@@ -1,0 +1,1 @@
+abiword-gtk2 required
