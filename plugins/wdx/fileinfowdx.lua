@@ -74,18 +74,21 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
     handle:close();
     return result;
   elseif (FieldIndex == 7) then
+    if (flags == 1) then return nil end
     local handle = io.popen('crc32 "'..FileName..'"');
     local result = handle:read("*a");
     handle:close();
     local result = result:sub(1, -2);
     return result;
   elseif (FieldIndex == 8) then
+    if (flags == 1) then return nil end
     local handle = io.popen('md5sum "'..FileName..'"');
     local result = handle:read("*a");
     handle:close();
     local result = string.match(result, '(%w+)%s+');
     return result;
   elseif (FieldIndex == 9) then
+    if (flags == 1) then return nil end
     local handle = io.popen('sha256sum "'..FileName..'"');
     local result = handle:read("*a");
     handle:close();
