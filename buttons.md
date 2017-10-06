@@ -1,6 +1,6 @@
 several buttons for the toolbar (copy-paste on the toolbar)
 
-**./cofigure**
+**./configure**
 ```
 DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
 <doublecmd>
