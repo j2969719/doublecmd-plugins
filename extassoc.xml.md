@@ -1,6 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<doublecmd DCVersion="0.8.0 alpha">
-  <ExtensionAssociation>
+```
       <FileType>
       <Name>FileInfo.sh</Name>
       <IconFile/>
@@ -13,5 +11,4 @@
         </Action>
       </Actions>
     </FileType>
-  </ExtensionAssociation>
-</doublecmd>
+```
