@@ -23,7 +23,7 @@ DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
     <Hint>make</Hint>
     <Command>make</Command>
     <Params>%t1</Params>
-    <StartPath>%p</StartPath>
+    <StartPath>%D</StartPath>
   </Program>
 </doublecmd>
 ```
@@ -50,7 +50,7 @@ DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
     <Hint>ldd</Hint>
     <Command>file</Command>
     <Params>%t1 %f &amp; ldd -r -v %f</Params>
-    <StartPath>%p</StartPath>
+    <StartPath>%D</StartPath>
   </Program>
 </doublecmd>
 ```
@@ -65,7 +65,7 @@ DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
     <Hint>install</Hint>
     <Command>sudo</Command>
     <Params>%t1 pacman -U %f</Params>
-    <StartPath>%p</StartPath>
+    <StartPath>%D</StartPath>
   </Program>
 </doublecmd>
 ```
@@ -123,7 +123,7 @@ DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
         <Hint>patch (p0)</Hint>
         <Command>patch</Command>
         <Params>%t1 -Np0 -i %f</Params>
-        <StartPath>%p</StartPath>
+        <StartPath>%D</StartPath>
       </Program>
       <Program>
         <ID>{B1CC4A23-8581-46C4-8A72-C7511CB46EF0}</ID>
@@ -131,7 +131,7 @@ DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
         <Hint>patch (p1)</Hint>
         <Command>patch</Command>
         <Params>%t1 -Np1 -i %f</Params>
-        <StartPath>%p</StartPath>
+        <StartPath>%D</StartPath>
       </Program>
       <Program>
         <ID>{38B86B6A-1352-41D3-8DAD-027362D02E6E}</ID>
@@ -139,7 +139,7 @@ DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
         <Hint>create a patch</Hint>
         <Command>diff</Command>
         <Params>%t1 -Naur %ds %dt &gt; patch.diff</Params>
-        <StartPath>%d</StartPath>
+        <StartPath>%D</StartPath>
       </Program>
       <Program>
         <ID>{C9B122CA-7BDA-4FDA-8D43-B8F036C5FAA7}</ID>
