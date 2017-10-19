@@ -4,12 +4,15 @@ local fields = {
     {"Subject", 8, "git log -1 --pretty=format:%s"}, 
     {"Body", 8, "git log -1 --pretty=format:%b"}, 
     {"Commit hash", 8, "git log -1 --pretty=format:%H"}, 
-    {"Committer name", 8, "git log -1 --pretty=format:%cn"}, 
+    {"Committer name", 8, "git log -1 --pretty=format:%cn"},
+    {"Committer email", 8, "git log -1 --pretty=format:%ce"},
     {"Сommitter date", 8, "git log -1 --pretty=format:%cd --date=format:'%d.%m.%Y %H:%M'"}, 
     {"Author name", 8, "git log -1 --pretty=format:%an"}, 
     {"Author email", 8, "git log -1 --pretty=format:%ae"}, 
     {"Author date", 8, "git log -1 --pretty=format:%ad --date=format:'%d.%m.%Y %H:%M'"}, 
-    {"Branch", 8, "git rev-parse --abbrev-ref HEAD #"}, 
+    {"Branch", 8, "git rev-parse --abbrev-ref HEAD #"},
+    {"Origin URL", 8, "git remote get-url origin #"},
+    {"Push URL", 8, "git remote get-url origin --push #"},
     {"Log", 8, "git log --oneline"}
 }
 
@@ -33,7 +36,7 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
         local handle = io.popen(fields[FieldIndex + 1][3] .. ' "'..FileName..'"');
         local result = handle:read("*a");
         handle:close();
-        if (FieldIndex == 8) then
+        if (fields[FieldIndex + 1][1]=="Branch") or (fields[FieldIndex + 1][1]=="Origin URL") or (fields[FieldIndex + 1][1]=="Push URL") then
             result = result:sub(1, - 2);
         end
         return result;
