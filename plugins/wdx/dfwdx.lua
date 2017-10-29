@@ -4,7 +4,7 @@ local fields = {
     {"Mountpoint", 6, "target | tail -1"}, 
     {"Target", 8, "target | tail -1"}, 
     {"Source", 8, "source | tail -1"}, 
-    {"FS Type", 8, "fstype | tail -1"}, 
+    {"FS Type", 8, "fstype | tail -1"} 
 }
 
 function ContentGetSupportedField(Index)
@@ -24,7 +24,7 @@ end
 
 function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
     if (fields[FieldIndex + 1][3] ~= nil) then
-        local handle = io.popen('df' .. ' "'..FileName..'" --output=' .. fields[FieldIndex + 1][3] );
+        local handle = io.popen('df "'..FileName..'" --output=' .. fields[FieldIndex + 1][3]);
         local result = handle:read("*a");
         handle:close();
         result = result:sub(1, - 2);
