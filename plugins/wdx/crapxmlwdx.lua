@@ -35,8 +35,9 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
             for line in file:lines() do
                 if string.find(line, '<' .. fields[FieldIndex + 1][3] .. '>') then
                     file:close();
-                    local result = string.gsub(line, '<' .. fields[FieldIndex + 1][3] .. '>' , "");
-                    return result:gsub('</' .. fields[FieldIndex + 1][3] .. '>', "");
+                    local result = string.gsub(line, '<' .. fields[FieldIndex + 1][3] .. '>%s*' , "");
+                    result = result:gsub('%s*</' .. fields[FieldIndex + 1][3] .. '>', "");
+                    return result:gsub('^%s*', "");
                 end
             end
             file:close();
