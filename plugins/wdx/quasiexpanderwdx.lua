@@ -50,12 +50,12 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
         num = FieldIndex - parts;
     end
     if (UnitIndex % 3  == 0) then
-        target = FileName:match("^.+[/\\](.+)$");
+        target = FileName:match("^.*[/\\](.+)$");
         if (string.match(target, "(.+)%..+")) then
             target = string.match(target, "(.+)%..+");
         end
     elseif (UnitIndex % 3 == 1) then
-        target = FileName:match("^.+[/\\](.+)$");
+        target = FileName:match("^.*[/\\](.+)$");
     elseif (UnitIndex % 3 == 2) then
         target = FileName:match("(.*[/\\])");
     end
