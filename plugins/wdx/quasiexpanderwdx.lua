@@ -3,10 +3,10 @@
 local parts = 5
 
 local separator = {
-    {"%s", "space"}, 
-    {"%-", "-"}, 
-    {"%s%-%s", " - "}, 
-    {"/", "/"}    
+    {"([^%s]+)", "space"}, 
+    {"([^-", "-"}, 
+    {nil, " - "},  --or {nil, " - ", "%s%-%s"},
+    {"([^/]+)", "/"}    
 }
 
 function ContentGetSupportedField(Index)
@@ -44,6 +44,7 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
     local target = '';
     local num = FieldIndex + 1
     local snum = 1;
+    local result = {};
     if (num > parts) then
         inv = true;
         num = FieldIndex - parts;
@@ -61,7 +62,13 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
             snum = snum + 1;
         end
     end
-    local result = split(target, separator[snum][1]);
+    if (separator[snum][1] ~= nil) then
+        result = split(target, separator[snum][1]);
+    elseif (separator[snum][3] ~= nil) then
+        result = split_alt(target, separator[snum][3]);
+    elseif (separator[snum][2] ~= nil) then
+        result = split_alt(target, separator[snum][2], true);
+    end
     if (inv == true) and (#result - num > 0) then
         return result[#result - num];
     elseif (inv == false) and (result[num] ~= nil) then 
@@ -72,6 +79,14 @@ end
 
 function getPath(str)
     return str:match("(.*[/\\])");
+end
+
+function split(str, pat)
+    local t = {};
+    for str in string.gmatch(str, pat) do
+        table.insert(t, str)
+    end
+    return t
 end
 
 -- https://stackoverflow.com/a/43582076
@@ -101,7 +116,7 @@ local function gsplit(text, pattern, plain)
     end
 end
 
-function split(text, pattern, plain)
+function split_alt(text, pattern, plain)
     local ret = {}
     for match in gsplit(text, pattern, plain) do
         table.insert(ret, match)
