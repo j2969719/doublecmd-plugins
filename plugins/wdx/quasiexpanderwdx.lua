@@ -51,7 +51,9 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
     end
     if (UnitIndex % 3  == 0) then
         target = string.gsub(FileName, getPath(FileName), "");
-        target = string.gsub(target, "%..*$", "");
+        if (string.match(target, "(.+)%..+")) then
+            target = string.match(target, "(.+)%..+");
+        end
     elseif (UnitIndex % 3 == 1) then
         target = string.gsub(FileName, getPath(FileName), "");
     elseif (UnitIndex % 3 == 2) then
