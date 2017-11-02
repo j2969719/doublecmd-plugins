@@ -50,14 +50,14 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
         num = FieldIndex - parts;
     end
     if (UnitIndex % 3  == 0) then
-        target = string.gsub(FileName, getPath(FileName), "");
+        target = FileName:match("^.+/(.+)$");
         if (string.match(target, "(.+)%..+")) then
             target = string.match(target, "(.+)%..+");
         end
     elseif (UnitIndex % 3 == 1) then
-        target = string.gsub(FileName, getPath(FileName), "");
+        target = FileName:match("^.+/(.+)$");
     elseif (UnitIndex % 3 == 2) then
-        target = getPath(FileName);
+        target = FileName:match("(.*[/\\])");
     end
     for i = 1, UnitIndex do
         if (i % 3  == 0) then
@@ -75,12 +75,8 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
         return result[#result - num];
     elseif (inv == false) and (result[num] ~= nil) then 
         return result[num];
-    end        
-    return nil; -- invalid 
-end
-
-function getPath(str)
-    return str:match("(.*[/\\])");
+    end
+    return nil; -- invalid
 end
 
 function split(str, pat)
