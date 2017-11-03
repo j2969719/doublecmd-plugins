@@ -1,6 +1,6 @@
 CC = gcc
 CFLAGS = -shared -fPIC
-INCLUDES = `pkg-config --cflags --libs abiword-3.0`
+INCLUDES = `pkg-config --cflags --libs abiword-3.0` -I../../sdk
 
 
 all:

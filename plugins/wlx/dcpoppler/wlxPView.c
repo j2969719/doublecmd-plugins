@@ -3,7 +3,7 @@
 #include <poppler.h>
 #include <math.h>
 #include <string.h>
-#include "common.h"
+#include "wlxplugin.h"
 
 
 GtkWidget  *tb1;

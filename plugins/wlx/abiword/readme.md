@@ -1,1 +1,1 @@
-abiword-gtk2 required [aur](https://aur.archlinux.org/packages/abiword-gtk2)
+[abiword-gtk2](https://aur.archlinux.org/packages/abiword-gtk2)(aur)

@@ -24,6 +24,9 @@ const       {Error codes returned to calling application}
   E_TOO_MANY_FILES=  23;       {Too many files to pack}
   E_NOT_SUPPORTED=   24;       {Function not supported}
 
+  E_HANDLED=         -32769;   {Handled error}
+  E_UNKNOWN=         +32768;   {Unknown error}
+
   {Unpacking flags}
   PK_OM_LIST=           0;
   PK_OM_EXTRACT=        1;
@@ -79,6 +82,9 @@ const       {Error codes returned to calling application}
   PK_CRYPT_DELETE_PASSWORD=6;       { Delete password}
 
   PK_CRYPTOPT_MASTERPASS_SET = 1;   // The user already has a master password defined
+
+  { THeaderData Flags }
+  RHDF_ENCRYPTED = $04;             { File encrypted with password }
 
 type
   { Unsigned integer with pointer size }

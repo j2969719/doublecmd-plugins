@@ -3,7 +3,7 @@
 #include <string.h>
 #include <gtk/gtk.h>
 #include <wand/MagickWand.h>
-#include "common.h"
+#include "wlxplugin.h"
 
 HWND DCPCALL ListLoad (HWND ParentWin, char* FileToLoad, int ShowFlags)
 {
