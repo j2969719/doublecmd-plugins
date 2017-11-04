@@ -26,7 +26,7 @@ FIELD fields[]={
 	{"Mode",					ft_string,	"fast|folow symlinks|uncompress|uncompress and folow symlinks|all matches"},
 	{"MIME type",				ft_string,																			""},
 	{"MIME encoding",			ft_string,																			""},
-	{"Object type",				ft_boolean,	"file|directory|character device|block device|named pipe|symlink|socket"},
+	{"Object type",				ft_multiplechoice,	"file|directory|character device|block device|named pipe|symlink|socket"},
 	{"Access rights in octal",	ft_numeric_32,																		""},
 	{"User name",				ft_string,																			""},
 	{"User ID",					ft_numeric_32,																		""},
@@ -37,6 +37,17 @@ FIELD fields[]={
 	{"Number of blocks",		ft_numeric_32,																		""},
 	{"Number of hard links",	ft_numeric_32,																		""},
 	{"Mountpoint",				ft_boolean,																			""},
+	{"Size",					ft_numeric_32,																		""},
+};
+
+char* objtypevalue[7]={
+	"file",
+        "directory",
+        "character device",
+        "block device",
+        "named pipe",
+        "symlink",
+        "socket"
 };
 
 char* strlcpy(char* p,const char* p2,int maxlen)
@@ -82,6 +93,7 @@ int DCPCALL ContentGetValue(char* FileName,int FieldIndex,int UnitIndex,void* Fi
 {
 		int ret1,ret2;
 		char pname[PATH_MAX];
+		fprintf(stdout, "%d %s\n", strlen(FileName), FileName);
 		struct stat buf, bfparent;
 		const char *magic_full;
 		magic_t magic_cookie;
@@ -130,84 +142,20 @@ int DCPCALL ContentGetValue(char* FileName,int FieldIndex,int UnitIndex,void* Fi
 			break;
 
 		case 4:
-			if (flags && CONTENT_DELAYIFSLOW)
-				return ft_fieldempty;
-
-			switch(UnitIndex)
-			{
-				case 0:
-					if (S_ISREG(buf.st_mode))
-					{
-						*(int*)FieldValue = 1;
-					}
-					else
-					{
-						*(int*)FieldValue = 0;
-					}
-					break;
-				case 1:
-					if (S_ISDIR(buf.st_mode))
-					{
-						*(int*)FieldValue = 1;
-					}
-					else
-					{
-						*(int*)FieldValue = 0;
-					}
-					break;
-				case 2:
-					if (S_ISCHR(buf.st_mode))
-					{
-						*(int*)FieldValue = 1;
-					}
-					else
-					{
-						*(int*)FieldValue = 0;
-					}
-					break;
-				case 3:
-					if (S_ISBLK(buf.st_mode))
-					{
-						*(int*)FieldValue = 1;
-					}
-					else
-					{
-						*(int*)FieldValue = 0;
-					}
-					break;
-				case 4:
-					if (S_ISFIFO(buf.st_mode))
-					{
-						*(int*)FieldValue = 1;
-					}
-					else
-					{
-						*(int*)FieldValue = 0;
-					}
-					break;
-				case 5:
-					if (S_ISLNK(buf.st_mode))
-					{
-						*(int*)FieldValue = 1;
-					}
-					else
-					{
-						*(int*)FieldValue = 0;
-					}
-					break;
-				case 6:
-					if (S_ISSOCK(buf.st_mode))
-					{
-						*(int*)FieldValue = 1;
-					}
-					else
-					{
-						*(int*)FieldValue = 0;
-					}
-					break;
-				default:
-						*(int*)FieldValue = 0;
-					}
+			if (S_ISDIR(buf.st_mode))
+				strlcpy((char*)FieldValue,objtypevalue[1],maxlen-1);
+			else if (S_ISCHR(buf.st_mode))
+				strlcpy((char*)FieldValue,objtypevalue[2],maxlen-1);
+			else if (S_ISBLK(buf.st_mode))
+				strlcpy((char*)FieldValue,objtypevalue[3],maxlen-1);
+			else if (S_ISFIFO(buf.st_mode))
+				strlcpy((char*)FieldValue,objtypevalue[4],maxlen-1);
+			else if (S_ISLNK(buf.st_mode))
+				strlcpy((char*)FieldValue,objtypevalue[5],maxlen-1);
+			else if (S_ISSOCK(buf.st_mode))
+				strlcpy((char*)FieldValue,objtypevalue[6],maxlen-1);
+			else
+				strlcpy((char*)FieldValue,objtypevalue[0],maxlen-1);
 			break;
 		case 5:
 			*(int*)FieldValue=convertDecimalToOctal(buf.st_mode & (S_IRWXU | S_IRWXG | S_IRWXO));
@@ -259,6 +207,9 @@ int DCPCALL ContentGetValue(char* FileName,int FieldIndex,int UnitIndex,void* Fi
 				return ft_fieldempty;
 			}
 		break;
+		case 15:
+			*(int*)FieldValue=buf.st_size;
+			break;
 		default:
 			return ft_nosuchfield;
 		}
