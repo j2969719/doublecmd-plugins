@@ -82,7 +82,6 @@ int DCPCALL ContentGetValue(char* FileName,int FieldIndex,int UnitIndex,void* Fi
 {
 		int ret1,ret2;
 		char pname[PATH_MAX];
-		fprintf(stdout, "%d %s\n", strlen(FileName), FileName);
 		struct stat buf, bfparent;
 		const char *magic_full;
 		magic_t magic_cookie;
