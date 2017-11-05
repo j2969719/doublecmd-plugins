@@ -92,11 +92,17 @@ int DCPCALL ContentGetDetectString(char* DetectString,int maxlen)
 int DCPCALL ContentGetValue(char* FileName,int FieldIndex,int UnitIndex,void* FieldValue,int maxlen,int flags)
 {
 		int ret1,ret2;
-		char pname[PATH_MAX+3];
+		char tname[PATH_MAX], pname[PATH_MAX+3];
 		struct stat buf, bfparent;
 		const char *magic_full;
 		magic_t magic_cookie;
-		if ((ret1 = lstat(FileName, &buf))!=0)
+		strlcpy(tname, FileName+strlen(FileName)-3, 3);
+		if (strcmp(tname, "/..") == 0)
+			strlcpy(tname, FileName, strlen(FileName)-3);
+		else
+			strlcpy(tname, FileName, strlen(FileName));
+			
+		if ((ret1 = lstat(tname, &buf))!=0)
 		{
 			fprintf(stderr, "stat failure error .%d", ret1);
 			return ft_fileerror;
@@ -184,9 +190,12 @@ int DCPCALL ContentGetValue(char* FileName,int FieldIndex,int UnitIndex,void* Fi
 			*(int*)FieldValue=buf.st_nlink;
 			break;
 		case 14:
+			if (strcmp(tname, "/") == 0)
+				return ft_fileerror;
+			
 			if (S_ISDIR(buf.st_mode))
 			{
-				sprintf (pname, "%s/..", FileName);
+				sprintf (pname, "%s/..", tname);
 				if ((ret1 = lstat(pname, &bfparent))!=0)
 				{
 					fprintf(stderr, "stat failure error .%d", ret1);
@@ -225,7 +234,7 @@ int DCPCALL ContentGetValue(char* FileName,int FieldIndex,int UnitIndex,void* Fi
 				magic_close(magic_cookie);
 				return ft_fileerror;
 			}
-			magic_full = magic_file(magic_cookie, FileName);
+			magic_full = magic_file(magic_cookie, tname);
 			strncpy((char*)FieldValue,magic_full,maxlen-1);
 			magic_close(magic_cookie);
 		}
