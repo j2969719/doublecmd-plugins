@@ -5,8 +5,9 @@ local parts = 5
 local separator = {
     {"([^%s]+)", "space"}, 
     {"([^-]+)", "-"}, 
-    {nil, " - "},  --or {nil, " - ", "%s%-%s"},
-    {"([^/]+)", "/"}    
+    {nil, " - "}, 
+    -- or {nil, " - ", "%s+%-%s+"},
+    {"([^/]+)", "/"}, 
 }
 
 function ContentGetSupportedField(Index)
@@ -37,27 +38,32 @@ function ContentGetDetectString()
 end
 
 function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
-    if (string.sub(FileName, - 3) == "/..") or (string.sub(FileName, - 2) == "/.") then
-        return nil;
-    end
     local inv = false;
     local target = '';
     local num = FieldIndex + 1
     local snum = 1;
     local result = {};
+    local tname = FileName;
+    if (string.find(FileName, "[/\\]%.%.$")) then
+        tname = string.sub(FileName, 1, - 3);
+    end
     if (num > parts) then
         inv = true;
         num = FieldIndex - parts;
     end
     if (UnitIndex % 3  == 0) then
-        target = FileName:match("^.*[/\\](.+)$");
-        if (string.match(target, "(.+)%..+")) then
-            target = string.match(target, "(.+)%..+");
+        target = tname:match("^.*[/\\](.+[^/\\])$");
+        if (target ~= nil) then
+            if (string.match(target, "(.+)%..+")) then
+                target = string.match(target, "(.+)%..+");
+            end
+        else
+            target = ''
         end
     elseif (UnitIndex % 3 == 1) then
-        target = FileName:match("^.*[/\\](.+)$");
+        target = tname:match("^.*[/\\](.+[^/\\])$");
     elseif (UnitIndex % 3 == 2) then
-        target = FileName:match("(.*[/\\])");
+        target = tname:match("(.*[/\\])");
     end
     for i = 1, UnitIndex do
         if (i % 3  == 0) then
@@ -73,7 +79,7 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
     end
     if (inv == true) and (#result - num > 0) then
         return result[#result - num];
-    elseif (inv == false) and (result[num] ~= nil) then 
+    elseif (inv == false) and (result[num] ~= nil) then
         return result[num];
     end
     return nil; -- invalid
