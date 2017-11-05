@@ -1,8 +1,11 @@
--- pdfdjwuwdx.lua
+-- scrtiptfileinfowdx.lua
+-- https://doublecmd.sourceforge.io/forum/viewtopic.php?f=8&t=2727
+
+local scriptpath = "$COMMANDER_PATH/scripts/fileinfo.sh" 
 
 function ContentGetSupportedField(Index)
   if (Index == 0) then
-    return 'fileinfo.sh','', 8; -- FieldName,Units,ft_string
+    return 'Text','', 9; -- FieldName,Units,ft_fulltext
   end
   return '','', 0; -- ft_nomorefields
 end
@@ -19,8 +22,8 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
   if (string.sub(FileName, -3) == "/..") or (string.sub(FileName, -2) == "/.") then
     return nil;
   end
-  if (FieldIndex == 0) then
-    local handle = io.popen('$COMMANDER_PATH/scripts/fileinfo.sh "'..FileName..'"');
+  if (FieldIndex == 0) and (UnitIndex == 0) then
+    local handle = io.popen(scriptpath .. ' "' .. FileName .. '"');
     local result = handle:read("*a");
     handle:close();
     local result = result:sub(1, -2);
