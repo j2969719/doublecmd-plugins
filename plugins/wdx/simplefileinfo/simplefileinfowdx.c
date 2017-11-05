@@ -27,7 +27,7 @@ FIELD fields[]={
 	{"MIME type",				ft_string,																			""},
 	{"MIME encoding",			ft_string,																			""},
 	{"Object type",				ft_multiplechoice,	"file|directory|character device|block device|named pipe|symlink|socket"},
-	{"Access rights in octal",	ft_numeric_32,																		""},
+	{"Access rights in octal",	ft_numeric_32,																"xxxx|xxx"},
 	{"User name",				ft_string,																			""},
 	{"User ID",					ft_numeric_32,																		""},
 	{"Group name",				ft_string,																			""},
@@ -163,7 +163,10 @@ int DCPCALL ContentGetValue(char* FileName,int FieldIndex,int UnitIndex,void* Fi
 				strlcpy((char*)FieldValue,objtypevalue[0],maxlen-1);
 			break;
 		case 5:
-			*(int*)FieldValue=convertDecimalToOctal(buf.st_mode & (S_IRWXU | S_IRWXG | S_IRWXO));
+			if (UnitIndex==0) 
+				*(int*)FieldValue=convertDecimalToOctal(buf.st_mode & (S_IRWXU | S_IRWXG | S_IRWXO | S_ISUID | S_ISGID | S_ISVTX));
+			else
+				*(int*)FieldValue=convertDecimalToOctal(buf.st_mode & (S_IRWXU | S_IRWXG | S_IRWXO));
 			break;
 		case 6:
 			strncpy((char*)FieldValue,pw->pw_name,maxlen-1);
