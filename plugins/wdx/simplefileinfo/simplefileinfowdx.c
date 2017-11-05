@@ -92,7 +92,7 @@ int DCPCALL ContentGetDetectString(char* DetectString,int maxlen)
 int DCPCALL ContentGetValue(char* FileName,int FieldIndex,int UnitIndex,void* FieldValue,int maxlen,int flags)
 {
 		int ret1,ret2;
-		char pname[PATH_MAX];
+		char pname[PATH_MAX+3];
 		struct stat buf, bfparent;
 		const char *magic_full;
 		magic_t magic_cookie;
