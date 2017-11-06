@@ -34,10 +34,10 @@ FIELD fields[]={
 	{"Group ID",				ft_numeric_32,																		""},
 	{"Inode number",			ft_numeric_32,																		""},
 	{"Block size",				ft_numeric_32,																		""},
-	{"Number of blocks",		ft_numeric_32,																		""},
+	{"Number of blocks",		ft_numeric_64,																		""},
 	{"Number of hard links",	ft_numeric_32,																		""},
 	{"Mountpoint",				ft_boolean,																			""},
-	{"Size",					ft_numeric_32,																		""},
+	{"Size",					ft_numeric_64,																		""},
 };
 
 char* objtypevalue[7]={
