@@ -3,6 +3,7 @@
 #include <openssl/sha.h>
 #include <zlib.h>
 #include <linux/limits.h>
+#include <sys/stat.h>
 #include <string.h>
 #include "wdxplugin.h"
 
@@ -22,6 +23,7 @@ FIELD fields[]={
 	{"MD5",			ft_string,		""},
 	{"SHA1",		ft_string,		""},
 	{"SHA256",		ft_string,		""},
+	{"SHA512",		ft_string,		""},
 };
 
 char* strlcpy(char* p,const char* p2,int maxlen)
@@ -56,14 +58,13 @@ int DCPCALL ContentGetValue(char* FileName,int FieldIndex,int UnitIndex,void* Fi
 			return ft_delayed;
 		int i, bytes;
 		unsigned char data[1024];
-		char tname[PATH_MAX], result[65];
-		strlcpy(tname, FileName+strlen(FileName)-3, 3);
-		if (strcmp(tname, "/..") == 0)
-			strlcpy(tname, FileName, strlen(FileName)-3);
-		else
-			strlcpy(tname, FileName, strlen(FileName));
-		
-		FILE *inFile = fopen (tname, "rb");
+		char result[128];
+		struct stat buf;
+		if (stat(FileName, &buf))
+			return ft_fileerror;
+		if (S_ISDIR(buf.st_mode))
+			return ft_fileerror;
+		FILE *inFile = fopen (FileName, "rb");
 		if (inFile == NULL)
 			return ft_fileerror;
 		
@@ -105,6 +106,17 @@ int DCPCALL ContentGetValue(char* FileName,int FieldIndex,int UnitIndex,void* Fi
 				SHA256_Update (&sha256, data, bytes);
 			SHA256_Final (c,&sha256);
 			for(i = 0; i < SHA256_DIGEST_LENGTH; i++)
+				sprintf(&result[i*2], "%02x", c[i]);
+		}
+		else if (FieldIndex == 4)
+		{
+			unsigned char c[SHA512_DIGEST_LENGTH];
+			SHA512_CTX sha512;
+			SHA512_Init(&sha512);
+			while ((bytes = fread (data, 1, 1024, inFile)) != 0)
+				SHA512_Update (&sha512, data, bytes);
+			SHA512_Final (c,&sha512);
+			for(i = 0; i < SHA512_DIGEST_LENGTH; i++)
 				sprintf(&result[i*2], "%02x", c[i]);
 		}
 		fclose (inFile);
