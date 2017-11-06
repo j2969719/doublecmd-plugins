@@ -62,7 +62,7 @@ int DCPCALL ContentGetValue(char* FileName,int FieldIndex,int UnitIndex,void* Fi
 		struct stat buf;
 		if (stat(FileName, &buf))
 			return ft_fileerror;
-		if (S_ISDIR(buf.st_mode))
+		if (!S_ISREG(buf.st_mode))
 			return ft_fileerror;
 		FILE *inFile = fopen (FileName, "rb");
 		if (inFile == NULL)
