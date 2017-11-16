@@ -386,3 +386,17 @@ DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
   </Program>
 </doublecmd>
 ```
+
+**gio unmount**
+```
+DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
+<doublecmd>
+  <Program>
+    <ID>{A4A25414-E759-40DE-9341-0533C187E2BF}</ID>
+    <Icon>player_eject</Icon>
+    <Hint>Unmount</Hint>
+    <Command>sh</Command>
+    <Params>-c 'gio mount -l | grep "Mount(" | sed "s/^.*\s-&gt;\s//g" | zenity --list --title="Unmount" --column="Mount" | xargs gio mount -u'</Params>
+  </Program>
+</doublecmd>
+```
