@@ -58,6 +58,7 @@ AddSelfExtract=%P a {-p%W} {-ap%RQA} -sfx --noarcext -sclANSI {%S} -- %AQA @%LA
 PasswordQuery=Enter decryption password:
 FormMode=8
 ```
+
 ```
 [FreeArc(wine)]
 Archiver=$COMMANDER_PATH/scripts/freearc
@@ -78,6 +79,8 @@ AddSelfExtract=%P a {-p%W} {-ap%RQA} -sfx --noarcext -sclUTF8 {%S} -- %AQU @%LU
 PasswordQuery=Enter decryption password:
 FormMode=10
 ```
+  [script example](https://github.com/j2969719/doublecmd-plugins/blob/master/scripts/freearc)
+
 
 **CHM**
 ```
@@ -159,6 +162,7 @@ List=%P -l -s %AQU
 Extract=%P -e -q  %AQ
 ExtractWithoutPath=%P -e -q  %AQ -I %FU
 ```
+
 ```
 [InnoSetup(wine)]
 Archiver=$COMMANDER_PATH/scripts/innounp
@@ -173,6 +177,8 @@ Extract=%P -x -m %AQ
 ExtractWithoutPath=%P -e -m %AQ %FQ
 FormMode=2
 ```
+  [script example](https://github.com/j2969719/doublecmd-plugins/blob/master/scripts/innounp)
+
 
 **Nullsoft Scriptable Install System**
 ```
@@ -230,6 +236,7 @@ List=%P l %AQA
 Extract=%P x %AQA
 FormMode=6
 ```
+  [script example](https://github.com/j2969719/doublecmd-plugins/blob/master/scripts/unshield)
 
 **MS-DOS installation compression**
 ```
