@@ -24,7 +24,7 @@
 
 ```
     <FileType>
-      <Name>all files</Name>
+      <Name>all folders</Name>
       <IconFile/>
       <ExtensionList>folder</ExtensionList>
       <Actions>
@@ -36,7 +36,7 @@
         <Action>
           <Name>ncdu</Name>
           <Command>ncdu</Command>
-          <Params>%t1 </Params>
+          <Params>%t1</Params>
           <StartPath>%p</StartPath>
         </Action>
       </Actions>
