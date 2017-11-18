@@ -1,37 +1,7 @@
 Multiarc
 ========
 
-[UnAce](#unace)
-
-[RAR + 7Zip](#rar)
-
-[FreeArc](#freearc)
-
-[CHM](#chm)
-
-[7Zip self-extracting archive](#7zsfx)
-
-[Microsoft Windows Installer](#msi)
-
-[Inno Setup installer](#innosetup)
-
-[Nullsoft Scriptable Install System](#nsis)
-
-[Microsoft Cabinet](#cab)
-
-[InstallShield](#unshield)
-
-[MS-DOS installation compression](#szdd)
-
-[ZPAQ](#zpaq)
-
-[pakextract](#pakextract)
-
-[grpar](#grpar)
-
-[The Unarchiver](#unar)
-
-[UPX](#upx)
+[UnAce](#unace), [RAR + 7Zip](#rar), [FreeArc](#freearc), [CHM](#chm), [7Zip self-extracting archive](#7zsfx), [Microsoft Windows Installer](#msi), [Inno Setup installer](#innosetup), [Nullsoft Scriptable Install System](#nsis), [Microsoft Cabinet](#cab), [InstallShield](#unshield), [MS-DOS installation compression](#szdd), [ZPAQ](#zpaq), [pakextract](#pakextract), [grpar](#grpar), [The Unarchiver](#unar), [UPX](#upx)
 
 <a name="unace"><h2>UNACE</h2></a>
 ```
