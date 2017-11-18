@@ -1,4 +1,4 @@
-**UNACE**
+# UNACE
 ```
 [ACE (ro)]
 Archiver=/usr/bin/unace
@@ -15,7 +15,7 @@ ExtractWithoutPath=%P e -y {-p%W} {%S} %AQA @%LQA
 Test=%P t -y %AQA
 ```
 
-**RAR + 7Zip**
+# RAR + 7Zip
 ```
 [RAR_3]
 Archiver=/usr/bin/rar
@@ -37,7 +37,7 @@ PasswordQuery=Enter password
 FormMode=8
 ```
 
-**FreeArc**
+# FreeArc
 ```
 [FreeArc]
 Archiver=/usr/bin/arc
@@ -82,7 +82,7 @@ FormMode=10
   [script example](https://github.com/j2969719/doublecmd-plugins/blob/master/scripts/freearc)
 
 
-**CHM**
+# CHM
 ```
 [CHM]
 Archiver=/usr/bin/7z
@@ -97,7 +97,7 @@ Extract=%P x -y {-p%W} {%S} %AQA @%LQU
 FormMode=8
 ```
 
-**7Zip self-extracting archive**
+# 7Zip self-extracting archive
 ```
 [7ZSfx]
 Archiver=/usr/bin/7z
@@ -114,7 +114,7 @@ PasswordQuery=Enter password
 FormMode=8
 ```
 
-**Microsoft Windows Installer**
+# Microsoft Windows Installer
 ```
 [MSI]
 Archiver=/usr/bin/7z
@@ -139,7 +139,7 @@ List=%P -l %AQA
 Extract=%P %AQA
 ```
 
-**Inno Setup installer**
+# Inno Setup installer
 ```
 [InnoSetup(gog)]
 Archiver=/usr/bin/innoextract
@@ -180,7 +180,7 @@ FormMode=2
   [script example](https://github.com/j2969719/doublecmd-plugins/blob/master/scripts/innounp)
 
 
-**Nullsoft Scriptable Install System**
+# Nullsoft Scriptable Install System
 ```
 [NSIS]
 Archiver=/usr/bin/7z
@@ -207,7 +207,7 @@ Extract=%P x -y {-p%W} {%S} %AQA @%LQU
 FormMode=8
 ```
 
-**Microsoft Cabinet**
+# Microsoft Cabinet
 ```
 [CAB]
 Archiver=/usr/bin/cabextract
@@ -221,7 +221,7 @@ List=%P -l %AQ
 Extract=%P {-F %F} %AQU
 ```
 
-**InstallShield**
+# InstallShield
 ```
 [InstallShield]
 Archiver=$COMMANDER_PATH/scripts/unshield
@@ -238,7 +238,7 @@ FormMode=6
 ```
   [script example](https://github.com/j2969719/doublecmd-plugins/blob/master/scripts/unshield)
 
-**MS-DOS installation compression**
+# MS-DOS installation compression
 ```
 [SZDD]
 Archiver=/usr/bin/7z
@@ -255,7 +255,7 @@ ExtractWithoutPath=%P e -y {-p%W} {%S} %AQA @%LQU
 Test=%P t -y {%S} %AQA @%LQU
 ```
 
-**[ZPAQ](http://mattmahoney.net/dc/zpaq.html)**
+# [ZPAQ](http://mattmahoney.net/dc/zpaq.html)
 ```
 [ZPAQ]
 Archiver=/usr/bin/zpaq
@@ -273,7 +273,7 @@ Add=%P a %AQA %FQU {%S} {-key %W}
 FormMode=1
 ```
 
-**[pakextract](http://github.com/yquake2/pakextract)**
+# [pakextract](http://github.com/yquake2/pakextract)
 ```
 [PAK]
 Archiver=pakextract
@@ -286,7 +286,8 @@ Format0=n+ (z+
 List=%P -l %AQ
 Extract=%P %AQ
 ```
-**[grpar](http://github.com/martymac/grpar)**
+
+# [grpar](http://github.com/martymac/grpar)
 ```
 [GRP]
 Archiver=grpar
@@ -300,7 +301,7 @@ List=%P -t -v -f %AQA
 Extract=%P -x -f %AQ
 ```
 
-**[The Unarchiver](https://theunarchiver.com/)**
+# [The Unarchiver](https://theunarchiver.com/)
 ```
 [Unarchiver]
 Archiver=
@@ -344,7 +345,7 @@ Extract=unar -f -t -D {-p %W} %AQ %FQ
 FormMode=8
 ```
 
-**UPX**
+# UPX
 ```
 [UPX]
 Archiver=upx

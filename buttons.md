@@ -1,6 +1,6 @@
 several buttons for the toolbar (copy-paste on the toolbar)
 
-**./configure**
+# ./configure
 ```
 DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
 <doublecmd>
@@ -13,7 +13,7 @@ DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
   </Program>
 </doublecmd>
 ```
-**make**
+# make
 ```
 DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
 <doublecmd>
@@ -27,7 +27,7 @@ DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
   </Program>
 </doublecmd>
 ```
-**makepkg**
+# makepkg
 ```
 DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
 <doublecmd>
@@ -40,7 +40,7 @@ DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
   </Program>
 </doublecmd>
 ```
-**ldd**
+# ldd
 ```
 DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
 <doublecmd>
@@ -54,7 +54,7 @@ DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
   </Program>
 </doublecmd>
 ```
-**pacman**
+# pacman
 
 ```
 DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
@@ -108,7 +108,7 @@ DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
   </Program>
 </doublecmd>
 ```
-**patch**
+# patch
 ```
 DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
 <doublecmd>
@@ -152,7 +152,7 @@ DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
   </Menu>
 </doublecmd>
 ```
-**iso**
+# iso
 ```
 DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
 <doublecmd>
@@ -207,7 +207,7 @@ DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
   </Menu>
 </doublecmd>
 ```
-**journalctl**
+# journalctl
 ```
 DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
 <doublecmd>
@@ -255,7 +255,7 @@ DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
   </Menu>
 </doublecmd>
 ```
-**gvfs admin**
+# gvfs admin
 ```
 DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
 <doublecmd>
@@ -268,7 +268,7 @@ DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
   </Program>
 </doublecmd>
 ```
-**gvfs webdav**
+# gvfs webdav
 ```
 DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
 <doublecmd>
@@ -295,7 +295,7 @@ DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
   </Menu>
 </doublecmd>
 ```
-**trash**
+# trash
 ```
 DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
 <doublecmd>
@@ -321,7 +321,7 @@ DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
   </Program>
 </doublecmd>
 ```
-**man**
+# man
 ```
 DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
 <doublecmd>
@@ -334,7 +334,8 @@ DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
   </Program>
 </doublecmd>
 ```
-**systemd-analyze plot** via `ristretto`
+# systemd-analyze plot
+via `ristretto`
 ```
 DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
 <doublecmd>
@@ -347,7 +348,7 @@ DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
   </Program>
 </doublecmd>
 ```
-**ncdu**
+# ncdu
 ```
 DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
 <doublecmd>
@@ -356,11 +357,11 @@ DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
     <Icon>baobab</Icon>
     <Hint>disk usage</Hint>
     <Command>ncdu</Command>
-    <Params>%t1 %d</Params>
+    <Params>%t1 %p</Params>
   </Program>
 </doublecmd>
 ```
-**duplicates**
+# duplicates
 ```
 DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
 <doublecmd>
@@ -387,7 +388,7 @@ DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
 </doublecmd>
 ```
 
-**gio unmount**
+# gio unmount
 ```
 DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
 <doublecmd>
