@@ -1,6 +1,7 @@
 -- filenamechrstatwdx.lua
 -- luarocks-5.1 install luautf8
-
+-- the search for duplicate file names is a bit unstable
+ 
 local utf8 = require("lua-utf8")
 
 local pattern = {
@@ -15,6 +16,7 @@ local pattern = {
     {"%."}, 
     {"%s%-%s"}, 
 }
+local fnames = {}
 
 function ContentGetSupportedField(Index)
     local submi = '';
@@ -42,6 +44,8 @@ function ContentGetSupportedField(Index)
         return 'lower case', 'Filename|Filename.Ext|Ext', 6;
     elseif (Index == 6) then
         return 'upper case', 'Filename|Filename.Ext|Ext', 6;
+    elseif (Index == 7) then
+        return '(case) duplicate filename', '', 6;
     end
     return '', '', 0; -- ft_nomorefields
 end
@@ -88,6 +92,23 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
             return  true; 
         end 
         return false;           
+    elseif (FieldIndex == 7) then         
+        local fpath = utf8.match(tname, "(.*[/\\])");
+        local fname = getFullname(tname);
+        if (#fnames ~= 0) then
+            for i = 1, #fnames do
+                local tpath = utf8.match(fnames[i], "(.*[/\\])");
+                local tfname = getFullname(fnames[i]);
+                if (fpath == tpath) and (fname ~= tfname) and (utf8.lower(fname) == utf8.lower(tfname)) then
+                    return true;
+                end
+            end
+            fnames[#fnames + 1] = tname;
+            return false;
+        else
+            fnames[1] = tname;
+            return false;        
+        end
     end
     if (target ~= nil) and (pattern[UnitIndex + 1][1] ~= nil) then
         local count = 0;
