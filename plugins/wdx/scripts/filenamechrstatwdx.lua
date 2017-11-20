@@ -127,7 +127,7 @@ function getFilename(str)
             target = utf8.match(target, "(.+)%..+");
         end
     else
-        target = ''
+        target = nil;
     end
     return target;
 end
