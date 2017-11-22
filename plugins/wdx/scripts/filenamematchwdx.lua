@@ -1,30 +1,34 @@
 -- filenamematchwdx.lua
 
+-- file groups 
+local groups = {
+    {"Music", "%.mp3$", "%.ogg$", "%.wma$", "%.wav$"},      -- group name, pattern, ...
+    {"Archive", "%.zip$", "%.rar$", "%.7z$", "%.tar%..+$"}, 
+    {"Docs", "%.doc$", "%.docx$", "%.rtf$"}, 
+}
+
+
 local pattern = {
-    {"(%d+)%.", 1, "(number)."}, -- pattern, type, name 
-    {"%-%s+(%d+)%.", 1, " (number)."}, 
-    {"^(.-)%s+%-", 8}, 
-    {"%-%s+(.+)", 8}, 
-    {".+%-%s(.+)$", 8}, 
-    {"%-%s+%d+%.(.+)$", 8}, 
+    {"(%d+)%.", 1, "(number)."},      -- pattern, type, name, alt pattern, ...
+    {"%-%s+(%d+)%.", 1}, 
+    {"^(.-)%s+%-", 8, "(part) -"}, 
+    {"%-%s+(.+)", 8, "- (part)", "%-%s+%d+%.(.+)$", ".+%-%s(.+)$"}, 
     {"%-%s(.-)%s+%-", 8}, 
     {"%.tar%.(.-)$", 8, "tar.(xyz)"}, 
 }
 
 function ContentGetSupportedField(Index)
-    if (pattern[Index + 1] ~= nil ) then
-        if (pattern[Index + 1][3] ~= nil) then
-            return pattern[Index + 1][3], "Filename|Filename.Ext|Path|Path with Filename.Ext", pattern[Index + 1][2];
+    if (Index == 0) then
+        return 'Group', '', 8; -- FieldName,Units,ft_string
+    elseif (pattern[Index] ~= nil ) then
+        if (pattern[Index][3] ~= nil) then
+            return pattern[Index][3], "Filename|Filename.Ext|Path|Path with Filename.Ext", pattern[Index][2];
         else
-            return pattern[Index + 1][1], "Filename|Filename.Ext|Path|Path with Filename.Ext", pattern[Index + 1][2];
+            return "Pattern: " .. pattern[Index][1], "Filename|Filename.Ext|Path|Path with Filename.Ext", pattern[Index][2];
         end
     else
         return '', '', 0; -- ft_nomorefields
     end
-end
-
-function ContentGetDefaultSortOrder(FieldIndex)
-    return 1; --or -1
 end
 
 function ContentGetDetectString()
@@ -36,6 +40,20 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
     if (string.find(FileName, "[/\\]%.%.$")) then
         tname = string.sub(FileName, 1, - 3);
     end
+    if (FieldIndex == 0) then
+        if (#groups >= 1) then
+            for group = 1, #groups do
+                if (#groups[group] > 1) then
+                    for i = 2, #groups[group] do
+                        if (string.find(tname, groups[group][i])) then
+                            return groups[group][1];
+                        end
+                    end
+                end
+            end
+        end
+        return nil;
+    end
     if (UnitIndex == 0) then
         tname = getFilename(tname);
     elseif (UnitIndex == 1) then
@@ -44,7 +62,14 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
         tname = string.match(tname, "(.*[/\\])");
     end
     if (tname ~= nil) then
-        return tname:match(pattern[FieldIndex + 1][1]);
+        if (#pattern[FieldIndex] > 3) then
+            for i = 4, #pattern[FieldIndex] do
+                if (string.find(tname, pattern[FieldIndex][i])) then
+                    return tname:match(pattern[FieldIndex][i]);
+                end
+            end
+        end
+        return tname:match(pattern[FieldIndex][1]);
     end
     return nil;
 end
