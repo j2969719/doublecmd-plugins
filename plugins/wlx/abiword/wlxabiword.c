@@ -4,24 +4,22 @@
 #include <abiwidget.h>
 #include "wlxplugin.h"
 
-GtkWidget * abi;
+#define _detectstring "(EXT=\"DOC\")|(EXT=\"RTF\")|(EXT=\"DOT\")|(EXT=\"ABW\")|(EXT=\"AWT\")|(EXT=\"ZABW\")"
 
+GtkWidget *abi;
 
 HWND DCPCALL ListLoad (HWND ParentWin, char* FileToLoad, int ShowFlags)
 {
 
-	GtkWidget *gFix, window;
-	gFix = gtk_vbox_new(FALSE , 5);
-	gtk_container_add(GTK_CONTAINER((GtkWidget*)(ParentWin)), gFix);
-	libabiword_init(NULL, NULL);
+	libabiword_init_noargs();
 	abi = abi_widget_new ();
-	gtk_container_add (GTK_CONTAINER (gFix), GTK_WIDGET(abi));
+	gtk_container_add(GTK_CONTAINER((GtkWidget*)(ParentWin)), abi);
 	gchar* fileUri = g_filename_to_uri(FileToLoad, NULL, NULL);
-	abi_widget_load_file (ABI_WIDGET (abi), fileUri, "");
-        abi_widget_view_print_layout (abi);
-	gtk_widget_show_all (gFix);
-	return gFix;
-	libabiword_shutdown ();
+	if (abi_widget_load_file (ABI_WIDGET (abi), fileUri, ""))
+		return NULL;
+	abi_widget_view_print_layout (ABI_WIDGET (abi));
+	gtk_widget_show_all (abi);
+	return abi;
 }
 
 void ListCloseWindow(HWND ListWin)
@@ -31,13 +29,18 @@ void ListCloseWindow(HWND ListWin)
 
 void DCPCALL ListGetDetectString(char* DetectString,int maxlen)
 {
-	strncpy(DetectString, "(EXT=\"DOC\")|(EXT=\"RTF\")|(EXT=\"DOT\")|(EXT=\"ABW\")|(EXT=\"AWT\")|(EXT=\"ZABW\")", maxlen);
+	strncpy(DetectString, _detectstring, maxlen);
 }
 
 int DCPCALL ListSearchText(HWND ListWin, char* SearchString,int SearchParameter)
 {
-        abi_widget_set_find_string (abi, SearchString);
-	abi_widget_find_prev (abi);
+	abi_widget_set_find_string (ABI_WIDGET(abi), SearchString);
+	if (SearchParameter & lcs_backwards)
+		abi_widget_find_prev (ABI_WIDGET(abi));
+	else if (SearchParameter & lcs_findfirst)
+		abi_widget_find_next (ABI_WIDGET(abi), TRUE);
+	else
+		abi_widget_find_next (ABI_WIDGET(abi), FALSE);
 }
 
 int DCPCALL ListSendCommand(HWND ListWin,int Command,int Parameter)
@@ -45,10 +48,10 @@ int DCPCALL ListSendCommand(HWND ListWin,int Command,int Parameter)
 	switch(Command)
 	{
 		case lc_copy :
-			abi_widget_copy (abi);
+			abi_widget_copy (ABI_WIDGET(abi));
 			break;
 		case lc_selectall :
-			abi_widget_select_all (abi);
+			abi_widget_select_all (ABI_WIDGET(abi));
 			break;
 		default :
 			printf("Command = %d\n", Command);

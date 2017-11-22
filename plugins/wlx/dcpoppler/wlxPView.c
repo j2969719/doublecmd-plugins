@@ -5,6 +5,7 @@
 #include <string.h>
 #include "wlxplugin.h"
 
+#define _detectstring "EXT=\"PDF\""
 
 GtkWidget  *tb1;
 GtkToolItem  *tb_back;
@@ -23,10 +24,9 @@ int total_pages = 0;
 void update_numpages()
 {
 	gchar *str;
-	str = g_strdup_printf("%d / %d",
-	current_page + 1, total_pages);
+	str = g_strdup_printf("%d / %d", current_page + 1, total_pages);
 
-	gtk_tool_button_set_label (tb_pages, str);
+	gtk_tool_button_set_label (GTK_TOOL_BUTTON(tb_pages), str);
 	g_free(str);
 }
 
@@ -95,12 +95,12 @@ HWND DCPCALL ListLoad (HWND ParentWin, char* FileToLoad, int ShowFlags)
 
 	GtkWidget  *vscroll;
 	GtkWidget  *gFix;
-        current_page = 0;
-        gchar* fileUri = g_filename_to_uri(FileToLoad, NULL, NULL);
+	current_page = 0;
+	gchar* fileUri = g_filename_to_uri(FileToLoad, NULL, NULL);
 	document = poppler_document_new_from_file (fileUri, NULL, NULL);
 
 	if (document == NULL)
-		return -1;
+		return NULL;
 
 	gFix = gtk_vbox_new (FALSE, 0);
 	gtk_container_add (GTK_CONTAINER ((GtkWidget*)(ParentWin)), gFix);
@@ -153,5 +153,5 @@ void ListCloseWindow(HWND ListWin)
 
 void DCPCALL ListGetDetectString(char* DetectString,int maxlen)
 {
-	strncpy(DetectString, "EXT=\"PDF\"", maxlen);
+	strncpy(DetectString, _detectstring, maxlen);
 }

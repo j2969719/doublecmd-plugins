@@ -1,6 +1,6 @@
 CC = gcc
-CFLAGS = -shared -fPIC
-INCLUDES = `pkg-config --cflags --libs MagickWand gtk+-2.0 gtkimageview` -I../../sdk
+CFLAGS = -shared -fPIC -Wl,--no-as-needed
+INCLUDES = `pkg-config --cflags --libs MagickWand gtkimageview` -I../../sdk
 
 
 all:
