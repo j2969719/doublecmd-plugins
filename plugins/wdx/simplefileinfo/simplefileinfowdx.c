@@ -33,11 +33,11 @@ FIELD fields[]={
 	{"Group name",				ft_string,																			""},
 	{"Group ID",				ft_numeric_32,																		""},
 	{"Inode number",			ft_numeric_32,																		""},
+	{"Size",					ft_numeric_64,																		""},
 	{"Block size",				ft_numeric_32,																		""},
 	{"Number of blocks",		ft_numeric_64,																		""},
 	{"Number of hard links",	ft_numeric_32,																		""},
 	{"Mountpoint",				ft_boolean,																			""},
-	{"Size",					ft_numeric_64,																		""},
 };
 
 char* objtypevalue[7]={
@@ -92,19 +92,19 @@ int DCPCALL ContentGetDetectString(char* DetectString,int maxlen)
 int DCPCALL ContentGetValue(char* FileName,int FieldIndex,int UnitIndex,void* FieldValue,int maxlen,int flags)
 {
 		int ret1,ret2;
-		char tname[PATH_MAX], pname[PATH_MAX+3];
+		char tname[PATH_MAX], pname[PATH_MAX+4];
 		struct stat buf, bfparent;
 		const char *magic_full;
 		magic_t magic_cookie;
-		strlcpy(tname, FileName+strlen(FileName)-3, 3);
+		strlcpy(tname, FileName+strlen(FileName)-3, 4);
 		if (strcmp(tname, "/..") == 0)
-			strlcpy(tname, FileName, strlen(FileName)-3);
+			strlcpy(tname, FileName, strlen(FileName)-2);
 		else
-			strlcpy(tname, FileName, strlen(FileName));
+			strlcpy(tname, FileName, strlen(FileName)+1);
 			
 		if ((ret1 = lstat(tname, &buf))!=0)
 		{
-			fprintf(stderr, "stat failure error .%d", ret1);
+			fprintf(stderr, "stat failure error .%d\n", ret1);
 			return ft_fileerror;
 		}
 		struct passwd *pw = getpwuid(buf.st_uid);
@@ -184,15 +184,18 @@ int DCPCALL ContentGetValue(char* FileName,int FieldIndex,int UnitIndex,void* Fi
 			*(int*)FieldValue=buf.st_ino;
 			break;
 		case 11:
-			*(int*)FieldValue=buf.st_blksize;
+			*(int*)FieldValue=buf.st_size;
 			break;
 		case 12:
-			*(int*)FieldValue=buf.st_blocks;
+			*(int*)FieldValue=buf.st_blksize;
 			break;
 		case 13:
-			*(int*)FieldValue=buf.st_nlink;
+			*(int*)FieldValue=buf.st_blocks;
 			break;
 		case 14:
+			*(int*)FieldValue=buf.st_nlink;
+			break;
+		case 15:
 			if (strcmp(tname, "/") == 0)
 				return ft_fileerror;
 			
@@ -201,7 +204,7 @@ int DCPCALL ContentGetValue(char* FileName,int FieldIndex,int UnitIndex,void* Fi
 				sprintf (pname, "%s/..", tname);
 				if ((ret1 = lstat(pname, &bfparent))!=0)
 				{
-					fprintf(stderr, "stat failure error .%d", ret1);
+					fprintf(stderr, "stat failure error .%d\n", ret1);
 					return ft_nosuchfield;
 				}
 				if ((buf.st_dev == bfparent.st_dev) && (buf.st_ino != bfparent.st_ino))
@@ -217,9 +220,6 @@ int DCPCALL ContentGetValue(char* FileName,int FieldIndex,int UnitIndex,void* Fi
 			{
 				return ft_fieldempty;
 			}
-		break;
-		case 15:
-			*(int*)FieldValue=buf.st_size;
 			break;
 		default:
 			return ft_nosuchfield;
