@@ -39,3 +39,7 @@ void DCPCALL ListGetDetectString(char* DetectString,int maxlen)
 	strncpy(DetectString, _detectstring, maxlen);
 }
 
+int DCPCALL ListSearchDialog(HWND ListWin,int FindNext)
+{
+	return LISTPLUGIN_OK;
+}
