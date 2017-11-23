@@ -30,7 +30,12 @@ HWND DCPCALL ListLoad (HWND ParentWin, char* FileToLoad, int ShowFlags)
 	magick_wand=NewMagickWand();
 
 	if (MagickReadImage(magick_wand,FileToLoad) == MagickFalse)
+	{
+		gtk_widget_destroy(gFix);
+		magick_wand=DestroyMagickWand(magick_wand);
+		MagickWandTerminus();
 		return NULL;
+	}
 	MagickResetIterator(magick_wand);
 	width = MagickGetImageWidth (magick_wand);
 	height = MagickGetImageHeight (magick_wand);

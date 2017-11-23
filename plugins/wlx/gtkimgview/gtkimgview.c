@@ -19,7 +19,10 @@ HWND DCPCALL ListLoad (HWND ParentWin, char* FileToLoad, int ShowFlags)
 	gtk_container_add (GTK_CONTAINER(gFix), scroll);
 	pixbuf = gdk_pixbuf_new_from_file (FileToLoad, NULL);
 	if (!pixbuf)
+	{
+		gtk_widget_destroy(gFix);
 		return NULL;
+	}
 	gtk_image_view_set_pixbuf (GTK_IMAGE_VIEW (view), pixbuf, TRUE);
 	gtk_widget_show_all (gFix);
 	
