@@ -53,7 +53,7 @@ void update_numpages()
 	g_free(str);
 }
 
-static void canvas_expose_event( GtkWidget *widget, GdkEventExpose *event )
+static void canvas_expose_event (GtkWidget *widget, GdkEventExpose *event)
 {
 	cairo_t *cr;
 
@@ -118,13 +118,17 @@ HWND DCPCALL ListLoad (HWND ParentWin, char* FileToLoad, int ShowFlags)
 
 	GtkWidget  *vscroll;
 	GtkWidget  *gFix;
-	current_page = 0;
-	gchar* fileUri = g_filename_to_uri(FileToLoad, NULL, NULL);
+	GdkColor  color;
+	
+	gchar* fileUri = g_filename_to_uri (FileToLoad, NULL, NULL);
 	document = poppler_document_new_from_file (fileUri, NULL, NULL);
 
 	if (document == NULL)
+	{
+		g_free (fileUri);
 		return NULL;
-
+	}
+	current_page = 0;
 	gFix = gtk_vbox_new (FALSE, 0);
 	gtk_container_add (GTK_CONTAINER ((GtkWidget*)(ParentWin)), gFix);
 
@@ -159,7 +163,9 @@ HWND DCPCALL ListLoad (HWND ParentWin, char* FileToLoad, int ShowFlags)
 	vscroll = gtk_scrolled_window_new(NULL, NULL);
 	gtk_box_pack_start (GTK_BOX (gFix), vscroll, TRUE, TRUE, 2);
 	canvas = gtk_drawing_area_new();
-	gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(vscroll), canvas);
+	gdk_color_parse ("white", &color); 
+	gtk_widget_modify_bg (canvas, GTK_STATE_NORMAL, &color);
+	gtk_scrolled_window_add_with_viewport (GTK_SCROLLED_WINDOW(vscroll), canvas);
 	g_signal_connect (G_OBJECT (canvas), "expose_event", G_CALLBACK (canvas_expose_event), (gpointer) (GtkWidget*)(ParentWin));
 
 	total_pages = poppler_document_get_n_pages (document);
