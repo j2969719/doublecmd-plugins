@@ -54,6 +54,6 @@ int DCPCALL ListSendCommand(HWND ListWin,int Command,int Parameter)
 			abi_widget_select_all (ABI_WIDGET(abi));
 			break;
 		default :
-			printf("Command = %d\n", Command);
+			return LISTPLUGIN_ERROR;
 	}
 }
