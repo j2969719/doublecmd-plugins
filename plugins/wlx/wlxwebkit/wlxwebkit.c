@@ -75,6 +75,7 @@ HWND DCPCALL ListLoad (HWND ParentWin, char* FileToLoad, int ShowFlags)
 	gtk_widget_set_name (webView, "webkitfrm");
 	gchar* fileUri = g_filename_to_uri(FileToLoad, NULL, NULL);
 	webkit_web_view_load_uri(WEBKIT_WEB_VIEW(webView), fileUri);
+	g_free(fileUri);
 	gtk_widget_grab_focus(webView);
 	gtk_container_add (GTK_CONTAINER (gFix), webView);
 
