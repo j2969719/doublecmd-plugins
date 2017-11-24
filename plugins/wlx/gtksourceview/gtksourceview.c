@@ -15,7 +15,6 @@
 
 #define _detectstring "EXT=\"C\"|EXT=\"H\"|EXT=\"LUA\"|EXT=\"CPP\"|EXT=\"HPP\"|EXT=\"PAS\""
 
-GtkSourceBuffer *sBuf;
 
 static gboolean open_file (GtkSourceBuffer *sBuf, const gchar *filename);
 
@@ -26,7 +25,7 @@ HWND DCPCALL ListLoad (HWND ParentWin, char* FileToLoad, int ShowFlags)
 	GtkWidget *pScrollWin;
 	GtkWidget *sView;
 	GtkSourceLanguageManager *lm;
-	//GtkSourceBuffer *sBuf;
+	GtkSourceBuffer *sBuf;
 
 	gFix = gtk_vbox_new(FALSE , 5);
 	gtk_container_add(GTK_CONTAINER (GTK_WIDGET(ParentWin)), gFix);
@@ -44,6 +43,7 @@ HWND DCPCALL ListLoad (HWND ParentWin, char* FileToLoad, int ShowFlags)
 	g_object_ref (lm);
 	g_object_set_data_full ( G_OBJECT (sBuf), "languages-manager",
 	lm, (GDestroyNotify) g_object_unref);
+	g_object_set_data_full ( G_OBJECT (gFix), "srcbuf", sBuf, (GDestroyNotify) g_object_unref);
 
 	/* Create the GtkSourceView and associate it with the buffer */
 	sView = gtk_source_view_new_with_buffer(sBuf);
@@ -51,7 +51,6 @@ HWND DCPCALL ListLoad (HWND ParentWin, char* FileToLoad, int ShowFlags)
 	gtk_source_view_set_show_line_numbers (GTK_SOURCE_VIEW(sView), TRUE);
 	gtk_source_view_set_highlight_current_line (GTK_SOURCE_VIEW(sView), TRUE);
 	gtk_source_view_set_draw_spaces (GTK_SOURCE_VIEW(sView), GTK_SOURCE_DRAW_SPACES_TAB);
-	gtk_widget_set_name (sView, "srcview");
 
 	/* Attach the GtkSourceView to the scrolled Window */
 	gtk_container_add (GTK_CONTAINER (pScrollWin), GTK_WIDGET (sView));
@@ -190,7 +189,10 @@ int DCPCALL ListSearchDialog(HWND ListWin,int FindNext)
 
 int DCPCALL ListSendCommand(HWND ListWin,int Command,int Parameter)
 {
+	GtkSourceBuffer *sBuf;
 	GtkTextIter p;
+
+	sBuf = g_object_get_data (G_OBJECT (ListWin), "srcbuf");
 
 	switch(Command)
 	{
