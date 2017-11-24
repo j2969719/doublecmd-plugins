@@ -16,7 +16,10 @@ HWND DCPCALL ListLoad (HWND ParentWin, char* FileToLoad, int ShowFlags)
 	gtk_container_add(GTK_CONTAINER((GtkWidget*)(ParentWin)), abi);
 	gchar* fileUri = g_filename_to_uri(FileToLoad, NULL, NULL);
 	if (abi_widget_load_file (ABI_WIDGET (abi), fileUri, ""))
+	{
+		g_free(fileUri);
 		return NULL;
+	}
 	abi_widget_view_print_layout (ABI_WIDGET (abi));
 	gtk_widget_show_all (abi);
 	return abi;
