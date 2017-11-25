@@ -61,6 +61,9 @@ HWND DCPCALL ListLoad (HWND ParentWin, char* FileToLoad, int ShowFlags)
 		gtk_widget_destroy(GTK_WIDGET(gFix));
 		return NULL;
 	}
+
+	gtk_text_view_set_editable (GTK_TEXT_VIEW (sView), FALSE);
+	gtk_text_view_set_cursor_visible (GTK_TEXT_VIEW (sView), FALSE);
 	gtk_widget_show_all (gFix);
 
 	return gFix;
