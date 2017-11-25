@@ -10,12 +10,18 @@
 #include <gtksourceview/gtksourcelanguage.h>
 #include <gtksourceview/gtksourcelanguagemanager.h>
 #include <gtksourceview/gtksourcestyleschememanager.h>
+#include <libconfig.h>
+#include <dlfcn.h>
+#include <limits.h>
 #include <string.h>
 #include "wlxplugin.h"
 
 
 #define _detectstring "EXT=\"C\"|EXT=\"H\"|EXT=\"LUA\"|EXT=\"CPP\"|EXT=\"HPP\"|EXT=\"PAS\""
+#define MAX_LEN 255
 
+char font[MAX_LEN] = "monospace 12";
+char style[MAX_LEN] = "classic";
 
 static gboolean open_file (GtkSourceBuffer *sBuf, const gchar *filename);
 
@@ -26,6 +32,8 @@ HWND DCPCALL ListLoad (HWND ParentWin, char* FileToLoad, int ShowFlags)
 	GtkWidget *pScrollWin;
 	GtkWidget *sView;
 	GtkSourceLanguageManager *lm;
+	GtkSourceStyleSchemeManager *scheme_manager;
+	GtkSourceStyleScheme *scheme;
 	GtkSourceBuffer *sBuf;
 
 	gFix = gtk_vbox_new(FALSE , 5);
@@ -48,21 +56,24 @@ HWND DCPCALL ListLoad (HWND ParentWin, char* FileToLoad, int ShowFlags)
 
 	/* Create the GtkSourceView and associate it with the buffer */
 	sView = gtk_source_view_new_with_buffer(sBuf);
-	gtk_widget_modify_font (sView, pango_font_description_from_string ("monospace 12"));
+	gtk_widget_modify_font (sView, pango_font_description_from_string (font));
 	gtk_source_view_set_show_line_numbers (GTK_SOURCE_VIEW(sView), TRUE);
 	gtk_source_view_set_highlight_current_line (GTK_SOURCE_VIEW(sView), TRUE);
 	gtk_source_view_set_draw_spaces (GTK_SOURCE_VIEW(sView), GTK_SOURCE_DRAW_SPACES_TAB);
 
 	/* Attach the GtkSourceView to the scrolled Window */
 	gtk_container_add (GTK_CONTAINER (pScrollWin), GTK_WIDGET (sView));
-
 	gtk_container_add (GTK_CONTAINER (gFix), pScrollWin);
+
 	if (!open_file (sBuf, FileToLoad))
 	{
 		gtk_widget_destroy(GTK_WIDGET(gFix));
 		return NULL;
 	}
 
+	scheme_manager = gtk_source_style_scheme_manager_get_default ();
+	scheme = gtk_source_style_scheme_manager_get_scheme (scheme_manager, style);
+	gtk_source_buffer_set_style_scheme (sBuf, scheme);
 	gtk_text_view_set_editable (GTK_TEXT_VIEW (sView), FALSE);
 	gtk_text_view_set_cursor_visible (GTK_TEXT_VIEW (sView), FALSE);
 	gtk_widget_show_all (gFix);
@@ -76,8 +87,6 @@ open_file (GtkSourceBuffer *sBuf, const gchar *filename)
 {
 	GtkSourceLanguageManager *lm;
 	GtkSourceLanguage *language = NULL;
-	GtkSourceStyleSchemeManager *scheme_manager;
-	GtkSourceStyleScheme *scheme;
 	GError *err = NULL;
 	gboolean reading;
 	GtkTextIter iter;
@@ -105,10 +114,6 @@ open_file (GtkSourceBuffer *sBuf, const gchar *filename)
 	g_free (content_type);
 
 	g_print("Language: [%s]\n", gtk_source_language_get_name(language));
-
-	scheme_manager = gtk_source_style_scheme_manager_get_default ();
-	scheme = gtk_source_style_scheme_manager_get_scheme (scheme_manager, "tango"); // or "classic"
-	gtk_source_buffer_set_style_scheme (sBuf, scheme);
 
 	/* Now load the file from Disk */
 	io = g_io_channel_new_file (filename, "r", &err);
@@ -241,4 +246,32 @@ int DCPCALL ListSendCommand(HWND ListWin,int Command,int Parameter)
 			return LISTPLUGIN_ERROR;
 	}
 }
+void DCPCALL ListSetDefaultParams(ListDefaultParamStruct* dps)
+{
+	Dl_info dlinfo;
+	static char cfg_path[PATH_MAX];
+	const char* cfg_file = "gtksourceview.cfg";
+	config_t cfg;
+	const char *str;
 
+	// Find in plugin directory
+	memset(&dlinfo, 0, sizeof(dlinfo));
+	if (dladdr(cfg_path, &dlinfo) != 0)
+	{
+		strncpy(cfg_path, dlinfo.dli_fname, PATH_MAX);
+		char *pos = strrchr(cfg_path, '/');
+		if (pos) 
+		{
+			strcpy(pos + 1, cfg_file);
+		}
+	}
+	config_init(&cfg);
+	if(config_read_file(&cfg, cfg_path))
+	{
+		if(config_lookup_string(&cfg, "font", &str))
+			strncpy(font, str, MAX_LEN);
+		if(config_lookup_string(&cfg, "style", &str))
+			strncpy(style, str, MAX_LEN);
+	}
+	config_destroy(&cfg);
+}

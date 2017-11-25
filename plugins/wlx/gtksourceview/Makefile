@@ -1,6 +1,6 @@
 CC = gcc
-CFLAGS = -shared -fPIC -Wl,--no-as-needed
-INCLUDES = `pkg-config --cflags --libs gtksourceview-2.0` -I../../sdk
+CFLAGS = -shared -fPIC -Wl,--no-as-needed -D_GNU_SOURCE
+INCLUDES = `pkg-config --cflags --libs gtksourceview-2.0 libconfig` -I../../sdk
 
 
 all:
