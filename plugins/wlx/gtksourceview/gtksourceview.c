@@ -9,6 +9,7 @@
 #include <gtksourceview/gtksourcebuffer.h>
 #include <gtksourceview/gtksourcelanguage.h>
 #include <gtksourceview/gtksourcelanguagemanager.h>
+#include <gtksourceview/gtksourcestyleschememanager.h>
 #include <string.h>
 #include "wlxplugin.h"
 
@@ -75,6 +76,8 @@ open_file (GtkSourceBuffer *sBuf, const gchar *filename)
 {
 	GtkSourceLanguageManager *lm;
 	GtkSourceLanguage *language = NULL;
+	GtkSourceStyleSchemeManager *scheme_manager;
+	GtkSourceStyleScheme *scheme;
 	GError *err = NULL;
 	gboolean reading;
 	GtkTextIter iter;
@@ -103,17 +106,21 @@ open_file (GtkSourceBuffer *sBuf, const gchar *filename)
 
 	g_print("Language: [%s]\n", gtk_source_language_get_name(language));
 
+	scheme_manager = gtk_source_style_scheme_manager_get_default ();
+	scheme = gtk_source_style_scheme_manager_get_scheme (scheme_manager, "tango"); // or "classic"
+	gtk_source_buffer_set_style_scheme (sBuf, scheme);
+
 	/* Now load the file from Disk */
 	io = g_io_channel_new_file (filename, "r", &err);
 	if (!io)
 	{
-		g_print("error: %s %s\n", (err)->message, filename);
+		g_print("gtksourceview.wlx (%s): %s", filename, (err)->message);
 		return FALSE;
 	}
 
 	if (g_io_channel_set_encoding (io, "utf-8", &err) != G_IO_STATUS_NORMAL)
 	{
-		g_print("err: Failed to set encoding:\n%s\n%s", filename, (err)->message);
+		g_print("gtksourceview.wlx: Failed to set encoding:\n%s\n%s", filename, (err)->message);
 		return FALSE;
 	}
 
@@ -144,7 +151,7 @@ open_file (GtkSourceBuffer *sBuf, const gchar *filename)
 			case G_IO_STATUS_ERROR:
 
 			default:
-				g_print("err (%s): %s", filename, (err)->message);
+				g_print("gtksourceview.wlx (%s): %s", filename, (err)->message);
 				/* because of error in input we clear already loaded text */
 				gtk_text_buffer_set_text (GTK_TEXT_BUFFER (sBuf), "", 0);
 
