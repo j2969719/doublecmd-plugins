@@ -17,17 +17,21 @@
 #include "wlxplugin.h"
 
 
-#define _detectstring "EXT=\"C\"|EXT=\"H\"|EXT=\"LUA\"|EXT=\"CPP\"|EXT=\"HPP\"|EXT=\"PAS\""
+#define _detectstring "EXT=\"C\"|EXT=\"H\"|EXT=\"LUA\"|EXT=\"CPP\"|EXT=\"HPP\"|EXT=\"PAS\"|EXT=\"CSS\"|EXT=\"SH\"|EXT=\"XML\"|EXT=\"INI\"|EXT=\"DIFF\"|EXT=\"PATCH\""
 #define MAX_LEN 255
 
 char font[MAX_LEN] = "monospace 12";
 char style[MAX_LEN] = "classic";
+gboolean line_num = TRUE;
+gboolean hcur_line = TRUE;
+gboolean draw_spaces = TRUE;
+gboolean no_cursor = TRUE;
 
 static gboolean open_file (GtkSourceBuffer *sBuf, const gchar *filename);
 
 
 HWND DCPCALL ListLoad (HWND ParentWin, char* FileToLoad, int ShowFlags)
-{ 
+{
 	GtkWidget *gFix;
 	GtkWidget *pScrollWin;
 	GtkWidget *sView;
@@ -38,11 +42,10 @@ HWND DCPCALL ListLoad (HWND ParentWin, char* FileToLoad, int ShowFlags)
 
 	gFix = gtk_vbox_new(FALSE , 5);
 	gtk_container_add(GTK_CONTAINER (GTK_WIDGET(ParentWin)), gFix);
- 
+
 	/* Create a Scrolled Window that will contain the GtkSourceView */
 	pScrollWin = gtk_scrolled_window_new (NULL, NULL);
-	gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (pScrollWin),
-	GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
+	gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (pScrollWin), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
 
 	/* Now create a GtkSourceLanguageManager */
 	lm = gtk_source_language_manager_new();
@@ -57,9 +60,10 @@ HWND DCPCALL ListLoad (HWND ParentWin, char* FileToLoad, int ShowFlags)
 	/* Create the GtkSourceView and associate it with the buffer */
 	sView = gtk_source_view_new_with_buffer(sBuf);
 	gtk_widget_modify_font (sView, pango_font_description_from_string (font));
-	gtk_source_view_set_show_line_numbers (GTK_SOURCE_VIEW(sView), TRUE);
-	gtk_source_view_set_highlight_current_line (GTK_SOURCE_VIEW(sView), TRUE);
-	gtk_source_view_set_draw_spaces (GTK_SOURCE_VIEW(sView), GTK_SOURCE_DRAW_SPACES_TAB);
+	gtk_source_view_set_show_line_numbers (GTK_SOURCE_VIEW(sView), line_num);
+	gtk_source_view_set_highlight_current_line (GTK_SOURCE_VIEW(sView), hcur_line);
+	if (draw_spaces)
+		gtk_source_view_set_draw_spaces (GTK_SOURCE_VIEW(sView), GTK_SOURCE_DRAW_SPACES_ALL);
 
 	/* Attach the GtkSourceView to the scrolled Window */
 	gtk_container_add (GTK_CONTAINER (pScrollWin), GTK_WIDGET (sView));
@@ -75,7 +79,8 @@ HWND DCPCALL ListLoad (HWND ParentWin, char* FileToLoad, int ShowFlags)
 	scheme = gtk_source_style_scheme_manager_get_scheme (scheme_manager, style);
 	gtk_source_buffer_set_style_scheme (sBuf, scheme);
 	gtk_text_view_set_editable (GTK_TEXT_VIEW (sView), FALSE);
-	gtk_text_view_set_cursor_visible (GTK_TEXT_VIEW (sView), FALSE);
+	if (no_cursor)
+		gtk_text_view_set_cursor_visible (GTK_TEXT_VIEW (sView), FALSE);
 	gtk_widget_show_all (gFix);
 
 	return gFix;
@@ -187,7 +192,7 @@ open_file (GtkSourceBuffer *sBuf, const gchar *filename)
 	return TRUE;
 }
 
-void ListCloseWindow(HWND ListWin)
+void ListCloseWindow (HWND ListWin)
 {
 	gtk_widget_destroy(GTK_WIDGET(ListWin));
 }
@@ -197,7 +202,7 @@ void DCPCALL ListGetDetectString(char* DetectString,int maxlen)
 	strncpy(DetectString, _detectstring, maxlen);
 }
 
-int DCPCALL ListSearchText(HWND ListWin, char* SearchString,int SearchParameter)
+int DCPCALL ListSearchText (HWND ListWin, char* SearchString,int SearchParameter)
 {
 	GtkSourceBuffer *sBuf;
 	GtkTextMark *last_pos;
@@ -224,7 +229,7 @@ int DCPCALL ListSearchText(HWND ListWin, char* SearchString,int SearchParameter)
 	
 }
 
-int DCPCALL ListSendCommand(HWND ListWin,int Command,int Parameter)
+int DCPCALL ListSendCommand (HWND ListWin,int Command,int Parameter)
 {
 	GtkSourceBuffer *sBuf;
 	GtkTextIter p;
@@ -246,7 +251,7 @@ int DCPCALL ListSendCommand(HWND ListWin,int Command,int Parameter)
 			return LISTPLUGIN_ERROR;
 	}
 }
-void DCPCALL ListSetDefaultParams(ListDefaultParamStruct* dps)
+void DCPCALL ListSetDefaultParams (ListDefaultParamStruct* dps)
 {
 	Dl_info dlinfo;
 	static char cfg_path[PATH_MAX];
@@ -272,6 +277,26 @@ void DCPCALL ListSetDefaultParams(ListDefaultParamStruct* dps)
 			strncpy(font, str, MAX_LEN);
 		if(config_lookup_string(&cfg, "style", &str))
 			strncpy(style, str, MAX_LEN);
+		if(config_lookup_string(&cfg, "line_numbers", &str))
+			if (strcasestr(str, "true"))
+				line_num = TRUE;
+			else
+				line_num = FALSE;
+		if(config_lookup_string(&cfg, "highlight_current_line", &str))
+			if (strcasestr(str, "true"))
+				hcur_line = TRUE;
+			else
+				hcur_line = FALSE;
+				if(config_lookup_string(&cfg, "draw_spaces", &str))
+			if (strcasestr(str, "true"))
+				draw_spaces = TRUE;
+			else
+				draw_spaces = FALSE;
+		if(config_lookup_string(&cfg, "no_cursor", &str))
+			if (strcasestr(str, "true"))
+				no_cursor = TRUE;
+			else
+				no_cursor = FALSE;
 	}
 	config_destroy(&cfg);
 }
