@@ -28,6 +28,8 @@ gboolean hcur_line = TRUE;
 gboolean draw_spaces = TRUE;
 gboolean no_cursor = TRUE;
 
+GtkWidget *sView;
+
 static gboolean open_file (GtkSourceBuffer *sBuf, const gchar *filename);
 
 
@@ -35,7 +37,7 @@ HWND DCPCALL ListLoad (HWND ParentWin, char* FileToLoad, int ShowFlags)
 {
 	GtkWidget *gFix;
 	GtkWidget *pScrollWin;
-	GtkWidget *sView;
+//	GtkWidget *sView;
 	GtkSourceLanguageManager *lm;
 	GtkSourceStyleSchemeManager *scheme_manager;
 	GtkSourceStyleScheme *scheme;
@@ -208,7 +210,7 @@ int DCPCALL ListSearchText (HWND ListWin, char* SearchString,int SearchParameter
 	GtkTextMark *last_pos;
 	GtkTextIter iter, mstart, mend;
 	gboolean found;
-	
+
 	sBuf = g_object_get_data (G_OBJECT (ListWin), "srcbuf");
 	last_pos = gtk_text_buffer_get_mark (GTK_TEXT_BUFFER(sBuf), "last_pos");
 	if (last_pos == NULL)
@@ -225,6 +227,7 @@ int DCPCALL ListSearchText (HWND ListWin, char* SearchString,int SearchParameter
 	{
 		gtk_text_buffer_select_range (GTK_TEXT_BUFFER(sBuf), &mstart, &mend);
 		gtk_text_buffer_create_mark (GTK_TEXT_BUFFER(sBuf), "last_pos", &mend, FALSE);
+		gtk_text_view_scroll_mark_onscreen (GTK_TEXT_VIEW (sView), gtk_text_buffer_get_mark (GTK_TEXT_BUFFER(sBuf), "last_pos"));
 	}
 	else 
 	{
