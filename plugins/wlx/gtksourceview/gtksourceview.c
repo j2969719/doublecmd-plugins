@@ -231,7 +231,7 @@ int DCPCALL ListSearchText (HWND ListWin, char* SearchString,int SearchParameter
 	}
 	else 
 	{
-		GtkWidget *dialog = gtk_message_dialog_new (GTK_WINDOW(gtk_widget_get_toplevel (GTK_WIDGET(ListWin))), GTK_DIALOG_MODAL, GTK_MESSAGE_INFO, GTK_BUTTONS_OK, "Not found!");
+		GtkWidget *dialog = gtk_message_dialog_new (GTK_WINDOW(gtk_widget_get_toplevel (GTK_WIDGET(ListWin))), GTK_DIALOG_MODAL, GTK_MESSAGE_INFO, GTK_BUTTONS_OK, "\"%s\" not found!", SearchString);
 		gtk_dialog_run (GTK_DIALOG (dialog));
 		gtk_widget_destroy (dialog);
 	}
