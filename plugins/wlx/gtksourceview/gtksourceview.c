@@ -1,7 +1,9 @@
 /* 
    http://www.bravegnu.org/gtktext/x561.html
-   Joe Arose updated code to gtk3 and gtksourceview-3.0. 
+   Joe Arose updated code to gtk3 and gtksourceview-3.0.
 */
+
+#define _GNU_SOURCE
 
 #include <gtk/gtk.h>
 #include <gdk/gdk.h>
@@ -15,7 +17,6 @@
 #include <limits.h>
 #include <string.h>
 #include "wlxplugin.h"
-
 
 #define _detectstring "EXT=\"C\"|EXT=\"H\"|EXT=\"LUA\"|EXT=\"CPP\"|EXT=\"HPP\"|EXT=\"PAS\"|EXT=\"CSS\"|EXT=\"SH\"|EXT=\"XML\"|EXT=\"INI\"|EXT=\"DIFF\"|EXT=\"PATCH\""
 #define MAX_LEN 255
@@ -164,7 +165,6 @@ open_file (GtkSourceBuffer *sBuf, const gchar *filename)
 				g_print("gtksourceview.wlx (%s): %s", filename, (err)->message);
 				/* because of error in input we clear already loaded text */
 				gtk_text_buffer_set_text (GTK_TEXT_BUFFER (sBuf), "", 0);
-
 				reading = FALSE;
 				break;
 		}
@@ -226,7 +226,12 @@ int DCPCALL ListSearchText (HWND ListWin, char* SearchString,int SearchParameter
 		gtk_text_buffer_select_range (GTK_TEXT_BUFFER(sBuf), &mstart, &mend);
 		gtk_text_buffer_create_mark (GTK_TEXT_BUFFER(sBuf), "last_pos", &mend, FALSE);
 	}
-	
+	else 
+	{
+		GtkWidget *dialog = gtk_message_dialog_new (GTK_WINDOW(gtk_widget_get_toplevel (GTK_WIDGET(ListWin))), GTK_DIALOG_MODAL, GTK_MESSAGE_INFO, GTK_BUTTONS_OK, "Not found!");
+		gtk_dialog_run (GTK_DIALOG (dialog));
+		gtk_widget_destroy (dialog);
+	}
 }
 
 int DCPCALL ListSendCommand (HWND ListWin,int Command,int Parameter)
@@ -266,9 +271,7 @@ void DCPCALL ListSetDefaultParams (ListDefaultParamStruct* dps)
 		strncpy(cfg_path, dlinfo.dli_fname, PATH_MAX);
 		char *pos = strrchr(cfg_path, '/');
 		if (pos) 
-		{
 			strcpy(pos + 1, cfg_file);
-		}
 	}
 	config_init(&cfg);
 	if(config_read_file(&cfg, cfg_path))
