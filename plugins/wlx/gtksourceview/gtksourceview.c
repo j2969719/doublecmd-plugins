@@ -228,9 +228,12 @@ int DCPCALL ListSearchText (HWND ListWin, char* SearchString,int SearchParameter
 	{
 		gtk_text_buffer_select_range (GTK_TEXT_BUFFER(sBuf), &mstart, &mend);
 		gtk_text_buffer_create_mark (GTK_TEXT_BUFFER(sBuf), "last_pos", &mend, FALSE);
-		last_pos = gtk_text_buffer_get_mark (GTK_TEXT_BUFFER(sBuf), "last_pos");
+		//--------------------------------------------------------------------------------
+		GtkTextBuffer *tmp = gtk_text_view_get_buffer (GTK_TEXT_VIEW (sView)); // ...
+		last_pos = gtk_text_buffer_get_mark (tmp, "last_pos");
 		if (last_pos)
 			gtk_text_view_scroll_mark_onscreen (GTK_TEXT_VIEW (sView), last_pos);
+		//--------------------------------------------------------------------------------
 	}
 	else 
 	{
