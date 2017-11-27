@@ -18,7 +18,8 @@
 #include <string.h>
 #include "wlxplugin.h"
 
-#define _detectstring "EXT=\"C\"|EXT=\"H\"|EXT=\"LUA\"|EXT=\"CPP\"|EXT=\"HPP\"|EXT=\"PAS\"|EXT=\"CSS\"|EXT=\"SH\"|EXT=\"XML\"|EXT=\"INI\"|EXT=\"DIFF\"|EXT=\"PATCH\""
+#define _detectstring "EXT=\"C\"|EXT=\"H\"|EXT=\"LUA\"|EXT=\"CPP\"|EXT=\"HPP\"|EXT=\"PAS\"|\
+EXT=\"CSS\"|EXT=\"SH\"|EXT=\"XML\"|EXT=\"INI\"|EXT=\"DIFF\"|EXT=\"PATCH\""
 #define MAX_LEN 255
 
 char font[MAX_LEN] = "monospace 12";
@@ -28,7 +29,7 @@ gboolean hcur_line = TRUE;
 gboolean draw_spaces = TRUE;
 gboolean no_cursor = TRUE;
 
-GtkWidget *sView;
+GtkWidget *sView; // ...
 
 static gboolean open_file (GtkSourceBuffer *sBuf, const gchar *filename);
 
@@ -227,11 +228,15 @@ int DCPCALL ListSearchText (HWND ListWin, char* SearchString,int SearchParameter
 	{
 		gtk_text_buffer_select_range (GTK_TEXT_BUFFER(sBuf), &mstart, &mend);
 		gtk_text_buffer_create_mark (GTK_TEXT_BUFFER(sBuf), "last_pos", &mend, FALSE);
-		gtk_text_view_scroll_mark_onscreen (GTK_TEXT_VIEW (sView), gtk_text_buffer_get_mark (GTK_TEXT_BUFFER(sBuf), "last_pos"));
+		last_pos = gtk_text_buffer_get_mark (GTK_TEXT_BUFFER(sBuf), "last_pos");
+		if (last_pos)
+			gtk_text_view_scroll_mark_onscreen (GTK_TEXT_VIEW (sView), last_pos);
 	}
 	else 
 	{
-		GtkWidget *dialog = gtk_message_dialog_new (GTK_WINDOW(gtk_widget_get_toplevel (GTK_WIDGET(ListWin))), GTK_DIALOG_MODAL, GTK_MESSAGE_INFO, GTK_BUTTONS_OK, "\"%s\" not found!", SearchString);
+		GtkWidget *dialog = gtk_message_dialog_new (GTK_WINDOW(gtk_widget_get_toplevel (GTK_WIDGET(ListWin))), 
+													GTK_DIALOG_MODAL, GTK_MESSAGE_INFO, GTK_BUTTONS_OK, 
+													"\"%s\" not found!", SearchString);
 		gtk_dialog_run (GTK_DIALOG (dialog));
 		gtk_widget_destroy (dialog);
 	}
