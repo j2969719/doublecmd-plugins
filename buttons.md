@@ -401,3 +401,96 @@ DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
   </Program>
 </doublecmd>
 ```
+
+# git
+```
+DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
+<doublecmd>
+  <Menu>
+    <ID>{EF6CA5CA-69F1-459D-8727-849414E1FF85}</ID>
+    <Icon>cm_runterm</Icon>
+    <Hint>Git</Hint>
+    <MenuItems>
+      <Program>
+        <ID>{A3541377-4F91-45E6-A8ED-DC6FA7D588C5}</ID>
+        <Icon>cm_gotolastfile</Icon>
+        <Hint>Pull</Hint>
+        <Command>git</Command>
+        <Params>pull %t1</Params>
+        <StartPath>%d</StartPath>
+      </Program>
+      <Program>
+        <ID>{3848EB14-8E03-492E-8486-02B76BDB5538}</ID>
+        <Icon>cm_operationsviewer</Icon>
+        <Hint>Status</Hint>
+        <Command>git</Command>
+        <Params>status %t1</Params>
+        <StartPath>%d</StartPath>
+      </Program>
+      <Program>
+        <ID>{9E5BF7CA-31E3-412B-AA92-4D31E241AD36}</ID>
+        <Icon>cm_comparecontents</Icon>
+        <Hint>View diff (current file, active panel)</Hint>
+        <Command>git</Command>
+        <Params>%t1 diff %fs &gt; patch.diff</Params>
+      </Program>
+      <Program>
+        <ID>{23A821C3-A607-4B59-AF86-F4739592413E}</ID>
+        <Icon>cm_markmarkall</Icon>
+        <Hint>Add all</Hint>
+        <Command>git</Command>
+        <Params>add * %t1</Params>
+        <StartPath>%d</StartPath>
+      </Program>
+      <Program>
+        <ID>{19316A20-1822-43EE-87C1-827BE3928FA2}</ID>
+        <Icon>cm_markmarkall</Icon>
+        <Hint>Add file</Hint>
+        <Command>git</Command>
+        <Params>add %p %t1</Params>
+        <StartPath>%d</StartPath>
+      </Program>
+      <Program>
+        <ID>{EF71220F-8746-413B-A822-1C40216C284B}</ID>
+        <Icon>cm_renameonly</Icon>
+        <Hint>Commit</Hint>
+        <Command>git</Command>
+        <Params>commit -m '%[Description;]' %t1</Params>
+        <StartPath>%d</StartPath>
+      </Program>
+      <Program>
+        <ID>{7D6E9C67-9661-4904-A212-80E17B1441F8}</ID>
+        <Icon>cm_gotolastfile</Icon>
+        <Hint>Fetch</Hint>
+        <Command>git</Command>
+        <Params>fetch %[Target;origin] %t1</Params>
+        <StartPath>%d</StartPath>
+      </Program>
+      <Program>
+        <ID>{4947C23B-7EB6-46E5-840A-981A1E664979}</ID>
+        <Icon>cm_gotofirstfile</Icon>
+        <Hint>Push</Hint>
+        <Command>git</Command>
+        <Params>push %[Target;origin master] %t1</Params>
+        <StartPath>%d</StartPath>
+      </Program>
+      <Program>
+        <ID>{3521972F-963D-4B4A-B110-58224C3DCC01}</ID>
+        <Icon>cm_copy</Icon>
+        <Hint>Clone</Hint>
+        <Command>git</Command>
+        <Params>clone %[Target;] %t1</Params>
+        <StartPath>%d</StartPath>
+      </Program>
+      <Program>
+        <ID>{A45C14BD-5794-43A7-B194-28864F1BDA1A}</ID>
+        <Icon>cm_gotofirstfile</Icon>
+        <Hint>Remote</Hint>
+        <Command>git</Command>
+        <Params>remote %t1</Params>
+        <StartPath>%d</StartPath>
+      </Program>
+    </MenuItems>
+  </Menu>
+</doublecmd>
+```
