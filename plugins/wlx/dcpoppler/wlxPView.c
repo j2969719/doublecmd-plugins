@@ -123,11 +123,10 @@ HWND DCPCALL ListLoad (HWND ParentWin, char* FileToLoad, int ShowFlags)
 	gchar* fileUri = g_filename_to_uri (FileToLoad, NULL, NULL);
 	document = poppler_document_new_from_file (fileUri, NULL, NULL);
 
-	if (document == NULL)
-	{
+	if (fileUri)
 		g_free (fileUri);
+	if (document == NULL)
 		return NULL;
-	}
 	current_page = 0;
 	gFix = gtk_vbox_new (FALSE, 0);
 	gtk_container_add (GTK_CONTAINER ((GtkWidget*)(ParentWin)), gFix);
