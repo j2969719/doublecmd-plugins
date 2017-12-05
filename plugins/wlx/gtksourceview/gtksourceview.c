@@ -21,12 +21,8 @@
 EXT=\"CSS\"|EXT=\"SH\"|EXT=\"XML\"|EXT=\"INI\"|EXT=\"DIFF\"|EXT=\"PATCH\""
 #define MAX_LEN 255
 
-char font[MAX_LEN] = "monospace 12";
-char style[MAX_LEN] = "classic";
-gboolean line_num = TRUE;
-gboolean hcur_line = TRUE;
-gboolean draw_spaces = TRUE;
-gboolean no_cursor = TRUE;
+char font[MAX_LEN], style[MAX_LEN];
+gboolean line_num, hcur_line, draw_spaces, no_cursor;
 
 GtkWidget *sView; // ...
 
@@ -290,6 +286,12 @@ void DCPCALL ListSetDefaultParams (ListDefaultParamStruct* dps)
 	if (!g_key_file_load_from_file(cfg, cfg_path, G_KEY_FILE_KEEP_COMMENTS, &err))
 	{
 		g_print("gtksourceview.wlx (%s): %s\n", cfg_path, (err)->message);
+		strncpy(font, "monospace 12", MAX_LEN);
+		strncpy(style, "classic", MAX_LEN);
+		line_num = TRUE;
+		hcur_line = TRUE;
+		draw_spaces = TRUE;
+		no_cursor = TRUE;
 	}
 	else
 	{
