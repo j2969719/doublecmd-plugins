@@ -289,7 +289,7 @@ void DCPCALL ListSetDefaultParams (ListDefaultParamStruct* dps)
 	cfg = g_key_file_new();
 	if (!g_key_file_load_from_file(cfg, cfg_path, G_KEY_FILE_KEEP_COMMENTS, &err))
 	{
-		g_print("gtksourceview.wlx (%s): %s\n", cfg_path, err->message);
+		g_print("gtksourceview.wlx (%s): %s\n", cfg_path, (err)->message);
 	}
 	else
 	{
@@ -325,4 +325,6 @@ void DCPCALL ListSetDefaultParams (ListDefaultParamStruct* dps)
 			no_cursor = TRUE;
 	}
 	g_key_file_free(cfg);
+	if (err)
+		g_error_free (err);
 }
