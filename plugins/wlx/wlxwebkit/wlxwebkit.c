@@ -72,6 +72,11 @@ HWND DCPCALL ListLoad (HWND ParentWin, char* FileToLoad, int ShowFlags)
 	gFix = gtk_scrolled_window_new(NULL, NULL);
 	gtk_container_add(GTK_CONTAINER((GtkWidget*)(ParentWin)), gFix);
 	webView = webkit_web_view_new();
+
+//  https://doublecmd.sourceforge.io/forum/viewtopic.php?f=8&t=4106&start=72#p22156
+	WebKitFaviconDatabase *database = webkit_get_favicon_database();
+	webkit_favicon_database_set_path(database, NULL);
+
 	gtk_widget_set_name (webView, "webkitfrm");
 	gchar* fileUri = g_filename_to_uri(FileToLoad, NULL, NULL);
 	webkit_web_view_load_uri(WEBKIT_WEB_VIEW(webView), fileUri);
