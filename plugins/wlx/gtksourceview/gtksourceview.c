@@ -12,7 +12,6 @@
 #include <gtksourceview/gtksourcelanguage.h>
 #include <gtksourceview/gtksourcelanguagemanager.h>
 #include <gtksourceview/gtksourcestyleschememanager.h>
-#include <libconfig.h>
 #include <dlfcn.h>
 #include <limits.h>
 #include <string.h>
@@ -128,13 +127,13 @@ open_file (GtkSourceBuffer *sBuf, const gchar *filename)
 	io = g_io_channel_new_file (filename, "r", &err);
 	if (!io)
 	{
-		g_print("gtksourceview.wlx (%s): %s", filename, (err)->message);
+		g_print("gtksourceview.wlx (%s): %s\n", filename, (err)->message);
 		return FALSE;
 	}
 
 	if (g_io_channel_set_encoding (io, "utf-8", &err) != G_IO_STATUS_NORMAL)
 	{
-		g_print("gtksourceview.wlx: Failed to set encoding:\n%s\n%s", filename, (err)->message);
+		g_print("gtksourceview.wlx (%s): Failed to set encoding: %s\n", filename, (err)->message);
 		return FALSE;
 	}
 
@@ -165,7 +164,7 @@ open_file (GtkSourceBuffer *sBuf, const gchar *filename)
 			case G_IO_STATUS_ERROR:
 
 			default:
-				g_print("gtksourceview.wlx (%s): %s", filename, (err)->message);
+				g_print("gtksourceview.wlx (%s): %s\n", filename, (err)->message);
 				/* because of error in input we clear already loaded text */
 				gtk_text_buffer_set_text (GTK_TEXT_BUFFER (sBuf), "", 0);
 				reading = FALSE;
@@ -238,8 +237,8 @@ int DCPCALL ListSearchText (HWND ListWin, char* SearchString,int SearchParameter
 	else 
 	{
 		GtkWidget *dialog = gtk_message_dialog_new (GTK_WINDOW(gtk_widget_get_toplevel (GTK_WIDGET(ListWin))), 
-													GTK_DIALOG_MODAL, GTK_MESSAGE_INFO, GTK_BUTTONS_OK, 
-													"\"%s\" not found!", SearchString);
+									GTK_DIALOG_MODAL, GTK_MESSAGE_INFO, GTK_BUTTONS_OK, 
+									"\"%s\" not found!", SearchString);
 		gtk_dialog_run (GTK_DIALOG (dialog));
 		gtk_widget_destroy (dialog);
 	}
@@ -271,9 +270,11 @@ void DCPCALL ListSetDefaultParams (ListDefaultParamStruct* dps)
 {
 	Dl_info dlinfo;
 	static char cfg_path[PATH_MAX];
-	const char* cfg_file = "gtksourceview.cfg";
-	config_t cfg;
-	const char *str;
+	const char* cfg_file = "settings.ini";
+	GKeyFile *cfg;
+	GError *err = NULL;
+	gchar *str;
+	gboolean bval;
 
 	// Find in plugin directory
 	memset(&dlinfo, 0, sizeof(dlinfo));
@@ -284,33 +285,44 @@ void DCPCALL ListSetDefaultParams (ListDefaultParamStruct* dps)
 		if (pos) 
 			strcpy(pos + 1, cfg_file);
 	}
-	config_init(&cfg);
-	if(config_read_file(&cfg, cfg_path))
+
+	cfg = g_key_file_new();
+	if (!g_key_file_load_from_file(cfg, cfg_path, G_KEY_FILE_KEEP_COMMENTS, &err))
 	{
-		if(config_lookup_string(&cfg, "font", &str))
-			strncpy(font, str, MAX_LEN);
-		if(config_lookup_string(&cfg, "style", &str))
-			strncpy(style, str, MAX_LEN);
-		if(config_lookup_string(&cfg, "line_numbers", &str))
-			if (strcasestr(str, "true"))
-				line_num = TRUE;
-			else
-				line_num = FALSE;
-		if(config_lookup_string(&cfg, "highlight_current_line", &str))
-			if (strcasestr(str, "true"))
-				hcur_line = TRUE;
-			else
-				hcur_line = FALSE;
-				if(config_lookup_string(&cfg, "draw_spaces", &str))
-			if (strcasestr(str, "true"))
-				draw_spaces = TRUE;
-			else
-				draw_spaces = FALSE;
-		if(config_lookup_string(&cfg, "no_cursor", &str))
-			if (strcasestr(str, "true"))
-				no_cursor = TRUE;
-			else
-				no_cursor = FALSE;
+		g_print("gtksourceview.wlx (%s): %s\n", cfg_path, err->message);
 	}
-	config_destroy(&cfg);
+	else
+	{
+		str = g_key_file_get_string(cfg, "Appearance", "Font", NULL);
+		if (str)
+			strncpy(font, str, MAX_LEN);
+		else
+			strncpy(font, "monospace 12", MAX_LEN);
+		str = g_key_file_get_string(cfg, "Appearance", "Style", NULL);
+		if (str)
+			strncpy(style, str, MAX_LEN);
+		else
+			strncpy(style, "classic", MAX_LEN);
+		bval = g_key_file_get_boolean(cfg, "Flags", "LineNumbers", &err);
+		if (!bval && !err)
+			line_num = FALSE;
+		else
+			line_num = TRUE;
+		bval = g_key_file_get_boolean(cfg, "Flags", "HighlightCurLine", &err);
+		if (!bval && !err)
+			hcur_line = FALSE;
+		else
+			hcur_line = TRUE;
+		bval = g_key_file_get_boolean(cfg, "Flags", "Spaces", &err);
+		if (!bval && !err)
+			draw_spaces = FALSE;
+		else
+			draw_spaces = TRUE;
+		bval = g_key_file_get_boolean(cfg, "Flags", "NoCursor", &err);
+		if (!bval && !err)
+			no_cursor = FALSE;
+		else
+			no_cursor = TRUE;
+	}
+	g_key_file_free(cfg);
 }
