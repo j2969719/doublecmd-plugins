@@ -104,7 +104,7 @@ int DCPCALL ContentGetValue(char* FileName,int FieldIndex,int UnitIndex,void* Fi
 			
 		if ((ret1 = lstat(tname, &buf))!=0)
 		{
-			fprintf(stderr, "stat failure error .%d\n", ret1);
+			//fprintf(stderr, "stat failure error .%d\n", ret1);
 			return ft_fileerror;
 		}
 		struct passwd *pw = getpwuid(buf.st_uid);
@@ -140,10 +140,10 @@ int DCPCALL ContentGetValue(char* FileName,int FieldIndex,int UnitIndex,void* Fi
 			}
 			break;
 		case 2:
-			magic_cookie = magic_open(MAGIC_MIME_TYPE);
+			magic_cookie = magic_open(MAGIC_MIME_TYPE|MAGIC_SYMLINK);
 			break;
 		case 3:
-			magic_cookie = magic_open(MAGIC_MIME_ENCODING);
+			magic_cookie = magic_open(MAGIC_MIME_ENCODING|MAGIC_SYMLINK);
 			break;
 
 		case 4:
@@ -204,7 +204,7 @@ int DCPCALL ContentGetValue(char* FileName,int FieldIndex,int UnitIndex,void* Fi
 				sprintf (pname, "%s/..", tname);
 				if ((ret1 = lstat(pname, &bfparent))!=0)
 				{
-					fprintf(stderr, "stat failure error .%d\n", ret1);
+					//fprintf(stderr, "stat failure error .%d\n", ret1);
 					return ft_nosuchfield;
 				}
 				if ((buf.st_dev == bfparent.st_dev) && (buf.st_ino != bfparent.st_ino))
