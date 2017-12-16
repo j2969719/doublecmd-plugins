@@ -140,10 +140,10 @@ int DCPCALL ContentGetValue(char* FileName,int FieldIndex,int UnitIndex,void* Fi
 			}
 			break;
 		case 2:
-			magic_cookie = magic_open(MAGIC_MIME_TYPE|MAGIC_SYMLINK);
+			magic_cookie = magic_open(MAGIC_MIME_TYPE); //|MAGIC_SYMLINK);
 			break;
 		case 3:
-			magic_cookie = magic_open(MAGIC_MIME_ENCODING|MAGIC_SYMLINK);
+			magic_cookie = magic_open(MAGIC_MIME_ENCODING); //|MAGIC_SYMLINK);
 			break;
 
 		case 4:
@@ -238,7 +238,10 @@ int DCPCALL ContentGetValue(char* FileName,int FieldIndex,int UnitIndex,void* Fi
 				return ft_fileerror;
 			}
 			magic_full = magic_file(magic_cookie, tname);
-			strncpy((char*)FieldValue,magic_full,maxlen-1);
+			if (magic_full)
+				strncpy((char*)FieldValue, magic_full, maxlen-1);
+			else
+				strncpy((char*)FieldValue, "error", maxlen-1);
 			magic_close(magic_cookie);
 		}
 		return fields[FieldIndex].type;
