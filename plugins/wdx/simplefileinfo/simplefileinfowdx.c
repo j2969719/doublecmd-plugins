@@ -22,22 +22,21 @@ typedef struct _field
 #define fieldcount (sizeof(fields)/sizeof(FIELD))
 
 FIELD fields[]={
-	{"Info",					ft_string,																			""},
-	{"Mode",					ft_string,	"fast|folow symlinks|uncompress|uncompress and folow symlinks|all matches"},
-	{"MIME type",				ft_string,													"default|folow symlinks"},
-	{"MIME encoding",			ft_string,													"default|folow symlinks"},
-	{"Object type",				ft_multiplechoice,	"file|directory|character device|block device|named pipe|symlink|socket"},
-	{"Access rights in octal",	ft_numeric_32,																"xxxx|xxx"},
-	{"User name",				ft_string,																			""},
-	{"User ID",					ft_numeric_32,																		""},
-	{"Group name",				ft_string,																			""},
-	{"Group ID",				ft_numeric_32,																		""},
-	{"Inode number",			ft_numeric_32,																		""},
-	{"Size",					ft_numeric_64,																		""},
-	{"Block size",				ft_numeric_32,																		""},
-	{"Number of blocks",		ft_numeric_64,																		""},
-	{"Number of hard links",	ft_numeric_32,																		""},
-	{"Mountpoint",				ft_boolean,																			""},
+	{"Info",			ft_string,	"default|fast|folow symlinks|uncompress|uncompress and folow symlinks|all matches"},
+	{"MIME type",			ft_string,								"default|folow symlinks"},
+	{"MIME encoding",		ft_string,								"default|folow symlinks"},
+	{"Object type",			ft_multiplechoice,	"file|directory|character device|block device|named pipe|symlink|socket"},
+	{"Access rights in octal",	ft_numeric_32,										"xxxx|xxx"},
+	{"User name",			ft_string,											""},
+	{"User ID",			ft_numeric_32,											""},
+	{"Group name",			ft_string,											""},
+	{"Group ID",			ft_numeric_32,											""},
+	{"Inode number",		ft_numeric_32,											""},
+	{"Size",			ft_numeric_64,											""},
+	{"Block size",			ft_numeric_32,											""},
+	{"Number of blocks",		ft_numeric_64,											""},
+	{"Number of hard links",	ft_numeric_32,											""},
+	{"Mountpoint",			ft_boolean,											""},
 };
 
 char* objtypevalue[7]={
@@ -52,7 +51,7 @@ char* objtypevalue[7]={
 
 char* strlcpy(char* p,const char* p2,int maxlen)
 {
-		if ((int)strlen(p2)>=maxlen)
+		if ((int)strlen(p2) >= maxlen)
 		{
 			strncpy(p, p2, maxlen);
 			p[maxlen] = 0;
@@ -76,7 +75,7 @@ char* strlcpy(char* p,const char* p2,int maxlen)
 
 int DCPCALL ContentGetSupportedField(int FieldIndex,char* FieldName,char* Units,int maxlen)
 {
-		if (FieldIndex<0 || FieldIndex>=fieldcount)
+		if (FieldIndex < 0 || FieldIndex >= fieldcount)
 			return ft_nomorefields;
 		strncpy(FieldName, fields[FieldIndex].name, maxlen-1);
 		strncpy(Units, fields[FieldIndex].unit, maxlen-1);
@@ -91,7 +90,6 @@ int DCPCALL ContentGetDetectString(char* DetectString,int maxlen)
 
 int DCPCALL ContentGetValue(char* FileName,int FieldIndex,int UnitIndex,void* FieldValue,int maxlen,int flags)
 {
-		int ret;
 		char tname[PATH_MAX], pname[PATH_MAX+4];
 		struct stat buf, bfparent;
 		const char *magic_full;
@@ -101,58 +99,50 @@ int DCPCALL ContentGetValue(char* FileName,int FieldIndex,int UnitIndex,void* Fi
 			strlcpy(tname, FileName, strlen(FileName)-2);
 		else
 			strlcpy(tname, FileName, strlen(FileName)+1);
-			
-		if ((ret = lstat(tname, &buf))!=0)
-		{
-			//fprintf(stderr, "stat failure error .%d\n", ret);
+
+		if (lstat(tname, &buf) != 0)
 			return ft_fileerror;
-		}
+
 		struct passwd *pw = getpwuid(buf.st_uid);
 		struct group  *gr = getgrgid(buf.st_gid);
 
 		switch (FieldIndex) {
 		case 0:
-			magic_cookie = magic_open(MAGIC_NONE);
-			break;
-		case 1:
-			if (flags && CONTENT_DELAYIFSLOW)
-				return ft_fieldempty;
-
 			switch(UnitIndex)
 			{
-			case 0:
+			case 1:
 				magic_cookie = magic_open(MAGIC_NO_CHECK_SOFT);
 				break;
-			case 1:
+			case 2:
 				magic_cookie = magic_open(MAGIC_SYMLINK);
 				break;
-			case 2:
+			case 3:
 				magic_cookie = magic_open(MAGIC_COMPRESS);;
 				break;
-			case 3:
+			case 4:
 				magic_cookie = magic_open(MAGIC_SYMLINK | MAGIC_COMPRESS);
 				break;
-			case 4:
+			case 5:
 				magic_cookie = magic_open(MAGIC_CONTINUE | MAGIC_SYMLINK | MAGIC_COMPRESS);
 				break;
 			default:
 				magic_cookie = magic_open(MAGIC_NONE);
 			}
 			break;
-		case 2:
+		case 1:
 			if (UnitIndex == 0)
 				magic_cookie = magic_open(MAGIC_MIME_TYPE);
 			else
 				magic_cookie = magic_open(MAGIC_MIME_TYPE | MAGIC_SYMLINK);
 			break;
-		case 3:
+		case 2:
 			if (UnitIndex == 0)
 				magic_cookie = magic_open(MAGIC_MIME_ENCODING);
 			else
 				magic_cookie = magic_open(MAGIC_MIME_ENCODING | MAGIC_SYMLINK);
 			break;
 
-		case 4:
+		case 3:
 			if (S_ISDIR(buf.st_mode))
 				strlcpy((char*)FieldValue, objtypevalue[1], maxlen-1);
 			else if (S_ISCHR(buf.st_mode))
@@ -168,51 +158,48 @@ int DCPCALL ContentGetValue(char* FileName,int FieldIndex,int UnitIndex,void* Fi
 			else
 				strlcpy((char*)FieldValue, objtypevalue[0], maxlen-1);
 			break;
-		case 5:
-			if (UnitIndex==0) 
+		case 4:
+			if (UnitIndex == 0) 
 				*(int*)FieldValue=convertDecimalToOctal(buf.st_mode & (S_IRWXU | S_IRWXG | S_IRWXO | S_ISUID | S_ISGID | S_ISVTX));
 			else
 				*(int*)FieldValue=convertDecimalToOctal(buf.st_mode & (S_IRWXU | S_IRWXG | S_IRWXO));
 			break;
-		case 6:
+		case 5:
 			strncpy((char*)FieldValue, pw->pw_name, maxlen-1);
 			break;
-		case 7:
+		case 6:
 			*(int*)FieldValue=buf.st_uid;
 			break;
-		case 8:
+		case 7:
 			strncpy((char*)FieldValue, gr->gr_name, maxlen-1);
 			break;
-		case 9:
+		case 8:
 			*(int*)FieldValue=buf.st_gid;
 			break;
-		case 10:
+		case 9:
 			*(int*)FieldValue=buf.st_ino;
 			break;
-		case 11:
+		case 10:
 			*(int*)FieldValue=buf.st_size;
 			break;
-		case 12:
+		case 11:
 			*(int*)FieldValue=buf.st_blksize;
 			break;
-		case 13:
+		case 12:
 			*(int*)FieldValue=buf.st_blocks;
 			break;
-		case 14:
+		case 13:
 			*(int*)FieldValue=buf.st_nlink;
 			break;
-		case 15:
+		case 14:
 			if (strcmp(tname, "/") == 0)
 				return ft_fileerror;
-			
+
 			if (S_ISDIR(buf.st_mode))
 			{
 				sprintf (pname, "%s/..", tname);
-				if ((ret = lstat(pname, &bfparent))!=0)
-				{
-					//fprintf(stderr, "stat failure error .%d\n", ret);
+				if (lstat(pname, &bfparent) != 0)
 					return ft_nosuchfield;
-				}
 				if ((buf.st_dev == bfparent.st_dev) && (buf.st_ino != bfparent.st_ino))
 				{
 					*(int*)FieldValue = 0;
@@ -231,7 +218,7 @@ int DCPCALL ContentGetValue(char* FileName,int FieldIndex,int UnitIndex,void* Fi
 			return ft_nosuchfield;
 		}
 
-		if ((FieldIndex >= 0) && (FieldIndex <4))
+		if ((FieldIndex >= 0) && (FieldIndex < 3))
 		{
 			if (magic_cookie == NULL) 
 			{
