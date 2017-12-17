@@ -42,22 +42,22 @@ FIELD fields[]={
 
 char* objtypevalue[7]={
 	"file",
-        "directory",
-        "character device",
-        "block device",
-        "named pipe",
-        "symlink",
-        "socket"
+	"directory",
+	"character device",
+	"block device",
+	"named pipe",
+	"symlink",
+	"socket"
 };
 
 char* strlcpy(char* p,const char* p2,int maxlen)
 {
 		if ((int)strlen(p2)>=maxlen)
 		{
-			strncpy(p,p2,maxlen);
-			p[maxlen]=0;
+			strncpy(p, p2, maxlen);
+			p[maxlen] = 0;
 		} else
-			strcpy(p,p2);
+			strcpy(p, p2);
 		return p;
 }
  int convertDecimalToOctal(int decimalNumber)
@@ -78,20 +78,20 @@ int DCPCALL ContentGetSupportedField(int FieldIndex,char* FieldName,char* Units,
 {
 		if (FieldIndex<0 || FieldIndex>=fieldcount)
 			return ft_nomorefields;
-		strncpy(FieldName,fields[FieldIndex].name,maxlen-1);
-		strncpy(Units,fields[FieldIndex].unit,maxlen-1);
+		strncpy(FieldName, fields[FieldIndex].name, maxlen-1);
+		strncpy(Units, fields[FieldIndex].unit, maxlen-1);
 		return fields[FieldIndex].type;
 }
 
 int DCPCALL ContentGetDetectString(char* DetectString,int maxlen)
 {
-		strlcpy(DetectString,_detectstring,maxlen);
+		strlcpy(DetectString, _detectstring, maxlen);
 		return 0;
 }
 
 int DCPCALL ContentGetValue(char* FileName,int FieldIndex,int UnitIndex,void* FieldValue,int maxlen,int flags)
 {
-		int ret1,ret2;
+		int ret;
 		char tname[PATH_MAX], pname[PATH_MAX+4];
 		struct stat buf, bfparent;
 		const char *magic_full;
@@ -102,9 +102,9 @@ int DCPCALL ContentGetValue(char* FileName,int FieldIndex,int UnitIndex,void* Fi
 		else
 			strlcpy(tname, FileName, strlen(FileName)+1);
 			
-		if ((ret1 = lstat(tname, &buf))!=0)
+		if ((ret = lstat(tname, &buf))!=0)
 		{
-			//fprintf(stderr, "stat failure error .%d\n", ret1);
+			//fprintf(stderr, "stat failure error .%d\n", ret);
 			return ft_fileerror;
 		}
 		struct passwd *pw = getpwuid(buf.st_uid);
@@ -130,37 +130,37 @@ int DCPCALL ContentGetValue(char* FileName,int FieldIndex,int UnitIndex,void* Fi
 				magic_cookie = magic_open(MAGIC_COMPRESS);;
 				break;
 			case 3:
-				magic_cookie = magic_open(MAGIC_SYMLINK|MAGIC_COMPRESS);
+				magic_cookie = magic_open(MAGIC_SYMLINK | MAGIC_COMPRESS);
 				break;
 			case 4:
-				magic_cookie = magic_open(MAGIC_CONTINUE|MAGIC_SYMLINK|MAGIC_COMPRESS);
+				magic_cookie = magic_open(MAGIC_CONTINUE | MAGIC_SYMLINK | MAGIC_COMPRESS);
 				break;
 			default:
 				magic_cookie = magic_open(MAGIC_NONE);
 			}
 			break;
 		case 2:
-			magic_cookie = magic_open(MAGIC_MIME_TYPE); //|MAGIC_SYMLINK);
+			magic_cookie = magic_open(MAGIC_MIME_TYPE); //| MAGIC_SYMLINK);
 			break;
 		case 3:
-			magic_cookie = magic_open(MAGIC_MIME_ENCODING); //|MAGIC_SYMLINK);
+			magic_cookie = magic_open(MAGIC_MIME_ENCODING); //| MAGIC_SYMLINK);
 			break;
 
 		case 4:
 			if (S_ISDIR(buf.st_mode))
-				strlcpy((char*)FieldValue,objtypevalue[1],maxlen-1);
+				strlcpy((char*)FieldValue, objtypevalue[1], maxlen-1);
 			else if (S_ISCHR(buf.st_mode))
-				strlcpy((char*)FieldValue,objtypevalue[2],maxlen-1);
+				strlcpy((char*)FieldValue, objtypevalue[2], maxlen-1);
 			else if (S_ISBLK(buf.st_mode))
-				strlcpy((char*)FieldValue,objtypevalue[3],maxlen-1);
+				strlcpy((char*)FieldValue, objtypevalue[3], maxlen-1);
 			else if (S_ISFIFO(buf.st_mode))
-				strlcpy((char*)FieldValue,objtypevalue[4],maxlen-1);
+				strlcpy((char*)FieldValue, objtypevalue[4], maxlen-1);
 			else if (S_ISLNK(buf.st_mode))
-				strlcpy((char*)FieldValue,objtypevalue[5],maxlen-1);
+				strlcpy((char*)FieldValue, objtypevalue[5], maxlen-1);
 			else if (S_ISSOCK(buf.st_mode))
-				strlcpy((char*)FieldValue,objtypevalue[6],maxlen-1);
+				strlcpy((char*)FieldValue, objtypevalue[6], maxlen-1);
 			else
-				strlcpy((char*)FieldValue,objtypevalue[0],maxlen-1);
+				strlcpy((char*)FieldValue, objtypevalue[0], maxlen-1);
 			break;
 		case 5:
 			if (UnitIndex==0) 
@@ -169,13 +169,13 @@ int DCPCALL ContentGetValue(char* FileName,int FieldIndex,int UnitIndex,void* Fi
 				*(int*)FieldValue=convertDecimalToOctal(buf.st_mode & (S_IRWXU | S_IRWXG | S_IRWXO));
 			break;
 		case 6:
-			strncpy((char*)FieldValue,pw->pw_name,maxlen-1);
+			strncpy((char*)FieldValue, pw->pw_name, maxlen-1);
 			break;
 		case 7:
 			*(int*)FieldValue=buf.st_uid;
 			break;
 		case 8:
-			strncpy((char*)FieldValue,gr->gr_name,maxlen-1);
+			strncpy((char*)FieldValue, gr->gr_name, maxlen-1);
 			break;
 		case 9:
 			*(int*)FieldValue=buf.st_gid;
@@ -202,9 +202,9 @@ int DCPCALL ContentGetValue(char* FileName,int FieldIndex,int UnitIndex,void* Fi
 			if (S_ISDIR(buf.st_mode))
 			{
 				sprintf (pname, "%s/..", tname);
-				if ((ret1 = lstat(pname, &bfparent))!=0)
+				if ((ret = lstat(pname, &bfparent))!=0)
 				{
-					//fprintf(stderr, "stat failure error .%d\n", ret1);
+					//fprintf(stderr, "stat failure error .%d\n", ret);
 					return ft_nosuchfield;
 				}
 				if ((buf.st_dev == bfparent.st_dev) && (buf.st_ino != bfparent.st_ino))
@@ -241,7 +241,7 @@ int DCPCALL ContentGetValue(char* FileName,int FieldIndex,int UnitIndex,void* Fi
 			if (magic_full)
 				strncpy((char*)FieldValue, magic_full, maxlen-1);
 			else
-				strncpy((char*)FieldValue, "error", maxlen-1);
+				return ft_fieldempty;
 			magic_close(magic_cookie);
 		}
 		return fields[FieldIndex].type;
