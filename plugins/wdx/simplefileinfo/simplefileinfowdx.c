@@ -24,8 +24,8 @@ typedef struct _field
 FIELD fields[]={
 	{"Info",					ft_string,																			""},
 	{"Mode",					ft_string,	"fast|folow symlinks|uncompress|uncompress and folow symlinks|all matches"},
-	{"MIME type",				ft_string,																			""},
-	{"MIME encoding",			ft_string,																			""},
+	{"MIME type",				ft_string,													"default|folow symlinks"},
+	{"MIME encoding",			ft_string,													"default|folow symlinks"},
 	{"Object type",				ft_multiplechoice,	"file|directory|character device|block device|named pipe|symlink|socket"},
 	{"Access rights in octal",	ft_numeric_32,																"xxxx|xxx"},
 	{"User name",				ft_string,																			""},
@@ -140,10 +140,16 @@ int DCPCALL ContentGetValue(char* FileName,int FieldIndex,int UnitIndex,void* Fi
 			}
 			break;
 		case 2:
-			magic_cookie = magic_open(MAGIC_MIME_TYPE); //| MAGIC_SYMLINK);
+			if (UnitIndex == 0)
+				magic_cookie = magic_open(MAGIC_MIME_TYPE);
+			else
+				magic_cookie = magic_open(MAGIC_MIME_TYPE | MAGIC_SYMLINK);
 			break;
 		case 3:
-			magic_cookie = magic_open(MAGIC_MIME_ENCODING); //| MAGIC_SYMLINK);
+			if (UnitIndex == 0)
+				magic_cookie = magic_open(MAGIC_MIME_ENCODING);
+			else
+				magic_cookie = magic_open(MAGIC_MIME_ENCODING | MAGIC_SYMLINK);
 			break;
 
 		case 4:
