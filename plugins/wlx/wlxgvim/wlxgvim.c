@@ -1,6 +1,5 @@
 #include <gtk/gtk.h>
 #include <string.h>
-#include "gtkvim.h"
 #include "wlxplugin.h"
 
 #define _detectstring  "(EXT=\"C\")|(EXT=\"H\")"
@@ -14,9 +13,11 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	gFix = gtk_vbox_new(FALSE , 5);
 	gtk_container_add(GTK_CONTAINER (GTK_WIDGET(ParentWin)), gFix);
 
-	vim = gtk_vim_new(40, 40, FileToLoad);
+	vim = gtk_socket_new();
 	gtk_container_add(GTK_CONTAINER(gFix), vim);
-	gtk_widget_realize(vim);
+	GdkNativeWindow id = gtk_socket_get_id(GTK_SOCKET(vim));
+	gchar *command = g_strdup_printf("gvim --servername %d --socketid %d %s", id, id, FileToLoad);
+	g_spawn_command_line_async(command, NULL);
 
 	gtk_widget_show_all(gFix);
 
