@@ -4,7 +4,7 @@
 #include <atril-document.h>
 #include "wlxplugin.h"
 
-#define _detectstring "(EXT=\"PDF\")|(EXT=\"DJVU\")|(EXT=\"DJV\")|(EXT=\"TIF\")|(EXT=\"TIFF\")|(EXT=\"PS\")|(EXT=\"CBR\")"
+#define _detectstring "(EXT=\"PDF\")|(EXT=\"DJVU\")|(EXT=\"DJV\")|(EXT=\"TIF\")|(EXT=\"TIFF\")|(EXT=\"PS\")|(EXT=\"CBR\")|(EXT=\"CBZ\")|(EXT=\"XPS\")"
 
 GtkWidget *view; // here we go again
 
