@@ -49,7 +49,7 @@ HWND DCPCALL ListLoad (HWND ParentWin, char* FileToLoad, int ShowFlags)
 	return gFix;
 }
 
-void ListCloseWindow(HWND ListWin)
+void DCPCALL ListCloseWindow(HWND ListWin)
 {
 	gtk_widget_destroy(GTK_WIDGET(ListWin));
 }

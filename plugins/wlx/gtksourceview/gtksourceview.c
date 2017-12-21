@@ -190,7 +190,7 @@ open_file (GtkSourceBuffer *sBuf, const gchar *filename)
 	return TRUE;
 }
 
-void ListCloseWindow (HWND ListWin)
+void DCPCALL ListCloseWindow(HWND ListWin)
 {
 	gtk_widget_destroy(GTK_WIDGET(ListWin));
 }

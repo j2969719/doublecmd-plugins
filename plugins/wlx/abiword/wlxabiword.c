@@ -28,9 +28,9 @@ HWND DCPCALL ListLoad (HWND ParentWin, char* FileToLoad, int ShowFlags)
 	return abi;
 }
 
-void ListCloseWindow(HWND ListWin)
+void DCPCALL ListCloseWindow(HWND ListWin)
 {
-	gtk_widget_destroy(ListWin);
+	gtk_widget_destroy(GTK_WIDGET(ListWin));
 }
 
 void DCPCALL ListGetDetectString(char* DetectString,int maxlen)
