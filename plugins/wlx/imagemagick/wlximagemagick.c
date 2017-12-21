@@ -1,6 +1,6 @@
 #include <gtkimageview/gtkimagescrollwin.h>
 #include <gtkimageview/gtkimageview.h>
-#include <wand/MagickWand.h>
+#include <MagickWand/MagickWand.h>
 #include <string.h>
 #include "wlxplugin.h"
 
