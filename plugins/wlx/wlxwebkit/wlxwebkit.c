@@ -33,27 +33,26 @@
 
 #define _detectstring "(EXT=\"HTML\")|(EXT=\"HTM\")|(EXT=\"XHTM\")"
 
-
 GtkWidget* find_child(GtkWidget* parent, const gchar* name)
 {
-	if (g_ascii_strcasecmp(gtk_widget_get_name((GtkWidget*)parent), (gchar*)name) == 0) 
+	if (g_ascii_strcasecmp(gtk_widget_get_name((GtkWidget*)parent), (gchar*)name) == 0)
 	{
 		return parent;
 	}
 
-	if (GTK_IS_BIN(parent)) 
+	if (GTK_IS_BIN(parent))
 	{
 		GtkWidget *child = gtk_bin_get_child(GTK_BIN(parent));
 		return find_child(child, name);
 	}
 
-	if (GTK_IS_CONTAINER(parent)) 
+	if (GTK_IS_CONTAINER(parent))
 	{
 		GList *children = gtk_container_get_children(GTK_CONTAINER(parent));
-		while ((children = g_list_next(children)) != NULL) 
+		while ((children = g_list_next(children)) != NULL)
 			{
 				GtkWidget* widget = find_child(children->data, name);
-				if (widget != NULL) 
+				if (widget != NULL)
 					{
 						return widget;
 					}
@@ -62,7 +61,6 @@ GtkWidget* find_child(GtkWidget* parent, const gchar* name)
 
 	return NULL;
 }
-
 
 HWND DCPCALL ListLoad (HWND ParentWin, char* FileToLoad, int ShowFlags)
 {
@@ -73,7 +71,7 @@ HWND DCPCALL ListLoad (HWND ParentWin, char* FileToLoad, int ShowFlags)
 	gtk_container_add(GTK_CONTAINER((GtkWidget*)(ParentWin)), gFix);
 	webView = webkit_web_view_new();
 
-//  https://doublecmd.sourceforge.io/forum/viewtopic.php?f=8&t=4106&start=72#p22156
+	// https://doublecmd.sourceforge.io/forum/viewtopic.php?f=8&t=4106&start=72#p22156
 	WebKitFaviconDatabase *database = webkit_get_favicon_database();
 	webkit_favicon_database_set_path(database, NULL);
 
@@ -85,13 +83,13 @@ HWND DCPCALL ListLoad (HWND ParentWin, char* FileToLoad, int ShowFlags)
 	gtk_widget_grab_focus(webView);
 	gtk_container_add (GTK_CONTAINER (gFix), webView);
 
-	gtk_widget_show_all (gFix); 
+	gtk_widget_show_all (gFix);
 	return gFix;
 }
 
-void ListCloseWindow(HWND ListWin)
+void DCPCALL ListCloseWindow(HWND ListWin)
 {
-	gtk_widget_destroy(ListWin);
+	gtk_widget_destroy(GTK_WIDGET(ListWin));
 }
 
 void DCPCALL ListGetDetectString(char* DetectString,int maxlen)
@@ -108,12 +106,11 @@ int DCPCALL ListSearchText(HWND ListWin,char* SearchString,int SearchParameter)
 	if (SearchParameter & lcs_backwards)
 		ss_forward = FALSE;
 	webkit_web_view_search_text (WEBKIT_WEB_VIEW(find_child(ListWin, "webkitfrm")), SearchString, ss_case, ss_forward, TRUE);
-
 }
 
 int DCPCALL ListSendCommand(HWND ListWin,int Command,int Parameter)
 {
-	switch(Command) 
+	switch(Command)
 	{
 		case lc_copy :
 			webkit_web_view_copy_clipboard (WEBKIT_WEB_VIEW(find_child(ListWin, "webkitfrm")));
@@ -125,4 +122,3 @@ int DCPCALL ListSendCommand(HWND ListWin,int Command,int Parameter)
 			return LISTPLUGIN_ERROR;
 	}
 }
-
