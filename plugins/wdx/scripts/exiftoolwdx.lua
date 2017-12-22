@@ -153,32 +153,32 @@ local fields = {
     {"Fiction Book Description Publish%-info City", 8, "City"}, 
     {"Fiction Book Description Publish%-info Year", 2, "Year"}, 
     {"Fiction Book Description Publish%-info Isbn", 8, "ISBN"}, 
-    {"Fiction Book Body Section Section Annotation P", 8, "Annotation"},
-    {"Description", 8},
-    {"Contributor", 8},
-    {"Language", 8},
-    {"Identifier", 8},
-    {"Compressed Size", 2},
-    {"Uncompressed Size", 2},
-    {"Zip Compressed Size", 2},
-    {"Zip Uncompressed Size", 2},
-    {"Operating System", 8},
-    {"Packing Method", 8},
-    {"Zip Required Version", 8},
-    {"Zip Bit Flag", 8},
-    {"Zip Compression", 8},
-    {"Zip CRC", 8},
-    {"Flags", 8},
-    {"Extra Flags", 8},
-    {"File Attributes", 8},
-    {"Target File Size", 2},
-    {"Run Window", 8},
-    {"Hot Key", 8},
-    {"Target File DOS Name", 8},
-    {"Relative Path", 8},
-    {"Working Directory", 8},
-    {"Command Line Arguments", 8},
-    {"Icon File Name", 8},
+    {"Fiction Book Body Section Section Annotation P", 8, "Annotation"}, 
+    {"Description", 8}, 
+    {"Contributor", 8}, 
+    {"Language", 8}, 
+    {"Identifier", 8}, 
+    {"Compressed Size", 2}, 
+    {"Uncompressed Size", 2}, 
+    {"Zip Compressed Size", 2}, 
+    {"Zip Uncompressed Size", 2}, 
+    {"Operating System", 8}, 
+    {"Packing Method", 8}, 
+    {"Zip Required Version", 8}, 
+    {"Zip Bit Flag", 8}, 
+    {"Zip Compression", 8}, 
+    {"Zip CRC", 8}, 
+    {"Flags", 8}, 
+    {"Extra Flags", 8}, 
+    {"File Attributes", 8}, 
+    {"Target File Size", 2}, 
+    {"Run Window", 8}, 
+    {"Hot Key", 8}, 
+    {"Target File DOS Name", 8}, 
+    {"Relative Path", 8}, 
+    {"Working Directory", 8}, 
+    {"Command Line Arguments", 8}, 
+    {"Icon File Name", 8}, 
 }
 
 local filename = ""
@@ -187,9 +187,9 @@ local res = nil
 function ContentGetSupportedField(Index)
     if (fields[Index + 1] ~= nil ) then
         if (fields[Index + 1][3] ~= nil ) then
-            return fields[Index + 1][3], "", fields[Index + 1][2];
+            return fields[Index + 1][3], "default|first match", fields[Index + 1][2];
         else
-            return fields[Index + 1][1], "", fields[Index + 1][2];
+            return fields[Index + 1][1], "default|first match", fields[Index + 1][2];
         end
     end
     return '', '', 0; -- ft_nomorefields
@@ -213,9 +213,51 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
         handle:close();
         filename = FileName;
     end
-    local tmp = string.match(res, "\n" .. fields[FieldIndex + 1][1] .. "%s*:%s[^\n]+");
-    if tmp ~= nil then
-        return tmp:gsub("^\n" .. fields[FieldIndex + 1][1] .. "%s*:%s", "");
-    end
+    if (UnitIndex == 0) then
+        return getval(fields[FieldIndex + 1][1]);
+    elseif (UnitIndex == 1) then
+        if (fields[FieldIndex + 1][3] ~= nil ) then
+            local hname = getname(FieldIndex + 1);
+            local i = 1;
+            while (fields[i] ~= nil) do
+                if samename(i, hname, fields[FieldIndex + 1][2]) then
+                    if (getval(fields[i][1])) then
+                        return getval(fields[i][1]);
+                    end
+                end
+                i = i + 1;
+            end
+        else
+            return getval(fields[FieldIndex + 1][1]);
+        end
+    end    
     return nil; -- invalid
+end
+
+function getval(str)
+    local tmp = string.match(res, "\n" .. str .. "%s*:%s[^\n]+");
+    if tmp ~= nil then
+        return tmp:gsub("^\n" .. str .. "%s*:%s", "");
+    end
+    return nil;
+end
+
+function getname(num)
+    if (fields[num][3] ~= nil) then
+        return fields[num][3];
+    else
+        return fields[num][1];
+    end
+    return nil;
+end
+
+function samename(i, str, t)
+    if (fields[i][2] == t) then
+        if (fields[i][1] == str) and (fields[i][3] == nil) then
+            return true;
+        elseif (fields[i][3] == str) then
+            return true;
+        end
+    end
+    return nil;
 end
