@@ -16,7 +16,7 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	vim = gtk_socket_new();
 	gtk_container_add(GTK_CONTAINER(gFix), vim);
 	GdkNativeWindow id = gtk_socket_get_id(GTK_SOCKET(vim));
-	gchar *command = g_strdup_printf("gvim --servername %d --socketid %d %s", id, id, FileToLoad);
+	gchar *command = g_strdup_printf("gvim --servername %d --socketid %d %s -R", id, id, FileToLoad);
 	g_spawn_command_line_async(command, NULL);
 
 	gtk_widget_show_all(gFix);
