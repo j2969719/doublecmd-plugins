@@ -63,6 +63,7 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	GtkToolItem *tb_orgsize;
 	GtkToolItem *tb_fit;
 	GtkToolItem *tb_separator;
+	GtkToolItem *tb_separator1;
 	GtkToolItem *tb_copy;
 	GtkToolItem *tb_rotare;
 	GtkToolItem *tb_rotare1;
@@ -143,11 +144,12 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	gtk_widget_set_tooltip_text(GTK_WIDGET(tb_vflip), "Flip Vertically");
 	g_signal_connect(G_OBJECT(tb_vflip), "clicked", G_CALLBACK(tb_vflip_clicked), (gpointer) (GtkWidget*)(view));
 
-	gtk_toolbar_insert(GTK_TOOLBAR(mtb), tb_separator, 10);
+	tb_separator1 = gtk_separator_tool_item_new();
+	gtk_toolbar_insert(GTK_TOOLBAR(mtb), tb_separator1, 10);
 	tstr = g_strdup_printf("%dx%d", gdk_pixbuf_get_width(pixbuf), gdk_pixbuf_get_height(pixbuf));
 	tb_size = gtk_tool_item_new();
 	label = gtk_label_new(tstr);
-	gtk_container_add(GTK_CONTAINER(tb_size), label);
+	gtk_container_add(GTK_CONTAINER(tb_size), GTK_WIDGET(label));
 	g_free(tstr);
 	gtk_toolbar_insert(GTK_TOOLBAR(mtb), tb_size, 11);
 
