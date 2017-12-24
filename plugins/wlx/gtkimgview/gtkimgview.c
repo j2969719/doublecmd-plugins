@@ -1,9 +1,10 @@
-#include <gtkimageview/gtkimagescrollwin.h>
+#include <gio/gio.h>
+#include <gtkimageview/gtkanimview.h>
 #include <gtkimageview/gtkimageview.h>
-#include <string.h>
+#include <gtkimageview/gtkimagescrollwin.h>
 #include "wlxplugin.h"
 
-#define _detectstring "(EXT=\"JPG\")|(EXT=\"PNG\")|(EXT=\"SVG\")|(EXT=\"BMP\")|(EXT=\"ICO\")"
+#define _detectstring "(EXT=\"JPG\")|(EXT=\"PNG\")|(EXT=\"SVG\")|(EXT=\"BMP\")|(EXT=\"ICO\")|(EXT=\"GIF\")"
 
 
 static void tb_zoom_in_clicked(GtkToolItem *tooleditcut, GtkWidget *imgview)
@@ -33,22 +34,42 @@ static void tb_copy_clicked(GtkToolItem *tooleditcopy, GtkWidget *imgview)
 
 static void tb_rotare_clicked(GtkToolItem *tooleditcopy, GtkWidget *imgview)
 {
+	if (gtk_anim_view_get_is_playing(GTK_ANIM_VIEW(imgview)))
+		gtk_anim_view_set_is_playing(GTK_ANIM_VIEW(imgview), FALSE);
 	gtk_image_view_set_pixbuf(GTK_IMAGE_VIEW(imgview), gdk_pixbuf_rotate_simple(gtk_image_view_get_pixbuf(GTK_IMAGE_VIEW(imgview)), GDK_PIXBUF_ROTATE_COUNTERCLOCKWISE), TRUE);
 }
 
 static void tb_rotare1_clicked(GtkToolItem *tooleditcopy, GtkWidget *imgview)
 {
+	if (gtk_anim_view_get_is_playing(GTK_ANIM_VIEW(imgview)))
+		gtk_anim_view_set_is_playing(GTK_ANIM_VIEW(imgview), FALSE);
 	gtk_image_view_set_pixbuf(GTK_IMAGE_VIEW(imgview), gdk_pixbuf_rotate_simple(gtk_image_view_get_pixbuf(GTK_IMAGE_VIEW(imgview)), GDK_PIXBUF_ROTATE_CLOCKWISE), TRUE);
 }
 
 static void tb_hflip_clicked(GtkToolItem *tooleditcopy, GtkWidget *imgview)
 {
+	if (gtk_anim_view_get_is_playing(GTK_ANIM_VIEW(imgview)))
+		gtk_anim_view_set_is_playing(GTK_ANIM_VIEW(imgview), FALSE);
 	gtk_image_view_set_pixbuf(GTK_IMAGE_VIEW(imgview), gdk_pixbuf_flip(gtk_image_view_get_pixbuf(GTK_IMAGE_VIEW(imgview)), TRUE), TRUE);
 }
 
 static void tb_vflip_clicked(GtkToolItem *tooleditcopy, GtkWidget *imgview)
 {
+	if (gtk_anim_view_get_is_playing(GTK_ANIM_VIEW(imgview)))
+		gtk_anim_view_set_is_playing(GTK_ANIM_VIEW(imgview), FALSE);
 	gtk_image_view_set_pixbuf(GTK_IMAGE_VIEW(imgview), gdk_pixbuf_flip(gtk_image_view_get_pixbuf(GTK_IMAGE_VIEW(imgview)), FALSE), TRUE);
+}
+
+static void tb_play_clicked(GtkToolItem *tooleditcopy, GtkWidget *imgview)
+{
+	if (!gtk_anim_view_get_is_playing(GTK_ANIM_VIEW(imgview)))
+		gtk_anim_view_set_is_playing(GTK_ANIM_VIEW(imgview), TRUE);
+}
+
+static void tb_stop_clicked(GtkToolItem *tooleditcopy, GtkWidget *imgview)
+{
+	if (gtk_anim_view_get_is_playing(GTK_ANIM_VIEW(imgview)))
+		gtk_anim_view_set_is_playing(GTK_ANIM_VIEW(imgview), FALSE);
 }
 
 HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
@@ -69,9 +90,14 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	GtkToolItem *tb_rotare1;
 	GtkToolItem *tb_hflip;
 	GtkToolItem *tb_vflip;
+	GtkToolItem *tb_play;
+	GtkToolItem *tb_stop;
 	GtkToolItem *tb_size;
 	GdkPixbuf *pixbuf;
+	GdkPixbufAnimation *anim = NULL;
 	gchar *tstr;
+	gboolean is_certain = FALSE;
+	int tb_last = 11;
 
 	gFix = gtk_vbox_new(FALSE , 1);
 	gtk_container_add(GTK_CONTAINER(GTK_WIDGET(ParentWin)), gFix);
@@ -79,7 +105,7 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	gtk_toolbar_set_show_arrow(GTK_TOOLBAR(mtb), TRUE);
 	gtk_toolbar_set_style(GTK_TOOLBAR(mtb), GTK_TOOLBAR_ICONS);
 	gtk_box_pack_start(GTK_BOX(gFix), mtb, FALSE, FALSE, 2);
-	view = gtk_image_view_new();
+	view = gtk_anim_view_new();
 	scroll = gtk_image_scroll_win_new(GTK_IMAGE_VIEW(view));
 	gtk_container_add(GTK_CONTAINER(gFix), scroll);
 
@@ -89,6 +115,17 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 		gtk_widget_destroy(gFix);
 		return NULL;
 	}
+	gchar *content_type = g_content_type_guess (FileToLoad, NULL, 0, &is_certain);
+	if (g_content_type_is_mime_type (content_type, "image/gif"))
+	{
+		anim = gdk_pixbuf_animation_new_from_file(FileToLoad, NULL);
+		if (anim)
+		{
+			gtk_anim_view_set_anim(GTK_ANIM_VIEW(view), anim);
+			gtk_anim_view_set_is_playing(GTK_ANIM_VIEW(view), TRUE);
+		}
+	}
+	g_free (content_type);
 	gtk_image_view_set_pixbuf(GTK_IMAGE_VIEW(view), pixbuf, TRUE);
 	g_object_set_data_full(G_OBJECT(gFix), "pixbuf", pixbuf, (GDestroyNotify) g_object_unref);
 
@@ -144,14 +181,33 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	gtk_widget_set_tooltip_text(GTK_WIDGET(tb_vflip), "Flip Vertically");
 	g_signal_connect(G_OBJECT(tb_vflip), "clicked", G_CALLBACK(tb_vflip_clicked), (gpointer) (GtkWidget*)(view));
 
-	tb_separator1 = gtk_separator_tool_item_new();
-	gtk_toolbar_insert(GTK_TOOLBAR(mtb), tb_separator1, 10);
+	if (anim)
+	{
+		tb_play = gtk_tool_button_new_from_stock(GTK_STOCK_MEDIA_PLAY);
+		gtk_toolbar_insert(GTK_TOOLBAR(mtb), tb_play, 10);
+		gtk_widget_set_tooltip_text(GTK_WIDGET(tb_play), "Play Animation");
+		g_signal_connect(G_OBJECT(tb_play), "clicked", G_CALLBACK(tb_play_clicked), (gpointer) (GtkWidget*)(view));
+
+		tb_stop = gtk_tool_button_new_from_stock(GTK_STOCK_MEDIA_PAUSE);
+		gtk_toolbar_insert(GTK_TOOLBAR(mtb), tb_stop, 11);
+		gtk_widget_set_tooltip_text(GTK_WIDGET(tb_stop), "Stop Animation");
+		g_signal_connect(G_OBJECT(tb_stop), "clicked", G_CALLBACK(tb_stop_clicked), (gpointer) (GtkWidget*)(view));
+
+		tb_separator1 = gtk_separator_tool_item_new();
+		gtk_toolbar_insert(GTK_TOOLBAR(mtb), tb_separator1, 12);
+		tb_last = 13;
+	}
+	else
+	{
+		tb_separator1 = gtk_separator_tool_item_new();
+		gtk_toolbar_insert(GTK_TOOLBAR(mtb), tb_separator1, 10);
+	}
 	tstr = g_strdup_printf("%dx%d", gdk_pixbuf_get_width(pixbuf), gdk_pixbuf_get_height(pixbuf));
 	tb_size = gtk_tool_item_new();
 	label = gtk_label_new(tstr);
-	gtk_container_add(GTK_CONTAINER(tb_size), GTK_WIDGET(label));
+	gtk_container_add(GTK_CONTAINER(tb_size), label);
 	g_free(tstr);
-	gtk_toolbar_insert(GTK_TOOLBAR(mtb), tb_size, 11);
+	gtk_toolbar_insert(GTK_TOOLBAR(mtb), tb_size, tb_last);
 
 	gtk_widget_grab_focus(view);
 	gtk_widget_show_all(gFix);
@@ -166,7 +222,7 @@ void DCPCALL ListCloseWindow(HWND ListWin)
 
 void DCPCALL ListGetDetectString(char* DetectString,int maxlen)
 {
-	strncpy(DetectString, _detectstring, maxlen);
+	g_strlcpy(DetectString, _detectstring, maxlen);
 }
 
 int DCPCALL ListSendCommand(HWND ListWin,int Command,int Parameter)
