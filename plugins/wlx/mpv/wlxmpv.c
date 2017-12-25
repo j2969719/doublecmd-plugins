@@ -21,7 +21,7 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	mpv = gtk_drawing_area_new();
 	gtk_container_add(GTK_CONTAINER(gFix), mpv);
 	GdkNativeWindow id = GDK_WINDOW_XID(gtk_widget_get_window(mpv));
-	gchar *command = g_strdup_printf("mpv --force-window=yes --wid=%d \"%s\"", id, FileToLoad);
+	gchar *command = g_strdup_printf("mpv --force-window=yes --loop --wid=%d \"%s\"", id, FileToLoad);
 	if (id!=0)
 		g_spawn_command_line_async(command, NULL);
 	else
