@@ -1,3 +1,5 @@
+local cmd = "svn info"
+
 local fields = {
     {"Path", 8},
     {"Name", 8},
@@ -36,7 +38,13 @@ end
 
 function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
     if (filename ~= FileName) then
-        local handle = io.popen('svn info "'..FileName..'"');
+        local attr = SysUtils.FileGetAttr(FileName);
+        if (attr > 0) then
+            if (math.floor(attr / 0x00000004) % 2 ~= 0)  then
+                return nil; 
+            end
+        end        
+        local handle = io.popen(cmd .. ' "' .. FileName .. '"');
         res = handle:read("*a");
         handle:close();
         filename = FileName;

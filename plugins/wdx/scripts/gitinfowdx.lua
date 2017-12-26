@@ -32,6 +32,12 @@ function ContentGetDetectString()
 end
 
 function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
+    local attr = SysUtils.FileGetAttr(FileName);
+    if (attr > 0) then
+        if (math.floor(attr / 0x00000004) % 2 ~= 0)  then
+            return nil; 
+        end
+    end
     if (fields[FieldIndex + 1][3] ~= nil) then
         local handle = io.popen(fields[FieldIndex + 1][3] .. ' "'..FileName..'"');
         local result = handle:read("*a");

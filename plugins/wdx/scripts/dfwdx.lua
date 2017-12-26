@@ -44,6 +44,12 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
         return nil;
     end
     if (fields[FieldIndex + 1][3] ~= nil) then
+        local attr = SysUtils.FileGetAttr(FileName);
+        if (attr > 0) then
+            if (math.floor(attr / 0x00000004) % 2 ~= 0)  then
+                return nil; 
+            end
+        end    
         local handle = io.popen('df "'..FileName..'" --output=' .. fields[FieldIndex + 1][3]);
         local result = handle:read("*a");
         handle:close();
