@@ -1,4 +1,9 @@
+#define _GNU_SOURCE
 #include <gtk/gtk.h>
+#include <limits.h>
+#include <dlfcn.h>
+#include <magic.h>
+#include <string.h>
 #include "wlxplugin.h"
 
 #define DETECT_STRING "EXT=\"*\""
@@ -9,16 +14,61 @@ HANDLE DCPCALL ListLoad (HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 	GtkWidget *scroll;
 	GtkWidget *tView;
 	GtkTextBuffer *tBuf;
-	gchar *tmp, *command, *buf1;
+	gchar *tmp, *command, *buf1, *src, *font, *content_type;
+	const char* cfg_file = "settings.ini";
+	const char *magic_full;
+	static char path[PATH_MAX];
+	magic_t magic_cookie;
+	GKeyFile *cfg;
+	GError *err = NULL;
+	Dl_info dlinfo;
 
-	gchar *content_type = g_content_type_guess (FileToLoad, NULL, 0, NULL);
-	if (!g_content_type_is_mime_type (content_type, "inode/directory"))
+	memset(&dlinfo, 0, sizeof(dlinfo));
+	if (dladdr(path, &dlinfo) != 0)
 	{
-		g_free(content_type);
+		g_strlcpy(path, dlinfo.dli_fname, PATH_MAX);
+		char *pos = strrchr(path, '/');
+		if (pos) 
+			strcpy(pos + 1, cfg_file);
+	}
+	cfg = g_key_file_new();
+	if (!g_key_file_load_from_file(cfg, path, G_KEY_FILE_KEEP_COMMENTS, &err))
+	{
+		g_print("%s\n", (err)->message);
+		g_error_free(err);
 		return NULL;
 	}
-	g_free(content_type);
-	command = g_strdup_printf("sh -c 'cd \"%s\" && du -h --apparent-size | sort -hr'", FileToLoad);
+	else
+	{
+		magic_cookie = magic_open(MAGIC_MIME_TYPE | MAGIC_SYMLINK);
+		if (magic_load(magic_cookie, NULL) != 0) 
+		{
+			magic_close(magic_cookie);
+			return NULL;
+		}
+		magic_full = magic_file(magic_cookie, FileToLoad);
+		
+		g_print("%s\n", magic_full);
+		src = g_key_file_get_string(cfg, "Scripts", magic_full, NULL);
+		if (!src)
+		{
+			g_key_file_free(cfg);
+			magic_close(magic_cookie);
+			return NULL;
+		}
+		else
+		{
+			char *pos = strrchr(path, '/');
+			if (pos) 
+				strcpy(pos + 1, src);
+		}
+		font = g_key_file_get_string(cfg, "Appearance", "Font", NULL);
+		if (!font)
+			g_strlcpy(font, "monospace 12", -1);
+	}
+	g_key_file_free(cfg);
+	magic_close(magic_cookie);
+	command = g_strdup_printf("\"%s\" \"%s\"", path, FileToLoad);
 	if (!g_spawn_command_line_sync(command, &buf1, NULL, NULL, NULL))
 	{
 		g_free(command);
@@ -44,7 +94,7 @@ HANDLE DCPCALL ListLoad (HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 	gtk_text_buffer_set_text(tBuf, tmp, -1);
 
 	tView = gtk_text_view_new_with_buffer(tBuf);
-	gtk_widget_modify_font (tView, pango_font_description_from_string("Monospace 11"));
+	gtk_widget_modify_font (tView, pango_font_description_from_string(font));
 	gtk_text_view_set_editable(GTK_TEXT_VIEW(tView), FALSE);
 	gtk_text_view_set_cursor_visible(GTK_TEXT_VIEW (tView), FALSE);
 
