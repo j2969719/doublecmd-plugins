@@ -8,13 +8,13 @@
 
 #define DETECT_STRING "EXT=\"*\""
 
-HANDLE DCPCALL ListLoad (HANDLE ParentWin, char* FileToLoad, int ShowFlags)
+HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 {
 	GtkWidget *gFix;
 	GtkWidget *scroll;
 	GtkWidget *tView;
 	GtkTextBuffer *tBuf;
-	gchar *tmp, *command, *buf1, *src, *font, *content_type;
+	gchar *tmp, *command, *buf1, *src, *font;
 	const char* cfg_file = "settings.ini";
 	const char *magic_full;
 	static char path[PATH_MAX];
@@ -64,7 +64,7 @@ HANDLE DCPCALL ListLoad (HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 		}
 		font = g_key_file_get_string(cfg, "Appearance", "Font", NULL);
 		if (!font)
-			g_strlcpy(font, "monospace 12", -1);
+			font = "monospace 12";
 	}
 	g_key_file_free(cfg);
 	magic_close(magic_cookie);
