@@ -8,11 +8,14 @@
 
 #define DETECT_STRING "EXT=\"*\""
 
+GtkWidget *tView; // ...
+gchar *nfstr;
+
 HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 {
 	GtkWidget *gFix;
 	GtkWidget *scroll;
-	GtkWidget *tView;
+//	GtkWidget *tView;
 	GtkTextBuffer *tBuf;
 	gchar *tmp, *command, *buf1, *src, *font;
 	const char* cfg_file = "settings.ini";
@@ -65,6 +68,9 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 		font = g_key_file_get_string(cfg, "Appearance", "Font", NULL);
 		if (!font)
 			font = "monospace 12";
+		nfstr = g_key_file_get_string(cfg, "Appearance", "NotFoundStr", NULL);
+		if (!nfstr)
+			nfstr = "not found";
 	}
 	g_key_file_free(cfg);
 	magic_close(magic_cookie);
@@ -80,7 +86,7 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 	gtk_container_add(GTK_CONTAINER((GtkWidget*)(ParentWin)), gFix);
 
 	scroll = gtk_scrolled_window_new(NULL, NULL);
-	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW (scroll), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
+	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scroll), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
 
 	tBuf = gtk_text_buffer_new(NULL);
 	g_object_set_data_full(G_OBJECT(gFix), "txtbuf", tBuf, (GDestroyNotify)g_object_unref);
@@ -96,7 +102,7 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 	tView = gtk_text_view_new_with_buffer(tBuf);
 	gtk_widget_modify_font (tView, pango_font_description_from_string(font));
 	gtk_text_view_set_editable(GTK_TEXT_VIEW(tView), FALSE);
-	gtk_text_view_set_cursor_visible(GTK_TEXT_VIEW (tView), FALSE);
+	gtk_text_view_set_cursor_visible(GTK_TEXT_VIEW(tView), FALSE);
 
 	gtk_container_add(GTK_CONTAINER(scroll), GTK_WIDGET(tView));
 	gtk_container_add(GTK_CONTAINER(gFix), scroll);
@@ -118,17 +124,53 @@ void DCPCALL ListGetDetectString(char* DetectString, int maxlen)
     g_strlcpy(DetectString, DETECT_STRING, maxlen);
 }
 
-int DCPCALL ListSearchDialog(HWND ListWin,int FindNext)
+int DCPCALL ListSearchText (HWND ListWin, char* SearchString,int SearchParameter)
 {
-	return LISTPLUGIN_OK;
+	GtkTextBuffer *sBuf;
+	GtkTextMark *last_pos;
+	GtkTextIter iter, mstart, mend;
+	gboolean found;
+
+	sBuf = g_object_get_data(G_OBJECT(ListWin), "txtbuf");
+	last_pos = gtk_text_buffer_get_mark(GTK_TEXT_BUFFER(sBuf), "last_pos");
+	if (last_pos == NULL)
+		gtk_text_buffer_get_start_iter(GTK_TEXT_BUFFER(sBuf), &iter);
+	else 
+		gtk_text_buffer_get_iter_at_mark(GTK_TEXT_BUFFER(sBuf), &iter, last_pos);
+
+	if (SearchParameter & lcs_backwards)
+		found = gtk_text_iter_backward_search(&iter, SearchString, GTK_TEXT_SEARCH_TEXT_ONLY, &mend, &mstart, NULL);
+	else
+		found = gtk_text_iter_forward_search(&iter, SearchString, GTK_TEXT_SEARCH_TEXT_ONLY, &mstart, &mend, NULL);
+
+	if (found)
+	{
+		gtk_text_buffer_select_range(GTK_TEXT_BUFFER(sBuf), &mstart, &mend);
+		gtk_text_buffer_create_mark(GTK_TEXT_BUFFER(sBuf), "last_pos", &mend, FALSE);
+		//--------------------------------------------------------------------------------
+		GtkTextBuffer *tmp = gtk_text_view_get_buffer(GTK_TEXT_VIEW(tView)); // ...
+		last_pos = gtk_text_buffer_get_mark(tmp, "last_pos");
+		if (last_pos)
+			gtk_text_view_scroll_mark_onscreen(GTK_TEXT_VIEW(tView), last_pos);
+		//--------------------------------------------------------------------------------
+	}
+	else 
+	{
+		GtkWidget *dialog = gtk_message_dialog_new (GTK_WINDOW(gtk_widget_get_toplevel(GTK_WIDGET(ListWin))), 
+								GTK_DIALOG_MODAL, GTK_MESSAGE_INFO, GTK_BUTTONS_OK, 
+								"\"%s\" %s!", SearchString, nfstr);
+		gtk_dialog_run(GTK_DIALOG(dialog));
+		gtk_widget_destroy(dialog);
+	}
 }
+
 
 int DCPCALL ListSendCommand (HWND ListWin,int Command,int Parameter)
 {
 	GtkTextBuffer *tBuf;
 	GtkTextIter p;
 
-	tBuf = g_object_get_data (G_OBJECT(ListWin), "txtbuf");
+	tBuf = g_object_get_data(G_OBJECT(ListWin), "txtbuf");
 
 	switch(Command)
 	{
