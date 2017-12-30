@@ -20,9 +20,10 @@
 #define _detectstring "EXT=\"C\"|EXT=\"H\"|EXT=\"LUA\"|EXT=\"CPP\"|EXT=\"HPP\"|EXT=\"PAS\"|\
 EXT=\"CSS\"|EXT=\"SH\"|EXT=\"XML\"|EXT=\"INI\"|EXT=\"DIFF\"|EXT=\"PATCH\""
 
+GtkWrapMode wrap_mode;
 gchar *font, *style, *nfstr;
 gboolean line_num, hcur_line, draw_spaces, no_cursor;
-gint s_tab;
+gint s_tab, p_above, p_below;
 
 GtkWidget *sView; // ...
 
@@ -81,6 +82,11 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	gtk_text_view_set_editable(GTK_TEXT_VIEW(sView), FALSE);
 	if (no_cursor)
 		gtk_text_view_set_cursor_visible(GTK_TEXT_VIEW(sView), FALSE);
+
+	gtk_text_view_set_pixels_above_lines(GTK_TEXT_VIEW(sView), p_above);
+	gtk_text_view_set_pixels_below_lines(GTK_TEXT_VIEW(sView), p_below);
+	gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(sView), wrap_mode);
+
 	gtk_widget_show_all(gFix);
 
 	return gFix;
@@ -286,12 +292,15 @@ void DCPCALL ListSetDefaultParams(ListDefaultParamStruct* dps)
 		g_print("gtksourceview.wlx (%s): %s\n", cfg_path, (err)->message);
 		font = "monospace 12";
 		style = "classic";
+		wrap_mode = GTK_WRAP_NONE;
 		line_num = TRUE;
 		hcur_line = TRUE;
 		draw_spaces = TRUE;
 		no_cursor = TRUE;
 		nfstr = "not found";
 		s_tab = 8;
+		p_above = 0;
+		p_below = 0;
 	}
 	else
 	{
@@ -306,16 +315,22 @@ void DCPCALL ListSetDefaultParams(ListDefaultParamStruct* dps)
 			line_num = FALSE;
 		else
 			line_num = TRUE;
+		if (err)
+			err = NULL;
 		bval = g_key_file_get_boolean(cfg, "Flags", "HighlightCurLine", &err);
 		if (!bval && !err)
 			hcur_line = FALSE;
 		else
 			hcur_line = TRUE;
+		if (err)
+			err = NULL;
 		bval = g_key_file_get_boolean(cfg, "Flags", "Spaces", &err);
 		if (!bval && !err)
 			draw_spaces = FALSE;
 		else
 			draw_spaces = TRUE;
+		if (err)
+			err = NULL;
 		bval = g_key_file_get_boolean(cfg, "Flags", "NoCursor", &err);
 		if (!bval && !err)
 			no_cursor = FALSE;
@@ -325,10 +340,30 @@ void DCPCALL ListSetDefaultParams(ListDefaultParamStruct* dps)
 		if (!nfstr)
 			nfstr = "not found";
 		if (err)
-			g_error_free(err);
+			err = NULL;
 		s_tab = g_key_file_get_integer(cfg, "Appearance", "TabSize", &err);
 		if (err)
+		{
 			s_tab = 8;
+			err = NULL;
+		}
+		p_above = g_key_file_get_integer(cfg, "Appearance", "PAbove", &err);
+		if (err)
+		{
+			p_above = 0;
+			err = NULL;
+		}
+		p_below = g_key_file_get_integer(cfg, "Appearance", "PBelow", &err);
+		if (err)
+		{
+			p_below = 0;
+			err = NULL;
+		}
+		bval = g_key_file_get_boolean(cfg, "Flags", "Wrap", NULL);
+		if (bval)
+			wrap_mode = GTK_WRAP_WORD;
+		else
+			wrap_mode = GTK_WRAP_NONE;
 	}
 	g_key_file_free(cfg);
 	if (err)

@@ -30,13 +30,8 @@
 
 #define _detectstring "EXT=\"PDF\""
 
-GtkWidget  *tb1;
-GtkToolItem  *tb_back;
-GtkToolItem  *tb_forward;
-GtkToolItem  *tb_home;
-GtkToolItem  *tb_separator;
-GtkToolItem  *tb_pages;
-GtkWidget  *canvas ;
+GtkWidget *label;
+GtkWidget  *canvas;
 
 PopplerPage *ppage;
 PopplerDocument *document;
@@ -49,7 +44,7 @@ void update_numpages()
 	gchar *str;
 	str = g_strdup_printf("%d / %d", current_page + 1, total_pages);
 
-	gtk_tool_button_set_label (GTK_TOOL_BUTTON(tb_pages), str);
+	gtk_label_set_text (GTK_LABEL(label), str);
 	g_free(str);
 }
 
@@ -97,6 +92,13 @@ static void tb_back_clicked (GtkToolItem *tooleditcut, GtkWindow *parentWindow)
 		current_page--;
 
 	view_set_page(current_page);
+
+	GtkAdjustment *tmp = gtk_scrolled_window_get_vadjustment(GTK_SCROLLED_WINDOW(parentWindow));
+	gtk_adjustment_set_value (tmp, 0);
+	gtk_scrolled_window_set_vadjustment(GTK_SCROLLED_WINDOW(parentWindow), tmp);
+	tmp = gtk_scrolled_window_get_hadjustment(GTK_SCROLLED_WINDOW(parentWindow));
+	gtk_adjustment_set_value (tmp, 0);
+	gtk_scrolled_window_set_hadjustment(GTK_SCROLLED_WINDOW(parentWindow), tmp);
 }
 
 static void tb_forward_clicked (GtkToolItem *tooleditcopy, GtkWindow *parentWindow)
@@ -105,12 +107,26 @@ static void tb_forward_clicked (GtkToolItem *tooleditcopy, GtkWindow *parentWind
 		current_page++;
 
 	view_set_page(current_page);
+
+	GtkAdjustment *tmp = gtk_scrolled_window_get_vadjustment(GTK_SCROLLED_WINDOW(parentWindow));
+	gtk_adjustment_set_value (tmp, 0);
+	gtk_scrolled_window_set_vadjustment(GTK_SCROLLED_WINDOW(parentWindow), tmp);
+	tmp = gtk_scrolled_window_get_hadjustment(GTK_SCROLLED_WINDOW(parentWindow));
+	gtk_adjustment_set_value (tmp, 0);
+	gtk_scrolled_window_set_hadjustment(GTK_SCROLLED_WINDOW(parentWindow), tmp);;
 }
 
 static void tb_home_clicked (GtkToolItem *tooleditpaste, GtkWindow *parentWindow)
 {
 	current_page = 0;
 	view_set_page(0);
+
+	GtkAdjustment *tmp = gtk_scrolled_window_get_vadjustment(GTK_SCROLLED_WINDOW(parentWindow));
+	gtk_adjustment_set_value (tmp, 0);
+	gtk_scrolled_window_set_vadjustment(GTK_SCROLLED_WINDOW(parentWindow), tmp);
+	tmp = gtk_scrolled_window_get_hadjustment(GTK_SCROLLED_WINDOW(parentWindow));
+	gtk_adjustment_set_value (tmp, 0);
+	gtk_scrolled_window_set_hadjustment(GTK_SCROLLED_WINDOW(parentWindow), tmp);
 }
 
 HWND DCPCALL ListLoad (HWND ParentWin, char* FileToLoad, int ShowFlags)
@@ -119,7 +135,13 @@ HWND DCPCALL ListLoad (HWND ParentWin, char* FileToLoad, int ShowFlags)
 	GtkWidget  *vscroll;
 	GtkWidget  *gFix;
 	GdkColor  color;
-	
+	GtkWidget  *tb1;
+	GtkToolItem  *tb_back;
+	GtkToolItem  *tb_forward;
+	GtkToolItem  *tb_home;
+	GtkToolItem  *tb_separator;
+	GtkToolItem  *tb_pages;
+
 	gchar* fileUri = g_filename_to_uri (FileToLoad, NULL, NULL);
 	document = poppler_document_new_from_file (fileUri, NULL, NULL);
 
@@ -131,7 +153,7 @@ HWND DCPCALL ListLoad (HWND ParentWin, char* FileToLoad, int ShowFlags)
 	gFix = gtk_vbox_new (FALSE, 0);
 	gtk_container_add (GTK_CONTAINER ((GtkWidget*)(ParentWin)), gFix);
 
-
+	vscroll = gtk_scrolled_window_new(NULL, NULL);
 	tb1 = gtk_toolbar_new ();
 	gtk_toolbar_set_show_arrow (GTK_TOOLBAR (tb1), TRUE);
 	gtk_toolbar_set_style (GTK_TOOLBAR (tb1), GTK_TOOLBAR_ICONS);
@@ -140,26 +162,28 @@ HWND DCPCALL ListLoad (HWND ParentWin, char* FileToLoad, int ShowFlags)
 	tb_back = gtk_tool_button_new_from_stock (GTK_STOCK_GO_BACK);
 	gtk_toolbar_insert (GTK_TOOLBAR (tb1), tb_back, 0);
 	gtk_widget_set_tooltip_text (GTK_WIDGET(tb_back), "Previous Page");
-	g_signal_connect (G_OBJECT (tb_back), "clicked", G_CALLBACK (tb_back_clicked), (gpointer) (GtkWidget*)(ParentWin));
+	g_signal_connect (G_OBJECT (tb_back), "clicked", G_CALLBACK (tb_back_clicked), (gpointer) (GtkWidget*)(vscroll));
 
 	tb_forward = gtk_tool_button_new_from_stock (GTK_STOCK_GO_FORWARD);
 	gtk_toolbar_insert (GTK_TOOLBAR (tb1), tb_forward, 1);
 	gtk_widget_set_tooltip_text (GTK_WIDGET(tb_forward), "Next page");
-	g_signal_connect (G_OBJECT (tb_forward), "clicked", G_CALLBACK (tb_forward_clicked), (gpointer) (GtkWidget*)(ParentWin));
+	g_signal_connect (G_OBJECT (tb_forward), "clicked", G_CALLBACK (tb_forward_clicked), (gpointer) (GtkWidget*)(vscroll));
 
 	tb_home = gtk_tool_button_new_from_stock (GTK_STOCK_HOME);
 	gtk_toolbar_insert (GTK_TOOLBAR (tb1), tb_home, 2);
 	gtk_widget_set_tooltip_text (GTK_WIDGET(tb_home), "First page");
-	g_signal_connect (G_OBJECT (tb_home), "clicked", G_CALLBACK (tb_home_clicked), (gpointer) (GtkWidget*)(ParentWin));
+	g_signal_connect (G_OBJECT (tb_home), "clicked", G_CALLBACK (tb_home_clicked), (gpointer) (GtkWidget*)(vscroll));
 
 	tb_separator = gtk_separator_tool_item_new ();
 	gtk_toolbar_insert (GTK_TOOLBAR (tb1), tb_separator, 3);
 
-	tb_pages = gtk_tool_button_new (NULL,"1 / 1");
+	tb_pages = gtk_tool_item_new();
+	label = gtk_label_new("1 / 1");
+	gtk_container_add(GTK_CONTAINER(tb_pages), label);
 	gtk_toolbar_insert (GTK_TOOLBAR (tb1), tb_pages, 4);
 	gtk_widget_set_tooltip_text (GTK_WIDGET(tb_pages), "Current page");
 
-	vscroll = gtk_scrolled_window_new(NULL, NULL);
+	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(vscroll), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
 	gtk_box_pack_start (GTK_BOX (gFix), vscroll, TRUE, TRUE, 2);
 	canvas = gtk_drawing_area_new();
 	gdk_color_parse ("white", &color); 
@@ -170,6 +194,7 @@ HWND DCPCALL ListLoad (HWND ParentWin, char* FileToLoad, int ShowFlags)
 	total_pages = poppler_document_get_n_pages (document);
 	view_set_page(0);
 
+	gtk_widget_grab_focus(vscroll);
 	gtk_widget_show_all (gFix);
 	return gFix;
 }

@@ -17,7 +17,10 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 	GtkWidget *scroll;
 //	GtkWidget *tView;
 	GtkTextBuffer *tBuf;
+	GtkWrapMode wrap_mode;
 	gchar *tmp, *command, *buf1, *src, *font;
+	gboolean bval, no_cursor;
+	gint p_above, p_below;
 	const char* cfg_file = "settings.ini";
 	const char *magic_full;
 	static char path[PATH_MAX];
@@ -71,7 +74,33 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 		nfstr = g_key_file_get_string(cfg, "Appearance", "NotFoundStr", NULL);
 		if (!nfstr)
 			nfstr = "not found";
+		if (err)
+			err = NULL;
+		p_above = g_key_file_get_integer(cfg, "Appearance", "PAbove", &err);
+		if (err)
+		{
+			p_above = 0;
+			err = NULL;
+		}
+		p_below = g_key_file_get_integer(cfg, "Appearance", "PBelow", &err);
+		if (err)
+		{
+			p_below = 0;
+			err = NULL;
+		}
+		bval = g_key_file_get_boolean(cfg, "Flags", "Wrap", NULL);
+		if (bval)
+			wrap_mode = GTK_WRAP_WORD;
+		else
+			wrap_mode = GTK_WRAP_NONE;
+		bval = g_key_file_get_boolean(cfg, "Flags", "NoCursor", &err);
+		if (!bval && !err)
+			no_cursor = FALSE;
+		else
+			no_cursor = TRUE;
 	}
+	if (err)
+		g_error_free(err);
 	g_key_file_free(cfg);
 	magic_close(magic_cookie);
 	command = g_strdup_printf("\"%s\" \"%s\"", path, FileToLoad);
@@ -102,7 +131,12 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 	tView = gtk_text_view_new_with_buffer(tBuf);
 	gtk_widget_modify_font (tView, pango_font_description_from_string(font));
 	gtk_text_view_set_editable(GTK_TEXT_VIEW(tView), FALSE);
-	gtk_text_view_set_cursor_visible(GTK_TEXT_VIEW(tView), FALSE);
+	if (no_cursor)
+		gtk_text_view_set_cursor_visible(GTK_TEXT_VIEW(tView), FALSE);
+
+	gtk_text_view_set_pixels_above_lines(GTK_TEXT_VIEW(tView), p_above);
+	gtk_text_view_set_pixels_below_lines(GTK_TEXT_VIEW(tView), p_below);
+	gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(tView), wrap_mode);
 
 	gtk_container_add(GTK_CONTAINER(scroll), GTK_WIDGET(tView));
 	gtk_container_add(GTK_CONTAINER(gFix), scroll);
