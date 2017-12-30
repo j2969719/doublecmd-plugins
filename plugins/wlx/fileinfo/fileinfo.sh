@@ -120,9 +120,9 @@ case "${filetype}" in
 			/g' | sed 's/<[^<]*>//g' | grep -v '^[[:space:]]*$' | sed G
 		;;
 	[Ee][Xx][Ee]|[Dd][Ll][Ll])
-		#wrestool --extract --raw --type=version "$file" |  strings -el
-		exiftool "$file"
-		;;
+		exiftool "$file" || \
+                wrestool --extract --raw --type=version "$file" |  strings -el
+                ;;
 	[Ff][Bb][2])
 		xsltproc $COMMANDER_PATH/scripts/FB2_2_txt_ru.xsl "$file" |  iconv -f "windows-1251" -t "UTF-8"
 		;;
