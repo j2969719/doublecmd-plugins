@@ -48,6 +48,16 @@ void update_numpages()
 	g_free(str);
 }
 
+void reset_scroll(GtkScrolledWindow *scrolled_window)
+{
+	GtkAdjustment *tmp = gtk_scrolled_window_get_vadjustment(scrolled_window);
+	gtk_adjustment_set_value (tmp, 0);
+	gtk_scrolled_window_set_vadjustment(scrolled_window, tmp);
+	tmp = gtk_scrolled_window_get_hadjustment(scrolled_window);
+	gtk_adjustment_set_value (tmp, 0);
+	gtk_scrolled_window_set_hadjustment(scrolled_window, tmp);
+}
+
 static void canvas_expose_event (GtkWidget *widget, GdkEventExpose *event)
 {
 	cairo_t *cr;
@@ -93,12 +103,7 @@ static void tb_back_clicked (GtkToolItem *tooleditcut, GtkWindow *parentWindow)
 
 	view_set_page(current_page);
 
-	GtkAdjustment *tmp = gtk_scrolled_window_get_vadjustment(GTK_SCROLLED_WINDOW(parentWindow));
-	gtk_adjustment_set_value (tmp, 0);
-	gtk_scrolled_window_set_vadjustment(GTK_SCROLLED_WINDOW(parentWindow), tmp);
-	tmp = gtk_scrolled_window_get_hadjustment(GTK_SCROLLED_WINDOW(parentWindow));
-	gtk_adjustment_set_value (tmp, 0);
-	gtk_scrolled_window_set_hadjustment(GTK_SCROLLED_WINDOW(parentWindow), tmp);
+	reset_scroll(GTK_SCROLLED_WINDOW(parentWindow));
 }
 
 static void tb_forward_clicked (GtkToolItem *tooleditcopy, GtkWindow *parentWindow)
@@ -108,12 +113,7 @@ static void tb_forward_clicked (GtkToolItem *tooleditcopy, GtkWindow *parentWind
 
 	view_set_page(current_page);
 
-	GtkAdjustment *tmp = gtk_scrolled_window_get_vadjustment(GTK_SCROLLED_WINDOW(parentWindow));
-	gtk_adjustment_set_value (tmp, 0);
-	gtk_scrolled_window_set_vadjustment(GTK_SCROLLED_WINDOW(parentWindow), tmp);
-	tmp = gtk_scrolled_window_get_hadjustment(GTK_SCROLLED_WINDOW(parentWindow));
-	gtk_adjustment_set_value (tmp, 0);
-	gtk_scrolled_window_set_hadjustment(GTK_SCROLLED_WINDOW(parentWindow), tmp);;
+	reset_scroll(GTK_SCROLLED_WINDOW(parentWindow));
 }
 
 static void tb_home_clicked (GtkToolItem *tooleditpaste, GtkWindow *parentWindow)
@@ -121,12 +121,7 @@ static void tb_home_clicked (GtkToolItem *tooleditpaste, GtkWindow *parentWindow
 	current_page = 0;
 	view_set_page(0);
 
-	GtkAdjustment *tmp = gtk_scrolled_window_get_vadjustment(GTK_SCROLLED_WINDOW(parentWindow));
-	gtk_adjustment_set_value (tmp, 0);
-	gtk_scrolled_window_set_vadjustment(GTK_SCROLLED_WINDOW(parentWindow), tmp);
-	tmp = gtk_scrolled_window_get_hadjustment(GTK_SCROLLED_WINDOW(parentWindow));
-	gtk_adjustment_set_value (tmp, 0);
-	gtk_scrolled_window_set_hadjustment(GTK_SCROLLED_WINDOW(parentWindow), tmp);
+	reset_scroll(GTK_SCROLLED_WINDOW(parentWindow));
 }
 
 HWND DCPCALL ListLoad (HWND ParentWin, char* FileToLoad, int ShowFlags)
