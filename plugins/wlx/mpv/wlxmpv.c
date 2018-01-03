@@ -7,6 +7,8 @@
 (EXT=\"BIK\")|(EXT=\"VOC\")|(EXT=\"WAV\")|(EXT=\"WEBM\")|(EXT=\"VOB\")|(EXT=\"ROQ\")|\
 (EXT=\"IVF\")|(EXT=\"MOV\")|(EXT=\"FLAC\")"
 
+#define _cmdstring "mpv --force-window=yes --keep-open=yes --script-opts=osc-visibility=always\
+ --cursor-autohide-fs-only --wid=%d \"%s\""
 
 HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 {
@@ -21,7 +23,7 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	gtk_container_add(GTK_CONTAINER(gFix), mpv);
 	gtk_widget_realize(mpv);
 	GdkNativeWindow id = GDK_WINDOW_XID(gtk_widget_get_window(mpv));
-	gchar *command = g_strdup_printf("mpv --force-window=yes --loop --wid=%d \"%s\"", id, FileToLoad);
+	gchar *command = g_strdup_printf(_cmdstring, id, FileToLoad);
 	if (id!=0)
 		g_spawn_command_line_async(command, NULL);
 	else
