@@ -27,10 +27,6 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
                 break;
             end       
             Result, FindData = SysUtils.FindNext(Handle)
-            if (Result ~= nil) and (FindData.Name ~= ".") and (FindData.Name ~= "..") then
-                empty = false;
-                break;
-            end
         until (Result == nil)
     else
         return nil;
