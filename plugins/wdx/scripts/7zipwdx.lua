@@ -1,6 +1,6 @@
 -- 7zipwdx.lua
 
-local cmd = "/usr/bin/7z"
+local cmd = "7z"
 
 local properties = {
     {"Type", 8}, 

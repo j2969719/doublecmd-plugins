@@ -1,4 +1,4 @@
-local cmd = "/usr/bin/getfattr"
+local cmd = "getfattr"
 local output = ''
 local dosattr = ''
 local filename = ''

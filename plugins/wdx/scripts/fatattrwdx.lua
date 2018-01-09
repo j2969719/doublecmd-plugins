@@ -1,4 +1,4 @@
-local cmd = "/usr/bin/fatattr"
+local cmd = "fatattr"
 local output = ''
 local dosattr = ''
 local filename = ''
