@@ -5,6 +5,8 @@
 #include "wlxplugin.h"
 
 #define _detectstring "(EXT=\"TTF\")|(EXT=\"OTF\")|(EXT=\"PCX\")"
+#define _outfile "/tmp/_dcwlximagemagick.png"
+#define _outfile0 "/tmp/_dcwlximagemagick-0.png"
 
 HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 {
@@ -26,21 +28,28 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	if (status != MagickFalse)
 	{
 		MagickResetIterator(magick_wand);
-		status=MagickWriteImages(magick_wand, "/tmp/_dcwlximagemagick.png", MagickTrue);
+		status=MagickWriteImages(magick_wand, _outfile, MagickTrue);
 	}
+	else
+	{
+		magick_wand=DestroyMagickWand(magick_wand);
+		MagickWandTerminus();
+		gtk_widget_destroy(gFix);
+		return NULL;
+	}
+	if (MagickGetNumberImages(magick_wand) > 1)
+		pixbuf = gdk_pixbuf_new_from_file(_outfile0, NULL);
+	else
+		pixbuf = gdk_pixbuf_new_from_file(_outfile, NULL);
 	magick_wand=DestroyMagickWand(magick_wand);
 	MagickWandTerminus();
-	if (status != MagickFalse)
+	if (!pixbuf)
 	{
-		pixbuf = gdk_pixbuf_new_from_file("/tmp/_dcwlximagemagick.png", NULL);
-		if (!pixbuf)
-		{
-			gtk_widget_destroy(gFix);
-			return NULL;
-		}
-		gtk_image_view_set_pixbuf(GTK_IMAGE_VIEW(view), pixbuf, TRUE);
-		g_object_set_data_full(G_OBJECT(gFix), "pixbuf", pixbuf, (GDestroyNotify) g_object_unref);
+		gtk_widget_destroy(gFix);
+		return NULL;
 	}
+	gtk_image_view_set_pixbuf(GTK_IMAGE_VIEW(view), pixbuf, TRUE);
+	g_object_set_data_full(G_OBJECT(gFix), "pixbuf", pixbuf, (GDestroyNotify) g_object_unref);
 	gtk_widget_show_all(gFix);
 	return gFix;
 }
