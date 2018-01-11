@@ -1,21 +1,20 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <dirent.h>
-#include <sys/stat.h>
 #include <linux/limits.h>
 #include <string.h>
 #include "wdxplugin.h"
 
-int calccount(const char *name, unsigned char type)
+unsigned int calccount(const char *name, unsigned char type)
 {
 	DIR *dir;
-	int count = 0;
+	unsigned int count = 0;
 	struct dirent *ent;
-	if ((dir = opendir (name)) != NULL)
+	if ((dir = opendir(name)) != NULL)
 	{
-		while ((ent = readdir (dir)) != NULL)
+		while ((ent = readdir(dir)) != NULL)
 		{
-			if ((strcmp(ent->d_name, ".") != 0) && (strcmp(ent->d_name, "..") !=0))
+			if ((strcmp(ent->d_name, ".") != 0) && (strcmp(ent->d_name, "..") != 0))
 			{
 				if (ent->d_type == type)
 					count ++;
@@ -36,11 +35,11 @@ int emptychk(const char *name, bool subf)
 {
 	DIR *dir;
 	struct dirent *ent;
-	if ((dir = opendir (name)) != NULL)
+	if ((dir = opendir(name)) != NULL)
 	{
-		while ((ent = readdir (dir)) != NULL)
+		while ((ent = readdir(dir)) != NULL)
 		{
-			if ((strcmp(ent->d_name, ".") != 0) && (strcmp(ent->d_name, "..") !=0))
+			if ((strcmp(ent->d_name, ".") != 0) && (strcmp(ent->d_name, "..") != 0))
 			{
 				if ((subf == true) && (ent->d_type == DT_DIR))
 				{
@@ -66,7 +65,6 @@ int emptychk(const char *name, bool subf)
 
 int DCPCALL ContentGetSupportedField(int FieldIndex, char* FieldName, char* Units, int maxlen)
 {
-
 	switch(FieldIndex)
 	{
 		case 0:
@@ -102,19 +100,16 @@ int DCPCALL ContentGetSupportedField(int FieldIndex, char* FieldName, char* Unit
 		default:
 			return ft_nomorefields;
 	}
-
 }
 
 int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void* FieldValue, int maxlen, int flags)
 {
-	struct stat buf;
-
-	if (lstat(FileName, &buf) != 0)
+	DIR* dir;
+	if ((dir = opendir(FileName)) == NULL)
 		return ft_fileerror;
-	if (!S_ISDIR(buf.st_mode))
-		return ft_fileerror;
+	closedir(dir);
 
-		switch(FieldIndex)
+	switch(FieldIndex)
 	{
 		case 0:
 			*(int*)FieldValue = emptychk(FileName, false);
@@ -123,33 +118,32 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 			*(int*)FieldValue = emptychk(FileName, true);
 			return ft_boolean;
 		case 2:
-			*(int*)FieldValue = calccount(FileName, DT_DIR);
+			*(unsigned int*)FieldValue = calccount(FileName, DT_DIR);
 			break;
 		case 3:
-			*(int*)FieldValue = calccount(FileName, DT_REG);
+			*(unsigned int*)FieldValue = calccount(FileName, DT_REG);
 			break;
 		case 4:
-			*(int*)FieldValue = calccount(FileName, DT_LNK);
+			*(unsigned int*)FieldValue = calccount(FileName, DT_LNK);
 			break;
 		case 5:
-			*(int*)FieldValue = calccount(FileName, DT_FIFO);
+			*(unsigned int*)FieldValue = calccount(FileName, DT_FIFO);
 			break;
 		case 6:
-			*(int*)FieldValue = calccount(FileName, DT_SOCK);
+			*(unsigned int*)FieldValue = calccount(FileName, DT_SOCK);
 			break;
 		case 7:
-			*(int*)FieldValue = calccount(FileName, DT_BLK);
+			*(unsigned int*)FieldValue = calccount(FileName, DT_BLK);
 			break;
 		case 8:
-			*(int*)FieldValue = calccount(FileName, DT_CHR);
+			*(unsigned int*)FieldValue = calccount(FileName, DT_CHR);
 			break;
 		case 9:
-			*(int*)FieldValue = calccount(FileName, DT_UNKNOWN);
+			*(unsigned int*)FieldValue = calccount(FileName, DT_UNKNOWN);
 			break;
 		default:
 			return ft_fieldempty;
 	}
 	return ft_numeric_32;
-
 }
 
