@@ -89,7 +89,7 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 	uint64_t rsize;
 	double val;
 
-	if (strstr(FileName, "/..\0") != NULL)
+	if (strncmp(FileName+strlen(FileName)-3, "/..", 4) == 0)
 		return ft_fileerror;
 	if (lstat(FileName, &buf) != 0)
 		return ft_fileerror;

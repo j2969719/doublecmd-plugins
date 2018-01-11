@@ -105,7 +105,7 @@ int DCPCALL ContentGetSupportedField(int FieldIndex, char* FieldName, char* Unit
 int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void* FieldValue, int maxlen, int flags)
 {
 	DIR* dir;
-	if (strstr(FileName, "/..\0") != NULL)
+	if (strncmp(FileName+strlen(FileName)-3, "/..", 4) == 0)
 		return ft_fileerror;
 	if ((dir = opendir(FileName)) == NULL)
 		return ft_fileerror;
