@@ -47,7 +47,7 @@ double sizecnv(uint64_t size, int bytes, int bpow)
 
 int DCPCALL ContentGetSupportedField(int FieldIndex, char* FieldName, char* Units, int maxlen)
 {
-
+	strncpy(Units, "default|files only|dirs only", maxlen-1);
 	switch(FieldIndex)
 	{
 		case 0:
@@ -93,10 +93,12 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 		return ft_fileerror;
 	if (lstat(FileName, &buf) != 0)
 		return ft_fileerror;
-	if (S_ISDIR(buf.st_mode))
+	if ((S_ISDIR(buf.st_mode)) && (UnitIndex != 1))
 		rsize = calcdirszie(FileName);
-	else
+	else if ((!S_ISDIR(buf.st_mode)) && (UnitIndex != 2))
 		rsize = buf.st_size;
+	else 
+		return ft_fieldempty;
 
 	switch(FieldIndex)
 	{
