@@ -64,7 +64,7 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 	g_object_set_data_full(G_OBJECT(gFix), "txtbuf", tBuf, (GDestroyNotify)g_object_unref);
 	tmp = g_locale_to_utf8(buf1, -1, NULL, NULL, NULL);
 	g_free(buf1);
-	if (tmp == NULL)
+	if ((tmp == NULL) || (g_strcmp0(tmp, "") == 0))
 	{
 		gtk_widget_destroy(GTK_WIDGET(gFix));
 		return NULL;
