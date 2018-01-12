@@ -18,7 +18,12 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	gtk_container_add(GTK_CONTAINER(gFix), socket);
 	GdkNativeWindow id = gtk_socket_get_id(GTK_SOCKET(socket));
 	gchar *command = g_strdup_printf(_cmdstring, id, id, FileToLoad);
-	g_spawn_command_line_async(command, NULL);
+	if (!g_spawn_command_line_async(command, NULL))
+	{
+		g_free(command);
+		gtk_widget_destroy(gFix);
+		return NULL;
+	}
 	g_free(command);
 
 	gtk_widget_show_all(gFix);

@@ -24,12 +24,10 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	gtk_widget_realize(mpv);
 	GdkNativeWindow id = GDK_WINDOW_XID(gtk_widget_get_window(mpv));
 	gchar *command = g_strdup_printf(_cmdstring, id, FileToLoad);
-	if (id!=0)
-		g_spawn_command_line_async(command, NULL);
-	else
+	if ((id == 0) || (!g_spawn_command_line_async(command, NULL)))
 	{
+		g_free(command);
 		gtk_widget_destroy(gFix);
-		g_print("no luck:( window xid = 0\n");
 		return NULL;
 	}
 	g_free(command);

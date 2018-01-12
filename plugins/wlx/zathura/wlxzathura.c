@@ -61,8 +61,12 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 		command = g_strdup_printf("zathura --reparent=%d \"%s\" %s --config-dir=\"%s\" --data-dir=\"%s\"", id, FileToLoad, param, plg_path, plg_path);
 	else
 		command = g_strdup_printf("zathura --reparent=%d \"%s\" %s", id, FileToLoad, param);
-	//g_print(command);
-	g_spawn_command_line_async(command, NULL);
+	if (!g_spawn_command_line_async(command, NULL))
+	{
+		g_free(command);
+		gtk_widget_destroy(gFix);
+		return NULL;
+	}
 	g_free(command);
 
 	gtk_widget_show_all(gFix);
