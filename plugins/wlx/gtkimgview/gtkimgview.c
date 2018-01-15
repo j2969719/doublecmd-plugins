@@ -4,7 +4,7 @@
 #include <gtkimageview/gtkimagescrollwin.h>
 #include "wlxplugin.h"
 
-#define _detectstring "(EXT=\"JPG\")|(EXT=\"PNG\")|(EXT=\"SVG\")|(EXT=\"BMP\")|(EXT=\"ICO\")|(EXT=\"GIF\")"
+#define _detectstring "(EXT=\"JPG\")|(EXT=\"PNG\")|(EXT=\"SVG\")|(EXT=\"BMP\")|(EXT=\"ICO\")|(EXT=\"GIF\")|(EXT=\"TIF\")|(EXT=\"TIFF\")"
 
 
 static void tb_zoom_in_clicked(GtkToolItem *tooleditcut, GtkWidget *imgview)
