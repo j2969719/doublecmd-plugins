@@ -4,8 +4,6 @@
 #include <gtkimageview/gtkimagescrollwin.h>
 #include "wlxplugin.h"
 
-#define _detectstring "(EXT=\"JPG\")|(EXT=\"PNG\")|(EXT=\"SVG\")|(EXT=\"BMP\")|(EXT=\"ICO\")|(EXT=\"GIF\")|(EXT=\"TIF\")|(EXT=\"TIFF\")"
-
 
 static void tb_zoom_in_clicked(GtkToolItem *tooleditcut, GtkWidget *imgview)
 {
@@ -115,8 +113,8 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 		gtk_widget_destroy(gFix);
 		return NULL;
 	}
-	gchar *content_type = g_content_type_guess (FileToLoad, NULL, 0, &is_certain);
-	if (g_content_type_is_mime_type (content_type, "image/gif"))
+	gchar *content_type = g_content_type_guess(FileToLoad, NULL, 0, &is_certain);
+	if (g_content_type_is_mime_type(content_type, "image/gif"))
 	{
 		anim = gdk_pixbuf_animation_new_from_file(FileToLoad, NULL);
 		if (anim)
@@ -125,7 +123,7 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 			gtk_anim_view_set_is_playing(GTK_ANIM_VIEW(view), TRUE);
 		}
 	}
-	g_free (content_type);
+	g_free(content_type);
 	gtk_image_view_set_pixbuf(GTK_IMAGE_VIEW(view), pixbuf, TRUE);
 	g_object_set_data_full(G_OBJECT(gFix), "pixbuf", pixbuf, (GDestroyNotify) g_object_unref);
 
@@ -222,7 +220,28 @@ void DCPCALL ListCloseWindow(HWND ListWin)
 
 void DCPCALL ListGetDetectString(char* DetectString,int maxlen)
 {
-	g_strlcpy(DetectString, _detectstring, maxlen);
+	GSList *l, *list;
+	gchar *detectstr = "", **ext;
+	gint i;
+
+	list = gdk_pixbuf_get_formats();
+	for (l = list; l != NULL; l = l->next)
+	{
+		GdkPixbufFormat *format = (GdkPixbufFormat*)l->data;
+		ext = gdk_pixbuf_format_get_extensions(format);
+		for (i = 0; ext[i] != NULL; i++)
+		{
+			if (g_strcmp0(detectstr, "") != 0)
+				detectstr = g_strdup_printf("|%s", detectstr);
+			detectstr = g_strdup_printf("(EXT=\"%s\")%s", ext[i], detectstr);
+		}
+	}
+	g_strlcpy(DetectString, detectstr, maxlen);
+	g_free(ext);
+	g_free(detectstr);
+	g_slist_free(l);
+	g_slist_free(list);
+
 }
 
 int DCPCALL ListSendCommand(HWND ListWin,int Command,int Parameter)
