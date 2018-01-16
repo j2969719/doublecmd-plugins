@@ -4,6 +4,11 @@
 #include <gtkimageview/gtkimagescrollwin.h>
 #include "wlxplugin.h"
 
+const gchar *anims[] =
+{
+	"image/gif",
+	"application/x-navi-animation",
+};
 
 static void tb_zoom_in_clicked(GtkToolItem *tooleditcut, GtkWidget *imgview)
 {
@@ -95,7 +100,7 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	GdkPixbufAnimation *anim = NULL;
 	gchar *tstr;
 	gboolean is_certain = FALSE;
-	int tb_last = 11;
+	gint tb_last = 11, i;
 
 	gFix = gtk_vbox_new(FALSE , 1);
 	gtk_container_add(GTK_CONTAINER(GTK_WIDGET(ParentWin)), gFix);
@@ -114,13 +119,17 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 		return NULL;
 	}
 	gchar *content_type = g_content_type_guess(FileToLoad, NULL, 0, &is_certain);
-	if (g_content_type_is_mime_type(content_type, "image/gif"))
+	g_print("content_type = %s\n", content_type);
+	for (i=0; anims[i] != NULL; i++ )
 	{
-		anim = gdk_pixbuf_animation_new_from_file(FileToLoad, NULL);
-		if (anim)
+		if (g_strcmp0(content_type, anims[i]) == 0)
 		{
-			gtk_anim_view_set_anim(GTK_ANIM_VIEW(view), anim);
-			gtk_anim_view_set_is_playing(GTK_ANIM_VIEW(view), TRUE);
+			anim = gdk_pixbuf_animation_new_from_file(FileToLoad, NULL);
+			if (anim)
+			{
+				gtk_anim_view_set_anim(GTK_ANIM_VIEW(view), anim);
+				gtk_anim_view_set_is_playing(GTK_ANIM_VIEW(view), TRUE);
+			}
 		}
 	}
 	g_free(content_type);
@@ -179,7 +188,7 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	gtk_widget_set_tooltip_text(GTK_WIDGET(tb_vflip), "Flip Vertically");
 	g_signal_connect(G_OBJECT(tb_vflip), "clicked", G_CALLBACK(tb_vflip_clicked), (gpointer) (GtkWidget*)(view));
 
-	if (anim)
+	if ((anim) && (!gdk_pixbuf_animation_is_static_image(anim)))
 	{
 		tb_play = gtk_tool_button_new_from_stock(GTK_STOCK_MEDIA_PLAY);
 		gtk_toolbar_insert(GTK_TOOLBAR(mtb), tb_play, 10);
