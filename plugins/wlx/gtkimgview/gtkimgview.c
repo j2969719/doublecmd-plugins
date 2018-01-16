@@ -10,6 +10,35 @@ const gchar *anims[] =
 	"application/x-navi-animation",
 };
 
+GtkWidget* find_child(GtkWidget* parent, const gchar* name)
+{
+	if (g_ascii_strcasecmp(gtk_widget_get_name((GtkWidget*)parent), (gchar*)name) == 0)
+	{
+		return parent;
+	}
+
+	if (GTK_IS_BIN(parent))
+	{
+		GtkWidget *child = gtk_bin_get_child(GTK_BIN(parent));
+		return find_child(child, name);
+	}
+
+	if (GTK_IS_CONTAINER(parent))
+	{
+		GList *children = gtk_container_get_children(GTK_CONTAINER(parent));
+		while ((children = g_list_next(children)) != NULL)
+			{
+				GtkWidget* widget = find_child(children->data, name);
+				if (widget != NULL)
+					{
+						return widget;
+					}
+			}
+	}
+
+	return NULL;
+}
+
 static void tb_zoom_in_clicked(GtkToolItem *tooleditcut, GtkWidget *imgview)
 {
 	gtk_image_view_zoom_in(GTK_IMAGE_VIEW(imgview));
@@ -109,6 +138,7 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	gtk_toolbar_set_style(GTK_TOOLBAR(mtb), GTK_TOOLBAR_ICONS);
 	gtk_box_pack_start(GTK_BOX(gFix), mtb, FALSE, FALSE, 2);
 	view = gtk_anim_view_new();
+	gtk_widget_set_name(view, "imageview");
 	scroll = gtk_image_scroll_win_new(GTK_IMAGE_VIEW(view));
 	gtk_container_add(GTK_CONTAINER(gFix), scroll);
 
@@ -134,7 +164,6 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	}
 	g_free(content_type);
 	gtk_image_view_set_pixbuf(GTK_IMAGE_VIEW(view), pixbuf, TRUE);
-	g_object_set_data_full(G_OBJECT(gFix), "pixbuf", pixbuf, (GDestroyNotify) g_object_unref);
 
 	tb_zoom_in = gtk_tool_button_new_from_stock(GTK_STOCK_ZOOM_IN);
 	gtk_toolbar_insert(GTK_TOOLBAR(mtb), tb_zoom_in, 0);
@@ -255,18 +284,15 @@ void DCPCALL ListGetDetectString(char* DetectString,int maxlen)
 
 int DCPCALL ListSendCommand(HWND ListWin,int Command,int Parameter)
 {
-	GdkPixbuf *pixbuf;
-
-	pixbuf = g_object_get_data(G_OBJECT(ListWin), "pixbuf");
-
 	switch(Command)
 	{
 		case lc_copy :
-			gtk_clipboard_set_image(gtk_clipboard_get(GDK_SELECTION_CLIPBOARD), pixbuf);
+			gtk_clipboard_set_image(gtk_clipboard_get(GDK_SELECTION_CLIPBOARD), gtk_image_view_get_pixbuf(GTK_IMAGE_VIEW(find_child(ListWin, "imageview"))));
 			break;
 		default :
 			return LISTPLUGIN_ERROR;
 	}
+	return LISTPLUGIN_OK;
 }
 
 int DCPCALL ListSearchDialog(HWND ListWin,int FindNext)
