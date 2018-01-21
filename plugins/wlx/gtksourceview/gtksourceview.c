@@ -136,7 +136,6 @@ static gboolean open_file(GtkSourceBuffer *sBuf, const gchar *filename)
 			else if ((ext_ini != NULL) && (g_strrstr(ext_ini, ext) != NULL))
 				language = gtk_source_language_manager_get_language(lm, "ini");
 			g_free(ext);
-			gtk_source_buffer_set_language(sBuf, language);
 		}
 	}
 
