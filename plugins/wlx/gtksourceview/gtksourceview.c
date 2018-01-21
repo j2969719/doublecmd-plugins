@@ -18,10 +18,11 @@
 #include "wlxplugin.h"
 
 #define _detectstring "EXT=\"C\"|EXT=\"H\"|EXT=\"LUA\"|EXT=\"CPP\"|EXT=\"HPP\"|EXT=\"PAS\"|\
-EXT=\"CSS\"|EXT=\"SH\"|EXT=\"XML\"|EXT=\"INI\"|EXT=\"DIFF\"|EXT=\"PATCH\""
+EXT=\"CSS\"|EXT=\"SH\"|EXT=\"XML\"|EXT=\"INI\"|EXT=\"DIFF\"|EXT=\"PATCH\"EXT=\"PO\"|EXT=\"PY\"|\
+EXT=\"XSL\"|EXT=\"LPR\"|EXT=\"PP\"|EXT=\"LPI\"|EXT=\"LFM\"|EXT=\"LPK\"|EXT=\"DOF\"|EXT=\"DPR\""
 
 GtkWrapMode wrap_mode;
-gchar *font, *style, *nfstr;
+gchar *font, *style, *nfstr, *ext_pascal, *ext_xml, *ext_ini;
 gboolean line_num, hcur_line, draw_spaces, no_cursor;
 gint s_tab, p_above, p_below;
 
@@ -102,6 +103,7 @@ static gboolean open_file(GtkSourceBuffer *sBuf, const gchar *filename)
 	GtkTextIter iter;
 	GIOChannel *io;
 	gchar *buffer;
+	gchar *ext;
 	gboolean result_uncertain;
 	gchar *content_type;
 
@@ -120,10 +122,28 @@ static gboolean open_file(GtkSourceBuffer *sBuf, const gchar *filename)
 	}
 
 	language = gtk_source_language_manager_guess_language(lm, filename, content_type);
-	gtk_source_buffer_set_language(sBuf, language);
-	g_free (content_type);
+	if (!language)
+	{
+		ext = g_strrstr(filename, ".");
+		if (ext != NULL)
+		{
+			ext = g_strdup_printf("%s;", ext);
+			ext = g_ascii_strdown(ext, -1);
+			if ((ext_pascal != NULL) && (g_strrstr(ext_pascal, ext) != NULL))
+				language = gtk_source_language_manager_get_language(lm, "pascal");
+			else if ((ext_xml != NULL) && (g_strrstr(ext_xml, ext) != NULL))
+				language = gtk_source_language_manager_get_language(lm, "xml");
+			else if ((ext_ini != NULL) && (g_strrstr(ext_ini, ext) != NULL))
+				language = gtk_source_language_manager_get_language(lm, "ini");
+			g_free(ext);
+			gtk_source_buffer_set_language(sBuf, language);
+		}
+	}
 
-	g_print("Language: [%s]\n", gtk_source_language_get_name(language));
+	gtk_source_buffer_set_language(sBuf, language);
+	if (language)
+		g_print("Language: [%s]\n", gtk_source_language_get_name(language));
+	g_free(content_type);
 
 	/* Now load the file from Disk */
 	io = g_io_channel_new_file(filename, "r", &err);
@@ -364,6 +384,9 @@ void DCPCALL ListSetDefaultParams(ListDefaultParamStruct* dps)
 			wrap_mode = GTK_WRAP_WORD;
 		else
 			wrap_mode = GTK_WRAP_NONE;
+		ext_pascal = g_key_file_get_string(cfg, "Override", "Pascal", NULL);
+		ext_xml = g_key_file_get_string(cfg, "Override", "XML", NULL);
+		ext_ini = g_key_file_get_string(cfg, "Override", "INI", NULL);
 	}
 	g_key_file_free(cfg);
 	if (err)
