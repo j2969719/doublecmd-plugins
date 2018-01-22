@@ -139,10 +139,11 @@ static gboolean open_file(GtkSourceBuffer *sBuf, const gchar *filename)
 		}
 	}
 
-	gtk_source_buffer_set_language(sBuf, language);
-	if (language)
-		g_print("Language: [%s]\n", gtk_source_language_get_name(language));
 	g_free(content_type);
+	g_return_val_if_fail(language != NULL, FALSE);
+	gtk_source_buffer_set_language(sBuf, language);
+	g_print("Language: [%s]\n", gtk_source_language_get_name(language));
+
 
 	/* Now load the file from Disk */
 	io = g_io_channel_new_file(filename, "r", &err);
