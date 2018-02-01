@@ -21,20 +21,22 @@ static void CloseDialog(GtkWidget *widget, gpointer data)
 static void SetValue(GtkWidget *widget, gpointer data)
 {
 	const gchar *envval = gtk_entry_get_text(GTK_ENTRY(data));
+
 	if (!g_setenv(curenvname, envval, TRUE))
 	{
-		GtkWidget *dialog = gtk_message_dialog_new (GTK_WINDOW(gtk_widget_get_toplevel(GTK_WIDGET(data))), 
-						GTK_DIALOG_MODAL, GTK_MESSAGE_ERROR, GTK_BUTTONS_OK, 
-						"Could not set environment variable \"%s\" to \"%s\"!", curenvname, envval);
+		GtkWidget *dialog = gtk_message_dialog_new(GTK_WINDOW(gtk_widget_get_toplevel(GTK_WIDGET(data))),
+		                    GTK_DIALOG_MODAL, GTK_MESSAGE_ERROR, GTK_BUTTONS_OK,
+		                    "Could not set environment variable \"%s\" to \"%s\"!", curenvname, envval);
 		gtk_window_set_title(GTK_WINDOW(dialog), "Environment Variable");
 		gtk_dialog_run(GTK_DIALOG(dialog));
 		gtk_widget_destroy(dialog);
 	}
+
 	gtk_grab_remove(gtk_widget_get_toplevel(GTK_WIDGET(data)));
 	gtk_widget_destroy(gtk_widget_get_toplevel(GTK_WIDGET(data)));
 }
 
-int DCPCALL FsInit(int PluginNr,tProgressProc pProgressProc, tLogProc pLogProc,tRequestProc pRequestProc)
+int DCPCALL FsInit(int PluginNr, tProgressProc pProgressProc, tLogProc pLogProc, tRequestProc pRequestProc)
 {
 	gPluginNr = PluginNr;
 	gProgressProc = pProgressProc;
@@ -43,22 +45,24 @@ int DCPCALL FsInit(int PluginNr,tProgressProc pProgressProc, tLogProc pLogProc,t
 	return 0;
 }
 
-HANDLE DCPCALL FsFindFirst(char* Path,WIN32_FIND_DATAA *FindData)
+HANDLE DCPCALL FsFindFirst(char* Path, WIN32_FIND_DATAA *FindData)
 {
 	memset(FindData, 0, sizeof(WIN32_FIND_DATAA));
 	ienv = 0;
 	env = g_listenv();
+
 	if (env[ienv] != NULL)
 	{
 		g_strlcpy(FindData->cFileName, env[ienv], PATH_MAX);
 		FindData->nFileSizeLow = strlen(g_getenv(env[ienv]));
 		ienv++;
 	}
+
 	return (HANDLE)(1985);
 }
 
 
-BOOL DCPCALL FsFindNext(HANDLE Hdl,WIN32_FIND_DATAA *FindData)
+BOOL DCPCALL FsFindNext(HANDLE Hdl, WIN32_FIND_DATAA *FindData)
 {
 	if (env[ienv] != NULL)
 	{
@@ -75,6 +79,7 @@ int DCPCALL FsFindClose(HANDLE Hdl)
 {
 	if (env)
 		g_strfreev(env);
+
 	return ienv;
 }
 
@@ -86,7 +91,7 @@ BOOL DCPCALL FsDeleteFile(char* RemoteName)
 }
 */
 
-int DCPCALL FsExecuteFile(HWND MainWin,char* RemoteName,char* Verb)
+int DCPCALL FsExecuteFile(HWND MainWin, char* RemoteName, char* Verb)
 {
 
 	GtkWidget *dialog;
@@ -118,7 +123,7 @@ int DCPCALL FsExecuteFile(HWND MainWin,char* RemoteName,char* Verb)
 	gtk_widget_show(value);
 
 	button = gtk_button_new_from_stock(GTK_STOCK_APPLY);
-	gtk_signal_connect(GTK_OBJECT(button), "clicked", G_CALLBACK(SetValue), (gpointer) (GtkWidget*)(value));
+	gtk_signal_connect(GTK_OBJECT(button), "clicked", G_CALLBACK(SetValue), (gpointer)(GtkWidget*)(value));
 	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->action_area), button, TRUE, TRUE, 0);
 //	gtk_widget_show(button);
 
@@ -136,7 +141,7 @@ int DCPCALL FsExecuteFile(HWND MainWin,char* RemoteName,char* Verb)
 	return FS_EXEC_OK;
 }
 
-void DCPCALL FsGetDefRootName(char* DefRootName,int maxlen)
+void DCPCALL FsGetDefRootName(char* DefRootName, int maxlen)
 {
 	g_strlcpy(DefRootName, "Environment variables", maxlen);
 }
