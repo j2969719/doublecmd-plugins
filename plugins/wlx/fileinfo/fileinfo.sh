@@ -12,7 +12,7 @@ case "${filetype}" in
 		ctorrent -x "$file" || transmission-show "$file"
 		;;
 	[Ss][Oo])
-		file "$file" && nm -C -D "$file"
+		nm -C -D "$file"
 		;;
 	[Mm][Oo])
 		msgunfmt "$file" || cat "$file"
@@ -133,10 +133,10 @@ case "${filetype}" in
 	*)
 		case "$(file -b --mime-type $file)" in
 			"application/x-executable")
-				file "$file" && nm -C -D "$file" && ldd  "$file"
+				nm -C -D "$file" && ldd  "$file"
 				;;
 			"application/x-sharedlib")
-				file "$file" && nm -C -D "$file" && ldd  "$file"
+				nm -C -D "$file" && ldd  "$file"
 				;;
 			"application/zip")
 				7z l "$file" || unzip -v "$file"
