@@ -39,9 +39,9 @@ gboolean gtk_text_iter_forward_search_nocase(GtkTextIter *iter,
 {
 	gunichar c;
 	gchar *lctext = g_strdup(text);    /* copy text */
-	gsize textlen = strlen(text);    /* get length */
+	gsize textlen = g_utf8_strlen(text, -1);    /* get length */
 
-	lctext = g_ascii_strdown(lctext, -1);
+	lctext = g_utf8_strdown(lctext, -1);      /* convert to lower-case */
 
 	for (;;)                /* iterate over all chars in range */
 	{
@@ -94,9 +94,9 @@ gboolean gtk_text_iter_backward_search_nocase(GtkTextIter *iter,
 {
 	gunichar c;
 	gchar *lctext = g_strdup(text);    /* copy text */
-	gsize textlen = strlen(text);    /* get length */
+	gsize textlen = g_utf8_strlen(text, -1);    /* get length */
 
-	lctext = g_ascii_strdown(lctext, -1);      /* convert to lower-case */
+	lctext = g_utf8_strdown(lctext, -1);      /* convert to lower-case */
 	*mend = *iter;        /* initialize end iterator */
 
 	while (gtk_text_iter_backward_char(iter))
