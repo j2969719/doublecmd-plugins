@@ -77,7 +77,7 @@ case "${filetype}" in
 			odt2txt "$file"
 		;;
 	[Dd][Oo][Cc]|[Rr][Tt][Ff])
-			catdoc -w "$file" #|  iconv -f "KOI8-R" -t "UTF-8"
+		catdoc -w "$file" #|  iconv -f "KOI8-R" -t "UTF-8"
 		;;
 	[Xx][Ll][Ss])
 		which xlhtml >/dev/null 2>&1 && {
