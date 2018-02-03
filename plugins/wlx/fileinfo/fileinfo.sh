@@ -6,6 +6,7 @@ file=$1
 filetype="${1##*.}"
 #echo "$filetype"
 file -b "$1"
+#du -h –max-depth=1 "$1"
 case "${filetype}" in
 	[Tt][Oo][Rr][Rr][Ee][Nn][Tt])
 		ctorrent -x "$file" || transmission-show "$file"
@@ -63,9 +64,6 @@ case "${filetype}" in
 	[Zz][Oo][Oo])
 		zoo l "$file"
 		;;
-	[Pp][Kk]4|[Oo][Xx][Tt])
-		unzip -v "$file"
-		;;
 	[Mm][Ss][Ii])
 		msiinfo suminfo "$file" && msiextract -l "$file"
 		;;
@@ -121,8 +119,8 @@ case "${filetype}" in
 		;;
 	[Ee][Xx][Ee]|[Dd][Ll][Ll])
 		exiftool "$file" || \
-                wrestool --extract --raw --type=version "$file" |  strings -el
-                ;;
+		wrestool --extract --raw --type=version "$file" |  strings -el
+		;;
 	[Ff][Bb][2])
 		xsltproc $COMMANDER_PATH/scripts/FB2_2_txt_ru.xsl "$file" |  iconv -f "windows-1251" -t "UTF-8"
 		;;
@@ -132,6 +130,23 @@ case "${filetype}" in
 	[Hh][Tt][Mm][Ll]|[Hh][Tt][Mm])
 		links -dump "$file" 2>/dev/null || w3m -dump "$file" 2>/dev/null || lynx -dump "$file"
 		;;
-		*)
+	*)
+		case "$(file -b --mime-type $file)" in
+			"application/x-executable")
+				file "$file" && nm -C -D "$file" && ldd  "$file"
 				;;
+			"application/x-sharedlib")
+				file "$file" && nm -C -D "$file" && ldd  "$file"
+				;;
+			"application/zip")
+				7z l "$file" || unzip -v "$file"
+				;;
+			"application/x-sqlite3")
+				sqlite3 "$file" .dbinfo .dump
+				;;
+			#"inode/directory")
+				#cd "$file" && du -h --apparent-size | sort -hr
+				#;;
 		esac
+		;;
+esac

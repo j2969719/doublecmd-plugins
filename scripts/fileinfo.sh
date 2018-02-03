@@ -49,7 +49,7 @@ case "${filetype}" in
 	[Cc][Pp][Ii][Oo])
 		cpio -itv < "$file" 2>/dev/null
 		;;
-	7[Zz]|[Gg][Zz]|[Xx][Zz]|[Tt][Xx][Zz]|[Bb][Zz]2)
+	7[Zz]|[Gg][Zz]|[Xx][Zz]|[Tt][Xx][Zz]|[Ii][Mm][Gg]|[Ii][Mm][Aa]|[Bb][Zz]2)
 		7za l "$file" 2>/dev/null || 7z l "$file"
 		;;
 	[Aa][Cc][Ee])
@@ -59,16 +59,13 @@ case "${filetype}" in
 		arc l "$file"
 		;;
 	[Zz][Ii][Pp])
-                unzip -v "$file"
+		7z l "$file" || unzip -v "$file"
 		;;
 	[Zz][Oo][Oo])
 		zoo l "$file"
 		;;
-        [Pp][Kk]4|[Oo][Xx][Tt])
-                unzip -v "$file"
-		;;
-        [Mm][Ss][Ii])
-                msiinfo suminfo "$file" && msiextract -l "$file"
+	[Mm][Ss][Ii])
+		msiinfo suminfo "$file" && msiextract -l "$file"
 		;;
 	[Pp][Ss])
 		ps2ascii "$file"
@@ -80,8 +77,8 @@ case "${filetype}" in
 			odt2txt "$file"
 		;;
 	[Dd][Oo][Cc]|[Rr][Tt][Ff])
-                catdoc -w "$file" #|  iconv -f "KOI8-R" -t "UTF-8"
-                ;;
+			catdoc -w "$file" #|  iconv -f "KOI8-R" -t "UTF-8"
+		;;
 	[Xx][Ll][Ss])
 		which xlhtml >/dev/null 2>&1 && {
 			tmp=`mktemp -d ${TMPDIR:-/tmp}/%p.XXXXXX`
@@ -92,42 +89,64 @@ case "${filetype}" in
 		#	xls2csv "$file" |  iconv -f "KOI8R" -t "UTF-8" || \
 		#	strings "$file"
 		;;
-        [Xx][Ll][Ss][Xx])
-                xlsx2csv "$file" | sed -e 's/,,/, ,/g' | column -s, -t
+	[Xx][Ll][Ss][Xx])
+		xlsx2csv "$file" | sed -e 's/,,/, ,/g' | column -s, -t
 		;;
 	[Dd][Vv][Ii])
 		which dvi2tty >/dev/null 2>&1 && \
 			dvi2tty "$file" || \
 			catdvi "$file"
 		;;
-	[Dd][Jj][Vv][Uu])
+	[Dd][Jj][Vv][Uu]|[Dd][Jj][Vv])
 		djvused -e print-pure-txt "$file"
 		;;
 	[Cc][Ss][Vv])
 		cat "$file" | sed -e 's/,,/, ,/g' | column -s, -t
 		;;
-
 	[Ee][Pp][Uu][Bb])
 		einfo -v "$file"
 		;;
+	[Aa][Nn][Ss])
+		strings | cat "$file" |  iconv -f "866" -t "UTF-8"
+		;;
+	[Zz][Pp][Aa][Qq])
+		zpaq l "$file"
+		;;
 	[Dd][Oo][Cc][Xx])
 		#docx2txt.pl "$file" -
-                unzip -p "$file" | grep --text '<w:r' | sed 's/<w:p[^<\/]*>/ \
-/g' | sed 's/<[^<]*>//g' | grep -v '^[[:space:]]*$' | sed G
+		unzip -p "$file" | grep --text '<w:r' | sed 's/<w:p[^<\/]*>/ \
+			/g' | sed 's/<[^<]*>//g' | grep -v '^[[:space:]]*$' | sed G
 		;;
-        [Ee][Xx][Ee]|[Dd][Ll][Ll])
+	[Ee][Xx][Ee]|[Dd][Ll][Ll])
+		exiftool "$file" || \
 		wrestool --extract --raw --type=version "$file" |  strings -el
 		;;
-        [Ff][Bb][2])
+	[Ff][Bb][2])
 		xsltproc $COMMANDER_PATH/scripts/FB2_2_txt_ru.xsl "$file" |  iconv -f "windows-1251" -t "UTF-8"
 		;;
-
 	[Ii][Ss][Oo])
 		isoinfo -d -i "$file" && isoinfo -l -R -J -i "$file"
 		;;
 	[Hh][Tt][Mm][Ll]|[Hh][Tt][Mm])
 		links -dump "$file" 2>/dev/null || w3m -dump "$file" 2>/dev/null || lynx -dump "$file"
 		;;
-		*)
+	*)
+		case "$(file -b --mime-type $file)" in
+			"application/x-executable")
+				file "$file" && nm -C -D "$file" && ldd  "$file"
 				;;
+			"application/x-sharedlib")
+				file "$file" && nm -C -D "$file" && ldd  "$file"
+				;;
+			"application/zip")
+				7z l "$file" || unzip -v "$file"
+				;;
+			"application/x-sqlite3")
+				sqlite3 "$file" .dbinfo .dump
+				;;
+			#"inode/directory")
+				#cd "$file" && du -h --apparent-size | sort -hr
+				#;;
 		esac
+		;;
+esac
