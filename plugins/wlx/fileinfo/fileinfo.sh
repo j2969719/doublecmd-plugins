@@ -49,8 +49,11 @@ case "${filetype}" in
 	[Cc][Pp][Ii][Oo])
 		cpio -itv < "$file" 2>/dev/null
 		;;
-	7[Zz]|[Gg][Zz]|[Xx][Zz]|[Tt][Xx][Zz]|[Ii][Mm][Gg]|[Ii][Mm][Aa]|[Bb][Zz]2)
+	7[Zz]|[Ii][Mm][Gg]|[Ii][Mm][Aa]|[Vv][Mm][Dd][Kk])
 		7za l "$file" 2>/dev/null || 7z l "$file"
+		;;
+	[Gg][Zz]|[Xx][Zz]|[Bb][Zz]2|[Ll][Zz][Mm][Aa]|[Tt][Xx][Zz]|[Tt][Gg][Zz]|[Tt][Bb][Zz]|[Tt][Ll][Zz])
+		tar -tvf "$file"
 		;;
 	[Aa][Cc][Ee])
 		unace v -y "$file"
