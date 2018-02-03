@@ -6,6 +6,8 @@
 /*Эта программа распространяется в надежде, что она будет полезна,*/
 /*Но БЕЗ КАКИХ-ЛИБО ГАРАНТИЙ*/
 
+// https://doublecmd.sourceforge.io/forum/viewtopic.php?f=8&t=2727
+
 #define _GNU_SOURCE
 
 #include <stdio.h>
