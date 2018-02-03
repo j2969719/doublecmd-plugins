@@ -1,4 +1,4 @@
-/* 
+/*
    http://www.bravegnu.org/gtktext/x561.html
    Joe Arose updated code to gtk3 and gtksourceview-3.0.
 */
@@ -28,6 +28,117 @@ gint s_tab, p_above, p_below;
 
 GtkWidget *sView; // ...
 
+/** case insensitive forward search for implementation without
+ *  GtkSourceView.
+ */
+gboolean gtk_text_iter_forward_search_nocase(GtkTextIter *iter,
+                const gchar *text,
+                GtkTextSearchFlags flags,
+                GtkTextIter *mstart,
+                GtkTextIter *mend)
+{
+	gunichar c;
+	gchar *lctext = g_strdup(text);    /* copy text */
+	gsize textlen = strlen(text);    /* get length */
+
+	lctext = g_ascii_strdown(lctext, -1);
+
+	for (;;)                /* iterate over all chars in range */
+	{
+
+		gsize len = textlen;               /* get char at iter */
+		c = g_unichar_tolower(gtk_text_iter_get_char(iter));
+
+		if (c == (gunichar)lctext[0]) /* compare 1st in lctext */
+		{
+			*mstart = *iter;      /* set start iter to current */
+
+			for (gsize i = 0; i < len; i++)
+			{
+				c = g_unichar_tolower(gtk_text_iter_get_char(iter));
+
+				/* compare/advance -- order IS important */
+				if (c != (gunichar)lctext[i] ||
+				                !gtk_text_iter_forward_char(iter))
+					goto next;              /* start next search */
+			}
+
+			*mend = *iter;                  /* set end iter */
+
+			if (lctext) g_free(lctext);     /* free lctext  */
+
+			return TRUE;                    /* return true  */
+		}
+
+next:;  /* if at end of selecton break */
+
+		if (!gtk_text_iter_forward_char(iter))
+			break;
+	}
+
+	if (lctext) g_free(lctext);     /* free lctext */
+
+	if (mstart || mend || flags) {}
+
+	return FALSE;
+}
+
+/** case insensitive backward search for implementation without
+ *  GtkSourceView.
+ */
+gboolean gtk_text_iter_backward_search_nocase(GtkTextIter *iter,
+                const gchar *text,
+                GtkTextSearchFlags flags,
+                GtkTextIter *mstart,
+                GtkTextIter *mend)
+{
+	gunichar c;
+	gchar *lctext = g_strdup(text);    /* copy text */
+	gsize textlen = strlen(text);    /* get length */
+
+	lctext = g_ascii_strdown(lctext, -1);      /* convert to lower-case */
+	*mend = *iter;        /* initialize end iterator */
+
+	while (gtk_text_iter_backward_char(iter))
+	{
+
+		gsize len = textlen - 1;  /* index for last in lctext */
+		c = g_unichar_tolower(gtk_text_iter_get_char(iter));
+
+		if (c == (gunichar)lctext[len]) /* initial comparison */
+		{
+			/* iterate over remaining chars in lctext/compare */
+			while (len-- && gtk_text_iter_backward_char(iter))
+			{
+				c = g_unichar_tolower(gtk_text_iter_get_char(iter));
+
+				if (c != (gunichar)lctext[len])
+				{
+					/* reset iter to right of char */
+					gtk_text_iter_forward_char(iter);
+					goto prev;
+				}
+			}
+
+			*mstart = *iter; /* set start iter before last char */
+
+			if (lctext) g_free(lctext);         /* free lctext */
+
+			return TRUE;                    /* return success */
+		}
+
+prev:
+		;
+		*mend = *iter;   /* set end iter after next search char */
+	}
+
+	if (lctext) g_free(lctext);     /* free lctext */
+
+	if (mstart || mend || flags) {}
+
+	return FALSE;   /* no match */
+}
+
 
 static gboolean open_file(GtkSourceBuffer *sBuf, const gchar *filename);
 
@@ -36,17 +147,17 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 {
 	GtkWidget *gFix;
 	GtkWidget *pScrollWin;
-//	GtkWidget *sView;
+	//GtkWidget *sView;
 	GtkSourceLanguageManager *lm;
 	GtkSourceStyleSchemeManager *scheme_manager;
 	GtkSourceStyleScheme *scheme;
 	GtkSourceBuffer *sBuf;
 
-	gFix = gtk_vbox_new(FALSE , 5);
+	gFix = gtk_vbox_new(FALSE, 5);
 	gtk_container_add(GTK_CONTAINER(GTK_WIDGET(ParentWin)), gFix);
 
 	/* Create a Scrolled Window that will contain the GtkSourceView */
-	pScrollWin = gtk_scrolled_window_new (NULL, NULL);
+	pScrollWin = gtk_scrolled_window_new(NULL, NULL);
 	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(pScrollWin), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
 
 	/* Now create a GtkSourceLanguageManager */
@@ -54,7 +165,7 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 
 	/* and a GtkSourceBuffer to hold text (similar to GtkTextBuffer) */
 	sBuf = GTK_SOURCE_BUFFER(gtk_source_buffer_new(NULL));
-	g_object_ref (lm);
+	g_object_ref(lm);
 	g_object_set_data_full(G_OBJECT(sBuf), "languages-manager", lm, (GDestroyNotify)g_object_unref);
 	g_object_set_data_full(G_OBJECT(gFix), "srcbuf", sBuf, (GDestroyNotify)g_object_unref);
 
@@ -64,6 +175,7 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	gtk_source_view_set_show_line_numbers(GTK_SOURCE_VIEW(sView), line_num);
 	gtk_source_view_set_tab_width(GTK_SOURCE_VIEW(sView), s_tab);
 	gtk_source_view_set_highlight_current_line(GTK_SOURCE_VIEW(sView), hcur_line);
+
 	if (draw_spaces)
 		gtk_source_view_set_draw_spaces(GTK_SOURCE_VIEW(sView), GTK_SOURCE_DRAW_SPACES_ALL);
 
@@ -81,6 +193,7 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	scheme = gtk_source_style_scheme_manager_get_scheme(scheme_manager, style);
 	gtk_source_buffer_set_style_scheme(sBuf, scheme);
 	gtk_text_view_set_editable(GTK_TEXT_VIEW(sView), FALSE);
+
 	if (no_cursor)
 		gtk_text_view_set_cursor_visible(GTK_TEXT_VIEW(sView), FALSE);
 
@@ -109,12 +222,13 @@ static gboolean open_file(GtkSourceBuffer *sBuf, const gchar *filename)
 
 	g_return_val_if_fail(sBuf != NULL, FALSE);
 	g_return_val_if_fail(filename != NULL, FALSE);
-	g_return_val_if_fail(GTK_SOURCE_BUFFER (sBuf), FALSE);
+	g_return_val_if_fail(GTK_SOURCE_BUFFER(sBuf), FALSE);
 
 	/* get the Language for source mimetype */
 	lm = g_object_get_data(G_OBJECT(sBuf), "languages-manager");
 
 	content_type = g_content_type_guess(filename, NULL, 0, &result_uncertain);
+
 	if (result_uncertain)
 	{
 		g_free(content_type);
@@ -122,31 +236,40 @@ static gboolean open_file(GtkSourceBuffer *sBuf, const gchar *filename)
 	}
 
 	language = gtk_source_language_manager_guess_language(lm, filename, content_type);
+
 	if (!language)
 	{
 		ext = g_strrstr(filename, ".");
+
 		if (ext != NULL)
 		{
 			ext = g_strdup_printf("%s;", ext);
 			ext = g_ascii_strdown(ext, -1);
+
 			if ((ext_pascal != NULL) && (g_strrstr(ext_pascal, ext) != NULL))
 				language = gtk_source_language_manager_get_language(lm, "pascal");
 			else if ((ext_xml != NULL) && (g_strrstr(ext_xml, ext) != NULL))
 				language = gtk_source_language_manager_get_language(lm, "xml");
 			else if ((ext_ini != NULL) && (g_strrstr(ext_ini, ext) != NULL))
 				language = gtk_source_language_manager_get_language(lm, "ini");
+
 			g_free(ext);
 		}
 	}
 
 	g_free(content_type);
-	g_return_val_if_fail(language != NULL, FALSE);
+
+	//g_return_val_if_fail(language != NULL, FALSE);
+	if (!language)
+		return FALSE;
+
 	gtk_source_buffer_set_language(sBuf, language);
 	g_print("Language: [%s]\n", gtk_source_language_get_name(language));
 
 
 	/* Now load the file from Disk */
 	io = g_io_channel_new_file(filename, "r", &err);
+
 	if (!io)
 	{
 		g_print("gtksourceview.wlx (%s): %s\n", filename, (err)->message);
@@ -164,35 +287,40 @@ static gboolean open_file(GtkSourceBuffer *sBuf, const gchar *filename)
 	//gtk_text_buffer_set_text (GTK_TEXT_BUFFER(sBuf), "", 0);
 	buffer = g_malloc(4096);
 	reading = TRUE;
+
 	while (reading)
 	{
 		gsize bytes_read;
 		GIOStatus status;
 
 		status = g_io_channel_read_chars(io, buffer, 4096, &bytes_read, &err);
+
 		switch (status)
 		{
-			case G_IO_STATUS_EOF: 
-				reading = FALSE;
+		case G_IO_STATUS_EOF:
+			reading = FALSE;
 
-			case G_IO_STATUS_NORMAL:
-				if (bytes_read == 0) continue; 
-				gtk_text_buffer_get_end_iter(GTK_TEXT_BUFFER(sBuf), &iter);
-				gtk_text_buffer_insert(GTK_TEXT_BUFFER(sBuf), &iter, buffer, bytes_read);
+		case G_IO_STATUS_NORMAL:
+			if (bytes_read == 0) continue;
+
+			gtk_text_buffer_get_end_iter(GTK_TEXT_BUFFER(sBuf), &iter);
+			gtk_text_buffer_insert(GTK_TEXT_BUFFER(sBuf), &iter, buffer, bytes_read);
 			break;
 
-			case G_IO_STATUS_AGAIN: continue;
+		case G_IO_STATUS_AGAIN:
+			continue;
 
-			case G_IO_STATUS_ERROR:
+		case G_IO_STATUS_ERROR:
 
-			default:
-				g_print("gtksourceview.wlx (%s): %s\n", filename, (err)->message);
-				/* because of error in input we clear already loaded text */
-				gtk_text_buffer_set_text(GTK_TEXT_BUFFER(sBuf), "", 0);
-				reading = FALSE;
-				break;
+		default:
+			g_print("gtksourceview.wlx (%s): %s\n", filename, (err)->message);
+			/* because of error in input we clear already loaded text */
+			gtk_text_buffer_set_text(GTK_TEXT_BUFFER(sBuf), "", 0);
+			reading = FALSE;
+			break;
 		}
 	}
+
 	g_free(buffer);
 
 	gtk_source_buffer_end_not_undoable_action(sBuf);
@@ -210,7 +338,7 @@ static gboolean open_file(GtkSourceBuffer *sBuf, const gchar *filename)
 	gtk_text_buffer_get_start_iter(GTK_TEXT_BUFFER(sBuf), &iter);
 	gtk_text_buffer_place_cursor(GTK_TEXT_BUFFER(sBuf), &iter);
 
-	g_object_set_data_full(G_OBJECT(sBuf),"filename", g_strdup(filename), (GDestroyNotify)g_free);
+	g_object_set_data_full(G_OBJECT(sBuf), "filename", g_strdup(filename), (GDestroyNotify)g_free);
 
 	return TRUE;
 }
@@ -220,12 +348,12 @@ void DCPCALL ListCloseWindow(HWND ListWin)
 	gtk_widget_destroy(GTK_WIDGET(ListWin));
 }
 
-void DCPCALL ListGetDetectString(char* DetectString,int maxlen)
+void DCPCALL ListGetDetectString(char* DetectString, int maxlen)
 {
 	strncpy(DetectString, _detectstring, maxlen);
 }
 
-int DCPCALL ListSearchText(HWND ListWin, char* SearchString,int SearchParameter)
+int DCPCALL ListSearchText(HWND ListWin, char* SearchString, int SearchParameter)
 {
 	GtkSourceBuffer *sBuf;
 	GtkTextMark *last_pos;
@@ -233,16 +361,21 @@ int DCPCALL ListSearchText(HWND ListWin, char* SearchString,int SearchParameter)
 	gboolean found;
 
 	sBuf = g_object_get_data(G_OBJECT(ListWin), "srcbuf");
-	last_pos = gtk_text_buffer_get_mark (GTK_TEXT_BUFFER(sBuf), "last_pos");
+	last_pos = gtk_text_buffer_get_mark(GTK_TEXT_BUFFER(sBuf), "last_pos");
+
 	if (last_pos == NULL)
 		gtk_text_buffer_get_start_iter(GTK_TEXT_BUFFER(sBuf), &iter);
-	else 
+	else
 		gtk_text_buffer_get_iter_at_mark(GTK_TEXT_BUFFER(sBuf), &iter, last_pos);
 
-	if (SearchParameter & lcs_backwards)
+	if ((SearchParameter & lcs_backwards) && (SearchParameter & lcs_matchcase))
 		found = gtk_text_iter_backward_search(&iter, SearchString, GTK_TEXT_SEARCH_TEXT_ONLY, &mend, &mstart, NULL);
-	else
+	else if (SearchParameter & lcs_matchcase)
 		found = gtk_text_iter_forward_search(&iter, SearchString, GTK_TEXT_SEARCH_TEXT_ONLY, &mstart, &mend, NULL);
+	else if (SearchParameter & lcs_backwards)
+		found = gtk_text_iter_backward_search_nocase(&iter, SearchString, GTK_TEXT_SEARCH_TEXT_ONLY, &mend, &mstart);
+	else
+		found = gtk_text_iter_forward_search_nocase(&iter, SearchString, GTK_TEXT_SEARCH_TEXT_ONLY, &mstart, &mend);
 
 	if (found)
 	{
@@ -251,40 +384,44 @@ int DCPCALL ListSearchText(HWND ListWin, char* SearchString,int SearchParameter)
 		//--------------------------------------------------------------------------------
 		GtkTextBuffer *tmp = gtk_text_view_get_buffer(GTK_TEXT_VIEW(sView)); // ...
 		last_pos = gtk_text_buffer_get_mark(tmp, "last_pos");
+
 		if (last_pos)
 			gtk_text_view_scroll_mark_onscreen(GTK_TEXT_VIEW(sView), last_pos);
+
 		//--------------------------------------------------------------------------------
 	}
-	else 
+	else
 	{
-		GtkWidget *dialog = gtk_message_dialog_new(GTK_WINDOW(gtk_widget_get_toplevel (GTK_WIDGET(ListWin))), 
-								GTK_DIALOG_MODAL, GTK_MESSAGE_INFO, GTK_BUTTONS_OK, 
-								"\"%s\" %s!", SearchString, nfstr);
+		GtkWidget *dialog = gtk_message_dialog_new(GTK_WINDOW(gtk_widget_get_toplevel(GTK_WIDGET(ListWin))),
+		                    GTK_DIALOG_MODAL, GTK_MESSAGE_INFO, GTK_BUTTONS_OK,
+		                    "\"%s\" %s!", SearchString, nfstr);
 		gtk_dialog_run(GTK_DIALOG(dialog));
 		gtk_widget_destroy(dialog);
 	}
 }
 
-int DCPCALL ListSendCommand(HWND ListWin,int Command,int Parameter)
+int DCPCALL ListSendCommand(HWND ListWin, int Command, int Parameter)
 {
 	GtkSourceBuffer *sBuf;
 	GtkTextIter p;
 
-	sBuf = g_object_get_data (G_OBJECT (ListWin), "srcbuf");
+	sBuf = g_object_get_data(G_OBJECT(ListWin), "srcbuf");
 
-	switch(Command)
+	switch (Command)
 	{
-		case lc_copy :
-			gtk_text_buffer_copy_clipboard(GTK_TEXT_BUFFER(sBuf), gtk_clipboard_get(GDK_SELECTION_CLIPBOARD));
-			break;
-		case lc_selectall :
-			gtk_text_buffer_get_start_iter(GTK_TEXT_BUFFER(sBuf), &p);
-			gtk_text_buffer_place_cursor(GTK_TEXT_BUFFER(sBuf), &p);
-			gtk_text_buffer_get_end_iter(GTK_TEXT_BUFFER(sBuf), &p);
-			gtk_text_buffer_move_mark_by_name(GTK_TEXT_BUFFER(sBuf), "selection_bound", &p);
-			break;
-		default :
-			return LISTPLUGIN_ERROR;
+	case lc_copy :
+		gtk_text_buffer_copy_clipboard(GTK_TEXT_BUFFER(sBuf), gtk_clipboard_get(GDK_SELECTION_CLIPBOARD));
+		break;
+
+	case lc_selectall :
+		gtk_text_buffer_get_start_iter(GTK_TEXT_BUFFER(sBuf), &p);
+		gtk_text_buffer_place_cursor(GTK_TEXT_BUFFER(sBuf), &p);
+		gtk_text_buffer_get_end_iter(GTK_TEXT_BUFFER(sBuf), &p);
+		gtk_text_buffer_move_mark_by_name(GTK_TEXT_BUFFER(sBuf), "selection_bound", &p);
+		break;
+
+	default :
+		return LISTPLUGIN_ERROR;
 	}
 }
 void DCPCALL ListSetDefaultParams(ListDefaultParamStruct* dps)
@@ -298,15 +435,18 @@ void DCPCALL ListSetDefaultParams(ListDefaultParamStruct* dps)
 
 	// Find in plugin directory
 	memset(&dlinfo, 0, sizeof(dlinfo));
+
 	if (dladdr(cfg_path, &dlinfo) != 0)
 	{
 		strncpy(cfg_path, dlinfo.dli_fname, PATH_MAX);
 		char *pos = strrchr(cfg_path, '/');
-		if (pos) 
+
+		if (pos)
 			strcpy(pos + 1, cfg_file);
 	}
 
 	cfg = g_key_file_new();
+
 	if (!g_key_file_load_from_file(cfg, cfg_path, G_KEY_FILE_KEEP_COMMENTS, &err))
 	{
 		g_print("gtksourceview.wlx (%s): %s\n", cfg_path, (err)->message);
@@ -325,70 +465,98 @@ void DCPCALL ListSetDefaultParams(ListDefaultParamStruct* dps)
 	else
 	{
 		font = g_key_file_get_string(cfg, "Appearance", "Font", NULL);
+
 		if (!font)
 			font = "monospace 12";
+
 		style = g_key_file_get_string(cfg, "Appearance", "Style", NULL);
+
 		if (!style)
 			style = "classic";
+
 		bval = g_key_file_get_boolean(cfg, "Flags", "LineNumbers", &err);
+
 		if (!bval && !err)
 			line_num = FALSE;
 		else
 			line_num = TRUE;
+
 		if (err)
 			err = NULL;
+
 		bval = g_key_file_get_boolean(cfg, "Flags", "HighlightCurLine", &err);
+
 		if (!bval && !err)
 			hcur_line = FALSE;
 		else
 			hcur_line = TRUE;
+
 		if (err)
 			err = NULL;
+
 		bval = g_key_file_get_boolean(cfg, "Flags", "Spaces", &err);
+
 		if (!bval && !err)
 			draw_spaces = FALSE;
 		else
 			draw_spaces = TRUE;
+
 		if (err)
 			err = NULL;
+
 		bval = g_key_file_get_boolean(cfg, "Flags", "NoCursor", &err);
+
 		if (!bval && !err)
 			no_cursor = FALSE;
 		else
 			no_cursor = TRUE;
+
 		nfstr = g_key_file_get_string(cfg, "Appearance", "NotFoundStr", NULL);
+
 		if (!nfstr)
 			nfstr = "not found";
+
 		if (err)
 			err = NULL;
+
 		s_tab = g_key_file_get_integer(cfg, "Appearance", "TabSize", &err);
+
 		if (err)
 		{
 			s_tab = 8;
 			err = NULL;
 		}
+
 		p_above = g_key_file_get_integer(cfg, "Appearance", "PAbove", &err);
+
 		if (err)
 		{
 			p_above = 0;
 			err = NULL;
 		}
+
 		p_below = g_key_file_get_integer(cfg, "Appearance", "PBelow", &err);
+
 		if (err)
 		{
 			p_below = 0;
 			err = NULL;
 		}
+
 		bval = g_key_file_get_boolean(cfg, "Flags", "Wrap", NULL);
+
 		if (bval)
 			wrap_mode = GTK_WRAP_WORD;
 		else
 			wrap_mode = GTK_WRAP_NONE;
+
 		ext_pascal = g_key_file_get_string(cfg, "Override", "Pascal", NULL);
 		ext_xml = g_key_file_get_string(cfg, "Override", "XML", NULL);
 		ext_ini = g_key_file_get_string(cfg, "Override", "INI", NULL);
 	}
+
 	g_key_file_free(cfg);
+
 	if (err)
 		g_error_free(err);
 }
