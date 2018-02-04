@@ -1,9 +1,8 @@
 #!/bin/bash
 path=$1
 filemane=$(basename $path)
-tmp=`mktemp -d ${TMPDIR:-/tmp}/%p.XXXXXX`
+tmp=`mktemp -d ${TMPDIR:-/tmp}/deb_XXXXXX`
 file -b "$1"
-mkdir /tmp/testdeb/
 cp "$path" "$tmp"
 cd "$tmp"
 ar -x "$filemane"
