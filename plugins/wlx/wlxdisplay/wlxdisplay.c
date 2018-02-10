@@ -11,19 +11,21 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	GtkWidget *gFix;
 	GtkWidget *socket;
 
-	gFix = gtk_vbox_new(FALSE , 5);
-	gtk_container_add(GTK_CONTAINER (GTK_WIDGET(ParentWin)), gFix);
+	gFix = gtk_vbox_new(FALSE, 5);
+	gtk_container_add(GTK_CONTAINER(GTK_WIDGET(ParentWin)), gFix);
 
 	socket = gtk_socket_new();
 	gtk_container_add(GTK_CONTAINER(gFix), socket);
 	GdkNativeWindow id = gtk_socket_get_id(GTK_SOCKET(socket));
 	gchar *command = g_strdup_printf(_cmdstring, id, id, FileToLoad);
+
 	if (!g_spawn_command_line_async(command, NULL))
 	{
 		g_free(command);
 		gtk_widget_destroy(gFix);
 		return NULL;
 	}
+
 	g_free(command);
 
 	gtk_widget_show_all(gFix);
@@ -36,12 +38,12 @@ void DCPCALL ListCloseWindow(HWND ListWin)
 	gtk_widget_destroy(GTK_WIDGET(ListWin));
 }
 
-void DCPCALL ListGetDetectString(char* DetectString,int maxlen)
+void DCPCALL ListGetDetectString(char* DetectString, int maxlen)
 {
 	strncpy(DetectString, _detectstring, maxlen);
 }
 
-int DCPCALL ListSearchDialog(HWND ListWin,int FindNext)
+int DCPCALL ListSearchDialog(HWND ListWin, int FindNext)
 {
 	return LISTPLUGIN_OK;
 }

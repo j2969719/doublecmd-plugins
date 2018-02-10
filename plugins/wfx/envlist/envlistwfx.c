@@ -125,7 +125,7 @@ int DCPCALL FsExecuteFile(HWND MainWin, char* RemoteName, char* Verb)
 	button = gtk_button_new_from_stock(GTK_STOCK_APPLY);
 	gtk_signal_connect(GTK_OBJECT(button), "clicked", G_CALLBACK(SetValue), (gpointer)(GtkWidget*)(value));
 	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->action_area), button, TRUE, TRUE, 0);
-//	gtk_widget_show(button);
+	//gtk_widget_show(button);
 
 	button = gtk_button_new_from_stock(GTK_STOCK_CLOSE);
 	gtk_signal_connect(GTK_OBJECT(button), "clicked", G_CALLBACK(CloseDialog), dialog);

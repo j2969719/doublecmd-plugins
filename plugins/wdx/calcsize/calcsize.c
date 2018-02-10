@@ -13,6 +13,7 @@ uint64_t calcdirszie(const char *name)
 	uint64_t size = 0;
 	struct dirent *ent;
 	struct stat buf;
+
 	if ((dir = opendir(name)) != NULL)
 	{
 		while ((ent = readdir(dir)) != NULL)
@@ -23,9 +24,11 @@ uint64_t calcdirszie(const char *name)
 				{
 					char file[PATH_MAX];
 					sprintf(file, "%s/%s", name, ent->d_name);
+
 					if (stat(file, &buf) == 0)
 						size += buf.st_size;
 				}
+
 				if (ent->d_type == DT_DIR)
 				{
 					char path[PATH_MAX];
@@ -34,51 +37,63 @@ uint64_t calcdirszie(const char *name)
 				}
 			}
 		}
+
 		closedir(dir);
 	}
+
 	return size;
 }
 
 double sizecnv(uint64_t size, int bytes, int bpow)
 {
 	double pb = pow(bytes, bpow);
-	return round(size / pb * 10) / 10; 
+	return round(size / pb * 10) / 10;
 }
 
 int DCPCALL ContentGetSupportedField(int FieldIndex, char* FieldName, char* Units, int maxlen)
 {
-	strncpy(Units, "default|files only|dirs only", maxlen-1);
-	switch(FieldIndex)
+	strncpy(Units, "default|files only|dirs only", maxlen - 1);
+
+	switch (FieldIndex)
 	{
-		case 0:
-			strncpy(FieldName, "bytes", maxlen-1);
-			return ft_numeric_64;
-		case 1:
-			strncpy(FieldName, "K", maxlen-1);
-			return ft_numeric_floating;
-		case 2:
-			strncpy(FieldName, "M", maxlen-1);
-			return ft_numeric_floating;
-		case 3:
-			strncpy(FieldName, "G", maxlen-1);
-			return ft_numeric_floating;
-		case 4:
-			strncpy(FieldName, "T", maxlen-1);
-			return ft_numeric_floating;
-		case 5:
-			strncpy(FieldName, "kB", maxlen-1);
-			return ft_numeric_floating;
-		case 6:
-			strncpy(FieldName, "MB", maxlen-1);
-			return ft_numeric_floating;
-		case 7:
-			strncpy(FieldName, "GB", maxlen-1);
-			return ft_numeric_floating;
-		case 8:
-			strncpy(FieldName, "TB", maxlen-1);
-			return ft_numeric_floating;
-		default:
-			return ft_nomorefields;
+	case 0:
+		strncpy(FieldName, "bytes", maxlen - 1);
+		return ft_numeric_64;
+
+	case 1:
+		strncpy(FieldName, "K", maxlen - 1);
+		return ft_numeric_floating;
+
+	case 2:
+		strncpy(FieldName, "M", maxlen - 1);
+		return ft_numeric_floating;
+
+	case 3:
+		strncpy(FieldName, "G", maxlen - 1);
+		return ft_numeric_floating;
+
+	case 4:
+		strncpy(FieldName, "T", maxlen - 1);
+		return ft_numeric_floating;
+
+	case 5:
+		strncpy(FieldName, "kB", maxlen - 1);
+		return ft_numeric_floating;
+
+	case 6:
+		strncpy(FieldName, "MB", maxlen - 1);
+		return ft_numeric_floating;
+
+	case 7:
+		strncpy(FieldName, "GB", maxlen - 1);
+		return ft_numeric_floating;
+
+	case 8:
+		strncpy(FieldName, "TB", maxlen - 1);
+		return ft_numeric_floating;
+
+	default:
+		return ft_nomorefields;
 	}
 }
 
@@ -89,81 +104,108 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 	uint64_t rsize;
 	double val;
 
-	if (strncmp(FileName+strlen(FileName)-3, "/..", 4) == 0)
+	if (strncmp(FileName + strlen(FileName) - 3, "/..", 4) == 0)
 		return ft_fileerror;
+
 	if (lstat(FileName, &buf) != 0)
 		return ft_fileerror;
+
 	if ((S_ISDIR(buf.st_mode)) && (UnitIndex != 1))
 		rsize = calcdirszie(FileName);
 	else if ((!S_ISDIR(buf.st_mode)) && (UnitIndex != 2))
 		rsize = buf.st_size;
-	else 
+	else
 		return ft_fieldempty;
 
-	switch(FieldIndex)
+	switch (FieldIndex)
 	{
-		case 0:
-			*(uint64_t*)FieldValue = rsize;
-			return ft_numeric_64;
-		case 1:
-			val = sizecnv(rsize, 1024, 1);
-			if (val == 0)
-				return ft_fieldempty;
-			else
-				*(double*)FieldValue = val;
-			break;
-		case 2:
-			val = sizecnv(rsize, 1024, 2);
-			if (val == 0)
-				return ft_fieldempty;
-			else
-				*(double*)FieldValue = val;
-			break;
-		case 3:
-			val = sizecnv(rsize, 1024, 3);
-			if (val == 0)
-				return ft_fieldempty;
-			else
-				*(double*)FieldValue = val;
-			break;
-		case 4:
-			val = sizecnv(rsize, 1024, 4);
-			if (val == 0)
-				return ft_fieldempty;
-			else
-				*(double*)FieldValue = val;
-			break;
-		case 5:
-			val = sizecnv(rsize, 1000, 1);
-			if (val == 0)
-				return ft_fieldempty;
-			else
-				*(double*)FieldValue = val;
-			break;
-		case 6:
-			val = sizecnv(rsize, 1000, 2);
-			if (val == 0)
-				return ft_fieldempty;
-			else
-				*(double*)FieldValue = val;
-			break;
-		case 7:
-			val = sizecnv(rsize, 1000, 3);
-			if (val == 0)
-				return ft_fieldempty;
-			else
-				*(double*)FieldValue = val;
-			break;
-		case 8:
-			val = sizecnv(rsize, 1000, 4);
-			if (val == 0)
-				return ft_fieldempty;
-			else
-				*(double*)FieldValue = val;
-			break;
-		default:
+	case 0:
+		*(uint64_t*)FieldValue = rsize;
+		return ft_numeric_64;
+
+	case 1:
+		val = sizecnv(rsize, 1024, 1);
+
+		if (val == 0)
 			return ft_fieldempty;
+		else
+			*(double*)FieldValue = val;
+
+		break;
+
+	case 2:
+		val = sizecnv(rsize, 1024, 2);
+
+		if (val == 0)
+			return ft_fieldempty;
+		else
+			*(double*)FieldValue = val;
+
+		break;
+
+	case 3:
+		val = sizecnv(rsize, 1024, 3);
+
+		if (val == 0)
+			return ft_fieldempty;
+		else
+			*(double*)FieldValue = val;
+
+		break;
+
+	case 4:
+		val = sizecnv(rsize, 1024, 4);
+
+		if (val == 0)
+			return ft_fieldempty;
+		else
+			*(double*)FieldValue = val;
+
+		break;
+
+	case 5:
+		val = sizecnv(rsize, 1000, 1);
+
+		if (val == 0)
+			return ft_fieldempty;
+		else
+			*(double*)FieldValue = val;
+
+		break;
+
+	case 6:
+		val = sizecnv(rsize, 1000, 2);
+
+		if (val == 0)
+			return ft_fieldempty;
+		else
+			*(double*)FieldValue = val;
+
+		break;
+
+	case 7:
+		val = sizecnv(rsize, 1000, 3);
+
+		if (val == 0)
+			return ft_fieldempty;
+		else
+			*(double*)FieldValue = val;
+
+		break;
+
+	case 8:
+		val = sizecnv(rsize, 1000, 4);
+
+		if (val == 0)
+			return ft_fieldempty;
+		else
+			*(double*)FieldValue = val;
+
+		break;
+
+	default:
+		return ft_fieldempty;
 	}
+
 	return ft_numeric_floating;
 }
-
