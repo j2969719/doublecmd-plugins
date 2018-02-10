@@ -5,7 +5,7 @@
 #define _detectstring  "(EXT=\"AVI\")|(EXT=\"MKV\")|(EXT=\"FLV\")|(EXT=\"MPG\")|\
 (EXT=\"MPEG\")|(EXT=\"MP4\")|(EXT=\"3GP\")|(EXT=\"MP3\")|(EXT=\"OGG\")|(EXT=\"WMA\")|\
 (EXT=\"BIK\")|(EXT=\"VOC\")|(EXT=\"WAV\")|(EXT=\"WEBM\")|(EXT=\"VOB\")|(EXT=\"ROQ\")|\
-(EXT=\"IVF\")|(EXT=\"MOV\")|(EXT=\"FLAC\")"
+(EXT=\"IVF\")|(EXT=\"MOV\")|(EXT=\"FLAC\")|(EXT=\"WMV\")"
 
 #define _cmdstring "mpv --force-window=yes --keep-open=yes --script-opts=osc-visibility=always\
  --cursor-autohide-fs-only --wid=%d \"%s\""
