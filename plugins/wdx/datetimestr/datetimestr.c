@@ -100,7 +100,9 @@ void DCPCALL ContentSetDefaultParams(ContentDefaultParamStruct* dps)
 	GError *err = NULL;
 	static char cfg_path[PATH_MAX];
 	const char* cfg_file = "settings.ini";
+	const gchar *prsetstr;
 	gchar *tmp;
+	gint i;
 	gboolean bval;
 
 	memset(&dlinfo, 0, sizeof(dlinfo));
@@ -120,125 +122,29 @@ void DCPCALL ContentSetDefaultParams(ContentDefaultParamStruct* dps)
 		g_print("datetime.wdx (%s): %s\n", cfg_path, (err)->message);
 	else
 	{
-		tmp = g_key_file_get_string(cfg, "Preset1", "Name", NULL);
-
-		if ((tmp) && (g_strcmp0(tmp, "") != 0))
-			fields[0].name = tmp;
-
-		tmp = g_key_file_get_string(cfg, "Preset1", "Format", NULL);
-
-		if ((tmp) && (g_strcmp0(tmp, "") != 0))
+		for (i = 0; i < 6; i++)
 		{
-			fields[0].format = tmp;
+			prsetstr = g_strdup_printf("Preset%d", i + 1);
+			tmp = g_key_file_get_string(cfg, prsetstr, "Name", NULL);
 
-			if (g_strcmp0(fields[0].name, "placeholder") == 0)
-				fields[0].name = fields[0].format;
+			if ((tmp) && (g_strcmp0(tmp, "") != 0))
+				fields[i].name = tmp;
+
+			tmp = g_key_file_get_string(cfg, prsetstr, "Format", NULL);
+
+			if ((tmp) && (g_strcmp0(tmp, "") != 0))
+			{
+				fields[i].format = tmp;
+
+				if (g_strcmp0(fields[i].name, "placeholder") == 0)
+					fields[i].name = fields[i].format;
+			}
+
+			bval = g_key_file_get_boolean(cfg, prsetstr, "Numeric", NULL);
+
+			if (bval == TRUE)
+				fields[i].type = ft_numeric_64;
 		}
-
-		bval = g_key_file_get_boolean(cfg, "Preset1", "Numeric", NULL);
-
-		if (bval == TRUE)
-			fields[0].type = ft_numeric_64;
-
-		tmp = g_key_file_get_string(cfg, "Preset2", "Name", NULL);
-
-		if ((tmp) && (g_strcmp0(tmp, "") != 0))
-			fields[1].name = tmp;
-
-		tmp = g_key_file_get_string(cfg, "Preset2", "Format", NULL);
-
-		if ((tmp) && (g_strcmp0(tmp, "") != 0))
-		{
-			fields[1].format = tmp;
-
-			if (g_strcmp0(fields[1].name, "placeholder") == 0)
-				fields[1].name = fields[1].format;
-		}
-
-		bval = g_key_file_get_boolean(cfg, "Preset2", "Numeric", NULL);
-
-		if (bval == TRUE)
-			fields[1].type = ft_numeric_64;
-
-		tmp = g_key_file_get_string(cfg, "Preset3", "Name", NULL);
-
-		if ((tmp) && (g_strcmp0(tmp, "") != 0))
-			fields[2].name = tmp;
-
-		tmp = g_key_file_get_string(cfg, "Preset3", "Format", NULL);
-
-		if ((tmp) && (g_strcmp0(tmp, "") != 0))
-		{
-			fields[2].format = tmp;
-
-			if (g_strcmp0(fields[2].name, "placeholder") == 0)
-				fields[2].name = fields[2].format;
-		}
-
-		bval = g_key_file_get_boolean(cfg, "Preset3", "Numeric", NULL);
-
-		if (bval == TRUE)
-			fields[2].type = ft_numeric_64;
-
-		tmp = g_key_file_get_string(cfg, "Preset4", "Name", NULL);
-
-		if ((tmp) && (g_strcmp0(tmp, "") != 0))
-			fields[3].name = tmp;
-
-		tmp = g_key_file_get_string(cfg, "Preset4", "Format", NULL);
-
-		if ((tmp) && (g_strcmp0(tmp, "") != 0))
-		{
-			fields[3].format = tmp;
-
-			if (g_strcmp0(fields[3].name, "placeholder") == 0)
-				fields[3].name = fields[3].format;
-		}
-
-		bval = g_key_file_get_boolean(cfg, "Preset4", "Numeric", NULL);
-
-		if (bval == TRUE)
-			fields[3].type = ft_numeric_64;
-
-		tmp = g_key_file_get_string(cfg, "Preset5", "Name", NULL);
-
-		if ((tmp) && (g_strcmp0(tmp, "") != 0))
-			fields[4].name = tmp;
-
-		tmp = g_key_file_get_string(cfg, "Preset5", "Format", NULL);
-
-		if ((tmp) && (g_strcmp0(tmp, "") != 0))
-		{
-			fields[4].format = tmp;
-
-			if (g_strcmp0(fields[4].name, "placeholder") == 0)
-				fields[4].name = fields[4].format;
-		}
-
-		bval = g_key_file_get_boolean(cfg, "Preset5", "Numeric", NULL);
-
-		if (bval == TRUE)
-			fields[4].type = ft_numeric_64;
-
-		tmp = g_key_file_get_string(cfg, "Preset6", "Name", NULL);
-
-		if ((tmp) && (g_strcmp0(tmp, "") != 0))
-			fields[5].name = tmp;
-
-		tmp = g_key_file_get_string(cfg, "Preset6", "Format", NULL);
-
-		if ((tmp) && (g_strcmp0(tmp, "") != 0))
-		{
-			fields[5].format = tmp;
-
-			if (g_strcmp0(fields[5].name, "placeholder") == 0)
-				fields[5].name = fields[5].format;
-		}
-
-		bval = g_key_file_get_boolean(cfg, "Preset6", "Numeric", NULL);
-
-		if (bval == TRUE)
-			fields[5].type = ft_numeric_64;
 	}
 
 	g_key_file_free(cfg);

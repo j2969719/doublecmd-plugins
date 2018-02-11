@@ -63,7 +63,8 @@ static void tb_fit_clicked(GtkToolItem *tooleditcopy, GtkWidget *imgview)
 
 static void tb_copy_clicked(GtkToolItem *tooleditcopy, GtkWidget *imgview)
 {
-	gtk_clipboard_set_image(gtk_clipboard_get(GDK_SELECTION_CLIPBOARD), gtk_image_view_get_pixbuf(GTK_IMAGE_VIEW(imgview)));
+	gtk_clipboard_set_image(gtk_clipboard_get(GDK_SELECTION_CLIPBOARD),
+	                        gtk_image_view_get_pixbuf(GTK_IMAGE_VIEW(imgview)));
 }
 
 static void tb_rotare_clicked(GtkToolItem *tooleditcopy, GtkWidget *imgview)
@@ -71,7 +72,9 @@ static void tb_rotare_clicked(GtkToolItem *tooleditcopy, GtkWidget *imgview)
 	if (gtk_anim_view_get_is_playing(GTK_ANIM_VIEW(imgview)))
 		gtk_anim_view_set_is_playing(GTK_ANIM_VIEW(imgview), FALSE);
 
-	gtk_image_view_set_pixbuf(GTK_IMAGE_VIEW(imgview), gdk_pixbuf_rotate_simple(gtk_image_view_get_pixbuf(GTK_IMAGE_VIEW(imgview)), GDK_PIXBUF_ROTATE_COUNTERCLOCKWISE), TRUE);
+	gtk_image_view_set_pixbuf(GTK_IMAGE_VIEW(imgview),
+	                          gdk_pixbuf_rotate_simple(gtk_image_view_get_pixbuf(GTK_IMAGE_VIEW(imgview)),
+	                                          GDK_PIXBUF_ROTATE_COUNTERCLOCKWISE), TRUE);
 }
 
 static void tb_rotare1_clicked(GtkToolItem *tooleditcopy, GtkWidget *imgview)
@@ -79,7 +82,9 @@ static void tb_rotare1_clicked(GtkToolItem *tooleditcopy, GtkWidget *imgview)
 	if (gtk_anim_view_get_is_playing(GTK_ANIM_VIEW(imgview)))
 		gtk_anim_view_set_is_playing(GTK_ANIM_VIEW(imgview), FALSE);
 
-	gtk_image_view_set_pixbuf(GTK_IMAGE_VIEW(imgview), gdk_pixbuf_rotate_simple(gtk_image_view_get_pixbuf(GTK_IMAGE_VIEW(imgview)), GDK_PIXBUF_ROTATE_CLOCKWISE), TRUE);
+	gtk_image_view_set_pixbuf(GTK_IMAGE_VIEW(imgview),
+	                          gdk_pixbuf_rotate_simple(gtk_image_view_get_pixbuf(GTK_IMAGE_VIEW(imgview)),
+	                                          GDK_PIXBUF_ROTATE_CLOCKWISE), TRUE);
 }
 
 static void tb_hflip_clicked(GtkToolItem *tooleditcopy, GtkWidget *imgview)
@@ -87,7 +92,8 @@ static void tb_hflip_clicked(GtkToolItem *tooleditcopy, GtkWidget *imgview)
 	if (gtk_anim_view_get_is_playing(GTK_ANIM_VIEW(imgview)))
 		gtk_anim_view_set_is_playing(GTK_ANIM_VIEW(imgview), FALSE);
 
-	gtk_image_view_set_pixbuf(GTK_IMAGE_VIEW(imgview), gdk_pixbuf_flip(gtk_image_view_get_pixbuf(GTK_IMAGE_VIEW(imgview)), TRUE), TRUE);
+	gtk_image_view_set_pixbuf(GTK_IMAGE_VIEW(imgview),
+	                          gdk_pixbuf_flip(gtk_image_view_get_pixbuf(GTK_IMAGE_VIEW(imgview)), TRUE), TRUE);
 }
 
 static void tb_vflip_clicked(GtkToolItem *tooleditcopy, GtkWidget *imgview)
@@ -95,7 +101,8 @@ static void tb_vflip_clicked(GtkToolItem *tooleditcopy, GtkWidget *imgview)
 	if (gtk_anim_view_get_is_playing(GTK_ANIM_VIEW(imgview)))
 		gtk_anim_view_set_is_playing(GTK_ANIM_VIEW(imgview), FALSE);
 
-	gtk_image_view_set_pixbuf(GTK_IMAGE_VIEW(imgview), gdk_pixbuf_flip(gtk_image_view_get_pixbuf(GTK_IMAGE_VIEW(imgview)), FALSE), TRUE);
+	gtk_image_view_set_pixbuf(GTK_IMAGE_VIEW(imgview),
+	                          gdk_pixbuf_flip(gtk_image_view_get_pixbuf(GTK_IMAGE_VIEW(imgview)), FALSE), TRUE);
 }
 
 static void tb_play_clicked(GtkToolItem *tooleditcopy, GtkWidget *imgview)
@@ -303,7 +310,8 @@ int DCPCALL ListSendCommand(HWND ListWin, int Command, int Parameter)
 	switch (Command)
 	{
 	case lc_copy :
-		gtk_clipboard_set_image(gtk_clipboard_get(GDK_SELECTION_CLIPBOARD), gtk_image_view_get_pixbuf(GTK_IMAGE_VIEW(find_child(ListWin, "imageview"))));
+		gtk_clipboard_set_image(gtk_clipboard_get(GDK_SELECTION_CLIPBOARD),
+		                        gtk_image_view_get_pixbuf(GTK_IMAGE_VIEW(find_child(ListWin, "imageview"))));
 		break;
 
 	default :
