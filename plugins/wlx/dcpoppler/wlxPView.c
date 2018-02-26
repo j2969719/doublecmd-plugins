@@ -124,6 +124,47 @@ static void tb_home_clicked(GtkToolItem *tooleditpaste, GtkWindow *parentWindow)
 	reset_scroll(GTK_SCROLLED_WINDOW(parentWindow));
 }
 
+static void tb_info_clicked(GtkToolItem *tooleditpaste, GtkWindow *parentWindow)
+{
+	GtkWidget *dialog;
+	GtkWidget *scroll;
+	GtkWidget *ilabel;
+	GtkWidget *mlabel;
+	gchar *mtext, *itext;
+
+	dialog = gtk_dialog_new();
+	gtk_window_set_title(GTK_WINDOW(dialog), "Info");
+	gtk_window_set_default_size(GTK_WINDOW(dialog), 400, 400);
+	gtk_container_border_width(GTK_CONTAINER(dialog), 5);
+	itext = g_strdup_printf("Title: %s\nAuthor: %s\nSubject: %s\nCreator: %s\nProducer: %s\nKeywords: %s\nVersion: %s",
+	                        poppler_document_get_title(document), poppler_document_get_author(document),
+	                        poppler_document_get_subject(document), poppler_document_get_creator(document),
+	                        poppler_document_get_producer(document), poppler_document_get_keywords(document),
+	                        poppler_document_get_pdf_version_string(document));
+	ilabel = gtk_label_new(itext);
+	gtk_misc_set_alignment(GTK_MISC(ilabel), 0, 0);
+	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->vbox), ilabel, FALSE, TRUE, 0);
+	gtk_widget_show(ilabel);
+	scroll = gtk_scrolled_window_new(NULL, NULL);
+	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->vbox), scroll, TRUE, TRUE, 0);
+	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scroll), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
+	gtk_widget_show(scroll);
+	mtext = poppler_document_get_metadata(document);
+
+	if (!mtext)
+		mtext = "metadata not found";
+
+	mlabel = gtk_label_new(mtext);
+	gtk_misc_set_alignment(GTK_MISC(mlabel), 0, 0);
+	gtk_label_set_selectable(GTK_LABEL(mlabel), TRUE);
+	gtk_label_set_line_wrap(GTK_LABEL(mlabel), FALSE);
+	gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(scroll), mlabel);
+	gtk_widget_show(mlabel);
+	gtk_widget_grab_focus(scroll);
+	gtk_widget_show(dialog);
+}
+
+
 HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 {
 
@@ -136,6 +177,7 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	GtkToolItem  *tb_home;
 	GtkToolItem  *tb_separator;
 	GtkToolItem  *tb_pages;
+	GtkToolItem  *tb_info;
 
 	gchar* fileUri = g_filename_to_uri(FileToLoad, NULL, NULL);
 	document = poppler_document_new_from_file(fileUri, NULL, NULL);
@@ -171,13 +213,19 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	gtk_widget_set_tooltip_text(GTK_WIDGET(tb_home), "First page");
 	g_signal_connect(G_OBJECT(tb_home), "clicked", G_CALLBACK(tb_home_clicked), (gpointer)(GtkWidget*)(vscroll));
 
+	tb_info = gtk_tool_button_new_from_stock(GTK_STOCK_INFO);
+	gtk_toolbar_insert(GTK_TOOLBAR(tb1), tb_info, 3);
+	gtk_widget_set_tooltip_text(GTK_WIDGET(tb_info), "Info");
+	g_signal_connect(G_OBJECT(tb_info), "clicked", G_CALLBACK(tb_info_clicked), (gpointer)(GtkWidget*)(vscroll));
+
+
 	tb_separator = gtk_separator_tool_item_new();
-	gtk_toolbar_insert(GTK_TOOLBAR(tb1), tb_separator, 3);
+	gtk_toolbar_insert(GTK_TOOLBAR(tb1), tb_separator, 4);
 
 	tb_pages = gtk_tool_item_new();
 	label = gtk_label_new("1 / 1");
 	gtk_container_add(GTK_CONTAINER(tb_pages), label);
-	gtk_toolbar_insert(GTK_TOOLBAR(tb1), tb_pages, 4);
+	gtk_toolbar_insert(GTK_TOOLBAR(tb1), tb_pages, 5);
 	gtk_widget_set_tooltip_text(GTK_WIDGET(tb_pages), "Current page");
 
 	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(vscroll), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
@@ -203,7 +251,7 @@ void DCPCALL ListCloseWindow(HWND ListWin)
 
 void DCPCALL ListGetDetectString(char* DetectString, int maxlen)
 {
-	strncpy(DetectString, _detectstring, maxlen);
+	g_strlcpy(DetectString, _detectstring, maxlen);
 }
 
 int DCPCALL ListSearchDialog(HWND ListWin, int FindNext)
