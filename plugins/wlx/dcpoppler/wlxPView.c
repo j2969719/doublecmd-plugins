@@ -133,7 +133,6 @@ static void tb_info_clicked(GtkToolItem *tooleditpaste, GtkWindow *parentWindow)
 	gchar *mtext, *itext;
 
 	dialog = gtk_dialog_new();
-	dialog = gtk_dialog_new();
 	gtk_window_set_title(GTK_WINDOW(dialog), "Info");
 	gtk_window_set_modal(GTK_WINDOW(dialog), TRUE);
 	gtk_window_set_default_size(GTK_WINDOW(dialog), 400, 400);
@@ -165,7 +164,6 @@ static void tb_info_clicked(GtkToolItem *tooleditpaste, GtkWindow *parentWindow)
 	gtk_widget_grab_focus(scroll);
 	gtk_widget_show(dialog);
 }
-
 
 HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 {
