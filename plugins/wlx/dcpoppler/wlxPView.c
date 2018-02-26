@@ -133,7 +133,9 @@ static void tb_info_clicked(GtkToolItem *tooleditpaste, GtkWindow *parentWindow)
 	gchar *mtext, *itext;
 
 	dialog = gtk_dialog_new();
+	dialog = gtk_dialog_new();
 	gtk_window_set_title(GTK_WINDOW(dialog), "Info");
+	gtk_window_set_modal(GTK_WINDOW(dialog), TRUE);
 	gtk_window_set_default_size(GTK_WINDOW(dialog), 400, 400);
 	gtk_container_border_width(GTK_CONTAINER(dialog), 5);
 	itext = g_strdup_printf("Title: %s\nAuthor: %s\nSubject: %s\nCreator: %s\nProducer: %s\nKeywords: %s\nVersion: %s",
