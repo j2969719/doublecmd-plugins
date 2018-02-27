@@ -40,32 +40,42 @@ void reset_scroll(GtkScrolledWindow *scrolled_window)
 
 static void canvas_expose_event(GtkWidget *widget)
 {
-	cairo_t *cr;
-	double width, height;
-
+	cairo_surface_t *surface = g_object_get_data(G_OBJECT(widget), "surface1");
 	gdk_window_clear(widget->window);
-	cr = gdk_cairo_create(widget->window);
-
-	PopplerPage *ppage = g_object_get_data(G_OBJECT(widget), "page");
-	poppler_page_get_size(ppage, &width, &height);
-	gtk_widget_set_size_request(widget, (guint)width, (guint)height);
-	poppler_page_render(ppage, cr);
-
-	guint current_page = GPOINTER_TO_UINT(g_object_get_data(G_OBJECT(widget), "cpage"));
-	guint total_pages = GPOINTER_TO_UINT(g_object_get_data(G_OBJECT(widget), "tpages"));
-	gchar *pstr = g_strdup_printf("%d / %d", current_page + 1, total_pages);
-	GtkWidget *label = g_object_get_data(G_OBJECT(widget), "plabel");
-	gtk_label_set_text(GTK_LABEL(label), pstr);
-	g_free(pstr);
+	cairo_t *cr = gdk_cairo_create(widget->window);
+	cairo_set_source_surface(cr, surface, 0, 0);
+	cairo_paint(cr);
+	cairo_destroy(cr);
 }
 
 static void view_set_page(GtkWidget *canvas, guint page)
 {
-	PopplerDocument *document =  g_object_get_data(G_OBJECT(canvas), "doc");
+	gdouble width, height;
+
+	PopplerDocument *document = g_object_get_data(G_OBJECT(canvas), "doc");
 	PopplerPage *ppage = poppler_document_get_page(document, page);
 	g_object_set_data_full(G_OBJECT(canvas), "page", ppage, (GDestroyNotify)g_object_unref);
 	g_object_set_data(G_OBJECT(canvas), "cpage", GUINT_TO_POINTER(page));
-	canvas_expose_event(canvas);
+
+	poppler_page_get_size(ppage, &width, &height);
+	gtk_widget_set_size_request(canvas, (guint)width, (guint)height);
+	cairo_surface_t *surface = g_object_get_data(G_OBJECT(canvas), "surface1");
+	cairo_surface_destroy(surface);
+	
+	surface = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, (guint)width, (guint)height);
+	cairo_t *cr = cairo_create(surface);
+	poppler_page_render(ppage, cr);
+	cairo_destroy(cr);
+	gtk_widget_queue_draw(canvas);
+	
+
+	guint current_page = GPOINTER_TO_UINT(g_object_get_data(G_OBJECT(canvas), "cpage"));
+	guint total_pages = GPOINTER_TO_UINT(g_object_get_data(G_OBJECT(canvas), "tpages"));
+	gchar *pstr = g_strdup_printf("%d / %d", current_page + 1, total_pages);
+	GtkWidget *label = g_object_get_data(G_OBJECT(canvas), "plabel");
+	gtk_label_set_text(GTK_LABEL(label), pstr);
+	g_free(pstr);
+	g_object_set_data(G_OBJECT(canvas), "surface1", surface);
 	reset_scroll(GTK_SCROLLED_WINDOW(g_object_get_data(G_OBJECT(canvas), "pscroll")));
 }
 
@@ -105,7 +115,7 @@ static void tb_info_clicked(GtkToolItem *toolbtn, GtkWidget *canvas)
 	GtkWidget *mlabel;
 	gchar *mtext, *itext;
 
-	PopplerDocument *document =  g_object_get_data(G_OBJECT(canvas), "doc");
+	PopplerDocument *document = g_object_get_data(G_OBJECT(canvas), "doc");
 	dialog = gtk_dialog_new();
 	gtk_window_set_title(GTK_WINDOW(dialog), "Info");
 	gtk_window_set_modal(GTK_WINDOW(dialog), TRUE);
@@ -142,6 +152,7 @@ static void tb_info_clicked(GtkToolItem *toolbtn, GtkWidget *canvas)
 HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 {
 	GtkWidget *gFix;
+	GtkWidget *pArea;
 	GtkWidget *vscroll;
 	GtkWidget *canvas;
 	GtkWidget *label;
@@ -153,6 +164,7 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	GtkToolItem *tb_pages;
 	GtkToolItem *tb_info;
 	GdkColor color;
+	cairo_surface_t *surface;
 	guint current_page = 0;
 	guint total_pages;
 
@@ -179,7 +191,9 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	canvas = gtk_drawing_area_new();
 	gdk_color_parse("white", &color);
 	gtk_widget_modify_bg(canvas, GTK_STATE_NORMAL, &color);
-	gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(vscroll), canvas);
+	pArea = gtk_aspect_frame_new(NULL, 0.5, 0.5, 0, TRUE);
+	gtk_container_add(GTK_CONTAINER(pArea), canvas);
+	gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(vscroll), pArea);
 	g_signal_connect(G_OBJECT(canvas), "expose_event", G_CALLBACK(canvas_expose_event), NULL);
 
 	tb_back = gtk_tool_button_new_from_stock(GTK_STOCK_GO_BACK);
@@ -214,12 +228,15 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 
 	PopplerPage *ppage = poppler_document_get_page(document, current_page);
 	total_pages = poppler_document_get_n_pages(document);
+	surface = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, 0, 0);
 	g_object_set_data_full(G_OBJECT(canvas), "doc", document, (GDestroyNotify)g_object_unref);
+	g_object_set_data(G_OBJECT(canvas), "surface1", surface);
 	g_object_set_data(G_OBJECT(canvas), "tpages", GUINT_TO_POINTER(total_pages));
 	g_object_set_data(G_OBJECT(canvas), "cpage", GUINT_TO_POINTER(current_page));
 	g_object_set_data_full(G_OBJECT(canvas), "page", ppage, (GDestroyNotify)g_object_unref);
 	g_object_set_data(G_OBJECT(canvas), "plabel", label);
 	g_object_set_data(G_OBJECT(canvas), "pscroll", vscroll);
+	view_set_page(canvas, 0);
 
 	gtk_widget_grab_focus(vscroll);
 	gtk_widget_show_all(gFix);
