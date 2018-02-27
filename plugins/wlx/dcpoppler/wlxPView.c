@@ -69,7 +69,7 @@ static void view_set_page(GtkWidget *canvas, guint page)
 	reset_scroll(GTK_SCROLLED_WINDOW(g_object_get_data(G_OBJECT(canvas), "pscroll")));
 }
 
-static void tb_back_clicked(GtkToolItem *tooleditcopy, GtkWidget *canvas)
+static void tb_back_clicked(GtkToolItem *toolbtn, GtkWidget *canvas)
 {
 	guint current_page = GPOINTER_TO_UINT(g_object_get_data(G_OBJECT(canvas), "cpage"));
 	guint total_pages = GPOINTER_TO_UINT(g_object_get_data(G_OBJECT(canvas), "tpages"));
@@ -80,7 +80,7 @@ static void tb_back_clicked(GtkToolItem *tooleditcopy, GtkWidget *canvas)
 	view_set_page(canvas, current_page);
 }
 
-static void tb_forward_clicked(GtkToolItem *tooleditcopy, GtkWidget *canvas)
+static void tb_forward_clicked(GtkToolItem *toolbtn, GtkWidget *canvas)
 {
 	guint current_page = GPOINTER_TO_UINT(g_object_get_data(G_OBJECT(canvas), "cpage"));
 	guint total_pages = GPOINTER_TO_UINT(g_object_get_data(G_OBJECT(canvas), "tpages"));
@@ -91,13 +91,13 @@ static void tb_forward_clicked(GtkToolItem *tooleditcopy, GtkWidget *canvas)
 	view_set_page(canvas, current_page);
 }
 
-static void tb_home_clicked(GtkToolItem *tooleditcopy, GtkWidget *canvas)
+static void tb_home_clicked(GtkToolItem *toolbtn, GtkWidget *canvas)
 {
 	guint current_page = 0;
 	view_set_page(canvas, current_page);
 }
 
-static void tb_info_clicked(GtkToolItem *tooleditpaste, GtkWidget *canvas)
+static void tb_info_clicked(GtkToolItem *toolbtn, GtkWidget *canvas)
 {
 	GtkWidget *dialog;
 	GtkWidget *scroll;
