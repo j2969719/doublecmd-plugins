@@ -100,10 +100,15 @@ static void tb_forward_clicked(GtkToolItem *toolbtn, GtkWidget *canvas)
 	view_set_page(canvas, current_page);
 }
 
-static void tb_home_clicked(GtkToolItem *toolbtn, GtkWidget *canvas)
+static void tb_first_clicked(GtkToolItem *toolbtn, GtkWidget *canvas)
 {
 	guint current_page = 0;
 	view_set_page(canvas, current_page);
+}
+
+static void tb_last_clicked(GtkToolItem *toolbtn, GtkWidget *canvas)
+{
+	view_set_page(canvas, GPOINTER_TO_UINT(g_object_get_data(G_OBJECT(canvas), "tpages")) - 1);
 }
 
 static void tb_text_clicked(GtkToolItem *toolbtn, GtkWidget *canvas)
@@ -187,7 +192,8 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	GtkWidget *tb1;
 	GtkToolItem *tb_back;
 	GtkToolItem *tb_forward;
-	GtkToolItem *tb_home;
+	GtkToolItem *tb_first;
+	GtkToolItem *tb_last;
 	GtkToolItem *tb_text;
 	GtkToolItem *tb_info;
 	GtkToolItem *tb_separator;
@@ -235,28 +241,33 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	gtk_widget_set_tooltip_text(GTK_WIDGET(tb_forward), "Next page");
 	g_signal_connect(G_OBJECT(tb_forward), "clicked", G_CALLBACK(tb_forward_clicked), (gpointer)canvas);
 
-	tb_home = gtk_tool_button_new_from_stock(GTK_STOCK_HOME);
-	gtk_toolbar_insert(GTK_TOOLBAR(tb1), tb_home, 2);
-	gtk_widget_set_tooltip_text(GTK_WIDGET(tb_home), "First page");
-	g_signal_connect(G_OBJECT(tb_home), "clicked", G_CALLBACK(tb_home_clicked), (gpointer)canvas);
+	tb_first = gtk_tool_button_new_from_stock(GTK_STOCK_GOTO_FIRST);
+	gtk_toolbar_insert(GTK_TOOLBAR(tb1), tb_first, 2);
+	gtk_widget_set_tooltip_text(GTK_WIDGET(tb_first), "First page");
+	g_signal_connect(G_OBJECT(tb_first), "clicked", G_CALLBACK(tb_first_clicked), (gpointer)canvas);
+
+	tb_last = gtk_tool_button_new_from_stock(GTK_STOCK_GOTO_LAST);
+	gtk_toolbar_insert(GTK_TOOLBAR(tb1), tb_last, 3);
+	gtk_widget_set_tooltip_text(GTK_WIDGET(tb_last), "Last page");
+	g_signal_connect(G_OBJECT(tb_last), "clicked", G_CALLBACK(tb_last_clicked), (gpointer)canvas);
 
 	tb_text = gtk_tool_button_new_from_stock(GTK_STOCK_SELECT_ALL);
-	gtk_toolbar_insert(GTK_TOOLBAR(tb1), tb_text, 3);
+	gtk_toolbar_insert(GTK_TOOLBAR(tb1), tb_text, 4);
 	gtk_widget_set_tooltip_text(GTK_WIDGET(tb_text), "Text");
 	g_signal_connect(G_OBJECT(tb_text), "clicked", G_CALLBACK(tb_text_clicked), (gpointer)canvas);
 
 	tb_info = gtk_tool_button_new_from_stock(GTK_STOCK_INFO);
-	gtk_toolbar_insert(GTK_TOOLBAR(tb1), tb_info, 4);
+	gtk_toolbar_insert(GTK_TOOLBAR(tb1), tb_info, 5);
 	gtk_widget_set_tooltip_text(GTK_WIDGET(tb_info), "Info");
 	g_signal_connect(G_OBJECT(tb_info), "clicked", G_CALLBACK(tb_info_clicked), (gpointer)canvas);
 
 	tb_separator = gtk_separator_tool_item_new();
-	gtk_toolbar_insert(GTK_TOOLBAR(tb1), tb_separator, 5);
+	gtk_toolbar_insert(GTK_TOOLBAR(tb1), tb_separator, 6);
 
 	tb_pages = gtk_tool_item_new();
 	label = gtk_label_new("1 / 1");
 	gtk_container_add(GTK_CONTAINER(tb_pages), label);
-	gtk_toolbar_insert(GTK_TOOLBAR(tb1), tb_pages, 6);
+	gtk_toolbar_insert(GTK_TOOLBAR(tb1), tb_pages, 7);
 	gtk_widget_set_tooltip_text(GTK_WIDGET(tb_pages), "Current page");
 
 	PopplerPage *ppage = poppler_document_get_page(document, current_page);
