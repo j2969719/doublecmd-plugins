@@ -68,9 +68,8 @@ static void view_set_page(GtkWidget *canvas, guint page)
 	cairo_destroy(cr);
 	gtk_widget_queue_draw(canvas);
 
-	guint current_page = GPOINTER_TO_UINT(g_object_get_data(G_OBJECT(canvas), "cpage"));
 	guint total_pages = GPOINTER_TO_UINT(g_object_get_data(G_OBJECT(canvas), "tpages"));
-	gchar *pstr = g_strdup_printf("%d/%d : %dx%d", current_page + 1, total_pages, (guint)width, (guint)height);
+	gchar *pstr = g_strdup_printf("%d/%d : %dx%d", page + 1, total_pages, (guint)width, (guint)height);
 	GtkWidget *label = g_object_get_data(G_OBJECT(canvas), "plabel");
 	gtk_label_set_text(GTK_LABEL(label), pstr);
 	g_free(pstr);
@@ -102,8 +101,7 @@ static void tb_forward_clicked(GtkToolItem *toolbtn, GtkWidget *canvas)
 
 static void tb_first_clicked(GtkToolItem *toolbtn, GtkWidget *canvas)
 {
-	guint current_page = 0;
-	view_set_page(canvas, current_page);
+	view_set_page(canvas, 0);
 }
 
 static void tb_last_clicked(GtkToolItem *toolbtn, GtkWidget *canvas)
@@ -233,7 +231,7 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 
 	tb_back = gtk_tool_button_new_from_stock(GTK_STOCK_GO_BACK);
 	gtk_toolbar_insert(GTK_TOOLBAR(tb1), tb_back, 0);
-	gtk_widget_set_tooltip_text(GTK_WIDGET(tb_back), "Previous Page");
+	gtk_widget_set_tooltip_text(GTK_WIDGET(tb_back), "Previous page");
 	g_signal_connect(G_OBJECT(tb_back), "clicked", G_CALLBACK(tb_back_clicked), (gpointer)canvas);
 
 	tb_forward = gtk_tool_button_new_from_stock(GTK_STOCK_GO_FORWARD);
