@@ -22,6 +22,7 @@
 */
 
 #include <gtk/gtk.h>
+#include <gdk/gdkkeysyms.h>
 #include <cairo.h>
 #include <poppler.h>
 #include "wlxplugin.h"
@@ -30,12 +31,9 @@
 
 void reset_scroll(GtkScrolledWindow *scrolled_window)
 {
-	GtkAdjustment *tmp = gtk_scrolled_window_get_vadjustment(scrolled_window);
-	gtk_adjustment_set_value(tmp, 0);
-	gtk_scrolled_window_set_vadjustment(scrolled_window, tmp);
-	tmp = gtk_scrolled_window_get_hadjustment(scrolled_window);
-	gtk_adjustment_set_value(tmp, 0);
-	gtk_scrolled_window_set_hadjustment(scrolled_window, tmp);
+	gboolean tmp;
+	g_signal_emit_by_name(scrolled_window, "scroll-child", GTK_SCROLL_START, FALSE, &tmp);
+	g_signal_emit_by_name(scrolled_window, "scroll-child", GTK_SCROLL_START, TRUE, &tmp);
 	gtk_widget_grab_focus(GTK_WIDGET(scrolled_window));
 }
 
@@ -123,6 +121,51 @@ static void tb_spin_changed(GtkSpinButton *spin_button, GtkWidget *canvas)
 {
 	gtk_entry_set_position(GTK_ENTRY(spin_button), 0);
 	view_set_page(canvas, gtk_spin_button_get_value_as_int(spin_button) - 1);
+}
+
+gboolean on_key_press(GtkWidget *widget, GdkEventKey *event, GtkWidget *canvas)
+{
+	gboolean tmp;
+
+	switch (event->keyval)
+	{
+	case GDK_Up:
+		g_signal_emit_by_name(widget, "scroll-child", GTK_SCROLL_STEP_BACKWARD, FALSE, &tmp);
+		return TRUE;
+
+	case GDK_Down:
+		g_signal_emit_by_name(widget, "scroll-child", GTK_SCROLL_STEP_FORWARD, FALSE, &tmp);
+		return TRUE;
+
+	case GDK_Right:
+		g_signal_emit_by_name(widget, "scroll-child", GTK_SCROLL_STEP_FORWARD, TRUE, &tmp);
+		return TRUE;
+
+	case GDK_Left:
+		g_signal_emit_by_name(widget, "scroll-child", GTK_SCROLL_STEP_BACKWARD, TRUE, &tmp);
+		return TRUE;
+
+	case GDK_Home:
+		tb_first_clicked(NULL, canvas);
+		return TRUE;
+
+	case GDK_End:
+		tb_last_clicked(NULL, canvas);
+		return TRUE;
+
+	case GDK_Page_Up:
+		tb_back_clicked(NULL, canvas);
+		return TRUE;
+
+	case GDK_Page_Down:
+		tb_forward_clicked(NULL, canvas);
+		return TRUE;
+
+	default:
+		return FALSE;
+	}
+
+	return FALSE;
 }
 
 static void tb_text_clicked(GtkToolItem *toolbtn, GtkWidget *canvas)
@@ -299,7 +342,7 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	gtk_container_add(GTK_CONTAINER(tb_pages), label);
 	gtk_toolbar_insert(GTK_TOOLBAR(tb1), tb_pages, 8);
 	gtk_widget_set_tooltip_text(GTK_WIDGET(tb_pages), "Current page");
-
+	g_signal_connect(G_OBJECT(vscroll), "key_press_event", G_CALLBACK(on_key_press), (gpointer)canvas);
 
 	g_object_set_data_full(G_OBJECT(canvas), "doc", document, (GDestroyNotify)g_object_unref);
 	g_object_set_data(G_OBJECT(canvas), "surface1", surface);
