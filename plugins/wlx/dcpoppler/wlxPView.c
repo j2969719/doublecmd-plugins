@@ -35,7 +35,6 @@ void reset_scroll(GtkScrolledWindow *scrolled_window)
 	gboolean tmp;
 	g_signal_emit_by_name(scrolled_window, "scroll-child", GTK_SCROLL_START, FALSE, &tmp);
 	g_signal_emit_by_name(scrolled_window, "scroll-child", GTK_SCROLL_START, TRUE, &tmp);
-	gtk_widget_grab_focus(GTK_WIDGET(scrolled_window));
 }
 
 static void canvas_expose_event(GtkWidget *widget)
@@ -102,6 +101,7 @@ static void tb_back_clicked(GtkToolItem *toolbtn, GtkWidget *canvas)
 	GtkWidget *spin = g_object_get_data(G_OBJECT(canvas), "pspin");
 	gtk_spin_button_set_value(GTK_SPIN_BUTTON(spin), (gdouble)current_page + 1);
 	view_set_page(canvas, current_page);
+	gtk_widget_grab_focus(g_object_get_data(G_OBJECT(canvas), "pscroll"));
 }
 
 static void tb_forward_clicked(GtkToolItem *toolbtn, GtkWidget *canvas)
@@ -115,6 +115,7 @@ static void tb_forward_clicked(GtkToolItem *toolbtn, GtkWidget *canvas)
 	GtkWidget *spin = g_object_get_data(G_OBJECT(canvas), "pspin");
 	gtk_spin_button_set_value(GTK_SPIN_BUTTON(spin), (gdouble)current_page + 1);
 	view_set_page(canvas, current_page);
+	gtk_widget_grab_focus(g_object_get_data(G_OBJECT(canvas), "pscroll"));
 }
 
 static void tb_first_clicked(GtkToolItem *toolbtn, GtkWidget *canvas)
@@ -122,6 +123,7 @@ static void tb_first_clicked(GtkToolItem *toolbtn, GtkWidget *canvas)
 	GtkWidget *spin = g_object_get_data(G_OBJECT(canvas), "pspin");
 	gtk_spin_button_set_value(GTK_SPIN_BUTTON(spin), 1);
 	view_set_page(canvas, 0);
+	gtk_widget_grab_focus(g_object_get_data(G_OBJECT(canvas), "pscroll"));
 }
 
 static void tb_last_clicked(GtkToolItem *toolbtn, GtkWidget *canvas)
@@ -130,11 +132,13 @@ static void tb_last_clicked(GtkToolItem *toolbtn, GtkWidget *canvas)
 	GtkWidget *spin = g_object_get_data(G_OBJECT(canvas), "pspin");
 	gtk_spin_button_set_value(GTK_SPIN_BUTTON(spin), total_pages);
 	view_set_page(canvas, total_pages - 1);
+	gtk_widget_grab_focus(g_object_get_data(G_OBJECT(canvas), "pscroll"));
 }
 
 static void tb_spin_changed(GtkSpinButton *spin_button, GtkWidget *canvas)
 {
 	view_set_page(canvas, gtk_spin_button_get_value_as_int(spin_button) - 1);
+	gtk_widget_grab_focus(g_object_get_data(G_OBJECT(canvas), "pscroll"));
 }
 
 gboolean on_key_press(GtkWidget *widget, GdkEventKey *event, GtkWidget *canvas)
@@ -364,7 +368,8 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	gtk_container_add(GTK_CONTAINER(tb_selector), spinbtn);
 	gtk_toolbar_insert(GTK_TOOLBAR(tb1), tb_selector, 7);
 	gtk_widget_set_tooltip_text(GTK_WIDGET(tb_selector), "Current page");
-	g_signal_connect(G_OBJECT(spinbtn), "value-changed", G_CALLBACK(tb_spin_changed), (gpointer)canvas);
+	//g_signal_connect(G_OBJECT(spinbtn), "value-changed", G_CALLBACK(tb_spin_changed), (gpointer)canvas);
+	g_signal_connect(G_OBJECT(spinbtn), "activate", G_CALLBACK(tb_spin_changed), (gpointer)canvas);
 
 	tb_pages = gtk_tool_item_new();
 	label = gtk_label_new(NULL);
