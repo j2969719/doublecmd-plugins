@@ -60,6 +60,7 @@ static void view_set_page(GtkWidget *canvas, guint page)
 	poppler_page_get_size(ppage, &width, &height);
 
 	guint pbox_width = GPOINTER_TO_UINT(g_object_get_data(G_OBJECT(canvas), "pwidth"));
+	GtkWidget *chkscale = g_object_get_data(G_OBJECT(canvas), "pchkorg");
 
 	if (pbox_width > kostyl)
 		pbox_width = pbox_width - kostyl;
@@ -69,8 +70,10 @@ static void view_set_page(GtkWidget *canvas, guint page)
 
 	cairo_surface_t *surface = g_object_get_data(G_OBJECT(canvas), "surface1");
 	cairo_surface_destroy(surface);
+	gchar *pstr = g_strdup_printf("Scale x%.1f", scale);
+	gtk_button_set_label(GTK_BUTTON(chkscale), pstr);
 
-	if (pbox_width > 0)
+	if ((pbox_width > 0) && (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(chkscale))))
 	{
 		gtk_widget_set_size_request(canvas, pbox_width, (guint)height * scale);
 		surface = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, (guint)pbox_width, (guint)height * scale);
@@ -82,7 +85,6 @@ static void view_set_page(GtkWidget *canvas, guint page)
 		gtk_widget_set_size_request(canvas, (guint)width, (guint)height);
 		surface = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, (guint)width, (guint)height);
 		cr = cairo_create(surface);
-		scale = 1;
 	}
 
 	poppler_page_render(ppage, cr);
@@ -90,7 +92,7 @@ static void view_set_page(GtkWidget *canvas, guint page)
 	gtk_widget_queue_draw(canvas);
 
 	guint total_pages = GPOINTER_TO_UINT(g_object_get_data(G_OBJECT(canvas), "tpages"));
-	gchar *pstr = g_strdup_printf(" / %d : %dx%d  Scale x%.1f", total_pages, (guint)width, (guint)height, scale);
+	pstr = g_strdup_printf(" / %d : %dx%d  ", total_pages, (guint)width, (guint)height);
 	GtkWidget *label = g_object_get_data(G_OBJECT(canvas), "plabel");
 	gtk_label_set_text(GTK_LABEL(label), pstr);
 	g_free(pstr);
@@ -147,6 +149,13 @@ static void tb_last_clicked(GtkToolItem *toolbtn, GtkWidget *canvas)
 static void tb_spin_changed(GtkSpinButton *spin_button, GtkWidget *canvas)
 {
 	view_set_page(canvas, gtk_spin_button_get_value_as_int(spin_button) - 1);
+	gtk_widget_grab_focus(g_object_get_data(G_OBJECT(canvas), "pscroll"));
+}
+
+static void tb_checkbox_changed(GtkSpinButton *spin_button, GtkWidget *canvas)
+{
+	guint current_page = GPOINTER_TO_UINT(g_object_get_data(G_OBJECT(canvas), "cpage"));
+	view_set_page(canvas, current_page);
 	gtk_widget_grab_focus(g_object_get_data(G_OBJECT(canvas), "pscroll"));
 }
 
@@ -291,6 +300,7 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	GtkWidget *canvas;
 	GtkWidget *label;
 	GtkWidget *spinbtn;
+	GtkWidget *chkscale;
 	GtkWidget *tb1;
 	GtkToolItem *tb_back;
 	GtkToolItem *tb_forward;
@@ -301,6 +311,7 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	GtkToolItem *tb_separator;
 	GtkToolItem *tb_pages;
 	GtkToolItem *tb_selector;
+	GtkToolItem *tb_checkbox;
 	GdkColor color;
 	cairo_surface_t *surface;
 	guint current_page = 0;
@@ -378,7 +389,6 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	gtk_container_add(GTK_CONTAINER(tb_selector), spinbtn);
 	gtk_toolbar_insert(GTK_TOOLBAR(tb1), tb_selector, 7);
 	gtk_widget_set_tooltip_text(GTK_WIDGET(tb_selector), "Current page");
-	//g_signal_connect(G_OBJECT(spinbtn), "value-changed", G_CALLBACK(tb_spin_changed), (gpointer)canvas);
 	g_signal_connect(G_OBJECT(spinbtn), "activate", G_CALLBACK(tb_spin_changed), (gpointer)canvas);
 
 	tb_pages = gtk_tool_item_new();
@@ -388,7 +398,13 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	gtk_widget_set_tooltip_text(GTK_WIDGET(tb_pages), "Current page");
 	g_signal_connect(G_OBJECT(vscroll), "key_press_event", G_CALLBACK(on_key_press), (gpointer)canvas);
 
-	//view_set_page(canvas, 0);
+	tb_checkbox = gtk_tool_item_new();
+	chkscale = gtk_check_button_new();
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(chkscale), TRUE);
+	gtk_container_add(GTK_CONTAINER(tb_checkbox), chkscale);
+	gtk_toolbar_insert(GTK_TOOLBAR(tb1), tb_checkbox, 9);
+	g_signal_connect(G_OBJECT(chkscale), "toggled", G_CALLBACK(tb_checkbox_changed), (gpointer)canvas);
+
 	g_signal_connect(G_OBJECT(pBox), "size-allocate", G_CALLBACK(p_getwidth), (gpointer)canvas);
 
 	g_object_set_data_full(G_OBJECT(canvas), "doc", document, (GDestroyNotify)g_object_unref);
@@ -398,6 +414,7 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	g_object_set_data_full(G_OBJECT(canvas), "page", ppage, (GDestroyNotify)g_object_unref);
 	g_object_set_data(G_OBJECT(canvas), "plabel", label);
 	g_object_set_data(G_OBJECT(canvas), "pspin", spinbtn);
+	g_object_set_data(G_OBJECT(canvas), "pchkorg", chkscale);
 	g_object_set_data(G_OBJECT(canvas), "pscroll", vscroll);
 
 
