@@ -199,6 +199,7 @@ static void tb_info_clicked(GtkToolItem *toolbtn, GtkWidget *canvas)
 HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 {
 	GtkWidget *gFix;
+	GtkWidget *pBox;
 	GtkWidget *pArea;
 	GtkWidget *vscroll;
 	GtkWidget *canvas;
@@ -246,9 +247,11 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	canvas = gtk_drawing_area_new();
 	gdk_color_parse("white", &color);
 	gtk_widget_modify_bg(canvas, GTK_STATE_NORMAL, &color);
+	pBox = gtk_vbox_new(TRUE, 0);
 	pArea = gtk_aspect_frame_new(NULL, 0.5, 0.5, 0, TRUE);
+	gtk_box_pack_start(GTK_BOX(pBox), pArea, FALSE, FALSE, 0);
 	gtk_container_add(GTK_CONTAINER(pArea), canvas);
-	gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(vscroll), pArea);
+	gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(vscroll), pBox);
 	g_signal_connect(G_OBJECT(canvas), "expose_event", G_CALLBACK(canvas_expose_event), NULL);
 
 	tb_back = gtk_tool_button_new_from_stock(GTK_STOCK_GO_BACK);
