@@ -36,6 +36,7 @@ void reset_scroll(GtkScrolledWindow *scrolled_window)
 	tmp = gtk_scrolled_window_get_hadjustment(scrolled_window);
 	gtk_adjustment_set_value(tmp, 0);
 	gtk_scrolled_window_set_hadjustment(scrolled_window, tmp);
+	gtk_widget_grab_focus(GTK_WIDGET(scrolled_window));
 }
 
 static void canvas_expose_event(GtkWidget *widget)
@@ -69,7 +70,7 @@ static void view_set_page(GtkWidget *canvas, guint page)
 	gtk_widget_queue_draw(canvas);
 
 	guint total_pages = GPOINTER_TO_UINT(g_object_get_data(G_OBJECT(canvas), "tpages"));
-	gchar *pstr = g_strdup_printf("%d/%d : %dx%d", page + 1, total_pages, (guint)width, (guint)height);
+	gchar *pstr = g_strdup_printf(" / %d : %dx%d", total_pages, (guint)width, (guint)height);
 	GtkWidget *label = g_object_get_data(G_OBJECT(canvas), "plabel");
 	gtk_label_set_text(GTK_LABEL(label), pstr);
 	g_free(pstr);
@@ -85,6 +86,8 @@ static void tb_back_clicked(GtkToolItem *toolbtn, GtkWidget *canvas)
 	if (current_page != 0)
 		current_page--;
 
+	GtkWidget *spin = g_object_get_data(G_OBJECT(canvas), "pspin");
+	gtk_spin_button_set_value(GTK_SPIN_BUTTON(spin), (gdouble)current_page + 1);
 	view_set_page(canvas, current_page);
 }
 
@@ -96,17 +99,30 @@ static void tb_forward_clicked(GtkToolItem *toolbtn, GtkWidget *canvas)
 	if (current_page != (total_pages - 1))
 		current_page++;
 
+	GtkWidget *spin = g_object_get_data(G_OBJECT(canvas), "pspin");
+	gtk_spin_button_set_value(GTK_SPIN_BUTTON(spin), (gdouble)current_page + 1);
 	view_set_page(canvas, current_page);
 }
 
 static void tb_first_clicked(GtkToolItem *toolbtn, GtkWidget *canvas)
 {
+	GtkWidget *spin = g_object_get_data(G_OBJECT(canvas), "pspin");
+	gtk_spin_button_set_value(GTK_SPIN_BUTTON(spin), 1);
 	view_set_page(canvas, 0);
 }
 
 static void tb_last_clicked(GtkToolItem *toolbtn, GtkWidget *canvas)
 {
-	view_set_page(canvas, GPOINTER_TO_UINT(g_object_get_data(G_OBJECT(canvas), "tpages")) - 1);
+	guint total_pages = GPOINTER_TO_UINT(g_object_get_data(G_OBJECT(canvas), "tpages"));
+	GtkWidget *spin = g_object_get_data(G_OBJECT(canvas), "pspin");
+	gtk_spin_button_set_value(GTK_SPIN_BUTTON(spin), total_pages);
+	view_set_page(canvas, total_pages - 1);
+}
+
+static void tb_spin_changed(GtkSpinButton *spin_button, GtkWidget *canvas)
+{
+	gtk_entry_set_position(GTK_ENTRY(spin_button), 0);
+	view_set_page(canvas, gtk_spin_button_get_value_as_int(spin_button) - 1);
 }
 
 static void tb_text_clicked(GtkToolItem *toolbtn, GtkWidget *canvas)
@@ -187,6 +203,7 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	GtkWidget *vscroll;
 	GtkWidget *canvas;
 	GtkWidget *label;
+	GtkWidget *spinbtn;
 	GtkWidget *tb1;
 	GtkToolItem *tb_back;
 	GtkToolItem *tb_forward;
@@ -196,6 +213,7 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	GtkToolItem *tb_info;
 	GtkToolItem *tb_separator;
 	GtkToolItem *tb_pages;
+	GtkToolItem *tb_selector;
 	GdkColor color;
 	cairo_surface_t *surface;
 	guint current_page = 0;
@@ -210,16 +228,20 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	if (document == NULL)
 		return NULL;
 
+	PopplerPage *ppage = poppler_document_get_page(document, current_page);
+	total_pages = poppler_document_get_n_pages(document);
+	surface = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, 0, 0);
+
 	gFix = gtk_vbox_new(FALSE, 0);
 	gtk_container_add(GTK_CONTAINER((GtkWidget*)(ParentWin)), gFix);
 
 	tb1 = gtk_toolbar_new();
 	gtk_toolbar_set_show_arrow(GTK_TOOLBAR(tb1), TRUE);
 	gtk_toolbar_set_style(GTK_TOOLBAR(tb1), GTK_TOOLBAR_ICONS);
-	gtk_box_pack_start(GTK_BOX(gFix), tb1, FALSE, FALSE, 2);
+	gtk_box_pack_start(GTK_BOX(gFix), tb1, FALSE, FALSE, 1);
 
 	vscroll = gtk_scrolled_window_new(NULL, NULL);
-	gtk_box_pack_start(GTK_BOX(gFix), vscroll, TRUE, TRUE, 2);
+	gtk_box_pack_start(GTK_BOX(gFix), vscroll, TRUE, TRUE, 0);
 	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(vscroll), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
 	canvas = gtk_drawing_area_new();
 	gdk_color_parse("white", &color);
@@ -262,21 +284,27 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	tb_separator = gtk_separator_tool_item_new();
 	gtk_toolbar_insert(GTK_TOOLBAR(tb1), tb_separator, 6);
 
+	tb_selector = gtk_tool_item_new();
+	spinbtn = gtk_spin_button_new_with_range(1, (gdouble)total_pages, 1);
+	gtk_container_add(GTK_CONTAINER(tb_selector), spinbtn);
+	gtk_toolbar_insert(GTK_TOOLBAR(tb1), tb_selector, 7);
+	gtk_widget_set_tooltip_text(GTK_WIDGET(tb_selector), "Current page");
+	g_signal_connect(G_OBJECT(spinbtn), "value-changed", G_CALLBACK(tb_spin_changed), (gpointer)canvas);
+
 	tb_pages = gtk_tool_item_new();
-	label = gtk_label_new("1 / 1");
+	label = gtk_label_new(NULL);
 	gtk_container_add(GTK_CONTAINER(tb_pages), label);
-	gtk_toolbar_insert(GTK_TOOLBAR(tb1), tb_pages, 7);
+	gtk_toolbar_insert(GTK_TOOLBAR(tb1), tb_pages, 8);
 	gtk_widget_set_tooltip_text(GTK_WIDGET(tb_pages), "Current page");
 
-	PopplerPage *ppage = poppler_document_get_page(document, current_page);
-	total_pages = poppler_document_get_n_pages(document);
-	surface = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, 0, 0);
+
 	g_object_set_data_full(G_OBJECT(canvas), "doc", document, (GDestroyNotify)g_object_unref);
 	g_object_set_data(G_OBJECT(canvas), "surface1", surface);
 	g_object_set_data(G_OBJECT(canvas), "tpages", GUINT_TO_POINTER(total_pages));
 	g_object_set_data(G_OBJECT(canvas), "cpage", GUINT_TO_POINTER(current_page));
 	g_object_set_data_full(G_OBJECT(canvas), "page", ppage, (GDestroyNotify)g_object_unref);
 	g_object_set_data(G_OBJECT(canvas), "plabel", label);
+	g_object_set_data(G_OBJECT(canvas), "pspin", spinbtn);
 	g_object_set_data(G_OBJECT(canvas), "pscroll", vscroll);
 	view_set_page(canvas, 0);
 
