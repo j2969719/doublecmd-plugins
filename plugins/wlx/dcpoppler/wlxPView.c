@@ -185,14 +185,15 @@ gboolean on_key_press(GtkWidget *widget, GdkEventKey *event, GtkWidget *canvas)
 
 void p_getwidth(GtkWidget *widget, GtkAllocation *allocation, GtkWidget *canvas)
 {
-	if (GPOINTER_TO_UINT(g_object_get_data(G_OBJECT(canvas), "pwidth")) == 1)
+	guint tmp = GPOINTER_TO_UINT(g_object_get_data(G_OBJECT(canvas), "pwidth"));
+	if (tmp == 1)
 	{
 		guint current_page = GPOINTER_TO_UINT(g_object_get_data(G_OBJECT(canvas), "cpage"));
 		g_object_set_data(G_OBJECT(canvas), "pwidth", GUINT_TO_POINTER(allocation->width));
 		view_set_page(canvas, current_page);
 
 	}
-	else if (allocation->width == 1)
+	else if ((allocation->width > 1) && (tmp == 0))
 		g_object_set_data(G_OBJECT(canvas), "pwidth", GUINT_TO_POINTER(1));
 }
 
