@@ -28,6 +28,7 @@
 #include "wlxplugin.h"
 
 #define _detectstring "EXT=\"PDF\""
+#define kostyl 20
 
 void reset_scroll(GtkScrolledWindow *scrolled_window)
 {
@@ -49,7 +50,7 @@ static void canvas_expose_event(GtkWidget *widget)
 
 static void view_set_page(GtkWidget *canvas, guint page)
 {
-	gdouble width, height;
+	gdouble width, height, scale;
 
 	PopplerDocument *document = g_object_get_data(G_OBJECT(canvas), "doc");
 	PopplerPage *ppage = poppler_document_get_page(document, page);
@@ -57,23 +58,37 @@ static void view_set_page(GtkWidget *canvas, guint page)
 	g_object_set_data(G_OBJECT(canvas), "cpage", GUINT_TO_POINTER(page));
 
 	poppler_page_get_size(ppage, &width, &height);
-	gtk_widget_set_size_request(canvas, (guint)width, (guint)height);
-	cairo_surface_t *surface = g_object_get_data(G_OBJECT(canvas), "surface1");
-	cairo_surface_destroy(surface);
 
-	surface = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, (guint)width, (guint)height);
-	cairo_t *cr = cairo_create(surface);
-	poppler_page_render(ppage, cr);
-	cairo_destroy(cr);
-	gtk_widget_queue_draw(canvas);
+	guint pbox_width = GPOINTER_TO_UINT(g_object_get_data(G_OBJECT(canvas), "pwidth"));
 
-	guint total_pages = GPOINTER_TO_UINT(g_object_get_data(G_OBJECT(canvas), "tpages"));
-	gchar *pstr = g_strdup_printf(" / %d : %dx%d", total_pages, (guint)width, (guint)height);
-	GtkWidget *label = g_object_get_data(G_OBJECT(canvas), "plabel");
-	gtk_label_set_text(GTK_LABEL(label), pstr);
-	g_free(pstr);
-	g_object_set_data(G_OBJECT(canvas), "surface1", surface);
-	reset_scroll(GTK_SCROLLED_WINDOW(g_object_get_data(G_OBJECT(canvas), "pscroll")));
+	if (pbox_width > kostyl)
+		pbox_width = pbox_width - kostyl;
+
+	if (width != 0)
+		scale = pbox_width / width;
+
+	if (pbox_width > 0)
+	{
+		gtk_widget_set_size_request(canvas, pbox_width, (guint)height * scale);
+
+		cairo_surface_t *surface = g_object_get_data(G_OBJECT(canvas), "surface1");
+		cairo_surface_destroy(surface);
+
+		surface = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, (guint)pbox_width, (guint)height * scale);
+		cairo_t *cr = cairo_create(surface);
+		cairo_scale(cr, scale, scale);
+		poppler_page_render(ppage, cr);
+		cairo_destroy(cr);
+		gtk_widget_queue_draw(canvas);
+
+		guint total_pages = GPOINTER_TO_UINT(g_object_get_data(G_OBJECT(canvas), "tpages"));
+		gchar *pstr = g_strdup_printf(" / %d : %dx%d  Scale x%.1f", total_pages, (guint)width, (guint)height, scale);
+		GtkWidget *label = g_object_get_data(G_OBJECT(canvas), "plabel");
+		gtk_label_set_text(GTK_LABEL(label), pstr);
+		g_free(pstr);
+		g_object_set_data(G_OBJECT(canvas), "surface1", surface);
+		reset_scroll(GTK_SCROLLED_WINDOW(g_object_get_data(G_OBJECT(canvas), "pscroll")));
+	}
 }
 
 static void tb_back_clicked(GtkToolItem *toolbtn, GtkWidget *canvas)
@@ -119,7 +134,6 @@ static void tb_last_clicked(GtkToolItem *toolbtn, GtkWidget *canvas)
 
 static void tb_spin_changed(GtkSpinButton *spin_button, GtkWidget *canvas)
 {
-	gtk_entry_set_position(GTK_ENTRY(spin_button), 0);
 	view_set_page(canvas, gtk_spin_button_get_value_as_int(spin_button) - 1);
 }
 
@@ -166,6 +180,20 @@ gboolean on_key_press(GtkWidget *widget, GdkEventKey *event, GtkWidget *canvas)
 	}
 
 	return FALSE;
+}
+
+
+void p_getwidth(GtkWidget *widget, GtkAllocation *allocation, GtkWidget *canvas)
+{
+	if (GPOINTER_TO_UINT(g_object_get_data(G_OBJECT(canvas), "pwidth")) == 1)
+	{
+		guint current_page = GPOINTER_TO_UINT(g_object_get_data(G_OBJECT(canvas), "cpage"));
+		g_object_set_data(G_OBJECT(canvas), "pwidth", GUINT_TO_POINTER(allocation->width));
+		view_set_page(canvas, current_page);
+
+	}
+	else if (allocation->width == 1)
+		g_object_set_data(G_OBJECT(canvas), "pwidth", GUINT_TO_POINTER(1));
 }
 
 static void tb_text_clicked(GtkToolItem *toolbtn, GtkWidget *canvas)
@@ -343,6 +371,8 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	gtk_toolbar_insert(GTK_TOOLBAR(tb1), tb_pages, 8);
 	gtk_widget_set_tooltip_text(GTK_WIDGET(tb_pages), "Current page");
 	g_signal_connect(G_OBJECT(vscroll), "key_press_event", G_CALLBACK(on_key_press), (gpointer)canvas);
+
+	g_signal_connect(G_OBJECT(pBox), "size-allocate", G_CALLBACK(p_getwidth), (gpointer)canvas);
 
 	g_object_set_data_full(G_OBJECT(canvas), "doc", document, (GDestroyNotify)g_object_unref);
 	g_object_set_data(G_OBJECT(canvas), "surface1", surface);
