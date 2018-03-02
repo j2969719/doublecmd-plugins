@@ -28,7 +28,7 @@
 #include "wlxplugin.h"
 
 #define _detectstring "EXT=\"PDF\""
-#define kostyl 20
+#define kostyl 25
 
 void reset_scroll(GtkScrolledWindow *scrolled_window)
 {
@@ -73,7 +73,7 @@ static void view_set_page(GtkWidget *canvas, guint page)
 	gchar *pstr = g_strdup_printf("Scale x%.1f", scale);
 	gtk_button_set_label(GTK_BUTTON(chkscale), pstr);
 
-	if ((pbox_width > 0) && (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(chkscale))))
+	if ((pbox_width > kostyl) && (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(chkscale))))
 	{
 		gtk_widget_set_size_request(canvas, pbox_width, (guint)height * scale);
 		surface = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, (guint)pbox_width, (guint)height * scale);
