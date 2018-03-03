@@ -70,7 +70,7 @@ static void view_set_page(GtkWidget *canvas, guint page)
 
 	cairo_surface_t *surface = g_object_get_data(G_OBJECT(canvas), "surface1");
 	cairo_surface_destroy(surface);
-	gchar *pstr = g_strdup_printf("Scale x%.1f", scale);
+	gchar *pstr = g_strdup_printf("Scale ~x%.1f", scale);
 	gtk_button_set_label(GTK_BUTTON(chkscale), pstr);
 
 	if ((pbox_width > kostyl) && (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(chkscale))))
@@ -152,6 +152,11 @@ static void tb_spin_changed(GtkSpinButton *spin_button, GtkWidget *canvas)
 	gtk_widget_grab_focus(g_object_get_data(G_OBJECT(canvas), "pscroll"));
 }
 
+static void tb_spin_changed_nograb(GtkSpinButton *spin_button, GtkWidget *canvas)
+{
+	view_set_page(canvas, gtk_spin_button_get_value_as_int(spin_button) - 1);
+}
+
 static void tb_checkbox_changed(GtkSpinButton *spin_button, GtkWidget *canvas)
 {
 	guint current_page = GPOINTER_TO_UINT(g_object_get_data(G_OBJECT(canvas), "cpage"));
@@ -162,6 +167,7 @@ static void tb_checkbox_changed(GtkSpinButton *spin_button, GtkWidget *canvas)
 gboolean on_key_press(GtkWidget *widget, GdkEventKey *event, GtkWidget *canvas)
 {
 	gboolean tmp;
+	GtkWidget *chkscale = g_object_get_data(G_OBJECT(canvas), "pchkorg");
 
 	switch (event->keyval)
 	{
@@ -195,6 +201,14 @@ gboolean on_key_press(GtkWidget *widget, GdkEventKey *event, GtkWidget *canvas)
 
 	case GDK_Page_Down:
 		tb_forward_clicked(NULL, canvas);
+		return TRUE;
+
+	case GDK_Insert:
+		if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(chkscale)))
+			gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(chkscale), FALSE);
+		else
+			gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(chkscale), TRUE);
+
 		return TRUE;
 
 	default:
@@ -351,59 +365,60 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(vscroll), pBox);
 	g_signal_connect(G_OBJECT(canvas), "expose_event", G_CALLBACK(canvas_expose_event), NULL);
 
+	tb_first = gtk_tool_button_new_from_stock(GTK_STOCK_GOTO_FIRST);
+	gtk_toolbar_insert(GTK_TOOLBAR(tb1), tb_first, 0);
+	gtk_widget_set_tooltip_text(GTK_WIDGET(tb_first), "First page");
+	g_signal_connect(G_OBJECT(tb_first), "clicked", G_CALLBACK(tb_first_clicked), (gpointer)canvas);
+
 	tb_back = gtk_tool_button_new_from_stock(GTK_STOCK_GO_BACK);
-	gtk_toolbar_insert(GTK_TOOLBAR(tb1), tb_back, 0);
+	gtk_toolbar_insert(GTK_TOOLBAR(tb1), tb_back, 1);
 	gtk_widget_set_tooltip_text(GTK_WIDGET(tb_back), "Previous page");
 	g_signal_connect(G_OBJECT(tb_back), "clicked", G_CALLBACK(tb_back_clicked), (gpointer)canvas);
 
 	tb_forward = gtk_tool_button_new_from_stock(GTK_STOCK_GO_FORWARD);
-	gtk_toolbar_insert(GTK_TOOLBAR(tb1), tb_forward, 1);
+	gtk_toolbar_insert(GTK_TOOLBAR(tb1), tb_forward, 2);
 	gtk_widget_set_tooltip_text(GTK_WIDGET(tb_forward), "Next page");
 	g_signal_connect(G_OBJECT(tb_forward), "clicked", G_CALLBACK(tb_forward_clicked), (gpointer)canvas);
-
-	tb_first = gtk_tool_button_new_from_stock(GTK_STOCK_GOTO_FIRST);
-	gtk_toolbar_insert(GTK_TOOLBAR(tb1), tb_first, 2);
-	gtk_widget_set_tooltip_text(GTK_WIDGET(tb_first), "First page");
-	g_signal_connect(G_OBJECT(tb_first), "clicked", G_CALLBACK(tb_first_clicked), (gpointer)canvas);
 
 	tb_last = gtk_tool_button_new_from_stock(GTK_STOCK_GOTO_LAST);
 	gtk_toolbar_insert(GTK_TOOLBAR(tb1), tb_last, 3);
 	gtk_widget_set_tooltip_text(GTK_WIDGET(tb_last), "Last page");
 	g_signal_connect(G_OBJECT(tb_last), "clicked", G_CALLBACK(tb_last_clicked), (gpointer)canvas);
 
-	tb_text = gtk_tool_button_new_from_stock(GTK_STOCK_SELECT_ALL);
-	gtk_toolbar_insert(GTK_TOOLBAR(tb1), tb_text, 4);
-	gtk_widget_set_tooltip_text(GTK_WIDGET(tb_text), "Text");
-	g_signal_connect(G_OBJECT(tb_text), "clicked", G_CALLBACK(tb_text_clicked), (gpointer)canvas);
-
-	tb_info = gtk_tool_button_new_from_stock(GTK_STOCK_INFO);
-	gtk_toolbar_insert(GTK_TOOLBAR(tb1), tb_info, 5);
-	gtk_widget_set_tooltip_text(GTK_WIDGET(tb_info), "Info");
-	g_signal_connect(G_OBJECT(tb_info), "clicked", G_CALLBACK(tb_info_clicked), (gpointer)canvas);
-
-	tb_separator = gtk_separator_tool_item_new();
-	gtk_toolbar_insert(GTK_TOOLBAR(tb1), tb_separator, 6);
-
 	tb_selector = gtk_tool_item_new();
 	spinbtn = gtk_spin_button_new_with_range(1, (gdouble)total_pages, 1);
 	gtk_container_add(GTK_CONTAINER(tb_selector), spinbtn);
-	gtk_toolbar_insert(GTK_TOOLBAR(tb1), tb_selector, 7);
-	gtk_widget_set_tooltip_text(GTK_WIDGET(tb_selector), "Current page");
+	gtk_toolbar_insert(GTK_TOOLBAR(tb1), tb_selector, 4);
+	//gtk_widget_set_tooltip_text(GTK_WIDGET(tb_selector), "Current page");
 	g_signal_connect(G_OBJECT(spinbtn), "activate", G_CALLBACK(tb_spin_changed), (gpointer)canvas);
+	g_signal_connect(G_OBJECT(spinbtn), "value-changed", G_CALLBACK(tb_spin_changed_nograb), (gpointer)canvas);
 
 	tb_pages = gtk_tool_item_new();
 	label = gtk_label_new(NULL);
 	gtk_container_add(GTK_CONTAINER(tb_pages), label);
-	gtk_toolbar_insert(GTK_TOOLBAR(tb1), tb_pages, 8);
-	gtk_widget_set_tooltip_text(GTK_WIDGET(tb_pages), "Current page");
+	gtk_toolbar_insert(GTK_TOOLBAR(tb1), tb_pages, 5);
+	//gtk_widget_set_tooltip_text(GTK_WIDGET(tb_pages), "Current page");
 	g_signal_connect(G_OBJECT(vscroll), "key_press_event", G_CALLBACK(on_key_press), (gpointer)canvas);
 
 	tb_checkbox = gtk_tool_item_new();
 	chkscale = gtk_check_button_new();
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(chkscale), TRUE);
 	gtk_container_add(GTK_CONTAINER(tb_checkbox), chkscale);
-	gtk_toolbar_insert(GTK_TOOLBAR(tb1), tb_checkbox, 9);
+	gtk_toolbar_insert(GTK_TOOLBAR(tb1), tb_checkbox, 6);
 	g_signal_connect(G_OBJECT(chkscale), "toggled", G_CALLBACK(tb_checkbox_changed), (gpointer)canvas);
+
+	tb_separator = gtk_separator_tool_item_new();
+	gtk_toolbar_insert(GTK_TOOLBAR(tb1), tb_separator, 7);
+
+	tb_text = gtk_tool_button_new_from_stock(GTK_STOCK_SELECT_ALL);
+	gtk_toolbar_insert(GTK_TOOLBAR(tb1), tb_text, 8);
+	gtk_widget_set_tooltip_text(GTK_WIDGET(tb_text), "Text");
+	g_signal_connect(G_OBJECT(tb_text), "clicked", G_CALLBACK(tb_text_clicked), (gpointer)canvas);
+
+	tb_info = gtk_tool_button_new_from_stock(GTK_STOCK_INFO);
+	gtk_toolbar_insert(GTK_TOOLBAR(tb1), tb_info, 9);
+	gtk_widget_set_tooltip_text(GTK_WIDGET(tb_info), "Info");
+	g_signal_connect(G_OBJECT(tb_info), "clicked", G_CALLBACK(tb_info_clicked), (gpointer)canvas);
 
 	g_signal_connect(G_OBJECT(pBox), "size-allocate", G_CALLBACK(p_getwidth), (gpointer)canvas);
 
@@ -416,7 +431,6 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	g_object_set_data(G_OBJECT(canvas), "pspin", spinbtn);
 	g_object_set_data(G_OBJECT(canvas), "pchkorg", chkscale);
 	g_object_set_data(G_OBJECT(canvas), "pscroll", vscroll);
-
 
 	gtk_widget_grab_focus(vscroll);
 	gtk_widget_show_all(gFix);
