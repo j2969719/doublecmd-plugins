@@ -390,8 +390,8 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	gtk_container_add(GTK_CONTAINER(tb_selector), spinbtn);
 	gtk_toolbar_insert(GTK_TOOLBAR(tb1), tb_selector, 4);
 	//gtk_widget_set_tooltip_text(GTK_WIDGET(tb_selector), "Current page");
-	g_signal_connect(G_OBJECT(spinbtn), "activate", G_CALLBACK(tb_spin_changed), (gpointer)canvas);
-	g_signal_connect(G_OBJECT(spinbtn), "value-changed", G_CALLBACK(tb_spin_changed_nograb), (gpointer)canvas);
+	//g_signal_connect(G_OBJECT(spinbtn), "activate", G_CALLBACK(tb_spin_changed), (gpointer)canvas);
+	g_signal_connect(G_OBJECT(spinbtn), "value-changed", G_CALLBACK(tb_spin_changed), (gpointer)canvas);
 
 	tb_pages = gtk_tool_item_new();
 	label = gtk_label_new(NULL);
