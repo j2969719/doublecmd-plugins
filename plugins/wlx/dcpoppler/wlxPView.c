@@ -444,8 +444,8 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	tb_fit = gtk_toggle_tool_button_new_from_stock(GTK_STOCK_ZOOM_FIT);
 	gtk_toolbar_insert(GTK_TOOLBAR(tb1), tb_fit, 8);
 	gtk_widget_set_tooltip_text(GTK_WIDGET(tb_fit), "Fit");
-	gtk_toggle_tool_button_set_active(GTK_TOGGLE_TOOL_BUTTON(tb_fit), TRUE);
-	g_object_set_data(G_OBJECT(canvas), "fit", GUINT_TO_POINTER(1));
+	//gtk_toggle_tool_button_set_active(GTK_TOGGLE_TOOL_BUTTON(tb_fit), TRUE);
+	//g_object_set_data(G_OBJECT(canvas), "fit", GUINT_TO_POINTER(1));
 	g_signal_connect(G_OBJECT(tb_fit), "toggled", G_CALLBACK(tb_fit_clicked), (gpointer)canvas);
 
 	tb_separator2 = gtk_separator_tool_item_new();
