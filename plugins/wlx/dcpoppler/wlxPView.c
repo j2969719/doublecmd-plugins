@@ -59,24 +59,41 @@ static void view_set_page(GtkWidget *canvas, guint page)
 
 	poppler_page_get_size(ppage, &width, &height);
 
+	guint isfit = GPOINTER_TO_UINT(g_object_get_data(G_OBJECT(canvas), "fit"));
 	guint pbox_width = GPOINTER_TO_UINT(g_object_get_data(G_OBJECT(canvas), "pwidth"));
+	guint pbox_height = GPOINTER_TO_UINT(g_object_get_data(G_OBJECT(canvas), "pheight"));
 	GtkWidget *chkscale = g_object_get_data(G_OBJECT(canvas), "pchkorg");
 
-	if (pbox_width > kostyl)
-		pbox_width = pbox_width - kostyl;
+	if (!isfit)
+	{
+		if (pbox_width > kostyl)
+			pbox_width = pbox_width - kostyl;
 
-	if (width != 0)
-		scale = pbox_width / width;
+		if (width != 0)
+			scale = pbox_width / width;
+
+		pbox_height = height * scale;
+	}
+	else
+	{
+		if (pbox_height > kostyl)
+			pbox_height = pbox_height - kostyl;
+
+		if (width != 0)
+			scale = pbox_height / height;
+
+		pbox_width = width * scale;
+	}
 
 	cairo_surface_t *surface = g_object_get_data(G_OBJECT(canvas), "surface1");
 	cairo_surface_destroy(surface);
 	gchar *pstr = g_strdup_printf("Scale ~x%.1f", scale);
 	gtk_button_set_label(GTK_BUTTON(chkscale), pstr);
 
-	if ((pbox_width > kostyl) && (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(chkscale))))
+	if ((pbox_width > kostyl) && (pbox_height > kostyl) && (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(chkscale))))
 	{
-		gtk_widget_set_size_request(canvas, pbox_width, (guint)height * scale);
-		surface = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, (guint)pbox_width, (guint)height * scale);
+		gtk_widget_set_size_request(canvas, (guint)pbox_width, (guint)pbox_height);
+		surface = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, (guint)pbox_width, (guint)pbox_height);
 		cr = cairo_create(surface);
 		cairo_scale(cr, scale, scale);
 	}
@@ -227,11 +244,23 @@ void p_getwidth(GtkWidget *widget, GtkAllocation *allocation, GtkWidget *canvas)
 	{
 		guint current_page = GPOINTER_TO_UINT(g_object_get_data(G_OBJECT(canvas), "cpage"));
 		g_object_set_data(G_OBJECT(canvas), "pwidth", GUINT_TO_POINTER(allocation->width));
+		g_object_set_data(G_OBJECT(canvas), "pheight", GUINT_TO_POINTER(allocation->height));
 		view_set_page(canvas, current_page);
 
 	}
 	else if ((allocation->width > 1) && (tmp == 0))
 		g_object_set_data(G_OBJECT(canvas), "pwidth", GUINT_TO_POINTER(1));
+}
+
+static void tb_fit_clicked(GtkToggleToolButton *toolbtn, GtkWidget *canvas)
+{
+	if (gtk_toggle_tool_button_get_active(toolbtn))
+		g_object_set_data(G_OBJECT(canvas), "fit", GUINT_TO_POINTER(1));
+	else
+		g_object_set_data(G_OBJECT(canvas), "fit", GUINT_TO_POINTER(0));
+
+	guint current_page = GPOINTER_TO_UINT(g_object_get_data(G_OBJECT(canvas), "cpage"));
+	view_set_page(canvas, current_page);
 }
 
 static void tb_text_clicked(GtkToolItem *toolbtn, GtkWidget *canvas)
@@ -322,10 +351,12 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	GtkToolItem *tb_last;
 	GtkToolItem *tb_text;
 	GtkToolItem *tb_info;
-	GtkToolItem *tb_separator;
+	GtkToolItem *tb_separator1;
+	GtkToolItem *tb_separator2;
 	GtkToolItem *tb_pages;
 	GtkToolItem *tb_selector;
 	GtkToolItem *tb_checkbox;
+	GtkToolItem *tb_fit;
 	GdkColor color;
 	cairo_surface_t *surface;
 	guint current_page = 0;
@@ -407,16 +438,26 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	gtk_toolbar_insert(GTK_TOOLBAR(tb1), tb_checkbox, 6);
 	g_signal_connect(G_OBJECT(chkscale), "toggled", G_CALLBACK(tb_checkbox_changed), (gpointer)canvas);
 
-	tb_separator = gtk_separator_tool_item_new();
-	gtk_toolbar_insert(GTK_TOOLBAR(tb1), tb_separator, 7);
+	tb_separator1 = gtk_separator_tool_item_new();
+	gtk_toolbar_insert(GTK_TOOLBAR(tb1), tb_separator1, 7);
+
+	tb_fit = gtk_toggle_tool_button_new_from_stock(GTK_STOCK_ZOOM_FIT);
+	gtk_toolbar_insert(GTK_TOOLBAR(tb1), tb_fit, 8);
+	gtk_widget_set_tooltip_text(GTK_WIDGET(tb_fit), "Fit");
+	gtk_toggle_tool_button_set_active(GTK_TOGGLE_TOOL_BUTTON(tb_fit), TRUE);
+	g_object_set_data(G_OBJECT(canvas), "fit", GUINT_TO_POINTER(1));
+	g_signal_connect(G_OBJECT(tb_fit), "toggled", G_CALLBACK(tb_fit_clicked), (gpointer)canvas);
+
+	tb_separator2 = gtk_separator_tool_item_new();
+	gtk_toolbar_insert(GTK_TOOLBAR(tb1), tb_separator2, 9);
 
 	tb_text = gtk_tool_button_new_from_stock(GTK_STOCK_SELECT_ALL);
-	gtk_toolbar_insert(GTK_TOOLBAR(tb1), tb_text, 8);
+	gtk_toolbar_insert(GTK_TOOLBAR(tb1), tb_text, 10);
 	gtk_widget_set_tooltip_text(GTK_WIDGET(tb_text), "Text");
 	g_signal_connect(G_OBJECT(tb_text), "clicked", G_CALLBACK(tb_text_clicked), (gpointer)canvas);
 
 	tb_info = gtk_tool_button_new_from_stock(GTK_STOCK_INFO);
-	gtk_toolbar_insert(GTK_TOOLBAR(tb1), tb_info, 9);
+	gtk_toolbar_insert(GTK_TOOLBAR(tb1), tb_info, 11);
 	gtk_widget_set_tooltip_text(GTK_WIDGET(tb_info), "Info");
 	g_signal_connect(G_OBJECT(tb_info), "clicked", G_CALLBACK(tb_info_clicked), (gpointer)canvas);
 
