@@ -79,7 +79,7 @@ static void view_set_page(GtkWidget *canvas, guint page)
 		if (pbox_height > kostyl)
 			pbox_height = pbox_height - kostyl;
 
-		if (width != 0)
+		if (height != 0)
 			scale = pbox_height / height;
 
 		pbox_width = width * scale;
