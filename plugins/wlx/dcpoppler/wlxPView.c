@@ -74,27 +74,28 @@ static void view_set_page(GtkWidget *canvas, guint page)
 	guint pbox_height = GPOINTER_TO_UINT(g_object_get_data(G_OBJECT(canvas), "pheight"));
 	GtkWidget *chkscale = g_object_get_data(G_OBJECT(canvas), "pchkorg");
 
-	if (!isfit)
+	if (pbox_width > kostyl)
+		pbox_width = pbox_width - kostyl;
+
+	if (pbox_height > kostyl)
+		pbox_height = pbox_height - kostyl;
+
+	if (isfit)
 	{
-		if (pbox_width > kostyl)
-			pbox_width = pbox_width - kostyl;
-
-		if (width != 0)
-			scale = pbox_width / width;
-
-		new_width = pbox_width;
-		new_height = height * scale;
-	}
-	else
-	{
-		if (pbox_height > kostyl)
-			pbox_height = pbox_height - kostyl;
-
 		if (height != 0)
 			scale = pbox_height / height;
 
 		new_width = width * scale;
 		new_height = pbox_height;
+	}
+
+	if ((!isfit) || (new_width > pbox_width))
+	{
+		if (width != 0)
+			scale = pbox_width / width;
+
+		new_width = pbox_width;
+		new_height = height * scale;
 	}
 
 	cairo_surface_t *surface = g_object_get_data(G_OBJECT(canvas), "surface1");
@@ -240,6 +241,7 @@ gboolean on_key_press(GtkWidget *widget, GdkEventKey *event, GtkWidget *canvas)
 			gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(chkscale), TRUE);
 
 		return TRUE;
+
 	case GDK_backslash:
 		if (gtk_toggle_tool_button_get_active(GTK_TOGGLE_TOOL_BUTTON(fitbtn)))
 			gtk_toggle_tool_button_set_active(GTK_TOGGLE_TOOL_BUTTON(fitbtn), FALSE);
