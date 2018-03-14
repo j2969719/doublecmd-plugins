@@ -50,7 +50,7 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
                 return nil; 
             end
         end    
-        local handle = io.popen('df "'..FileName..'" --output=' .. fields[FieldIndex + 1][3]);
+        local handle = io.popen('df "'..FileName..'" --output=' .. fields[FieldIndex + 1][3], 'r');
         local result = handle:read("*a");
         handle:close();
         result = result:sub(1, - 2);

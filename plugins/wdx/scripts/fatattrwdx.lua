@@ -33,7 +33,7 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
                 return nil; 
             end
         end        
-        local handle = io.popen(cmd .. ' "' .. FileName .. '"');
+        local handle = io.popen(cmd .. ' "' .. FileName .. '"', 'r');
         output = handle:read("*a");
         handle:close();
         if (output:sub(1, 9) ~= FileName:sub(1, 9)) then

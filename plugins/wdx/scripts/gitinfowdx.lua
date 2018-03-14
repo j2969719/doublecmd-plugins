@@ -39,7 +39,7 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
         end
     end
     if (fields[FieldIndex + 1][3] ~= nil) then
-        local handle = io.popen(fields[FieldIndex + 1][3] .. ' "'..FileName..'"');
+        local handle = io.popen(fields[FieldIndex + 1][3] .. ' "'..FileName..'"', 'r');
         local result = handle:read("*a");
         handle:close();
         if (fields[FieldIndex + 1][1]=="Branch") or (fields[FieldIndex + 1][1]=="Origin URL") or (fields[FieldIndex + 1][1]=="Push URL") then

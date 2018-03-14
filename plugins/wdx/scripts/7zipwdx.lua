@@ -56,7 +56,7 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
                 return nil; 
             end
         end
-        local handle = io.popen(cmd .. ' l "' .. FileName .. '" -p');
+        local handle = io.popen(cmd .. ' l "' .. FileName .. '" -p', 'r');
         output = handle:read("*a");
         handle:close();
         filename = FileName;

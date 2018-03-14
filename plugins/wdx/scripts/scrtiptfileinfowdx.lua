@@ -29,7 +29,7 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
                 return nil; 
             end
         end  
-        local handle = io.popen(scriptpath .. ' "' .. FileName .. '"');
+        local handle = io.popen(scriptpath .. ' "' .. FileName .. '"', 'r');
         local result = handle:read("*a");
         handle:close();
         local result = result:sub(1, - 2);

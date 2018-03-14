@@ -35,7 +35,7 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
         if (chechattr(attr, 0x00000004))  then
             return nil; 
         end
-        local handle = io.popen(cmd .. ' --absolute-names -d "' .. FileName .. '"');
+        local handle = io.popen(cmd .. ' --absolute-names -d "' .. FileName .. '"', 'r');
         output = handle:read("*a");
         handle:close();
         dosattr = output:match('%.DOSATTRIB="([^"]+)');

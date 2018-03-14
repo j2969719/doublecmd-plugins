@@ -58,7 +58,7 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
                 return nil; 
             end
         end        
-        local handle = io.popen(cmd1 .. ' "'..FileName..'"');
+        local handle = io.popen(cmd1 .. ' "'..FileName..'"', 'r');
         local result = handle:read("*a");
         handle:close();
         result = result:match("^%d+");
@@ -68,7 +68,7 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
             return szcalc(result, bval, FieldIndex); 
         end
     elseif (FieldIndex == 5) then
-        local handle = io.popen(cmd2 .. ' "'..FileName..'"');
+        local handle = io.popen(cmd2 .. ' "'..FileName..'"', 'r');
         local result = handle:read("*a");
         handle:close();
         return result:match("^%d+.?%d+%w");
