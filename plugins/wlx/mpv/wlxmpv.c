@@ -121,7 +121,6 @@ void DCPCALL ListGetDetectString(char* DetectString, int maxlen)
 	Dl_info dlinfo;
 	static char cfg_path[PATH_MAX];
 	GKeyFile *cfg;
-	GError *err = NULL;
 	gchar *_detectstr;
 
 	memset(&dlinfo, 0, sizeof(dlinfo));
