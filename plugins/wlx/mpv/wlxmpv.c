@@ -24,7 +24,7 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	GKeyFile *cfg;
 	GError *err = NULL;
 	gboolean is_certain = FALSE;
-	gchar *_filetype;
+	gchar *_mediatype;
 	GtkWidget *gFix;
 	GtkWidget *mpv;
 
@@ -49,37 +49,52 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	}
 	else
 	{
+		gchar *ext = g_strrstr(FileToLoad, ".");
+		ext = g_strdup_printf("%s", ext + 1);
+		ext = g_ascii_strdown(ext, -1);
 		gchar *content_type = g_content_type_guess(FileToLoad, NULL, 0, &is_certain);
 		g_print("content_type = %s\n", content_type);
-		_filetype = g_strdup_printf("%.5s", content_type);
-		_cmd = g_key_file_get_string(cfg, content_type, "Cmd", NULL);
+		_mediatype = g_strdup_printf("%.5s", content_type);
+
+		_cmd = g_key_file_get_string(cfg, ext, "Cmd", NULL);
 
 		if (!_cmd)
 		{
-			_cmd = g_key_file_get_string(cfg, _filetype, "Cmd", NULL);
+			_cmd = g_key_file_get_string(cfg, content_type, "Cmd", NULL);
 
 			if (!_cmd)
-				_cmd = g_key_file_get_string(cfg, "Default", "Cmd", NULL);
+			{
+				_cmd = g_key_file_get_string(cfg, _mediatype, "Cmd", NULL);
 
-			if (!_cmd)
-				_cmd = _defaultcmd;
+				if (!_cmd)
+					_cmd = g_key_file_get_string(cfg, "Default", "Cmd", NULL);
+
+				if (!_cmd)
+					_cmd = _defaultcmd;
+			}
 		}
 
-		_params = g_key_file_get_string(cfg, content_type, "Params", NULL);
+		_params = g_key_file_get_string(cfg, ext, "Params", NULL);
 
 		if (!_params)
 		{
-			_params = g_key_file_get_string(cfg, _filetype, "Params", NULL);
+			_params = g_key_file_get_string(cfg, content_type, "Params", NULL);
 
 			if (!_params)
-				_params = g_key_file_get_string(cfg, "Default", "Params", NULL);
+			{
+				_params = g_key_file_get_string(cfg, _mediatype, "Params", NULL);
 
-			if (!_params)
-				_params = _defaultparams;
+				if (!_params)
+					_params = g_key_file_get_string(cfg, "Default", "Params", NULL);
+
+				if (!_params)
+					_params = _defaultparams;
+			}
 		}
 
 		g_free(content_type);
-		g_free(_filetype);
+		g_free(_mediatype);
+		g_free(ext);
 	}
 
 	g_key_file_free(cfg);
