@@ -37,7 +37,7 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
         local attr = SysUtils.FileGetAttr(FileName);
         if (attr > 0) then
             if (math.floor(attr / 0x00000004) % 2 ~= 0)  then
-                return nil; 
+                return tname; 
             end
         end        
         local handle = io.popen(cmd[FieldIndex + 1][1] .. ' "' .. tname .. '" ' .. cmd[FieldIndex + 1][2]);
