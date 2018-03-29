@@ -36,7 +36,14 @@ GtkWrapMode wrap_mode;
 gchar *font, *nfstr;
 gboolean no_cursor;
 gint p_above, p_below;
-GtkWidget *tView;
+
+static GtkWidget * getFirstChild(GtkWidget *w)
+{
+	GList *list = gtk_container_get_children(GTK_CONTAINER(w));
+	GtkWidget *result = GTK_WIDGET(list->data);
+	g_list_free(list);
+	return result;
+}
 
 /** case insensitive forward search for implementation without
  *  GtkSourceView.
@@ -154,7 +161,7 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 {
 	GtkWidget *gFix;
 	GtkWidget *scroll;
-	//GtkWidget *tView;
+	GtkWidget *tView;
 	GtkTextBuffer *tBuf;
 	gchar *tmp, *command, *buf1;
 
@@ -359,14 +366,8 @@ int DCPCALL ListSearchText(HWND ListWin, char* SearchString, int SearchParameter
 	{
 		gtk_text_buffer_select_range(GTK_TEXT_BUFFER(sBuf), &mstart, &mend);
 		gtk_text_buffer_create_mark(GTK_TEXT_BUFFER(sBuf), "last_pos", &mend, FALSE);
-		//--------------------------------------------------------------------------------
-		GtkTextBuffer *tmp = gtk_text_view_get_buffer(GTK_TEXT_VIEW(tView)); // ...
-		last_pos = gtk_text_buffer_get_mark(tmp, "last_pos");
-
-		if (last_pos)
-			gtk_text_view_scroll_mark_onscreen(GTK_TEXT_VIEW(tView), last_pos);
-
-		//--------------------------------------------------------------------------------
+		gtk_text_view_scroll_mark_onscreen(GTK_TEXT_VIEW(getFirstChild(getFirstChild(GTK_WIDGET(ListWin)))),
+		                                   gtk_text_buffer_get_mark(GTK_TEXT_BUFFER(sBuf), "last_pos"));
 	}
 	else
 	{
