@@ -1,19 +1,26 @@
 #include <gtk/gtk.h>
-#include <string.h>
 #include <atril-view.h>
 #include <atril-document.h>
 #include "wlxplugin.h"
 
-#define _detectstring "(EXT=\"PDF\")|(EXT=\"DJVU\")|(EXT=\"DJV\")|(EXT=\"TIF\")|(EXT=\"TIFF\")|(EXT=\"PS\")|(EXT=\"CBR\")|(EXT=\"CBZ\")|(EXT=\"XPS\")"
+#define _detectstring "(EXT=\"PDF\")|(EXT=\"DJVU\")|(EXT=\"DJV\")|(EXT=\"TIF\")|\
+(EXT=\"TIFF\")|(EXT=\"PS\")|(EXT=\"CBR\")|(EXT=\"CBZ\")|(EXT=\"XPS\")"
 
-GtkWidget *view; // here we go again
+
+static GtkWidget * getFirstChild(GtkWidget *w)
+{
+	GList *list = gtk_container_get_children(GTK_CONTAINER(w));
+	GtkWidget *result = GTK_WIDGET(list->data);
+	g_list_free(list);
+	return result;
+}
 
 HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 {
 
 	GtkWidget *gFix;
 	GtkWidget *scrolled_window;
-	//GtkWidget *view;
+	GtkWidget *view;
 	EvDocument *document;
 	EvDocumentModel *docmodel;
 
@@ -25,6 +32,7 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	scrolled_window = gtk_scrolled_window_new(NULL, NULL);
 	gchar* fileUri = g_filename_to_uri(FileToLoad, NULL, NULL);
 	document = EV_DOCUMENT(ev_document_factory_get_document(fileUri, NULL));
+
 	g_free(fileUri);
 
 	if (EV_IS_DOCUMENT(document))
@@ -58,7 +66,7 @@ void DCPCALL ListCloseWindow(HWND ListWin)
 
 void DCPCALL ListGetDetectString(char* DetectString, int maxlen)
 {
-	strncpy(DetectString, _detectstring, maxlen);
+	g_strlcpy(DetectString, _detectstring, maxlen);
 }
 
 int DCPCALL ListSearchDialog(HWND ListWin, int FindNext)
@@ -71,11 +79,11 @@ int DCPCALL ListSendCommand(HWND ListWin, int Command, int Parameter)
 	switch (Command)
 	{
 	case lc_copy :
-		ev_view_copy(EV_VIEW(view));
+		ev_view_copy(EV_VIEW(getFirstChild(getFirstChild(GTK_WIDGET(ListWin)))));
 		break;
 
 	case lc_selectall :
-		ev_view_select_all(EV_VIEW(view));
+		ev_view_select_all(EV_VIEW(getFirstChild(getFirstChild(GTK_WIDGET(ListWin)))));
 		break;
 
 	default :

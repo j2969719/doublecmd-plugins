@@ -1,19 +1,25 @@
 #include <gtk/gtk.h>
-#include <string.h>
 #include <evince2/2.32/evince2-view.h>
 #include <evince2/2.32/evince2-document.h>
 #include "wlxplugin.h"
 
-#define _detectstring "(EXT=\"PDF\")|(EXT=\"DJVU\")|(EXT=\"DJV\")|(EXT=\"TIF\")|(EXT=\"TIFF\")|(EXT=\"PS\")|(EXT=\"CBR\")"
+#define _detectstring "(EXT=\"PDF\")|(EXT=\"DJVU\")|(EXT=\"DJV\")|(EXT=\"TIF\")|\
+(EXT=\"TIFF\")|(EXT=\"PS\")|(EXT=\"CBR\")"
 
-GtkWidget *view; // here we go again
+static GtkWidget * getFirstChild(GtkWidget *w)
+{
+	GList *list = gtk_container_get_children(GTK_CONTAINER(w));
+	GtkWidget *result = GTK_WIDGET(list->data);
+	g_list_free(list);
+	return result;
+}
 
 HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 {
 
 	GtkWidget *gFix;
 	GtkWidget *scrolled_window;
-	//GtkWidget *view;
+	GtkWidget *view;
 	EvDocument *document;
 	EvDocumentModel *docmodel;
 
@@ -58,7 +64,7 @@ void DCPCALL ListCloseWindow(HWND ListWin)
 
 void DCPCALL ListGetDetectString(char* DetectString, int maxlen)
 {
-	strncpy(DetectString, _detectstring, maxlen);
+	g_strlcpy(DetectString, _detectstring, maxlen);
 }
 
 int DCPCALL ListSearchDialog(HWND ListWin, int FindNext)
@@ -71,11 +77,11 @@ int DCPCALL ListSendCommand(HWND ListWin, int Command, int Parameter)
 	switch (Command)
 	{
 	case lc_copy :
-		ev_view_copy(EV_VIEW(view));
+		ev_view_copy(EV_VIEW(getFirstChild(getFirstChild(GTK_WIDGET(ListWin)))));
 		break;
 
 	case lc_selectall :
-		ev_view_select_all(EV_VIEW(view));
+		ev_view_select_all(EV_VIEW(getFirstChild(getFirstChild(GTK_WIDGET(ListWin)))));
 		break;
 
 	default :
