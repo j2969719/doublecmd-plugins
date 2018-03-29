@@ -1,16 +1,15 @@
 #include <gtk/gtk.h>
-#include <string.h>
 #include <libabiword.h>
 #include <abiwidget.h>
 #include "wlxplugin.h"
 
 #define _detectstring "(EXT=\"DOC\")|(EXT=\"RTF\")|(EXT=\"DOT\")|(EXT=\"ABW\")|(EXT=\"AWT\")|(EXT=\"ZABW\")"
 
-GtkWidget *abi;
 
 HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 {
 
+	GtkWidget *abi;
 	libabiword_init_noargs();
 	abi = abi_widget_new();
 	gtk_container_add(GTK_CONTAINER((GtkWidget*)(ParentWin)), abi);
@@ -39,19 +38,19 @@ void DCPCALL ListCloseWindow(HWND ListWin)
 
 void DCPCALL ListGetDetectString(char* DetectString, int maxlen)
 {
-	strncpy(DetectString, _detectstring, maxlen);
+	g_strlcpy(DetectString, _detectstring, maxlen);
 }
 
 int DCPCALL ListSearchText(HWND ListWin, char* SearchString, int SearchParameter)
 {
-	abi_widget_set_find_string(ABI_WIDGET(abi), SearchString);
+	abi_widget_set_find_string(ABI_WIDGET(ListWin), SearchString);
 
 	if (SearchParameter & lcs_backwards)
-		abi_widget_find_prev(ABI_WIDGET(abi));
+		abi_widget_find_prev(ABI_WIDGET(ListWin));
 	else if (SearchParameter & lcs_findfirst)
-		abi_widget_find_next(ABI_WIDGET(abi), TRUE);
+		abi_widget_find_next(ABI_WIDGET(ListWin), TRUE);
 	else
-		abi_widget_find_next(ABI_WIDGET(abi), FALSE);
+		abi_widget_find_next(ABI_WIDGET(ListWin), FALSE);
 }
 
 int DCPCALL ListSendCommand(HWND ListWin, int Command, int Parameter)
@@ -59,11 +58,11 @@ int DCPCALL ListSendCommand(HWND ListWin, int Command, int Parameter)
 	switch (Command)
 	{
 	case lc_copy :
-		abi_widget_copy(ABI_WIDGET(abi));
+		abi_widget_copy(ABI_WIDGET(ListWin));
 		break;
 
 	case lc_selectall :
-		abi_widget_select_all(ABI_WIDGET(abi));
+		abi_widget_select_all(ABI_WIDGET(ListWin));
 		break;
 
 	default :
