@@ -31,7 +31,7 @@
 #include <string.h>
 #include "wlxplugin.h"
 
-#define _detectstring "(EXT=\"HTML\")|(EXT=\"HTM\")|(EXT=\"XHTM\")"
+#define _detectstring "(EXT=\"HTML\")|(EXT=\"HTM\")|(EXT=\"XHTM\")|(EXT=\"XHTML\")"
 
 GtkWidget* find_child(GtkWidget* parent, const gchar* name)
 {
@@ -112,7 +112,8 @@ int DCPCALL ListSearchText(HWND ListWin, char* SearchString, int SearchParameter
 	if (SearchParameter & lcs_backwards)
 		ss_forward = FALSE;
 
-	webkit_web_view_search_text(WEBKIT_WEB_VIEW(find_child(ListWin, "webkitfrm")), SearchString, ss_case, ss_forward, TRUE);
+	webkit_web_view_search_text(WEBKIT_WEB_VIEW(find_child(ListWin, "webkitfrm")),
+	                            SearchString, ss_case, ss_forward, TRUE);
 }
 
 int DCPCALL ListSendCommand(HWND ListWin, int Command, int Parameter)
