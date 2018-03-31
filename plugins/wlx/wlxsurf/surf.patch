@@ -1,0 +1,10 @@
+--- surf.c	2017-03-28 18:17:44.000000000 +0300
++++ surf.c	2018-03-05 16:51:11.506800038 +0300
+@@ -629,6 +629,7 @@
+ {
+ 	GdkRGBA bgcolor = { 0 };
+ 	WebKitSettings *s = webkit_web_view_get_settings(c->view);
++	webkit_settings_set_allow_universal_access_from_file_urls(s, TRUE);
+ 
+ 	switch (p) {
+ 	case AcceleratedCanvas:
