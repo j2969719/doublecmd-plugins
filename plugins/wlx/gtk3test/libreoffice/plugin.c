@@ -5,7 +5,7 @@
 #include <string.h>
 #include "wlxplugin.h"
 
-#define _detectstring "(EXT=\"DOC\")|(EXT=\"RTF\")|(EXT=\"DOT\")|(EXT=\"ABW\")|(EXT=\"AWT\")|(EXT=\"ZABW\")"
+#define _detectstring "(EXT=\"DOC\")|(EXT=\"RTF\")|(EXT=\"DOT\")|(EXT=\"DOCX\")|(EXT=\"XLS\")|(EXT=\"XLSX\")"
 
 static void show_nope(GtkWidget *widget)
 {

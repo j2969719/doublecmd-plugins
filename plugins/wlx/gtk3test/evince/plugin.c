@@ -42,7 +42,7 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	gtk_container_add(GTK_CONTAINER(gFix), socket);
 	GdkNativeWindow id = gtk_socket_get_id(GTK_SOCKET(socket));
 	gchar *command = g_strdup_printf("\"%s\" -w %d -f \"%s\"", kpath, id, FileToLoad);
-	g_print(command);
+	g_print("%s\n", command);
 
 	if (!g_spawn_command_line_async(command, NULL))
 	{
