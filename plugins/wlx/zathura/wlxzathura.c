@@ -8,11 +8,19 @@
 #define _detectstring  "(EXT=\"PDF\")|(EXT=\"DJVU\")|(EXT=\"DJV\")|(EXT=\"PS\")|(EXT=\"CBR\")|(EXT=\"CBZ\")"
 
 
+static void plug_added(GtkWidget *widget, gpointer data)
+{
+	gtk_spinner_stop(GTK_SPINNER(data));
+	gtk_widget_hide(GTK_WIDGET(data));
+	gtk_widget_show(widget);
+}
+
 HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 {
 	Dl_info dlinfo;
 	static char plg_path[PATH_MAX], cfg_path[PATH_MAX];
 	GtkWidget *gFix;
+	GtkWidget *wspin;
 	GtkWidget *zathura;
 	GKeyFile *cfg;
 	GError *err = NULL;
@@ -65,6 +73,10 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 
 	gFix = gtk_vbox_new(FALSE, 5);
 	gtk_container_add(GTK_CONTAINER(GTK_WIDGET(ParentWin)), gFix);
+	wspin = gtk_spinner_new();
+	gtk_spinner_start(GTK_SPINNER(wspin));
+	gtk_box_pack_start(GTK_BOX(gFix), wspin, TRUE, FALSE, 5);
+	gtk_widget_show(wspin);
 
 	zathura = gtk_socket_new();
 	gtk_container_add(GTK_CONTAINER(gFix), zathura);
@@ -83,8 +95,9 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	}
 
 	g_free(command);
+	g_signal_connect(zathura, "plug-added", G_CALLBACK(plug_added), (gpointer)wspin);
 
-	gtk_widget_show_all(gFix);
+	gtk_widget_show(gFix);
 
 	return gFix;
 }

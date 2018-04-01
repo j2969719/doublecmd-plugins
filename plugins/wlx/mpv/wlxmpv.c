@@ -106,12 +106,14 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	gFix = gtk_vbox_new(FALSE, 5);
 	gtk_container_add(GTK_CONTAINER(GTK_WIDGET(ParentWin)), gFix);
 
-	mpv = gtk_drawing_area_new();
-	gtk_container_add(GTK_CONTAINER(gFix), mpv);
+//	mpv = gtk_drawing_area_new();
+//	gtk_container_add(GTK_CONTAINER(gFix), mpv);
+	mpv = gtk_spinner_new();
+	gtk_spinner_start(GTK_SPINNER(mpv));
+	gtk_box_pack_start(GTK_BOX(gFix), mpv, TRUE, FALSE, 5);
 	gtk_widget_realize(mpv);
 	GdkNativeWindow id = GDK_WINDOW_XID(gtk_widget_get_window(mpv));
 	gchar *command = g_strdup_printf("%s %s --wid=%d \"%s\"", _cmd, _params, id, FileToLoad);
-
 	if ((id == 0) || (!g_spawn_command_line_async(command, NULL)))
 	{
 		g_free(command);

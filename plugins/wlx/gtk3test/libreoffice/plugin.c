@@ -19,9 +19,9 @@ static void show_nope(GtkWidget *widget)
 
 static void plug_added(GtkWidget *widget, gpointer data)
 {
+	gtk_spinner_stop(GTK_SPINNER(data));
 	gtk_widget_hide(GTK_WIDGET(data));
 	gtk_widget_show(widget);
-    
 }
 
 HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
@@ -64,7 +64,7 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	}
 
 	g_free(command);
-	g_signal_connect(socket, "plug-added", G_CALLBACK(plug_added), (gpointer)wspin);
+	g_signal_connect(G_OBJECT(socket), "plug-added", G_CALLBACK(plug_added), (gpointer)wspin);
 
 	gtk_widget_show(gFix);
 
