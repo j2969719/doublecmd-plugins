@@ -1,6 +1,6 @@
 CC = gcc
 CFLAGS =
-INCLUDES = `pkg-config --cflags --libs gtk+-3.0` -llibreofficekitgtk
+INCLUDES = `pkg-config --cflags --libs gtk+-3.0` -llibreofficekitgtk -I.
 PLGNAME = libreoffice_tst.wlx
 PLGFLAGS = -shared -fPIC -Wl,--no-as-needed
 PLGINCLUDES = `pkg-config --cflags --libs gtk+-2.0` -I../../../sdk

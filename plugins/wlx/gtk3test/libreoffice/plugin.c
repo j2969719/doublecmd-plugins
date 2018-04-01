@@ -5,21 +5,30 @@
 #include <string.h>
 #include "wlxplugin.h"
 
-#define _detectstring "(EXT=\"DOC\")|(EXT=\"RTF\")|(EXT=\"DOT\")|(EXT=\"DOCX\")|(EXT=\"XLS\")|(EXT=\"XLSX\")"
+#define _detectstring "(EXT=\"DOC\")|(EXT=\"RTF\")|(EXT=\"DOT\")|(EXT=\"DOCX\")|\
+(EXT=\"XLS\")|(EXT=\"XLSX\")|(EXT=\"PPT\")|(EXT=\"PPTX\")|(EXT=\"ODT\")|(EXT=\"ODS\")"
 
 static void show_nope(GtkWidget *widget)
 {
 	GtkWidget *dialog = gtk_message_dialog_new(GTK_WINDOW(gtk_widget_get_toplevel(widget)),
 	                    GTK_DIALOG_MODAL, GTK_MESSAGE_INFO, GTK_BUTTONS_OK,
-	                    "nope:(");
+	                    "not implemented:(");
 	gtk_dialog_run(GTK_DIALOG(dialog));
 	gtk_widget_destroy(dialog);
+}
+
+static void plug_added(GtkWidget *widget, gpointer data)
+{
+	gtk_widget_hide(GTK_WIDGET(data));
+	gtk_widget_show(widget);
+    
 }
 
 HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 {
 	Dl_info dlinfo;
 	GtkWidget *gFix;
+	GtkWidget *wspin;
 	GtkWidget *socket;
 	static char kpath[PATH_MAX];
 
@@ -36,12 +45,16 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 
 	gFix = gtk_vbox_new(FALSE, 5);
 	gtk_container_add(GTK_CONTAINER(GTK_WIDGET(ParentWin)), gFix);
+	wspin = gtk_spinner_new();
+	gtk_spinner_start(GTK_SPINNER(wspin));
+	gtk_box_pack_start(GTK_BOX(gFix), wspin, TRUE, FALSE, 5);
+	gtk_widget_show(wspin);
 
 	socket = gtk_socket_new();
 	gtk_container_add(GTK_CONTAINER(gFix), socket);
 	GdkNativeWindow id = gtk_socket_get_id(GTK_SOCKET(socket));
 	gchar *command = g_strdup_printf("\"%s\" -w %d -f \"%s\"", kpath, id, FileToLoad);
-	g_print("%s\n", command);
+	//g_print("%s\n", command);
 
 	if (!g_spawn_command_line_async(command, NULL))
 	{
@@ -51,8 +64,9 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	}
 
 	g_free(command);
+	g_signal_connect(socket, "plug-added", G_CALLBACK(plug_added), (gpointer)wspin);
 
-	gtk_widget_show_all(gFix);
+	gtk_widget_show(gFix);
 
 	return gFix;
 
