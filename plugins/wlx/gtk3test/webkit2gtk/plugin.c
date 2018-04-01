@@ -89,6 +89,11 @@ int DCPCALL ListSearchDialog(HWND ListWin, int FindNext)
 
 int DCPCALL ListSendCommand(HWND ListWin, int Command, int Parameter)
 {
-	show_nope(GTK_WIDGET(ListWin));
+	if (Command == lc_copy)
+		gtk_clipboard_set_text(gtk_clipboard_get(GDK_SELECTION_CLIPBOARD),
+		                       gtk_clipboard_wait_for_text(gtk_clipboard_get(GDK_SELECTION_PRIMARY)), -1);
+	else
+		show_nope(GTK_WIDGET(ListWin));
+
 	return LISTPLUGIN_OK;
 }
