@@ -95,6 +95,15 @@ gboolean view_popup_menu(GtkWidget *widget, GdkEventButton *event, gpointer user
 	return FALSE;
 }
 
+gboolean view_kostyl_primary(GtkWidget *widget, GdkEventButton *event, gpointer userdata)
+{
+	if (event->type == GDK_BUTTON_RELEASE  &&  event->button == 1)
+		gtk_clipboard_set_text(gtk_clipboard_get(GDK_SELECTION_PRIMARY),
+		                       lok_doc_view_copy_selection(LOK_DOC_VIEW(widget),
+		                                       "text/plain;charset=utf-8", NULL), -1);
+
+	return FALSE;
+}
 int main(int   argc, char *argv[])
 {
 	GtkWidget *pDocView;
@@ -147,6 +156,7 @@ int main(int   argc, char *argv[])
 	g_signal_connect(plug, "destroy", G_CALLBACK(destroy), NULL);
 	gtk_widget_add_events(pDocView, GDK_SCROLL_MASK);
 	g_signal_connect(GTK_WIDGET(pDocView), "button_press_event", G_CALLBACK(view_popup_menu), NULL);
+	g_signal_connect(GTK_WIDGET(pDocView), "button_release_event", G_CALLBACK(view_kostyl_primary), NULL);
 
 	gtk_main();
 
