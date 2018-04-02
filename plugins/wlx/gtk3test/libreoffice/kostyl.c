@@ -1,8 +1,7 @@
 #include <stdlib.h>
 #include <gtk/gtk.h>
 #include <gtk/gtkx.h>
-//#include <LibreOfficeKit/LibreOfficeKit.h>
-//#include <LibreOfficeKit/LibreOfficeKitInit.h>
+#include <gdk/gdkkeysyms.h>
 #include <LibreOfficeKit/LibreOfficeKitGtk.h>
 
 #define TEST_PATH "/usr/lib/libreoffice/program"
@@ -95,6 +94,34 @@ gboolean view_popup_menu(GtkWidget *widget, GdkEventButton *event, gpointer user
 	return FALSE;
 }
 
+gboolean view_key_press(GtkWidget *widget, GdkEventKey *event, gpointer userdata)
+{
+	gboolean tmp;
+
+	switch (event->keyval)
+	{
+	case GDK_KEY_Up:
+		g_signal_emit_by_name(widget, "scroll-child", GTK_SCROLL_STEP_BACKWARD, FALSE, &tmp);
+		return TRUE;
+
+	case GDK_KEY_Down:
+		g_signal_emit_by_name(widget, "scroll-child", GTK_SCROLL_STEP_FORWARD, FALSE, &tmp);
+		return TRUE;
+
+	case GDK_KEY_Right:
+		g_signal_emit_by_name(widget, "scroll-child", GTK_SCROLL_STEP_FORWARD, TRUE, &tmp);
+		return TRUE;
+
+	case GDK_KEY_Left:
+		g_signal_emit_by_name(widget, "scroll-child", GTK_SCROLL_STEP_BACKWARD, TRUE, &tmp);
+		return TRUE;
+	}
+
+	return FALSE;
+}
+
+
+
 gboolean view_kostyl_primary(GtkWidget *widget, GdkEventButton *event, gpointer userdata)
 {
 	if (event->type == GDK_BUTTON_RELEASE  &&  event->button == 1)
@@ -104,6 +131,7 @@ gboolean view_kostyl_primary(GtkWidget *widget, GdkEventButton *event, gpointer 
 
 	return FALSE;
 }
+
 int main(int   argc, char *argv[])
 {
 	GtkWidget *pDocView;
@@ -148,7 +176,7 @@ int main(int   argc, char *argv[])
 		gtk_plug_construct(GTK_PLUG(plug), id);
 		gtk_widget_show_all(plug);
 		gtk_widget_realize(scrolled_window);
-		gtk_widget_grab_focus(scrolled_window);
+		//gtk_widget_grab_focus(scrolled_window);
 	}
 	else
 		return EXIT_FAILURE;
@@ -156,6 +184,7 @@ int main(int   argc, char *argv[])
 	g_signal_connect(plug, "destroy", G_CALLBACK(destroy), NULL);
 	gtk_widget_add_events(pDocView, GDK_SCROLL_MASK);
 	g_signal_connect(GTK_WIDGET(pDocView), "button_press_event", G_CALLBACK(view_popup_menu), NULL);
+	g_signal_connect(GTK_WIDGET(scrolled_window), "key_press_event", G_CALLBACK(view_key_press), NULL);
 	g_signal_connect(GTK_WIDGET(pDocView), "button_release_event", G_CALLBACK(view_kostyl_primary), NULL);
 
 	gtk_main();
