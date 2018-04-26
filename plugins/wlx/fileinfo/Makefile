@@ -1,9 +1,9 @@
 CC = gcc
-CFLAGS = -shared -fPIC
+CFLAGS = -shared -fPIC -Wl,--no-as-needed
 INCLUDES = `pkg-config --libs --cflags gtk+-2.0 gtksourceview-2.0` -I../../sdk
 
 all:
-		$(CC) $(CFLAGS) $(INCLUDES) fileinfo.c -o fileinfo_fork.wlx
+		$(CC) $(CFLAGS) $(INCLUDES) fileinfo.c -o fileinfo.wlx
 
 clean:
-		$(RM) fileinfo_fork.wlx
+		$(RM) fileinfo.wlx

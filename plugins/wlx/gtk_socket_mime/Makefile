@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -shared -fPIC
+CFLAGS = -shared -fPIC -Wl,--no-as-needed
 INCLUDES = `pkg-config --cflags --libs gtk+-2.0` -lmagic -I/usr/include/magic -I../../sdk
 PLUGNAME = gtk_socket_mime.wlx
 
