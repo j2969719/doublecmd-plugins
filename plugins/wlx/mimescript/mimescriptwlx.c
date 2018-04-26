@@ -4,129 +4,24 @@
 #include <dlfcn.h>
 #include <magic.h>
 #include <string.h>
+#include <gtksourceview/gtksourceview.h>
+#include <gtksourceview/gtksourceiter.h>
+#include <gtksourceview/gtksourcebuffer.h>
+#include <gtksourceview/gtksourcelanguage.h>
+#include <gtksourceview/gtksourcelanguagemanager.h>
+#include <gtksourceview/gtksourcestyleschememanager.h>
 #include "wlxplugin.h"
 
 #define DETECT_STRING "EXT=\"*\""
 
 gchar *nfstr;
 
-static GtkWidget * getFirstChild(GtkWidget *w)
+static GtkWidget *getFirstChild(GtkWidget *w)
 {
 	GList *list = gtk_container_get_children(GTK_CONTAINER(w));
 	GtkWidget *result = GTK_WIDGET(list->data);
 	g_list_free(list);
 	return result;
-}
-
-/** case insensitive forward search for implementation without
- *  GtkSourceView.
- */
-gboolean gtk_text_iter_forward_search_nocase(GtkTextIter *iter,
-                const gchar *text,
-                GtkTextSearchFlags flags,
-                GtkTextIter *mstart,
-                GtkTextIter *mend)
-{
-	gunichar c;
-	gchar *lctext = g_strdup(text);    /* copy text */
-	gsize textlen = g_utf8_strlen(text, -1);    /* get length */
-
-	lctext = g_utf8_strdown(lctext, -1);      /* convert to lower-case */
-
-	for (;;)                /* iterate over all chars in range */
-	{
-
-		gsize len = textlen;               /* get char at iter */
-		c = g_unichar_tolower(gtk_text_iter_get_char(iter));
-
-		if (c == (gunichar)lctext[0]) /* compare 1st in lctext */
-		{
-			*mstart = *iter;      /* set start iter to current */
-
-			for (gsize i = 0; i < len; i++)
-			{
-				c = g_unichar_tolower(gtk_text_iter_get_char(iter));
-
-				/* compare/advance -- order IS important */
-				if (c != (gunichar)lctext[i] ||
-				                !gtk_text_iter_forward_char(iter))
-					goto next;              /* start next search */
-			}
-
-			*mend = *iter;                  /* set end iter */
-
-			if (lctext) g_free(lctext);     /* free lctext  */
-
-			return TRUE;                    /* return true  */
-		}
-
-next:;  /* if at end of selecton break */
-
-		if (!gtk_text_iter_forward_char(iter))
-			break;
-	}
-
-	if (lctext) g_free(lctext);     /* free lctext */
-
-	if (mstart || mend || flags) {}
-
-	return FALSE;
-}
-
-/** case insensitive backward search for implementation without
- *  GtkSourceView.
- */
-gboolean gtk_text_iter_backward_search_nocase(GtkTextIter *iter,
-                const gchar *text,
-                GtkTextSearchFlags flags,
-                GtkTextIter *mstart,
-                GtkTextIter *mend)
-{
-	gunichar c;
-	gchar *lctext = g_strdup(text);    /* copy text */
-	gsize textlen = g_utf8_strlen(text, -1);    /* get length */
-
-	lctext = g_utf8_strdown(lctext, -1);      /* convert to lower-case */
-	*mend = *iter;        /* initialize end iterator */
-
-	while (gtk_text_iter_backward_char(iter))
-	{
-
-		gsize len = textlen - 1;  /* index for last in lctext */
-		c = g_unichar_tolower(gtk_text_iter_get_char(iter));
-
-		if (c == (gunichar)lctext[len]) /* initial comparison */
-		{
-			/* iterate over remaining chars in lctext/compare */
-			while (len-- && gtk_text_iter_backward_char(iter))
-			{
-				c = g_unichar_tolower(gtk_text_iter_get_char(iter));
-
-				if (c != (gunichar)lctext[len])
-				{
-					/* reset iter to right of char */
-					gtk_text_iter_forward_char(iter);
-					goto prev;
-				}
-			}
-
-			*mstart = *iter; /* set start iter before last char */
-
-			if (lctext) g_free(lctext);         /* free lctext */
-
-			return TRUE;                    /* return success */
-		}
-
-prev:
-		;
-		*mend = *iter;   /* set end iter after next search char */
-	}
-
-	if (lctext) g_free(lctext);     /* free lctext */
-
-	if (mstart || mend || flags) {}
-
-	return FALSE;   /* no match */
 }
 
 
@@ -135,9 +30,14 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 	GtkWidget *gFix;
 	GtkWidget *scroll;
 	GtkWidget *tView;
-	GtkTextBuffer *tBuf;
+	GtkSourceBuffer *tBuf;
+	GtkSourceLanguageManager *lm;
+	GtkSourceLanguage *language = NULL;
+	GtkSourceStyleSchemeManager *scheme_manager;
+	GtkSourceStyleScheme *scheme;
 	GtkWrapMode wrap_mode;
 	gchar *tmp, *command, *buf1, *src, *font;
+	gchar *style, *syntax;
 	gboolean bval, no_cursor;
 	gint p_above, p_below;
 	const char* cfg_file = "settings.ini";
@@ -180,7 +80,7 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 		magic_full = magic_file(magic_cookie, FileToLoad);
 
 		g_print("%s\n", magic_full);
-		src = g_key_file_get_string(cfg, "Scripts", magic_full, NULL);
+		src = g_key_file_get_string(cfg, magic_full, "Script", NULL);
 
 		if (!src)
 		{
@@ -225,7 +125,13 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 			err = NULL;
 		}
 
-		bval = g_key_file_get_boolean(cfg, "Flags", "Wrap", NULL);
+		bval = g_key_file_get_boolean(cfg, magic_full, "Wrap", &err);
+
+		if (err)
+		{
+			err = NULL;
+			bval = g_key_file_get_boolean(cfg, "Flags", "Wrap", NULL);
+		}
 
 		if (bval)
 			wrap_mode = GTK_WRAP_WORD;
@@ -238,6 +144,16 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 			no_cursor = FALSE;
 		else
 			no_cursor = TRUE;
+
+		style = g_key_file_get_string(cfg, magic_full, "Style", NULL);
+
+		if (!style)
+			style = g_key_file_get_string(cfg, "Appearance", "Style", NULL);
+
+		syntax = g_key_file_get_string(cfg, magic_full, "Syntax", NULL);
+
+		if (!syntax)
+			syntax = g_key_file_get_string(cfg, "Appearance", "Syntax", NULL);
 	}
 
 	if (err)
@@ -261,7 +177,7 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 	scroll = gtk_scrolled_window_new(NULL, NULL);
 	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scroll), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
 
-	tBuf = gtk_text_buffer_new(NULL);
+	tBuf = gtk_source_buffer_new(NULL);
 	g_object_set_data_full(G_OBJECT(gFix), "txtbuf", tBuf, (GDestroyNotify)g_object_unref);
 	tmp = g_locale_to_utf8(buf1, -1, NULL, NULL, NULL);
 	g_free(buf1);
@@ -272,9 +188,9 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 		return NULL;
 	}
 
-	gtk_text_buffer_set_text(tBuf, tmp, -1);
+	gtk_text_buffer_set_text(GTK_TEXT_BUFFER(tBuf), tmp, -1);
 
-	tView = gtk_text_view_new_with_buffer(tBuf);
+	tView = gtk_source_view_new_with_buffer(tBuf);
 	gtk_widget_modify_font(tView, pango_font_description_from_string(font));
 	gtk_text_view_set_editable(GTK_TEXT_VIEW(tView), FALSE);
 
@@ -284,6 +200,20 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 	gtk_text_view_set_pixels_above_lines(GTK_TEXT_VIEW(tView), p_above);
 	gtk_text_view_set_pixels_below_lines(GTK_TEXT_VIEW(tView), p_below);
 	gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(tView), wrap_mode);
+
+	if (style)
+	{
+		scheme_manager = gtk_source_style_scheme_manager_get_default();
+		scheme = gtk_source_style_scheme_manager_get_scheme(scheme_manager, style);
+		gtk_source_buffer_set_style_scheme(tBuf, scheme);
+	}
+	
+	if (syntax)
+	{
+		lm = gtk_source_language_manager_new();
+		language = gtk_source_language_manager_get_language(lm, syntax);
+		gtk_source_buffer_set_language(tBuf, language);
+	}
 
 	gtk_container_add(GTK_CONTAINER(scroll), GTK_WIDGET(tView));
 	gtk_container_add(GTK_CONTAINER(gFix), scroll);
@@ -307,7 +237,7 @@ void DCPCALL ListGetDetectString(char* DetectString, int maxlen)
 
 int DCPCALL ListSearchText(HWND ListWin, char* SearchString, int SearchParameter)
 {
-	GtkTextBuffer *sBuf;
+	GtkSourceBuffer *sBuf;
 	GtkTextMark *last_pos;
 	GtkTextIter iter, mstart, mend;
 	gboolean found;
@@ -321,13 +251,15 @@ int DCPCALL ListSearchText(HWND ListWin, char* SearchString, int SearchParameter
 		gtk_text_buffer_get_iter_at_mark(GTK_TEXT_BUFFER(sBuf), &iter, last_pos);
 
 	if ((SearchParameter & lcs_backwards) && (SearchParameter & lcs_matchcase))
-		found = gtk_text_iter_backward_search(&iter, SearchString, GTK_TEXT_SEARCH_TEXT_ONLY, &mend, &mstart, NULL);
+		found = gtk_source_iter_backward_search(&iter, SearchString, GTK_SOURCE_SEARCH_TEXT_ONLY, &mend, &mstart, NULL);
 	else if (SearchParameter & lcs_matchcase)
-		found = gtk_text_iter_forward_search(&iter, SearchString, GTK_TEXT_SEARCH_TEXT_ONLY, &mstart, &mend, NULL);
+		found = gtk_source_iter_forward_search(&iter, SearchString, GTK_SOURCE_SEARCH_TEXT_ONLY, &mstart, &mend, NULL);
 	else if (SearchParameter & lcs_backwards)
-		found = gtk_text_iter_backward_search_nocase(&iter, SearchString, GTK_TEXT_SEARCH_TEXT_ONLY, &mend, &mstart);
+		found = gtk_source_iter_backward_search(&iter, SearchString, GTK_SOURCE_SEARCH_TEXT_ONLY | GTK_SOURCE_SEARCH_CASE_INSENSITIVE,
+		                                        &mend, &mstart, NULL);
 	else
-		found = gtk_text_iter_forward_search_nocase(&iter, SearchString, GTK_TEXT_SEARCH_TEXT_ONLY, &mstart, &mend);
+		found = gtk_source_iter_forward_search(&iter, SearchString, GTK_SOURCE_SEARCH_TEXT_ONLY | GTK_SOURCE_SEARCH_CASE_INSENSITIVE,
+		                                       &mstart, &mend, NULL);
 
 	if (found)
 	{
@@ -335,6 +267,7 @@ int DCPCALL ListSearchText(HWND ListWin, char* SearchString, int SearchParameter
 		gtk_text_buffer_create_mark(GTK_TEXT_BUFFER(sBuf), "last_pos", &mend, FALSE);
 		gtk_text_view_scroll_mark_onscreen(GTK_TEXT_VIEW(getFirstChild(getFirstChild(GTK_WIDGET(ListWin)))),
 		                                   gtk_text_buffer_get_mark(GTK_TEXT_BUFFER(sBuf), "last_pos"));
+
 	}
 	else
 	{
@@ -345,7 +278,6 @@ int DCPCALL ListSearchText(HWND ListWin, char* SearchString, int SearchParameter
 		gtk_widget_destroy(dialog);
 	}
 }
-
 
 int DCPCALL ListSendCommand(HWND ListWin, int Command, int Parameter)
 {
