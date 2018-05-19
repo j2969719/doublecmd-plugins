@@ -32,7 +32,7 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
     end
     if (filename ~= FileName) or (FieldIndex == 6) then
         local attr = SysUtils.FileGetAttr(FileName);      
-        if (chechattr(attr, 0x00000004))  then
+        if (checkattr(attr, 0x00000004))  then
             return nil; 
         end
         local handle = io.popen(cmd .. ' --absolute-names -d "' .. FileName .. '"', 'r');
@@ -42,35 +42,35 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
         filename = FileName;
     end
     if (FieldIndex == 0) then
-        return chechattr(dosattr, 0x20);
+        return checkattr(dosattr, 0x20);
     elseif (FieldIndex == 1) then
-        return chechattr(dosattr, 0x800);
+        return checkattr(dosattr, 0x800);
     elseif (FieldIndex == 2) then
-        return chechattr(dosattr, 0x4000);
+        return checkattr(dosattr, 0x4000);
     elseif (FieldIndex == 3) then
-        return chechattr(dosattr, 0x2);
+        return checkattr(dosattr, 0x2);
     elseif (FieldIndex == 4) then
-        return chechattr(dosattr, 0x1);
+        return checkattr(dosattr, 0x1);
     elseif (FieldIndex == 5) then
-        return chechattr(dosattr, 0x4);
+        return checkattr(dosattr, 0x4);
     elseif (FieldIndex == 6) then
         local str = '';       
-        if (chechattr(dosattr, 0x1)) then
+        if (checkattr(dosattr, 0x1)) then
             str = str .. 'r';
         else
             str = str .. '-';
         end
-        if (chechattr(dosattr, 0x20)) then
+        if (checkattr(dosattr, 0x20)) then
             str = str .. 'a';
         else
             str = str .. '-';
         end
-        if (chechattr(dosattr, 0x2)) then
+        if (checkattr(dosattr, 0x2)) then
             str = str .. 'h';
         else
             str = str .. '-';
         end
-        if (chechattr(dosattr, 0x4)) then
+        if (checkattr(dosattr, 0x4)) then
             str = str .. 's';
         else
             str = str .. '-';
@@ -80,7 +80,7 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
     return nil; -- invalid
 end
 
-function chechattr(vattr, val)
+function checkattr(vattr, val)
     if (vattr ~= nil) then
         if (math.floor(vattr / val) % 2 ~= 0)  then
             return true;        

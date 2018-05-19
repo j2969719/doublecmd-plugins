@@ -42,31 +42,31 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
         filename = FileName;
     end
     if (FieldIndex == 0) then
-        return chechattr(dosattr, 'a');
+        return checkattr(dosattr, 'a');
     elseif (FieldIndex == 1) then
-        return chechattr(dosattr, 'h');
+        return checkattr(dosattr, 'h');
     elseif (FieldIndex == 2) then
-        return chechattr(dosattr, 'r');
+        return checkattr(dosattr, 'r');
     elseif (FieldIndex == 3) then
-        return chechattr(dosattr, 's');
+        return checkattr(dosattr, 's');
     elseif (FieldIndex == 4) then
         local str = '';       
-        if (chechattr(dosattr, 'r')) then
+        if (checkattr(dosattr, 'r')) then
             str = str .. 'r';
         else
             str = str .. '-';
         end
-        if (chechattr(dosattr, 'a')) then
+        if (checkattr(dosattr, 'a')) then
             str = str .. 'a';
         else
             str = str .. '-';
         end
-        if (chechattr(dosattr, 'h')) then
+        if (checkattr(dosattr, 'h')) then
             str = str .. 'h';
         else
             str = str .. '-';
         end
-        if (chechattr(dosattr, 's')) then
+        if (checkattr(dosattr, 's')) then
             str = str .. 's';
         else
             str = str .. '-';
@@ -76,7 +76,7 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
     return nil; -- invalid
 end
 
-function chechattr(vattr, val)
+function checkattr(vattr, val)
     if (vattr ~= nil) then
         if (string.find(vattr, val)) then
             return true;

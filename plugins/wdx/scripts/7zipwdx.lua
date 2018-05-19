@@ -37,6 +37,8 @@ function ContentGetSupportedField(Index)
         return "Warnings", '', 1;
     elseif (Index == #properties + 6) then
         return "Errors", '', 1; 
+    elseif (Index == #properties + 7) then
+        return "Encrypted", '', 6; 
     end
     return '', '', 0; -- ft_nomorefields
 end
@@ -56,7 +58,7 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
                 return nil; 
             end
         end
-        local handle = io.popen(cmd .. ' l "' .. FileName .. '" -p', 'r');
+        local handle = io.popen(cmd .. ' l "' .. FileName .. '" -p 2>&1', 'r');
         output = handle:read("*a");
         handle:close();
         filename = FileName;
@@ -65,9 +67,19 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
     if (FieldIndex >= 0) and (FieldIndex < #properties) then
         return getproperty(properties[FieldIndex + 1][1])
     elseif (FieldIndex == #properties) then
-        return getfromlastlines("(%d+)%sfiles");
+        local result = getfromlastlines("(%d+)%sfiles");
+        if (result == nil) then
+            return 0;
+        else
+            return result;
+        end
     elseif (FieldIndex == #properties + 1) then
-        return getfromlastlines("(%d+)%sfolders");
+        local result = getfromlastlines("(%d+)%sfolders");
+        if (result == nil) then
+            return 0;
+        else
+            return result;
+        end
     elseif (FieldIndex == #properties + 2) then
         return getfromlastlines("(%d+)%s+%d+%s+%d+%sf");
     elseif (FieldIndex == #properties + 3) then
@@ -78,6 +90,13 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
         return getfromlastlines("Warnings:%s(%d+)");
     elseif (FieldIndex == #properties + 6) then
         return getfromlastlines("Errors:%s(%d+)");
+    elseif (FieldIndex == #properties + 7) then
+        local result = output:match(":%sCan%snot%sopen%s(encrypted)%sarchive.%sWrong%spassword");
+        if (result == nil) then
+            return false;
+        else
+            return true;
+        end
     end
     return nil; -- invalid
 end
