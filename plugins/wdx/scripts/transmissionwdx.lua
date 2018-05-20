@@ -31,8 +31,8 @@ function ContentGetDetectString()
 end
 
 function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
-    if (FileName:find("[^" .. SysUtils.PathDelim .. "]%.%.$")) then
-        return nil;
+    if (SysUtils.DirectoryExists(FileName)) then 
+        return nil; 
     end
     if (filename ~= FileName) then
         if (skipsysfiles == true) then
