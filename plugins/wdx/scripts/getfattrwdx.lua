@@ -32,8 +32,8 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
     end
     if (filename ~= FileName) or (FieldIndex == 6) then
         local attr = SysUtils.FileGetAttr(FileName);      
-        if (checkattr(attr, 0x00000004))  then
-            return nil; 
+        if (attr < 0) or (checkattr(attr, 0x00000004))  then
+            return nil;
         end
         local handle = io.popen(cmd .. ' --absolute-names -d "' .. FileName .. '"', 'r');
         output = handle:read("*a");

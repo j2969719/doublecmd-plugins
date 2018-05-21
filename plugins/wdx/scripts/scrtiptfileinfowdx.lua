@@ -1,7 +1,8 @@
 -- scrtiptfileinfowdx.lua
 -- https://doublecmd.sourceforge.io/forum/viewtopic.php?f=8&t=2727
 
-local scriptpath = "$COMMANDER_PATH/scripts/fileinfo.sh" 
+local scriptpath = "/usr/bin/fileinfo.sh" -- path to executable script
+local skipsysfiles = true  -- skip character, block or fifo files
 
 function ContentGetSupportedField(Index)
     if (Index == 0) then
@@ -19,16 +20,16 @@ function ContentGetDetectString()
 end
 
 function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
-    if (string.sub(FileName, - 3) == "/..") or (string.sub(FileName, - 2) == "/.") then
+    if (FileName:find("[^" .. SysUtils.PathDelim .. "]%.%.$")) then
         return nil;
     end
     if (FieldIndex == 0) and (UnitIndex == 0) then
-        local attr = SysUtils.FileGetAttr(FileName);
-        if (attr > 0) then
-            if (math.floor(attr / 0x00000004) % 2 ~= 0)  then
+        if (skipsysfiles == true) then
+            local attr = SysUtils.FileGetAttr(FileName);
+            if (attr < 0) or (math.floor(attr / 0x00000004) % 2 ~= 0) then
                 return nil; 
             end
-        end  
+        end
         local handle = io.popen(scriptpath .. ' "' .. FileName .. '"', 'r');
         local result = handle:read("*a");
         handle:close();

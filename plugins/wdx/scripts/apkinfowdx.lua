@@ -35,15 +35,10 @@ function ContentGetDetectString()
 end
 
 function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
-    if (SysUtils.DirectoryExists(FileName)) then 
-        return nil; 
-    end
     if (filename ~= FileName) then
         local attr = SysUtils.FileGetAttr(FileName);
-        if (attr > 0) then
-            if (math.floor(attr / 0x00000004) % 2 ~= 0)  then
-                return nil; 
-            end
+        if (attr < 0) or (math.floor(attr / 0x00000004) % 2 ~= 0) or (math.floor(attr / 0x00000010) % 2 ~= 0) then
+            return nil;
         end
         local handle = io.popen(cmd .. ' dump badging "' .. FileName .. '"');
         output = handle:read("*a");
@@ -65,17 +60,17 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
     elseif (FieldIndex == 3) then
         return getvalue("install%-location:'");
     elseif (FieldIndex == 4) then
-    	local resultstr = '';   
-     	for permission in string.gmatch(output, "\nuses%-permission: name='([^']+)") do
-      		if (resultstr ~= '') then
-                    resultstr = resultstr .. '\n' .. permission;
-                else
-                    resultstr = permission;
-                end  
+        local resultstr = '';
+        for permission in string.gmatch(output, "\nuses%-permission: name='([^']+)") do
+            if (resultstr ~= '') then
+                resultstr = resultstr .. '\n' .. permission;
+            else
+                resultstr = permission;
             end
+        end
         return resultstr;
     elseif (FieldIndex == 5) then
-  	return getvalue("locales: '", "' '", ', ');
+        return getvalue("locales: '", "' '", ', ');
     elseif (FieldIndex == 6) then
         return getvalue("supports%-screens: '", "' '", ', ');
     elseif (FieldIndex == 7) then

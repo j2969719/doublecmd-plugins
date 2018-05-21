@@ -33,10 +33,8 @@ end
 
 function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
     local attr = SysUtils.FileGetAttr(FileName);
-    if (attr > 0) then
-        if (math.floor(attr / 0x00000004) % 2 ~= 0)  then
-            return nil; 
-        end
+    if (attr < 0) or (math.floor(attr / 0x00000004) % 2 ~= 0) then
+        return nil;
     end
     if (fields[FieldIndex + 1][3] ~= nil) then
         local handle = io.popen(fields[FieldIndex + 1][3] .. ' "'..FileName..'"', 'r');

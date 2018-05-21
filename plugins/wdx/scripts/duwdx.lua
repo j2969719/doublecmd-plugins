@@ -53,11 +53,9 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
     end
     if (FieldIndex < 5) then
         local attr = SysUtils.FileGetAttr(FileName);
-        if (attr > 0) then
-            if (math.floor(attr / 0x00000004) % 2 ~= 0)  then
-                return nil; 
-            end
-        end        
+        if (attr < 0) or (math.floor(attr / 0x00000004) % 2 ~= 0) then
+            return nil;
+        end
         local handle = io.popen(cmd1 .. ' "'..FileName..'"', 'r');
         local result = handle:read("*a");
         handle:close();

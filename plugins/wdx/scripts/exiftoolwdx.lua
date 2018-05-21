@@ -206,15 +206,10 @@ function ContentGetDetectString()
 end
 
 function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
-    if (SysUtils.DirectoryExists(FileName)) then 
-        return nil; 
-    end
     if (filename ~= FileName) then
         local attr = SysUtils.FileGetAttr(FileName);
-        if (attr > 0) then
-            if (math.floor(attr / 0x00000004) % 2 ~= 0)  then
-                return nil; 
-            end
+        if (attr < 0) or (math.floor(attr / 0x00000004) % 2 ~= 0) or (math.floor(attr / 0x00000010) % 2 ~= 0) then
+            return nil;
         end
         local handle = io.popen(cmd .. ' "' .. FileName .. '"', 'r');
         res = handle:read("*a");
