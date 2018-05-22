@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -shared -fPIC
+CFLAGS = -shared -fPIC -Wl,--no-as-needed
 INCLUDES = -I../../sdk
 
 

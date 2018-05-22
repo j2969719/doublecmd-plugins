@@ -1,5 +1,7 @@
 -- fixfilenamewdx.lua
 
+local skipsysfiles = true  -- skip character, block or fifo files
+
 local cmd = {
     {"echo", "| iconv -t latin1 | iconv -f cp1251 -t utf-8", "fix encoding"}, 
     
@@ -34,10 +36,12 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
         tname = string.match(tname, "(.*[/\\])");
     end
     if (tname ~= nil) then
-        local attr = SysUtils.FileGetAttr(FileName);
-        if (attr < 0) or (math.floor(attr / 0x00000004) % 2 ~= 0) then
-            return tname;
-        end        
+        if (skipsysfiles == true) then
+            local attr = SysUtils.FileGetAttr(FileName);
+            if (attr < 0) or (math.floor(attr / 0x00000004) % 2 ~= 0) then
+                return nil;
+            end
+        end
         local handle = io.popen(cmd[FieldIndex + 1][1] .. ' "' .. tname .. '" ' .. cmd[FieldIndex + 1][2]);
         output = handle:read("*a");
         handle:close();

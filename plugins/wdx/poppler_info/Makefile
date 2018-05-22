@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -shared -fPIC
+CFLAGS = -shared -fPIC -Wl,--no-as-needed
 INCLUDES = `pkg-config --cflags --libs poppler-glib` -I../../sdk
 PLUGNAME = poppler_info.wdx
 

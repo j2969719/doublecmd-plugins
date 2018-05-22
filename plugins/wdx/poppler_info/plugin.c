@@ -25,8 +25,8 @@ FIELD fields[] =
 	{"Keywords",			ft_string,	""},
 	{"Version",			ft_string,	""},
 	{"Total Pages",			ft_numeric_32,	""},
-	{"Creation",			ft_datetime,	""},
-	{"Modification",		ft_datetime,	""},
+	{"Creation date",		ft_datetime,	""},
+	{"Modification date",		ft_datetime,	""},
 	{"Attachments",			ft_boolean,	""},
 	{"Linearized",			ft_boolean,	""},
 	{"Password protected",		ft_boolean,	""},
@@ -34,8 +34,8 @@ FIELD fields[] =
 	{"Can be printer",		ft_boolean,	""},
 	{"Can be modified",		ft_boolean,	""},
 	{"Can be copied",		ft_boolean,	""},
-	{"Ok to add notes",		ft_boolean,	""},
-	{"Ok to fill form",		ft_boolean,	""},
+	{"OK to add notes",		ft_boolean,	""},
+	{"OK to fill form",		ft_boolean,	""},
 };
 
 gboolean UnixTimeToFileTime(uint64_t unix_time, LPFILETIME FileTime)
