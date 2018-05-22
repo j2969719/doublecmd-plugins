@@ -185,8 +185,8 @@ local fields = {
     {"Icon File Name", 8}, 
 }
 
-local filename = ""
-local res = nil
+local filename = ''
+local output = ''
 
 function ContentGetSupportedField(Index)
     if (fields[Index + 1] ~= nil ) then
@@ -214,7 +214,7 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
             return nil;
         end
         local handle = io.popen(cmd .. ' "' .. FileName .. '"', 'r');
-        res = handle:read("*a");
+        output = handle:read("*a");
         handle:close();
         filename = FileName;
     end
@@ -240,9 +240,8 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
 end
 
 function getval(str)
-    local tmp = string.match(res, "\n" .. str .. "%s*:%s[^\n]+");
-    if tmp ~= nil then
-        return tmp:gsub("^\n" .. str .. "%s*:%s", "");
+    if (output ~= nil) then
+        return output:match("\n" .. str .. "%s*:%s([^\n]+)");
     end
     return nil;
 end

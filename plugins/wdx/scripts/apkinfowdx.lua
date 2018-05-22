@@ -1,7 +1,9 @@
 -- requires aapt
 
 local cmd = "aapt"
+local params = "dump badging"
 local locale = "ru"
+local separator = "\n"
 local output = ''
 local filename = ''
 
@@ -40,9 +42,12 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
         if (attr < 0) or (math.floor(attr / 0x00000004) % 2 ~= 0) or (math.floor(attr / 0x00000010) % 2 ~= 0) then
             return nil;
         end
-        local handle = io.popen(cmd .. ' dump badging "' .. FileName .. '"');
+        local handle = io.popen(cmd .. ' ' .. params .. ' "' .. FileName .. '"', 'r');
         output = handle:read("*a");
         handle:close();
+        if (output == nil) then
+            return nil;
+        end
         filename = FileName;
     end
     
@@ -63,7 +68,7 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
         local resultstr = '';
         for permission in string.gmatch(output, "\nuses%-permission: name='([^']+)") do
             if (resultstr ~= '') then
-                resultstr = resultstr .. '\n' .. permission;
+                resultstr = resultstr .. separator .. permission;
             else
                 resultstr = permission;
             end
@@ -80,9 +85,8 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
 end
 
 function getvalue(str, rpl, by)
-    local tmp = output:match("\n" .. str .. "[^\n]+");
+    local tmp = output:match("\n" .. str .. "([^\n]+)");
     if (tmp ~= nil) then
-        tmp = tmp:gsub("^\n" .. str, "");
         if (rpl ~= nil) then
             tmp = tmp:gsub(rpl, by);
         end

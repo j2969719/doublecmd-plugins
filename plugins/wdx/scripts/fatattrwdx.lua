@@ -23,7 +23,11 @@ function ContentGetDetectString()
 end
 
 function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
-    if (string.find(FileName, "[^" .. SysUtils.PathDelim .. "]%.%.$")) then
+    local delimpat = SysUtils.PathDelim;
+    if (delimpat == nil) then
+        delimpat = "/\\";
+    end
+    if (FileName:find("[^" .. delimpat .. "]%.%.$")) then
         return nil;
     end
     if (filename ~= FileName) or (FieldIndex == 4) then        
@@ -34,7 +38,7 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
         local handle = io.popen(cmd .. ' "' .. FileName .. '"', 'r');
         output = handle:read("*a");
         handle:close();
-        if (output:sub(1, 9) ~= FileName:sub(1, 9)) then
+        if (output ~= nil) and (output:sub(1, 9) ~= FileName:sub(1, 9)) then
             dosattr = output:sub(1, 9);
         end
         filename = FileName;

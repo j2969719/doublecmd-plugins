@@ -1,4 +1,5 @@
 local cmd = "getfattr"
+local params = "--absolute-names -d"
 local output = ''
 local dosattr = ''
 local filename = ''
@@ -27,19 +28,25 @@ function ContentGetDetectString()
 end
 
 function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
-    if (string.find(FileName, "[^" .. SysUtils.PathDelim .. "]%.%.$")) then
+    local delimpat = SysUtils.PathDelim;
+    if (delimpat == nil) then
+        delimpat = "/\\";
+    end
+    if (FileName:find("[^" .. delimpat .. "]%.%.$")) then
         return nil;
     end
     if (filename ~= FileName) or (FieldIndex == 6) then
         local attr = SysUtils.FileGetAttr(FileName);      
-        if (attr < 0) or (checkattr(attr, 0x00000004))  then
+        if (attr < 0) or (checkattr(attr, 0x00000004)) then
             return nil;
         end
-        local handle = io.popen(cmd .. ' --absolute-names -d "' .. FileName .. '"', 'r');
+        local handle = io.popen(cmd .. ' ' .. params .. ' "' .. FileName .. '"', 'r');
         output = handle:read("*a");
         handle:close();
-        dosattr = output:match('%.DOSATTRIB="([^"]+)');
         filename = FileName;
+        if (output ~= nil) then
+            dosattr = output:match('%.DOSATTRIB="([^"]+)');
+        end
     end
     if (FieldIndex == 0) then
         return checkattr(dosattr, 0x20);
@@ -82,7 +89,7 @@ end
 
 function checkattr(vattr, val)
     if (vattr ~= nil) then
-        if (math.floor(vattr / val) % 2 ~= 0)  then
+        if (math.floor(vattr / val) % 2 ~= 0) then
             return true;        
         end
     end

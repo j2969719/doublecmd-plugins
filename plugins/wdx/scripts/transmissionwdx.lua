@@ -6,7 +6,7 @@ local output = ''
 local filename = ''
 
 local fields = {
-    {"Name",        8,         "%s%sName:%s([^\n]+)"}, 
+    {"Name",        8,         "%s%sName:%s([^\n]+)"},  -- name, field type, pattern
     {"Hash",        8,         "%s%sHash:%s([^\n]+)"}, 
     {"Created by",  8,  "%s%sCreated%sby:%s([^\n]+)"}, 
     {"Created on",  8,  "%s%sCreated%son:%s([^\n]+)"}, 
@@ -40,7 +40,7 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
         handle:close();
         filename = FileName;
     end
-    if (fields[FieldIndex + 1][3] ~= nil) then
+    if (output ~= nil) and (fields[FieldIndex + 1][3] ~= nil) then
         return output:match(fields[FieldIndex + 1][3]);
     end 
     return nil;

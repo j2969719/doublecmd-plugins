@@ -6,7 +6,7 @@ local output = ''
 local filename = ''
 
 local fields = {
-    {"iconv name",           "-g -i",    "([^\n]+)"},    -- display name, command line parameters, pattern
+    {"iconv name",           "-g -i",    "([^\n]+)"},  -- display name, command line parameters, pattern
     {"enca's encoding name", "-g -e",    "([^\n]+)"},
     {"lang ru",              "-L ru -g",  "(.+)\n$"},
 }
@@ -35,7 +35,7 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
         handle:close();
         filename = FileName;
     end
-    if (fields[FieldIndex + 1][3] ~= nil) then
+    if (output ~= nil) and (fields[FieldIndex + 1][3] ~= nil) then
         return output:match(fields[FieldIndex + 1][3]);
     end 
     return nil;

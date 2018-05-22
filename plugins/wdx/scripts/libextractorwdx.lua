@@ -3,30 +3,30 @@
 local cmd = "extract"
 
 local fields = {
-    {"title", 8}, 
-    {"author name", 8}, 
-    {"creator", 8}, 
-    {"format", 8}, 
-    {"last saved by", 8}, 
-    {"created by software", 8},  
-    {"produced by software", 8},  
-    {"encoder version", 8}, 
-    {"image dimensions", 8}, 
-    {"comment", 8}, 
-    {"language", 8}, 
-    {"page count", 2}, 
-    {"word count", 2}, 
-    {"line count", 2}, 
-    {"character count", 2}, 
-    {"paragraph count", 2}, 
-    {"editing cycles", 2}, 
-    {"creation date", 8}, 
-    {"modification date", 8},  
-    {"template", 8},  
+    {"title",                8,                  "\ntitle%s%-%s([^\n]+)"},  -- name, field type, pattern
+    {"author name",          8,           "\nauthor%sname%s%-%s([^\n]+)"},
+    {"creator",              8,                "\ncreator%s%-%s([^\n]+)"},
+    {"format",               8,                 "\nformat%s%-%s([^\n]+)"},
+    {"last saved by",        8,        "\nlast%ssaved%sby%s%-%s([^\n]+)"},
+    {"created by software",  8,  "\ncreated%sby%ssoftware%s%-%s([^\n]+)"},
+    {"produced by software", 8, "\nproduced%sby%ssoftware%s%-%s([^\n]+)"},
+    {"encoder version",      8,       "\nencoder%sversion%s%-%s([^\n]+)"},
+    {"image dimensions",     8,      "\nimage%sdimensions%s%-%s([^\n]+)"},
+    {"comment",              8,                "\ncomment%s%-%s([^\n]+)"},
+    {"language",             8,               "\nlanguage%s%-%s([^\n]+)"},
+    {"page count",           2,            "\npage%scount%s%-%s([^\n]+)"},
+    {"word count",           2,            "\nword%scount%s%-%s([^\n]+)"},
+    {"line count",           2,            "\nline%scount%s%-%s([^\n]+)"},
+    {"character count",      2,       "\ncharacter%scount%s%-%s([^\n]+)"},
+    {"paragraph count",      2,       "\nparagraph%scount%s%-%s([^\n]+)"},
+    {"editing cycles",       2,        "\nediting%scycles%s%-%s([^\n]+)"},
+    {"creation date",        8,         "\ncreation%sdate%s%-%s([^\n]+)"},
+    {"modification date",    8,     "\nmodification%sdate%s%-%s([^\n]+)"},
+    {"template",             8,               "\ntemplate%s%-%s([^\n]+)"},
 }
 
-local filename = ""
-local res = nil
+local filename = ''
+local output = ''
 
 function ContentGetSupportedField(Index)
     if (fields[Index + 1] ~= nil ) then
@@ -51,17 +51,12 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
             return nil;
         end
         local handle = io.popen(cmd .. ' "' .. FileName .. '"', 'r');
-        res = handle:read("*a");
+        output = handle:read("*a");
         handle:close();
         filename = FileName;
     end
-    return getval(fields[FieldIndex + 1][1]);
-end
-
-function getval(str)
-    local tmp = string.match(res, "\n" .. str .. "%s%-%s[^\n]+");
-    if tmp ~= nil then
-        return tmp:gsub("^\n" .. str .. "%s%-%s", "");
+    if (output ~= nil) and (fields[FieldIndex + 1][3] ~= nil) then
+        return output:match(fields[FieldIndex + 1][3]);
     end
     return nil;
 end
