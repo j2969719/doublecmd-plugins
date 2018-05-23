@@ -52,6 +52,14 @@ gboolean selectionexist(int index)
 
 }
 
+void GetCurrentFileTime(LPFILETIME ft)
+{
+	gint64 ll = g_get_real_time();
+	ll = ll * 10 + 116444736000000000;
+	ft->dwLowDateTime = (DWORD)ll;
+	ft->dwHighDateTime = ll >> 32;
+}
+
 int DCPCALL FsInit(int PluginNr, tProgressProc pProgressProc, tLogProc pLogProc, tRequestProc pRequestProc)
 {
 	gPluginNr = PluginNr;
@@ -69,6 +77,7 @@ HANDLE DCPCALL FsFindFirst(char* Path, WIN32_FIND_DATAA *FindData)
 	if (entries[ienv] != NULL)
 	{
 		g_strlcpy(FindData->cFileName, entries[ienv], PATH_MAX);
+		GetCurrentFileTime(&FindData->ftLastWriteTime);
 
 		if (selectionexist(ienv))
 			FindData->nFileSizeLow = 1;
@@ -87,6 +96,7 @@ BOOL DCPCALL FsFindNext(HANDLE Hdl, WIN32_FIND_DATAA *FindData)
 	if (entries[ienv] != NULL)
 	{
 		g_strlcpy(FindData->cFileName, entries[ienv], PATH_MAX);
+		GetCurrentFileTime(&FindData->ftLastWriteTime);
 
 		if (selectionexist(ienv))
 			FindData->nFileSizeLow = 1;
@@ -111,7 +121,7 @@ int DCPCALL FsGetFile(char* RemoteName, char* LocalName, int CopyFlags, RemoteIn
 		return FS_FILE_USERABORT;
 
 	if (access(LocalName, F_OK) == 0)
-		return FS_FILE_NOTSUPPORTED; // FS_FILE_EXISTS;
+		return FS_FILE_EXISTS;
 
 	FILE* tfp = fopen(LocalName, "w");
 
@@ -141,7 +151,7 @@ int DCPCALL FsGetFile(char* RemoteName, char* LocalName, int CopyFlags, RemoteIn
 		gdk_pixbuf_save(pixbuf, LocalName, "png", NULL, NULL);
 	}
 
-	return FS_FILE_NOTSUPPORTED;
+	return FS_FILE_OK;
 }
 
 int DCPCALL FsExecuteFile(HWND MainWin, char* RemoteName, char* Verb)
