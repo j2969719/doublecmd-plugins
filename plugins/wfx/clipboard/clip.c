@@ -1,7 +1,10 @@
 #include <glib.h>
 #include <gtk/gtk.h>
+#include <gdk-pixbuf/gdk-pixbuf.h>
 #include <string.h>
 #include "wfxplugin.h"
+
+#define _plugname "Clipboard"
 
 int gPluginNr;
 tProgressProc gProgressProc;
@@ -15,8 +18,20 @@ const gchar *entries[] =
 	"SECONDARY.TXT",
 	"CLIPBOARD.TXT",
 	"CLIPBOARD.PNG",
+	"CLIPBOARD.JPG",
+//	"CLIPBOARD.BMP",
+	"CLIPBOARD.ICO",
 	NULL
 };
+
+static void ShowGError(gchar *str, GError *err)
+{
+	GtkWidget *dialog = gtk_message_dialog_new(NULL,
+	                    GTK_DIALOG_MODAL, GTK_MESSAGE_ERROR, GTK_BUTTONS_OK, "%s: %s", str, (err)->message);
+	gtk_window_set_title(GTK_WINDOW(dialog), _plugname);
+	gtk_dialog_run(GTK_DIALOG(dialog));
+	gtk_widget_destroy(dialog);
+}
 
 gboolean selectionexist(int index)
 {
@@ -41,11 +56,12 @@ gboolean selectionexist(int index)
 
 		break;
 
-	case 3:
+	default:
 		if (gtk_clipboard_wait_is_image_available(gtk_clipboard_get(GDK_SELECTION_CLIPBOARD)))
 			return TRUE;
 
 		break;
+
 	}
 
 	return FALSE;
@@ -116,6 +132,7 @@ int DCPCALL FsFindClose(HANDLE Hdl)
 int DCPCALL FsGetFile(char* RemoteName, char* LocalName, int CopyFlags, RemoteInfoStruct* ri)
 {
 	int err = gProgressProc(gPluginNr, RemoteName, LocalName, 0);
+	GError *gerr = NULL;
 
 	if (err)
 		return FS_FILE_USERABORT;
@@ -148,7 +165,35 @@ int DCPCALL FsGetFile(char* RemoteName, char* LocalName, int CopyFlags, RemoteIn
 	{
 		fclose(tfp);
 		GdkPixbuf *pixbuf = gtk_clipboard_wait_for_image(gtk_clipboard_get(GDK_SELECTION_CLIPBOARD));
-		gdk_pixbuf_save(pixbuf, LocalName, "png", NULL, NULL);
+		gdk_pixbuf_save(pixbuf, LocalName, "png", &gerr, NULL);
+	}
+	else if (g_strcmp0(RemoteName + 1, entries[4]) == 0)
+	{
+		fclose(tfp);
+		GdkPixbuf *pixbuf = gtk_clipboard_wait_for_image(gtk_clipboard_get(GDK_SELECTION_CLIPBOARD));
+		gdk_pixbuf_save(pixbuf, LocalName, "jpeg", &gerr, NULL);
+	}
+	else if (g_strcmp0(RemoteName + 1, entries[5]) == 0)
+/*	{
+		fclose(tfp);
+
+		if (!gtk_clipboard_wait_is_image_available(gtk_clipboard_get(GDK_SELECTION_CLIPBOARD)))
+			return FS_FILE_NOTSUPPORTED;
+
+		GdkPixbuf *pixbuf = gtk_clipboard_wait_for_image(gtk_clipboard_get(GDK_SELECTION_CLIPBOARD));
+		gdk_pixbuf_save(pixbuf, LocalName, "bmp", &gerr, NULL);
+	}
+	else if (g_strcmp0(RemoteName + 1, entries[6]) == 0)*/
+	{
+		fclose(tfp);
+		GdkPixbuf *pixbuf = gtk_clipboard_wait_for_image(gtk_clipboard_get(GDK_SELECTION_CLIPBOARD));
+		gdk_pixbuf_save(pixbuf, LocalName, "ico", &gerr, NULL);
+	}
+
+	if (gerr)
+	{
+		ShowGError(LocalName, gerr);
+		g_error_free(gerr);
 	}
 
 	return FS_FILE_OK;
@@ -166,5 +211,5 @@ int DCPCALL FsExecuteFile(HWND MainWin, char* RemoteName, char* Verb)
 
 void DCPCALL FsGetDefRootName(char* DefRootName, int maxlen)
 {
-	g_strlcpy(DefRootName, "Clipboard", maxlen);
+	g_strlcpy(DefRootName, _plugname, maxlen);
 }
