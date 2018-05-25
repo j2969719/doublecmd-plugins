@@ -7,7 +7,6 @@
 
 #define _plugname "CMD Output"
 #define _inifile "settings.ini"
-#define _inicmd "CommandString"
 #define _filesize 0
 
 int gPluginNr;
@@ -15,6 +14,7 @@ tProgressProc gProgressProc;
 tLogProc gLogProc;
 tRequestProc gRequestProc;
 GKeyFile *cfg;
+gboolean grous;
 gchar **files;
 gsize count, i;
 
@@ -47,9 +47,7 @@ int DCPCALL FsInit(int PluginNr, tProgressProc pProgressProc, tLogProc pLogProc,
 	cfg = g_key_file_new();
 
 	if (!g_key_file_load_from_file(cfg, cfgpath, G_KEY_FILE_KEEP_COMMENTS, &err))
-		g_print("%s(%s): %s", _plugname, cfgpath, (err)->message);
-	else
-		files = g_key_file_get_groups(cfg, &count);
+		g_print("%s(%s): %s\n", _plugname, cfgpath, (err)->message);
 
 	if (err)
 		g_error_free(err);
@@ -62,10 +60,26 @@ HANDLE DCPCALL FsFindFirst(char* Path, WIN32_FIND_DATAA *FindData)
 	memset(FindData, 0, sizeof(WIN32_FIND_DATAA));
 	i = 0;
 
+	if (files)
+		g_strfreev(files);
+
+	if (g_strcmp0(Path, "/") == 0)
+	{
+		files = g_key_file_get_groups(cfg, &count);
+		grous = TRUE;
+	}
+	else
+	{
+		files = g_key_file_get_keys(cfg, Path + 1, &count, NULL);
+	}
+
 	if (files[i] != NULL)
 	{
 		g_strlcpy(FindData->cFileName, files[i], PATH_MAX);
 		GetCurrentFileTime(&FindData->ftLastWriteTime);
+
+		if (grous == TRUE)
+			FindData->dwFileAttributes = FILE_ATTRIBUTE_DIRECTORY;
 
 		FindData->nFileSizeLow = _filesize;
 		i++;
@@ -84,6 +98,9 @@ BOOL DCPCALL FsFindNext(HANDLE Hdl, WIN32_FIND_DATAA *FindData)
 		g_strlcpy(FindData->cFileName, files[i], PATH_MAX);
 		GetCurrentFileTime(&FindData->ftLastWriteTime);
 
+		if (grous == TRUE)
+			FindData->dwFileAttributes = FILE_ATTRIBUTE_DIRECTORY;
+
 		FindData->nFileSizeLow = _filesize;
 
 		i++;
@@ -95,6 +112,9 @@ BOOL DCPCALL FsFindNext(HANDLE Hdl, WIN32_FIND_DATAA *FindData)
 
 int DCPCALL FsFindClose(HANDLE Hdl)
 {
+	if (grous == TRUE)
+		grous = FALSE;
+
 	return 0;
 }
 
@@ -109,15 +129,21 @@ int DCPCALL FsGetFile(char* RemoteName, char* LocalName, int CopyFlags, RemoteIn
 	if ((CopyFlags == 0) && (g_file_test(LocalName, G_FILE_TEST_EXISTS)))
 		return FS_FILE_EXISTS;
 
-	gchar *cmdsrt = g_key_file_get_string(cfg, RemoteName + 1, _inicmd, &gerr);
+	gchar **target = g_strsplit(RemoteName + 1, "/", 2);
+
+	gchar *cmdsrt = g_key_file_get_string(cfg, target[0], target[1], &gerr);
 
 	if (gerr)
 	{
-		g_print("%s(%s): %s", _plugname, _inicmd, (gerr)->message);
+		g_print("%s(%s/%s): %s\n", _plugname, target[0], target[1], (gerr)->message);
 		g_error_free(gerr);
 	}
 
+	if (target)
+		g_strfreev(target);
+
 	gchar *command = g_strdup_printf(cmdsrt, LocalName, LocalName);
+	g_print("%s: %s\n", _plugname, command);
 
 	if (system(command) == -1)
 		return FS_FILE_WRITEERROR;
