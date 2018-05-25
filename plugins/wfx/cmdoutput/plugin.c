@@ -5,7 +5,7 @@
 #include "extension.h"
 #include "wfxplugin.h"
 
-#define _plugname "CMD Output"
+#define _plugname "CMDOutput"
 #define _inifile "settings.ini"
 #define _filesize 0
 
