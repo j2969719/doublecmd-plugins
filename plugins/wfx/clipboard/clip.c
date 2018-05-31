@@ -5,6 +5,7 @@
 #include "wfxplugin.h"
 
 #define _plugname "Clipboard"
+#define _pseudosize 1024
 
 int gPluginNr;
 tProgressProc gProgressProc;
@@ -19,7 +20,7 @@ const gchar *entries[] =
 	"CLIPBOARD.TXT",
 	"CLIPBOARD.PNG",
 	"CLIPBOARD.JPG",
-//	"CLIPBOARD.BMP",
+	"CLIPBOARD.BMP",
 	"CLIPBOARD.ICO",
 	NULL
 };
@@ -96,7 +97,7 @@ HANDLE DCPCALL FsFindFirst(char* Path, WIN32_FIND_DATAA *FindData)
 		GetCurrentFileTime(&FindData->ftLastWriteTime);
 
 		if (selectionexist(ienv))
-			FindData->nFileSizeLow = 1;
+			FindData->nFileSizeLow = _pseudosize;
 
 		ienv++;
 	}
@@ -115,7 +116,7 @@ BOOL DCPCALL FsFindNext(HANDLE Hdl, WIN32_FIND_DATAA *FindData)
 		GetCurrentFileTime(&FindData->ftLastWriteTime);
 
 		if (selectionexist(ienv))
-			FindData->nFileSizeLow = 1;
+			FindData->nFileSizeLow = _pseudosize;
 
 		ienv++;
 		return TRUE;
@@ -137,7 +138,7 @@ int DCPCALL FsGetFile(char* RemoteName, char* LocalName, int CopyFlags, RemoteIn
 	if (err)
 		return FS_FILE_USERABORT;
 
-	if (access(LocalName, F_OK) == 0)
+	if ((CopyFlags == 0) && (access(LocalName, F_OK) == 0))
 		return FS_FILE_EXISTS;
 
 	FILE* tfp = fopen(LocalName, "w");
@@ -164,31 +165,71 @@ int DCPCALL FsGetFile(char* RemoteName, char* LocalName, int CopyFlags, RemoteIn
 	else if (g_strcmp0(RemoteName + 1, entries[3]) == 0)
 	{
 		fclose(tfp);
+
+		if (!selectionexist(3))
+		{
+			remove(LocalName);
+			return FS_FILE_NOTFOUND;
+		}
+
 		GdkPixbuf *pixbuf = gtk_clipboard_wait_for_image(gtk_clipboard_get(GDK_SELECTION_CLIPBOARD));
-		gdk_pixbuf_save(pixbuf, LocalName, "png", &gerr, NULL);
+
+		if (pixbuf)
+			gdk_pixbuf_save(pixbuf, LocalName, "png", &gerr, NULL);
 	}
 	else if (g_strcmp0(RemoteName + 1, entries[4]) == 0)
 	{
 		fclose(tfp);
+
+		if (!selectionexist(4))
+		{
+			remove(LocalName);
+			return FS_FILE_NOTFOUND;
+		}
+
 		GdkPixbuf *pixbuf = gtk_clipboard_wait_for_image(gtk_clipboard_get(GDK_SELECTION_CLIPBOARD));
-		gdk_pixbuf_save(pixbuf, LocalName, "jpeg", &gerr, NULL);
+
+		if (pixbuf)
+			gdk_pixbuf_save(pixbuf, LocalName, "jpeg", &gerr, NULL);
 	}
 	else if (g_strcmp0(RemoteName + 1, entries[5]) == 0)
-/*	{
-		fclose(tfp);
-
-		if (!gtk_clipboard_wait_is_image_available(gtk_clipboard_get(GDK_SELECTION_CLIPBOARD)))
-			return FS_FILE_NOTSUPPORTED;
-
-		GdkPixbuf *pixbuf = gtk_clipboard_wait_for_image(gtk_clipboard_get(GDK_SELECTION_CLIPBOARD));
-		gdk_pixbuf_save(pixbuf, LocalName, "bmp", &gerr, NULL);
-	}
-	else if (g_strcmp0(RemoteName + 1, entries[6]) == 0)*/
 	{
 		fclose(tfp);
+
+		if (!selectionexist(5))
+		{
+			remove(LocalName);
+			return FS_FILE_NOTFOUND;
+		}
+
 		GdkPixbuf *pixbuf = gtk_clipboard_wait_for_image(gtk_clipboard_get(GDK_SELECTION_CLIPBOARD));
-		gdk_pixbuf_save(pixbuf, LocalName, "ico", &gerr, NULL);
+
+		if (pixbuf)
+			gdk_pixbuf_save(pixbuf, LocalName, "bmp", &gerr, NULL);
 	}
+	else if (g_strcmp0(RemoteName + 1, entries[6]) == 0)
+	{
+		fclose(tfp);
+
+		if (!selectionexist(6))
+		{
+			remove(LocalName);
+			return FS_FILE_NOTFOUND;
+		}
+
+		GdkPixbuf *pixbuf = gtk_clipboard_wait_for_image(gtk_clipboard_get(GDK_SELECTION_CLIPBOARD));
+
+		if (pixbuf)
+			gdk_pixbuf_save(pixbuf, LocalName, "ico", &gerr, NULL);
+	}
+	else
+	{
+		fclose(tfp);
+		remove(LocalName);
+		return FS_FILE_NOTFOUND;
+	}
+
+
 
 	if (gerr)
 	{
