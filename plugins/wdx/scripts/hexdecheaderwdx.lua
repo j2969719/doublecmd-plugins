@@ -22,7 +22,10 @@ function ContentGetSupportedField(Index)
     if (fields[Index + 1] ~= nil) then
         local fieldname = fields[Index + 1][1];
         if (tonumber(fields[Index + 1][2]) > 0) and (showoffset == true) then
-            fieldname = fieldname .. ": " .. fields[Index + 1][2];
+            fieldname = fieldname .. " " .. fields[Index + 1][2];
+            if (fields[Index + 1][5] ~= nil) and (fields[Index + 1][4] ~= "raw") then
+                fieldname = fieldname .. ": " .. fields[Index + 1][5];
+            end
         end
         if (fields[Index + 1][4] ~= "hex") then
             fieldname = fieldname .. " (" .. fields[Index + 1][4] .. ")";
