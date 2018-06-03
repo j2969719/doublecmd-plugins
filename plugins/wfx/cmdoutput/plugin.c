@@ -16,7 +16,7 @@ tRequestProc gRequestProc;
 GKeyFile *cfg;
 gboolean grous;
 gchar **files;
-gsize count, i;
+gsize i;
 
 void GetCurrentFileTime(LPFILETIME ft)
 {
@@ -24,6 +24,26 @@ void GetCurrentFileTime(LPFILETIME ft)
 	ll = ll * 10 + 116444736000000000;
 	ft->dwLowDateTime = (DWORD)ll;
 	ft->dwHighDateTime = ll >> 32;
+}
+
+gboolean SetFindData(WIN32_FIND_DATAA *FindData)
+{
+	memset(FindData, 0, sizeof(WIN32_FIND_DATAA));
+
+	if (files[i] != NULL)
+	{
+		g_strlcpy(FindData->cFileName, files[i], PATH_MAX);
+		GetCurrentFileTime(&FindData->ftLastWriteTime);
+
+		if (grous == TRUE)
+			FindData->dwFileAttributes = FILE_ATTRIBUTE_DIRECTORY;
+
+		FindData->nFileSizeLow = _filesize;
+		i++;
+		return TRUE;
+	}
+
+	return FALSE;
 }
 
 int DCPCALL FsInit(int PluginNr, tProgressProc pProgressProc, tLogProc pLogProc, tRequestProc pRequestProc)
@@ -57,6 +77,7 @@ int DCPCALL FsInit(int PluginNr, tProgressProc pProgressProc, tLogProc pLogProc,
 
 HANDLE DCPCALL FsFindFirst(char* Path, WIN32_FIND_DATAA *FindData)
 {
+	gsize count;
 	memset(FindData, 0, sizeof(WIN32_FIND_DATAA));
 	i = 0;
 
@@ -73,39 +94,17 @@ HANDLE DCPCALL FsFindFirst(char* Path, WIN32_FIND_DATAA *FindData)
 		files = g_key_file_get_keys(cfg, Path + 1, &count, NULL);
 	}
 
-	if (files[i] != NULL)
-	{
-		g_strlcpy(FindData->cFileName, files[i], PATH_MAX);
-		GetCurrentFileTime(&FindData->ftLastWriteTime);
-
-		if (grous == TRUE)
-			FindData->dwFileAttributes = FILE_ATTRIBUTE_DIRECTORY;
-
-		FindData->nFileSizeLow = _filesize;
-		i++;
-	}
-
-	return (HANDLE)(1985);
+	if (SetFindData(FindData))
+		return (HANDLE)(1985);
+	else
+		return (HANDLE)(-1);
 }
 
 
 BOOL DCPCALL FsFindNext(HANDLE Hdl, WIN32_FIND_DATAA *FindData)
 {
-	memset(FindData, 0, sizeof(WIN32_FIND_DATAA));
-
-	if (files[i] != NULL)
-	{
-		g_strlcpy(FindData->cFileName, files[i], PATH_MAX);
-		GetCurrentFileTime(&FindData->ftLastWriteTime);
-
-		if (grous == TRUE)
-			FindData->dwFileAttributes = FILE_ATTRIBUTE_DIRECTORY;
-
-		FindData->nFileSizeLow = _filesize;
-
-		i++;
+	if (SetFindData(FindData))
 		return TRUE;
-	}
 	else
 		return FALSE;
 }

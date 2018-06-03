@@ -34,7 +34,7 @@ static void ShowGError(gchar *str, GError *err)
 	gtk_widget_destroy(dialog);
 }
 
-gboolean selectionexist(int index)
+gboolean SelectionExist(int index)
 {
 
 	switch (index)
@@ -69,12 +69,43 @@ gboolean selectionexist(int index)
 
 }
 
+
 void GetCurrentFileTime(LPFILETIME ft)
 {
 	gint64 ll = g_get_real_time();
 	ll = ll * 10 + 116444736000000000;
 	ft->dwLowDateTime = (DWORD)ll;
 	ft->dwHighDateTime = ll >> 32;
+}
+
+gboolean SetFindData(WIN32_FIND_DATAA *FindData)
+{
+	gboolean found = FALSE;
+	memset(FindData, 0, sizeof(WIN32_FIND_DATAA));
+
+	while (entries[ienv] != NULL)
+	{
+		ienv++;
+
+		if (SelectionExist(ienv - 1))
+		{
+			found = TRUE;
+			break;
+		}
+	}
+
+	if (found)
+	{
+		FindData->nFileSizeLow = _pseudosize;
+		g_strlcpy(FindData->cFileName, entries[ienv - 1], PATH_MAX);
+		GetCurrentFileTime(&FindData->ftLastWriteTime);
+		FindData->ftCreationTime.dwHighDateTime = 0xFFFFFFFF;
+		FindData->ftCreationTime.dwLowDateTime = 0xFFFFFFFE;
+		FindData->dwFileAttributes = 0;
+		return found;
+	}
+
+	return found;
 }
 
 int DCPCALL FsInit(int PluginNr, tProgressProc pProgressProc, tLogProc pLogProc, tRequestProc pRequestProc)
@@ -88,39 +119,19 @@ int DCPCALL FsInit(int PluginNr, tProgressProc pProgressProc, tLogProc pLogProc,
 
 HANDLE DCPCALL FsFindFirst(char* Path, WIN32_FIND_DATAA *FindData)
 {
-	memset(FindData, 0, sizeof(WIN32_FIND_DATAA));
 	ienv = 0;
 
-	if (entries[ienv] != NULL)
-	{
-		g_strlcpy(FindData->cFileName, entries[ienv], PATH_MAX);
-		GetCurrentFileTime(&FindData->ftLastWriteTime);
-
-		if (selectionexist(ienv))
-			FindData->nFileSizeLow = _pseudosize;
-
-		ienv++;
-	}
-
-	return (HANDLE)(1985);
+	if (SetFindData(FindData))
+		return (HANDLE)(1985);
+	else
+		return (HANDLE)(-1);
 }
 
 
 BOOL DCPCALL FsFindNext(HANDLE Hdl, WIN32_FIND_DATAA *FindData)
 {
-	memset(FindData, 0, sizeof(WIN32_FIND_DATAA));
-
-	if (entries[ienv] != NULL)
-	{
-		g_strlcpy(FindData->cFileName, entries[ienv], PATH_MAX);
-		GetCurrentFileTime(&FindData->ftLastWriteTime);
-
-		if (selectionexist(ienv))
-			FindData->nFileSizeLow = _pseudosize;
-
-		ienv++;
+	if (SetFindData(FindData))
 		return TRUE;
-	}
 	else
 		return FALSE;
 }
@@ -166,7 +177,7 @@ int DCPCALL FsGetFile(char* RemoteName, char* LocalName, int CopyFlags, RemoteIn
 	{
 		fclose(tfp);
 
-		if (!selectionexist(3))
+		if (!SelectionExist(3))
 		{
 			remove(LocalName);
 			return FS_FILE_NOTFOUND;
@@ -181,7 +192,7 @@ int DCPCALL FsGetFile(char* RemoteName, char* LocalName, int CopyFlags, RemoteIn
 	{
 		fclose(tfp);
 
-		if (!selectionexist(4))
+		if (!SelectionExist(4))
 		{
 			remove(LocalName);
 			return FS_FILE_NOTFOUND;
@@ -196,7 +207,7 @@ int DCPCALL FsGetFile(char* RemoteName, char* LocalName, int CopyFlags, RemoteIn
 	{
 		fclose(tfp);
 
-		if (!selectionexist(5))
+		if (!SelectionExist(5))
 		{
 			remove(LocalName);
 			return FS_FILE_NOTFOUND;
@@ -211,7 +222,7 @@ int DCPCALL FsGetFile(char* RemoteName, char* LocalName, int CopyFlags, RemoteIn
 	{
 		fclose(tfp);
 
-		if (!selectionexist(6))
+		if (!SelectionExist(6))
 		{
 			remove(LocalName);
 			return FS_FILE_NOTFOUND;
