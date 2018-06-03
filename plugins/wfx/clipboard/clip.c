@@ -18,10 +18,10 @@ const gchar *entries[] =
 	"PRIMARY.TXT",
 	"SECONDARY.TXT",
 	"CLIPBOARD.TXT",
-	"CLIPBOARD.PNG",
-	"CLIPBOARD.JPG",
-	"CLIPBOARD.BMP",
-	"CLIPBOARD.ICO",
+	"Clipboard.png",
+	"Clipboard.jpg",
+	"Clipboard.bmp",
+	"Clipboard.ico",
 	NULL
 };
 
@@ -68,7 +68,6 @@ gboolean SelectionExist(int index)
 	return FALSE;
 
 }
-
 
 void GetCurrentFileTime(LPFILETIME ft)
 {
@@ -248,7 +247,23 @@ int DCPCALL FsGetFile(char* RemoteName, char* LocalName, int CopyFlags, RemoteIn
 		g_error_free(gerr);
 	}
 
+	gProgressProc(gPluginNr, RemoteName, LocalName, 100);
 	return FS_FILE_OK;
+}
+
+int DCPCALL FsPutFile(char* LocalName, char* RemoteName, int CopyFlags)
+{
+	int err = gProgressProc(gPluginNr, RemoteName, LocalName, 0);
+	GdkPixbuf *pixbuf = gdk_pixbuf_new_from_file(LocalName, NULL);
+
+	if (pixbuf)
+	{
+		gtk_clipboard_set_image(gtk_clipboard_get(GDK_SELECTION_CLIPBOARD), pixbuf);
+		gProgressProc(gPluginNr, RemoteName, LocalName, 100);
+		return FS_FILE_OK;
+	}
+
+	return FS_FILE_NOTSUPPORTED;
 }
 
 int DCPCALL FsExecuteFile(HWND MainWin, char* RemoteName, char* Verb)
