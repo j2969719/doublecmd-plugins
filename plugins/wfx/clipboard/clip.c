@@ -5,6 +5,7 @@
 #include "wfxplugin.h"
 
 #define _plugname "Clipboard"
+#define _copyimage "Set CLIPBOARD as an image?"
 #define _pseudosize 1024
 
 int gPluginNr;
@@ -257,7 +258,7 @@ int DCPCALL FsPutFile(char* LocalName, char* RemoteName, int CopyFlags)
 	GdkPixbuf *pixbuf = gdk_pixbuf_new_from_file(LocalName, NULL);
 	GtkClipboard *clipboard = gtk_clipboard_get(GDK_SELECTION_CLIPBOARD);
 
-	if (pixbuf)
+	if ((pixbuf) && (gRequestProc(gPluginNr, RT_MsgYesNo, _plugname, _copyimage, NULL, 0)))
 	{
 		gtk_clipboard_set_image(clipboard, pixbuf);
 		gProgressProc(gPluginNr, RemoteName, LocalName, 100);
