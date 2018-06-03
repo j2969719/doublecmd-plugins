@@ -1,0 +1,6 @@
+*.w[cdlf]x
+*.w[cdlf]x64
+*.[oa]
+*.ppu
+*.compiled
+*.bak
