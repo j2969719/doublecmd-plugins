@@ -255,10 +255,34 @@ int DCPCALL FsPutFile(char* LocalName, char* RemoteName, int CopyFlags)
 {
 	int err = gProgressProc(gPluginNr, RemoteName, LocalName, 0);
 	GdkPixbuf *pixbuf = gdk_pixbuf_new_from_file(LocalName, NULL);
+	GtkClipboard *clipboard = gtk_clipboard_get(GDK_SELECTION_CLIPBOARD);
 
 	if (pixbuf)
 	{
-		gtk_clipboard_set_image(gtk_clipboard_get(GDK_SELECTION_CLIPBOARD), pixbuf);
+		gtk_clipboard_set_image(clipboard, pixbuf);
+		gProgressProc(gPluginNr, RemoteName, LocalName, 100);
+		return FS_FILE_OK;
+	}
+	else
+	{
+		gchar *escapeduri = g_filename_to_uri(LocalName, NULL, NULL);
+		gchar *uri = g_uri_unescape_string(escapeduri, NULL);
+/*
+		if (gtk_clipboard_wait_is_uris_available(clipboard))
+		{
+*/			gchar *prev = gtk_clipboard_wait_for_text(clipboard);
+
+			if (prev)
+			{
+				gchar *uris = g_strdup_printf("%s\n%s", prev, uri);
+				gtk_clipboard_set_text(clipboard, uris, -1);
+			}
+			else
+				gtk_clipboard_set_text(clipboard, uri, -1);
+/*		}
+		else
+			gtk_clipboard_set_text(clipboard, uri, -1);
+*/
 		gProgressProc(gPluginNr, RemoteName, LocalName, 100);
 		return FS_FILE_OK;
 	}
