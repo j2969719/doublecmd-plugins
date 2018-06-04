@@ -6,6 +6,7 @@
 
 #define _plugname "Clipboard"
 #define _copyimage "Set CLIPBOARD as an image?"
+#define _copytext "Set CLIPBOARD as an text?"
 #define _pseudosize 1024
 
 int gPluginNr;
@@ -63,7 +64,6 @@ gboolean SelectionExist(int index)
 			return TRUE;
 
 		break;
-
 	}
 
 	return FALSE;
@@ -145,6 +145,7 @@ int DCPCALL FsGetFile(char* RemoteName, char* LocalName, int CopyFlags, RemoteIn
 {
 	int err = gProgressProc(gPluginNr, RemoteName, LocalName, 0);
 	GError *gerr = NULL;
+	GtkClipboard *clipboard = gtk_clipboard_get(GDK_SELECTION_CLIPBOARD);
 
 	if (err)
 		return FS_FILE_USERABORT;
@@ -170,77 +171,32 @@ int DCPCALL FsGetFile(char* RemoteName, char* LocalName, int CopyFlags, RemoteIn
 	}
 	else if (g_strcmp0(RemoteName + 1, entries[2]) == 0)
 	{
-		fprintf(tfp, gtk_clipboard_wait_for_text(gtk_clipboard_get(GDK_SELECTION_CLIPBOARD)));
+		fprintf(tfp, gtk_clipboard_wait_for_text(clipboard));
 		fclose(tfp);
-	}
-	else if (g_strcmp0(RemoteName + 1, entries[3]) == 0)
-	{
-		fclose(tfp);
-
-		if (!SelectionExist(3))
-		{
-			remove(LocalName);
-			return FS_FILE_NOTFOUND;
-		}
-
-		GdkPixbuf *pixbuf = gtk_clipboard_wait_for_image(gtk_clipboard_get(GDK_SELECTION_CLIPBOARD));
-
-		if (pixbuf)
-			gdk_pixbuf_save(pixbuf, LocalName, "png", &gerr, NULL);
-	}
-	else if (g_strcmp0(RemoteName + 1, entries[4]) == 0)
-	{
-		fclose(tfp);
-
-		if (!SelectionExist(4))
-		{
-			remove(LocalName);
-			return FS_FILE_NOTFOUND;
-		}
-
-		GdkPixbuf *pixbuf = gtk_clipboard_wait_for_image(gtk_clipboard_get(GDK_SELECTION_CLIPBOARD));
-
-		if (pixbuf)
-			gdk_pixbuf_save(pixbuf, LocalName, "jpeg", &gerr, NULL);
-	}
-	else if (g_strcmp0(RemoteName + 1, entries[5]) == 0)
-	{
-		fclose(tfp);
-
-		if (!SelectionExist(5))
-		{
-			remove(LocalName);
-			return FS_FILE_NOTFOUND;
-		}
-
-		GdkPixbuf *pixbuf = gtk_clipboard_wait_for_image(gtk_clipboard_get(GDK_SELECTION_CLIPBOARD));
-
-		if (pixbuf)
-			gdk_pixbuf_save(pixbuf, LocalName, "bmp", &gerr, NULL);
-	}
-	else if (g_strcmp0(RemoteName + 1, entries[6]) == 0)
-	{
-		fclose(tfp);
-
-		if (!SelectionExist(6))
-		{
-			remove(LocalName);
-			return FS_FILE_NOTFOUND;
-		}
-
-		GdkPixbuf *pixbuf = gtk_clipboard_wait_for_image(gtk_clipboard_get(GDK_SELECTION_CLIPBOARD));
-
-		if (pixbuf)
-			gdk_pixbuf_save(pixbuf, LocalName, "ico", &gerr, NULL);
 	}
 	else
 	{
 		fclose(tfp);
 		remove(LocalName);
-		return FS_FILE_NOTFOUND;
+		GdkPixbuf *pixbuf = gtk_clipboard_wait_for_image(clipboard);
+
+		if (pixbuf)
+		{
+			if ((SelectionExist(3)) && (g_strcmp0(RemoteName + 1, entries[3]) == 0))
+				gdk_pixbuf_save(pixbuf, LocalName, "png", &gerr, NULL);
+
+			if ((SelectionExist(4)) && (g_strcmp0(RemoteName + 1, entries[4]) == 0))
+				gdk_pixbuf_save(pixbuf, LocalName, "jpeg", &gerr, NULL);
+
+			if ((SelectionExist(5)) && (g_strcmp0(RemoteName + 1, entries[5]) == 0))
+				gdk_pixbuf_save(pixbuf, LocalName, "bmp", &gerr, NULL);
+
+			if ((SelectionExist(6)) && (g_strcmp0(RemoteName + 1, entries[6]) == 0))
+				gdk_pixbuf_save(pixbuf, LocalName, "ico", &gerr, NULL);
+		}
+		else
+			return FS_FILE_NOTFOUND;
 	}
-
-
 
 	if (gerr)
 	{
@@ -254,6 +210,7 @@ int DCPCALL FsGetFile(char* RemoteName, char* LocalName, int CopyFlags, RemoteIn
 
 int DCPCALL FsPutFile(char* LocalName, char* RemoteName, int CopyFlags)
 {
+	gchar *contents;
 	int err = gProgressProc(gPluginNr, RemoteName, LocalName, 0);
 	GdkPixbuf *pixbuf = gdk_pixbuf_new_from_file(LocalName, NULL);
 	GtkClipboard *clipboard = gtk_clipboard_get(GDK_SELECTION_CLIPBOARD);
@@ -264,14 +221,16 @@ int DCPCALL FsPutFile(char* LocalName, char* RemoteName, int CopyFlags)
 		gProgressProc(gPluginNr, RemoteName, LocalName, 100);
 		return FS_FILE_OK;
 	}
+/*	else if ((g_file_get_contents(LocalName, &contents, NULL, NULL)) && (gRequestProc(gPluginNr, RT_MsgYesNo, _plugname, _copytext, NULL, 0)))
+		gtk_clipboard_set_text(clipboard, contents, -1);*/
 	else
 	{
 		gchar *escapeduri = g_filename_to_uri(LocalName, NULL, NULL);
 		gchar *uri = g_uri_unescape_string(escapeduri, NULL);
 /*
 		if (gtk_clipboard_wait_is_uris_available(clipboard))
-		{
-*/			gchar *prev = gtk_clipboard_wait_for_text(clipboard);
+		{*/
+			gchar *prev = gtk_clipboard_wait_for_text(clipboard);
 
 			if (prev)
 			{
@@ -282,13 +241,11 @@ int DCPCALL FsPutFile(char* LocalName, char* RemoteName, int CopyFlags)
 				gtk_clipboard_set_text(clipboard, uri, -1);
 /*		}
 		else
-			gtk_clipboard_set_text(clipboard, uri, -1);
-*/
-		gProgressProc(gPluginNr, RemoteName, LocalName, 100);
-		return FS_FILE_OK;
+			gtk_clipboard_set_text(clipboard, uri, -1);*/
 	}
 
-	return FS_FILE_NOTSUPPORTED;
+	gProgressProc(gPluginNr, RemoteName, LocalName, 100);
+	return FS_FILE_OK;
 }
 
 int DCPCALL FsExecuteFile(HWND MainWin, char* RemoteName, char* Verb)
