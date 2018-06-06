@@ -4,10 +4,71 @@
 #include "wlxplugin.h"
 
 #define DETECT_STRING "EXT=\"*\""
-#define HACK_HINT "hit ctrl+q twice(or type 'exit' and press ctrl+q) to close quick view"
+#define HACK_HINT "hit ctrl+q or type 'exit' to remove grab"
+#define MI_COPY "Copy"
+#define MI_PASTE "Paste"
+#define MI_CRTL_C "Send CRTL+C"
+#define MI_CRTL_Z "Send CTRL+Z"
 
-static void grab_hack(GtkWidget *widget, gpointer user_data)
+void vte_popup_menu_copy(GtkWidget *menuitem, gpointer userdata)
 {
+	vte_terminal_copy_clipboard(VTE_TERMINAL(userdata));
+}
+
+void vte_popup_menu_paste(GtkWidget *menuitem, gpointer userdata)
+{
+	vte_terminal_paste_clipboard(VTE_TERMINAL(userdata));
+}
+
+void vte_popup_menu_ctrlc(GtkWidget *menuitem, gpointer userdata)
+{
+	vte_terminal_feed_child(VTE_TERMINAL(userdata), "\003", -1);
+}
+
+void vte_popup_menu_ctrlz(GtkWidget *menuitem, gpointer userdata)
+{
+	vte_terminal_feed_child(VTE_TERMINAL(userdata), "\032", -1);
+}
+
+gboolean grab_hack(GtkWidget *widget, GdkEventButton *event, gpointer user_data)
+{
+	if (event->type == GDK_BUTTON_PRESS  &&  event->button == 3)
+	{
+		GtkWidget *menu;
+		GtkWidget *mipaste;
+		GtkWidget *micopy;
+		GtkWidget *mictrlc;
+		GtkWidget *mictrlz;
+
+		menu = gtk_menu_new();
+
+		micopy = gtk_menu_item_new_with_label(MI_COPY);
+		mipaste = gtk_menu_item_new_with_label(MI_PASTE);
+		mictrlc = gtk_menu_item_new_with_label(MI_CRTL_C);
+		mictrlz = gtk_menu_item_new_with_label(MI_CRTL_Z);
+
+		g_signal_connect(micopy, "activate", G_CALLBACK(vte_popup_menu_copy), (gpointer)widget);
+		g_signal_connect(mipaste, "activate", G_CALLBACK(vte_popup_menu_paste), (gpointer)widget);
+		g_signal_connect(mictrlc, "activate", G_CALLBACK(vte_popup_menu_ctrlc), (gpointer)widget);
+		g_signal_connect(mictrlz, "activate", G_CALLBACK(vte_popup_menu_ctrlz), (gpointer)widget);
+
+		gtk_menu_shell_append(GTK_MENU_SHELL(menu), micopy);
+		gtk_menu_shell_append(GTK_MENU_SHELL(menu), mipaste);
+		gtk_menu_shell_append(GTK_MENU_SHELL(menu), mictrlc);
+		gtk_menu_shell_append(GTK_MENU_SHELL(menu), mictrlz);
+
+		gtk_widget_show_all(menu);
+		gtk_menu_popup(GTK_MENU(menu), NULL, NULL, NULL, NULL, (event != NULL) ? event->button : 0, gdk_event_get_time((GdkEvent*)event));
+	}
+
+	gtk_label_set_text(GTK_LABEL(user_data), HACK_HINT);
+	gtk_grab_add(widget);
+	return FALSE;
+}
+
+static void grab_hack_remove(GtkWidget *widget, gpointer user_data)
+{
+	gtk_label_set_text(GTK_LABEL(user_data), NULL);
 	gtk_grab_remove(widget);
 }
 
@@ -18,7 +79,10 @@ gboolean key_press_hack(GtkWidget *widget, GdkEventKey *event, gpointer user_dat
 	{
 	case GDK_q:
 		if (event -> state & GDK_CONTROL_MASK)
+		{
 			gtk_grab_remove(widget);
+			gtk_label_set_text(GTK_LABEL(user_data), NULL);
+		}
 
 		break;
 
@@ -61,14 +125,14 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 	gtk_box_pack_start(GTK_BOX(gFix), scroll, TRUE, TRUE, 0);
 	gtk_container_add(GTK_CONTAINER(scroll), vte);
 
-	hint = gtk_label_new(HACK_HINT);
+	hint = gtk_label_new(NULL);
 	gtk_box_pack_start(GTK_BOX(gFix), hint, FALSE, FALSE, 1);
 
 	gtk_widget_show_all(gFix);
 
-	gtk_grab_add(vte);
-	g_signal_connect(G_OBJECT(vte), "key_press_event", G_CALLBACK(key_press_hack), NULL);
-	g_signal_connect(G_OBJECT(vte), "child-exited", G_CALLBACK(grab_hack), NULL);
+	g_signal_connect(G_OBJECT(vte), "key_press_event", G_CALLBACK(key_press_hack), (gpointer)hint);
+	g_signal_connect(G_OBJECT(vte), "child-exited", G_CALLBACK(grab_hack_remove), (gpointer)hint);
+	g_signal_connect(G_OBJECT(vte), "button-press-event", G_CALLBACK(grab_hack), (gpointer)hint);
 
 	return gFix;
 
