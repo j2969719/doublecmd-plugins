@@ -4,3 +4,6 @@
 *.ppu
 *.compiled
 *.bak
+*.log
+*.lps
+backup/
