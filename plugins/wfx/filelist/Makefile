@@ -1,6 +1,6 @@
 CC = gcc
-CFLAGS = -shared -fPIC
-INCLUDES = `pkg-config --libs --cflags gtk+-2.0` -I../../sdk
+CFLAGS = -shared -fPIC -Wl,--no-as-needed
+INCLUDES = -I../../sdk
 
 all:
 		$(CC) $(CFLAGS) $(INCLUDES) filelistwfx.c -o filelist.wfx
