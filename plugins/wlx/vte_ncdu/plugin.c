@@ -9,7 +9,7 @@
 #define _detectstring "EXT=\"*\""
 #define _plgname "vte_ncdu.wlx"
 
-gchar *font, *bgimage, *bgcolor, *cmd;
+gchar *font, *bgimage, *bgcolor, **command;
 gdouble saturation;
 
 HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
@@ -23,18 +23,18 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 	VteTerminal *terminal;
 	GdkColor color;
 
-	if (!cmd)
+	if (!command)
 	{
-		gchar **envp = g_get_environ();
-		cmd = g_strdup(g_environ_getenv(envp, "SHELL"));
-		g_strfreev(envp);
+/*		gchar **envp = g_get_environ();
+		command = (gchar * [])
+		{
+			g_strdup(g_environ_getenv(envp, "SHELL")),
+			NULL
+		};
+		g_strfreev(envp);*/
+		return NULL;
 	}
 
-	gchar **command = (gchar * [])
-	{
-		g_strdup(cmd),
-		NULL
-	};
 
 	gFix = gtk_vbox_new(FALSE, 0);
 	gtk_container_add(GTK_CONTAINER((GtkWidget*)(ParentWin)), gFix);
@@ -43,7 +43,8 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 	terminal = VTE_TERMINAL(vte);
 	scroll = gtk_scrolled_window_new(NULL, terminal->adjustment);
 	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scroll), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
-	vte_terminal_fork_command_full(terminal, VTE_PTY_DEFAULT, FileToLoad, command, NULL, 0, NULL, NULL, NULL, NULL);
+	if (!vte_terminal_fork_command_full(terminal, VTE_PTY_DEFAULT, FileToLoad, command, NULL, 0, NULL, NULL, NULL, NULL))
+		return NULL;
 	vte_terminal_set_scrollback_lines(terminal, -1);
 	vte_terminal_set_size(terminal, 80, 60);
 
@@ -117,7 +118,8 @@ void DCPCALL ListSetDefaultParams(ListDefaultParamStruct* dps)
 		bgimage = g_key_file_get_string(cfg, "VTE", "BGImage", NULL);
 		bgcolor = g_key_file_get_string(cfg, "VTE", "BGTintColor", NULL);
 		saturation = g_key_file_get_double(cfg, "VTE", "BGSaturation", NULL);
-		cmd = g_key_file_get_string(cfg, "VTE", "Command", NULL);
+		g_key_file_set_list_separator(cfg, ' ');
+		command = g_key_file_get_string_list(cfg, "VTE", "Command", NULL, NULL);
 	}
 
 	g_key_file_free(cfg);
