@@ -1,0 +1,3 @@
+#!/bin/bash
+name=$(basename "$1")
+echo "$name" | sed -e 's/\.[^.]*$//'

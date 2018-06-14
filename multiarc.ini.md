@@ -1,7 +1,7 @@
 Multiarc
 ========
 
-[UnAce](#unace), [RAR + 7Zip](#rar), [FreeArc](#freearc), [CHM](#chm), [7Zip self-extracting archive](#7zsfx), [Microsoft Windows Installer](#msi), [Inno Setup installer](#innosetup), [Nullsoft Scriptable Install System](#nsis), [Microsoft Cabinet](#cab), [InstallShield](#unshield), [MS-DOS installation compression](#szdd), [ZPAQ](#zpaq), [pakextract](#pakextract), [grpar](#grpar), [The Unarchiver](#unar), [UPX](#upx)
+[UnAce](#unace), [RAR + 7Zip](#rar), [FreeArc](#freearc), [CHM](#chm), [7Zip self-extracting archive](#7zsfx), [Microsoft Windows Installer](#msi), [Inno Setup installer](#innosetup), [Nullsoft Scriptable Install System](#nsis), [Microsoft Cabinet](#cab), [InstallShield](#unshield), [MS-DOS installation compression](#szdd), [ZPAQ](#zpaq), [pakextract](#pakextract), [grpar](#grpar), [The Unarchiver](#unar), [UPX](#upx), [ZSTD](#zstd), [LZ4](#lz4)
 
 <a name="unace"><h2>UNACE</h2></a>
 ```
@@ -371,3 +371,29 @@ ExtractWithoutPath=
 Test=%P -t -q %AQW
 Add=%P {%S} -q -o %AQ %FQ
 ```
+
+<a name="zstd"><h2>ZSTD</h2></a>
+```
+[ZSTD]
+Archiver=$COMMANDER_PATH/scripts/cutext
+Description=ZSTD
+Extension=zst
+Format0=n+
+List=%P %aQ
+Extract=zstd {%S} -d %AQ -o %FQ
+Add=zstd {%S} -f %FQ -o %AQ
+```
+  [script cutext](https://github.com/j2969719/doublecmd-plugins/blob/master/scripts/cutext)
+
+<a name="lz4"><h2>LZ4</h2></a>
+```
+[LZ4]
+Archiver=$COMMANDER_PATH/scripts/cutext
+Description=LZ4
+Extension=lz4
+Format0=n+
+List=%P %aQ
+Extract=lz4 {%S} -d %AQ %FQ
+Add=lz4 {%S} -f %FQ %AQ
+```
+  [script cutext](https://github.com/j2969719/doublecmd-plugins/blob/master/scripts/cutext)
