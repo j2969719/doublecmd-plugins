@@ -1,7 +1,7 @@
 Multiarc
 ========
 
-[UnAce](#unace), [RAR + 7Zip](#rar), [FreeArc](#freearc), [CHM](#chm), [7Zip self-extracting archive](#7zsfx), [Microsoft Windows Installer](#msi), [Inno Setup installer](#innosetup), [Nullsoft Scriptable Install System](#nsis), [Microsoft Cabinet](#cab), [InstallShield](#unshield), [MS-DOS installation compression](#szdd), [ZPAQ](#zpaq), [pakextract](#pakextract), [grpar](#grpar), [The Unarchiver](#unar), [UPX](#upx), [ZSTD](#zstd), [LZ4](#lz4)
+[UnAce](#unace), [RAR + 7Zip](#rar), [FreeArc](#freearc), [CHM](#chm), [7Zip self-extracting archive](#7zsfx), [Microsoft Windows Installer](#msi), [Inno Setup installer](#innosetup), [Nullsoft Scriptable Install System](#nsis), [Microsoft Cabinet](#cab), [InstallShield](#unshield), [MS-DOS installation compression](#szdd), [ZPAQ](#zpaq), [pakextract](#pakextract), [grpar](#grpar), [The Unarchiver](#unar), [UPX](#upx), [ZSTD](#zstd), [LZ4](#lz4), [mcm](#mcm), [BALZ](#balz), [QUAD](#quad), [PAQ8](#paq8o9), [lrzip](#lrzip)
 
 <a name="unace"><h2>UNACE</h2></a>
 ```
@@ -396,4 +396,76 @@ List=%P %aQ
 Extract=lz4 {%S} -d %AQ %FQ
 Add=lz4 {%S} -f %FQ %AQ
 ```
+  [script cutext](https://github.com/j2969719/doublecmd-plugins/blob/master/scripts/cutext)
+
+<a name="mcm"><h2>mcm</h2></a>
+```
+[mcm]
+Archiver=$COMMANDER_PATH/scripts/cutext
+Description=mcm
+ID=4D 43 4D 41 52 43 48 49 56 45
+IDPos=0
+IDSeekRange=0
+Extension=mcm
+Format0=n+
+List=%P %AQ
+Extract=mcm d %AQ %FQ
+Add=mcm -m9 %FQ %AQ
+```
+  [link](https://github.com/mathieuchartier/mcm)
+  [script cutext](https://github.com/j2969719/doublecmd-plugins/blob/master/scripts/cutext)
+
+<a name="balz"><h2>BALZ</h2></a>
+```
+[BALZ]
+Archiver=$COMMANDER_PATH/scripts/cutext
+Description=BALZ
+Extension=balz
+Format0=n+
+List=%P %AQ
+Extract=balz d %AQ %FQ
+Add=balz c{%S} %FQ %AQ
+```
+  [link](https://sourceforge.net/projects/balz/)
+  [script cutext](https://github.com/j2969719/doublecmd-plugins/blob/master/scripts/cutext)
+
+<a name="quad"><h2>QUAD</h2></a>
+```
+[QUAD]
+Archiver=$COMMANDER_PATH/scripts/cutext
+Description=QUAD
+Extension=quad
+Format0=n+
+List=%P %AQ
+Extract=quad -d %AQ %FQ
+Add=quad {%S} -f %FQ %AQ
+```
+  [link](https://sourceforge.net/projects/quad/)
+  [script cutext](https://github.com/j2969719/doublecmd-plugins/blob/master/scripts/cutext)
+
+<a name="paq8o9"><h2>PAQ8</h2></a>
+```
+[paq8o]
+Archiver=$COMMANDER_PATH/scripts/cutext
+Description=PAQ8
+Extension=paq8o9
+Format0=n+
+List=%P %AQ
+Extract=paq8o {%S} -d %AQ %RQ
+Add=paq8o {%S} %FQ %AQ
+```
+  [script cutext](https://github.com/j2969719/doublecmd-plugins/blob/master/scripts/cutext)
+
+<a name="lrzip"><h2>lrzip</h2></a>
+```
+[lrzip]
+Archiver=$COMMANDER_PATH/scripts/cutext
+Description=lrzip
+Extension=lrz
+Format0=n+
+List=%P %AQ
+Extract=lrzip -d %AQ -o %FQ
+Add=lrzip {%S} -f %FQ -o %AQ
+```
+  [link](https://github.com/ckolivas/lrzip)
   [script cutext](https://github.com/j2969719/doublecmd-plugins/blob/master/scripts/cutext)
