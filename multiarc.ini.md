@@ -1,7 +1,7 @@
 Multiarc
 ========
 
-[UnAce](#unace), [RAR + 7Zip](#rar), [FreeArc](#freearc), [CHM](#chm), [7Zip self-extracting archive](#7zsfx), [Microsoft Windows Installer](#msi), [Inno Setup installer](#innosetup), [Nullsoft Scriptable Install System](#nsis), [Microsoft Cabinet](#cab), [InstallShield](#unshield), [MS-DOS installation compression](#szdd), [ZPAQ](#zpaq), [pakextract](#pakextract), [grpar](#grpar), [The Unarchiver](#unar), [UPX](#upx), [ZSTD](#zstd), [LZ4](#lz4), [mcm](#mcm), [BALZ](#balz), [QUAD](#quad), [PAQ8](#paq8o9), [lrzip](#lrzip)
+[UnAce](#unace), [RAR + 7Zip](#rar), [FreeArc](#freearc), [CHM](#chm), [7Zip self-extracting archive](#7zsfx), [Microsoft Windows Installer](#msi), [Inno Setup installer](#innosetup), [Nullsoft Scriptable Install System](#nsis), [Microsoft Cabinet](#cab), [InstallShield](#unshield), [MS-DOS installation compression](#szdd), [ZPAQ](#zpaq), [pakextract](#pakextract), [grpar](#grpar), [The Unarchiver](#unar), [UPX](#upx), [ZSTD](#zstd), [LZ4](#lz4), [mcm](#mcm), [BALZ](#balz), [QUAD](#quad), [PAQ8](#paq8o9), [lrzip](#lrzip), [lzop](#lzop)
 
 <a name="unace"><h2>UNACE</h2></a>
 ```
@@ -413,6 +413,7 @@ Extract=mcm d %AQ %FQ
 Add=mcm -m9 %FQ %AQ
 ```
   [link](https://github.com/mathieuchartier/mcm)
+
   [script cutext](https://github.com/j2969719/doublecmd-plugins/blob/master/scripts/cutext)
 
 <a name="balz"><h2>BALZ</h2></a>
@@ -427,6 +428,7 @@ Extract=balz d %AQ %FQ
 Add=balz c{%S} %FQ %AQ
 ```
   [link](https://sourceforge.net/projects/balz/)
+
   [script cutext](https://github.com/j2969719/doublecmd-plugins/blob/master/scripts/cutext)
 
 <a name="quad"><h2>QUAD</h2></a>
@@ -441,6 +443,7 @@ Extract=quad -d %AQ %FQ
 Add=quad {%S} -f %FQ %AQ
 ```
   [link](https://sourceforge.net/projects/quad/)
+
   [script cutext](https://github.com/j2969719/doublecmd-plugins/blob/master/scripts/cutext)
 
 <a name="paq8o9"><h2>PAQ8</h2></a>
@@ -468,4 +471,20 @@ Extract=lrzip -d %AQ -o %FQ
 Add=lrzip {%S} -f %FQ -o %AQ
 ```
   [link](https://github.com/ckolivas/lrzip)
+
+  [script cutext](https://github.com/j2969719/doublecmd-plugins/blob/master/scripts/cutext)
+
+<a name="lzop"><h2>lzop</h2></a>
+```
+[lzop]
+Archiver=$COMMANDER_PATH/scripts/cutext
+Description=lzop
+Extension=lzo
+Format0=n+
+List=%P %AQ
+Extract=lzop -d %AQ -o%FQ
+Add=lzop {%S} -f %FQ -o%AQ
+```
+  [link](http://www.lzop.org/)
+
   [script cutext](https://github.com/j2969719/doublecmd-plugins/blob/master/scripts/cutext)
