@@ -148,24 +148,24 @@ Extract=%P %AQA
 ```
 [InnoSetup(gog)]
 Archiver=/usr/bin/innoextract
-Description=InnoSetup (GOG)
+Description=innoextract 1.7 (GOG)
 ID=49 6E 6E 6F 20 53 65 74 75 70 20 53 65 74 75 70 20 44 61 74 61 20 28 35 2E
 IDPos=<SeekID>
-Format0=n+
-List=%P -l -g -s %AQA
-Extract=%P -e -g -q  %AQ
-ExtractWithoutPath=%P -e -g -q  %AQ -I %FU
+Format0=z+ n+
+List=%P --list-sizes -g -s %AQU
+Extract=%P -e -g -q  %AQU
+ExtractWithoutPath=%P -e -g -q  %AQU -I %FQU
 ```
 ```
 [InnoSetup]
 Archiver=/usr/bin/innoextract
-Description=InnoSetup
+Description=innoextract 1.7
 ID=49 6E 6E 6F 20 53 65 74 75 70 20 53 65 74 75 70 20 44 61 74 61 20 28 35 2E, 49 6E 6E 6F 20 53 65 74 75 70 20 53 65 74 75 70 20 44 61 74 61 20 28 34 2E, 49 6E 6E 6F 20 53 65 74 75 70 20 53 65 74 75 70 20 44 61 74 61 20 28 33 2E, 49 6E 6E 6F 20 53 65 74 75 70 20 53 65 74 75 70 20 44 61 74 61 20 28 32 2E, 49 6E 6E 6F
 IDPos=<SeekID>
-Format0=n+
-List=%P -l -s %AQU
-Extract=%P -e -q  %AQ
-ExtractWithoutPath=%P -e -q  %AQ -I %FU
+Format0=z+ n+
+List=%P --list-sizes -s %AQU
+Extract=%P -e -q  %AQU
+ExtractWithoutPath=%P -e -q  %AQU -I %FQU
 ```
 
 ```
