@@ -43,7 +43,11 @@ function ContentGetDetectString()
 end
 
 function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
-    if (FileName:find("[^" .. SysUtils.PathDelim .. "]%.%.$")) then
+    local delimpat = SysUtils.PathDelim;
+    if (delimpat == nil) then
+        delimpat = "/\\";
+    end
+    if (FileName:find("[" .. delimpat .. "]%.%.$")) then
         return nil;
     end
     if (filename ~= FileName) then

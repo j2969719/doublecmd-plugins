@@ -32,7 +32,7 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
     if (delimpat == nil) then
         delimpat = "/\\";
     end
-    if (FileName:find("[^" .. delimpat .. "]%.%.$")) then
+    if (FileName:find("[" .. delimpat .. "]%.%.$")) then
         return nil;
     end
     if (filename ~= FileName) or (FieldIndex == 6) then
