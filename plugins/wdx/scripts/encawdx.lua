@@ -11,10 +11,10 @@ local values = {    -- return values
 }
 
 local fields = {    -- field name, command line parameters, pattern, return values
-    {"iconv name",           "-g -i",    "([^\n]+)",       nil},
-    {"iconv name(boolean)",  "-g -i",    "([^\n]+)", values[1]},
-    {"enca's encoding name", "-g -e",    "([^\n]+)",       nil},
-    {"lang ru",              "-L ru -g",  "(.+)\n$",       nil},
+    {"iconv name",               "-g -i",    "([^\n]+)",       nil},
+    {"iconv name(multichoice)",  "-g -i",    "([^\n]+)", values[1]},
+    {"enca's encoding name",     "-g -e",    "([^\n]+)",       nil},
+    {"lang ru",                  "-L ru -g",  "(.+)\n$",       nil},
 }
 
 function ContentGetSupportedField(Index)
@@ -27,7 +27,7 @@ function ContentGetSupportedField(Index)
                 end
                 units = units .. fields[Index + 1][4][i];
             end
-            return fields[Index + 1][1], units, 6;
+            return fields[Index + 1][1], units, 7;
         else
             return fields[Index + 1][1], "", 8;
         end
@@ -40,7 +40,6 @@ function ContentGetDetectString()
 end
 
 function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
-    local result = '';
     if (filename ~= FileName) or (params ~= fields[FieldIndex + 1][2]) then
         local attr = SysUtils.FileGetAttr(FileName);
         if (attr < 0) or (math.floor(attr / 0x00000004) % 2 ~= 0) or (math.floor(attr / 0x00000010) % 2 ~= 0) then
@@ -55,18 +54,7 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
         end
     end
     if (fields[FieldIndex + 1][3] ~= nil) then
-        result = output:match(fields[FieldIndex + 1][3]);
-    end
-    if (result ~= nil) then
-        if (fields[FieldIndex + 1][4] ~= nil) then
-            if (fields[FieldIndex + 1][4][UnitIndex + 1] == result) then
-                return true;
-            else
-                return false;
-            end
-        else
-            return result;
-        end
+        return output:match(fields[FieldIndex + 1][3]);
     end
     return nil;
 end

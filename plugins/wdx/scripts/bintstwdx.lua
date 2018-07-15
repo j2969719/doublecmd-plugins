@@ -9,8 +9,6 @@ local units = {
     "UTF-16, little-endian (byte order mark)", 
     "UTF-8 (byte order mark)", 
 }
-local utfbom = false
-
 
 function ContentGetSupportedField(Index)
     if (Index == 0) then
@@ -21,7 +19,7 @@ function ContentGetSupportedField(Index)
             end
             unitstr = unitstr .. units[i];
         end
-        return 'content', unitstr, 6;
+        return 'content', unitstr, 7;
     end
     return '', '', 0; -- ft_nomorefields
 end
@@ -34,20 +32,19 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
                 return nil; 
             end
         end    
-        utfbom = false;
         local isbin = false;
         local f = io.open(FileName, "rb");
         if (f ~= nil) then
-            if checkbom(f, 4, '0000FEFF') and (UnitIndex == 1) then
-                return true;
-            elseif checkbom(f, 4, 'FFFE0000') and (UnitIndex == 2) then
-                return true;
-            elseif checkbom(f, 2, 'FEFF') and (UnitIndex == 3) then
-                return true;
-            elseif checkbom(f, 2, 'FFFE') and (UnitIndex == 4) then
-                return true
-            elseif checkbom(f, 3, 'EFBBBF') and (UnitIndex == 5) then
-                return true;
+            if checkbom(f, 4, '0000FEFF') then
+                return units[2];
+            elseif checkbom(f, 4, 'FFFE0000') then
+                return units[3];
+            elseif checkbom(f, 2, 'FEFF') then
+                return units[4];
+            elseif checkbom(f, 2, 'FFFE') then
+                return units[5];
+            elseif checkbom(f, 3, 'EFBBBF') then
+                return units[6];
             end
             f:seek("set", 0);
             while (isbin ~= true) do
@@ -65,10 +62,9 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
                 end
             end
             f:close();
-            if (isbin == true) and (UnitIndex == 0) and  (utfbom == false) then
-                return true;
+            if (isbin == true) then
+                return units[1];
             end
-            return false;
         end  
     end
     return nil; -- invalid
@@ -84,7 +80,6 @@ function checkbom(file, num, hexstr)
         end       
         local str = table.concat(t);
         if (hexstr == str) then
-            utfbom = true;
             return true;
         end
     end
