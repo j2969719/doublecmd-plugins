@@ -3,11 +3,11 @@ local blacklist = '\a\b\t\n\f\r\\e'
 local bufsize = 1024
 local units = {
     "binary (contain control chars)", 
-    "byte order mark (UTF-32, big-endian)", 
-    "byte order mark (UTF-32, little-endian)", 
-    "byte order mark (UTF-16, big-endian)", 
-    "byte order mark (UTF-16, little-endian)", 
-    "byte order mark (UTF-8)", 
+    "UTF-32, big-endian (byte order mark)", 
+    "UTF-32, little-endian (byte order mark)", 
+    "UTF-16, big-endian (byte order mark)", 
+    "UTF-16, little-endian (byte order mark)", 
+    "UTF-8 (byte order mark)", 
 }
 local utfbom = false
 
