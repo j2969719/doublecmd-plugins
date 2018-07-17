@@ -68,13 +68,12 @@ bool getFileFromList(FILE *List, WIN32_FIND_DATAA *FindData)
 		strlcpy(FindData->cFileName, line, PATH_MAX);
 		FindData->ftCreationTime.dwHighDateTime = 0xFFFFFFFF;
 		FindData->ftCreationTime.dwLowDateTime = 0xFFFFFFFE;
-/*
-		FindData->dwFileAttributes = 0x80000000;
-		FindData->dwReserved0 = buf.st_mode & (S_IRWXU | S_IRWXG | S_IRWXO | S_ISUID | S_ISGID | S_ISVTX);
-		*/
+
+		FindData->dwFileAttributes |= 0x80000000;
+		FindData->dwReserved0 = buf.st_mode;
+
 		UnixTimeToFileTime(buf.st_mtime, &FindData->ftLastWriteTime);
 		UnixTimeToFileTime(buf.st_atime, &FindData->ftLastAccessTime);
-		FindData->dwFileAttributes = 0;
 		return true;
 	}
 

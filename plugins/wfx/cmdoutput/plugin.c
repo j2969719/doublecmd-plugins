@@ -7,14 +7,14 @@
 
 #define _plugname "CMDOutput"
 #define _inifile "settings.ini"
-#define _filesize 0
+#define _filesize 1024
 
 int gPluginNr;
 tProgressProc gProgressProc;
 tLogProc gLogProc;
 tRequestProc gRequestProc;
 GKeyFile *cfg;
-gboolean grous;
+gboolean groups;
 gchar **files;
 gsize i;
 
@@ -35,7 +35,7 @@ gboolean SetFindData(WIN32_FIND_DATAA *FindData)
 		g_strlcpy(FindData->cFileName, files[i], PATH_MAX);
 		GetCurrentFileTime(&FindData->ftLastWriteTime);
 
-		if (grous == TRUE)
+		if (groups == TRUE)
 			FindData->dwFileAttributes = FILE_ATTRIBUTE_DIRECTORY;
 
 		FindData->nFileSizeLow = _filesize;
@@ -87,7 +87,7 @@ HANDLE DCPCALL FsFindFirst(char* Path, WIN32_FIND_DATAA *FindData)
 	if (g_strcmp0(Path, "/") == 0)
 	{
 		files = g_key_file_get_groups(cfg, &count);
-		grous = TRUE;
+		groups = TRUE;
 	}
 	else
 	{
@@ -111,8 +111,8 @@ BOOL DCPCALL FsFindNext(HANDLE Hdl, WIN32_FIND_DATAA *FindData)
 
 int DCPCALL FsFindClose(HANDLE Hdl)
 {
-	if (grous == TRUE)
-		grous = FALSE;
+	if (groups == TRUE)
+		groups = FALSE;
 
 	return 0;
 }

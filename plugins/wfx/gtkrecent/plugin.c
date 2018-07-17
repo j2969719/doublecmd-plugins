@@ -46,7 +46,11 @@ gboolean SetFindData(WIN32_FIND_DATAA *FindData)
 		if (stat(fname, &buf) != 0)
 			FindData->nFileSizeLow = 0;
 		else
+		{
 			FindData->nFileSizeLow = buf.st_size;
+			FindData->dwFileAttributes |= 0x80000000;
+			FindData->dwReserved0 = buf.st_mode;
+		}
 
 		g_free(fname);
 		gtk_recent_info_unref(list->data);
