@@ -34,6 +34,7 @@ class SqliteViewer:
         hbox.add(self.query)
 
         self.sw = gtk.ScrolledWindow()
+        self.sw.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
         self.sw.add(self.table)
 
         self.container = gtk.VBox(homogeneous=False, spacing=5)
@@ -79,9 +80,10 @@ class SqliteViewer:
 
     def create_collumns(self, column_names):
         rendererText = gtk.CellRendererText()
+        rendererText.set_property('editable', True)
         for index, name in enumerate(column_names):
             column = gtk.TreeViewColumn(name, rendererText, text=index)
-            column.set_sort_column_id(1)
+            column.set_sort_column_id(index)
             self.table.append_column(column)
 
 

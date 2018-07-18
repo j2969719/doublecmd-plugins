@@ -20,7 +20,7 @@ static gchar *getfrmtstr(GKeyFile *cfg, const gchar *ext, gchar *workdir)
 	{
 		result = g_key_file_get_string(cfg, ext, "command", NULL);
 
-		if ((!g_strrstr(result, "%s")) || (!g_strrstr(result, "%d")))
+		if ((!result) || (!g_strrstr(result, "%s")) || (!g_strrstr(result, "%d")))
 			return NULL;
 	}
 	else
