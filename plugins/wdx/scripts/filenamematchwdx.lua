@@ -9,17 +9,24 @@ local groups = {
 
 
 local pattern = {
-    {"(%d+)%.", 1, "(number)."},      -- pattern, type, name, alt pattern, ...
-    {"%-%s+(%d+)%.", 1}, 
-    {"^(.-)%s+%-", 8, "(part) -"}, 
-    {"%-%s+(.+)", 8, "- (part)", "%-%s+%d+%.(.+)$", ".+%-%s(.+)$"}, 
+    {"%-%s+(%d+)%.?", 1, "(number)."},      -- pattern, type, name, alt pattern, ...
+    {"(%d+)%.", 1}, 
+    {".+", 8, "(part) -", "^(.-)%s+%-"}, 
+    {"%-%s+(.+)", 8, "- (part)", "%-%s+%d+%.?(.+)$", ".+%-%s(.+)$"}, 
     {"%-%s(.-)%s+%-", 8}, 
     {"%.tar%.(.-)$", 8, "tar.(xyz)"}, 
 }
 
 function ContentGetSupportedField(Index)
     if (Index == 0) then
-        return 'Group', '', 8; -- FieldName,Units,ft_string
+        local units = '';
+        for i = 1 , #groups do
+            if (i > 1) then
+                units = units .. '|';
+            end
+            units = units .. groups[i][1];
+        end
+        return 'Group', units, 7; -- FieldName,Units,ft_string
     elseif (pattern[Index] ~= nil ) then
         if (pattern[Index][3] ~= nil) then
             return pattern[Index][3], "Filename|Filename.Ext|Path|Path with Filename.Ext", pattern[Index][2];
