@@ -78,10 +78,11 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 	if (!frmtstr)
 		frmtstr = "%s %s";
 
-	if (emblems)
-	{
-		gsize i = 0;
 
+	gsize i = 0;
+
+	if (emblems && emblems[i] != NULL)
+	{
 		while (emblems[i] != NULL)
 		{
 			emblem = g_key_file_get_string(cfg, "Emblems", emblems[i], NULL);
