@@ -1,0 +1,205 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+# copypasted from https://github.com/otsaloma/csv-viewer
+
+# Copyright (C) 2013 Osmo Salomaa
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program. If not, see <http://www.gnu.org/licenses/>.
+
+"""Viewer for tabular data files."""
+
+import atexit
+import csv
+import locale
+import optparse
+import os
+import re
+
+import gi
+gi.require_version("Gdk", "3.0")
+gi.require_version("Gtk", "3.0")
+
+from gi.repository import Gdk
+from gi.repository import GLib
+from gi.repository import Gtk
+
+CSS = """
+.csv-view {
+  color: #404444;
+  font-family: "Source Code Pro",monospace;
+  font-size: 12px;
+}
+.csv-view :selected {
+  color: white;
+}
+"""
+
+locale.setlocale(locale.LC_ALL, "")
+ENCODING = locale.getpreferredencoding() or "utf_8"
+RE_RIGHT_ALIGN = re.compile(r"^([\d\W]+( .*)?||NA|NAN|TRUE|FALSE)$", re.IGNORECASE)
+
+
+def init_column(index, view):
+    """Initialize and return a column."""
+    renderer = Gtk.CellRendererText()
+    renderer.props.xalign = 1
+    renderer.props.xpad = 9
+    renderer.props.ypad = 9
+    renderer.set_fixed_height_from_font(1)
+    column = Gtk.TreeViewColumn(str(index), renderer, text=index)
+    column.props.resizable = True
+    if index == 0:
+        renderer.props.foreground = "#aaaaaa"
+        column.set_cell_data_func(renderer, render_cell, view)
+    label = Gtk.Label(label=str(index))
+    label.props.margin_start = 6
+    label.props.margin_end = 6
+    label.show()
+    column.props.widget = label
+    return column
+
+def init_view(ncolumns):
+    """Initialize and return a blank view."""
+    view = Gtk.TreeView()
+    view.props.rubber_banding = True
+    view.set_grid_lines(Gtk.TreeViewGridLines.BOTH)
+    provider = Gtk.CssProvider.get_default()
+    provider.load_from_data(bytes(CSS.encode()))
+    style = view.get_style_context()
+    style.add_class("csv-view")
+    screen = Gdk.Screen.get_default()
+    priority = Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
+    style.add_provider_for_screen(screen, provider, priority)
+    selection = view.get_selection()
+    selection.props.mode = Gtk.SelectionMode.MULTIPLE
+    columns = [str for x in range(ncolumns)]
+    store = Gtk.ListStore(*columns)
+    view.props.model = store
+    for i in range(ncolumns):
+        column = init_column(i, view)
+        column.set_sort_column_id(i)
+        view.append_column(column)
+    return view
+
+def init_window(title, size, view):
+    """Initialize and return a window."""
+    scroller = Gtk.ScrolledWindow()
+    scroller.set_policy(*(Gtk.PolicyType.AUTOMATIC,)*2)
+    scroller.add(view)
+    scroller.show_all()
+    scroller.set_events(Gdk.EventMask.SCROLL_MASK)
+    window = Gtk.Plug()
+    window.add(scroller)
+    window.connect("delete-event", Gtk.main_quit)
+    window.connect("key-press-event", on_window_key_press_event)
+    window.set_events(window.get_events() & Gdk.EventMask.SCROLL_MASK)
+    window.construct(int(size))
+    return window
+
+def load_chunk(reader, view):
+    """Load rows from `reader` into `view`."""
+    store = view.get_model()
+    columns = view.get_columns()
+    renderers = [x.get_cells()[0] for x in columns]
+    for i, row in enumerate(reader):
+        row.insert(0, str(i+1))
+        row.append("")
+        for j, item in enumerate(row):
+            if (renderers[j].props.xalign > 0.5
+                and not RE_RIGHT_ALIGN.search(item)):
+                renderers[j].props.xalign = 0
+        store.append(row)
+        if i < 10 or i % 10 == 0:
+            while Gtk.events_pending():
+                Gtk.main_iteration()
+            yield True # to be called again.
+    yield False # to not be called again.
+
+def main():
+    """Parse arguments and display CSV file."""
+    opts, path = parse_arguments()
+    f = open(path, "r", encoding=ENCODING, errors="replace")
+    atexit.register(f.close)
+    # Sniffer could be used to detect the presence
+    # of a header line, but seems to fail if all
+    # columns hold strings.
+    sniffer = csv.Sniffer()
+    sample = f.read(32768)
+    f.seek(0)
+    try:
+        dialect = sniffer.sniff(sample)
+        reader = csv.reader(f, dialect)
+    except Exception:
+        print("Detecting dialect failed")
+        print("Trying to open as a regular CSV file")
+        reader = csv.reader(f, delimiter=",")
+    first_row = next(reader)
+    view = init_view(len(first_row) + 2)
+    title = os.path.basename(path)
+    window = init_window(title, opts.wid, view)
+    window.show_all()
+    set_headers(view, first_row)
+    loader = load_chunk(reader, view)
+    GLib.idle_add(loader.__next__)
+    Gtk.main()
+
+def on_window_key_press_event(window, event):
+    """Exit if some exit key is pressed."""
+    control = event.get_state() & Gdk.ModifierType.CONTROL_MASK
+    if ((event.keyval == Gdk.KEY_Escape) or
+        (control and event.keyval in (Gdk.KEY_w, Gdk.KEY_q))):
+        Gtk.main_quit()
+
+def parse_arguments():
+    """Parse and return options and argument or exit."""
+    usage = "csv-viewer -w WindowID CSV_FILE"
+    parser = optparse.OptionParser(usage=usage)
+    parser.add_option("-w", "--wid",
+                      action="store",
+                      type="str",
+                      metavar="WINDOW",
+                      dest="wid",
+                      default="0",
+                      help="Set Window ID")
+
+    opts, args = parser.parse_args()
+    if len(args) < 1 or not os.path.isfile(args[0]):
+        raise SystemExit("Usage: {}".format(usage))
+    return opts, args[0]
+
+def render_cell(column, renderer, store, itr, view):
+    """Set background color zebra-stripes."""
+    # XXX: Zebra stripes would be faster and cleaner done with CSS
+    # selectors :nth-child(odd) and :nth-child(even), but they don't
+    # seem to work, might even be deliberately broken.
+    # https://bugzilla.gnome.org/show_bug.cgi?id=709617#c1
+    path = view.get_model().get_path(itr)
+    row = path.get_indices()[0]
+    color = "#f2f2f2" if row % 2 == 0 else "#ffffff"
+    for column in view.get_columns():
+        for renderer in column.get_cells():
+            renderer.props.cell_background = color
+
+def set_headers(view, row):
+    """Set `row` as column headers."""
+    row.insert(0, "#")
+    row.append("")
+    for i, title in enumerate(row):
+        column = view.get_column(i)
+        column.props.widget.set_text(title)
+
+
+if __name__ == "__main__":
+    main()

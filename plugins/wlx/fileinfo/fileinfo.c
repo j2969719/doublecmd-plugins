@@ -13,6 +13,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <gtk/gtk.h>
+#include <gdk/gdkkeysyms.h>
 #include <string.h>
 #include <limits.h>
 #include <dlfcn.h>
@@ -48,6 +49,65 @@ static GtkWidget * getFirstChild(GtkWidget *w)
 	return result;
 }
 
+void convertbuf1(gchar* encin, gchar* encout, GtkWidget *widget)
+{
+	gchar *result;
+	gsize coverted;
+	gchar *buf1 = g_object_get_data(G_OBJECT(widget), "origin");
+	GtkSourceBuffer *sBuf = g_object_get_data(G_OBJECT(widget), "txtbuf");
+
+	if (encout)
+	{
+		gchar *tmp = g_convert(buf1, -1, encin, "UTF-8", NULL, &coverted, NULL);
+
+		if ((tmp) && (g_strcmp0(tmp, "") != 0))
+		{
+			result = g_convert(tmp, coverted, "UTF-8", encout, NULL, NULL, NULL);
+			g_free(tmp);
+		}
+	}
+	else
+		result = g_convert(buf1, -1, "UTF-8", encin, NULL, NULL, NULL);
+
+	if (result && g_utf8_validate(result, -1, NULL))
+	{
+		gtk_text_buffer_set_text(GTK_TEXT_BUFFER(sBuf), result, -1);
+		g_free(result);
+	}
+
+}
+
+void resetbuf1(GtkWidget *widget)
+{
+	gchar *buf1 = g_object_get_data(G_OBJECT(widget), "origin");
+	GtkSourceBuffer *sBuf = g_object_get_data(G_OBJECT(widget), "txtbuf");
+	gtk_text_buffer_set_text(GTK_TEXT_BUFFER(sBuf), buf1, -1);
+}
+
+
+
+gboolean on_key_press(GtkWidget *widget, GdkEventKey *event, gpointer data)
+{
+	switch (event->keyval)
+	{
+	case GDK_k:
+		convertbuf1("CP1251", "KOI-8", data);
+		return TRUE;
+
+	case GDK_d:
+		convertbuf1("CP1251", "866", data);
+		return TRUE;
+
+	case GDK_r:
+		resetbuf1(data);
+		return TRUE;
+
+	default:
+		return FALSE;
+	}
+
+	return FALSE;
+}
 
 HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 {
@@ -76,19 +136,26 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 	tBuf = gtk_source_buffer_new(NULL);
 	g_object_set_data_full(G_OBJECT(gFix), "txtbuf", tBuf, (GDestroyNotify)g_object_unref);
 	tmp = g_locale_to_utf8(buf1, -1, NULL, NULL, NULL);
-	g_free(buf1);
 
 	if (tmp == NULL)
 	{
-		gtk_widget_destroy(GTK_WIDGET(gFix));
-		return NULL;
+		tmp = g_convert(buf1, -1, "UTF-8", "CP1251", NULL, NULL, NULL);
+
+		if ((tmp == NULL) || (g_strcmp0(tmp, "") == 0) || (!g_utf8_validate(tmp, -1, NULL)))
+		{
+			gtk_widget_destroy(GTK_WIDGET(gFix));
+			return NULL;
+		}
 	}
 
+	g_free(buf1);
+	g_object_set_data_full(G_OBJECT(gFix), "origin", tmp, (GDestroyNotify)g_free);
 	gtk_text_buffer_set_text(GTK_TEXT_BUFFER(tBuf), tmp, -1); // utf only
 
 	tView = gtk_source_view_new_with_buffer(tBuf);
 	gtk_widget_modify_font(tView, pango_font_description_from_string(font));
 	gtk_text_view_set_editable(GTK_TEXT_VIEW(tView), FALSE);
+	g_signal_connect(G_OBJECT(tView), "key_press_event", G_CALLBACK(on_key_press), (gpointer)gFix);
 
 	if (no_cursor)
 		gtk_text_view_set_cursor_visible(GTK_TEXT_VIEW(tView), FALSE);
@@ -100,8 +167,6 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 	gtk_container_add(GTK_CONTAINER(scroll), GTK_WIDGET(tView));
 	gtk_container_add(GTK_CONTAINER(gFix), scroll);
 	gtk_widget_show_all(gFix);
-
-	g_free(tmp);
 
 	return gFix;
 
