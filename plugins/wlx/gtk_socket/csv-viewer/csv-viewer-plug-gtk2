@@ -51,6 +51,7 @@ def init_view(ncolumns):
     """Initialize and return a blank view."""
     view = gtk.TreeView()
     view.props.rubber_banding = True
+    view.set_grid_lines(gtk.TREE_VIEW_GRID_LINES_BOTH)
     columns = [str for x in range(ncolumns)]
     store = gtk.ListStore(*columns)
     view.props.model = store

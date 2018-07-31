@@ -15,8 +15,6 @@
 #define _defaultcmd "mpv"
 #define _configfile "settings.ini"
 
-gchar *_cmd, *_params;
-
 HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 {
 	Dl_info dlinfo;
@@ -25,6 +23,7 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	GError *err = NULL;
 	gboolean is_certain = FALSE;
 	gboolean bval = FALSE;
+	gchar *_cmd, *_params;
 	gchar *_mediatype;
 	GdkNativeWindow id;
 	GtkWidget *gFix;
