@@ -29,7 +29,7 @@ int DCPCALL ContentGetSupportedField(int FieldIndex, char* FieldName, char* Unit
 		{
 			gchar *emblem = g_key_file_get_string(cfg, "Emblems", keys[i], NULL);
 
-			if (emblem)
+			if (emblem != NULL)
 			{
 				if (g_strcmp0(emblems, "") != 0)
 				{
@@ -39,15 +39,18 @@ int DCPCALL ContentGetSupportedField(int FieldIndex, char* FieldName, char* Unit
 				}
 				else
 					emblems = g_strdup(emblem);
+
+				g_free(emblem);
 			}
 
-			g_free(emblem);
 			i++;
 		}
 
+		if (keys && keys[0] != NULL)
+			g_strfreev(keys);
+
 		g_strlcpy(FieldName, "contain", maxlen - 1);
 		g_strlcpy(Units, emblems, maxlen - 1);
-		g_strfreev(keys);
 		return ft_boolean;
 	}
 
