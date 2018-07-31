@@ -24,7 +24,9 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	GKeyFile *cfg;
 	GError *err = NULL;
 	gboolean is_certain = FALSE;
+	gboolean bval = FALSE;
 	gchar *_mediatype;
+	GdkNativeWindow id;
 	GtkWidget *gFix;
 	GtkWidget *mpv;
 
@@ -53,7 +55,13 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 		ext = g_strdup_printf("%s", ext + 1);
 		ext = g_ascii_strdown(ext, -1);
 		gchar *content_type = g_content_type_guess(FileToLoad, NULL, 0, &is_certain);
-		g_print("content_type = %s\n", content_type);
+
+		bval = g_key_file_get_boolean(cfg, "Default", "PrintContentType", NULL);
+
+		if (bval)
+			g_print("content_type = %s\n", content_type);
+
+		bval = g_key_file_get_boolean(cfg, "Default", "GTK_Socket", NULL);
 		_mediatype = g_strdup_printf("%.5s", content_type);
 
 		_cmd = g_key_file_get_string(cfg, ext, "Cmd", NULL);
@@ -106,11 +114,23 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	gFix = gtk_vbox_new(FALSE, 5);
 	gtk_container_add(GTK_CONTAINER(GTK_WIDGET(ParentWin)), gFix);
 
-	mpv = gtk_drawing_area_new();
-	gtk_container_add(GTK_CONTAINER(gFix), mpv);
-	gtk_widget_realize(mpv);
-	GdkNativeWindow id = GDK_WINDOW_XID(gtk_widget_get_window(mpv));
+	if (bval)
+	{
+		mpv = gtk_socket_new();
+		gtk_container_add(GTK_CONTAINER(gFix), mpv);
+		id = gtk_socket_get_id(GTK_SOCKET(mpv));
+	}
+	else
+	{
+		mpv = gtk_drawing_area_new();
+		gtk_container_add(GTK_CONTAINER(gFix), mpv);
+		gtk_widget_realize(mpv);
+		id = GDK_WINDOW_XID(gtk_widget_get_window(mpv));
+	}
+
+
 	gchar *command = g_strdup_printf("%s %s --wid=%d \"%s\"", _cmd, _params, id, FileToLoad);
+
 	if ((id == 0) || (!g_spawn_command_line_async(command, NULL)))
 	{
 		g_free(command);
