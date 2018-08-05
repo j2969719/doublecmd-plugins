@@ -88,6 +88,8 @@ void resetbuf1(GtkWidget *widget)
 
 gboolean on_key_press(GtkWidget *widget, GdkEventKey *event, gpointer data)
 {
+	GtkTextView *textview;
+
 	switch (event->keyval)
 	{
 	case GDK_k:
@@ -100,6 +102,16 @@ gboolean on_key_press(GtkWidget *widget, GdkEventKey *event, gpointer data)
 
 	case GDK_r:
 		resetbuf1(data);
+		return TRUE;
+
+	case GDK_w:
+		textview = GTK_TEXT_VIEW(getFirstChild(getFirstChild(GTK_WIDGET(data))));
+
+		if (gtk_text_view_get_wrap_mode(textview) == GTK_WRAP_NONE)
+			gtk_text_view_set_wrap_mode(textview, GTK_WRAP_WORD);
+		else
+			gtk_text_view_set_wrap_mode(textview, GTK_WRAP_NONE);
+
 		return TRUE;
 
 	default:
