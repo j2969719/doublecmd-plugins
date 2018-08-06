@@ -9,7 +9,7 @@
 #define _detectstring "EXT=\"*\""
 #define _plgname "vte_ncdu.wlx"
 
-gchar *font, *bgimage, *bgcolor, **command;
+gchar *font, *bgimage, *bgcolor, *cmdstr;
 gdouble saturation;
 
 HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
@@ -22,18 +22,18 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 	GtkWidget *vte;
 	VteTerminal *terminal;
 	GdkColor color;
+	gint argcp;
+	gchar **command = NULL;
+	gchar *tmpcmd;
+
+	if (cmdstr)
+	{
+		tmpcmd = g_strdup_printf("%s %s", cmdstr, g_shell_quote(FileToLoad));
+		g_shell_parse_argv(tmpcmd, &argcp, &command, NULL);
+	}
 
 	if (!command)
-	{
-/*		gchar **envp = g_get_environ();
-		command = (gchar * [])
-		{
-			g_strdup(g_environ_getenv(envp, "SHELL")),
-			NULL
-		};
-		g_strfreev(envp);*/
 		return NULL;
-	}
 
 
 	gFix = gtk_vbox_new(FALSE, 0);
@@ -43,8 +43,10 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 	terminal = VTE_TERMINAL(vte);
 	scroll = gtk_scrolled_window_new(NULL, terminal->adjustment);
 	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scroll), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
+
 	if (!vte_terminal_fork_command_full(terminal, VTE_PTY_DEFAULT, FileToLoad, command, NULL, 0, NULL, NULL, NULL, NULL))
 		return NULL;
+
 	vte_terminal_set_scrollback_lines(terminal, -1);
 	vte_terminal_set_size(terminal, 80, 60);
 
@@ -81,7 +83,7 @@ void DCPCALL ListCloseWindow(HANDLE ListWin)
 
 void DCPCALL ListGetDetectString(char* DetectString, int maxlen)
 {
-	g_strlcpy(DetectString, _detectstring, maxlen);
+	g_strlcpy(DetectString, _detectstring, maxlen-1);
 }
 
 int DCPCALL ListSearchDialog(HWND ListWin, int FindNext)
@@ -118,8 +120,7 @@ void DCPCALL ListSetDefaultParams(ListDefaultParamStruct* dps)
 		bgimage = g_key_file_get_string(cfg, "VTE", "BGImage", NULL);
 		bgcolor = g_key_file_get_string(cfg, "VTE", "BGTintColor", NULL);
 		saturation = g_key_file_get_double(cfg, "VTE", "BGSaturation", NULL);
-		g_key_file_set_list_separator(cfg, ' ');
-		command = g_key_file_get_string_list(cfg, "VTE", "Command", NULL, NULL);
+		cmdstr = g_key_file_get_string(cfg, _plgname, "Command", NULL);
 	}
 
 	g_key_file_free(cfg);

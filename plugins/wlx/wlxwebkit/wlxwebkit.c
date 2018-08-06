@@ -28,40 +28,16 @@
 
 #include <gtk/gtk.h>
 #include <webkit/webkit.h>
-#include <string.h>
 #include "wlxplugin.h"
 
 #define _detectstring "(EXT=\"HTML\")|(EXT=\"HTM\")|(EXT=\"XHTM\")|(EXT=\"XHTML\")"
 
-GtkWidget* find_child(GtkWidget* parent, const gchar* name)
+static GtkWidget *getFirstChild(GtkWidget *w)
 {
-	if (g_ascii_strcasecmp(gtk_widget_get_name((GtkWidget*)parent), (gchar*)name) == 0)
-	{
-		return parent;
-	}
-
-	if (GTK_IS_BIN(parent))
-	{
-		GtkWidget *child = gtk_bin_get_child(GTK_BIN(parent));
-		return find_child(child, name);
-	}
-
-	if (GTK_IS_CONTAINER(parent))
-	{
-		GList *children = gtk_container_get_children(GTK_CONTAINER(parent));
-
-		while ((children = g_list_next(children)) != NULL)
-		{
-			GtkWidget* widget = find_child(children->data, name);
-
-			if (widget != NULL)
-			{
-				return widget;
-			}
-		}
-	}
-
-	return NULL;
+	GList *list = gtk_container_get_children(GTK_CONTAINER(w));
+	GtkWidget *result = GTK_WIDGET(list->data);
+	g_list_free(list);
+	return result;
 }
 
 HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
@@ -77,7 +53,6 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	WebKitFaviconDatabase *database = webkit_get_favicon_database();
 	webkit_favicon_database_set_path(database, NULL);
 
-	gtk_widget_set_name(webView, "webkitfrm");
 	gchar* fileUri = g_filename_to_uri(FileToLoad, NULL, NULL);
 	webkit_web_view_load_uri(WEBKIT_WEB_VIEW(webView), fileUri);
 
@@ -98,13 +73,13 @@ void DCPCALL ListCloseWindow(HWND ListWin)
 
 void DCPCALL ListGetDetectString(char* DetectString, int maxlen)
 {
-	strncpy(DetectString, _detectstring, maxlen);
+	g_strlcpy(DetectString, _detectstring, maxlen - 1);
 }
 
 int DCPCALL ListSearchText(HWND ListWin, char* SearchString, int SearchParameter)
 {
-	bool ss_case = FALSE;
-	bool ss_forward = TRUE;
+	gboolean ss_case = FALSE;
+	gboolean ss_forward = TRUE;
 
 	if (SearchParameter & lcs_matchcase)
 		ss_case = TRUE;
@@ -112,7 +87,7 @@ int DCPCALL ListSearchText(HWND ListWin, char* SearchString, int SearchParameter
 	if (SearchParameter & lcs_backwards)
 		ss_forward = FALSE;
 
-	webkit_web_view_search_text(WEBKIT_WEB_VIEW(find_child(ListWin, "webkitfrm")),
+	webkit_web_view_search_text(WEBKIT_WEB_VIEW(getFirstChild(ListWin)),
 	                            SearchString, ss_case, ss_forward, TRUE);
 }
 
@@ -121,11 +96,11 @@ int DCPCALL ListSendCommand(HWND ListWin, int Command, int Parameter)
 	switch (Command)
 	{
 	case lc_copy :
-		webkit_web_view_copy_clipboard(WEBKIT_WEB_VIEW(find_child(ListWin, "webkitfrm")));
+		webkit_web_view_copy_clipboard(WEBKIT_WEB_VIEW(getFirstChild(ListWin)));
 		break;
 
 	case lc_selectall :
-		webkit_web_view_select_all(WEBKIT_WEB_VIEW(find_child(ListWin, "webkitfrm")));
+		webkit_web_view_select_all(WEBKIT_WEB_VIEW(getFirstChild(ListWin)));
 		break;
 
 	default :

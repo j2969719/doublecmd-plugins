@@ -188,7 +188,7 @@ void DCPCALL ListGetDetectString(char* DetectString, int maxlen)
 			detectstr = g_strdup_printf("(EXT=\"%s\")%s", g_ascii_strup(ext[index],  -1), detectstr);
 		}
 
-		g_strlcpy(DetectString, detectstr, maxlen);
+		g_strlcpy(DetectString, detectstr, maxlen-1);
 	}
 
 	g_key_file_free(cfg);

@@ -14,35 +14,64 @@
 static char cfg_path[PATH_MAX];
 const char* cfg_file = "settings.ini";
 
-HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
+gchar *get_file_ext(const gchar *Filename)
 {
-	GKeyFile *cfg;
-	GError *err = NULL;
-	gchar *fileext, *tmpval;
+	if (g_file_test(Filename, G_FILE_TEST_IS_DIR))
+		return NULL;
+
+	gchar *basename, *result, *tmpval;
+
+	basename = g_path_get_basename(Filename);
+	result = g_strrstr(basename, ".");
+
+	if (result)
+	{
+		if (g_strcmp0(result, basename) != 0)
+		{
+			tmpval = g_strdup_printf("%s", result + 1);
+			result = g_ascii_strdown(tmpval, -1);
+			g_free(tmpval);
+		}
+		else
+			result = NULL;
+	}
+
+	g_free(basename);
+
+	return result;
+}
+
+gchar *get_mime_type(const gchar *Filename)
+{
 	magic_t magic_cookie;
-	const gchar *mimetype;
-	gchar *font, *bgimage, *bgcolor, *frmtcmd, *cmdstr;
-	gchar **command;
-	gdouble saturation;
-	gint argcp;
+	gchar *result;
 
 	magic_cookie = magic_open(MAGIC_MIME_TYPE | MAGIC_SYMLINK);
+
 	if (magic_load(magic_cookie, NULL) != 0)
 	{
 		magic_close(magic_cookie);
 		return NULL;
 	}
 
-	mimetype = magic_file(magic_cookie, FileToLoad);
+	result = g_strdup(magic_file(magic_cookie, Filename));
+	magic_close(magic_cookie);
+	return result;
+}
 
+HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
+{
+	GKeyFile *cfg;
+	GError *err = NULL;
+	gchar *file_ext, *mime_type;
+	gchar *font, *bgimage, *bgcolor, *cmdstr;
+	gchar *frmtcmd = NULL;
+	gchar **command;
+	gdouble saturation;
+	gint argcp;
 
-	fileext = g_strrstr(FileToLoad, ".");
-
-	if (fileext)
-	{
-		tmpval = g_strdup_printf("%s", fileext + 1);
-		fileext = g_ascii_strdown(tmpval, -1);
-	}
+	mime_type = get_mime_type(FileToLoad);
+	file_ext = get_file_ext(FileToLoad);
 
 	cfg = g_key_file_new();
 
@@ -54,15 +83,16 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 		bgimage = g_key_file_get_string(cfg, "VTE", "BGImage", NULL);
 		bgcolor = g_key_file_get_string(cfg, "VTE", "BGTintColor", NULL);
 		saturation = g_key_file_get_double(cfg, "VTE", "BGSaturation", NULL);
-		if (fileext)
-			frmtcmd = g_key_file_get_string(cfg, fileext, "Command", NULL);
-		if ((!fileext) || (!frmtcmd))
-			frmtcmd = g_key_file_get_string(cfg, mimetype, "Command", NULL);
+
+		if (file_ext)
+			frmtcmd = g_key_file_get_string(cfg, file_ext, "Command", NULL);
+
+		if (mime_type && ((!file_ext) || (!frmtcmd)))
+			frmtcmd = g_key_file_get_string(cfg, mime_type, "Command", NULL);
 
 	}
 
 	g_key_file_free(cfg);
-	magic_close(magic_cookie);
 
 	if (!frmtcmd)
 		return NULL;
@@ -90,8 +120,10 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 	terminal = VTE_TERMINAL(vte);
 	scroll = gtk_scrolled_window_new(NULL, terminal->adjustment);
 	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scroll), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
+
 	if (!vte_terminal_fork_command_full(terminal, VTE_PTY_DEFAULT, NULL, command, NULL, 0, NULL, NULL, NULL, NULL))
 		return NULL;
+
 	vte_terminal_set_scrollback_lines(terminal, -1);
 	vte_terminal_set_size(terminal, 80, 60);
 
@@ -128,7 +160,7 @@ void DCPCALL ListCloseWindow(HANDLE ListWin)
 
 void DCPCALL ListGetDetectString(char* DetectString, int maxlen)
 {
-	g_strlcpy(DetectString, _detectstring, maxlen);
+	g_strlcpy(DetectString, _detectstring, maxlen-1);
 }
 
 int DCPCALL ListSearchDialog(HWND ListWin, int FindNext)

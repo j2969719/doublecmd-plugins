@@ -260,5 +260,5 @@ int DCPCALL FsExecuteFile(HWND MainWin, char* RemoteName, char* Verb)
 
 void DCPCALL FsGetDefRootName(char* DefRootName, int maxlen)
 {
-	g_strlcpy(DefRootName, _plugname, maxlen);
+	g_strlcpy(DefRootName, _plugname, maxlen-1);
 }

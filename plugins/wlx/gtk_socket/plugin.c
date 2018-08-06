@@ -2,85 +2,132 @@
 #include <gtk/gtk.h>
 #include <gdk/gdkx.h>
 #include <dlfcn.h>
+#include <glib.h>
+#include <magic.h>
 #include <string.h>
 #include "wlxplugin.h"
 
-#define _inifile "settings.ini"
+#define _detectstring "EXT=\"*\""
 #define _plgname "gtk_socket.wlx"
 #define _frmtsrt "%d \"%s\""
 
-static gchar *getfrmtstr(GKeyFile *cfg, gchar *ext, gchar *workdir)
-{
-	gchar *result;
-	result = g_key_file_get_string(cfg, ext, "script", NULL);
+static char cfg_path[PATH_MAX];
+static char plug_path[PATH_MAX];
+const char* cfg_file = "settings.ini";
 
-	if (!result)
+gchar *get_file_ext(const gchar *Filename)
+{
+	if (g_file_test(Filename, G_FILE_TEST_IS_DIR))
+		return NULL;
+
+	gchar *basename, *result, *tmpval;
+
+	basename = g_path_get_basename(Filename);
+	result = g_strrstr(basename, ".");
+
+	if (result)
 	{
-		result = g_key_file_get_string(cfg, ext, "command", NULL);
+		if (g_strcmp0(result, basename) != 0)
+		{
+			tmpval = g_strdup_printf("%s", result + 1);
+			result = g_ascii_strdown(tmpval, -1);
+			g_free(tmpval);
+		}
+		else
+			result = NULL;
+	}
+
+	g_free(basename);
+
+	return result;
+}
+
+gchar *get_mime_type(const gchar *Filename)
+{
+	magic_t magic_cookie;
+	gchar *result;
+
+	magic_cookie = magic_open(MAGIC_MIME_TYPE | MAGIC_SYMLINK);
+
+	if (magic_load(magic_cookie, NULL) != 0)
+	{
+		magic_close(magic_cookie);
+		return NULL;
+	}
+
+	result = g_strdup(magic_file(magic_cookie, Filename));
+	magic_close(magic_cookie);
+	return result;
+}
+
+static gchar *cfg_get_frmt_str(GKeyFile *Cfg, const gchar *Group, const gchar *FileDir)
+{
+	gchar *result, *cfg_value, *tmp;
+	cfg_value = g_key_file_get_string(Cfg, Group, "script", NULL);
+
+	if (!cfg_value)
+	{
+		result = g_key_file_get_string(Cfg, Group, "command", NULL);
 
 		if ((!result) || (!g_strrstr(result, "%s")) || (!g_strrstr(result, "%d")))
-			return NULL;
+			result = NULL;
 	}
 	else
 	{
-		if (g_file_test(result, G_FILE_TEST_EXISTS))
-			result = g_strdup_printf("%s %s", result, _frmtsrt);
+		if (g_file_test(result, G_FILE_TEST_EXISTS) && (g_strcmp0(FileDir, plug_path) != 0))
+			result = g_strdup_printf("%s %s", cfg_value, _frmtsrt);
 		else
 		{
-			result = g_strdup_printf("%s/%s", workdir, result);
+			tmp = g_strdup_printf("%s/%s", plug_path, cfg_value);
 
-			if (g_file_test(result, G_FILE_TEST_EXISTS))
-				result = g_strdup_printf("%s %s", result, _frmtsrt);
+			if (g_file_test(tmp, G_FILE_TEST_EXISTS))
+				result = g_strdup_printf("%s %s", tmp, _frmtsrt);
 			else
-				return NULL;
+				result = NULL;
 		}
 	}
 
 	return result;
 }
 
+gchar *cfg_find_value(GKeyFile *Cfg, const gchar *Group, const gchar *FileDir)
+{
+	gchar *result, *redirect;
+	redirect = g_key_file_get_string(Cfg, Group, "redirect", NULL);
+
+	if (redirect)
+		result = cfg_get_frmt_str(Cfg, redirect, FileDir);
+	else
+		result = cfg_get_frmt_str(Cfg, Group, FileDir);
+	g_free(redirect);
+	return result;
+}
+
 HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 {
-	Dl_info dlinfo;
 	GKeyFile *cfg;
 	GError *err = NULL;
 	GtkWidget *gFix;
 	GtkWidget *socket;
-	gchar *_cfgpath = "";
-	gchar *_workdir;
-	gchar *_command;
-	gchar *_tmpsval;
-	gchar *_fileext;
+	gchar *file_ext, *mime_type;
+	gchar *command;
+	gchar *frmt_str = NULL;
+	gchar *file_path;
 
-	memset(&dlinfo, 0, sizeof(dlinfo));
-
-	if (dladdr(_cfgpath, &dlinfo) != 0)
-	{
-		_workdir = g_path_get_dirname(dlinfo.dli_fname);
-		_cfgpath = g_strdup_printf("%s/%s", _workdir, _inifile);
-	}
-
-	_fileext = g_strrstr(FileToLoad, ".");
-	_fileext = g_strdup_printf("%s", _fileext + 1);
-	_fileext = g_ascii_strdown(_fileext, -1);
+	mime_type = get_mime_type(FileToLoad);
+	file_ext = get_file_ext(FileToLoad);
+	file_path = g_path_get_dirname(FileToLoad);
 
 	cfg = g_key_file_new();
 
-	if (!g_key_file_load_from_file(cfg, _cfgpath, G_KEY_FILE_KEEP_COMMENTS, &err))
-	{
-		g_print("%s (%s): %s\n", _plgname, _cfgpath, (err)->message);
-		return NULL;
-	}
+	if (!g_key_file_load_from_file(cfg, cfg_path, G_KEY_FILE_KEEP_COMMENTS, &err))
+		g_print("%s (%s): %s\n", _plgname, cfg_path, (err)->message);
 	else
 	{
-		_tmpsval = g_key_file_get_string(cfg, _fileext, "redirect", NULL);
-
-		if (_tmpsval)
-			_tmpsval = getfrmtstr(cfg, _tmpsval, _workdir);
-
-		else
-			_tmpsval = getfrmtstr(cfg, _fileext, _workdir);
-
+		if (file_ext)
+			frmt_str = cfg_find_value(cfg, file_ext, file_path);
+		if (mime_type && (!file_ext || !frmt_str))
+			frmt_str = cfg_find_value(cfg, mime_type, file_path);
 	}
 
 	g_key_file_free(cfg);
@@ -88,7 +135,7 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	if (err)
 		g_error_free(err);
 
-	if (!_tmpsval)
+	if (!frmt_str)
 		return NULL;
 
 	gFix = gtk_vbox_new(FALSE, 5);
@@ -97,10 +144,10 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	gtk_container_add(GTK_CONTAINER(gFix), socket);
 
 	GdkNativeWindow id = gtk_socket_get_id(GTK_SOCKET(socket));
-	_command = g_strdup_printf(_tmpsval, id, FileToLoad);
-	g_print("%s\n", _command);
+	command = g_strdup_printf(frmt_str, id, FileToLoad);
+	g_print("%s\n", command);
 
-	if (!g_spawn_command_line_async(_command, NULL))
+	if (!g_spawn_command_line_async(command, NULL))
 	{
 		gtk_widget_destroy(gFix);
 		return NULL;
@@ -118,50 +165,7 @@ void DCPCALL ListCloseWindow(HWND ListWin)
 
 void DCPCALL ListGetDetectString(char* DetectString, int maxlen)
 {
-	Dl_info dlinfo;
-	GKeyFile *cfg;
-	GError *err = NULL;
-	gsize extcount;
-	gchar *detectstr = "";
-	gchar *_cfgpath = "";
-	gchar *_workdir;
-	gchar **ext;
-	guint index;
-
-	memset(&dlinfo, 0, sizeof(dlinfo));
-
-	if (dladdr(_cfgpath, &dlinfo) != 0)
-	{
-		_workdir = g_path_get_dirname(dlinfo.dli_fname);
-		_cfgpath = g_strdup_printf("%s/%s", _workdir, _inifile);
-	}
-
-	cfg = g_key_file_new();
-
-	if (!g_key_file_load_from_file(cfg, _cfgpath, G_KEY_FILE_KEEP_COMMENTS, &err))
-	{
-		g_print("%s (%s): %s\n", _plgname, _cfgpath, (err)->message);
-
-	}
-	else
-	{
-		ext = g_key_file_get_groups(cfg, &extcount);
-
-		for (index = 0; index < extcount; index++)
-		{
-			if (g_strcmp0(detectstr, "") != 0)
-				detectstr = g_strdup_printf("|%s", detectstr);
-
-			detectstr = g_strdup_printf("(EXT=\"%s\")%s", g_ascii_strup(ext[index],  -1), detectstr);
-		}
-
-		g_strlcpy(DetectString, detectstr, maxlen);
-	}
-
-	g_key_file_free(cfg);
-
-	if (err)
-		g_error_free(err);
+	g_strlcpy(DetectString, _detectstring, maxlen-1);
 }
 
 int DCPCALL ListSearchDialog(HWND ListWin, int FindNext)
@@ -177,4 +181,21 @@ int DCPCALL ListSendCommand(HWND ListWin, int Command, int Parameter)
 		                       gtk_clipboard_wait_for_text(gtk_clipboard_get(GDK_SELECTION_PRIMARY)), -1);
 
 	return LISTPLUGIN_OK;
+}
+
+void DCPCALL ListSetDefaultParams(ListDefaultParamStruct* dps)
+{
+	Dl_info dlinfo;
+
+	memset(&dlinfo, 0, sizeof(dlinfo));
+
+	if (dladdr(cfg_path, &dlinfo) != 0)
+	{
+		strncpy(cfg_path, dlinfo.dli_fname, PATH_MAX);
+		strncpy(plug_path, g_path_get_dirname(cfg_path), PATH_MAX);
+		char *pos = strrchr(cfg_path, '/');
+
+		if (pos)
+			strcpy(pos + 1, cfg_file);
+	}
 }

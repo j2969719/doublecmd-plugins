@@ -304,7 +304,7 @@ void DCPCALL ListSetDefaultParams(ListDefaultParamStruct* dps)
 
 void DCPCALL ListGetDetectString(char* DetectString, int maxlen)
 {
-	g_strlcpy(DetectString, DETECT_STRING, maxlen);
+	g_strlcpy(DetectString, DETECT_STRING, maxlen-1);
 }
 
 int DCPCALL ListSearchText(HWND ListWin, char* SearchString, int SearchParameter)

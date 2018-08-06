@@ -301,7 +301,7 @@ int DCPCALL ContentGetSupportedField(int FieldIndex, char* FieldName, char* Unit
 
 int DCPCALL ContentGetDetectString(char* DetectString, int maxlen)
 {
-	g_strlcpy(DetectString, _detectstring, maxlen);
+	g_strlcpy(DetectString, _detectstring, maxlen-1);
 	return 0;
 }
 

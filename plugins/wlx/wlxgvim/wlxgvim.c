@@ -40,7 +40,7 @@ void DCPCALL ListCloseWindow(HWND ListWin)
 
 void DCPCALL ListGetDetectString(char* DetectString, int maxlen)
 {
-	strncpy(DetectString, _detectstring, maxlen);
+	strncpy(DetectString, _detectstring, maxlen-1);
 }
 
 int DCPCALL ListSearchDialog(HWND ListWin, int FindNext)

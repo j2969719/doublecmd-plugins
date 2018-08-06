@@ -300,7 +300,7 @@ void DCPCALL ListGetDetectString(char* DetectString, int maxlen)
 		}
 	}
 
-	g_strlcpy(DetectString, detectstr, maxlen);
+	g_strlcpy(DetectString, detectstr, maxlen-1);
 	g_free(ext);
 	g_free(detectstr);
 	g_slist_free(l);

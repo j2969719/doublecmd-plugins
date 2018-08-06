@@ -245,5 +245,5 @@ int DCPCALL FsGetFile(char* RemoteName, char* LocalName, int CopyFlags, RemoteIn
 
 void DCPCALL FsGetDefRootName(char* DefRootName, int maxlen)
 {
-	g_strlcpy(DefRootName, "Environment variables", maxlen);
+	g_strlcpy(DefRootName, "Environment variables", maxlen-1);
 }

@@ -1,5 +1,4 @@
 #include <gtk/gtk.h>
-#include <string.h>
 #include "wlxplugin.h"
 
 #define _detectstring "EXT=\"GIF\""
@@ -36,7 +35,7 @@ void DCPCALL ListCloseWindow(HWND ListWin)
 
 void DCPCALL ListGetDetectString(char* DetectString, int maxlen)
 {
-	strncpy(DetectString, _detectstring, maxlen);
+	g_strlcpy(DetectString, _detectstring, maxlen-1);
 }
 
 int DCPCALL ListSearchDialog(HWND ListWin, int FindNext)

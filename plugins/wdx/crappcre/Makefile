@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -shared -fPIC
+CFLAGS = -shared -fPIC -Wl,--no-as-needed
 INCLUDES = `pkg-config --cflags --libs glib-2.0` -I../../sdk
 PLUGNAME = crappcre.wdx
 

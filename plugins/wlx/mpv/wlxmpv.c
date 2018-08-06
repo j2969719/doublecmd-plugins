@@ -15,6 +15,33 @@
 #define _defaultcmd "mpv"
 #define _configfile "settings.ini"
 
+gchar *get_file_ext(const gchar *Filename)
+{
+	if (g_file_test(Filename, G_FILE_TEST_IS_DIR))
+		return NULL;
+
+	gchar *basename, *result, *tmpval;
+
+	basename = g_path_get_basename(Filename);
+	result = g_strrstr(basename, ".");
+
+	if (result)
+	{
+		if (g_strcmp0(result, basename) != 0)
+		{
+			tmpval = g_strdup_printf("%s", result + 1);
+			result = g_ascii_strdown(tmpval, -1);
+			g_free(tmpval);
+		}
+		else
+			result = NULL;
+	}
+
+	g_free(basename);
+
+	return result;
+}
+
 HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 {
 	Dl_info dlinfo;
@@ -50,9 +77,7 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	}
 	else
 	{
-		gchar *ext = g_strrstr(FileToLoad, ".");
-		ext = g_strdup_printf("%s", ext + 1);
-		ext = g_ascii_strdown(ext, -1);
+		gchar *ext = get_file_ext(FileToLoad);
 		gchar *content_type = g_content_type_guess(FileToLoad, NULL, 0, &is_certain);
 
 		bval = g_key_file_get_boolean(cfg, "Default", "PrintContentType", NULL);
@@ -170,15 +195,15 @@ void DCPCALL ListGetDetectString(char* DetectString, int maxlen)
 	cfg = g_key_file_new();
 
 	if (!g_key_file_load_from_file(cfg, cfg_path, G_KEY_FILE_KEEP_COMMENTS, NULL))
-		g_strlcpy(DetectString, _detectstring, maxlen);
+		g_strlcpy(DetectString, _detectstring, maxlen-1);
 	else
 	{
 		_detectstr = g_key_file_get_string(cfg, "Default", "DetectString", NULL);
 
 		if (!_detectstr)
-			g_strlcpy(DetectString, _detectstring, maxlen);
+			g_strlcpy(DetectString, _detectstring, maxlen-1);
 		else
-			g_strlcpy(DetectString, _detectstr, maxlen);
+			g_strlcpy(DetectString, _detectstr, maxlen-1);
 	}
 
 	g_key_file_free(cfg);
