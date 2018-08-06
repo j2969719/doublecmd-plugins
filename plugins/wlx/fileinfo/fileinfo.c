@@ -33,11 +33,19 @@
 (EXT=\"EXE\")|(EXT=\"DLL\")|(EXT=\"GZ\")|(EXT=\"BZ2\")|\
 (EXT=\"XZ\")|(EXT=\"MSI\")|(EXT=\"ZPAQ\")|(EXT=\"IMA\")|\
 (EXT=\"IMG\")"
+#define _enc_default "UTF-8"
+#define _enc_ansi "CP1251"
+#define _enc_dos "866"
+#define _enc_koi "KOI-8"
+#define _font_default "monospace 12"
+#define _nfstr_default "not found"
+#define _cfg_gruop "Appearance"
 
 static char script_path[PATH_MAX];
 const char* script_file = "fileinfo.sh";
 GtkWrapMode wrap_mode;
 gchar *font, *nfstr;
+gchar *enc_ansi, *enc_dos, *enc_koi;
 gboolean no_cursor;
 gint p_above, p_below;
 
@@ -49,7 +57,7 @@ static GtkWidget * getFirstChild(GtkWidget *w)
 	return result;
 }
 
-void convertbuf1(gchar* encin, gchar* encout, GtkWidget *widget)
+void enc_swap(gchar* encin, gchar* encout, GtkWidget *widget)
 {
 	gchar *result;
 	gsize coverted;
@@ -58,16 +66,16 @@ void convertbuf1(gchar* encin, gchar* encout, GtkWidget *widget)
 
 	if (encout)
 	{
-		gchar *tmp = g_convert(buf1, -1, encin, "UTF-8", NULL, &coverted, NULL);
+		gchar *tmp = g_convert(buf1, -1, encin, _enc_default, NULL, &coverted, NULL);
 
 		if ((tmp) && (g_strcmp0(tmp, "") != 0))
 		{
-			result = g_convert(tmp, coverted, "UTF-8", encout, NULL, NULL, NULL);
+			result = g_convert(tmp, coverted, _enc_default, encout, NULL, NULL, NULL);
 			g_free(tmp);
 		}
 	}
 	else
-		result = g_convert(buf1, -1, "UTF-8", encin, NULL, NULL, NULL);
+		result = g_convert(buf1, -1, _enc_default, encin, NULL, NULL, NULL);
 
 	if (result && g_utf8_validate(result, -1, NULL))
 	{
@@ -77,7 +85,7 @@ void convertbuf1(gchar* encin, gchar* encout, GtkWidget *widget)
 
 }
 
-void resetbuf1(GtkWidget *widget)
+void reset_textbuf(GtkWidget *widget)
 {
 	gchar *buf1 = g_object_get_data(G_OBJECT(widget), "origin");
 	GtkSourceBuffer *sBuf = g_object_get_data(G_OBJECT(widget), "txtbuf");
@@ -93,22 +101,22 @@ gboolean on_key_press(GtkWidget *widget, GdkEventKey *event, gpointer data)
 	switch (event->keyval)
 	{
 	case GDK_k:
-		convertbuf1("CP1251", "KOI-8", data);
+		enc_swap(enc_ansi, enc_koi, data);
 		return TRUE;
 
 	case GDK_d:
-		convertbuf1("CP1251", "866", data);
+		enc_swap(enc_ansi, enc_dos, data);
 		return TRUE;
 
 	case GDK_r:
-		resetbuf1(data);
+		reset_textbuf(data);
 		return TRUE;
 
 	case GDK_w:
 		textview = GTK_TEXT_VIEW(getFirstChild(getFirstChild(GTK_WIDGET(data))));
 
 		if (gtk_text_view_get_wrap_mode(textview) == GTK_WRAP_NONE)
-			gtk_text_view_set_wrap_mode(textview, GTK_WRAP_WORD);
+			gtk_text_view_set_wrap_mode(textview, wrap_mode);
 		else
 			gtk_text_view_set_wrap_mode(textview, GTK_WRAP_NONE);
 
@@ -151,7 +159,7 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 
 	if (tmp == NULL)
 	{
-		tmp = g_convert(buf1, -1, "UTF-8", "CP1251", NULL, NULL, NULL);
+		tmp = g_convert(buf1, -1, _enc_default, enc_ansi, NULL, NULL, NULL);
 
 		if ((tmp == NULL) || (g_strcmp0(tmp, "") == 0) || (!g_utf8_validate(tmp, -1, NULL)))
 		{
@@ -174,7 +182,6 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 
 	gtk_text_view_set_pixels_above_lines(GTK_TEXT_VIEW(tView), p_above);
 	gtk_text_view_set_pixels_below_lines(GTK_TEXT_VIEW(tView), p_below);
-	gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(tView), wrap_mode);
 
 	gtk_container_add(GTK_CONTAINER(scroll), GTK_WIDGET(tView));
 	gtk_container_add(GTK_CONTAINER(gFix), scroll);
@@ -196,6 +203,7 @@ void DCPCALL ListSetDefaultParams(ListDefaultParamStruct* dps)
 	static char cfg_path[PATH_MAX];
 	const char* cfg_file = "settings.ini";
 	GKeyFile *cfg;
+	gchar *wrapstr;
 	GError *err = NULL;
 	gboolean bval;
 	gboolean found = FALSE;
@@ -243,24 +251,40 @@ void DCPCALL ListSetDefaultParams(ListDefaultParamStruct* dps)
 	if (!g_key_file_load_from_file(cfg, cfg_path, G_KEY_FILE_KEEP_COMMENTS, &err))
 	{
 		g_print("fileinfo.wlx (%s): %s\n", cfg_path, (err)->message);
-		font = "monospace 12";
-		wrap_mode = GTK_WRAP_NONE;
+		font = _font_default;
+		wrap_mode = GTK_WRAP_WORD;
 		no_cursor = TRUE;
-		nfstr = "not found";
+		nfstr = _nfstr_default;
+		enc_ansi = _enc_ansi;
+		enc_dos = _enc_dos;
+		enc_koi = _enc_koi;
 		p_above = 0;
 		p_below = 0;
 	}
 	else
 	{
-		font = g_key_file_get_string(cfg, "Appearance", "Font", NULL);
+		font = g_key_file_get_string(cfg, _cfg_gruop, "Font", NULL);
 
 		if (!font)
-			font = "monospace 12";
+			font = _font_default;
+
+		enc_ansi = g_key_file_get_string(cfg, "Encoding", "Ansi", NULL);
+
+		if (!enc_ansi)
+			enc_ansi = _enc_ansi;
+		enc_dos = g_key_file_get_string(cfg, "Encoding", "Dos", NULL);
+
+		if (!enc_dos)
+			enc_dos = _enc_dos;
+		enc_koi = g_key_file_get_string(cfg, "Encoding", "Koi", NULL);
+
+		if (!enc_koi)
+			enc_koi = _enc_koi;
 
 		if (err)
-			g_error_free(err);
+			err = NULL;
 
-		p_above = g_key_file_get_integer(cfg, "Appearance", "PAbove", &err);
+		p_above = g_key_file_get_integer(cfg, _cfg_gruop, "PAbove", &err);
 
 		if (err)
 		{
@@ -268,7 +292,7 @@ void DCPCALL ListSetDefaultParams(ListDefaultParamStruct* dps)
 			err = NULL;
 		}
 
-		p_below = g_key_file_get_integer(cfg, "Appearance", "PBelow", &err);
+		p_below = g_key_file_get_integer(cfg, _cfg_gruop, "PBelow", &err);
 
 		if (err)
 		{
@@ -276,24 +300,33 @@ void DCPCALL ListSetDefaultParams(ListDefaultParamStruct* dps)
 			err = NULL;
 		}
 
-		bval = g_key_file_get_boolean(cfg, "Flags", "Wrap", NULL);
-
-		if (bval)
-			wrap_mode = GTK_WRAP_WORD;
-		else
-			wrap_mode = GTK_WRAP_NONE;
-
-		bval = g_key_file_get_boolean(cfg, "Flags", "NoCursor", &err);
+		bval = g_key_file_get_boolean(cfg, _cfg_gruop, "NoCursor", &err);
 
 		if (!bval && !err)
 			no_cursor = FALSE;
 		else
 			no_cursor = TRUE;
 
-		nfstr = g_key_file_get_string(cfg, "Appearance", "NotFoundStr", NULL);
+		nfstr = g_key_file_get_string(cfg, _cfg_gruop, "NotFoundStr", NULL);
 
 		if (!nfstr)
-			nfstr = "not found";
+			nfstr = _nfstr_default;
+
+		wrapstr = g_key_file_get_string(cfg, _cfg_gruop, "WrapMode", NULL);
+
+		if (!wrapstr)
+			wrap_mode = GTK_WRAP_WORD;
+		else
+		{
+			if (g_strcmp0(wrapstr, "char") == 0)
+				wrap_mode = GTK_WRAP_CHAR;
+			else if (g_strcmp0(wrapstr, "mixed") == 0)
+				wrap_mode = GTK_WRAP_WORD_CHAR;
+			else
+				wrap_mode = GTK_WRAP_WORD;
+
+			g_free(wrapstr);
+		}
 	}
 
 	g_key_file_free(cfg);
