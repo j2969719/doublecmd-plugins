@@ -15,6 +15,8 @@
 #define _defaultcmd "mpv"
 #define _configfile "settings.ini"
 
+static char cfg_path[PATH_MAX];
+
 gchar *get_file_ext(const gchar *Filename)
 {
 	if (g_file_test(Filename, G_FILE_TEST_IS_DIR))
@@ -42,38 +44,54 @@ gchar *get_file_ext(const gchar *Filename)
 	return result;
 }
 
+gchar *cfg_get_value(GKeyFile *Cfg, const gchar *Key, const gchar *FileExt, const gchar *ContenType)
+{
+	gchar *result = NULL, *mediatype;
+
+	if (FileExt)
+		result = g_key_file_get_string(Cfg, FileExt, Key, NULL);
+
+	if (!result && ContenType)
+	{
+		result = g_key_file_get_string(Cfg, ContenType, Key, NULL);
+
+		if (!result)
+		{
+			mediatype = g_strdup_printf("%.5s", ContenType);
+
+			if (mediatype)
+			{
+				result = g_key_file_get_string(Cfg, mediatype, Key, NULL);
+				g_free(mediatype);
+			}
+		}
+	}
+
+	if (!result)
+		result = g_key_file_get_string(Cfg, "Default", Key, NULL);
+
+
+	return result;
+}
+
 HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 {
-	Dl_info dlinfo;
-	static char cfg_path[PATH_MAX];
 	GKeyFile *cfg;
 	GError *err = NULL;
 	gboolean is_certain = FALSE;
 	gboolean bval = FALSE;
-	gchar *_cmd, *_params;
-	gchar *_mediatype;
+	gchar *cmdstr, *params;
 	GdkNativeWindow id;
 	GtkWidget *gFix;
 	GtkWidget *mpv;
-
-	memset(&dlinfo, 0, sizeof(dlinfo));
-
-	if (dladdr(cfg_path, &dlinfo) != 0)
-	{
-		strncpy(cfg_path, dlinfo.dli_fname, PATH_MAX);
-		char *pos = strrchr(cfg_path, '/');
-
-		if (pos)
-			strcpy(pos + 1, _configfile);
-	}
 
 	cfg = g_key_file_new();
 
 	if (!g_key_file_load_from_file(cfg, cfg_path, G_KEY_FILE_KEEP_COMMENTS, &err))
 	{
 		g_print("mpv.wlx (%s): %s\n", cfg_path, (err)->message);
-		_cmd = _defaultcmd;
-		_params = _defaultparams;
+		cmdstr = _defaultcmd;
+		params = _defaultparams;
 	}
 	else
 	{
@@ -86,47 +104,16 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 			g_print("content_type = %s\n", content_type);
 
 		bval = g_key_file_get_boolean(cfg, "Default", "GTK_Socket", NULL);
-		_mediatype = g_strdup_printf("%.5s", content_type);
 
-		_cmd = g_key_file_get_string(cfg, ext, "Cmd", NULL);
+		cmdstr = cfg_get_value(cfg, "Cmd", ext, content_type);
 
-		if (!_cmd)
-		{
-			_cmd = g_key_file_get_string(cfg, content_type, "Cmd", NULL);
+		if (!cmdstr)
+			cmdstr = _defaultcmd;
 
-			if (!_cmd)
-			{
-				_cmd = g_key_file_get_string(cfg, _mediatype, "Cmd", NULL);
+		params = cfg_get_value(cfg, "Params", ext, content_type);
 
-				if (!_cmd)
-					_cmd = g_key_file_get_string(cfg, "Default", "Cmd", NULL);
-
-				if (!_cmd)
-					_cmd = _defaultcmd;
-			}
-		}
-
-		_params = g_key_file_get_string(cfg, ext, "Params", NULL);
-
-		if (!_params)
-		{
-			_params = g_key_file_get_string(cfg, content_type, "Params", NULL);
-
-			if (!_params)
-			{
-				_params = g_key_file_get_string(cfg, _mediatype, "Params", NULL);
-
-				if (!_params)
-					_params = g_key_file_get_string(cfg, "Default", "Params", NULL);
-
-				if (!_params)
-					_params = _defaultparams;
-			}
-		}
-
-		g_free(content_type);
-		g_free(_mediatype);
-		g_free(ext);
+		if (!params)
+			params = _defaultparams;
 	}
 
 	g_key_file_free(cfg);
@@ -153,7 +140,7 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	}
 
 
-	gchar *command = g_strdup_printf("%s %s --wid=%d \"%s\"", _cmd, _params, id, FileToLoad);
+	gchar *command = g_strdup_printf("%s %s --wid=%d \"%s\"", cmdstr, params, id, FileToLoad);
 
 	if ((id == 0) || (!g_spawn_command_line_async(command, NULL)))
 	{
@@ -176,34 +163,21 @@ void DCPCALL ListCloseWindow(HWND ListWin)
 
 void DCPCALL ListGetDetectString(char* DetectString, int maxlen)
 {
-	Dl_info dlinfo;
-	static char cfg_path[PATH_MAX];
 	GKeyFile *cfg;
 	gchar *_detectstr;
-
-	memset(&dlinfo, 0, sizeof(dlinfo));
-
-	if (dladdr(cfg_path, &dlinfo) != 0)
-	{
-		strncpy(cfg_path, dlinfo.dli_fname, PATH_MAX);
-		char *pos = strrchr(cfg_path, '/');
-
-		if (pos)
-			strcpy(pos + 1, _configfile);
-	}
 
 	cfg = g_key_file_new();
 
 	if (!g_key_file_load_from_file(cfg, cfg_path, G_KEY_FILE_KEEP_COMMENTS, NULL))
-		g_strlcpy(DetectString, _detectstring, maxlen-1);
+		g_strlcpy(DetectString, _detectstring, maxlen - 1);
 	else
 	{
 		_detectstr = g_key_file_get_string(cfg, "Default", "DetectString", NULL);
 
 		if (!_detectstr)
-			g_strlcpy(DetectString, _detectstring, maxlen-1);
+			g_strlcpy(DetectString, _detectstring, maxlen - 1);
 		else
-			g_strlcpy(DetectString, _detectstr, maxlen-1);
+			g_strlcpy(DetectString, _detectstr, maxlen - 1);
 	}
 
 	g_key_file_free(cfg);
@@ -217,4 +191,20 @@ int DCPCALL ListSearchDialog(HWND ListWin, int FindNext)
 int DCPCALL ListSendCommand(HWND ListWin, int Command, int Parameter)
 {
 	return LISTPLUGIN_ERROR;
+}
+
+void DCPCALL ListSetDefaultParams(ListDefaultParamStruct* dps)
+{
+	Dl_info dlinfo;
+
+	memset(&dlinfo, 0, sizeof(dlinfo));
+
+	if (dladdr(cfg_path, &dlinfo) != 0)
+	{
+		strncpy(cfg_path, dlinfo.dli_fname, PATH_MAX);
+		char *pos = strrchr(cfg_path, '/');
+
+		if (pos)
+			strcpy(pos + 1, _configfile);
+	}
 }
