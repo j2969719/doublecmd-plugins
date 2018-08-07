@@ -55,8 +55,9 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
     if (attr < 0) or (math.floor(attr / 0x00000004) % 2 ~= 0) then
         return nil;
     end
+    local dir = FileName:match("(.*[/\\])");
     if (fields[FieldIndex + 1][3] ~= nil) then
-        local handle = io.popen(fields[FieldIndex + 1][3] .. ' "'..FileName..'"', 'r');
+        local handle = io.popen("cd "..dir.." && "..fields[FieldIndex + 1][3]..' "'..FileName..'"', 'r');
         local result = handle:read("*a");
         handle:close();
         if (result ~= nil) then
