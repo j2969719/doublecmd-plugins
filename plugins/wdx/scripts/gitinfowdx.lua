@@ -14,12 +14,18 @@ local fields = {  -- field name, field type, command
     {"Origin URL",      8,                                   "git remote get-url origin #"},
     {"Push URL",        8,                            "git remote get-url origin --push #"},
     {"Log",             8,                                             "git log --oneline"},
+    {"Untracked",       6,                                               "git ls-files -o"},
+    {"Ignored",         6,                            "git ls-files -i --exclude-standard"},
+    {"Modified",        6,                                               "git ls-files -m"},
 }
 
 local stripnewline = {  -- strip trailing linebreak from output
     {"Branch"},  -- field name
     {"Origin URL"},
     {"Push URL"},
+    {"Untracked"},
+    {"Ignored"},
+    {"Modified"},
 }
 
 function ContentGetSupportedField(Index)
@@ -60,7 +66,15 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
                     break;
                 end
             end
-            return result;
+            if (fields[FieldIndex + 1][2] == 6) then
+                if (result ~= "") then
+                    return true;
+                else
+                    return false;
+                end
+            else
+                return result;
+            end
         end
     end
     return nil; -- invalid
