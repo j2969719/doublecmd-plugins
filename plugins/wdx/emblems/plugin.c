@@ -21,7 +21,10 @@ int DCPCALL ContentGetSupportedField(int FieldIndex, char* FieldName, char* Unit
 	{
 		gchar *emblems = "";
 		GKeyFile *cfg = g_key_file_new();
-		g_key_file_load_from_file(cfg, cfg_path, G_KEY_FILE_KEEP_COMMENTS, NULL);
+
+		if (!g_key_file_load_from_file(cfg, cfg_path, G_KEY_FILE_KEEP_COMMENTS, NULL))
+			return ft_nomorefields;
+
 		gchar **keys = g_key_file_get_keys(cfg, "Emblems", NULL, NULL);
 		gsize i = 0;
 
@@ -62,6 +65,7 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 	gchar *result = "";
 	gchar *emblem;
 	gchar *frmtstr;
+	gboolean cfg_open;
 
 	GFile *gfile = g_file_new_for_path(FileName);
 
@@ -75,10 +79,12 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 
 	gchar **emblems = g_file_info_get_attribute_stringv(fileinfo, "metadata::emblems");
 
-	g_key_file_load_from_file(cfg, cfg_path, G_KEY_FILE_KEEP_COMMENTS, NULL);
-	frmtstr = g_key_file_get_string(cfg, "Settings", "Format", NULL);
+	cfg_open = g_key_file_load_from_file(cfg, cfg_path, G_KEY_FILE_KEEP_COMMENTS, NULL);
 
-	if (!frmtstr)
+	if (cfg_open)
+		frmtstr = g_key_file_get_string(cfg, "Settings", "Format", NULL);
+
+	if ((!cfg_open) || (!frmtstr))
 		frmtstr = "%s %s";
 
 
@@ -88,9 +94,10 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 	{
 		while (emblems[i] != NULL)
 		{
-			emblem = g_key_file_get_string(cfg, "Emblems", emblems[i], NULL);
+			if (cfg_open)
+				emblem = g_key_file_get_string(cfg, "Emblems", emblems[i], NULL);
 
-			if (!emblem)
+			if ((!cfg_open) || (!emblem))
 				emblem = g_strdup(emblems[i]);
 
 			if (g_strcmp0(result, "") != 0)
@@ -109,6 +116,9 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 
 		if (FieldIndex == 1)
 		{
+			if ((!cfg_open))
+				return ft_fieldempty;
+
 			gchar **keys = g_key_file_get_keys(cfg, "Emblems", NULL, NULL);
 			emblem = g_key_file_get_string(cfg, "Emblems", keys[UnitIndex], NULL);
 			g_strfreev(keys);
@@ -118,12 +128,16 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 			else
 				*(int*)FieldValue = 0;
 
-			g_free(emblem);
+			if (emblem)
+				g_free(emblem);
+
 			return ft_boolean;
 		}
 		else if (FieldIndex == 0)
 		{
-			g_free(emblem);
+			if (emblem)
+				g_free(emblem);
+
 			g_strlcpy((char*)FieldValue, result, maxlen - 1);
 			return ft_string;
 		}
@@ -152,5 +166,6 @@ void DCPCALL ContentSetDefaultParams(ContentDefaultParamStruct* dps)
 
 void DCPCALL ContentPluginUnloading(void)
 {
-	g_key_file_free(cfg);
+	if (cfg)
+		g_key_file_free(cfg);
 }
