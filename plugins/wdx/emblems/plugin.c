@@ -20,7 +20,6 @@ int DCPCALL ContentGetSupportedField(int FieldIndex, char* FieldName, char* Unit
 	else if (FieldIndex == 1)
 	{
 		gchar *emblems = "";
-		GKeyFile *cfg = g_key_file_new();
 
 		if (!g_key_file_load_from_file(cfg, cfg_path, G_KEY_FILE_KEEP_COMMENTS, NULL))
 			return ft_nomorefields;
