@@ -10,10 +10,10 @@
 
 #define _detectstring "EXT=\"*\""
 #define _plgname "yavteplg.wlx"
-#define _nfstr "not found"
 
 static char cfg_path[PATH_MAX];
 const char* cfg_file = "settings.ini";
+const gchar *_nfstr = "not found";
 
 static GtkWidget *getFirstChild(GtkWidget *w)
 {
@@ -213,7 +213,7 @@ int DCPCALL ListSearchText(HWND ListWin, char* SearchString, int SearchParameter
 	if (!(SearchParameter & lcs_matchcase))
 		flags |= G_REGEX_CASELESS;
 
-	GRegex *regex =  g_regex_new(SearchString, flags, G_REGEX_MATCH_PARTIAL_SOFT, NULL);
+	GRegex *regex =  g_regex_new(SearchString, flags, 0, NULL);
 	VteTerminal *terminal = VTE_TERMINAL(getFirstChild(getFirstChild(ListWin)));
 	vte_terminal_search_set_gregex(terminal, regex);
 
