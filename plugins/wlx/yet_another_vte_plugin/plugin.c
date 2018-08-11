@@ -10,9 +10,18 @@
 
 #define _detectstring "EXT=\"*\""
 #define _plgname "yavteplg.wlx"
+#define _nfstr "not found"
 
 static char cfg_path[PATH_MAX];
 const char* cfg_file = "settings.ini";
+
+static GtkWidget *getFirstChild(GtkWidget *w)
+{
+	GList *list = gtk_container_get_children(GTK_CONTAINER(w));
+	GtkWidget *result = GTK_WIDGET(list->data);
+	g_list_free(list);
+	return result;
+}
 
 gchar *get_file_ext(const gchar *Filename)
 {
@@ -160,12 +169,7 @@ void DCPCALL ListCloseWindow(HANDLE ListWin)
 
 void DCPCALL ListGetDetectString(char* DetectString, int maxlen)
 {
-	g_strlcpy(DetectString, _detectstring, maxlen-1);
-}
-
-int DCPCALL ListSearchDialog(HWND ListWin, int FindNext)
-{
-	return LISTPLUGIN_OK;
+	g_strlcpy(DetectString, _detectstring, maxlen - 1);
 }
 
 void DCPCALL ListSetDefaultParams(ListDefaultParamStruct* dps)
@@ -181,5 +185,50 @@ void DCPCALL ListSetDefaultParams(ListDefaultParamStruct* dps)
 
 		if (pos)
 			strcpy(pos + 1, cfg_file);
+	}
+}
+
+int DCPCALL ListSendCommand(HWND ListWin, int Command, int Parameter)
+{
+	switch (Command)
+	{
+	case lc_copy :
+		vte_terminal_copy_clipboard(VTE_TERMINAL(getFirstChild(getFirstChild(ListWin))));
+		break;
+
+	case lc_selectall :
+		vte_terminal_select_all(VTE_TERMINAL(getFirstChild(getFirstChild(ListWin))));
+		break;
+
+	default :
+		return LISTPLUGIN_ERROR;
+	}
+}
+
+int DCPCALL ListSearchText(HWND ListWin, char* SearchString, int SearchParameter)
+{
+	gboolean found;
+	GRegexCompileFlags flags;
+
+	if (!(SearchParameter & lcs_matchcase))
+		flags |= G_REGEX_CASELESS;
+
+	GRegex *regex =  g_regex_new(SearchString, flags, G_REGEX_MATCH_PARTIAL_SOFT, NULL);
+	VteTerminal *terminal = VTE_TERMINAL(getFirstChild(getFirstChild(ListWin)));
+	vte_terminal_search_set_gregex(terminal, regex);
+
+
+	if (SearchParameter & lcs_backwards)
+		found = vte_terminal_search_find_previous(terminal);
+	else
+		found = vte_terminal_search_find_next(terminal);
+
+	if (!found)
+	{
+		GtkWidget *dialog = gtk_message_dialog_new(GTK_WINDOW(gtk_widget_get_toplevel(GTK_WIDGET(ListWin))),
+		                    GTK_DIALOG_MODAL, GTK_MESSAGE_INFO, GTK_BUTTONS_OK,
+		                    "\"%s\" %s!", SearchString, _nfstr);
+		gtk_dialog_run(GTK_DIALOG(dialog));
+		gtk_widget_destroy(dialog);
 	}
 }
