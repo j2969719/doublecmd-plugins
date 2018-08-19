@@ -48,8 +48,12 @@ gboolean SetFindData(WIN32_FIND_DATAA *FindData)
 		else
 		{
 			FindData->nFileSizeLow = buf.st_size;
-			FindData->dwFileAttributes |= 0x80000000;
-			FindData->dwReserved0 = buf.st_mode;
+
+			if (!S_ISDIR(buf.st_mode))
+			{
+				FindData->dwFileAttributes |= 0x80000000;
+				FindData->dwReserved0 = buf.st_mode;
+			}
 		}
 
 		g_free(fname);
