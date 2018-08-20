@@ -7,8 +7,8 @@
 int main(int argc, char **argv)
 {
 	const gchar *cmd = "dbus-send --print-reply --dest=org.gnome.NautilusPreviewer \
-/org/gnome/NautilusPreviewer org.gnome.NautilusPreviewer.ShowFile string:\"%s\" int32:0 boolean:true";
+/org/gnome/NautilusPreviewer org.gnome.NautilusPreviewer.ShowFile string:\"%s\" int32:%d boolean:true";
 	gchar *fileUri = g_filename_to_uri(argv[1], NULL, NULL);
-	system(g_strdup_printf(cmd, fileUri));
+	system(g_strdup_printf(cmd, fileUri, argv[2]));
 	return(EXIT_SUCCESS);
 }
