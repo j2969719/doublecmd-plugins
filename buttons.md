@@ -494,3 +494,17 @@ DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
   </Menu>
 </doublecmd>
 ```
+
+# force internal viewer (for assigning hotkey)
+```
+DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
+<doublecmd>
+  <Program>
+    <ID>{81124796-B4A5-453C-BE0E-3F846C8C9A5E}</ID>
+    <Icon>cm_view</Icon>
+    <Hint>internal viewer</Hint>
+    <Command>{!DC-VIEWER}</Command>
+    <Params>%p</Params>
+  </Program>
+</doublecmd>
+```
