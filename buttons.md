@@ -508,3 +508,137 @@ DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
   </Program>
 </doublecmd>
 ```
+
+# emblems
+```
+DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
+<doublecmd>
+  <Menu>
+    <ID>{97CE02F0-3471-4132-8F88-8A81CE93209A}</ID>
+    <Icon>emblem-default</Icon>
+    <Hint>Emblems</Hint>
+    <MenuItems>
+      <Program>
+        <ID>{0169607F-0833-4C5C-992E-30A135C7830F}</ID>
+        <Icon>edit-cut</Icon>
+        <Hint>Clear</Hint>
+        <Command>gio</Command>
+        <Params>set -t unset %p metadata::emblems</Params>
+      </Program>
+      <Program>
+        <ID>{76DFF65F-6D47-4A8C-8672-B2E79A3CAD7A}</ID>
+        <Icon>emblem-default</Icon>
+        <Hint>emblem-default</Hint>
+        <Command>gio</Command>
+        <Params>set -t stringv %p metadata::emblems emblem-default</Params>
+      </Program>
+      <Program>
+        <ID>{567DE734-05B9-4803-A6D2-E1E3F0F9D9AC}</ID>
+        <Icon>emblem-documents</Icon>
+        <Hint>emblem-documents</Hint>
+        <Command>gio</Command>
+        <Params>set -t stringv %p metadata::emblems emblem-documents</Params>
+      </Program>
+      <Program>
+        <ID>{3317A393-75F7-460D-8733-0124CEC792A5}</ID>
+        <Icon>emblem-downloads</Icon>
+        <Hint>emblem-downloads</Hint>
+        <Command>gio</Command>
+        <Params>set -t stringv %p metadata::emblems emblem-downloads</Params>
+      </Program>
+      <Program>
+        <ID>{B43627E9-DCC3-47DD-A954-C73EF9B3DEFF}</ID>
+        <Icon>emblem-favorite</Icon>
+        <Hint>emblem-favorite</Hint>
+        <Command>gio</Command>
+        <Params>set -t stringv %p metadata::emblems emblem-favorite</Params>
+      </Program>
+      <Program>
+        <ID>{A9773A7C-365A-49AC-8AAE-63001BF39C45}</ID>
+        <Icon>emblem-important</Icon>
+        <Hint>emblem-important</Hint>
+        <Command>gio</Command>
+        <Params>set -t stringv %p metadata::emblems emblem-important</Params>
+      </Program>
+      <Program>
+        <ID>{62DC9DFC-C701-425B-95F3-046D0E9C80B3}</ID>
+        <Icon>emblem-mail</Icon>
+        <Hint>emblem-mail</Hint>
+        <Command>gio</Command>
+        <Params>set -t stringv %p metadata::emblems emblem-mail</Params>
+      </Program>
+      <Program>
+        <ID>{ED0A9F83-84BE-45D7-BD22-1765C6DF5B40}</ID>
+        <Icon>emblem-new</Icon>
+        <Hint>emblem-new</Hint>
+        <Command>gio</Command>
+        <Params>set -t stringv %p metadata::emblems emblem-new</Params>
+      </Program>
+      <Program>
+        <ID>{763528E5-A9CB-4D0C-8204-96BB78F2981F}</ID>
+        <Icon>emblem-package</Icon>
+        <Hint>emblem-package</Hint>
+        <Command>gio</Command>
+        <Params>set -t stringv %p metadata::emblems emblem-package</Params>
+      </Program>
+      <Program>
+        <ID>{E854A8F3-1AA0-4B1D-B17F-411BF1176FBF}</ID>
+        <Icon>emblem-photos</Icon>
+        <Hint>emblem-photos</Hint>
+        <Command>gio</Command>
+        <Params>set -t stringv %p metadata::emblems emblem-photos</Params>
+      </Program>
+      <Program>
+        <ID>{57EB96A8-9D7B-484A-83E7-ACB21FFB0EB5}</ID>
+        <Icon>emblem-readonly</Icon>
+        <Hint>emblem-readonly</Hint>
+        <Command>gio</Command>
+        <Params>set -t stringv %p metadata::emblems eemblem-readonly</Params>
+      </Program>
+      <Program>
+        <ID>{E0D0E7DD-71F5-461A-B49D-0D8548D98354}</ID>
+        <Icon>emblem-shared</Icon>
+        <Hint>emblem-shared</Hint>
+        <Command>gio</Command>
+        <Params>set -t stringv %p metadata::emblems emblem-shared</Params>
+      </Program>
+      <Program>
+        <ID>{67DB89EC-A9CC-43C4-BFAF-E3715F1F55F4}</ID>
+        <Icon>emblem-synchronizing</Icon>
+        <Hint>emblem-synchronizing</Hint>
+        <Command>gio</Command>
+        <Params>set -t stringv %p metadata::emblems emblem-synchronizing</Params>
+      </Program>
+      <Program>
+        <ID>{A404DD57-F0F2-43D5-BC81-F89D53536CBD}</ID>
+        <Icon>emblem-system</Icon>
+        <Hint>emblem-system</Hint>
+        <Command>gio</Command>
+        <Params>set -t stringv %p metadata::emblems emblem-system</Params>
+      </Program>
+      <Program>
+        <ID>{9B496328-CBE1-4568-9D3B-6A4DC150D8BE}</ID>
+        <Icon>emblem-unreadable</Icon>
+        <Hint>emblem-unreadable</Hint>
+        <Command>gio</Command>
+        <Params>set -t stringv %p metadata::emblems emblem-unreadable</Params>
+      </Program>
+      <Program>
+        <ID>{EF52C175-80DE-44BC-8332-1992EE88A07A}</ID>
+        <Icon>emblem-urgent</Icon>
+        <Hint>emblem-urgent</Hint>
+        <Command>gio</Command>
+        <Params>set -t stringv %p metadata::emblems emblem-urgent</Params>
+      </Program>
+      <Program>
+        <ID>{B1090949-EE57-45F9-933D-C3CB02A64311}</ID>
+        <Icon>emblem-web</Icon>
+        <Hint>emblem-web</Hint>
+        <Command>gio</Command>
+        <Params>set -t stringv %p metadata::emblems emblem-web</Params>
+      </Program>
+    </MenuItems>
+  </Menu>
+</doublecmd>
+
+```
