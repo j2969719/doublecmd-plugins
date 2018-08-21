@@ -593,7 +593,7 @@ DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
         <Icon>emblem-readonly</Icon>
         <Hint>emblem-readonly</Hint>
         <Command>gio</Command>
-        <Params>set -t stringv %p metadata::emblems eemblem-readonly</Params>
+        <Params>set -t stringv %p metadata::emblems emblem-readonly</Params>
       </Program>
       <Program>
         <ID>{E0D0E7DD-71F5-461A-B49D-0D8548D98354}</ID>
@@ -640,5 +640,4 @@ DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
     </MenuItems>
   </Menu>
 </doublecmd>
-
 ```
