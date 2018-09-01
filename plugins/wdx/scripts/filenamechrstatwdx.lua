@@ -148,9 +148,9 @@ function checkCaseDupl(Str)
                 IsFound = true;
                 break;
             end
-                Result, FindData = SysUtils.FindNext(Handle)
+                Result, FindData = SysUtils.FindNext(Handle);
         until (Result == nil)
-        SysUtils.FindClose(Handle)
+        SysUtils.FindClose(Handle);
     end
     return IsFound;
 end

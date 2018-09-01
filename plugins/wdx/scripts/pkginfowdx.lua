@@ -8,12 +8,12 @@ local fields = {
     {"pkgver",    8,    "\npkgver = ([^\n]+)"}, 
     {"pkgdesc",   8,   "\npkgdesc = ([^\n]+)"}, 
     {"url",       8,       "\nurl = ([^\n]+)"}, 
-    {"packager",  8,  "\npackager = ([^\n]+)"},  
+    {"packager",  8,  "\npackager = ([^\n]+)"}, 
     {"license",   8,   "\nlicense = ([^\n]+)"}, 
-    {"builddate", 8, "\nbuilddate = ([^\n]+)"},  
+    {"builddate", 8, "\nbuilddate = ([^\n]+)"}, 
     {"size",      2,      "\nsize = ([^\n]+)"}, 
     {"conflict",  8,  "\nconflict = ([^\n]+)"}, 
-    {"provides",  8,  "\nprovides = ([^\n]+)"},  
+    {"provides",  8,  "\nprovides = ([^\n]+)"}, 
     {"replaces",  8,  "\nreplaces = ([^\n]+)"}, 
     {"arch",      7,      "\narch = ([^\n]+)"}, 
     {"raw",       8,                "(.+)\n$"}, 
@@ -31,11 +31,11 @@ function ContentGetSupportedField(Index)
 end
 
 function ContentGetDetectString()
-    return 'EXT="XZ"';
+    return '(EXT="XZ")|(EXT="GZ")';
 end
 
 function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
-    if (FileName:find("%.pkg%.tar%.xz$") == nil) then
+    if (FileName:find("%.pkg%.tar%.xz$") == nil) and (FileName:find("%.pkg%.tar%.gz$") == nil) then
         return nil;
     end
     if (filename ~= FileName) then
@@ -47,7 +47,7 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
         output = handle:read("*a");
         handle:close();
         filename = FileName;
-        if (output == '') or (output == nil) then 
+        if (output == '') or (output == nil) then
             return nil;
         end
     end
