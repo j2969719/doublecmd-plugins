@@ -17,6 +17,8 @@ import gtk, gobject
 Wid = 0L
 # TREE_VIEW_GRID_LINES_NONE TREE_VIEW_GRID_LINES_BOTH TREE_VIEW_GRID_LINES_VERTICAL
 grid_lines = gtk.TREE_VIEW_GRID_LINES_VERTICAL
+cell_width = -1
+cell_height = -1
 
 class SqliteViewer:
     def __init__(self, xid, path):
@@ -33,6 +35,7 @@ class SqliteViewer:
         self.dialog = gtk.Dialog()
 
         self.table.set_enable_search(True)
+        # self.query.set_editable(False)
         self.table.set_grid_lines(grid_lines)
         # self.table.set_hover_selection(True)
         self.query.connect("activate", self.entry_activate)
@@ -101,6 +104,7 @@ class SqliteViewer:
     def create_collumns(self, column_names):
         rendererText = gtk.CellRendererText()
         rendererText.set_property('editable', True)
+        rendererText.set_fixed_size(cell_width, cell_height)
         for index, name in enumerate(column_names):
             column = gtk.TreeViewColumn(name, rendererText, text=index)
             column.set_sort_column_id(index)
