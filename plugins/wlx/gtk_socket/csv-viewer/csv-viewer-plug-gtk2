@@ -24,6 +24,7 @@ import atexit
 import csv
 import locale
 import optparse
+import sys
 import os
 import re
 
@@ -95,7 +96,10 @@ def addText(loader):
 
 def main():
     """Parse arguments and display CSV file."""
-    opts, path = parse_arguments()
+    # opts, path = parse_arguments()
+    xid = 0L
+    xid = long(sys.argv[1])
+    path = sys.argv[2]
     f = open(path, "r")
     atexit.register(f.close)
     # Sniffer could be used to detect the presence
@@ -114,7 +118,8 @@ def main():
     first_row = next(reader)
     view = init_view(len(first_row) + 2)
     title = os.path.basename(path)
-    window = init_window(title, opts.wid, view)
+    # window = init_window(title, opts.wid, view)
+    window = init_window(title, xid, view)
     window.show_all()
     set_headers(view, first_row)
     loader = load_chunk(reader, view)
@@ -154,5 +159,5 @@ def set_headers(view, row):
         column.props.widget.set_text(title)
 
 
-if __name__ == "__main__":
+if __name__ == "__main__" and len(sys.argv) == 3:
     main()
