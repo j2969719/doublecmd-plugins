@@ -16,9 +16,19 @@ import gtk, gobject
 
 Wid = 0L
 # TREE_VIEW_GRID_LINES_NONE TREE_VIEW_GRID_LINES_BOTH TREE_VIEW_GRID_LINES_VERTICAL
-grid_lines = gtk.TREE_VIEW_GRID_LINES_VERTICAL
-# cell_width = -1
-# cell_height = -1
+grid_lines = gtk.TREE_VIEW_GRID_LINES_BOTH
+# fixed cell size
+cell_width = -1
+cell_height = -1
+# fixed height from font
+number_of_rows = -1
+# cell single paragraph mode
+single_paragraph = False
+# query in main window
+query_is_entry = False
+query_editable = True
+# set hover selection
+hover_selection = False
 
 class SqliteViewer:
     def __init__(self, xid, path):
@@ -29,16 +39,22 @@ class SqliteViewer:
         self.isopen = False
 
         self.tables = gtk.combo_box_new_text()
-        self.query = gtk.Entry()
         self.table = gtk.TreeView()
 
         self.dialog = gtk.Dialog()
 
         self.table.set_enable_search(True)
-        # self.query.set_editable(False)
         self.table.set_grid_lines(grid_lines)
-        # self.table.set_hover_selection(True)
-        self.query.connect("activate", self.entry_activate)
+        self.table.set_hover_selection(hover_selection)
+
+        if query_is_entry:
+           self.query = gtk.Entry()
+           self.query.set_editable(query_editable)
+           self.query.connect("activate", self.entry_activate)
+        else:
+           self.query = gtk.Label()
+           self.query.set_selectable(query_editable)
+           self.query.set_alignment(0,0.5)
 
         button = gtk.Button("Query", None, False)
         button.connect("pressed", self.kostyl_dialog)
@@ -104,12 +120,18 @@ class SqliteViewer:
     def create_collumns(self, column_names):
         rendererText = gtk.CellRendererText()
         rendererText.set_property('editable', True)
-        # rendererText.set_fixed_size(cell_width, cell_height)
-        rendererText.set_fixed_height_from_font(1)
+        rendererText.set_property("single-paragraph-mode", single_paragraph)
+        if cell_width > 0 or cell_height > 0:
+           rendererText.set_fixed_size(cell_width, cell_height)
+        elif number_of_rows > 0:
+           rendererText.set_fixed_height_from_font(number_of_rows)
         for index, name in enumerate(column_names):
             column = gtk.TreeViewColumn(name, rendererText, text=index)
             column.props.resizable = True
             column.set_sort_column_id(index)
+            label = gtk.Label(str(name))
+            label.show()
+            column.props.widget = label
             self.table.append_column(column)
 
     def show_message(self, text):
@@ -147,6 +169,7 @@ class SqliteViewer:
         self.table = gtk.TreeView()
         self.table.set_enable_search(True)
         self.table.set_grid_lines(grid_lines)
+        self.table.set_hover_selection(hover_selection)
         self.sw.add(self.table)
         self.sw.show_all()
         gobject.idle_add(self.execute, query)
