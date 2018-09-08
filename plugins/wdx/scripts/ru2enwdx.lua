@@ -1,4 +1,4 @@
--- ru2enwdx.lua
+-- dc >= r8316
 
 local ru_en = {
     ["Й"] = "Q", ["й"] = "q", 
@@ -11,9 +11,9 @@ local ru_en = {
     ["Ш"] = "I", ["ш"] = "i", 
     ["Щ"] = "O", ["щ"] = "o", 
     ["З"] = "P", ["З"] = "p", 
-    ["Х"] = "{", ["х"] = "%[", 
-    ["Ъ"] = "}", ["ъ"] = "%]", 
-    
+    ["Х"] = "{", ["х"] = "[", 
+    ["Ъ"] = "}", ["ъ"] = "]", 
+
     ["Ф"] = "A", ["ф"] = "a", 
     ["Ы"] = "S", ["ы"] = "s", 
     ["В"] = "D", ["в"] = "d", 
@@ -24,25 +24,26 @@ local ru_en = {
     ["Л"] = "K", ["л"] = "k", 
     ["Д"] = "L", ["д"] = "l", 
     ["Ж"] = ":", ["ж"] = ";", 
-    ["Э"] = "\"", ["э"] = "'",
+    ["Э"] = '"', ["э"] = "'", 
 
-    ["Я"] = "Z", ["я"] = "z",
-    ["Ч"] = "X", ["ч"] = "x",
-    ["С"] = "C", ["с"] = "c",
-    ["М"] = "V", ["м"] = "v",
-    ["И"] = "B", ["и"] = "b",
-    ["Т"] = "N", ["т"] = "n",
-    ["Ь"] = "M", ["ь"] = "m",
-    ["Б"] = "<", ["б"] = ",",
-    ["Ю"] = ">", ["ю"] = ".",
+    ["Я"] = "Z", ["я"] = "z", 
+    ["Ч"] = "X", ["ч"] = "x", 
+    ["С"] = "C", ["с"] = "c", 
+    ["М"] = "V", ["м"] = "v", 
+    ["И"] = "B", ["и"] = "b", 
+    ["Т"] = "N", ["т"] = "n", 
+    ["Ь"] = "M", ["ь"] = "m", 
+    ["Б"] = "<", ["б"] = ",", 
+    ["Ю"] = ">", ["ю"] = ".", 
 
-    ["Ё"] = "~", ["ё"] = "`",
-    
-    [";"] = "%$",
-    [":"] = "%^",
-    ["%?"] = "&",
-    ["\""] = "@",
-    ["№"] = "#"
+    ["Ё"] = "~", ["ё"] = "`", 
+
+    [","] = "?", 
+    ['"'] = "@", 
+    ["№"] = "#", 
+    [";"] = "$", 
+    [":"] = "^", 
+    ["?"] = "&", 
 }
 
 local en_ru = {
@@ -56,9 +57,9 @@ local en_ru = {
     ["I"] = "Ш", ["i"] = "ш", 
     ["O"] = "Щ", ["o"] = "щ", 
     ["P"] = "З", ["p"] = "з", 
-    ["{"] = "Х", ["%["] = "х", 
-    ["}"] = "Ъ", ["%]"] = "ъ", 
-    
+    ["{"] = "Х", ["["] = "х", 
+    ["}"] = "Ъ", ["]"] = "ъ", 
+
     ["A"] = "Ф", ["a"] = "ф", 
     ["S"] = "Ы", ["s"] = "ы", 
     ["D"] = "В", ["d"] = "в", 
@@ -69,21 +70,28 @@ local en_ru = {
     ["K"] = "Л", ["k"] = "л", 
     ["L"] = "Д", ["l"] = "д", 
     [":"] = "Ж", [";"] = "ж", 
-    ["\""] = "Э", ["'"] = "э",
+    ['"'] = "Э", ["'"] = "э", 
 
-    ["Z"] = "Я", ["z"] = "я",
-    ["X"] = "Ч", ["x"] = "ч",
-    ["C"] = "С", ["c"] = "с",
-    ["V"] = "М", ["v"] = "м",
-    ["B"] = "И", ["b"] = "и",
-    ["N"] = "Т", ["n"] = "т",
-    ["M"] = "Ь", ["m"] = "ь",
-    ["<"] = "Б", [","] = "б",
-    [">"] = "Ю", ["%."] = "ю",
+    ["Z"] = "Я", ["z"] = "я", 
+    ["X"] = "Ч", ["x"] = "ч", 
+    ["C"] = "С", ["c"] = "с", 
+    ["V"] = "М", ["v"] = "м", 
+    ["B"] = "И", ["b"] = "и", 
+    ["N"] = "Т", ["n"] = "т", 
+    ["M"] = "Ь", ["m"] = "ь", 
+    ["<"] = "Б", [","] = "б", 
+    [">"] = "Ю", ["."] = "ю", 
 
-    ["~"] = "Ё", ["`"] = "ё"
-} 
+    ["~"] = "Ё", ["`"] = "ё", 
 
+    ["?"] = ",", 
+    ["/"] = ".", 
+    ["@"] = '"', 
+    ["#"] = "№", 
+    ["$"] = ";", 
+    ["^"] = ":", 
+    ["&"] = "?", 
+}
 
 function ContentGetSupportedField(Index)
     if (Index == 0) then
@@ -96,32 +104,66 @@ end
 
 function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
     local result = FileName;
-    if (string.find(result, "[/\\]%.%.$")) then
+    if (string.find(result, "[" .. SysUtils.PathDelim .. "]%.%.$")) then
         return nil;
     end
+    local isDir = SysUtils.DirectoryExists(result);
     if (UnitIndex == 0) then
-        result = string.match(result, "^.*[/\\](.+[^/\\])$");
+        result = getFullname(result);
     elseif (UnitIndex == 1) then
-        result = string.match(result, "^.*[/\\](.+[^/\\])$");
-        if (result ~= nil) and (string.match(result, "(.+)%..+")) then
-            result = string.match(result, "(.+)%..+");
-        end
+        result = getFilename(result, isDir);
     elseif (UnitIndex == 2) then
-        result = string.match(result, ".+%.(.+)$");
-    end 
+        result = getExt(result, isDir);
+    end
     if (result == nil) then
         return nil;
     elseif (FieldIndex == 0) then
-        for ru, en in pairs(ru_en) do
-            result = string.gsub(result, ru, en);
-        end
-        return result;
+        return strReplace(result, ru_en);
     elseif (FieldIndex == 1) then
-        for en, ru in pairs(en_ru) do
-            result = string.gsub(result, en, ru);
-        end
-        return result;
+        return strReplace(result, en_ru);
     end
     return nil; -- invalid
 end
 
+function getFullname(Str)
+    if (Str == nil) then
+        return nil;
+    end
+    return string.match(Str, "[" .. SysUtils.PathDelim .. "]([^" .. SysUtils.PathDelim .. "]+)$");
+end
+
+function getFilename(Str, IsDir)
+    local FileName = nil;
+    local FullName = getFullname(Str);
+    if (FullName ~= nil) and (IsDir == false) then
+        FileName = string.match(FullName, "(.+)%..+");
+    end
+    if (FileName ~= nil) then
+        return FileName;
+    else
+        return FullName;
+    end
+end
+
+function getExt(Str, IsDir)
+    if (Str == nil) or (IsDir == true) then
+        return nil;
+    end
+    if (getFilename(Str, IsDir) == getFullname(Str)) then
+        return nil;
+    end
+    return string.match(Str, ".+%.(.+)$");
+end
+
+function strReplace(Str, Table)
+    local Result = '';
+    for I = 1, LazUtf8.Length(Str) do
+    local Char = LazUtf8.Copy(Str, I, 1);
+        if (Table[Char] ~= nil) then
+            Result = Result .. Table[Char];
+        else
+            Result = Result .. Char;
+        end
+    end
+    return Result;
+end

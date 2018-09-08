@@ -45,7 +45,7 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
     if (utf8.find(FileName, "[" .. DelimPattern .. "]%.%.$")) then
         targetpath = utf8.sub(FileName, 1, -3);
     end
-    local isDir = SysUtils.DirectoryExists(targetpath)
+    local isDir = SysUtils.DirectoryExists(targetpath);
     local target = getTargetStr(targetpath, isDir, UnitIndex);
     if (FieldIndex > -1) and (FieldIndex < #pattern) then
         return calcChr(target, pattern[FieldIndex+1][1]);
