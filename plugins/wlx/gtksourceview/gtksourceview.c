@@ -26,7 +26,6 @@ GtkWrapMode wrap_mode;
 gchar *font, *style, *nfstr, *ext_pascal, *ext_xml, *ext_ini;
 gboolean line_num, hcur_line, draw_spaces, no_cursor;
 gint s_tab, p_above, p_below;
-gchar *plug_dir;
 
 
 static GtkWidget *getFirstChild(GtkWidget *w)
@@ -49,7 +48,6 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	GtkSourceStyleSchemeManager *scheme_manager;
 	GtkSourceStyleScheme *scheme;
 	GtkSourceBuffer *sBuf;
-	gchar *dir_styles, *dir_langs;
 
 	gFix = gtk_vbox_new(FALSE, 5);
 	gtk_container_add(GTK_CONTAINER(GTK_WIDGET(ParentWin)), gFix);
@@ -58,35 +56,8 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	pScrollWin = gtk_scrolled_window_new(NULL, NULL);
 	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(pScrollWin), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
 
-	if (plug_dir)
-	{
-		dir_styles = g_strdup_printf("%s/styles/", plug_dir);
-		dir_langs = g_strdup_printf("%s/language-specs/", plug_dir);
-	}
-
 	/* Now create a GtkSourceLanguageManager */
 	lm = gtk_source_language_manager_new();
-
-	if ((dir_langs) && (g_file_test(dir_langs, G_FILE_TEST_IS_DIR)))
-	{
-		gchar **lang_files;
-		int i, lang_files_count;
-		char **new_langs;
-
-		lang_files = g_strdupv(gtk_source_language_manager_get_search_path(lm));
-
-		lang_files_count = g_strv_length(lang_files);
-		new_langs = g_new(char*, lang_files_count + 2);
-
-		for (i = 0; lang_files[i]; i++)
-			new_langs[i] = lang_files[i];
-
-		new_langs[lang_files_count] = g_strdup(dir_langs);
-		new_langs[lang_files_count + 1] = NULL;
-		g_free(lang_files);
-		g_free(dir_langs);
-		gtk_source_language_manager_set_search_path(lm, new_langs);
-	}
 
 	/* and a GtkSourceBuffer to hold text (similar to GtkTextBuffer) */
 	sBuf = GTK_SOURCE_BUFFER(gtk_source_buffer_new(NULL));
@@ -115,13 +86,6 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	}
 
 	scheme_manager = gtk_source_style_scheme_manager_get_default();
-
-	if ((dir_styles) && (g_file_test(dir_styles, G_FILE_TEST_IS_DIR)))
-	{
-		gtk_source_style_scheme_manager_prepend_search_path(scheme_manager, dir_styles);
-		g_free(dir_styles);
-	}
-
 	scheme = gtk_source_style_scheme_manager_get_scheme(scheme_manager, style);
 	gtk_source_buffer_set_style_scheme(sBuf, scheme);
 	gtk_text_view_set_editable(GTK_TEXT_VIEW(sView), FALSE);
@@ -282,7 +246,7 @@ void DCPCALL ListCloseWindow(HWND ListWin)
 
 void DCPCALL ListGetDetectString(char* DetectString, int maxlen)
 {
-	g_strlcpy(DetectString, _detectstring, maxlen - 1);
+	g_strlcpy(DetectString, _detectstring, maxlen-1);
 }
 
 int DCPCALL ListSearchText(HWND ListWin, char* SearchString, int SearchParameter)
@@ -373,8 +337,6 @@ void DCPCALL ListSetDefaultParams(ListDefaultParamStruct* dps)
 		if (pos)
 			strcpy(pos + 1, cfg_file);
 	}
-
-	plug_dir = g_path_get_dirname(cfg_path);
 
 	cfg = g_key_file_new();
 
