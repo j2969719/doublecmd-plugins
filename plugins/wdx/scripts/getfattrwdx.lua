@@ -4,27 +4,23 @@ local output = ''
 local dosattr = ''
 local filename = ''
 
-function ContentGetSupportedField(Index)
-    if (Index == 0) then
+function ContentGetSupportedField(FieldIndex)
+    if (FieldIndex == 0) then
         return 'archive', '', 6; 
-    elseif (Index == 1) then
+    elseif (FieldIndex == 1) then
         return 'compressed', '', 6;
-    elseif (Index == 2) then
+    elseif (FieldIndex == 2) then
         return 'encrypted', '', 6;
-    elseif (Index == 3) then
+    elseif (FieldIndex == 3) then
         return 'hidden', '', 6;
-    elseif (Index == 4) then
+    elseif (FieldIndex == 4) then
         return 'readonly', '', 6;
-    elseif (Index == 5) then
+    elseif (FieldIndex == 5) then
         return 'system', '', 6;
-    elseif (Index == 6) then
+    elseif (FieldIndex == 6) then
         return 'attr string', '', 8;
     end
     return '', '', 0; -- ft_nomorefields
-end
-
-function ContentGetDetectString()
-    return nil; -- return detect string
 end
 
 function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)

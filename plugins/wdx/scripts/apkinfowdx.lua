@@ -7,22 +7,22 @@ local separator = "\n"
 local output = ''
 local filename = ''
 
-function ContentGetSupportedField(Index)
-    if (Index == 0) then
+function ContentGetSupportedField(FieldIndex)
+    if (FieldIndex == 0) then
         return 'Label', '', 8; -- FieldName,Units,ft_string
-    elseif (Index == 1) then
+    elseif (FieldIndex == 1) then
         return 'Label (' .. locale .. ')', '', 8;
-    elseif (Index == 2) then
+    elseif (FieldIndex == 2) then
         return 'Version', '', 8;
-    elseif (Index == 3) then
+    elseif (FieldIndex == 3) then
         return 'Install Location', '', 8;
-    elseif (Index == 4) then
+    elseif (FieldIndex == 4) then
         return 'Uses Permissions', '', 8;
-    elseif (Index == 5) then
+    elseif (FieldIndex == 5) then
         return 'Locales', '', 8;
-    elseif (Index == 6) then
+    elseif (FieldIndex == 6) then
         return 'Supports Screens', '', 8;
-    elseif (Index == 7) then
+    elseif (FieldIndex == 7) then
         return 'Native Code', '', 8;
     end
     return '', '', 0; -- ft_nomorefields

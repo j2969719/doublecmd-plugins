@@ -2,15 +2,15 @@
 
 local parts = 5
 
-local separator = {
-    {"([^%s]+)", "space"}, 
-    {"([^-]+)", "-"}, 
-    {nil, " - "}, 
-    -- or {nil, " - ", "%s+%-%s+"},
-    {"([^/]+)", "/"}, 
+local separator = { -- patern (function split), field name, patern (function gsplit)
+    {"([^%s]+)", "space",         nil},
+    {"([^-]+)",  "-",             nil},
+    {nil,        " - ",           nil}, -- uses field name as a pattern in gsplit
+    {nil,        " - (2)", "%s+%-%s+"},
+    {"([^/]+)",  "/",             nil},
 }
 
-function ContentGetSupportedField(Index)
+function ContentGetSupportedField(FieldIndex)
     local submi = '';
     for i = 1, #separator do
         if (i > 1) then
@@ -20,21 +20,13 @@ function ContentGetSupportedField(Index)
         submi = submi .. 'FilenameWithExt (' .. separator[i][2] .. ')|';
         submi = submi .. 'Path (' .. separator[i][2] .. ')';
     end
-    local num = Index + 1
+    local num = FieldIndex + 1
     if (parts >= num) then
         return 'left ' .. num, submi, 8;
     elseif (num > parts) and (parts >= num - parts) then
         return 'right ' .. num - parts, submi, 8;
     end
     return '', '', 0; -- ft_nomorefields
-end
-
-function ContentGetDefaultSortOrder(FieldIndex)
-    return 1; --or -1
-end
-
-function ContentGetDetectString()
-    return nil;
 end
 
 function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)

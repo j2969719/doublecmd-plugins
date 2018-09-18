@@ -28,9 +28,9 @@ local stripnewline = {  -- strip trailing linebreak from output
     {"Modified"},
 }
 
-function ContentGetSupportedField(Index)
-    if (fields[Index + 1] ~= nil ) then
-        return fields[Index + 1][1], "", fields[Index + 1][2];
+function ContentGetSupportedField(FieldIndex)
+    if (fields[FieldIndex + 1] ~= nil ) then
+        return fields[FieldIndex + 1][1], "", fields[FieldIndex + 1][2];
     end
     return '', '', 0; -- ft_nomorefields
 end

@@ -188,12 +188,12 @@ local fields = {
 local filename = ''
 local output = ''
 
-function ContentGetSupportedField(Index)
-    if (fields[Index + 1] ~= nil ) then
-        if (fields[Index + 1][3] ~= nil ) then
-            return fields[Index + 1][3], "default|first match", fields[Index + 1][2];
+function ContentGetSupportedField(FieldIndex)
+    if (fields[FieldIndex + 1] ~= nil ) then
+        if (fields[FieldIndex + 1][3] ~= nil ) then
+            return fields[FieldIndex + 1][3], "default|first match", fields[FieldIndex + 1][2];
         else
-            return fields[Index + 1][1], "default|first match", fields[Index + 1][2];
+            return fields[FieldIndex + 1][1], "default|first match", fields[FieldIndex + 1][2];
         end
     end
     return '', '', 0; -- ft_nomorefields

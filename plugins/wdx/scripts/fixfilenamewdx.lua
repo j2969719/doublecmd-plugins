@@ -7,20 +7,16 @@ local cmd = {
     
 }
 
-function ContentGetSupportedField(Index)
-    if (cmd[Index + 1] ~= nil ) then
-        if (cmd[Index + 1][3] ~= nil) then
-            return cmd[Index + 1][3], "Filename|Filename.Ext|Path|Path with Filename.Ext", 8;
+function ContentGetSupportedField(FieldIndex)
+    if (cmd[FieldIndex + 1] ~= nil ) then
+        if (cmd[FieldIndex + 1][3] ~= nil) then
+            return cmd[FieldIndex + 1][3], "Filename|Filename.Ext|Path|Path with Filename.Ext", 8;
         else
-            return cmd[Index + 1][1] .. " filename " .. cmd[Index + 1][2], "Filename|Filename.Ext|Path|Path with Filename.Ext", 8;
+            return cmd[FieldIndex + 1][1] .. " filename " .. cmd[FieldIndex + 1][2], "Filename|Filename.Ext|Path|Path with Filename.Ext", 8;
         end
     else
         return '', '', 0; -- ft_nomorefields
     end
-end
-
-function ContentGetDetectString()
-    return nil;
 end
 
 function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)

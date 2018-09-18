@@ -18,29 +18,25 @@ local fields = {
     {"test check",  "0x4",       8,           "raw",   values[2]}, 
 }
 
-function ContentGetSupportedField(Index)
-    if (fields[Index + 1] ~= nil) then
-        local fieldname = fields[Index + 1][1];
-        if (tonumber(fields[Index + 1][2]) > 0) and (showoffset == true) then
-            fieldname = fieldname .. " " .. fields[Index + 1][2];
-            if (fields[Index + 1][5] ~= nil) and (fields[Index + 1][4] ~= "raw") then
-                fieldname = fieldname .. ": " .. fields[Index + 1][5];
+function ContentGetSupportedField(FieldIndex)
+    if (fields[FieldIndex + 1] ~= nil) then
+        local fieldname = fields[FieldIndex + 1][1];
+        if (tonumber(fields[FieldIndex + 1][2]) > 0) and (showoffset == true) then
+            fieldname = fieldname .. " " .. fields[FieldIndex + 1][2];
+            if (fields[FieldIndex + 1][5] ~= nil) and (fields[FieldIndex + 1][4] ~= "raw") then
+                fieldname = fieldname .. ": " .. fields[FieldIndex + 1][5];
             end
         end
-        if (fields[Index + 1][4] ~= "hex") then
-            fieldname = fieldname .. " (" .. fields[Index + 1][4] .. ")";
+        if (fields[FieldIndex + 1][4] ~= "hex") then
+            fieldname = fieldname .. " (" .. fields[FieldIndex + 1][4] .. ")";
         end
-        if (fields[Index + 1][5] ~= nil) then
+        if (fields[FieldIndex + 1][5] ~= nil) then
             return fieldname, '', 6;
         else
-            return fieldname, getUnitsString(fields[Index + 1][3]), 8;
+            return fieldname, getUnitsString(fields[FieldIndex + 1][3]), 8;
         end
     end
     return '', '', 0; -- ft_nomorefields
-end
-
-function ContentGetDetectString()
-    return nil; -- return detect string
 end
 
 function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)

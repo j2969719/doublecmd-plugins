@@ -17,19 +17,19 @@ local fields = {    -- field name, command line parameters, pattern, return valu
     {"lang ru",                  "-L ru -g",  "(.+)\n$",       nil},
 }
 
-function ContentGetSupportedField(Index)
-    if (fields[Index + 1] ~= nil) then
-        if (fields[Index + 1][4] ~= nil) then
+function ContentGetSupportedField(FieldIndex)
+    if (fields[FieldIndex + 1] ~= nil) then
+        if (fields[FieldIndex + 1][4] ~= nil) then
             local units = '';
-            for i = 1 , #fields[Index + 1][4] do
+            for i = 1 , #fields[FieldIndex + 1][4] do
                 if (i > 1) then
                     units = units .. '|';
                 end
-                units = units .. fields[Index + 1][4][i];
+                units = units .. fields[FieldIndex + 1][4][i];
             end
-            return fields[Index + 1][1], units, 7;
+            return fields[FieldIndex + 1][1], units, 7;
         else
-            return fields[Index + 1][1], "", 8;
+            return fields[FieldIndex + 1][1], "", 8;
         end
     end
     return '', '', 0; -- ft_nomorefields

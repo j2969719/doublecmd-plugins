@@ -28,9 +28,9 @@ local fields = {
 local filename = ''
 local output = ''
 
-function ContentGetSupportedField(Index)
-    if (fields[Index + 1] ~= nil ) then
-        return fields[Index + 1][1], "", fields[Index + 1][2];
+function ContentGetSupportedField(FieldIndex)
+    if (fields[FieldIndex + 1] ~= nil ) then
+        return fields[FieldIndex + 1][1], '', fields[FieldIndex + 1][2];
     else
         return '', '', 0; -- ft_nomorefields
     end

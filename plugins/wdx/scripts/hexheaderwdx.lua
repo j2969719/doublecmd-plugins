@@ -8,27 +8,19 @@ local offset = {
     "0x20B0",
 }
 
-function ContentGetSupportedField(Index)
+function ContentGetSupportedField(FieldIndex)
     local submi = "1 byte";
     for i = 2, 16 do
         submi = submi .. '|' .. i .. " bytes";
     end
-    if (Index == 0) then
+    if (FieldIndex == 0) then
         return "header", submi, 8; -- FieldName,Units,ft_string
-    elseif (Index == 1) then
+    elseif (FieldIndex == 1) then
         return "all file", '', 9; -- FieldName,Units,ft_fulltext
-    elseif (offset[Index - 1] ~= nil) then
-        return "offset: " .. offset[Index - 1], submi, 8;
+    elseif (offset[FieldIndex - 1] ~= nil) then
+        return "offset: " .. offset[FieldIndex - 1], submi, 8;
     end
     return '', '', 0; -- ft_nomorefields
-end
-
-function ContentGetDefaultSortOrder(FieldIndex)
-    return 1; --or -1
-end
-
-function ContentGetDetectString()
-    return nil; -- return detect string
 end
 
 function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)

@@ -19,12 +19,12 @@ local fields = {
     {"raw",       8,                "(.+)\n$"}, 
 }
 
-function ContentGetSupportedField(Index)
-    if (fields[Index + 1] ~= nil ) then
-        if (fields[Index + 1][1] == "arch") then
-            return fields[Index + 1][1], "x86_64|i686|arm|armv6h|armv6h|aarch64|aarch64", fields[Index + 1][2];
+function ContentGetSupportedField(FieldIndex)
+    if (fields[FieldIndex + 1] ~= nil ) then
+        if (fields[FieldIndex + 1][1] == "arch") then
+            return fields[FieldIndex + 1][1], "x86_64|i686|arm|armv6h|armv6h|aarch64|aarch64", fields[FieldIndex + 1][2];
         else
-            return fields[Index + 1][1], "", fields[Index + 1][2];
+            return fields[FieldIndex + 1][1], "", fields[FieldIndex + 1][2];
         end
     end
     return '', '', 0; -- ft_nomorefields

@@ -5,18 +5,18 @@ local apparentSize = true
 local skipOtherFS = false
 local isSI = false
 
-function ContentGetSupportedField(Index)
-    if (Index == 0) then
+function ContentGetSupportedField(FieldIndex)
+    if (FieldIndex == 0) then
         return 'Bytes', '', 2; -- FieldName,Units,ft_string
-    elseif (Index == 1) then
+    elseif (FieldIndex == 1) then
         return 'K', '', 3;
-    elseif (Index == 2) then
+    elseif (FieldIndex == 2) then
         return 'M', '', 3;
-    elseif (Index == 3) then
+    elseif (FieldIndex == 3) then
         return 'G', '', 3;
-    elseif (Index == 4) then
+    elseif (FieldIndex == 4) then
         return 'T', '', 3;
-    elseif (Index == 5) then
+    elseif (FieldIndex == 5) then
         return 'Human readable', '', 8;
     end
     return '', '', 0; -- ft_nomorefields

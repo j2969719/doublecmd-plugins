@@ -99,10 +99,10 @@ local en_ru = {
 --    ["|"] = "/" -- useless
 } 
 
-function ContentGetSupportedField(Index)
-    if (Index == 0) then
+function ContentGetSupportedField(FieldIndex)
+    if (FieldIndex == 0) then
         return 'RU > EN', 'Filename.Ext|Filename|Ext', 8; -- FieldName,Units,ft_string
-    elseif (Index == 1) then
+    elseif (FieldIndex == 1) then
         return 'EN > RU', 'Filename.Ext|Filename|Ext', 8;
     end
     return '', '', 0; -- ft_nomorefields

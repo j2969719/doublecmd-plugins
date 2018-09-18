@@ -17,8 +17,8 @@ local pattern = {
     {"%.tar%.(.-)$", 8, "tar.(xyz)"}, 
 }
 
-function ContentGetSupportedField(Index)
-    if (Index == 0) then
+function ContentGetSupportedField(FieldIndex)
+    if (FieldIndex == 0) then
         local units = '';
         for i = 1 , #groups do
             if (i > 1) then
@@ -27,11 +27,11 @@ function ContentGetSupportedField(Index)
             units = units .. groups[i][1];
         end
         return 'Group', units, 7; -- FieldName,Units,ft_multiplechoice
-    elseif (pattern[Index] ~= nil ) then
-        if (pattern[Index][3] ~= nil) then
-            return pattern[Index][3], "Filename|Filename.Ext|Path|Path with Filename.Ext", pattern[Index][2];
+    elseif (pattern[FieldIndex] ~= nil ) then
+        if (pattern[FieldIndex][3] ~= nil) then
+            return pattern[FieldIndex][3], "Filename|Filename.Ext|Path|Path with Filename.Ext", pattern[FieldIndex][2];
         else
-            return "Pattern: " .. pattern[Index][1], "Filename|Filename.Ext|Path|Path with Filename.Ext", pattern[Index][2];
+            return "Pattern: " .. pattern[FieldIndex][1], "Filename|Filename.Ext|Path|Path with Filename.Ext", pattern[FieldIndex][2];
         end
     else
         return '', '', 0; -- ft_nomorefields

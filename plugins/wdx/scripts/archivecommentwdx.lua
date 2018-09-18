@@ -5,8 +5,8 @@ local settings = { -- command, additional parameters, pattern, ext, ...
 } 
 local notfoundstr = "not found"
 
-function ContentGetSupportedField(Index)
-    if (Index == 0) then
+function ContentGetSupportedField(FieldIndex)
+    if (FieldIndex == 0) then
         return "comment", 'default|show "' .. notfoundstr .. '"', 8; -- FieldName,Units,ft_string
     end
     return '', '', 0; -- ft_nomorefields

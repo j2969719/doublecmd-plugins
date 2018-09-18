@@ -28,9 +28,9 @@ local fields = {
     {"Encrypted",    6, ":%sCan%snot%sopen%s(encrypted)%sarchive", true},
 }
 
-function ContentGetSupportedField(Index)
-    if (fields[Index + 1] ~= nil ) then
-        return fields[Index + 1][1], "", fields[Index + 1][2];
+function ContentGetSupportedField(FieldIndex)
+    if (fields[FieldIndex + 1] ~= nil ) then
+        return fields[FieldIndex + 1][1], "", fields[FieldIndex + 1][2];
     end
     return '', '', 0; -- ft_nomorefields
 end

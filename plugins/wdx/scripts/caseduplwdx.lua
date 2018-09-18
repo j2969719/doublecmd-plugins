@@ -3,8 +3,8 @@
 local dupl_found = "Yes"
 local dupl_notfound = "-"
 
-function ContentGetSupportedField(Index)
-    if (Index == 0) then
+function ContentGetSupportedField(FieldIndex)
+    if (FieldIndex == 0) then
         return "case duplicates", dupl_found .. '|' .. dupl_notfound, 7;
     end
     return '', '', 0; -- ft_nomorefields

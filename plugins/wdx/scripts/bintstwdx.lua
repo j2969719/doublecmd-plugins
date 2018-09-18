@@ -10,8 +10,8 @@ local units = {
     "UTF-8 (byte order mark)", 
 }
 
-function ContentGetSupportedField(Index)
-    if (Index == 0) then
+function ContentGetSupportedField(FieldIndex)
+    if (FieldIndex == 0) then
         local unitstr = '';
         for i = 1 , #units do
             if (i > 1) then

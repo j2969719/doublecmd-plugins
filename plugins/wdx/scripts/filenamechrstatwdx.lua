@@ -18,20 +18,20 @@ local pattern = { -- pattern, discription
     {"%s%-%s",              nil}, 
 }
 
-function ContentGetSupportedField(Index)
-    if (Index > -1) and (Index < #pattern) then
+function ContentGetSupportedField(FieldIndex)
+    if (FieldIndex > -1) and (FieldIndex < #pattern) then
         local fieldname = "Chars Stat (";
-        if (pattern[Index+1][2] ~= nil) then
-            fieldname = fieldname .. pattern[Index+1][2] .. ')';
+        if (pattern[FieldIndex+1][2] ~= nil) then
+            fieldname = fieldname .. pattern[FieldIndex+1][2] .. ')';
         else
-            fieldname = fieldname .. 'pattern "' .. pattern[Index+1][1] .. '")';
+            fieldname = fieldname .. 'pattern "' .. pattern[FieldIndex+1][1] .. '")';
         end
         return fieldname, UnitsStr, 1;
-    elseif (Index == #pattern) then
+    elseif (FieldIndex == #pattern) then
         return "Lower Case Check", UnitsStr, 6;
-    elseif (Index == #pattern+1) then
+    elseif (FieldIndex == #pattern+1) then
         return "Upper Case Check", UnitsStr, 6;
-    elseif (Index == #pattern+2) then
+    elseif (FieldIndex == #pattern+2) then
         return "Case Duplicates Check", '', 6;
     end
     return '', '', 0; -- ft_nomorefields

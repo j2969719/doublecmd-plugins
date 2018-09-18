@@ -1,13 +1,13 @@
 -- ... 
 
 local fields = {
-    {"first name", 8, "first%-name"},
+    {"first name",  8,  "first%-name"},
     {"middle name", 8, "middle%-name"},
-    {"last name", 8, "last%-name"},
-    {"book title", 8, "book%-title"},
-    {"publisher", 8, "publisher"},
-    {"city", 8, "city"},
-    {"year", 2, "year"}
+    {"last name",   8,   "last%-name"},
+    {"book title",  8,  "book%-title"},
+    {"publisher",   8,    "publisher"},
+    {"city",        8,         "city"},
+    {"year",        2,         "year"}
 }
 
 local limit = 256
@@ -289,15 +289,11 @@ for w, u in win2utf_list:gmatch'0x(%x%x)%s+0x(%x+)' do
 end
 
 
-function ContentGetSupportedField(Index)
-    if (fields[Index + 1] ~= nil ) then
-        return fields[Index + 1][1], "", fields[Index + 1][2];
+function ContentGetSupportedField(FieldIndex)
+    if (fields[FieldIndex + 1] ~= nil) then
+        return fields[FieldIndex + 1][1], "", fields[FieldIndex + 1][2];
     end
     return '', '', 0; -- ft_nomorefields
-end
-
-function ContentGetDefaultSortOrder(FieldIndex)
-    return 1; --or -1
 end
 
 function ContentGetDetectString()

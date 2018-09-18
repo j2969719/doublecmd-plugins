@@ -4,22 +4,14 @@ local charset = {}
 local filename = ""
 local count = 10
 
-function ContentGetSupportedField(Index)
-    if (Index == 0) then
+function ContentGetSupportedField(FieldIndex)
+    if (FieldIndex == 0) then
         return "1 character", "", 8;
         
-    elseif (Index < count) then
-        return Index + 1 .. " characters", "", 8;
+    elseif (FieldIndex < count) then
+        return FieldIndex + 1 .. " characters", "", 8;
     end
     return '', '', 0; -- ft_nomorefields
-end
-
-function ContentGetDefaultSortOrder(FieldIndex)
-    return 1; --or -1
-end
-
-function ContentGetDetectString()
-    return ''; -- return detect string
 end
 
 function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)

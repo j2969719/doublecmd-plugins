@@ -4,8 +4,8 @@
 local scriptpath = "/usr/bin/fileinfo.sh" -- path to executable script
 local skipsysfiles = true  -- skip character, block or fifo files
 
-function ContentGetSupportedField(Index)
-    if (Index == 0) then
+function ContentGetSupportedField(FieldIndex)
+    if (FieldIndex == 0) then
         return 'Text', '', 9; -- FieldName,Units,ft_fulltext
     end
     return '', '', 0; -- ft_nomorefields
