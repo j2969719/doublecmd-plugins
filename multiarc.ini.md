@@ -384,6 +384,16 @@ Extract=zstd {%S} -d %AQ -o %FQ
 Add=zstd {%S} -f %FQ -o %AQ
 ```
   [script cutext](https://github.com/j2969719/doublecmd-plugins/blob/master/scripts/cutext)
+```
+[TZST]
+Archiver=/usr/bin/tar
+Description=Compressed tar file (tar.zst)
+Extension=tzst
+Format0=aaaaaaaaaa zzzzzzz yyyy-tt-dd hh:mm nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn
+List=%P -tv -I zstd -f %AQA
+Extract=%P -x -I zstd {%S} -f %AQA -T %LFQA
+Add=%P -c -I zstd {%S} -f %AQA --no-recursion -T %LQA %E512
+```
 
 <a name="lz4"><h2>LZ4</h2></a>
 ```
