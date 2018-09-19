@@ -4,12 +4,13 @@ local cmd = "exiftool"
 
 local ft_string = 8
 local ft_number = 2
+local ft_float  = 3
 
 local fields = {  -- pattern (also used as a field name if it is not specified), field type, field name
     {"Machine Type",                                                ft_string,                                nil}, 
     {"Time Stamp",                                                  ft_string,                                nil}, 
     {"PE Type",                                                     ft_string,                                nil}, 
-    {"OS Version",                                                  ft_string,                                nil}, 
+    {"OS Version",                                                  ft_float,                                 nil}, 
     {"Subsystem",                                                   ft_string,                                nil}, 
     {"Subsystem Version",                                           ft_string,                                nil}, 
     {"File Version Number",                                         ft_string,                                nil}, 
@@ -215,49 +216,59 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
         filename = FileName;
     end
     if (UnitIndex == 0) then
-        return getval(fields[FieldIndex + 1][1]);
+        return getval(fields[FieldIndex + 1][1], fields[FieldIndex + 1][2]);
     elseif (UnitIndex == 1) then
-        if (fields[FieldIndex + 1][3] ~= nil ) then
+        if (fields[FieldIndex + 1][3] ~= nil) then
             local hname = getfieldname(FieldIndex + 1);
             local i = 1;
             while (fields[i] ~= nil) do
                 if samename(i, hname, fields[FieldIndex + 1][2]) then
-                    if (getval(fields[i][1])) then
-                        return getval(fields[i][1]);
+                    local value = getval(fields[i][1], fields[i][2]);
+                    if (value ~= nil) then
+                        return value;
                     end
                 end
                 i = i + 1;
             end
         else
-            return getval(fields[FieldIndex + 1][1]);
+            return getval(fields[FieldIndex + 1][1], fields[FieldIndex + 1][2]);
         end
-    end    
+    end
     return nil; -- invalid
 end
 
-function getval(str)
+function getval(str, fieldtype)
     if (output ~= nil) then
-        return output:match("\n" .. str .. "%s*:%s([^\n]+)");
-    end
-    return nil;
-end
-
-function getfieldname(num)
-    if (fields[num][3] ~= nil) then
-        return fields[num][3];
-    else
-        return fields[num][1];
-    end
-    return nil;
-end
-
-function samename(i, str, t)
-    if (fields[i][2] == t) then
-        if (fields[i][1] == str) and (fields[i][3] == nil) then
-            return true;
-        elseif (fields[i][3] == str) then
-            return true;
+        local result = output:match("\n" .. str .. "%s*:%s([^\n]+)");
+        if (result == nil) then
+            return nil;
         end
+        if (fieldtype == ft_float) then
+            result = result:gsub(",", "%.");
+            result = result:gsub("[^%d%.]", '');
+            return tonumber(result);
+        elseif (fieldtype == ft_number) then
+            result = result:match("%d+");
+            return tonumber(result);
+        elseif (fieldtype == ft_string) then
+            return result;
+        end
+    end
+    return nil;
+end
+
+function getfieldname(index)
+    if (fields[index][3] ~= nil) then
+        return fields[index][3];
+    else
+        return fields[index][1];
+    end
+    return nil;
+end
+
+function samename(index, fieldname, fieldtype)
+    if (fields[index][2] == fieldtype) and (getfieldname(index) == fieldname) then
+        return true;
     end
     return false;
 end
