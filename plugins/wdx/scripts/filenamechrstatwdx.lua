@@ -5,7 +5,7 @@ local utf8 = require("lua-utf8")
 local DelimPattern = SysUtils.PathDelim;
 local UnitsStr = "Filename|Filename.Ext|Ext|Path|Path with Filename.Ext";
 
-local pattern = { -- pattern, discription
+local pattern = { -- pattern, description
     {".",           "all chars"}, 
     {"%w", "alphanumeric chars"}, 
     {"%s",             "spaces"}, 
