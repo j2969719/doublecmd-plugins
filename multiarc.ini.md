@@ -499,7 +499,7 @@ Add=lzop {%S} -f %FQ -o%AQ
 
   [script cutext](https://github.com/j2969719/doublecmd-plugins/blob/master/scripts/cutext)
 
-<a name="Base64"><h2>b64</h2></a>
+<a name="b64"><h2>Base64</h2></a>
 ```
 [Base64]
 Archiver=%COMMANDER_PATH%/utils/base64uue
@@ -514,7 +514,7 @@ Add=%P -eb %AQ %FQ
 
   [script base64uue](https://github.com/j2969719/doublecmd-plugins/blob/master/utils/base64uue)
 
-<a name="UUEncode"><h2>uue</h2></a>
+<a name="uue"><h2>UUEncode</h2></a>
 ```
 [UUEncode]
 Archiver=%COMMANDER_PATH%/utils/base64uue
