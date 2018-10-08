@@ -1,7 +1,7 @@
 Multiarc
 ========
 
-[UnAce](#unace), [RAR + 7Zip](#rar), [FreeArc](#freearc), [CHM](#chm), [7Zip self-extracting archive](#7zsfx), [Microsoft Windows Installer](#msi), [Inno Setup installer](#innosetup), [Nullsoft Scriptable Install System](#nsis), [Microsoft Cabinet](#cab), [InstallShield](#unshield), [MS-DOS installation compression](#szdd), [ZPAQ](#zpaq), [pakextract](#pakextract), [grpar](#grpar), [The Unarchiver](#unar), [UPX](#upx), [ZSTD](#zstd), [LZ4](#lz4), [mcm](#mcm), [BALZ](#balz), [QUAD](#quad), [PAQ8](#paq8o9), [lrzip](#lrzip), [lzop](#lzop)
+[UnAce](#unace), [RAR + 7Zip](#rar), [FreeArc](#freearc), [CHM](#chm), [7Zip self-extracting archive](#7zsfx), [Microsoft Windows Installer](#msi), [Inno Setup installer](#innosetup), [Nullsoft Scriptable Install System](#nsis), [Microsoft Cabinet](#cab), [InstallShield](#unshield), [MS-DOS installation compression](#szdd), [ZPAQ](#zpaq), [pakextract](#pakextract), [grpar](#grpar), [The Unarchiver](#unar), [UPX](#upx), [ZSTD](#zstd), [LZ4](#lz4), [mcm](#mcm), [BALZ](#balz), [QUAD](#quad), [PAQ8](#paq8o9), [lrzip](#lrzip), [lzop](#lzop), [Base64](#b64), [UUEncode](#uue)
 
 <a name="unace"><h2>UNACE</h2></a>
 ```
@@ -498,3 +498,33 @@ Add=lzop {%S} -f %FQ -o%AQ
   [link](http://www.lzop.org/)
 
   [script cutext](https://github.com/j2969719/doublecmd-plugins/blob/master/scripts/cutext)
+
+<a name="Base64"><h2>b64</h2></a>
+```
+[Base64]
+Archiver=%COMMANDER_PATH%/utils/base64uue
+Description=Base64
+Extension=b64
+Format0=yyyy tt dd hh mm ss aaaaa zzzzzzzzzzzz n+
+List=%P -l %AQ
+Extract=%P -d %AQ %FQ
+Add=%P -eb %AQ %FQ
+```
+  [link](https://doublecmd.sourceforge.io/forum/viewtopic.php?p=24877#p24877)
+
+  [script base64uue](https://github.com/j2969719/doublecmd-plugins/blob/master/utils/base64uue)
+
+<a name="UUEncode"><h2>uue</h2></a>
+```
+[UUEncode]
+Archiver=%COMMANDER_PATH%/utils/base64uue
+Description=UUEncode
+Extension=uue
+Format0=yyyy tt dd hh mm ss aaaaa zzzzzzzzzzzz n+
+List=%P -l %AQ
+Extract=%P -d %AQ %FQ
+Add=%P -eu %AQ %FQ
+```
+  [link](https://doublecmd.sourceforge.io/forum/viewtopic.php?p=24877#p24877)
+
+  [script base64uue](https://github.com/j2969719/doublecmd-plugins/blob/master/utils/base64uue)
