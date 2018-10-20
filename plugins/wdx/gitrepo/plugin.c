@@ -1,10 +1,10 @@
 #include <git2.h>
 #include <unistd.h>
+#include <linux/limits.h>
 #include <string.h>
 #include "wdxplugin.h"
 
 #define _detectstring "EXT=\"*\""
-#define PATH_LENGTH 4096
 
 typedef struct _field
 {
@@ -35,6 +35,7 @@ FIELD fields[] =
 	{"status: unreadable",			ft_boolean,			""},
 	{"status: ignored",			ft_boolean,			""},
 	{"status: conflicted",			ft_boolean,			""},
+	{"root workdir",			ft_boolean,			""},
 };
 
 char* strlcpy(char* p, const char* p2, int maxlen)
@@ -77,7 +78,7 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 	git_strarray remote;
 	git_oid upstream;
 	const git_oid *local;
-	char remoteName[PATH_LENGTH];
+	char path_temp[PATH_MAX];
 	const char *strval = NULL;
 
 	git_libgit2_init();
@@ -192,14 +193,14 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 			if (remote.count)
 			{
 				local = git_reference_target(head);
-				strcpy(remoteName, "refs/remotes/");
+				strcpy(path_temp, "refs/remotes/");
 
 				if (remote.strings[0])
-					strcat(remoteName, remote.strings[0]);
+					strcat(path_temp, remote.strings[0]);
 
-				strcat(remoteName, "/");
-				strcat(remoteName, strval);
-				ret = git_reference_name_to_id(&upstream, repo, remoteName);
+				strcat(path_temp, "/");
+				strcat(path_temp, strval);
+				ret = git_reference_name_to_id(&upstream, repo, path_temp);
 
 				if (local && !ret)
 					ret = git_graph_ahead_behind(&ahead, &behind, repo, local, &upstream);
@@ -229,14 +230,14 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 			if (remote.count)
 			{
 				local = git_reference_target(head);
-				strcpy(remoteName, "refs/remotes/");
+				strcpy(path_temp, "refs/remotes/");
 
 				if (remote.strings[0])
-					strcat(remoteName, remote.strings[0]);
+					strcat(path_temp, remote.strings[0]);
 
-				strcat(remoteName, "/");
-				strcat(remoteName, strval);
-				ret = git_reference_name_to_id(&upstream, repo, remoteName);
+				strcat(path_temp, "/");
+				strcat(path_temp, strval);
+				ret = git_reference_name_to_id(&upstream, repo, path_temp);
 
 				if (local && !ret)
 					ret = git_graph_ahead_behind(&ahead, &behind, repo, local, &upstream);
@@ -259,7 +260,7 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 	case 10:
 		strval = git_repository_workdir(repo);
 
-		if (git_status_file(&status_flags, repo, FileName + strlen(strval)) == 0)
+		if (strval && git_status_file(&status_flags, repo, FileName + strlen(strval)) == 0)
 		{
 			if (status_flags & GIT_STATUS_WT_NEW)
 				*(int*)FieldValue = 1;
@@ -278,7 +279,7 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 	case 11:
 		strval = git_repository_workdir(repo);
 
-		if (git_status_file(&status_flags, repo, FileName + strlen(strval)) == 0)
+		if (strval && git_status_file(&status_flags, repo, FileName + strlen(strval)) == 0)
 		{
 			if (status_flags & GIT_STATUS_WT_MODIFIED)
 				*(int*)FieldValue = 1;
@@ -297,7 +298,7 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 	case 12:
 		strval = git_repository_workdir(repo);
 
-		if (git_status_file(&status_flags, repo, FileName + strlen(strval)) == 0)
+		if (strval && git_status_file(&status_flags, repo, FileName + strlen(strval)) == 0)
 		{
 			if (status_flags & GIT_STATUS_WT_DELETED)
 				*(int*)FieldValue = 1;
@@ -316,7 +317,7 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 	case 13:
 		strval = git_repository_workdir(repo);
 
-		if (git_status_file(&status_flags, repo, FileName + strlen(strval)) == 0)
+		if (strval && git_status_file(&status_flags, repo, FileName + strlen(strval)) == 0)
 		{
 			if (status_flags & GIT_STATUS_WT_TYPECHANGE)
 				*(int*)FieldValue = 1;
@@ -335,7 +336,7 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 	case 14:
 		strval = git_repository_workdir(repo);
 
-		if (git_status_file(&status_flags, repo, FileName + strlen(strval)) == 0)
+		if (strval && git_status_file(&status_flags, repo, FileName + strlen(strval)) == 0)
 		{
 			if (status_flags & GIT_STATUS_WT_RENAMED)
 				*(int*)FieldValue = 1;
@@ -354,7 +355,7 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 	case 15:
 		strval = git_repository_workdir(repo);
 
-		if (git_status_file(&status_flags, repo, FileName + strlen(strval)) == 0)
+		if (strval && git_status_file(&status_flags, repo, FileName + strlen(strval)) == 0)
 		{
 			if (status_flags & GIT_STATUS_WT_UNREADABLE)
 				*(int*)FieldValue = 1;
@@ -373,7 +374,7 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 	case 16:
 		strval = git_repository_workdir(repo);
 
-		if (git_status_file(&status_flags, repo, FileName + strlen(strval)) == 0)
+		if (strval && git_status_file(&status_flags, repo, FileName + strlen(strval)) == 0)
 		{
 			if (status_flags & GIT_STATUS_IGNORED)
 				*(int*)FieldValue = 1;
@@ -392,9 +393,30 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 	case 17:
 		strval = git_repository_workdir(repo);
 
-		if (git_status_file(&status_flags, repo, FileName + strlen(strval)) == 0)
+		if (strval && git_status_file(&status_flags, repo, FileName + strlen(strval)) == 0)
 		{
 			if (status_flags & GIT_STATUS_CONFLICTED)
+				*(int*)FieldValue = 1;
+			else
+				*(int*)FieldValue = 0;
+		}
+		else
+		{
+			git_repository_free(repo);
+			git_libgit2_shutdown();
+			return ft_fieldempty;
+		}
+
+		break;
+
+	case 18:
+		strval = git_repository_workdir(repo);
+		strcpy(path_temp, FileName);
+		strcat(path_temp, "/");
+
+		if (strval)
+		{
+			if (strcmp(path_temp, strval) == 0)
 				*(int*)FieldValue = 1;
 			else
 				*(int*)FieldValue = 0;
