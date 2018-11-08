@@ -26,13 +26,14 @@ local WhitelistContainPatterns = false;
 local Params = {...};
 local StartPath = Params[1];
 local FileList  = Params[2];
-local Counter = 0;
+local SelectedDirs = {};
 local Result = nil;
 
 
 function CDAndCopy(Directory)
     DC.ExecuteCommand("cm_FocusSwap");
-    DC.ExecuteCommand("cm_ChangeDir", Directory);
+    local Target = Directory:gsub(' ', '\\ ');
+    DC.ExecuteCommand("cm_ChangeDir", Target);
     DC.ExecuteCommand("cm_FocusSwap");
     DC.ExecuteCommand("cm_SaveSelection");
     DC.ExecuteCommand("cm_Copy", "confirmation=" .. ShowConfirmation, "queueid=" .. QueueID);
@@ -59,15 +60,15 @@ end
 if (StartPath ~= nil) then
     
     if (FileList ~= nil) and (CopyToAllSubdirs == false) then
-        for Target in io.lines(FileList) do 
-            if SysUtils.DirectoryExists(Target) then
-                CDAndCopy(Target);
-                Counter = Counter + 1;
+        for Target in io.lines(FileList) do
+            local TargetName = string.match(Target, "[" .. SysUtils.PathDelim .. "]([^" .. SysUtils.PathDelim .. "]+)$");
+            if SysUtils.DirectoryExists(Target) and (CheckName(TargetName) == true) then
+                table.insert(SelectedDirs, Target);
             end
         end
     end
-      
-    if (Counter == 0) or (CopyToAllSubdirs == true) then
+    
+    if (#SelectedDirs <= 1) or (CopyToAllSubdirs == true) then
         local Handle, FindData = SysUtils.FindFirst(StartPath .. SysUtils.PathDelim .. "*");
         if (Handle ~= nil) then
             repeat
@@ -77,6 +78,10 @@ if (StartPath ~= nil) then
                 Result, FindData = SysUtils.FindNext(Handle);
             until (Result == nil)
             SysUtils.FindClose(Handle);
+        end
+    else
+        for i = 1, #SelectedDirs do
+            CDAndCopy(SelectedDirs[i]);
         end
     end
     

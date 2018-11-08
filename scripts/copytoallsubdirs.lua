@@ -28,7 +28,8 @@ local FileList  = {};
 
 function CDAndCopy(Directory)
     DC.ExecuteCommand("cm_FocusSwap");
-    DC.ExecuteCommand("cm_ChangeDir", Directory);
+    local Target = Directory:gsub(' ', '\\ ');
+    DC.ExecuteCommand("cm_ChangeDir", Target);
     DC.ExecuteCommand("cm_FocusSwap");
     DC.ExecuteCommand("cm_SaveSelection");
     DC.ExecuteCommand("cm_Copy", "confirmation=" .. ShowConfirmation, "queueid=" .. QueueID);
