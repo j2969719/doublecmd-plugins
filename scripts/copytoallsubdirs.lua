@@ -17,6 +17,8 @@ DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
 local ShowConfirmation = "no";
 local QueueID = "1";
 local Blacklist = {".", ".."};
+local Whitelist = {};
+local WhitelistContainPatterns = false;
 
 
 local Params = {...};
@@ -33,7 +35,19 @@ function CDAndCopy(Directory)
     DC.ExecuteCommand("cm_RestoreSelection");
 end
 
-function CheckName(Name)
+function CheckWhitelist(Name)
+    if (#Whitelist ~= 0) then
+        for i = 1, #Whitelist do
+            if (Name == Whitelist[i]) or (WhitelistContainPatterns == true and string.find(Name, Whitelist[i])) then
+                return true;
+            end
+        end
+        return false;
+    end
+    return true;
+end
+
+function CheckBlacklist(Name)
     for i = 1, #Blacklist do
         if (Name == Blacklist[i]) then
             return false;
@@ -47,9 +61,11 @@ function FindSubdirs(Path)
     local Handle, FindData = SysUtils.FindFirst(Path .. SysUtils.PathDelim .. "*");
     if (Handle ~= nil) then
         repeat
-            if (math.floor(FindData.Attr / 0x00000010) % 2 ~= 0) and (CheckName(FindData.Name) == true) then
+            if (math.floor(FindData.Attr / 0x00000010) % 2 ~= 0) and (CheckBlacklist(FindData.Name) == true) then
                 local Subdir = Path .. SysUtils.PathDelim .. FindData.Name;
-                table.insert(FileList, Subdir);
+                if (CheckWhitelist(FindData.Name) == true) then
+                    table.insert(FileList, Subdir);
+                end
                 FindSubdirs(Subdir);
             end
             Result, FindData = SysUtils.FindNext(Handle);
@@ -59,15 +75,15 @@ function FindSubdirs(Path)
 end
 
 if (StartPath ~= nil) then
-
+    
     FindSubdirs(StartPath);
-
+    
     for i = 1, #FileList do
         if SysUtils.DirectoryExists(FileList[i]) then
             CDAndCopy(FileList[i]);
         end
     end
-
+    
     DC.ExecuteCommand("cm_FocusSwap");
     DC.ExecuteCommand("cm_ChangeDir", StartPath);
     DC.ExecuteCommand("cm_FocusSwap");

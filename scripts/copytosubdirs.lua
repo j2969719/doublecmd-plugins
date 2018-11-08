@@ -19,6 +19,8 @@ local ShowConfirmation = "no";
 local QueueID = "1";
 local CopyToAllSubdirs = false;
 local Blacklist = {".", ".."};
+local Whitelist = {};
+local WhitelistContainPatterns = false;
 
 
 local Params = {...};
@@ -38,6 +40,14 @@ function CDAndCopy(Directory)
 end
 
 function CheckName(Name)
+    if (#Whitelist ~= 0) then
+        for i = 1, #Whitelist do
+            if (Name == Whitelist[i]) or (WhitelistContainPatterns == true and string.find(Name, Whitelist[i])) then
+                return true;
+            end
+        end
+        return false;
+    end
     for i = 1, #Blacklist do
         if (Name == Blacklist[i]) then
             return false;
