@@ -24,6 +24,9 @@ local WhitelistContainPatterns = false;
 local Params = {...};
 local StartPath = Params[1];
 local FileList  = {};
+local MessageText = "Copy to all " .. StartPath .. " subdirs?";
+local MessageCaption = "copy to all subdirs (recursively)";
+local Flags = 0x0004 + 0x0020;
 
 
 function CDAndCopy(Directory)
@@ -75,7 +78,9 @@ function FindSubdirs(Path)
     end
 end
 
-if (StartPath ~= nil) then
+local MBReturn = Dialogs.MessageBox(MessageText, MessageCaption, Flags);
+
+if (StartPath ~= nil) and (MBReturn == 0x0006) then
     
     FindSubdirs(StartPath);
     

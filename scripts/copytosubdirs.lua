@@ -28,6 +28,9 @@ local StartPath = Params[1];
 local FileList  = Params[2];
 local SelectedDirs = {};
 local Result = nil;
+local MessageText = "Copy to " .. StartPath .. " subdirs?";
+local MessageCaption = "copy to subdirs";
+local Flags = 0x0004 + 0x0020;
 
 
 function CDAndCopy(Directory)
@@ -57,7 +60,9 @@ function CheckName(Name)
     return true;
 end
 
-if (StartPath ~= nil) then
+local MBReturn = Dialogs.MessageBox(MessageText, MessageCaption, Flags);
+
+if (StartPath ~= nil) and (MBReturn == 0x0006) then
     
     if (FileList ~= nil) and (CopyToAllSubdirs == false) then
         for Target in io.lines(FileList) do
