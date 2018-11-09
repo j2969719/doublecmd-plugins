@@ -1,4 +1,5 @@
 --[[
+
 DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
 <doublecmd>
   <Command>
@@ -6,11 +7,12 @@ DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
     <Icon>cm_symlink</Icon>
     <Hint>go to link path</Hint>
     <Command>cm_ExecuteScript</Command>
-    <Param>/path/to/gotolinkpath.lua</Param>
+    <Param>$COMMANDER_PATH/scripts/lua/gotolinkpath.lua</Param>
     <Param>"%p1"</Param>
     <Param>onlydir</Param>
   </Command>
 </doublecmd>
+
 ]]
 
 local args = {...};
@@ -28,5 +30,6 @@ if (args[1] ~= nil) then
 end
 
 if (path ~= nil) then
+    path = path:gsub(' ', '\\ ');
     DC.ExecuteCommand("cm_ChangeDir", path);
 end

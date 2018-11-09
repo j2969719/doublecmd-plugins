@@ -7,7 +7,7 @@ DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
     <Icon>cm_copy</Icon>
     <Hint>copy to all subdirs (recursively)</Hint>
     <Command>cm_ExecuteScript</Command>
-    <Param>/path/to/copytoallsubdirs.lua</Param>
+    <Param>$COMMANDER_PATH/scripts/lua/copytoallsubdirs.lua</Param>
     <Param>%Dt</Param>
   </Command>
 </doublecmd>
