@@ -641,3 +641,100 @@ DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
   </Menu>
 </doublecmd>
 ```
+# scripts
+```
+DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
+<doublecmd>
+  <Command>
+    <ID>{767A8509-B6FD-46A4-9856-7DD0FDEC8633}</ID>
+    <Icon>cm_copy</Icon>
+    <Hint>copy to all subdirs (recursively)</Hint>
+    <Command>cm_ExecuteScript</Command>
+    <Param>$COMMANDER_PATH/scripts/lua/copytoallsubdirs.lua</Param>
+    <Param>%Dt</Param>
+  </Command>
+</doublecmd>
+```
+[script copytoallsubdirs.lua](https://github.com/j2969719/doublecmd-plugins/blob/master/scripts/lua/copytoallsubdirs.lua)
+
+
+```
+DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
+<doublecmd>
+  <Command>
+    <ID>{767A8509-B6FD-46A4-9856-7DD0FDEC8633}</ID>
+    <Icon>cm_copy</Icon>
+    <Hint>copy to subdirs</Hint>
+    <Command>cm_ExecuteScript</Command>
+    <Param>$COMMANDER_PATH/scripts/lua/copytosubdirs.lua</Param>
+    <Param>%Dt</Param>
+    <Param>%Lt</Param>
+  </Command>
+</doublecmd>
+```
+[script copytosubdirs.lua](https://github.com/j2969719/doublecmd-plugins/blob/master/scripts/lua/copytosubdirs.lua)
+
+
+```
+DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
+<doublecmd>
+  <Command>
+    <ID>{FE3433C9-3980-441C-8D08-CE0FEC98F740}</ID>
+    <Icon>cm_symlink</Icon>
+    <Hint>Edit Symlink</Hint>
+    <Command>cm_ExecuteScript</Command>
+    <Param>$COMMANDER_PATH/scripts/lua/editsymlink.lua</Param>
+    <Param>"%p1"</Param>
+  </Command>
+</doublecmd>
+```
+[script editsymlink.lua](https://github.com/j2969719/doublecmd-plugins/blob/master/scripts/lua/editsymlink.lua)
+
+
+```
+DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
+<doublecmd>
+  <Command>
+    <ID>{4651FC8B-CC8A-4D8B-8741-DB29D812B7E3}</ID>
+    <Icon>cm_symlink</Icon>
+    <Hint>go to link path</Hint>
+    <Command>cm_ExecuteScript</Command>
+    <Param>$COMMANDER_PATH/scripts/lua/gotolinkpath.lua</Param>
+    <Param>"%p1"</Param>
+    <Param>onlydir</Param>
+  </Command>
+</doublecmd>
+```
+[script gotolinkpath.lua](https://github.com/j2969719/doublecmd-plugins/blob/master/scripts/lua/gotolinkpath.lua)
+
+
+```
+DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
+<doublecmd>
+  <Command>
+    <ID>{58430566-6032-4BCC-986E-FE206ADA40FF}</ID>
+    <Icon>cm_markmarkall</Icon>
+    <Hint>MarkUnmark</Hint>
+    <Command>cm_ExecuteScript</Command>
+    <Param>%COMMANDER_PATH%/scripts/lua/markunmark.lua</Param>
+    <Param>%ps2</Param>
+  </Command>
+</doublecmd>
+```
+[script markunmark.lua](https://github.com/j2969719/doublecmd-plugins/blob/master/scripts/lua/markunmark.lua)
+
+
+```
+DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
+<doublecmd>
+  <Command>
+    <ID>{5CF4F955-29F7-41B1-AD5C-6B991A099DFC}</ID>
+    <Icon>cm_newtab</Icon>
+    <Hint>Move tab to opposite side</Hint>
+    <Command>cm_ExecuteScript</Command>
+    <Param>$COMMANDER_PATH/scripts/lua/quasimovetab.lua</Param>
+    <Param>%D</Param>
+  </Command>
+</doublecmd>
+```
+[script quasimovetab.lua](https://github.com/j2969719/doublecmd-plugins/blob/master/scripts/lua/quasimovetab.lua)
