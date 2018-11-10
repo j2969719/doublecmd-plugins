@@ -16,16 +16,17 @@ DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
 
 local args = {...};
 local path, ret, newpath, msg;
+local params = "-n";
 
 local function getOutput(command)
     local handle = io.popen(command, 'r');
     local output = handle:read("*a");
     handle:close();
-    return output:sub(1, -2);
+    return output;
 end
 
 if (args[1] ~= nil) then
-    path = getOutput('readlink -n "' .. args[1] .. '"');
+    path = getOutput('readlink ' .. params .. ' "' .. args[1] .. '"');
 end
 
 if (path ~= nil) and (path ~= "") then
