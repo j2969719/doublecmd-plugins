@@ -642,22 +642,8 @@ DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
 </doublecmd>
 ```
 # scripts
-```
-DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
-<doublecmd>
-  <Command>
-    <ID>{767A8509-B6FD-46A4-9856-7DD0FDEC8633}</ID>
-    <Icon>cm_copy</Icon>
-    <Hint>copy to all subdirs (recursively)</Hint>
-    <Command>cm_ExecuteScript</Command>
-    <Param>$COMMANDER_PATH/scripts/lua/copytoallsubdirs.lua</Param>
-    <Param>%Dt</Param>
-  </Command>
-</doublecmd>
-```
-[script copytoallsubdirs.lua](https://github.com/j2969719/doublecmd-plugins/blob/master/scripts/lua/copytoallsubdirs.lua)
 
-
+## copy to subdirs
 ```
 DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
 <doublecmd>
@@ -675,6 +661,24 @@ DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
 [script copytosubdirs.lua](https://github.com/j2969719/doublecmd-plugins/blob/master/scripts/lua/copytosubdirs.lua)
 
 
+## copy to all subdirs (recursively)
+```
+DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
+<doublecmd>
+  <Command>
+    <ID>{767A8509-B6FD-46A4-9856-7DD0FDEC8633}</ID>
+    <Icon>cm_copy</Icon>
+    <Hint>copy to all subdirs (recursively)</Hint>
+    <Command>cm_ExecuteScript</Command>
+    <Param>$COMMANDER_PATH/scripts/lua/copytoallsubdirs.lua</Param>
+    <Param>%Dt</Param>
+  </Command>
+</doublecmd>
+```
+[script copytoallsubdirs.lua](https://github.com/j2969719/doublecmd-plugins/blob/master/scripts/lua/copytoallsubdirs.lua)
+
+
+## edit symlink
 ```
 DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
 <doublecmd>
@@ -691,6 +695,8 @@ DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
 [script editsymlink.lua](https://github.com/j2969719/doublecmd-plugins/blob/master/scripts/lua/editsymlink.lua)
 
 
+
+## go to link path
 ```
 DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
 <doublecmd>
@@ -708,6 +714,7 @@ DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
 [script gotolinkpath.lua](https://github.com/j2969719/doublecmd-plugins/blob/master/scripts/lua/gotolinkpath.lua)
 
 
+## mark all or unmark all
 ```
 DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
 <doublecmd>
@@ -724,6 +731,7 @@ DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
 [script markunmark.lua](https://github.com/j2969719/doublecmd-plugins/blob/master/scripts/lua/markunmark.lua)
 
 
+## move tab to inactive panel
 ```
 DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
 <doublecmd>
