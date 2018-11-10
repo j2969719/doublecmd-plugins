@@ -24,7 +24,7 @@ if (args[1] ~= nil) then
     path = handle:read("*a");
     handle:close();
     if (args[2] == "onlydir") and (SysUtils.DirectoryExists(path) == false) then
-        path = string.match(output, "(.*[/\\])");
+        path = string.match(path, "(.*[/\\])");
     end
 end
 
