@@ -17,15 +17,19 @@ DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
 
 local args = {...};
 local path;
+local params = "-m"
 
 if (args[1] ~= nil) then
-    local handle = io.popen('readlink  "' .. args[1] .. '"', 'r');
+    local handle = io.popen('readlink ' .. params .. ' "' .. args[1] .. '"', 'r');
     local output = handle:read("*a");
     handle:close();
-    if (args[2] == "onlydir") then
-        path = string.match(output, "(.*[/\\])");
-    else
+    if (string.find(output, "\n")) then
         path = string.match(output, "(.*[\n])");
+    else
+        path = output;
+    end
+    if (args[2] == "onlydir") and (SysUtils.DirectoryExists(path) == false) then
+        path = string.match(output, "(.*[/\\])");
     end
 end
 
