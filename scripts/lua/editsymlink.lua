@@ -25,10 +25,10 @@ local function getOutput(command)
 end
 
 if (args[1] ~= nil) then
-    path = getOutput('readlink  "' .. args[1] .. '"');
+    path = getOutput('readlink -n "' .. args[1] .. '"');
 end
 
-if (path ~= nil) then
+if (path ~= nil) and (path ~= "") then
    ret, newpath = Dialogs.InputQuery("Edit Symlink", "Enter new path:", false, path);
 
    if (ret == true) then
