@@ -754,7 +754,7 @@ DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
 <doublecmd>
   <Command>
     <ID>{78AE07D0-42A0-4238-92BB-BE802AFB6F48}</ID>
-    <Icon>cm_executescript</Icon>
+    <Icon>cm_editnew</Icon>
     <Hint>Create new file</Hint>
     <Command>cm_ExecuteScript</Command>
     <Param>%COMMANDER_PATH%/utils/CreateNewFile.lua</Param>
