@@ -16,9 +16,7 @@ DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
 
 local params = {...};
 
-local tab_dir = params[1]:gsub(' ', '\\ ');
-
 DC.ExecuteCommand("cm_CloseTab");
 DC.ExecuteCommand("cm_FocusSwap");
 DC.ExecuteCommand("cm_NewTab");
-DC.ExecuteCommand("cm_ChangeDir", tab_dir);
+DC.ExecuteCommand("cm_ChangeDir", params[1]);
