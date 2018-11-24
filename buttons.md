@@ -748,7 +748,7 @@ DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
 [script quasimovetab.lua](https://github.com/j2969719/doublecmd-plugins/blob/master/scripts/lua/quasimovetab.lua)
 
 
-## сreate new file
+## create new file
 ```
 DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
 <doublecmd>
@@ -766,3 +766,20 @@ DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
 [script CreateNewFile.lua](https://github.com/j2969719/doublecmd-plugins/blob/master/utils/CreateNewFile.lua)
 
 [templates](https://github.com/j2969719/doublecmd-plugins/blob/master/utils/newfiles/)
+
+
+## make dir(s)
+```
+DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
+<doublecmd>
+  <Command>
+    <ID>{78AE07D0-42A0-4238-92BB-BE802AFB6F49}</ID>
+    <Icon>cm_makedir</Icon>
+    <Hint>Make dir(s)</Hint>
+    <Command>cm_ExecuteScript</Command>
+    <Param>%COMMANDER_PATH%/utils/MakeDir.lua</Param>
+    <Param>%"0%D</Param>
+  </Command>
+</doublecmd>
+```
+[script MakeDir.lua](https://github.com/j2969719/doublecmd-plugins/blob/master/utils/MakeDir.lua)
