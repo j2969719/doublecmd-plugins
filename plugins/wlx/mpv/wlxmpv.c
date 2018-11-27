@@ -140,7 +140,7 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	}
 
 
-	gchar *command = g_strdup_printf("%s %s --wid=%d \"%s\"", cmdstr, params, id, FileToLoad);
+	gchar *command = g_strdup_printf("%s %s --wid=%d %s", cmdstr, params, id, g_shell_quote(FileToLoad));
 
 	if ((id == 0) || (!g_spawn_command_line_async(command, NULL)))
 	{
