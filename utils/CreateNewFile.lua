@@ -1,5 +1,5 @@
 -- Create new file (cross-platform)
--- 2018.11.28
+-- 2018.12.01
 --
 -- Params:
 --   %"0%D
@@ -40,6 +40,7 @@ if (hd ~= nil) then
 end
 -- Get new file
 if (#items >= 1) then
+  table.sort(items);
   st = Dialogs.InputListBox('Create new file', 'Select type:', items, 1);
   if (st == nil) then return end;
   -- Get new filename
