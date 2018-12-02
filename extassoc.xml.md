@@ -1,6 +1,6 @@
 # All files
 
-```
+```xml
     <FileType>
       <Name>all files</Name>
       <IconFile/>
@@ -22,7 +22,7 @@
 
 # All folders
 
-```
+```xml
     <FileType>
       <Name>all folders</Name>
       <IconFile/>
@@ -45,7 +45,7 @@
 
 # Script [fileinfo.sh](https://doublecmd.sourceforge.io/forum/viewtopic.php?f=8&t=2727)
 
-```
+```xml
     <FileType>
       <Name>FileInfo.sh</Name>
       <IconFile/>

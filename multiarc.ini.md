@@ -4,7 +4,7 @@ Multiarc
 [UnAce](#unace), [RAR + 7Zip](#rar), [FreeArc](#freearc), [CHM](#chm), [7Zip self-extracting archive](#7zsfx), [Microsoft Windows Installer](#msi), [Inno Setup installer](#innosetup), [Nullsoft Scriptable Install System](#nsis), [Microsoft Cabinet](#cab), [InstallShield](#unshield), [MS-DOS installation compression](#szdd), [ZPAQ](#zpaq), [pakextract](#pakextract), [grpar](#grpar), [The Unarchiver](#unar), [UPX](#upx), [ZSTD](#zstd), [LZ4](#lz4), [mcm](#mcm), [BALZ](#balz), [QUAD](#quad), [PAQ8](#paq8o9), [lrzip](#lrzip), [lzop](#lzop), [Base64](#b64), [UUEncode](#uue)
 
 <a name="unace"><h2>UNACE</h2></a>
-```
+```ini
 [ACE (ro)]
 Archiver=/usr/bin/unace
 Description=UNACE v2.5
@@ -21,7 +21,7 @@ Test=%P t -y %AQA
 ```
 
 <a name="rar"><h2>RAR + 7Zip</h2></a>
-```
+```ini
 [RAR_3]
 Archiver=/usr/bin/rar
 Description=RAR 5.x - http://www.rarlab.com
@@ -43,7 +43,7 @@ FormMode=8
 ```
 
 <a name="freearc"><h2>FreeArc</h2></a>
-```
+```ini
 [FreeArc]
 Archiver=/usr/bin/arc
 Description=FreeArc 0.666
@@ -64,7 +64,7 @@ PasswordQuery=Enter decryption password:
 FormMode=8
 ```
 
-```
+```ini
 [FreeArc(wine)]
 Archiver=$COMMANDER_PATH/scripts/freearc
 Description=FreeArc 0.67 (wine)
@@ -88,7 +88,7 @@ FormMode=10
 
 
 <a name="chm"><h2>CHM</h2></a>
-```
+```ini
 [CHM]
 Archiver=/usr/bin/7z
 Description=Compressed Help Module
@@ -103,7 +103,7 @@ FormMode=8
 ```
 
 <a name="7zsfx"><h2>7Zip self-extracting archive</h2></a>
-```
+```ini
 [7ZSfx]
 Archiver=/usr/bin/7z
 Description=7-Zip - www.7-zip.org
@@ -120,7 +120,7 @@ FormMode=8
 ```
 
 <a name="msi"><h2>Microsoft Windows Installer</h2></a>
-```
+```ini
 [MSI]
 Archiver=/usr/bin/7z
 Description=Microsoft Windows Installer
@@ -133,7 +133,7 @@ List=%P -r0 l %AQA
 Extract=%P x -y {-p%W} {%S} %AQA @%LQU
 FormMode=8
 ```
-```
+```ini
 [MSI_2]
 Archiver=/usr/bin/msiextract
 Description=Microsoft Windows Installer (msiextract)
@@ -145,7 +145,7 @@ Extract=%P %AQA
 ```
 
 <a name="innosetup"><h2>Inno Setup installer</h2></a>
-```
+```ini
 [InnoSetup(gog)]
 Archiver=/usr/bin/innoextract
 Description=innoextract 1.7 (GOG)
@@ -156,7 +156,7 @@ List=%P --list-sizes -g -s %AQU
 Extract=%P -e -g -q  %AQU
 ExtractWithoutPath=%P -e -g -q  %AQU -I %FQU
 ```
-```
+```ini
 [InnoSetup]
 Archiver=/usr/bin/innoextract
 Description=innoextract 1.7
@@ -168,7 +168,7 @@ Extract=%P -e -q  %AQU
 ExtractWithoutPath=%P -e -q  %AQU -I %FQU
 ```
 
-```
+```ini
 [InnoSetup(wine)]
 Archiver=$COMMANDER_PATH/scripts/innounp
 Description=InnoSetup без -c%R           @%LQA
@@ -186,7 +186,7 @@ FormMode=2
 
 
 <a name="nsis"><h2>Nullsoft Scriptable Install System</h2></a>
-```
+```ini
 [NSIS]
 Archiver=/usr/bin/7z
 Description=NSIS Unpacker Part 1 (needs 7-Zip >= 4.40)
@@ -199,7 +199,7 @@ List=%P -r0 l %AQA
 Extract=%P x -y {-p%W} {%S} %AQA @%LQU
 FormMode=8
 ```
-```
+```ini
 [NSISSkipSfxHeader]
 Archiver=/usr/bin/7z
 Description=NSIS SkipSfxHeader (using 7-Zip 4.40 and up)
@@ -213,7 +213,7 @@ FormMode=8
 ```
 
 <a name="cab"><h2>Microsoft Cabinet</h2></a>
-```
+```ini
 [CAB]
 Archiver=/usr/bin/cabextract
 Description=MSCAB
@@ -227,7 +227,7 @@ Extract=%P {-F %F} %AQU
 ```
 
 <a name="unshield"><h2>InstallShield</h2></a>
-```
+```ini
 [InstallShield]
 Archiver=$COMMANDER_PATH/scripts/unshield
 Description=installshield
@@ -244,7 +244,7 @@ FormMode=6
   [script example](https://github.com/j2969719/doublecmd-plugins/blob/master/scripts/unshield)
 
 <a name="szdd"><h2>MS-DOS installation compression</h2></a>
-```
+```ini
 [SZDD]
 Archiver=/usr/bin/7z
 Description=MS-DOS installation compression
@@ -261,7 +261,7 @@ Test=%P t -y {%S} %AQA @%LQU
 ```
 
 <a name="zpaq"><h2>ZPAQ</h2></a>
-```
+```ini
 [ZPAQ]
 Archiver=/usr/bin/zpaq
 Description=zpaq
@@ -280,7 +280,7 @@ FormMode=1
   [link](http://mattmahoney.net/dc/zpaq.html)
 
 <a name="pakextract"><h2>pakextract</h2></a>
-```
+```ini
 [PAK]
 Archiver=pakextract
 Description=Quake/Quake II pak file or Sin .sin
@@ -291,11 +291,11 @@ Extension=sin
 Format0=n+ (z+
 List=%P -l %AQ
 Extract=%P %AQ
-```
+```ini
   [link](http://github.com/yquake2/pakextract)
 
 <a name="grpar"><h2>grpar</h2></a>
-```
+```ini
 [GRP]
 Archiver=grpar
 Description=DUKE3D GRP
@@ -310,7 +310,7 @@ Extract=%P -x -f %AQ
   [link](http://github.com/martymac/grpar)
 
 <a name="unar"><h2>The Unarchiver</h2></a>
-```
+```ini
 [Unarchiver]
 Archiver=
 Description=The Unarchiver - https://unarchiver.c3.cx
@@ -323,7 +323,7 @@ Extract=unar -f -t -D {-p %W} %AQ
 PasswordQuery=Password (will not be shown):
 FormMode=8
 ```
-```
+```ini
 [Unarchiver_2]
 Archiver=
 Description=The Unarchiver - https://unarchiver.c3.cx
@@ -337,7 +337,7 @@ Extract=unar -f -t -D {-p %W} %AQ %FQ
 PasswordQuery=Password (will not be shown):
 FormMode=8
 ```
-```
+```ini
 [ARC]
 Archiver=
 Description=old ARC
@@ -355,7 +355,7 @@ FormMode=8
   [link](https://theunarchiver.com/)
 
 <a name="upx"><h2>UPX</h2></a>
-```
+```ini
 [UPX]
 Archiver=upx
 Description=UPX 3.94
@@ -373,7 +373,7 @@ Add=%P {%S} -q -o %AQ %FQ
 ```
 
 <a name="zstd"><h2>ZSTD</h2></a>
-```
+```ini
 [ZSTD]
 Archiver=$COMMANDER_PATH/scripts/cutext
 Description=ZSTD
@@ -384,7 +384,7 @@ Extract=zstd {%S} -d %AQ -o %FQ
 Add=zstd {%S} -f %FQ -o %AQ
 ```
   [script cutext](https://github.com/j2969719/doublecmd-plugins/blob/master/scripts/cutext)
-```
+```ini
 [TZST]
 Archiver=/usr/bin/tar
 Description=Compressed tar file (tar.zst)
@@ -396,7 +396,7 @@ Add=%P -c -I zstd {%S} -f %AQA --no-recursion -T %LQA %E512
 ```
 
 <a name="lz4"><h2>LZ4</h2></a>
-```
+```ini
 [LZ4]
 Archiver=$COMMANDER_PATH/scripts/cutext
 Description=LZ4
@@ -409,7 +409,7 @@ Add=lz4 {%S} -f %FQ %AQ
   [script cutext](https://github.com/j2969719/doublecmd-plugins/blob/master/scripts/cutext)
 
 <a name="mcm"><h2>mcm</h2></a>
-```
+```ini
 [mcm]
 Archiver=$COMMANDER_PATH/scripts/cutext
 Description=mcm
@@ -427,7 +427,7 @@ Add=mcm -m9 %FQ %AQ
   [script cutext](https://github.com/j2969719/doublecmd-plugins/blob/master/scripts/cutext)
 
 <a name="balz"><h2>BALZ</h2></a>
-```
+```ini
 [BALZ]
 Archiver=$COMMANDER_PATH/scripts/cutext
 Description=BALZ
@@ -442,7 +442,7 @@ Add=balz c{%S} %FQ %AQ
   [script cutext](https://github.com/j2969719/doublecmd-plugins/blob/master/scripts/cutext)
 
 <a name="quad"><h2>QUAD</h2></a>
-```
+```ini
 [QUAD]
 Archiver=$COMMANDER_PATH/scripts/cutext
 Description=QUAD
@@ -457,7 +457,7 @@ Add=quad {%S} -f %FQ %AQ
   [script cutext](https://github.com/j2969719/doublecmd-plugins/blob/master/scripts/cutext)
 
 <a name="paq8o9"><h2>PAQ8</h2></a>
-```
+```ini
 [paq8o]
 Archiver=$COMMANDER_PATH/scripts/cutext
 Description=PAQ8
@@ -470,7 +470,7 @@ Add=paq8o {%S} %FQ %AQ
   [script cutext](https://github.com/j2969719/doublecmd-plugins/blob/master/scripts/cutext)
 
 <a name="lrzip"><h2>lrzip</h2></a>
-```
+```ini
 [lrzip]
 Archiver=$COMMANDER_PATH/scripts/cutext
 Description=lrzip
@@ -485,7 +485,7 @@ Add=lrzip {%S} -f %FQ -o %AQ
   [script cutext](https://github.com/j2969719/doublecmd-plugins/blob/master/scripts/cutext)
 
 <a name="lzop"><h2>lzop</h2></a>
-```
+```ini
 [lzop]
 Archiver=$COMMANDER_PATH/scripts/cutext
 Description=lzop
@@ -500,7 +500,7 @@ Add=lzop {%S} -f %FQ -o%AQ
   [script cutext](https://github.com/j2969719/doublecmd-plugins/blob/master/scripts/cutext)
 
 <a name="b64"><h2>Base64</h2></a>
-```
+```ini
 [Base64]
 Archiver=%COMMANDER_PATH%/utils/base64uue
 Description=Base64
@@ -515,7 +515,7 @@ Add=%P -eb %AQ %FQ
   [script base64uue](https://github.com/j2969719/doublecmd-plugins/blob/master/utils/base64uue)
 
 <a name="uue"><h2>UUEncode</h2></a>
-```
+```ini
 [UUEncode]
 Archiver=%COMMANDER_PATH%/utils/base64uue
 Description=UUEncode
