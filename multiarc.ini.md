@@ -1,4 +1,4 @@
-Multiarc
+MultiArc
 ========
 
 [UnAce](#unace), [RAR + 7Zip](#rar), [FreeArc](#freearc), [CHM](#chm), [7Zip self-extracting archive](#7zsfx), [Microsoft Windows Installer](#msi), [Inno Setup installer](#innosetup), [Nullsoft Scriptable Install System](#nsis), [Microsoft Cabinet](#cab), [InstallShield](#unshield), [MS-DOS installation compression](#szdd), [ZPAQ](#zpaq), [pakextract](#pakextract), [grpar](#grpar), [The Unarchiver](#unar), [UPX](#upx), [ZSTD](#zstd), [LZ4](#lz4), [mcm](#mcm), [BALZ](#balz), [QUAD](#quad), [PAQ8](#paq8o9), [lrzip](#lrzip), [lzop](#lzop), [Base64](#b64), [UUEncode](#uue)
@@ -31,7 +31,7 @@ Extension=rar
 Start=^-------------------
 End=^-------------------
 Format0=yyyy tt dd hh mm ss aaaaa zzzzzzzzzzzz pppppppppppp  n+
-List=7z -r0 l %AQA
+List=7z -r0 l {-p%W} %AQA
 Extract=7z x -y {-p%W} {%S} %AQA @%LQU
 ExtractWithoutPath=7z e -y {-p%W} {%S} %AQA @%LQU
 Test=%P t -y {%S} %AQA
