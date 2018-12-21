@@ -7,6 +7,8 @@ function ContentGetSupportedField(FieldIndex)
         return 'Description (uppercase filenames)', 'default|ansi|oem', 8; -- FieldName,Units,ft_string
     elseif (FieldIndex == 2) then
         return 'Description (lowercase filenames)', 'default|ansi|oem', 8; -- FieldName,Units,ft_string
+    elseif (FieldIndex == 3) then
+        return 'Description (uppercase and lowercase filenames)', 'default|ansi|oem', 8; -- FieldName,Units,ft_string
     end
     
     return '', '', 0; -- ft_nomorefields
@@ -25,6 +27,8 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
             case = "upper";
         elseif (FieldIndex == 2) then
             case = "lower";
+        elseif (FieldIndex == 3) then
+            case = "both";
         end
         if (path ~= nil) and (name ~= nil) then
             local enc = "default";
@@ -45,19 +49,20 @@ function GetDesc(Path, Name, Enc, Case)
     local descfile = GetDFilename(Path);
     if (descfile ~= nil) then
         local f = io.open(Path .. descfile, "r");
-        if not f then
-            return nil;
-        end
-        local pattern = GetPattern(Name, Case);
-        
-        for line in f:lines() do
-            if line:find(pattern) then
-                f:close();
-                return LazUtf8.ConvertEncoding(line:gsub(pattern, ""), Enc, "utf8");
+        if (f ~= nil) then
+            local result = nil;
+            if (Case == "both") then
+                result = CheckLines(f, GetPattern(Name, "upper"), Enc);
+                if (result == nil) then
+                    f:seek("set", 0);
+                    result = CheckLines(f, GetPattern(Name, "lower"), Enc);
+                end
+            else
+                result = CheckLines(f, GetPattern(Name, Case), Enc);
             end
-        end  
-        
-        f:close();
+            f:close();
+            return result;
+        end
     end
     return nil;
 end
@@ -73,7 +78,7 @@ function GetPattern(Name, Case)
     for k, chr in pairs(magic_chars) do
         target = target:gsub("%" .. chr, "%%%" .. chr);
     end
-    return '"?' .. target .. '"?%s+';
+    return '^"?' .. target .. '"?%s+';
 end
 
 function GetDFilename(Path)
@@ -89,6 +94,28 @@ function GetDFilename(Path)
         until (result == nil)
         SysUtils.FindClose(handle);
         return filename;
+    end
+    return nil;
+end
+
+function CheckLines(File, Pattern, Enc)
+    local firstline = true;
+    local target = "";
+    for line in File:lines() do
+        if (firstline == true) then
+            firstline = false;
+            target = line;
+            if (Enc ~= "ansi") and (Enc ~= "oem") and (line:sub(1, 3) == "\239\187\191") then
+                target = line:sub(4);
+            else
+                target = line;
+            end
+        else
+            target = line;
+        end
+        if target:find(Pattern) then
+            return LazUtf8.ConvertEncoding(target:gsub(Pattern, ""), Enc, "utf8");
+        end
     end
     return nil;
 end
