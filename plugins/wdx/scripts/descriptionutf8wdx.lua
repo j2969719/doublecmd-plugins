@@ -1,4 +1,7 @@
 -- This script reads file descriptions from descript.ion
+-- luarocks-5.1 install luautf8
+
+local utf8 = require("lua-utf8")
 
 function ContentGetSupportedField(FieldIndex)
     if (FieldIndex == 0) then
@@ -51,9 +54,12 @@ function GetDesc(Path, Name, Enc, Case)
         local pattern = GetPattern(Name, Case);
         
         for line in f:lines() do
-            if line:find(pattern) then
+            local target = LazUtf8.ConvertEncoding(line, Enc, "utf8");
+            target = utf8.match(target, "[%w%s%p]+");
+            if (target ~= nil) and utf8.find(target, pattern) then
                 f:close();
-                return LazUtf8.ConvertEncoding(line:gsub(pattern, ""), Enc, "utf8");
+                local result = utf8.gsub(target, pattern, "");
+                return result;
             end
         end  
         
@@ -66,14 +72,14 @@ function GetPattern(Name, Case)
     local magic_chars = {"%", ".", "-", "+", "*", "?", "^", "$", "(", ")", "["};
     local target = Name;
     if (Case == "upper") then
-        target = LazUtf8.UpperCase(Name);
+        target = utf8.upper(Name);
     elseif (Case == "lower") then
-        target = LazUtf8.LowerCase(Name);
+        target = utf8.lower(Name);
     end
     for k, chr in pairs(magic_chars) do
         target = target:gsub("%" .. chr, "%%%" .. chr);
     end
-    return '"?' .. target .. '"?%s+';
+    return '^"?' .. target .. '"?%s+';
 end
 
 function GetDFilename(Path)
@@ -81,7 +87,7 @@ function GetDFilename(Path)
     local handle, FindData = SysUtils.FindFirst(Path .. "*");
     if (handle ~= nil) then
         repeat
-            if (LazUtf8.LowerCase(FindData.Name) == "descript.ion") or (LazUtf8.UpperCase(FindData.Name) == "FILES.BBS") then
+            if (utf8.lower(FindData.Name) == "descript.ion") or (utf8.upper(FindData.Name) == "FILES.BBS") then
                 filename = FindData.Name;
                 break;
             end
