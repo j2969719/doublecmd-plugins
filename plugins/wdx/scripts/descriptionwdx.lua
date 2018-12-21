@@ -7,7 +7,7 @@ function ContentGetSupportedField(FieldIndex)
         return 'Description (uppercase filenames)', 'default|ansi|oem', 8; -- FieldName,Units,ft_string
     elseif (FieldIndex == 2) then
         return 'Description (lowercase filenames)', 'default|ansi|oem', 8; -- FieldName,Units,ft_string
-    end 
+    end
     
     return '', '', 0; -- ft_nomorefields
 end
@@ -22,21 +22,21 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
         local name = FileName:match("[^" .. SysUtils.PathDelim .. "]+$");
         local case = "";
         if (FieldIndex == 1) then
-            case = "upper"
+            case = "upper";
         elseif (FieldIndex == 2) then
-            case = "lower"
+            case = "lower";
         end
         if (path ~= nil) and (name ~= nil) then
-            local enc = "default"
+            local enc = "default";
             if (UnitIndex == 1) then
                 enc = "ansi";
             elseif (UnitIndex == 2) then
                 enc = "oem";
             end
             return GetDesc(path, name, enc, case);
-        else 
+        else
             return "";
-        end  
+        end
     end
     return nil;
 end
@@ -45,7 +45,7 @@ function GetDesc(Path, Name, Enc, Case)
     local descfile = GetDFilename(Path);
     if (descfile ~= nil) then
         local f = io.open(Path .. descfile, "r");
-        if not f then 
+        if not f then
             return nil;
         end
         local pattern = GetPattern(Name, Case);
@@ -73,7 +73,7 @@ function GetPattern(Name, Case)
     for k, chr in pairs(magic_chars) do
         target = target:gsub("%" .. chr, "%%%" .. chr);
     end
-    return '^"?' .. target .. '"?%s+';
+    return '"?' .. target .. '"?%s+';
 end
 
 function GetDFilename(Path)
@@ -81,7 +81,6 @@ function GetDFilename(Path)
     local handle, FindData = SysUtils.FindFirst(Path .. "*");
     if (handle ~= nil) then
         repeat
-            print(FindData.Name:lower())
             if (FindData.Name:lower() == "descript.ion") or (FindData.Name:upper() == "FILES.BBS") then
                 filename = FindData.Name;
                 break;
