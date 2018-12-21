@@ -104,7 +104,6 @@ function CheckLines(File, Pattern, Enc)
     for line in File:lines() do
         if (firstline == true) then
             firstline = false;
-            target = line;
             if (Enc ~= "ansi") and (Enc ~= "oem") and (line:sub(1, 3) == "\239\187\191") then
                 target = line:sub(4);
             else
@@ -114,8 +113,24 @@ function CheckLines(File, Pattern, Enc)
             target = line;
         end
         if target:find(Pattern) then
-            return LazUtf8.ConvertEncoding(target:gsub(Pattern, ""), Enc, "utf8");
+            local result = target:gsub(Pattern, "") .. CheckNextLines(File);
+            return LazUtf8.ConvertEncoding(result, Enc, "utf8");
         end
     end
     return nil;
+end
+
+function CheckNextLines(File)
+    local pos = File:seek();
+    local result = "";
+    for line in File:lines() do
+        if line:find("^%s+|%s+") then
+            result = result .. "\n" .. line:gsub("^%s+|%s+", "");
+        else
+            break;
+        end
+        pos = File:seek();
+    end
+    File:seek("set", pos);
+    return result;
 end
