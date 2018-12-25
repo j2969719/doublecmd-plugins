@@ -18,21 +18,21 @@ function ContentSetDefaultParams(IniFileName, PlugApiVerHi, PlugApiVerLow)
     if SysUtils.FileExists(path .. script) then
         scriptpath = path .. script;
     else
-        path = os.getenv("DC_CONFIG_PATH");
+        path = os.getenv("HOME");
         if (path ~= nil) then
-            if SysUtils.FileExists(path .. scriptfolder .. script) then
-                scriptpath = path .. scriptfolder .. script;
+            path = path .. "/.config/doublecmd/";
+            if SysUtils.FileExists(path .. scriptsfolder .. script) then
+                scriptpath = path .. scriptsfolder .. script;
             elseif SysUtils.FileExists(path .. pluginsfolder .. script) then
                 scriptpath = path .. pluginsfolder .. script;
-            else
-                path = os.getenv("COMMANDER_PATH");
-                if (path ~= nil) then
-                    if SysUtils.FileExists(path .. scriptfolder .. script) then
-                        scriptpath = path .. scriptfolder .. script;
-                    elseif SysUtils.FileExists(path .. pluginsfolder .. script) then
-                        scriptpath = path .. pluginsfolder .. script;
-                    end
-                end
+            end
+        end
+        path = os.getenv("COMMANDER_PATH");
+        if (path ~= nil) then
+            if SysUtils.FileExists(path .. scriptsfolder .. script) then
+                scriptpath = path .. scriptsfolder .. script;
+            elseif SysUtils.FileExists(path .. pluginsfolder .. script) then
+                scriptpath = path .. pluginsfolder .. script;
             end
         end
     end
