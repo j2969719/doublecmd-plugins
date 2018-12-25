@@ -1,8 +1,37 @@
 -- scrtiptfileinfowdx.lua
 -- https://doublecmd.sourceforge.io/forum/viewtopic.php?f=8&t=2727
 
-local scriptpath = "/usr/bin/fileinfo.sh" -- path to executable script
+local scriptpath = "/usr/bin/fileinfo.sh" -- default path to executable script
 local skipsysfiles = true  -- skip character, block or fifo files
+local delimpat = SysUtils.PathDelim;
+
+function ContentSetDefaultParams(IniFileName, PlugApiVerHi, PlugApiVerLow)
+    local script = "fileinfo.sh";
+    local scriptsfolder = "/scripts/";
+    
+    if (delimpat == nil) then
+        delimpat = "/\\";
+    end
+    
+    local path = IniFileName:match(".*" .. delimpat);
+    if SysUtils.FileExists(path .. script) then
+        scriptpath = path .. script;
+    else
+        path = os.getenv("DC_CONFIG_PATH");
+        if (path ~= nil) then
+            if SysUtils.FileExists(path .. scriptfolder .. script) then
+                scriptpath = path .. scriptfolder .. script;
+            else
+                path = os.getenv("COMMANDER_PATH");
+                if (path ~= nil) then
+                    if SysUtils.FileExists(path .. scriptfolder .. script) then
+                        scriptpath = path .. scriptfolder .. script;
+                    end
+                end
+            end
+        end
+    end
+end
 
 function ContentGetSupportedField(FieldIndex)
     if (FieldIndex == 0) then
@@ -20,10 +49,6 @@ function ContentGetDetectString()
 end
 
 function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
-    local delimpat = SysUtils.PathDelim;
-    if (delimpat == nil) then
-        delimpat = "/\\";
-    end
     if (FileName:find("[" .. delimpat .. "]%.%.$")) then
         return nil;
     end
