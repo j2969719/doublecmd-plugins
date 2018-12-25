@@ -8,6 +8,7 @@ local delimpat = SysUtils.PathDelim;
 function ContentSetDefaultParams(IniFileName, PlugApiVerHi, PlugApiVerLow)
     local script = "fileinfo.sh";
     local scriptsfolder = "/scripts/";
+    local pluginsfolder = "/plugins/wlx/fileinfo/";
     
     if (delimpat == nil) then
         delimpat = "/\\";
@@ -21,11 +22,15 @@ function ContentSetDefaultParams(IniFileName, PlugApiVerHi, PlugApiVerLow)
         if (path ~= nil) then
             if SysUtils.FileExists(path .. scriptfolder .. script) then
                 scriptpath = path .. scriptfolder .. script;
+            elseif SysUtils.FileExists(path .. pluginsfolder .. script) then
+                scriptpath = path .. pluginsfolder .. script;
             else
                 path = os.getenv("COMMANDER_PATH");
                 if (path ~= nil) then
                     if SysUtils.FileExists(path .. scriptfolder .. script) then
                         scriptpath = path .. scriptfolder .. script;
+                    elseif SysUtils.FileExists(path .. pluginsfolder .. script) then
+                        scriptpath = path .. pluginsfolder .. script;
                     end
                 end
             end
