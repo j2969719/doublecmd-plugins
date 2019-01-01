@@ -9,26 +9,33 @@ function ContentSetDefaultParams(IniFileName, PlugApiVerHi, PlugApiVerLow)
     local script = "fileinfo.sh";
     local scriptsfolder = "/scripts/";
     local pluginsfolder = "/plugins/wlx/fileinfo/";
-    
+
     if (delimpat == nil) then
-        delimpat = "/\\";
+        delimpat = "[/\\]";
     end
-    
+
     local path = IniFileName:match(".*" .. delimpat);
     if SysUtils.FileExists(path .. script) then
         scriptpath = path .. script;
     else
-        path = os.getenv("HOME");
+        path = os.getenv("COMMANDER_PATH");
         if (path ~= nil) then
-            path = path .. "/.config/doublecmd/";
             if SysUtils.FileExists(path .. scriptsfolder .. script) then
                 scriptpath = path .. scriptsfolder .. script;
             elseif SysUtils.FileExists(path .. pluginsfolder .. script) then
                 scriptpath = path .. pluginsfolder .. script;
             end
         end
-        path = os.getenv("COMMANDER_PATH");
+        path = debug.getinfo(1).source;
         if (path ~= nil) then
+            path = path:match("@(.*" .. delimpat .. ")");
+            if SysUtils.FileExists(path .. script) then
+                scriptpath = path .. script;
+            end
+        end
+        path = os.getenv("HOME");
+        if (path ~= nil) then
+            path = path .. "/.config/doublecmd/";
             if SysUtils.FileExists(path .. scriptsfolder .. script) then
                 scriptpath = path .. scriptsfolder .. script;
             elseif SysUtils.FileExists(path .. pluginsfolder .. script) then
@@ -54,7 +61,7 @@ function ContentGetDetectString()
 end
 
 function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
-    if (FileName:find("[" .. delimpat .. "]%.%.$")) then
+    if (FileName:find(delimpat .. "%.%.$")) then
         return nil;
     end
     if (FieldIndex == 0) and (UnitIndex == 0) then
