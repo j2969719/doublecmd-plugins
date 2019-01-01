@@ -36,7 +36,25 @@ FIELD fields[] =
 	{"Can be copied",		ft_boolean,	""},
 	{"OK to add notes",		ft_boolean,	""},
 	{"OK to fill form",		ft_boolean,	""},
+	{"Text",			ft_fulltext,	""},
 };
+
+static gchar *doc_text;
+static gsize pos;
+
+char* GetDocumentText(PopplerDocument *document)
+{
+	gchar *text = "";
+	gsize index, pages;
+	PopplerPage *ppage;
+	pages = poppler_document_get_n_pages(document);
+	for (index = 0; index < pages; index++)
+	{
+		ppage = poppler_document_get_page(document, index);
+		text = g_strconcat(text, "\n", poppler_page_get_text(ppage), NULL);
+	}
+	return g_strconcat(text, "\0", NULL);
+}
 
 gboolean UnixTimeToFileTime(uint64_t unix_time, LPFILETIME FileTime)
 {
@@ -246,6 +264,32 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 			*(int*)FieldValue = 1;
 		else
 			*(int*)FieldValue = 0;
+
+		break;
+	case 19:
+		if (UnitIndex == 0)
+		{
+			doc_text = GetDocumentText(document);
+			g_strlcpy(FieldValue, doc_text, maxlen-1);
+			pos = maxlen-2;
+		}
+		else if (UnitIndex == -1)
+		{
+			doc_text = NULL;
+			pos = 0;
+			return ft_fieldempty;
+		}
+		else
+		{
+			if (strlen(doc_text+pos) > 0)
+			{
+				g_strlcpy((char*)FieldValue, doc_text+pos, maxlen-1);
+				pos += maxlen-2;
+			}
+			else
+				return ft_fieldempty;
+		}
+		return ft_fulltext;
 
 		break;
 
