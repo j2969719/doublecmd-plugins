@@ -28,7 +28,11 @@ local fields = {  -- field name, field type, command, strip newline, sort order
 
 function ContentGetSupportedField(FieldIndex)
     if (fields[FieldIndex + 1] ~= nil ) then
-        return fields[FieldIndex + 1][1], '', fields[FieldIndex + 1][2];
+        if (fields[FieldIndex + 1][2] == 7) then
+            return fields[FieldIndex + 1][1], result_true..'|'..result_false, fields[FieldIndex + 1][2];
+        else
+            return fields[FieldIndex + 1][1], '', fields[FieldIndex + 1][2];
+        end
     end
     return '', '', 0; -- ft_nomorefields
 end
@@ -55,12 +59,12 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
     end
     local dir = FileName:match("(.*[" .. delimpat .. "])");
     if (fields[FieldIndex + 1][3] ~= nil) then
-        local handle = io.popen('cd "'..dir..'" && ' .. fields[FieldIndex + 1][3] .. ' "'..FileName..'"', 'r');
+        local handle = io.popen('cd "'..dir..'" && '..fields[FieldIndex + 1][3]..' "'..FileName..'"', 'r');
         local result = handle:read("*a");
         handle:close();
         if (result ~= nil) then
             if (fields[FieldIndex + 1][4] == true) then
-                result = result:sub(1, - 2);
+                result = result:sub(1, -2);
             end
             if (fields[FieldIndex + 1][2] == 6) then
                 if (result ~= '') then

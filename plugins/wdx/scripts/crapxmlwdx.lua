@@ -338,7 +338,7 @@ end
 function cutval(src, str, ecn)
     local result = string.gsub(src, '.*<' .. str .. '>%s*' , "");
     result = result:gsub('%s*</.*', "");
-    if  (ecn == true) then
+    if (ecn == true) then
         return result:gsub('.', win2utf);
     else
         return result;

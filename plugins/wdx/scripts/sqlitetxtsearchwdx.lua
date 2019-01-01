@@ -36,7 +36,7 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
         elseif (fields[FieldIndex][1] ~= nil) and (fields[FieldIndex][2] ~= nil) then
             query = "SELECT " .. fields[FieldIndex][2] .. " FROM " .. fields[FieldIndex][1];
         end
-        if  (db:exec(query) == sqlite3.OK) then
+        if (db:exec(query) == sqlite3.OK) then
             for row in db:urows(query) do
                 table.insert(tmp, row .. '\n');
             end
