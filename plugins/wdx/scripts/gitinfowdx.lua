@@ -17,7 +17,7 @@ local fields = {  -- field name, field type, command, strip newline, sort order
     {"Revision",        2,                                   "git rev-list --count HEAD #", true,   1},
     {"Origin URL",      8,                                   "git remote get-url origin #", true,   1},
     {"Push URL",        8,                            "git remote get-url origin --push #", true,   1},
-    {"Log",             8,                                             "git log --oneline", false,  1},
+    {"Log",             9,                                             "git log --oneline", false,  1},
     {"Untracked",       6,                                               "git ls-files -o", false,  1},
     {"Ignored",         6,                            "git ls-files -i --exclude-standard", true,  -1},
     {"Modified",        6,                                               "git ls-files -m", true,  -1},
@@ -55,12 +55,12 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
     end
     local dir = FileName:match("(.*[" .. delimpat .. "])");
     if (fields[FieldIndex + 1][3] ~= nil) then
-        local handle = io.popen("cd "..dir.." && "..fields[FieldIndex + 1][3]..' "'..FileName..'"', 'r');
+        local handle = io.popen('cd "'..dir..'" && ' .. fields[FieldIndex + 1][3] .. ' "'..FileName..'"', 'r');
         local result = handle:read("*a");
         handle:close();
         if (result ~= nil) then
             if (fields[FieldIndex + 1][4] == true) then
-                    result = result:sub(1, -2);
+                result = result:sub(1, - 2);
             end
             if (fields[FieldIndex + 1][2] == 6) then
                 if (result ~= '') then
@@ -76,6 +76,12 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
                 end
             elseif (fields[FieldIndex + 1][2] == 2) then
                 return tonumber(result);
+            elseif (fields[FieldIndex + 1][2] == 9) then
+                if (UnitIndex == 0) then
+                    return result;
+                else
+                    return nil;
+                end
             else
                 return result;
             end
