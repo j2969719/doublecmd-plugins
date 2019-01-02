@@ -1,4 +1,0 @@
-{"entry": {
-    "info": "this is a string",
-    "types": ["FIRST ELEMENT", "SECOND ELEMENT", {"sub" : {"info" : "this is the third element"}}]
-    }}
