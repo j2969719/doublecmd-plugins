@@ -60,7 +60,7 @@ gchar *get_mime_type(const gchar *Filename)
 	return result;
 }
 
-static gchar *cfg_get_frmt_str(GKeyFile *Cfg, const gchar *Group, const gchar *FileDir)
+static gchar *cfg_get_frmt_str(GKeyFile *Cfg, const gchar *Group)
 {
 	gchar *result, *cfg_value, *tmp;
 	cfg_value = g_key_file_get_string(Cfg, Group, "script", NULL);
@@ -74,31 +74,28 @@ static gchar *cfg_get_frmt_str(GKeyFile *Cfg, const gchar *Group, const gchar *F
 	}
 	else
 	{
-		if (g_file_test(result, G_FILE_TEST_EXISTS) && (g_strcmp0(FileDir, plug_path) != 0))
+		tmp = g_strdup_printf("%s/%s", plug_path, cfg_value);
+
+		if (g_file_test(tmp, G_FILE_TEST_EXISTS))
+			result = g_strdup_printf("%s %s", g_shell_quote(tmp), _frmtsrt);
+		else if (g_file_test(cfg_value, G_FILE_TEST_EXISTS))
 			result = g_strdup_printf("%s %s", cfg_value, _frmtsrt);
 		else
-		{
-			tmp = g_strdup_printf("%s/%s", plug_path, cfg_value);
-
-			if (g_file_test(tmp, G_FILE_TEST_EXISTS))
-				result = g_strdup_printf("%s %s", g_shell_quote(tmp), _frmtsrt);
-			else
-				result = NULL;
-		}
+			result = NULL;
 	}
 
 	return result;
 }
 
-gchar *cfg_find_value(GKeyFile *Cfg, const gchar *Group, const gchar *FileDir)
+gchar *cfg_find_value(GKeyFile *Cfg, const gchar *Group)
 {
 	gchar *result, *redirect;
 	redirect = g_key_file_get_string(Cfg, Group, "redirect", NULL);
 
 	if (redirect)
-		result = cfg_get_frmt_str(Cfg, redirect, FileDir);
+		result = cfg_get_frmt_str(Cfg, redirect);
 	else
-		result = cfg_get_frmt_str(Cfg, Group, FileDir);
+		result = cfg_get_frmt_str(Cfg, Group);
 	g_free(redirect);
 	return result;
 }
@@ -112,11 +109,9 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	gchar *file_ext, *mime_type;
 	gchar *command;
 	gchar *frmt_str = NULL;
-	gchar *file_path;
 
 	mime_type = get_mime_type(FileToLoad);
 	file_ext = get_file_ext(FileToLoad);
-	file_path = g_path_get_dirname(FileToLoad);
 
 	cfg = g_key_file_new();
 
@@ -125,9 +120,9 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	else
 	{
 		if (file_ext)
-			frmt_str = cfg_find_value(cfg, file_ext, file_path);
+			frmt_str = cfg_find_value(cfg, file_ext);
 		if (mime_type && (!file_ext || !frmt_str))
-			frmt_str = cfg_find_value(cfg, mime_type, file_path);
+			frmt_str = cfg_find_value(cfg, mime_type);
 	}
 
 	g_key_file_free(cfg);
