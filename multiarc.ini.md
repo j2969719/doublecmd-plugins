@@ -291,7 +291,7 @@ Extension=sin
 Format0=n+ (z+
 List=%P -l %AQ
 Extract=%P %AQ
-```ini
+```
   [link](http://github.com/yquake2/pakextract)
 
 <a name="grpar"><h2>grpar</h2></a>
