@@ -16,6 +16,18 @@ function ContentGetSupportedField(FieldIndex)
     return '', '', 0; -- ft_nomorefields
 end
 
+function ContentGetDetectString()
+    local detect_string = '';
+    for ext in pairs(commands) do
+        if (detect_string == '') then
+            detect_string = '(EXT="' .. ext:upper() .. '")';
+        else
+            detect_string = detect_string .. ' | (EXT="' .. ext:upper() .. '")';
+        end
+    end
+    return detect_string; -- return detect string
+end
+
 function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
     if not SysUtils.DirectoryExists(FileName) and (UnitIndex == 0) then
         local ext = FileName:match(".+%.(.+)$");
