@@ -4,8 +4,8 @@ local commands = {
     ['djv' ] = 'djvused -e print-pure-txt "$FILE"', 
     ['djvu'] = 'djvused -e print-pure-txt "$FILE"', 
     
-    ['doc' ] = 'catdoc -w  "$FILE"', 
-    ['rtf' ] = 'catdoc -w  "$FILE"', 
+    ['doc' ] = 'catdoc -w "$FILE"', 
+    ['rtf' ] = 'catdoc -w "$FILE"', 
     ['docx'] = 'docx2txt "$FILE" -', 
     ['odt' ] = 'odt2txt "$FILE"', 
     

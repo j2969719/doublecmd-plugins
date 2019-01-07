@@ -52,10 +52,6 @@ function ContentGetSupportedField(FieldIndex)
     return '', '', 0; -- ft_nomorefields
 end
 
-function ContentGetDefaultSortOrder(FieldIndex)
-    return 1; --or -1
-end
-
 function ContentGetDetectString()
     return '(EXT="ISO")|(EXT="TORRENT")|(EXT="SO")|(EXT="MO")|(EXT="DEB")|(EXT="TAR")|(EXT="LHA")|(EXT="ARJ")|(EXT="CAB")|(EXT="HA")|(EXT="RAR")|(EXT="ALZ")|(EXT="CPIO")|(EXT="7Z")|(EXT="ACE")|(EXT="ARC")|(EXT="ZIP")|(EXT="ZOO")|(EXT="PS")|(EXT="PDF")|(EXT="ODT")|(EXT="DOC")|(EXT="XLS")|(EXT="DVI")|(EXT="DJVU")|(EXT="EPUB")|(EXT="HTML")|(EXT="HTM")|(EXT="EXE")|(EXT="DLL")|(EXT="GZ")|(EXT="BZ2")|(EXT="XZ")|(EXT="MSI")|(EXT="RTF")|(EXT="FB2")'; -- return detect string
 end
@@ -74,9 +70,7 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
         local handle = io.popen(scriptpath .. ' "' .. FileName .. '"', 'r');
         local result = handle:read("*a");
         handle:close();
-        if (result ~= nil) then
-            return result:sub(1, - 2);
-        end
+        return result;
     end
     return nil; -- invalid
 end

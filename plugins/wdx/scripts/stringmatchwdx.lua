@@ -9,9 +9,9 @@ local fields = {
 }
 
 local commands = {
-    {"doc", "catdoc -w",                  true}, 
-    {"pdf", "pdftotext -layout -nopgbrk", true}, 
-    {"odt", "odt2txt",                    true}, 
+    ['doc'] = 'catdoc -w "$FILE"', 
+    ['pdf'] = 'pdftotext -layout -nopgbrk "$FILE" -', 
+    ['odt'] = 'odt2txt "$FILE"', 
 }
 
 function ContentGetSupportedField(FieldIndex)
@@ -24,9 +24,10 @@ end
 function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
     if (fields[FieldIndex + 1] ~= nil) and (isAttrValid(FileName) == true) then
         local ext = FileName:match(".+%.(.+)$");
-        for i = 1, #commands do
-            if (commands[i][1] == ext) then
-                local output = getOutput(commands[i][2] .. ' "' .. FileName .. '"', commands[i][3]);
+        if (ext ~= nil) then
+            ext = ext:lower(); 
+            if (commands[ext] ~= nil) then
+                local output = getOutput(commands[ext]:gsub("$FILE", FileName));
                 return getValue(output, fields[FieldIndex + 1][2], fields[FieldIndex + 1][3]);
             end
         end
@@ -52,13 +53,10 @@ function isAttrValid(filename)
     return true;
 end
 
-function getOutput(command, stripnewline)
+function getOutput(command)
     local handle = io.popen(command, 'r');
     local output = handle:read("*a");
     handle:close();
-    if (stripnewline == true) and (output ~= nil) then
-        return output:sub(1, - 2);
-    end
     return output;
 end
 
