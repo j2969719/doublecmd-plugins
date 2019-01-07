@@ -1,12 +1,16 @@
 
 local commands = {
-    ['pdf']  = 'pdftotext -layout -nopgbrk "$FILE" -', 
-    ['doc']  = 'catdoc -w  "$FILE"', 
-    ['rtf']  = 'catdoc -w  "$FILE"', 
-    ['docx'] = 'docx2txt "$FILE" -', 
-    ['odt']  = 'odt2txt "$FILE"', 
-    ['djv']  = 'djvused -e print-pure-txt "$FILE"', 
+    ['pdf' ] = 'pdftotext -layout -nopgbrk "$FILE" -', 
+    ['djv' ] = 'djvused -e print-pure-txt "$FILE"', 
     ['djvu'] = 'djvused -e print-pure-txt "$FILE"', 
+    
+    ['doc' ] = 'catdoc -w  "$FILE"', 
+    ['rtf' ] = 'catdoc -w  "$FILE"', 
+    ['docx'] = 'docx2txt "$FILE" -', 
+    ['odt' ] = 'odt2txt "$FILE"', 
+    
+    ['xls' ] = 'xls2csv "$FILE"', 
+    ['xlsx'] = 'xlsx2csv "$FILE"', 
 }
 
 function ContentGetSupportedField(FieldIndex)
