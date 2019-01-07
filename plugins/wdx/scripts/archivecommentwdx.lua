@@ -1,8 +1,16 @@
 
-local settings = { -- command, additional parameters, pattern, ext, ...  
-    {"unzip -z", '',    "^Archive[^\n]+\n(.+)\n$",                         "zip"}, 
-    {"rar l",    '-p-', "Type 'rar %-%?' for help\n\n(.+)\n\n\nArchive: ", "rar"}, 
-} 
+local settings = {
+    ['zip' ] = {
+        'unzip -z "$FILE"',       -- command
+        "^Archive[^\n]+\n(.+)\n$" -- pattern
+        }, 
+    
+    ['rar' ] = {
+        'rar l "$FILE" -p-', 
+        "Type 'rar %-%?' for help\n\n(.+)\n\n\nArchive: "
+        }, 
+}
+
 local notfoundstr = "not found"
 
 function ContentGetSupportedField(FieldIndex)
@@ -13,36 +21,32 @@ function ContentGetSupportedField(FieldIndex)
 end
 
 function ContentGetDetectString()
-    local detectstring = '';
-    for arc = 1, #settings do
-        for i = 4, #settings[arc] do
-            if (detectstring ~= '') then
-                detectstring = detectstring .. ' | (EXT="' .. string.upper(settings[arc][i]) .. '")';
-            else
-                detectstring = '(EXT="' .. string.upper(settings[arc][i]) .. '")';
-            end
+    local detect_string = '';
+    for ext in pairs(settings) do
+        if (detect_string == '') then
+            detect_string = '(EXT="' .. ext:upper() .. '")';
+        else
+            detect_string = detect_string .. ' | (EXT="' .. ext:upper() .. '")';
         end
     end
-    return detectstring; -- return detect string
+    return detect_string; -- return detect string
 end
 
 function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
-    if (FieldIndex == 0) then
+    if not SysUtils.DirectoryExists(FileName) and (FieldIndex == 0) then
         local result = nil;
         local ext = FileName:match(".+%.(.+)$");
-        for arc = 1, #settings do
-            for i = 4, #settings[arc] do
-                if (ext == settings[arc][i]) then
-                    local handle = io.popen(settings[arc][1] .. ' "' .. FileName .. '" ' .. settings[arc][2]);
-                    local output = handle:read("*a");
-                    handle:close();
-                    if (output ~= nil) then
-                        result = output:match(settings[arc][3]);
-                    end
-                    break;
+        if (ext ~= nil) then
+            ext = ext:lower();
+            if (settings[ext] ~= nil) then
+                local handle = io.popen(settings[ext][1]:gsub("$FILE", FileName), 'r');
+                local output = handle:read("*a");
+                handle:close();
+                if (output ~= nil) then
+                    result = output:match(settings[ext][2]);
                 end
-            end 
-        end 
+            end
+        end
         if (UnitIndex == 1) and (result == nil) then
             return notfoundstr;
         else
