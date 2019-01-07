@@ -31,11 +31,14 @@ end
 function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
     if not SysUtils.DirectoryExists(FileName) and (UnitIndex == 0) then
         local ext = FileName:match(".+%.(.+)$");
-        if (ext ~= nil) and (commands[ext] ~= nil) then
-            local handle = io.popen(commands[ext]:gsub("$FILE", FileName), 'r');
-            local result = handle:read("*a");
-            handle:close();
-            return result;
+        if (ext ~= nil) then
+            ext = ext:lower();
+            if (commands[ext] ~= nil) then
+                local handle = io.popen(commands[ext]:gsub("$FILE", FileName), 'r');
+                local result = handle:read("*a");
+                handle:close();
+                return result;
+            end
         end
     end
     return nil; -- invalid
