@@ -13,9 +13,25 @@ local commands = {
     ['xlsx'] = 'xlsx2csv "$FILE"', 
 }
 
+local encoding = {
+    "ansi", 
+    "oem", 
+    "koi8", 
+    "cp1251", 
+    "cp866", 
+}
+
+local convert = nil;
+
+if (LazUtf8 ~= nil) then
+    convert = LazUtf8.ConvertEncoding;
+end
+
 function ContentGetSupportedField(FieldIndex)
     if (FieldIndex == 0) then
         return 'Text', '', 9; -- FieldName,Units,ft_fulltext
+    elseif (convert ~= nil) and (encoding[FieldIndex] ~= nil) then
+        return 'Text (' .. encoding[FieldIndex] .. ')', '', 9; -- FieldName,Units,ft_fulltext
     end
     return '', '', 0; -- ft_nomorefields
 end
@@ -41,7 +57,11 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
                 local handle = io.popen(commands[ext]:gsub("$FILE", FileName), 'r');
                 local result = handle:read("*a");
                 handle:close();
-                return result;
+                if (FieldIndex > 0) and (encoding[FieldIndex] ~= nil) then
+                    return convert(result, encoding[FieldIndex], 'utf8');
+                else
+                    return result;
+                end
             end
         end
     end
