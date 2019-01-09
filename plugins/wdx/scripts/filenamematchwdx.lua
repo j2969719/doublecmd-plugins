@@ -1,3 +1,10 @@
+-- luarocks-5.1 install luautf8
+
+local utf,strfunc = pcall(require,"lua-utf8")
+if not utf then
+    strfunc = string
+end
+
 local group_unknown = "No group"
 
 -- file groups 
@@ -71,7 +78,7 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
             for group = 1, #groups do
                 if (#groups[group] > 1) then
                     for i = 2, #groups[group] do
-                        if (string.find(FileName, groups[group][i])) then
+                        if (strfunc.find(FileName, groups[group][i])) then
                             return groups[group][1];
                         end
                     end
@@ -84,7 +91,7 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
     local target = getTargetStr(FileName, isDir, UnitIndex);
     if (target ~= nil) and (#pattern[FieldIndex] > 2) then
         for i = 3, #pattern[FieldIndex] do
-            local result = target:match(pattern[FieldIndex][i]);
+            local result = strfunc.match(target, pattern[FieldIndex][i]);
             if (result ~= nil) then
                 return result;
             end
@@ -112,21 +119,21 @@ function getPath(Str)
     if (Str == nil) then
         return nil;
     end
-    return string.match(Str, "(.*[" .. DelimPattern .. "])");
+    return strfunc.match(Str, "(.*[" .. DelimPattern .. "])");
 end
 
 function getFullname(Str)
     if (Str == nil) then
         return nil;
     end
-    return string.match(Str, "[" .. DelimPattern .. "]([^" .. DelimPattern .. "]+)$");
+    return strfunc.match(Str, "[" .. DelimPattern .. "]([^" .. DelimPattern .. "]+)$");
 end
 
 function getFilename(Str, IsDir)
     local FileName = nil;
     local FullName = getFullname(Str);
     if (FullName ~= nil) and (IsDir == false) then
-        FileName = string.match(FullName, "(.+)%..+");
+        FileName = strfunc.match(FullName, "(.+)%..+");
     end
     if (FileName ~= nil) then
         return FileName;
@@ -142,7 +149,7 @@ function getExt(Str, IsDir)
     if (getFilename(Str, IsDir) == getFullname(Str)) then
         return nil;
     end
-    return string.match(Str, ".+%.(.+)$");
+    return strfunc.match(Str, ".+%.(.+)$");
 end
 
 function getTargetStr(FullPath, IsDir, UnitIndex)
@@ -153,7 +160,7 @@ function getTargetStr(FullPath, IsDir, UnitIndex)
     elseif (UnitIndex == 2) then
         return getExt(FullPath, IsDir);
     elseif (UnitIndex == 3) then
-        return string.match(FullPath, "(.*[" .. DelimPattern .. "])");
+        return strfunc.match(FullPath, "(.*[" .. DelimPattern .. "])");
     elseif (UnitIndex == 4) then
         return FullPath;
     end
