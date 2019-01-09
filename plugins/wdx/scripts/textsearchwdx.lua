@@ -19,6 +19,7 @@ local encoding = {
     "cp437", "cp850", "cp852", "cp866", "cp874", "cp932", "cp936", "cp949", "cp950", 
     "iso88591", "iso88592", "iso885915", 
     "macintosh", "koi8", 
+    "ucs2le", "ucs2be", 
 }
 
 local convert = nil;
