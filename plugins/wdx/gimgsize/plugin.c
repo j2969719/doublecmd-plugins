@@ -2,6 +2,8 @@
 #include <gdk-pixbuf/gdk-pixbuf.h>
 #include "wdxplugin.h"
 
+#define imgtypes "jpeg|png|gif|svg|bmp|ico|xpm"
+
 typedef struct _field
 {
 	char *name;
@@ -13,10 +15,11 @@ typedef struct _field
 
 FIELD fields[] =
 {
-	{"width",	ft_numeric_32,	""},
-	{"height",	ft_numeric_32,	""},
-	{"size",	ft_string,	""},
-	{"description",	ft_string,	""},
+	{"width",	ft_numeric_32,			""},
+	{"height",	ft_numeric_32,			""},
+	{"size",	ft_string,			""},
+	{"type",	ft_multiplechoice,	  imgtypes},
+	{"description",	ft_string,			""},
 };
 
 int DCPCALL ContentGetSupportedField(int FieldIndex, char* FieldName, char* Units, int maxlen)
@@ -34,6 +37,9 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 	int width;
 	int height;
 	gchar *tmp;
+
+	if (!g_file_test(FileName, G_FILE_TEST_IS_REGULAR))
+		return ft_fileerror;
 
 	GdkPixbufFormat *fileinfo = gdk_pixbuf_get_file_info(FileName, &width, &height);
 
@@ -61,6 +67,16 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 		break;
 
 	case 3:
+		tmp = gdk_pixbuf_format_get_name(fileinfo);
+
+		if (tmp)
+			g_strlcpy((char*)FieldValue, tmp, maxlen-1);
+		else
+			return ft_fieldempty;
+
+		break;
+
+	case 4:
 		tmp = gdk_pixbuf_format_get_description(fileinfo);
 
 		if (tmp)

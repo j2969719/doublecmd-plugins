@@ -144,6 +144,9 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	gboolean is_certain = FALSE;
 	gint tb_last = 11, i;
 
+	if (!g_file_test(FileToLoad, G_FILE_TEST_IS_REGULAR))
+		return NULL;
+
 	gFix = gtk_vbox_new(FALSE, 1);
 	gtk_container_add(GTK_CONTAINER(GTK_WIDGET(ParentWin)), gFix);
 	mtb = gtk_toolbar_new();
