@@ -2,6 +2,7 @@ local cmd = "tar -xf"
 local params = ".PKGINFO -O"
 local output = ''
 local filename = ''
+local possible_licenses = "GPL|GPL2|GPL3|LGPL|LGPL2.1|LGPL3|AGPL|AGPL3|BSD|MIT|Apache|Python|PHP|RUBY|ZLIB|PSF|ISC|CCPL|CDDL|CPL|FDL|FDL1.2|FDL1.3|LPPL|MPL|MPL2|EPL|ZPL|W3C|Boost|PerlArtistic|Artistic2.0|custom"
 
 local fields = {
     {"pkgname",   8,   "\npkgname = ([^\n]+)"}, 
@@ -9,7 +10,8 @@ local fields = {
     {"pkgdesc",   8,   "\npkgdesc = ([^\n]+)"}, 
     {"url",       8,       "\nurl = ([^\n]+)"}, 
     {"packager",  8,  "\npackager = ([^\n]+)"}, 
-    {"license",   8,   "\nlicense = ([^\n]+)"}, 
+    {"license",   7,   "\nlicense = ([^\n]+)"}, 
+    {"license(s)",8,   "\nlicense = ([^\n]+)"}, 
     {"builddate", 8, "\nbuilddate = ([^\n]+)"}, 
     {"size",      2,      "\nsize = ([^\n]+)"}, 
     {"conflict",  8,  "\nconflict = ([^\n]+)"}, 
@@ -23,6 +25,8 @@ function ContentGetSupportedField(FieldIndex)
     if (fields[FieldIndex + 1] ~= nil ) then
         if (fields[FieldIndex + 1][1] == "arch") then
             return fields[FieldIndex + 1][1], "x86_64|i686|arm|armv6h|armv6h|aarch64|aarch64", fields[FieldIndex + 1][2];
+        elseif (fields[FieldIndex + 1][1] == "license") then
+            return fields[FieldIndex + 1][1], possible_licenses, fields[FieldIndex + 1][2];
         else
             return fields[FieldIndex + 1][1], "", fields[FieldIndex + 1][2];
         end
