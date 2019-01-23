@@ -68,6 +68,15 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	return gFix;
 }
 
+int DCPCALL ListLoadNext(HWND ParentWin,HWND PluginWin,char* FileToLoad,int ShowFlags)
+{
+	gchar* fileUri = g_filename_to_uri(FileToLoad, NULL, NULL);
+	webkit_web_view_load_uri(WEBKIT_WEB_VIEW(getFirstChild(PluginWin)), fileUri);
+	if (fileUri)
+		g_free(fileUri);
+	return LISTPLUGIN_OK;
+}
+
 void DCPCALL ListCloseWindow(HWND ListWin)
 {
 	gtk_widget_destroy(GTK_WIDGET(ListWin));

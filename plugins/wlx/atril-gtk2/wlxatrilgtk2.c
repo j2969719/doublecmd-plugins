@@ -59,6 +59,27 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	return gFix;
 }
 
+int DCPCALL ListLoadNext(HWND ParentWin,HWND PluginWin,char* FileToLoad,int ShowFlags)
+{
+	EvDocument *document;
+	EvDocumentModel *docmodel;
+
+	gchar* fileUri = g_filename_to_uri(FileToLoad, NULL, NULL);
+	document = EV_DOCUMENT(ev_document_factory_get_document(fileUri, NULL));
+
+	if (EV_IS_DOCUMENT(document))
+	{
+		docmodel = EV_DOCUMENT_MODEL(ev_document_model_new_with_document(document));
+		ev_view_set_model(EV_VIEW(getFirstChild(getFirstChild(GTK_WIDGET(PluginWin)))), docmodel);
+		g_object_unref(document);
+		g_object_unref(docmodel);
+	}
+	else
+		return LISTPLUGIN_ERROR;
+
+	return LISTPLUGIN_OK;
+}
+
 void DCPCALL ListCloseWindow(HWND ListWin)
 {
 	gtk_widget_destroy(GTK_WIDGET(ListWin));

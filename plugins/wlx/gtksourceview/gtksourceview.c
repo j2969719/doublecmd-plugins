@@ -102,6 +102,16 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	return gFix;
 }
 
+int DCPCALL ListLoadNext(HWND ParentWin,HWND PluginWin,char* FileToLoad,int ShowFlags)
+{
+	GtkSourceBuffer *sBuf = g_object_get_data(G_OBJECT(PluginWin), "srcbuf");
+	gtk_text_buffer_set_text(GTK_TEXT_BUFFER(sBuf), "", 0);
+
+	if (!open_file(sBuf, FileToLoad))
+		return LISTPLUGIN_ERROR;
+
+	return LISTPLUGIN_OK;
+}
 
 static gboolean open_file(GtkSourceBuffer *sBuf, const gchar *filename)
 {

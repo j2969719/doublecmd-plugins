@@ -162,6 +162,52 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 	return gFix;
 }
 
+int DCPCALL ListLoadNext(HWND ParentWin,HWND PluginWin,char* FileToLoad,int ShowFlags)
+{
+	GKeyFile *cfg;
+	GError *err = NULL;
+	gchar *file_ext, *mime_type, *cmdstr;
+	gchar *frmtcmd = NULL;
+	gchar **command;
+	gint argcp;
+
+	mime_type = get_mime_type(FileToLoad);
+	file_ext = get_file_ext(FileToLoad);
+
+	cfg = g_key_file_new();
+
+	if (!g_key_file_load_from_file(cfg, cfg_path, G_KEY_FILE_KEEP_COMMENTS, &err))
+		g_print("%s (%s): %s\n", _plgname, cfg_path, (err)->message);
+	else
+	{
+		if (file_ext)
+			frmtcmd = g_key_file_get_string(cfg, file_ext, "Command", NULL);
+
+		if (mime_type && ((!file_ext) || (!frmtcmd)))
+			frmtcmd = g_key_file_get_string(cfg, mime_type, "Command", NULL);
+
+	}
+
+	g_key_file_free(cfg);
+
+	if (!frmtcmd)
+		return LISTPLUGIN_ERROR;
+
+	cmdstr = g_strdup_printf(frmtcmd, g_shell_quote(FileToLoad));
+	g_shell_parse_argv(cmdstr, &argcp, &command, NULL);
+
+	if (err)
+		g_error_free(err);
+
+	if (!command)
+		return LISTPLUGIN_ERROR;
+
+	if (!vte_terminal_fork_command_full(VTE_TERMINAL(getFirstChild(getFirstChild(PluginWin))), VTE_PTY_DEFAULT, NULL, command, NULL, 0, NULL, NULL, NULL, NULL))
+		return LISTPLUGIN_ERROR;
+
+	return LISTPLUGIN_OK;
+}
+
 void DCPCALL ListCloseWindow(HANDLE ListWin)
 {
 	gtk_widget_destroy(GTK_WIDGET(ListWin));
