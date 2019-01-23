@@ -144,7 +144,7 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 
 	gchar *command = g_strdup_printf("%s %s --wid=%d %s", cmdstr, params, id, g_shell_quote(FileToLoad));
 
-	if (!g_shell_parse_argv (command, NULL, &argv, NULL))
+	if (!g_shell_parse_argv(command, NULL, &argv, NULL))
 	{
 		g_free(command);
 		gtk_widget_destroy(gFix);

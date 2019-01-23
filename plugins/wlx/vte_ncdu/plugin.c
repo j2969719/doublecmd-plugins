@@ -12,6 +12,14 @@
 gchar *font, *bgimage, *bgcolor, *cmdstr;
 gdouble saturation;
 
+static GtkWidget *getFirstChild(GtkWidget *w)
+{
+	GList *list = gtk_container_get_children(GTK_CONTAINER(w));
+	GtkWidget *result = GTK_WIDGET(list->data);
+	g_list_free(list);
+	return result;
+}
+
 HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 {
 	if (!g_file_test(FileToLoad, G_FILE_TEST_IS_DIR))
@@ -75,6 +83,30 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 
 	return gFix;
 }
+
+int DCPCALL ListLoadNext(HWND ParentWin,HWND PluginWin,char* FileToLoad,int ShowFlags)
+{
+	gchar **command = NULL;
+	gchar *tmpcmd;
+
+	if (!g_file_test(FileToLoad, G_FILE_TEST_IS_DIR))
+		return LISTPLUGIN_ERROR;
+
+	if (cmdstr)
+	{
+		tmpcmd = g_strdup_printf("%s %s", cmdstr, g_shell_quote(FileToLoad));
+		g_shell_parse_argv(tmpcmd, NULL, &command, NULL);
+	}
+
+	if (!command)
+		return LISTPLUGIN_ERROR;
+
+	if (!vte_terminal_fork_command_full(VTE_TERMINAL(getFirstChild(getFirstChild(PluginWin))), VTE_PTY_DEFAULT, FileToLoad, command, NULL, 0, NULL, NULL, NULL, NULL))
+		return LISTPLUGIN_ERROR;
+
+	return LISTPLUGIN_OK;
+}
+
 
 void DCPCALL ListCloseWindow(HANDLE ListWin)
 {
