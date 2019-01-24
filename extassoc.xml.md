@@ -59,3 +59,19 @@
       </Actions>
     </FileType>
 ```
+
+# Plugins
+```xml
+    <FileType>
+      <Name>Plugins</Name>
+      <IconFile>cm_configplugins</IconFile>
+      <ExtensionList>wcx|wlx|wfx|wdx|wdx64|wfx64|wlx64|wcx64</ExtensionList>
+      <Actions>
+        <Action>
+          <Name>Add Plugin</Name>
+          <Command>cm_AddPlugin</Command>
+          <Params>%p</Params>
+        </Action>
+      </Actions>
+    </FileType>
+```
