@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-01-24 20:59+0300\n"
-"PO-Revision-Date: 2019-01-24 21:00+0300\n"
+"POT-Creation-Date: 2019-01-25 00:31+0300\n"
+"PO-Revision-Date: 2019-01-25 00:32+0300\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "Language: ru\n"
@@ -63,13 +63,13 @@ msgstr "Копировать в буфер"
 #: ../wlx/imagemagick/wlximagemagick.c:197
 #: ../wlx/imagemagick/wlximagemagick.c:200 ../wlx/gtkimgview/gtkimgview.c:225
 #: ../wlx/gtkimgview/gtkimgview.c:228
-msgid "Rotare"
+msgid "Rotate"
 msgstr ""
 
 #: ../wlx/imagemagick/wlximagemagick.c:203
 #: ../wlx/imagemagick/wlximagemagick.c:206 ../wlx/gtkimgview/gtkimgview.c:231
 #: ../wlx/gtkimgview/gtkimgview.c:234
-msgid "Rotare Clockwise"
+msgid "Rotate Clockwise"
 msgstr ""
 
 #: ../wlx/imagemagick/wlximagemagick.c:209

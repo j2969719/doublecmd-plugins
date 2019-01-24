@@ -194,16 +194,16 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	gtk_widget_set_tooltip_text(GTK_WIDGET(tb_copy), _("Copy to Clipboard"));
 	g_signal_connect(G_OBJECT(tb_copy), "clicked", G_CALLBACK(tb_copy_clicked), (gpointer)(GtkWidget*)(view));
 
-	tb_rotare = gtk_tool_button_new(NULL, _("Rotare"));
+	tb_rotare = gtk_tool_button_new(NULL, _("Rotate"));
 	gtk_tool_button_set_icon_name(GTK_TOOL_BUTTON(tb_rotare), "object-rotate-left");
 	gtk_toolbar_insert(GTK_TOOLBAR(mtb), tb_rotare, 6);
-	gtk_widget_set_tooltip_text(GTK_WIDGET(tb_rotare), _("Rotare"));
+	gtk_widget_set_tooltip_text(GTK_WIDGET(tb_rotare), _("Rotate"));
 	g_signal_connect(G_OBJECT(tb_rotare), "clicked", G_CALLBACK(tb_rotare_clicked), (gpointer)(GtkWidget*)(view));
 
-	tb_rotare1 = gtk_tool_button_new(NULL, _("Rotare Clockwise"));
+	tb_rotare1 = gtk_tool_button_new(NULL, _("Rotate Clockwise"));
 	gtk_tool_button_set_icon_name(GTK_TOOL_BUTTON(tb_rotare1), "object-rotate-right");
 	gtk_toolbar_insert(GTK_TOOLBAR(mtb), tb_rotare1, 7);
-	gtk_widget_set_tooltip_text(GTK_WIDGET(tb_rotare1), _("Rotare Clockwise"));
+	gtk_widget_set_tooltip_text(GTK_WIDGET(tb_rotare1), _("Rotate Clockwise"));
 	g_signal_connect(G_OBJECT(tb_rotare1), "clicked", G_CALLBACK(tb_rotare1_clicked), (gpointer)(GtkWidget*)(view));
 
 	tb_hflip = gtk_tool_button_new(NULL, _("Flip Horizontally"));

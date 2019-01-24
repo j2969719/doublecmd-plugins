@@ -36,7 +36,7 @@ int DCPCALL ContentGetSupportedField(int FieldIndex, char* FieldName, char* Unit
 		return ft_nomorefields;
 
 	g_strlcpy(FieldName, gettext(fields[FieldIndex].name), maxlen-1);
-        g_strlcpy(Units, fields[FieldIndex].unit, maxlen-1);
+	g_strlcpy(Units, fields[FieldIndex].unit, maxlen-1);
 	return fields[FieldIndex].type;
 }
 

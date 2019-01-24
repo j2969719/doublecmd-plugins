@@ -43,7 +43,6 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 	if (!command)
 		return NULL;
 
-
 	gFix = gtk_vbox_new(FALSE, 0);
 	gtk_container_add(GTK_CONTAINER((GtkWidget*)(ParentWin)), gFix);
 
@@ -107,7 +106,6 @@ int DCPCALL ListLoadNext(HWND ParentWin,HWND PluginWin,char* FileToLoad,int Show
 	return LISTPLUGIN_OK;
 }
 
-
 void DCPCALL ListCloseWindow(HANDLE ListWin)
 {
 	gtk_widget_destroy(GTK_WIDGET(ListWin));
@@ -152,7 +150,7 @@ void DCPCALL ListSetDefaultParams(ListDefaultParamStruct* dps)
 		bgimage = g_key_file_get_string(cfg, "VTE", "BGImage", NULL);
 		bgcolor = g_key_file_get_string(cfg, "VTE", "BGTintColor", NULL);
 		saturation = g_key_file_get_double(cfg, "VTE", "BGSaturation", NULL);
-		cmdstr = g_key_file_get_string(cfg, _plgname, "Command", NULL);
+		cmdstr = g_key_file_get_string(cfg, "VTE", "Command", NULL);
 	}
 
 	g_key_file_free(cfg);
