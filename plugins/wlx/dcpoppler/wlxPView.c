@@ -21,24 +21,23 @@
 *      https://yassernour.wordpress.com/2010/04/04/how-hard-to-build-a-pdf-viewer/
 */
 
+#define _GNU_SOURCE
+
 #include <gtk/gtk.h>
 #include <gdk/gdkkeysyms.h>
 #include <cairo.h>
 #include <poppler.h>
 #include "wlxplugin.h"
 
+#include <dlfcn.h>
+
+#include <glib/gi18n.h>
+#include <locale.h>
+#define GETTEXT_PACKAGE "plugins"
+
 #define _detectstring "EXT=\"PDF\""
 #define kostyl 25
-#define T_FIRST_PAGE "First page"
-#define T_PREV_PAGE "Previous page"
-#define T_NEXT_PAGE "Next page"
-#define T_LAST_PAGE "Last page"
-#define T_SCALE_PAGE "Scale ~x"
-#define T_FIT_PAGE "Fit"
-#define T_TEXT_LAYER "Text"
-#define T_INFO_DOC "Info"
-#define T_INFO_DOC_LABEL "Title: %s\nAuthor: %s\nSubject: %s\nCreator: %s\nProducer: %s\nKeywords: %s\nVersion: %s"
-#define T_METADATA_NOTFOUND "metadata not found"
+
 
 void reset_scroll(GtkScrolledWindow *scrolled_window)
 {
@@ -100,7 +99,7 @@ static void view_set_page(GtkWidget *canvas, guint page)
 
 	cairo_surface_t *surface = g_object_get_data(G_OBJECT(canvas), "surface1");
 	cairo_surface_destroy(surface);
-	gchar *pstr = g_strdup_printf("%s%.1f", T_SCALE_PAGE, scale);
+	gchar *pstr = g_strdup_printf("%s%.1f", _("Scale ~x"), scale);
 	gtk_button_set_label(GTK_BUTTON(chkscale), pstr);
 
 	if ((pbox_width > kostyl) && (pbox_height > kostyl) && (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(chkscale))))
@@ -296,7 +295,7 @@ static void tb_text_clicked(GtkToolItem *toolbtn, GtkWidget *canvas)
 	guint current_page = GPOINTER_TO_UINT(g_object_get_data(G_OBJECT(canvas), "cpage"));
 	PopplerPage *ppage = poppler_document_get_page(document, current_page);
 	dialog = gtk_dialog_new();
-	gtk_window_set_title(GTK_WINDOW(dialog), T_TEXT_LAYER);
+	gtk_window_set_title(GTK_WINDOW(dialog), _("Text"));
 	gtk_window_set_modal(GTK_WINDOW(dialog), TRUE);
 	gtk_window_set_default_size(GTK_WINDOW(dialog), 400, 400);
 	gtk_container_border_width(GTK_CONTAINER(dialog), 2);
@@ -323,11 +322,12 @@ static void tb_info_clicked(GtkToolItem *toolbtn, GtkWidget *canvas)
 
 	PopplerDocument *document = g_object_get_data(G_OBJECT(canvas), "doc");
 	dialog = gtk_dialog_new();
-	gtk_window_set_title(GTK_WINDOW(dialog), T_INFO_DOC);
+	gtk_window_set_title(GTK_WINDOW(dialog), _("Info"));
 	gtk_window_set_modal(GTK_WINDOW(dialog), TRUE);
 	gtk_window_set_default_size(GTK_WINDOW(dialog), 400, 400);
 	gtk_container_border_width(GTK_CONTAINER(dialog), 5);
-	itext = g_strdup_printf(T_INFO_DOC_LABEL, poppler_document_get_title(document), poppler_document_get_author(document),
+	itext = g_strdup_printf(_("Title: %s\nAuthor: %s\nSubject: %s\nCreator: %s\nProducer: %s\nKeywords: %s\nVersion: %s"),
+	                        poppler_document_get_title(document), poppler_document_get_author(document),
 	                        poppler_document_get_subject(document), poppler_document_get_creator(document),
 	                        poppler_document_get_producer(document), poppler_document_get_keywords(document),
 	                        poppler_document_get_pdf_version_string(document));
@@ -343,7 +343,7 @@ static void tb_info_clicked(GtkToolItem *toolbtn, GtkWidget *canvas)
 	mtext = poppler_document_get_metadata(document);
 
 	if (!mtext)
-		mtext = T_METADATA_NOTFOUND;
+		mtext = _("metadata not found");
 
 	mlabel = gtk_label_new(mtext);
 	gtk_misc_set_alignment(GTK_MISC(mlabel), 0, 0);
@@ -419,26 +419,26 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 
 	tb_first = gtk_tool_button_new_from_stock(GTK_STOCK_GOTO_FIRST);
 	gtk_toolbar_insert(GTK_TOOLBAR(tb1), tb_first, 0);
-	gtk_tool_button_set_label(GTK_TOOL_BUTTON(tb_first), T_FIRST_PAGE);
-	gtk_widget_set_tooltip_text(GTK_WIDGET(tb_first), T_FIRST_PAGE);
+	gtk_tool_button_set_label(GTK_TOOL_BUTTON(tb_first), _("First page"));
+	gtk_widget_set_tooltip_text(GTK_WIDGET(tb_first), _("First page"));
 	g_signal_connect(G_OBJECT(tb_first), "clicked", G_CALLBACK(tb_first_clicked), (gpointer)canvas);
 
 	tb_back = gtk_tool_button_new_from_stock(GTK_STOCK_GO_BACK);
 	gtk_toolbar_insert(GTK_TOOLBAR(tb1), tb_back, 1);
-	gtk_tool_button_set_label(GTK_TOOL_BUTTON(tb_back), T_PREV_PAGE);
-	gtk_widget_set_tooltip_text(GTK_WIDGET(tb_back), T_PREV_PAGE);
+	gtk_tool_button_set_label(GTK_TOOL_BUTTON(tb_back), _("Previous page"));
+	gtk_widget_set_tooltip_text(GTK_WIDGET(tb_back), _("Previous page"));
 	g_signal_connect(G_OBJECT(tb_back), "clicked", G_CALLBACK(tb_back_clicked), (gpointer)canvas);
 
 	tb_forward = gtk_tool_button_new_from_stock(GTK_STOCK_GO_FORWARD);
 	gtk_toolbar_insert(GTK_TOOLBAR(tb1), tb_forward, 2);
-	gtk_tool_button_set_label(GTK_TOOL_BUTTON(tb_forward), T_NEXT_PAGE);
-	gtk_widget_set_tooltip_text(GTK_WIDGET(tb_forward), T_NEXT_PAGE);
+	gtk_tool_button_set_label(GTK_TOOL_BUTTON(tb_forward), _("Next page"));
+	gtk_widget_set_tooltip_text(GTK_WIDGET(tb_forward), _("Next page"));
 	g_signal_connect(G_OBJECT(tb_forward), "clicked", G_CALLBACK(tb_forward_clicked), (gpointer)canvas);
 
 	tb_last = gtk_tool_button_new_from_stock(GTK_STOCK_GOTO_LAST);
 	gtk_toolbar_insert(GTK_TOOLBAR(tb1), tb_last, 3);
-	gtk_tool_button_set_label(GTK_TOOL_BUTTON(tb_last), T_LAST_PAGE);
-	gtk_widget_set_tooltip_text(GTK_WIDGET(tb_last), T_LAST_PAGE);
+	gtk_tool_button_set_label(GTK_TOOL_BUTTON(tb_last), _("Last page"));
+	gtk_widget_set_tooltip_text(GTK_WIDGET(tb_last), _("Last page"));
 	g_signal_connect(G_OBJECT(tb_last), "clicked", G_CALLBACK(tb_last_clicked), (gpointer)canvas);
 
 	tb_selector = gtk_tool_item_new();
@@ -465,8 +465,8 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 
 	tb_fit = gtk_toggle_tool_button_new_from_stock(GTK_STOCK_ZOOM_FIT);
 	gtk_toolbar_insert(GTK_TOOLBAR(tb1), tb_fit, 8);
-	gtk_tool_button_set_label(GTK_TOOL_BUTTON(tb_fit), T_FIT_PAGE);
-	gtk_widget_set_tooltip_text(GTK_WIDGET(tb_fit), T_FIT_PAGE);
+	gtk_tool_button_set_label(GTK_TOOL_BUTTON(tb_fit), _("Fit"));
+	gtk_widget_set_tooltip_text(GTK_WIDGET(tb_fit), _("Fit"));
 	g_signal_connect(G_OBJECT(tb_fit), "toggled", G_CALLBACK(tb_fit_clicked), (gpointer)canvas);
 
 	tb_separator2 = gtk_separator_tool_item_new();
@@ -474,14 +474,14 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 
 	tb_text = gtk_tool_button_new_from_stock(GTK_STOCK_SELECT_ALL);
 	gtk_toolbar_insert(GTK_TOOLBAR(tb1), tb_text, 10);
-	gtk_tool_button_set_label(GTK_TOOL_BUTTON(tb_text), T_TEXT_LAYER);
-	gtk_widget_set_tooltip_text(GTK_WIDGET(tb_text), T_TEXT_LAYER);
+	gtk_tool_button_set_label(GTK_TOOL_BUTTON(tb_text), _("Text"));
+	gtk_widget_set_tooltip_text(GTK_WIDGET(tb_text), _("Text"));
 	g_signal_connect(G_OBJECT(tb_text), "clicked", G_CALLBACK(tb_text_clicked), (gpointer)canvas);
 
 	tb_info = gtk_tool_button_new_from_stock(GTK_STOCK_INFO);
 	gtk_toolbar_insert(GTK_TOOLBAR(tb1), tb_info, 11);
-	gtk_tool_button_set_label(GTK_TOOL_BUTTON(tb_info), T_INFO_DOC);
-	gtk_widget_set_tooltip_text(GTK_WIDGET(tb_info), T_INFO_DOC);
+	gtk_tool_button_set_label(GTK_TOOL_BUTTON(tb_info), _("Info"));
+	gtk_widget_set_tooltip_text(GTK_WIDGET(tb_info), _("Info"));
 	g_signal_connect(G_OBJECT(tb_info), "clicked", G_CALLBACK(tb_info_clicked), (gpointer)canvas);
 
 	g_signal_connect(G_OBJECT(pBox), "size-allocate", G_CALLBACK(p_getwidth), (gpointer)canvas);
@@ -509,10 +509,26 @@ void DCPCALL ListCloseWindow(HWND ListWin)
 
 void DCPCALL ListGetDetectString(char* DetectString, int maxlen)
 {
-	g_strlcpy(DetectString, _detectstring, maxlen-1);
+	g_strlcpy(DetectString, _detectstring, maxlen - 1);
 }
 
 int DCPCALL ListSearchDialog(HWND ListWin, int FindNext)
 {
 	return LISTPLUGIN_OK;
+}
+
+void DCPCALL ListSetDefaultParams(ListDefaultParamStruct* dps)
+{
+	Dl_info dlinfo;
+	const gchar* dir_f = "%s/langs";
+
+	memset(&dlinfo, 0, sizeof(dlinfo));
+
+	if (dladdr(dir_f, &dlinfo) != 0)
+	{
+		setlocale(LC_ALL, "");
+		bindtextdomain(GETTEXT_PACKAGE, g_strdup_printf(dir_f,
+		                g_path_get_dirname(dlinfo.dli_fname)));
+		textdomain(GETTEXT_PACKAGE);
+	}
 }

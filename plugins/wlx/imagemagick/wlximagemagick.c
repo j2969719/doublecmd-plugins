@@ -1,7 +1,15 @@
+#define _GNU_SOURCE
+
 #include <MagickWand/MagickWand.h>
 #include <gtkimageview/gtkimagescrollwin.h>
 #include <gtkimageview/gtkimageview.h>
 #include "wlxplugin.h"
+
+#include <dlfcn.h>
+
+#include <glib/gi18n.h>
+#include <locale.h>
+#define GETTEXT_PACKAGE "plugins"
 
 #define _detectstring "(EXT=\"DDS\")|(EXT=\"TGA\")|(EXT=\"PCX\")|(EXT=\"BMP\")|(EXT=\"WEBP\")"
 
@@ -160,22 +168,22 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 
 	tb_zoom_in = gtk_tool_button_new_from_stock(GTK_STOCK_ZOOM_IN);
 	gtk_toolbar_insert(GTK_TOOLBAR(mtb), tb_zoom_in, 0);
-	gtk_widget_set_tooltip_text(GTK_WIDGET(tb_zoom_in), "Zoom In");
+	gtk_widget_set_tooltip_text(GTK_WIDGET(tb_zoom_in), _("Zoom In"));
 	g_signal_connect(G_OBJECT(tb_zoom_in), "clicked", G_CALLBACK(tb_zoom_in_clicked), (gpointer)(GtkWidget*)(view));
 
 	tb_zoom_out = gtk_tool_button_new_from_stock(GTK_STOCK_ZOOM_OUT);
 	gtk_toolbar_insert(GTK_TOOLBAR(mtb), tb_zoom_out, 1);
-	gtk_widget_set_tooltip_text(GTK_WIDGET(tb_zoom_out), "Zoom Out");
+	gtk_widget_set_tooltip_text(GTK_WIDGET(tb_zoom_out), _("Zoom Out"));
 	g_signal_connect(G_OBJECT(tb_zoom_out), "clicked", G_CALLBACK(tb_zoom_out_clicked), (gpointer)(GtkWidget*)(view));
 
 	tb_orgsize = gtk_tool_button_new_from_stock(GTK_STOCK_ZOOM_100);
 	gtk_toolbar_insert(GTK_TOOLBAR(mtb), tb_orgsize, 2);
-	gtk_widget_set_tooltip_text(GTK_WIDGET(tb_orgsize), "Original Size");
+	gtk_widget_set_tooltip_text(GTK_WIDGET(tb_orgsize), _("Original Size"));
 	g_signal_connect(G_OBJECT(tb_orgsize), "clicked", G_CALLBACK(tb_orgsize_clicked), (gpointer)(GtkWidget*)(view));
 
 	tb_fit = gtk_tool_button_new_from_stock(GTK_STOCK_ZOOM_FIT);
 	gtk_toolbar_insert(GTK_TOOLBAR(mtb), tb_fit, 3);
-	gtk_widget_set_tooltip_text(GTK_WIDGET(tb_fit), "Fit");
+	gtk_widget_set_tooltip_text(GTK_WIDGET(tb_fit), _("Fit"));
 	g_signal_connect(G_OBJECT(tb_fit), "clicked", G_CALLBACK(tb_fit_clicked), (gpointer)(GtkWidget*)(view));
 
 	tb_separator = gtk_separator_tool_item_new();
@@ -183,31 +191,31 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 
 	tb_copy = gtk_tool_button_new_from_stock(GTK_STOCK_COPY);
 	gtk_toolbar_insert(GTK_TOOLBAR(mtb), tb_copy, 5);
-	gtk_widget_set_tooltip_text(GTK_WIDGET(tb_copy), "Copy to Clipboard");
+	gtk_widget_set_tooltip_text(GTK_WIDGET(tb_copy), _("Copy to Clipboard"));
 	g_signal_connect(G_OBJECT(tb_copy), "clicked", G_CALLBACK(tb_copy_clicked), (gpointer)(GtkWidget*)(view));
 
-	tb_rotare = gtk_tool_button_new(NULL, "Rotare");
+	tb_rotare = gtk_tool_button_new(NULL, _("Rotare"));
 	gtk_tool_button_set_icon_name(GTK_TOOL_BUTTON(tb_rotare), "object-rotate-left");
 	gtk_toolbar_insert(GTK_TOOLBAR(mtb), tb_rotare, 6);
-	gtk_widget_set_tooltip_text(GTK_WIDGET(tb_rotare), "Rotare");
+	gtk_widget_set_tooltip_text(GTK_WIDGET(tb_rotare), _("Rotare"));
 	g_signal_connect(G_OBJECT(tb_rotare), "clicked", G_CALLBACK(tb_rotare_clicked), (gpointer)(GtkWidget*)(view));
 
-	tb_rotare1 = gtk_tool_button_new(NULL, "Rotare Clockwise");
+	tb_rotare1 = gtk_tool_button_new(NULL, _("Rotare Clockwise"));
 	gtk_tool_button_set_icon_name(GTK_TOOL_BUTTON(tb_rotare1), "object-rotate-right");
 	gtk_toolbar_insert(GTK_TOOLBAR(mtb), tb_rotare1, 7);
-	gtk_widget_set_tooltip_text(GTK_WIDGET(tb_rotare1), "Rotare Clockwise");
+	gtk_widget_set_tooltip_text(GTK_WIDGET(tb_rotare1), _("Rotare Clockwise"));
 	g_signal_connect(G_OBJECT(tb_rotare1), "clicked", G_CALLBACK(tb_rotare1_clicked), (gpointer)(GtkWidget*)(view));
 
-	tb_hflip = gtk_tool_button_new(NULL, "Flip Horizontally");
+	tb_hflip = gtk_tool_button_new(NULL, _("Flip Horizontally"));
 	gtk_tool_button_set_icon_name(GTK_TOOL_BUTTON(tb_hflip), "object-flip-horizontal");
 	gtk_toolbar_insert(GTK_TOOLBAR(mtb), tb_hflip, 8);
-	gtk_widget_set_tooltip_text(GTK_WIDGET(tb_hflip), "Flip Horizontally");
+	gtk_widget_set_tooltip_text(GTK_WIDGET(tb_hflip), _("Flip Horizontally"));
 	g_signal_connect(G_OBJECT(tb_hflip), "clicked", G_CALLBACK(tb_hflip_clicked), (gpointer)(GtkWidget*)(view));
 
-	tb_vflip = gtk_tool_button_new(NULL, "Flip Vertically");
+	tb_vflip = gtk_tool_button_new(NULL, _("Flip Vertically"));
 	gtk_tool_button_set_icon_name(GTK_TOOL_BUTTON(tb_vflip), "object-flip-vertical");
 	gtk_toolbar_insert(GTK_TOOLBAR(mtb), tb_vflip, 9);
-	gtk_widget_set_tooltip_text(GTK_WIDGET(tb_vflip), "Flip Vertically");
+	gtk_widget_set_tooltip_text(GTK_WIDGET(tb_vflip), _("Flip Vertically"));
 	g_signal_connect(G_OBJECT(tb_vflip), "clicked", G_CALLBACK(tb_vflip_clicked), (gpointer)(GtkWidget*)(view));
 
 	tb_separator1 = gtk_separator_tool_item_new();
@@ -257,4 +265,20 @@ int DCPCALL ListSendCommand(HWND ListWin, int Command, int Parameter)
 int DCPCALL ListSearchDialog(HWND ListWin, int FindNext)
 {
 	return LISTPLUGIN_OK;
+}
+
+void DCPCALL ListSetDefaultParams(ListDefaultParamStruct* dps)
+{
+	Dl_info dlinfo;
+	const gchar* dir_f = "%s/langs";
+
+	memset(&dlinfo, 0, sizeof(dlinfo));
+
+	if (dladdr(dir_f, &dlinfo) != 0)
+	{
+		setlocale(LC_ALL, "");
+		bindtextdomain(GETTEXT_PACKAGE, g_strdup_printf(dir_f,
+		                g_path_get_dirname(dlinfo.dli_fname)));
+		textdomain(GETTEXT_PACKAGE);
+	}
 }

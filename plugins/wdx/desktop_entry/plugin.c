@@ -1,7 +1,16 @@
+#define _GNU_SOURCE
+
 #include <glib.h>
 #include <gio/gio.h>
 #include <gio/gdesktopappinfo.h>
 #include "wdxplugin.h"
+
+
+#include <dlfcn.h>
+
+#include <glib/gi18n.h>
+#include <locale.h>
+#define GETTEXT_PACKAGE "plugins"
 
 #define _detectstring "EXT=\"desktop\""
 
@@ -16,29 +25,29 @@ typedef struct _field
 
 FIELD fields[] =
 {
-	{"Name",		ft_string,	  "locale|default"},
-	{"Comment",		ft_string,	  "locale|default"},
-	{"Genetic Name",	ft_string,	  "locale|default"},
-	{"Exec",		ft_string,			""},
-	{"TryExec",		ft_string,			""},
-	{"Path",		ft_string,			""},
-	{"URL",			ft_string,			""},
-	{"Icon",		ft_string,	  "locale|default"},
-	{"Categories",		ft_string,			""},
-	{"Hidden",		ft_boolean,			""},
-	{"NoDisplay",		ft_boolean,			""},
-	{"Shown in menus",	ft_boolean,			""},
-	{"Terminal",		ft_boolean,			""},
-	{"StartupNotify",	ft_boolean,			""},
-	{"DBusActivatable",	ft_boolean,			""},
-	{"StartupWMClass",	ft_string,			""},
-	{"Type",		ft_string,			""},
-	{"OnlyShowIn",		ft_string,			""},
-	{"NotShowIn",		ft_string,			""},
-	{"MimeType",		ft_string,			""},
-	{"Actions",		ft_string,			""},
-	{"Keywords",		ft_string,	  "locale|default"},
-	{"Implements",		ft_string,			""},
+	{N_("Name"),		ft_string,	N_("locale|default")},
+	{N_("Comment"),		ft_string,	N_("locale|default")},
+	{N_("Genetic Name"),	ft_string,	N_("locale|default")},
+	{N_("Exec"),		ft_string,			  ""},
+	{N_("TryExec"),		ft_string,			  ""},
+	{N_("Path"),		ft_string,			  ""},
+	{N_("URL"),		ft_string,			  ""},
+	{N_("Icon"),		ft_string,	N_("locale|default")},
+	{N_("Categories"),	ft_string,			  ""},
+	{N_("Hidden"),		ft_boolean,			  ""},
+	{N_("NoDisplay"),	ft_boolean,			  ""},
+	{N_("Shown in menus"),	ft_boolean,			  ""},
+	{N_("Terminal"),	ft_boolean,			  ""},
+	{N_("StartupNotify"),	ft_boolean,			  ""},
+	{N_("DBusActivatable"),	ft_boolean,			  ""},
+	{N_("StartupWMClass"),	ft_string,			  ""},
+	{N_("Type"),		ft_string,			  ""},
+	{N_("OnlyShowIn"),	ft_string,			  ""},
+	{N_("NotShowIn"),	ft_string,			  ""},
+	{N_("MimeType"),	ft_string,			  ""},
+	{N_("Actions"),		ft_string,			  ""},
+	{N_("Keywords"),	ft_string,	N_("locale|default")},
+	{N_("Implements"),	ft_string,			  ""},
 };
 
 int DCPCALL ContentGetSupportedField(int FieldIndex, char* FieldName, char* Units, int maxlen)
@@ -46,8 +55,13 @@ int DCPCALL ContentGetSupportedField(int FieldIndex, char* FieldName, char* Unit
 	if (FieldIndex < 0 || FieldIndex >= fieldcount)
 		return ft_nomorefields;
 
-	g_strlcpy(FieldName, fields[FieldIndex].name, maxlen - 1);
-	g_strlcpy(Units, fields[FieldIndex].unit, maxlen - 1);
+	g_strlcpy(FieldName, gettext(fields[FieldIndex].name), maxlen - 1);
+
+	if (fields[FieldIndex].unit != "")
+		g_strlcpy(Units, gettext(fields[FieldIndex].unit), maxlen - 1);
+	else
+		g_strlcpy(Units, "", maxlen - 1);
+
 	return fields[FieldIndex].type;
 }
 
@@ -155,3 +169,16 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 		return fields[FieldIndex].type;
 }
 
+void DCPCALL ContentSetDefaultParams(ContentDefaultParamStruct* dps)
+{
+	Dl_info dlinfo;
+
+	memset(&dlinfo, 0, sizeof(dlinfo));
+
+	if (dladdr(fields, &dlinfo) != 0)
+	{
+		setlocale (LC_ALL, "");
+		bindtextdomain(GETTEXT_PACKAGE, g_strdup_printf("%s/langs", g_path_get_dirname(dlinfo.dli_fname)));
+		textdomain(GETTEXT_PACKAGE);
+	}
+}

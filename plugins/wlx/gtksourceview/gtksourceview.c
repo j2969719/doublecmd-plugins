@@ -18,12 +18,16 @@
 #include <string.h>
 #include "wlxplugin.h"
 
+#include <glib/gi18n.h>
+#include <locale.h>
+#define GETTEXT_PACKAGE "plugins"
+
 #define _detectstring "EXT=\"C\"|EXT=\"H\"|EXT=\"LUA\"|EXT=\"CPP\"|EXT=\"HPP\"|EXT=\"PAS\"|\
 EXT=\"CSS\"|EXT=\"SH\"|EXT=\"XML\"|EXT=\"INI\"|EXT=\"DIFF\"|EXT=\"PATCH\"|EXT=\"PO\"|EXT=\"PY\"|\
 EXT=\"XSL\"|EXT=\"LPR\"|EXT=\"PP\"|EXT=\"LPI\"|EXT=\"LFM\"|EXT=\"LPK\"|EXT=\"DOF\"|EXT=\"DPR\""
 
 GtkWrapMode wrap_mode;
-gchar *font, *style, *nfstr, *ext_pascal, *ext_xml, *ext_ini;
+gchar *font, *style, *ext_pascal, *ext_xml, *ext_ini;
 gboolean line_num, hcur_line, draw_spaces, no_cursor;
 gint s_tab, p_above, p_below;
 
@@ -170,7 +174,7 @@ static gboolean open_file(GtkSourceBuffer *sBuf, const gchar *filename)
 		return FALSE;
 
 	gtk_source_buffer_set_language(sBuf, language);
-	g_print("Language: [%s]\n", gtk_source_language_get_name(language));
+	g_print("%s [%s]\n", _("Language:"), gtk_source_language_get_name(language));
 
 
 	/* Now load the file from Disk */
@@ -184,7 +188,7 @@ static gboolean open_file(GtkSourceBuffer *sBuf, const gchar *filename)
 
 	if (g_io_channel_set_encoding(io, "utf-8", &err) != G_IO_STATUS_NORMAL)
 	{
-		g_print("gtksourceview.wlx (%s): Failed to set encoding: %s\n", filename, (err)->message);
+		g_print("gtksourceview.wlx (%s): %s: %s\n", filename, _("Failed to set encoding"), (err)->message);
 		return FALSE;
 	}
 
@@ -297,7 +301,7 @@ int DCPCALL ListSearchText(HWND ListWin, char* SearchString, int SearchParameter
 	{
 		GtkWidget *dialog = gtk_message_dialog_new(GTK_WINDOW(gtk_widget_get_toplevel(GTK_WIDGET(ListWin))),
 		                    GTK_DIALOG_MODAL, GTK_MESSAGE_INFO, GTK_BUTTONS_OK,
-		                    "\"%s\" %s!", SearchString, nfstr);
+		                    _("\"%s\" not found!"), SearchString);
 		gtk_dialog_run(GTK_DIALOG(dialog));
 		gtk_widget_destroy(dialog);
 	}
@@ -346,6 +350,10 @@ void DCPCALL ListSetDefaultParams(ListDefaultParamStruct* dps)
 
 		if (pos)
 			strcpy(pos + 1, cfg_file);
+
+		setlocale (LC_ALL, "");
+		bindtextdomain(GETTEXT_PACKAGE, g_strdup_printf("%s/langs", g_path_get_dirname(dlinfo.dli_fname)));
+		textdomain(GETTEXT_PACKAGE);
 	}
 
 	cfg = g_key_file_new();
@@ -360,7 +368,6 @@ void DCPCALL ListSetDefaultParams(ListDefaultParamStruct* dps)
 		hcur_line = TRUE;
 		draw_spaces = TRUE;
 		no_cursor = TRUE;
-		nfstr = "not found";
 		s_tab = 8;
 		p_above = 0;
 		p_below = 0;
@@ -413,11 +420,6 @@ void DCPCALL ListSetDefaultParams(ListDefaultParamStruct* dps)
 			no_cursor = FALSE;
 		else
 			no_cursor = TRUE;
-
-		nfstr = g_key_file_get_string(cfg, "Appearance", "NotFoundStr", NULL);
-
-		if (!nfstr)
-			nfstr = "not found";
 
 		if (err)
 			err = NULL;

@@ -1,6 +1,6 @@
 CC = gcc
 CFLAGS = -shared -fPIC -Wl,--no-as-needed
-INCLUDES = `pkg-config --cflags --libs gtk+-2.0 vte` -lmagic -I/usr/include/magic -I../../sdk
+INCLUDES = `pkg-config --cflags --libs gtk+-2.0 vte` -I../../sdk
 PLUGNAME = yavteplg.wlx
 
 all:

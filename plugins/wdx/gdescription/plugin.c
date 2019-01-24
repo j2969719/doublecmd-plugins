@@ -1,12 +1,20 @@
+#define _GNU_SOURCE
+
 #include <glib.h>
 #include <gio/gio.h>
 #include "wdxplugin.h"
+
+#include <dlfcn.h>
+
+#include <glib/gi18n.h>
+#include <locale.h>
+#define GETTEXT_PACKAGE "plugins"
 
 int DCPCALL ContentGetSupportedField(int FieldIndex, char* FieldName, char* Units, int maxlen)
 {
 	if (FieldIndex == 0)
 	{
-		g_strlcpy(FieldName, "description", maxlen-1);
+		g_strlcpy(FieldName, _("description"), maxlen-1);
 		return ft_string;
 	}
 	else
@@ -48,4 +56,20 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 	}
 
 	return ft_fieldempty;
+}
+
+void DCPCALL ContentSetDefaultParams(ContentDefaultParamStruct* dps)
+{
+	Dl_info dlinfo;
+	const gchar* dir_f = "%s/langs";
+
+	memset(&dlinfo, 0, sizeof(dlinfo));
+
+	if (dladdr(dir_f, &dlinfo) != 0)
+	{
+		setlocale(LC_ALL, "");
+		bindtextdomain(GETTEXT_PACKAGE, g_strdup_printf(dir_f,
+		                g_path_get_dirname(dlinfo.dli_fname)));
+		textdomain(GETTEXT_PACKAGE);
+	}
 }

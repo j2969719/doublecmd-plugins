@@ -3,7 +3,6 @@
 #include <gdk/gdkx.h>
 #include <dlfcn.h>
 #include <glib.h>
-#include <magic.h>
 #include <string.h>
 #include "wlxplugin.h"
 
@@ -42,22 +41,21 @@ gchar *get_file_ext(const gchar *Filename)
 	return result;
 }
 
-gchar *get_mime_type(const gchar *Filename)
+const gchar *get_mime_type(const gchar *Filename)
 {
-	magic_t magic_cookie;
-	gchar *result;
+	GFile *gfile = g_file_new_for_path(Filename);
 
-	magic_cookie = magic_open(MAGIC_MIME_TYPE | MAGIC_SYMLINK);
-
-	if (magic_load(magic_cookie, NULL) != 0)
-	{
-		magic_close(magic_cookie);
+	if (!gfile)
 		return NULL;
-	}
 
-	result = g_strdup(magic_file(magic_cookie, Filename));
-	magic_close(magic_cookie);
-	return result;
+	GFileInfo *fileinfo = g_file_query_info(gfile, G_FILE_ATTRIBUTE_STANDARD_CONTENT_TYPE, G_FILE_QUERY_INFO_NOFOLLOW_SYMLINKS, NULL, NULL);
+
+	if (!fileinfo)
+		return NULL;
+
+	const gchar *content_type = g_file_info_get_content_type(fileinfo);
+
+	return content_type;
 }
 
 static gchar *cfg_get_frmt_str(GKeyFile *Cfg, const gchar *Group)
@@ -106,7 +104,7 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	GError *err = NULL;
 	GtkWidget *gFix;
 	GtkWidget *socket;
-	gchar *file_ext, *mime_type;
+	const gchar *file_ext, *mime_type;
 	gchar *command;
 	gchar *frmt_str = NULL;
 

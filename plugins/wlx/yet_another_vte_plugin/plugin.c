@@ -2,18 +2,20 @@
 #include <gtk/gtk.h>
 #include <vte/vte.h>
 #include <glib.h>
-#include <magic.h>
 #include <dlfcn.h>
 #include <limits.h>
 #include <string.h>
 #include "wlxplugin.h"
+
+#include <glib/gi18n.h>
+#include <locale.h>
+#define GETTEXT_PACKAGE "plugins"
 
 #define _detectstring "EXT=\"*\""
 #define _plgname "yavteplg.wlx"
 
 static char cfg_path[PATH_MAX];
 const char* cfg_file = "settings.ini";
-const gchar *_nfstr = "not found";
 
 static GtkWidget *getFirstChild(GtkWidget *w)
 {
@@ -50,29 +52,28 @@ gchar *get_file_ext(const gchar *Filename)
 	return result;
 }
 
-gchar *get_mime_type(const gchar *Filename)
+const gchar *get_mime_type(const gchar *Filename)
 {
-	magic_t magic_cookie;
-	gchar *result;
+	GFile *gfile = g_file_new_for_path(Filename);
 
-	magic_cookie = magic_open(MAGIC_MIME_TYPE | MAGIC_SYMLINK);
-
-	if (magic_load(magic_cookie, NULL) != 0)
-	{
-		magic_close(magic_cookie);
+	if (!gfile)
 		return NULL;
-	}
 
-	result = g_strdup(magic_file(magic_cookie, Filename));
-	magic_close(magic_cookie);
-	return result;
+	GFileInfo *fileinfo = g_file_query_info(gfile, G_FILE_ATTRIBUTE_STANDARD_CONTENT_TYPE, G_FILE_QUERY_INFO_NOFOLLOW_SYMLINKS, NULL, NULL);
+
+	if (!fileinfo)
+		return NULL;
+
+	const gchar *content_type = g_file_info_get_content_type(fileinfo);
+
+	return content_type;
 }
 
 HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 {
 	GKeyFile *cfg;
 	GError *err = NULL;
-	gchar *file_ext, *mime_type;
+	const gchar *file_ext, *mime_type;
 	gchar *font, *bgimage, *bgcolor, *cmdstr;
 	gchar *frmtcmd = NULL;
 	gchar **command;
@@ -166,7 +167,8 @@ int DCPCALL ListLoadNext(HWND ParentWin,HWND PluginWin,char* FileToLoad,int Show
 {
 	GKeyFile *cfg;
 	GError *err = NULL;
-	gchar *file_ext, *mime_type, *cmdstr;
+	const gchar *file_ext, *mime_type;
+	gchar *cmdstr;
 	gchar *frmtcmd = NULL;
 	gchar **command;
 	gint argcp;
@@ -231,6 +233,10 @@ void DCPCALL ListSetDefaultParams(ListDefaultParamStruct* dps)
 
 		if (pos)
 			strcpy(pos + 1, cfg_file);
+
+		setlocale (LC_ALL, "");
+		bindtextdomain(GETTEXT_PACKAGE, g_strdup_printf("%s/langs", g_path_get_dirname(dlinfo.dli_fname)));
+		textdomain(GETTEXT_PACKAGE);
 	}
 }
 
@@ -273,7 +279,7 @@ int DCPCALL ListSearchText(HWND ListWin, char* SearchString, int SearchParameter
 	{
 		GtkWidget *dialog = gtk_message_dialog_new(GTK_WINDOW(gtk_widget_get_toplevel(GTK_WIDGET(ListWin))),
 		                    GTK_DIALOG_MODAL, GTK_MESSAGE_INFO, GTK_BUTTONS_OK,
-		                    "\"%s\" %s!", SearchString, _nfstr);
+		                    _("\"%s\" not found!"), SearchString);
 		gtk_dialog_run(GTK_DIALOG(dialog));
 		gtk_widget_destroy(dialog);
 	}

@@ -1,0 +1,645 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2019-01-24 20:59+0300\n"
+"PO-Revision-Date: 2019-01-24 21:00+0300\n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"Language: ru\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Poedit 2.2.1\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
+"%10<=4 && (n%100<12 || n%100>14) ? 1 : 2);\n"
+
+#: ../wlx/vte_in_quickview/plugin.c:48
+msgid "Copy"
+msgstr ""
+
+#: ../wlx/vte_in_quickview/plugin.c:49
+msgid "Paste"
+msgstr ""
+
+#: ../wlx/vte_in_quickview/plugin.c:50
+msgid "Send CRTL+C"
+msgstr ""
+
+#: ../wlx/vte_in_quickview/plugin.c:51
+msgid "Send CTRL+Z"
+msgstr ""
+
+#: ../wlx/vte_in_quickview/plugin.c:67
+msgid "hit ctrl+q or type 'exit' to remove grab"
+msgstr ""
+
+#: ../wlx/imagemagick/wlximagemagick.c:171 ../wlx/gtkimgview/gtkimgview.c:199
+msgid "Zoom In"
+msgstr "Увеличить"
+
+#: ../wlx/imagemagick/wlximagemagick.c:176 ../wlx/gtkimgview/gtkimgview.c:204
+msgid "Zoom Out"
+msgstr "Уменьшить"
+
+#: ../wlx/imagemagick/wlximagemagick.c:181 ../wlx/gtkimgview/gtkimgview.c:209
+msgid "Original Size"
+msgstr "Исходный размер"
+
+#: ../wlx/imagemagick/wlximagemagick.c:186 ../wlx/gtkimgview/gtkimgview.c:214
+#: ../wlx/dcpoppler/wlxPView.c:468 ../wlx/dcpoppler/wlxPView.c:469
+msgid "Fit"
+msgstr ""
+
+#: ../wlx/imagemagick/wlximagemagick.c:194 ../wlx/gtkimgview/gtkimgview.c:222
+msgid "Copy to Clipboard"
+msgstr "Копировать в буфер"
+
+#: ../wlx/imagemagick/wlximagemagick.c:197
+#: ../wlx/imagemagick/wlximagemagick.c:200 ../wlx/gtkimgview/gtkimgview.c:225
+#: ../wlx/gtkimgview/gtkimgview.c:228
+msgid "Rotare"
+msgstr ""
+
+#: ../wlx/imagemagick/wlximagemagick.c:203
+#: ../wlx/imagemagick/wlximagemagick.c:206 ../wlx/gtkimgview/gtkimgview.c:231
+#: ../wlx/gtkimgview/gtkimgview.c:234
+msgid "Rotare Clockwise"
+msgstr ""
+
+#: ../wlx/imagemagick/wlximagemagick.c:209
+#: ../wlx/imagemagick/wlximagemagick.c:212 ../wlx/gtkimgview/gtkimgview.c:237
+#: ../wlx/gtkimgview/gtkimgview.c:240
+msgid "Flip Horizontally"
+msgstr ""
+
+#: ../wlx/imagemagick/wlximagemagick.c:215
+#: ../wlx/imagemagick/wlximagemagick.c:218 ../wlx/gtkimgview/gtkimgview.c:243
+#: ../wlx/gtkimgview/gtkimgview.c:246
+msgid "Flip Vertically"
+msgstr ""
+
+#: ../wlx/wlxwebkit/wlxwebkit.c:115 ../wlx/yet_another_vte_plugin/plugin.c:282
+#: ../wlx/gtksourceview/gtksourceview.c:304 ../wlx/fileinfo/fileinfo.c:382
+#: ../wlx/mimescript/mimescriptwlx.c:290
+#, c-format
+msgid "\"%s\" not found!"
+msgstr "\"%s\" не найден!"
+
+#: ../wlx/gtksourceview/gtksourceview.c:177
+msgid "Language:"
+msgstr ""
+
+#: ../wlx/gtksourceview/gtksourceview.c:191
+msgid "Failed to set encoding"
+msgstr ""
+
+#: ../wlx/gtkimgview/gtkimgview.c:253
+msgid "Play Animation"
+msgstr ""
+
+#: ../wlx/gtkimgview/gtkimgview.c:258
+msgid "Stop Animation"
+msgstr ""
+
+#: ../wlx/dcpoppler/wlxPView.c:102
+msgid "Scale ~x"
+msgstr ""
+
+#: ../wlx/dcpoppler/wlxPView.c:298 ../wlx/dcpoppler/wlxPView.c:477
+#: ../wlx/dcpoppler/wlxPView.c:478 ../wdx/poppler_info/plugin.c:47
+msgid "Text"
+msgstr ""
+
+#: ../wlx/dcpoppler/wlxPView.c:325 ../wlx/dcpoppler/wlxPView.c:483
+#: ../wlx/dcpoppler/wlxPView.c:484 ../wdx/simplefileinfo/simplefileinfowdx.c:37
+msgid "Info"
+msgstr ""
+
+#: ../wlx/dcpoppler/wlxPView.c:329
+#, c-format
+msgid ""
+"Title: %s\n"
+"Author: %s\n"
+"Subject: %s\n"
+"Creator: %s\n"
+"Producer: %s\n"
+"Keywords: %s\n"
+"Version: %s"
+msgstr ""
+
+#: ../wlx/dcpoppler/wlxPView.c:346
+msgid "metadata not found"
+msgstr ""
+
+#: ../wlx/dcpoppler/wlxPView.c:422 ../wlx/dcpoppler/wlxPView.c:423
+msgid "First page"
+msgstr ""
+
+#: ../wlx/dcpoppler/wlxPView.c:428 ../wlx/dcpoppler/wlxPView.c:429
+msgid "Previous page"
+msgstr ""
+
+#: ../wlx/dcpoppler/wlxPView.c:434 ../wlx/dcpoppler/wlxPView.c:435
+msgid "Next page"
+msgstr ""
+
+#: ../wlx/dcpoppler/wlxPView.c:440 ../wlx/dcpoppler/wlxPView.c:441
+msgid "Last page"
+msgstr ""
+
+#: ../wdx/gdescription/plugin.c:17 ../wdx/gimgsize/plugin.c:30
+msgid "description"
+msgstr ""
+
+#: ../wdx/calcsize/calcsize.c:65
+msgid "default|files only|dirs only"
+msgstr ""
+
+#: ../wdx/calcsize/calcsize.c:70
+msgid "bytes"
+msgstr ""
+
+#: ../wdx/calcsize/calcsize.c:74
+msgid "K"
+msgstr ""
+
+#: ../wdx/calcsize/calcsize.c:78
+msgid "M"
+msgstr ""
+
+#: ../wdx/calcsize/calcsize.c:82
+msgid "G"
+msgstr ""
+
+#: ../wdx/calcsize/calcsize.c:86
+msgid "T"
+msgstr ""
+
+#: ../wdx/calcsize/calcsize.c:90
+msgid "kB"
+msgstr ""
+
+#: ../wdx/calcsize/calcsize.c:94
+msgid "MB"
+msgstr ""
+
+#: ../wdx/calcsize/calcsize.c:98
+msgid "GB"
+msgstr ""
+
+#: ../wdx/calcsize/calcsize.c:102
+msgid "TB"
+msgstr ""
+
+#: ../wdx/gitrepo/plugin.c:30
+msgid "bare repository"
+msgstr ""
+
+#: ../wdx/gitrepo/plugin.c:31
+msgid "empty repository"
+msgstr ""
+
+#: ../wdx/gitrepo/plugin.c:32
+msgid "linked work tree"
+msgstr ""
+
+#: ../wdx/gitrepo/plugin.c:33
+msgid "shallow clone"
+msgstr ""
+
+#: ../wdx/gitrepo/plugin.c:34
+msgid "current branch is unborn"
+msgstr ""
+
+#: ../wdx/gitrepo/plugin.c:35
+msgid "repository's HEAD is detached"
+msgstr ""
+
+#: ../wdx/gitrepo/plugin.c:36
+msgid "branch"
+msgstr ""
+
+#: ../wdx/gitrepo/plugin.c:37
+msgid "remote"
+msgstr ""
+
+#: ../wdx/gitrepo/plugin.c:38
+msgid "commits ahead"
+msgstr ""
+
+#: ../wdx/gitrepo/plugin.c:39
+msgid "commits behind"
+msgstr ""
+
+#: ../wdx/gitrepo/plugin.c:40
+msgid "status: new"
+msgstr ""
+
+#: ../wdx/gitrepo/plugin.c:41
+msgid "status: modified"
+msgstr ""
+
+#: ../wdx/gitrepo/plugin.c:42
+msgid "status: deleted"
+msgstr ""
+
+#: ../wdx/gitrepo/plugin.c:43
+msgid "status: typechange"
+msgstr ""
+
+#: ../wdx/gitrepo/plugin.c:44
+msgid "status: renamed"
+msgstr ""
+
+#: ../wdx/gitrepo/plugin.c:45
+msgid "status: unreadable"
+msgstr ""
+
+#: ../wdx/gitrepo/plugin.c:46
+msgid "status: ignored"
+msgstr ""
+
+#: ../wdx/gitrepo/plugin.c:47
+msgid "status: conflicted"
+msgstr ""
+
+#: ../wdx/gitrepo/plugin.c:48
+msgid "root workdir"
+msgstr ""
+
+#: ../wdx/emptydir/emptydir.c:89
+msgid "is empty"
+msgstr ""
+
+#: ../wdx/emptydir/emptydir.c:93
+msgid "contains empty dirs only"
+msgstr ""
+
+#: ../wdx/emptydir/emptydir.c:97
+msgid "contains (dir)"
+msgstr ""
+
+#: ../wdx/emptydir/emptydir.c:101
+msgid "contains (regular file)"
+msgstr ""
+
+#: ../wdx/emptydir/emptydir.c:105
+msgid "contains (link)"
+msgstr ""
+
+#: ../wdx/emptydir/emptydir.c:109
+msgid "contains (fifo)"
+msgstr ""
+
+#: ../wdx/emptydir/emptydir.c:113
+msgid "contains (socket)"
+msgstr ""
+
+#: ../wdx/emptydir/emptydir.c:117
+msgid "contains (block device)"
+msgstr ""
+
+#: ../wdx/emptydir/emptydir.c:121
+msgid "contains (character device)"
+msgstr ""
+
+#: ../wdx/emptydir/emptydir.c:125
+msgid "contains (unknown)"
+msgstr ""
+
+#: ../wdx/simplefileinfo/simplefileinfowdx.c:37
+msgid ""
+"default|fast|folow symlinks|uncompress|uncompress and folow symlinks|all "
+"matches"
+msgstr ""
+
+#: ../wdx/simplefileinfo/simplefileinfowdx.c:38
+msgid "MIME type"
+msgstr ""
+
+#: ../wdx/simplefileinfo/simplefileinfowdx.c:38
+#: ../wdx/simplefileinfo/simplefileinfowdx.c:39
+msgid "default|folow symlinks"
+msgstr ""
+
+#: ../wdx/simplefileinfo/simplefileinfowdx.c:39
+msgid "MIME encoding"
+msgstr ""
+
+#: ../wdx/simplefileinfo/simplefileinfowdx.c:40
+msgid "Object type"
+msgstr ""
+
+#: ../wdx/simplefileinfo/simplefileinfowdx.c:40
+msgid "file|directory|character device|block device|named pipe|symlink|socket"
+msgstr ""
+
+#: ../wdx/simplefileinfo/simplefileinfowdx.c:41
+msgid "Access rights in octal"
+msgstr ""
+
+#: ../wdx/simplefileinfo/simplefileinfowdx.c:42
+msgid "User name"
+msgstr ""
+
+#: ../wdx/simplefileinfo/simplefileinfowdx.c:43
+msgid "User ID"
+msgstr ""
+
+#: ../wdx/simplefileinfo/simplefileinfowdx.c:44
+msgid "Group name"
+msgstr ""
+
+#: ../wdx/simplefileinfo/simplefileinfowdx.c:45
+msgid "Group ID"
+msgstr ""
+
+#: ../wdx/simplefileinfo/simplefileinfowdx.c:46
+msgid "Inode number"
+msgstr ""
+
+#: ../wdx/simplefileinfo/simplefileinfowdx.c:47
+msgid "Size"
+msgstr ""
+
+#: ../wdx/simplefileinfo/simplefileinfowdx.c:48
+msgid "Block size"
+msgstr ""
+
+#: ../wdx/simplefileinfo/simplefileinfowdx.c:49
+msgid "Number of blocks"
+msgstr ""
+
+#: ../wdx/simplefileinfo/simplefileinfowdx.c:50
+msgid "Number of hard links"
+msgstr ""
+
+#: ../wdx/simplefileinfo/simplefileinfowdx.c:51
+msgid "Mountpoint"
+msgstr ""
+
+#: ../wdx/simplefileinfo/simplefileinfowdx.c:56
+msgid "file"
+msgstr ""
+
+#: ../wdx/simplefileinfo/simplefileinfowdx.c:57
+msgid "directory"
+msgstr ""
+
+#: ../wdx/simplefileinfo/simplefileinfowdx.c:58
+msgid "character device"
+msgstr ""
+
+#: ../wdx/simplefileinfo/simplefileinfowdx.c:59
+msgid "block device"
+msgstr ""
+
+#: ../wdx/simplefileinfo/simplefileinfowdx.c:60
+msgid "named pipe"
+msgstr ""
+
+#: ../wdx/simplefileinfo/simplefileinfowdx.c:61
+msgid "symlink"
+msgstr ""
+
+#: ../wdx/simplefileinfo/simplefileinfowdx.c:62
+msgid "socket"
+msgstr ""
+
+#: ../wdx/simplefileinfo/simplefileinfowdx.c:275
+#, c-format
+msgid "unable to initialize magic library\n"
+msgstr ""
+
+#: ../wdx/simplefileinfo/simplefileinfowdx.c:281
+#, c-format
+msgid "cannot load magic database - %s\n"
+msgstr ""
+
+#: ../wdx/gimgsize/plugin.c:26
+msgid "width"
+msgstr ""
+
+#: ../wdx/gimgsize/plugin.c:27
+msgid "height"
+msgstr ""
+
+#: ../wdx/gimgsize/plugin.c:28
+msgid "size"
+msgstr ""
+
+#: ../wdx/gimgsize/plugin.c:29
+msgid "type"
+msgstr ""
+
+#: ../wdx/emblems/plugin.c:21
+msgid "emblems"
+msgstr ""
+
+#: ../wdx/emblems/plugin.c:58
+msgid "contain"
+msgstr ""
+
+#: ../wdx/poppler_info/plugin.c:28
+msgid "Title"
+msgstr ""
+
+#: ../wdx/poppler_info/plugin.c:29
+msgid "Author"
+msgstr ""
+
+#: ../wdx/poppler_info/plugin.c:30
+msgid "Subject"
+msgstr ""
+
+#: ../wdx/poppler_info/plugin.c:31
+msgid "Creator"
+msgstr ""
+
+#: ../wdx/poppler_info/plugin.c:32
+msgid "Producer"
+msgstr ""
+
+#: ../wdx/poppler_info/plugin.c:33 ../wdx/desktop_entry/plugin.c:49
+msgid "Keywords"
+msgstr ""
+
+#: ../wdx/poppler_info/plugin.c:34
+msgid "Version"
+msgstr ""
+
+#: ../wdx/poppler_info/plugin.c:35
+msgid "Total Pages"
+msgstr ""
+
+#: ../wdx/poppler_info/plugin.c:36
+msgid "Creation date"
+msgstr ""
+
+#: ../wdx/poppler_info/plugin.c:37
+msgid "Modification date"
+msgstr ""
+
+#: ../wdx/poppler_info/plugin.c:38
+msgid "Attachments"
+msgstr ""
+
+#: ../wdx/poppler_info/plugin.c:39
+msgid "Linearized"
+msgstr ""
+
+#: ../wdx/poppler_info/plugin.c:40
+msgid "Password protected"
+msgstr ""
+
+#: ../wdx/poppler_info/plugin.c:41
+msgid "Damaged"
+msgstr ""
+
+#: ../wdx/poppler_info/plugin.c:42
+msgid "Can be printer"
+msgstr ""
+
+#: ../wdx/poppler_info/plugin.c:43
+msgid "Can be modified"
+msgstr ""
+
+#: ../wdx/poppler_info/plugin.c:44
+msgid "Can be copied"
+msgstr ""
+
+#: ../wdx/poppler_info/plugin.c:45
+msgid "OK to add notes"
+msgstr ""
+
+#: ../wdx/poppler_info/plugin.c:46
+msgid "OK to fill form"
+msgstr ""
+
+#: ../wdx/desktop_entry/plugin.c:28
+msgid "Name"
+msgstr ""
+
+#: ../wdx/desktop_entry/plugin.c:28 ../wdx/desktop_entry/plugin.c:29
+#: ../wdx/desktop_entry/plugin.c:30 ../wdx/desktop_entry/plugin.c:35
+#: ../wdx/desktop_entry/plugin.c:49
+msgid "locale|default"
+msgstr ""
+
+#: ../wdx/desktop_entry/plugin.c:29
+msgid "Comment"
+msgstr ""
+
+#: ../wdx/desktop_entry/plugin.c:30
+msgid "Genetic Name"
+msgstr ""
+
+#: ../wdx/desktop_entry/plugin.c:31
+msgid "Exec"
+msgstr ""
+
+#: ../wdx/desktop_entry/plugin.c:32
+msgid "TryExec"
+msgstr ""
+
+#: ../wdx/desktop_entry/plugin.c:33
+msgid "Path"
+msgstr ""
+
+#: ../wdx/desktop_entry/plugin.c:34
+msgid "URL"
+msgstr ""
+
+#: ../wdx/desktop_entry/plugin.c:35
+msgid "Icon"
+msgstr ""
+
+#: ../wdx/desktop_entry/plugin.c:36
+msgid "Categories"
+msgstr ""
+
+#: ../wdx/desktop_entry/plugin.c:37
+msgid "Hidden"
+msgstr ""
+
+#: ../wdx/desktop_entry/plugin.c:38
+msgid "NoDisplay"
+msgstr ""
+
+#: ../wdx/desktop_entry/plugin.c:39
+msgid "Shown in menus"
+msgstr ""
+
+#: ../wdx/desktop_entry/plugin.c:40
+msgid "Terminal"
+msgstr ""
+
+#: ../wdx/desktop_entry/plugin.c:41
+msgid "StartupNotify"
+msgstr ""
+
+#: ../wdx/desktop_entry/plugin.c:42
+msgid "DBusActivatable"
+msgstr ""
+
+#: ../wdx/desktop_entry/plugin.c:43
+msgid "StartupWMClass"
+msgstr ""
+
+#: ../wdx/desktop_entry/plugin.c:44
+msgid "Type"
+msgstr ""
+
+#: ../wdx/desktop_entry/plugin.c:45
+msgid "OnlyShowIn"
+msgstr ""
+
+#: ../wdx/desktop_entry/plugin.c:46
+msgid "NotShowIn"
+msgstr ""
+
+#: ../wdx/desktop_entry/plugin.c:47
+msgid "MimeType"
+msgstr ""
+
+#: ../wdx/desktop_entry/plugin.c:48
+msgid "Actions"
+msgstr ""
+
+#: ../wdx/desktop_entry/plugin.c:50
+msgid "Implements"
+msgstr ""
+
+#: ../wdx/gunixmounts/mounts.c:26
+msgid "mountpoint"
+msgstr ""
+
+#: ../wdx/gunixmounts/mounts.c:27
+msgid "name"
+msgstr ""
+
+#: ../wdx/gunixmounts/mounts.c:28
+msgid "fs type"
+msgstr ""
+
+#: ../wdx/gunixmounts/mounts.c:29
+msgid "device"
+msgstr ""
+
+#: ../wdx/gunixmounts/mounts.c:30
+msgid "readonly"
+msgstr ""
+
+#: ../wdx/gunixmounts/mounts.c:31
+msgid "internal"
+msgstr ""
+
+#: ../wdx/gunixmounts/mounts.c:32
+msgid "can eject"
+msgstr ""

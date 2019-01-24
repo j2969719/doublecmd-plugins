@@ -1,14 +1,17 @@
+#define _GNU_SOURCE
+
 #include <gtk/gtk.h>
 #include <vte/vte.h>
 #include <gdk/gdkkeysyms.h>
 #include "wlxplugin.h"
 
+#include <dlfcn.h>
+
+#include <glib/gi18n.h>
+#include <locale.h>
+#define GETTEXT_PACKAGE "plugins"
+
 #define DETECT_STRING "EXT=\"*\""
-#define HACK_HINT "hit ctrl+q or type 'exit' to remove grab"
-#define MI_COPY "Copy"
-#define MI_PASTE "Paste"
-#define MI_CRTL_C "Send CRTL+C"
-#define MI_CRTL_Z "Send CTRL+Z"
 
 void vte_popup_menu_copy(GtkWidget *menuitem, gpointer userdata)
 {
@@ -42,10 +45,10 @@ gboolean grab_hack(GtkWidget *widget, GdkEventButton *event, gpointer user_data)
 
 		menu = gtk_menu_new();
 
-		micopy = gtk_menu_item_new_with_label(MI_COPY);
-		mipaste = gtk_menu_item_new_with_label(MI_PASTE);
-		mictrlc = gtk_menu_item_new_with_label(MI_CRTL_C);
-		mictrlz = gtk_menu_item_new_with_label(MI_CRTL_Z);
+		micopy = gtk_menu_item_new_with_label(_("Copy"));
+		mipaste = gtk_menu_item_new_with_label(_("Paste"));
+		mictrlc = gtk_menu_item_new_with_label(_("Send CRTL+C"));
+		mictrlz = gtk_menu_item_new_with_label(_("Send CTRL+Z"));
 
 		g_signal_connect(micopy, "activate", G_CALLBACK(vte_popup_menu_copy), (gpointer)widget);
 		g_signal_connect(mipaste, "activate", G_CALLBACK(vte_popup_menu_paste), (gpointer)widget);
@@ -61,7 +64,7 @@ gboolean grab_hack(GtkWidget *widget, GdkEventButton *event, gpointer user_data)
 		gtk_menu_popup(GTK_MENU(menu), NULL, NULL, NULL, NULL, (event != NULL) ? event->button : 0, gdk_event_get_time((GdkEvent*)event));
 	}
 
-	gtk_label_set_text(GTK_LABEL(user_data), HACK_HINT);
+	gtk_label_set_text(GTK_LABEL(user_data), _("hit ctrl+q or type 'exit' to remove grab"));
 	gtk_grab_add(widget);
 	return FALSE;
 }
@@ -151,4 +154,20 @@ void DCPCALL ListGetDetectString(char* DetectString, int maxlen)
 int DCPCALL ListSearchDialog(HWND ListWin, int FindNext)
 {
 	return LISTPLUGIN_OK;
+}
+
+void DCPCALL ListSetDefaultParams(ListDefaultParamStruct* dps)
+{
+	Dl_info dlinfo;
+	const gchar* dir_f = "%s/langs";
+
+	memset(&dlinfo, 0, sizeof(dlinfo));
+
+	if (dladdr(dir_f, &dlinfo) != 0)
+	{
+		setlocale(LC_ALL, "");
+		bindtextdomain(GETTEXT_PACKAGE, g_strdup_printf(dir_f,
+		                g_path_get_dirname(dlinfo.dli_fname)));
+		textdomain(GETTEXT_PACKAGE);
+	}
 }

@@ -22,6 +22,10 @@
 #include <gtksourceview/gtksourcebuffer.h>
 #include "wlxplugin.h"
 
+#include <glib/gi18n.h>
+#include <locale.h>
+#define GETTEXT_PACKAGE "plugins"
+
 #define DETECT_STRING "\
 (EXT=\"ISO\")|(EXT=\"TORRENT\")|(EXT=\"SO\")|(EXT=\"MO\")|\
 (EXT=\"DEB\")|(EXT=\"TAR\")|(EXT=\"LHA\")|(EXT=\"ARJ\")|\
@@ -38,13 +42,12 @@
 #define _enc_dos "866"
 #define _enc_koi "KOI-8"
 #define _font_default "monospace 12"
-#define _nfstr_default "not found"
 #define _cfg_gruop "Appearance"
 
 static char script_path[PATH_MAX];
 const char* script_file = "fileinfo.sh";
 GtkWrapMode wrap_mode;
-gchar *font, *nfstr;
+gchar *font;
 gchar *enc_ansi, *enc_dos, *enc_koi;
 gboolean no_cursor;
 gint p_above, p_below;
@@ -227,6 +230,10 @@ void DCPCALL ListSetDefaultParams(ListDefaultParamStruct* dps)
 
 		if (pos)
 			strcpy(pos + 1, cfg_file);
+
+		setlocale (LC_ALL, "");
+		bindtextdomain(GETTEXT_PACKAGE, g_strdup_printf("%s/langs", g_path_get_dirname(dlinfo.dli_fname)));
+		textdomain(GETTEXT_PACKAGE);
 	}
 
 	// Find in configuration directory
@@ -254,7 +261,6 @@ void DCPCALL ListSetDefaultParams(ListDefaultParamStruct* dps)
 		font = _font_default;
 		wrap_mode = GTK_WRAP_WORD;
 		no_cursor = TRUE;
-		nfstr = _nfstr_default;
 		enc_ansi = _enc_ansi;
 		enc_dos = _enc_dos;
 		enc_koi = _enc_koi;
@@ -306,11 +312,6 @@ void DCPCALL ListSetDefaultParams(ListDefaultParamStruct* dps)
 			no_cursor = FALSE;
 		else
 			no_cursor = TRUE;
-
-		nfstr = g_key_file_get_string(cfg, _cfg_gruop, "NotFoundStr", NULL);
-
-		if (!nfstr)
-			nfstr = _nfstr_default;
 
 		wrapstr = g_key_file_get_string(cfg, _cfg_gruop, "WrapMode", NULL);
 
@@ -378,7 +379,7 @@ int DCPCALL ListSearchText(HWND ListWin, char* SearchString, int SearchParameter
 	{
 		GtkWidget *dialog = gtk_message_dialog_new(GTK_WINDOW(gtk_widget_get_toplevel(GTK_WIDGET(ListWin))),
 		                    GTK_DIALOG_MODAL, GTK_MESSAGE_INFO, GTK_BUTTONS_OK,
-		                    "\"%s\" %s!", SearchString, nfstr);
+		                    _("\"%s\" not found!"), SearchString);
 		gtk_dialog_run(GTK_DIALOG(dialog));
 		gtk_widget_destroy(dialog);
 	}

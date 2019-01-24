@@ -1,8 +1,18 @@
+#define _GNU_SOURCE
+
 #include <git2.h>
 #include <unistd.h>
 #include <linux/limits.h>
 #include <string.h>
 #include "wdxplugin.h"
+
+#include <dlfcn.h>
+
+#include <libintl.h>
+#include <locale.h>
+
+#define N_(String) String
+#define GETTEXT_PACKAGE "plugins"
 
 #define _detectstring "EXT=\"*\""
 
@@ -17,25 +27,25 @@ typedef struct _field
 
 FIELD fields[] =
 {
-	{"bare repository",			ft_boolean,			""},
-	{"empty repository",			ft_boolean,			""},
-	{"linked work tree",			ft_boolean,			""},
-	{"shallow clone",			ft_boolean,			""},
-	{"current branch is unborn",		ft_boolean,			""},
-	{"repository's HEAD is detached",	ft_boolean,			""},
-	{"branch",				ft_string,			""},
-	{"remote",				ft_string,			""},
-	{"commits ahead",			ft_numeric_32,			""},
-	{"commits behind",			ft_numeric_32,			""},
-	{"status: new",				ft_boolean,			""},
-	{"status: modified",			ft_boolean,			""},
-	{"status: deleted",			ft_boolean,			""},
-	{"status: typechange",			ft_boolean,			""},
-	{"status: renamed",			ft_boolean,			""},
-	{"status: unreadable",			ft_boolean,			""},
-	{"status: ignored",			ft_boolean,			""},
-	{"status: conflicted",			ft_boolean,			""},
-	{"root workdir",			ft_boolean,			""},
+	{N_("bare repository"),			ft_boolean,			""},
+	{N_("empty repository"),		ft_boolean,			""},
+	{N_("linked work tree"),		ft_boolean,			""},
+	{N_("shallow clone"),			ft_boolean,			""},
+	{N_("current branch is unborn"),	ft_boolean,			""},
+	{N_("repository's HEAD is detached"),	ft_boolean,			""},
+	{N_("branch"),				ft_string,			""},
+	{N_("remote"),				ft_string,			""},
+	{N_("commits ahead"),			ft_numeric_32,			""},
+	{N_("commits behind"),			ft_numeric_32,			""},
+	{N_("status: new"),			ft_boolean,			""},
+	{N_("status: modified"),		ft_boolean,			""},
+	{N_("status: deleted"),			ft_boolean,			""},
+	{N_("status: typechange"),		ft_boolean,			""},
+	{N_("status: renamed"),			ft_boolean,			""},
+	{N_("status: unreadable"),		ft_boolean,			""},
+	{N_("status: ignored"),			ft_boolean,			""},
+	{N_("status: conflicted"),		ft_boolean,			""},
+	{N_("root workdir"),			ft_boolean,			""},
 };
 
 char* strlcpy(char* p, const char* p2, int maxlen)
@@ -56,7 +66,7 @@ int DCPCALL ContentGetSupportedField(int FieldIndex, char* FieldName, char* Unit
 	if (FieldIndex < 0 || FieldIndex >= fieldcount)
 		return ft_nomorefields;
 
-	strlcpy(FieldName, fields[FieldIndex].name, maxlen - 1);
+	strlcpy(FieldName, gettext(fields[FieldIndex].name), maxlen - 1);
 	strlcpy(Units, fields[FieldIndex].unit, maxlen - 1);
 	return fields[FieldIndex].type;
 }
@@ -439,4 +449,26 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 	git_repository_free(repo);
 	git_libgit2_shutdown();
 	return fields[FieldIndex].type;
+}
+
+void DCPCALL ContentSetDefaultParams(ContentDefaultParamStruct* dps)
+{
+	Dl_info dlinfo;
+	static char plg_path[PATH_MAX];
+	const char* loc_dir = "langs";
+
+	memset(&dlinfo, 0, sizeof(dlinfo));
+
+	if (dladdr(plg_path, &dlinfo) != 0)
+	{
+		strncpy(plg_path, dlinfo.dli_fname, PATH_MAX);
+		char *pos = strrchr(plg_path, '/');
+
+		if (pos)
+			strcpy(pos + 1, loc_dir);
+
+		setlocale (LC_ALL, "");
+		bindtextdomain(GETTEXT_PACKAGE, plg_path);
+		textdomain(GETTEXT_PACKAGE);
+	}
 }

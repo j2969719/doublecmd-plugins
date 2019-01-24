@@ -1,3 +1,5 @@
+#define _GNU_SOURCE
+
 #include <stdio.h>
 #include <stdint.h>
 #include <dirent.h>
@@ -6,6 +8,14 @@
 #include <linux/limits.h>
 #include <string.h>
 #include "wdxplugin.h"
+
+#include <dlfcn.h>
+
+#include <libintl.h>
+#include <locale.h>
+
+#define _(STRING) gettext(STRING)
+#define GETTEXT_PACKAGE "plugins"
 
 uint64_t calcdirszie(const char *name)
 {
@@ -52,44 +62,44 @@ double sizecnv(uint64_t size, int bytes, int bpow)
 
 int DCPCALL ContentGetSupportedField(int FieldIndex, char* FieldName, char* Units, int maxlen)
 {
-	strncpy(Units, "default|files only|dirs only", maxlen - 1);
+	strncpy(Units, _("default|files only|dirs only"), maxlen - 1);
 
 	switch (FieldIndex)
 	{
 	case 0:
-		strncpy(FieldName, "bytes", maxlen - 1);
+		strncpy(FieldName, _("bytes"), maxlen - 1);
 		return ft_numeric_64;
 
 	case 1:
-		strncpy(FieldName, "K", maxlen - 1);
+		strncpy(FieldName, _("K"), maxlen - 1);
 		return ft_numeric_floating;
 
 	case 2:
-		strncpy(FieldName, "M", maxlen - 1);
+		strncpy(FieldName, _("M"), maxlen - 1);
 		return ft_numeric_floating;
 
 	case 3:
-		strncpy(FieldName, "G", maxlen - 1);
+		strncpy(FieldName, _("G"), maxlen - 1);
 		return ft_numeric_floating;
 
 	case 4:
-		strncpy(FieldName, "T", maxlen - 1);
+		strncpy(FieldName, _("T"), maxlen - 1);
 		return ft_numeric_floating;
 
 	case 5:
-		strncpy(FieldName, "kB", maxlen - 1);
+		strncpy(FieldName, _("kB"), maxlen - 1);
 		return ft_numeric_floating;
 
 	case 6:
-		strncpy(FieldName, "MB", maxlen - 1);
+		strncpy(FieldName, _("MB"), maxlen - 1);
 		return ft_numeric_floating;
 
 	case 7:
-		strncpy(FieldName, "GB", maxlen - 1);
+		strncpy(FieldName, _("GB"), maxlen - 1);
 		return ft_numeric_floating;
 
 	case 8:
-		strncpy(FieldName, "TB", maxlen - 1);
+		strncpy(FieldName, _("TB"), maxlen - 1);
 		return ft_numeric_floating;
 
 	default:
@@ -208,4 +218,26 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 	}
 
 	return ft_numeric_floating;
+}
+
+void DCPCALL ContentSetDefaultParams(ContentDefaultParamStruct* dps)
+{
+	Dl_info dlinfo;
+	static char plg_path[PATH_MAX];
+	const char* loc_dir = "langs";
+
+	memset(&dlinfo, 0, sizeof(dlinfo));
+
+	if (dladdr(plg_path, &dlinfo) != 0)
+	{
+		strncpy(plg_path, dlinfo.dli_fname, PATH_MAX);
+		char *pos = strrchr(plg_path, '/');
+
+		if (pos)
+			strcpy(pos + 1, loc_dir);
+
+		setlocale (LC_ALL, "");
+		bindtextdomain(GETTEXT_PACKAGE, plg_path);
+		textdomain(GETTEXT_PACKAGE);
+	}
 }

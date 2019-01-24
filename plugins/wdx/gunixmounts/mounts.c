@@ -1,6 +1,14 @@
+#define _GNU_SOURCE
+
 #include <glib.h>
 #include <gio/gunixmounts.h>
 #include "wdxplugin.h"
+
+#include <dlfcn.h>
+
+#include <glib/gi18n.h>
+#include <locale.h>
+#define GETTEXT_PACKAGE "plugins"
 
 #define _detectstring "EXT=\"*\""
 
@@ -15,13 +23,13 @@ typedef struct _field
 
 FIELD fields[] =
 {
-	{"mountpoint",	ft_boolean,	""},
-	{"name",	ft_string,	""},
-	{"fs type",	ft_string,	""},
-	{"device",	ft_string,	""},
-	{"readonly",	ft_boolean,	""},
-	{"internal",	ft_boolean,	""},
-	{"can eject",	ft_boolean,	""},
+	{N_("mountpoint"),	ft_boolean,	""},
+	{N_("name"),		ft_string,	""},
+	{N_("fs type"),		ft_string,	""},
+	{N_("device"),		ft_string,	""},
+	{N_("readonly"),	ft_boolean,	""},
+	{N_("internal"),	ft_boolean,	""},
+	{N_("can eject"),	ft_boolean,	""},
 };
 
 int DCPCALL ContentGetSupportedField(int FieldIndex, char* FieldName, char* Units, int maxlen)
@@ -29,7 +37,7 @@ int DCPCALL ContentGetSupportedField(int FieldIndex, char* FieldName, char* Unit
 	if (FieldIndex < 0 || FieldIndex >= fieldcount)
 		return ft_nomorefields;
 
-	g_strlcpy(FieldName, fields[FieldIndex].name, maxlen - 1);
+	g_strlcpy(FieldName, gettext(fields[FieldIndex].name), maxlen - 1);
 	g_strlcpy(Units, fields[FieldIndex].unit, maxlen - 1);
 	return fields[FieldIndex].type;
 }
@@ -123,4 +131,18 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 		return ft_fieldempty;
 	else
 		return fields[FieldIndex].type;
+}
+
+void DCPCALL ContentSetDefaultParams(ContentDefaultParamStruct* dps)
+{
+	Dl_info dlinfo;
+
+	memset(&dlinfo, 0, sizeof(dlinfo));
+
+	if (dladdr(fields, &dlinfo) != 0)
+	{
+		setlocale (LC_ALL, "");
+		bindtextdomain(GETTEXT_PACKAGE, g_strdup_printf("%s/langs", g_path_get_dirname(dlinfo.dli_fname)));
+		textdomain(GETTEXT_PACKAGE);
+	}
 }

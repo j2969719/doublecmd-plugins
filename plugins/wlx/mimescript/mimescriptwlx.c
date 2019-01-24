@@ -2,7 +2,6 @@
 #include <gtk/gtk.h>
 #include <limits.h>
 #include <dlfcn.h>
-#include <magic.h>
 #include <string.h>
 #include <gtksourceview/gtksourceview.h>
 #include <gtksourceview/gtksourceiter.h>
@@ -12,9 +11,11 @@
 #include <gtksourceview/gtksourcestyleschememanager.h>
 #include "wlxplugin.h"
 
-#define DETECT_STRING "EXT=\"*\""
+#include <glib/gi18n.h>
+#include <locale.h>
+#define GETTEXT_PACKAGE "plugins"
 
-gchar *nfstr;
+#define DETECT_STRING "EXT=\"*\""
 
 static GtkWidget *getFirstChild(GtkWidget *w)
 {
@@ -24,6 +25,22 @@ static GtkWidget *getFirstChild(GtkWidget *w)
 	return result;
 }
 
+const gchar *get_mime_type(const gchar *Filename)
+{
+	GFile *gfile = g_file_new_for_path(Filename);
+
+	if (!gfile)
+		return NULL;
+
+	GFileInfo *fileinfo = g_file_query_info(gfile, G_FILE_ATTRIBUTE_STANDARD_CONTENT_TYPE, G_FILE_QUERY_INFO_NOFOLLOW_SYMLINKS, NULL, NULL);
+
+	if (!fileinfo)
+		return NULL;
+
+	const gchar *content_type = g_file_info_get_content_type(fileinfo);
+
+	return content_type;
+}
 
 HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 {
@@ -41,9 +58,9 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 	gboolean bval, no_cursor;
 	gint p_above, p_below;
 	const char* cfg_file = "settings.ini";
-	const char *magic_full;
+	const gchar *content_type;
 	static char path[PATH_MAX];
-	magic_t magic_cookie;
+	GFileInfo *fileinfo;
 	GKeyFile *cfg;
 	GError *err = NULL;
 	Dl_info dlinfo;
@@ -57,6 +74,10 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 
 		if (pos)
 			strcpy(pos + 1, cfg_file);
+
+		setlocale (LC_ALL, "");
+		bindtextdomain(GETTEXT_PACKAGE, g_strdup_printf("%s/langs", g_path_get_dirname(dlinfo.dli_fname)));
+		textdomain(GETTEXT_PACKAGE);
 	}
 
 	cfg = g_key_file_new();
@@ -69,23 +90,22 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 	}
 	else
 	{
-		magic_cookie = magic_open(MAGIC_MIME_TYPE | MAGIC_SYMLINK);
 
-		if (magic_load(magic_cookie, NULL) != 0)
+		content_type = get_mime_type(FileToLoad);
+
+		if (!content_type)
 		{
-			magic_close(magic_cookie);
+			g_key_file_free(cfg);
 			return NULL;
 		}
 
-		magic_full = magic_file(magic_cookie, FileToLoad);
+		g_print("%s\n", content_type);
 
-		g_print("%s\n", magic_full);
-		src = g_key_file_get_string(cfg, magic_full, "Script", NULL);
+		src = g_key_file_get_string(cfg, content_type, "Script", NULL);
 
 		if (!src)
 		{
 			g_key_file_free(cfg);
-			magic_close(magic_cookie);
 			return NULL;
 		}
 		else
@@ -100,11 +120,6 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 
 		if (!font)
 			font = "monospace 12";
-
-		nfstr = g_key_file_get_string(cfg, "Appearance", "NotFoundStr", NULL);
-
-		if (!nfstr)
-			nfstr = "not found";
 
 		if (err)
 			err = NULL;
@@ -125,7 +140,7 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 			err = NULL;
 		}
 
-		bval = g_key_file_get_boolean(cfg, magic_full, "Wrap", &err);
+		bval = g_key_file_get_boolean(cfg, content_type, "Wrap", &err);
 
 		if (err)
 		{
@@ -145,12 +160,12 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 		else
 			no_cursor = TRUE;
 
-		style = g_key_file_get_string(cfg, magic_full, "Style", NULL);
+		style = g_key_file_get_string(cfg, content_type, "Style", NULL);
 
 		if (!style)
 			style = g_key_file_get_string(cfg, "Appearance", "Style", NULL);
 
-		syntax = g_key_file_get_string(cfg, magic_full, "Syntax", NULL);
+		syntax = g_key_file_get_string(cfg, content_type, "Syntax", NULL);
 
 		if (!syntax)
 			syntax = g_key_file_get_string(cfg, "Appearance", "Syntax", NULL);
@@ -160,7 +175,6 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 		g_error_free(err);
 
 	g_key_file_free(cfg);
-	magic_close(magic_cookie);
 	command = g_strdup_printf("\"%s\" \"%s\"", path, FileToLoad);
 
 	if (!g_spawn_command_line_sync(command, &buf1, NULL, NULL, NULL))
@@ -273,7 +287,7 @@ int DCPCALL ListSearchText(HWND ListWin, char* SearchString, int SearchParameter
 	{
 		GtkWidget *dialog = gtk_message_dialog_new(GTK_WINDOW(gtk_widget_get_toplevel(GTK_WIDGET(ListWin))),
 		                    GTK_DIALOG_MODAL, GTK_MESSAGE_INFO, GTK_BUTTONS_OK,
-		                    "\"%s\" %s!", SearchString, nfstr);
+		                    _("\"%s\" not found!"), SearchString);
 		gtk_dialog_run(GTK_DIALOG(dialog));
 		gtk_widget_destroy(dialog);
 	}

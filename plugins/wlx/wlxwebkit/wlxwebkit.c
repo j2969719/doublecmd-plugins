@@ -26,13 +26,19 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#define _GNU_SOURCE
+
 #include <gtk/gtk.h>
 #include <webkit/webkit.h>
 #include "wlxplugin.h"
 
-#define _detectstring "(EXT=\"HTML\")|(EXT=\"HTM\")|(EXT=\"XHTM\")|(EXT=\"XHTML\")"
+#include <dlfcn.h>
 
-const gchar *_nfstr = "not found";
+#include <glib/gi18n.h>
+#include <locale.h>
+#define GETTEXT_PACKAGE "plugins"
+
+#define _detectstring "(EXT=\"HTML\")|(EXT=\"HTM\")|(EXT=\"XHTM\")|(EXT=\"XHTML\")"
 
 static GtkWidget *getFirstChild(GtkWidget *w)
 {
@@ -106,7 +112,7 @@ int DCPCALL ListSearchText(HWND ListWin, char* SearchString, int SearchParameter
 	{
 		GtkWidget *dialog = gtk_message_dialog_new(GTK_WINDOW(gtk_widget_get_toplevel(GTK_WIDGET(ListWin))),
 		                    GTK_DIALOG_MODAL, GTK_MESSAGE_INFO, GTK_BUTTONS_OK,
-		                    "\"%s\" %s!", SearchString, _nfstr);
+		                    _("\"%s\" not found!"), SearchString);
 		gtk_dialog_run(GTK_DIALOG(dialog));
 		gtk_widget_destroy(dialog);
 	}
@@ -126,5 +132,21 @@ int DCPCALL ListSendCommand(HWND ListWin, int Command, int Parameter)
 
 	default :
 		return LISTPLUGIN_ERROR;
+	}
+}
+
+void DCPCALL ListSetDefaultParams(ListDefaultParamStruct* dps)
+{
+	Dl_info dlinfo;
+	const gchar* dir_f = "%s/langs";
+
+	memset(&dlinfo, 0, sizeof(dlinfo));
+
+	if (dladdr(dir_f, &dlinfo) != 0)
+	{
+		setlocale(LC_ALL, "");
+		bindtextdomain(GETTEXT_PACKAGE, g_strdup_printf(dir_f,
+		                g_path_get_dirname(dlinfo.dli_fname)));
+		textdomain(GETTEXT_PACKAGE);
 	}
 }
