@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2019-01-25 00:31+0300\n"
-"PO-Revision-Date: 2019-01-25 00:32+0300\n"
+"PO-Revision-Date: 2019-01-25 22:01+0300\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "Language: ru\n"
@@ -21,11 +21,11 @@ msgstr ""
 
 #: ../wlx/vte_in_quickview/plugin.c:48
 msgid "Copy"
-msgstr ""
+msgstr "Копировать"
 
 #: ../wlx/vte_in_quickview/plugin.c:49
 msgid "Paste"
-msgstr ""
+msgstr "Вставить"
 
 #: ../wlx/vte_in_quickview/plugin.c:50
 msgid "Send CRTL+C"
@@ -54,7 +54,7 @@ msgstr "Исходный размер"
 #: ../wlx/imagemagick/wlximagemagick.c:186 ../wlx/gtkimgview/gtkimgview.c:214
 #: ../wlx/dcpoppler/wlxPView.c:468 ../wlx/dcpoppler/wlxPView.c:469
 msgid "Fit"
-msgstr ""
+msgstr "Вместить"
 
 #: ../wlx/imagemagick/wlximagemagick.c:194 ../wlx/gtkimgview/gtkimgview.c:222
 msgid "Copy to Clipboard"
@@ -64,25 +64,25 @@ msgstr "Копировать в буфер"
 #: ../wlx/imagemagick/wlximagemagick.c:200 ../wlx/gtkimgview/gtkimgview.c:225
 #: ../wlx/gtkimgview/gtkimgview.c:228
 msgid "Rotate"
-msgstr ""
+msgstr "Повернуть"
 
 #: ../wlx/imagemagick/wlximagemagick.c:203
 #: ../wlx/imagemagick/wlximagemagick.c:206 ../wlx/gtkimgview/gtkimgview.c:231
 #: ../wlx/gtkimgview/gtkimgview.c:234
 msgid "Rotate Clockwise"
-msgstr ""
+msgstr "Повернуть по часовой стрелке"
 
 #: ../wlx/imagemagick/wlximagemagick.c:209
 #: ../wlx/imagemagick/wlximagemagick.c:212 ../wlx/gtkimgview/gtkimgview.c:237
 #: ../wlx/gtkimgview/gtkimgview.c:240
 msgid "Flip Horizontally"
-msgstr ""
+msgstr "Отразить по горизонтали"
 
 #: ../wlx/imagemagick/wlximagemagick.c:215
 #: ../wlx/imagemagick/wlximagemagick.c:218 ../wlx/gtkimgview/gtkimgview.c:243
 #: ../wlx/gtkimgview/gtkimgview.c:246
 msgid "Flip Vertically"
-msgstr ""
+msgstr "Отразить по вертикали"
 
 #: ../wlx/wlxwebkit/wlxwebkit.c:115 ../wlx/yet_another_vte_plugin/plugin.c:282
 #: ../wlx/gtksourceview/gtksourceview.c:304 ../wlx/fileinfo/fileinfo.c:382
@@ -101,25 +101,25 @@ msgstr ""
 
 #: ../wlx/gtkimgview/gtkimgview.c:253
 msgid "Play Animation"
-msgstr ""
+msgstr "Воспроизвести анимацию"
 
 #: ../wlx/gtkimgview/gtkimgview.c:258
 msgid "Stop Animation"
-msgstr ""
+msgstr "Остановить анимацию"
 
 #: ../wlx/dcpoppler/wlxPView.c:102
 msgid "Scale ~x"
-msgstr ""
+msgstr "Масштаб ~x"
 
 #: ../wlx/dcpoppler/wlxPView.c:298 ../wlx/dcpoppler/wlxPView.c:477
 #: ../wlx/dcpoppler/wlxPView.c:478 ../wdx/poppler_info/plugin.c:47
 msgid "Text"
-msgstr ""
+msgstr "Текст"
 
 #: ../wlx/dcpoppler/wlxPView.c:325 ../wlx/dcpoppler/wlxPView.c:483
 #: ../wlx/dcpoppler/wlxPView.c:484 ../wdx/simplefileinfo/simplefileinfowdx.c:37
 msgid "Info"
-msgstr ""
+msgstr "Информация"
 
 #: ../wlx/dcpoppler/wlxPView.c:329
 #, c-format
@@ -132,26 +132,33 @@ msgid ""
 "Keywords: %s\n"
 "Version: %s"
 msgstr ""
+"Название: %s\n"
+"Автор: %s\n"
+"Тема: %s\n"
+"Создатель: %s\n"
+"Сегнерировано: %s\n"
+"Ключевые слова: %s\n"
+"Версия: %s"
 
 #: ../wlx/dcpoppler/wlxPView.c:346
 msgid "metadata not found"
-msgstr ""
+msgstr "Метаданные не найдены"
 
 #: ../wlx/dcpoppler/wlxPView.c:422 ../wlx/dcpoppler/wlxPView.c:423
 msgid "First page"
-msgstr ""
+msgstr "Первая страница"
 
 #: ../wlx/dcpoppler/wlxPView.c:428 ../wlx/dcpoppler/wlxPView.c:429
 msgid "Previous page"
-msgstr ""
+msgstr "Предыдущая страница"
 
 #: ../wlx/dcpoppler/wlxPView.c:434 ../wlx/dcpoppler/wlxPView.c:435
 msgid "Next page"
-msgstr ""
+msgstr "Следующая страница"
 
 #: ../wlx/dcpoppler/wlxPView.c:440 ../wlx/dcpoppler/wlxPView.c:441
 msgid "Last page"
-msgstr ""
+msgstr "Последняя страница"
 
 #: ../wdx/gdescription/plugin.c:17 ../wdx/gimgsize/plugin.c:30
 msgid "description"
@@ -424,19 +431,19 @@ msgstr ""
 
 #: ../wdx/gimgsize/plugin.c:26
 msgid "width"
-msgstr ""
+msgstr "Ширина"
 
 #: ../wdx/gimgsize/plugin.c:27
 msgid "height"
-msgstr ""
+msgstr "Высота"
 
 #: ../wdx/gimgsize/plugin.c:28
 msgid "size"
-msgstr ""
+msgstr "Размер"
 
 #: ../wdx/gimgsize/plugin.c:29
 msgid "type"
-msgstr ""
+msgstr "Тип"
 
 #: ../wdx/emblems/plugin.c:21
 msgid "emblems"
