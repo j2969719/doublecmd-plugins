@@ -1,3 +1,4 @@
+//#include <wand/MagickWand.h>
 #include <MagickWand/MagickWand.h>
 #include <gtkimageview/gtkimagescrollwin.h>
 #include <gtkimageview/gtkimageview.h>
