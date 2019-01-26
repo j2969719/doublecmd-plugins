@@ -6,10 +6,6 @@
 #include <dlfcn.h>
 #include "wdxplugin.h"
 
-#include <glib/gi18n.h>
-#include <locale.h>
-#define GETTEXT_PACKAGE "plugins"
-
 GKeyFile *cfg;
 static char cfg_path[PATH_MAX];
 const char* cfg_file = "settings.ini";
@@ -18,7 +14,7 @@ int DCPCALL ContentGetSupportedField(int FieldIndex, char* FieldName, char* Unit
 {
 	if (FieldIndex == 0)
 	{
-		g_strlcpy(FieldName, _("emblems"), maxlen - 1);
+		g_strlcpy(FieldName, "emblems", maxlen - 1);
 		return ft_string;
 	}
 	else if (FieldIndex == 1)
@@ -55,7 +51,7 @@ int DCPCALL ContentGetSupportedField(int FieldIndex, char* FieldName, char* Unit
 		if (keys && keys[0] != NULL)
 			g_strfreev(keys);
 
-		g_strlcpy(FieldName, _("contain"), maxlen - 1);
+		g_strlcpy(FieldName, "contain", maxlen - 1);
 		g_strlcpy(Units, emblems, maxlen - 1);
 		return ft_boolean;
 	}
@@ -162,11 +158,6 @@ void DCPCALL ContentSetDefaultParams(ContentDefaultParamStruct* dps)
 
 		if (pos)
 			strcpy(pos + 1, cfg_file);
-
-		setlocale (LC_ALL, "");
-		bindtextdomain(GETTEXT_PACKAGE, g_strdup_printf("%s/langs", g_path_get_dirname(dlinfo.dli_fname)));
-		textdomain(GETTEXT_PACKAGE);
-
 	}
 
 	cfg = g_key_file_new();

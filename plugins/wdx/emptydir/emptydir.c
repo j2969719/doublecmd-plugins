@@ -1,19 +1,9 @@
-#define _GNU_SOURCE
-
 #include <stdio.h>
 #include <stdbool.h>
 #include <dirent.h>
 #include <linux/limits.h>
 #include <string.h>
 #include "wdxplugin.h"
-
-#include <dlfcn.h>
-
-#include <libintl.h>
-#include <locale.h>
-
-#define _(STRING) gettext(STRING)
-#define GETTEXT_PACKAGE "plugins"
 
 unsigned int calccount(const char *name, unsigned char type)
 {
@@ -86,43 +76,43 @@ int DCPCALL ContentGetSupportedField(int FieldIndex, char* FieldName, char* Unit
 	switch (FieldIndex)
 	{
 	case 0:
-		strncpy(FieldName, _("is empty"), maxlen - 1);
+		strncpy(FieldName, "is empty", maxlen - 1);
 		return ft_boolean;
 
 	case 1:
-		strncpy(FieldName, _("contains empty dirs only"), maxlen - 1);
+		strncpy(FieldName, "contains empty dirs only", maxlen - 1);
 		return ft_boolean;
 
 	case 2:
-		strncpy(FieldName, _("contains (dir)"), maxlen - 1);
+		strncpy(FieldName, "contains (dir)", maxlen - 1);
 		return ft_numeric_32;
 
 	case 3:
-		strncpy(FieldName, _("contains (regular file)"), maxlen - 1);
+		strncpy(FieldName, "contains (regular file)", maxlen - 1);
 		return ft_numeric_32;
 
 	case 4:
-		strncpy(FieldName, _("contains (link)"), maxlen - 1);
+		strncpy(FieldName, "contains (link)", maxlen - 1);
 		return ft_numeric_32;
 
 	case 5:
-		strncpy(FieldName, _("contains (fifo)"), maxlen - 1);
+		strncpy(FieldName, "contains (fifo)", maxlen - 1);
 		return ft_numeric_32;
 
 	case 6:
-		strncpy(FieldName, _("contains (socket)"), maxlen - 1);
+		strncpy(FieldName, "contains (socket)", maxlen - 1);
 		return ft_numeric_32;
 
 	case 7:
-		strncpy(FieldName, _("contains (block device)"), maxlen - 1);
+		strncpy(FieldName, "contains (block device)", maxlen - 1);
 		return ft_numeric_32;
 
 	case 8:
-		strncpy(FieldName, _("contains (character device)"), maxlen - 1);
+		strncpy(FieldName, "contains (character device)", maxlen - 1);
 		return ft_numeric_32;
 
 	case 9:
-		strncpy(FieldName, _("contains (unknown)"), maxlen - 1);
+		strncpy(FieldName, "contains (unknown)", maxlen - 1);
 		return ft_numeric_32;
 
 	default:
@@ -189,26 +179,4 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 	}
 
 	return ft_numeric_32;
-}
-
-void DCPCALL ContentSetDefaultParams(ContentDefaultParamStruct* dps)
-{
-	Dl_info dlinfo;
-	static char plg_path[PATH_MAX];
-	const char* loc_dir = "langs";
-
-	memset(&dlinfo, 0, sizeof(dlinfo));
-
-	if (dladdr(plg_path, &dlinfo) != 0)
-	{
-		strncpy(plg_path, dlinfo.dli_fname, PATH_MAX);
-		char *pos = strrchr(plg_path, '/');
-
-		if (pos)
-			strcpy(pos + 1, loc_dir);
-
-		setlocale (LC_ALL, "");
-		bindtextdomain(GETTEXT_PACKAGE, plg_path);
-		textdomain(GETTEXT_PACKAGE);
-	}
 }

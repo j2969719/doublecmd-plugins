@@ -1,15 +1,7 @@
-#define _GNU_SOURCE
-
 #include <glib.h>
 #include <gio/gio.h>
 #include <poppler.h>
 #include "wdxplugin.h"
-
-#include <dlfcn.h>
-
-#include <glib/gi18n.h>
-#include <locale.h>
-#define GETTEXT_PACKAGE "plugins"
 
 #define _detectstring "EXT=\"PDF\""
 #define _validcontent "application/pdf"
@@ -25,26 +17,26 @@ typedef struct _field
 
 FIELD fields[] =
 {
-	{N_("Title"),			ft_string,	""},
-	{N_("Author"),			ft_string,	""},
-	{N_("Subject"),			ft_string,	""},
-	{N_("Creator"),			ft_string,	""},
-	{N_("Producer"),		ft_string,	""},
-	{N_("Keywords"),		ft_string,	""},
-	{N_("Version"),			ft_string,	""},
-	{N_("Total Pages"),		ft_numeric_32,	""},
-	{N_("Creation date"),		ft_datetime,	""},
-	{N_("Modification date"),	ft_datetime,	""},
-	{N_("Attachments"),		ft_boolean,	""},
-	{N_("Linearized"),		ft_boolean,	""},
-	{N_("Password protected"),	ft_boolean,	""},
-	{N_("Damaged"),			ft_boolean,	""},
-	{N_("Can be printer"),		ft_boolean,	""},
-	{N_("Can be modified"),		ft_boolean,	""},
-	{N_("Can be copied"),		ft_boolean,	""},
-	{N_("OK to add notes"),		ft_boolean,	""},
-	{N_("OK to fill form"),		ft_boolean,	""},
-	{N_("Text"),			ft_fulltext,	""},
+	{"Title",			ft_string,	""},
+	{"Author",			ft_string,	""},
+	{"Subject",			ft_string,	""},
+	{"Creator",			ft_string,	""},
+	{"Producer",			ft_string,	""},
+	{"Keywords",			ft_string,	""},
+	{"Version",			ft_string,	""},
+	{"Total Pages",			ft_numeric_32,	""},
+	{"Creation date",		ft_datetime,	""},
+	{"Modification date",		ft_datetime,	""},
+	{"Attachments",			ft_boolean,	""},
+	{"Linearized",			ft_boolean,	""},
+	{"Password protected",		ft_boolean,	""},
+	{"Damaged",			ft_boolean,	""},
+	{"Can be printer",		ft_boolean,	""},
+	{"Can be modified",		ft_boolean,	""},
+	{"Can be copied",		ft_boolean,	""},
+	{"OK to add notes",		ft_boolean,	""},
+	{"OK to fill form",		ft_boolean,	""},
+	{"Text",			ft_fulltext,	""},
 };
 
 static gchar *doc_text;
@@ -80,7 +72,7 @@ int DCPCALL ContentGetSupportedField(int FieldIndex, char* FieldName, char* Unit
 	if (FieldIndex < 0 || FieldIndex >= fieldcount)
 		return ft_nomorefields;
 
-	g_strlcpy(FieldName, gettext(fields[FieldIndex].name), maxlen - 1);
+	g_strlcpy(FieldName, fields[FieldIndex].name, maxlen - 1);
 	g_strlcpy(Units, fields[FieldIndex].unit, maxlen - 1);
 	return fields[FieldIndex].type;
 }
@@ -311,18 +303,4 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 		return ft_fieldempty;
 	else
 		return fields[FieldIndex].type;
-}
-
-void DCPCALL ContentSetDefaultParams(ContentDefaultParamStruct* dps)
-{
-	Dl_info dlinfo;
-
-	memset(&dlinfo, 0, sizeof(dlinfo));
-
-	if (dladdr(fields, &dlinfo) != 0)
-	{
-		setlocale (LC_ALL, "");
-		bindtextdomain(GETTEXT_PACKAGE, g_strdup_printf("%s/langs", g_path_get_dirname(dlinfo.dli_fname)));
-		textdomain(GETTEXT_PACKAGE);
-	}
 }
