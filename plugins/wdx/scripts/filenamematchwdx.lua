@@ -1,6 +1,6 @@
 -- luarocks-5.1 install luautf8
 
-local utf,strfunc = pcall(require,"lua-utf8")
+local utf, strfunc = pcall(require, "lua-utf8")
 if not utf then
     strfunc = string
 end
@@ -36,13 +36,29 @@ local ft_number = 2
 local ft_float  = 3
 
 local pattern = {  
-  -- description, field type, pattern,            alt pattern, ...
-    {"(number).", ft_number,  "(%d+)%.",          nil,                    nil},
-    {nil,         ft_number,  "%-%s+(%d+)%.",     nil,                    nil},
-    {"(part) -",  ft_string,  "^(.-)%s+%-",       ".+",                   nil},
-    {"- (part)",  ft_string,  "%-%s+%d+%.(.+)$",  ".+%-%s(.+)$",  "%-%s+(.+)"},
-    {nil,         ft_string,  "%-%s(.-)%s+%-",    nil,                    nil},
-    {"tar.(xyz)", ft_string,  "%.tar%.(.-)$",     nil,                    nil},
+--[[ description,  field type,  pattern,
+                                alt pattern, 
+                                ...                     ]]
+
+    {"(number).",   ft_number,  "(%d+)%.",               },
+    
+    {nil,           ft_number,  "%-%s+(%d+)%."           },
+    
+    {"(part) -",    ft_string,  "^(.-)%s+%-", 
+                                ".+",                    },
+    
+    {"- (part)",    ft_string,  "%-%s+%d+%.(.+)$", 
+                                ".+%-%s(.+)$", 
+                                "%-%s+(.+)",             },
+    
+    {nil,           ft_string,  "%-%s(.-)%s+%-",         },
+    
+    {"tar.(xyz)",   ft_string,  "%.tar%.(.-)$",          },
+    
+    {"cut article", ft_string,  "^[Tt][Hh][Ee]*%s+(.+)", 
+                                "^[Aa][Nn]*%s+(.+)", 
+                                "^[Aa]*%s+(.+)", 
+                                ".+",                    },
 }
 
 local UnitsStr = "Filename|Filename.Ext|Ext|Path|Path with Filename.Ext";
@@ -63,14 +79,14 @@ function ContentGetSupportedField(FieldIndex)
         end
         return "Group", group_names, 7; -- FieldName,Units,ft_multiplechoice
     elseif (pattern[FieldIndex] ~= nil) then
-            return getFieldName(FieldIndex), UnitsStr, pattern[FieldIndex][2];
+        return getFieldName(FieldIndex), UnitsStr, pattern[FieldIndex][2];
     else
         return '', '', 0; -- ft_nomorefields
     end
 end
 
 function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
-    if (FileName:find("["..DelimPattern.."]%.%.$")) then
+    if (FileName:find("[" .. DelimPattern .. "]%.%.$")) then
         return nil;
     end
     if (FieldIndex == 0) then
@@ -95,7 +111,7 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
             if (result ~= nil) then
                 return result;
             end
-         end
+        end
     end
     return nil;
 end
