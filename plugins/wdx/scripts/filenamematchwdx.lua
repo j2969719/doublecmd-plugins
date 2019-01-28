@@ -55,9 +55,9 @@ local pattern = {
     
     {"tar.(xyz)",   ft_string,  "%.tar%.(.-)$",          },
     
-    {"cut article", ft_string,  "^[Tt][Hh][Ee]*%s+(.+)", 
-                                "^[Aa][Nn]*%s+(.+)", 
-                                "^[Aa]*%s+(.+)", 
+    {"cut article", ft_string,  "^[Tt][Hh][Ee]%s+(.+)", 
+                                "^[Aa][Nn]%s+(.+)", 
+                                "^[Aa]%s+(.+)", 
                                 ".+",                    },
 }
 
