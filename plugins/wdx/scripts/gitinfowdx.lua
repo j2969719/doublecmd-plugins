@@ -18,7 +18,7 @@ local fields = {  -- field name, field type, command, strip newline, sort order
     {"Origin URL",      8,                                   "git remote get-url origin #", true,   1},
     {"Push URL",        8,                            "git remote get-url origin --push #", true,   1},
     {"Log",             9,                                             "git log --oneline", false,  1},
-    {"Untracked",       6,                                               "git ls-files -o", false,  1},
+    {"Untracked",       6,                                               "git ls-files -o", true,  -1},
     {"Ignored",         6,                            "git ls-files -i --exclude-standard", true,  -1},
     {"Modified",        6,                                               "git ls-files -m", true,  -1},
     {"Untracked (alt)", 7,                                               "git ls-files -o", true,  -1},
