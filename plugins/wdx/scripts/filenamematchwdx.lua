@@ -55,6 +55,8 @@ local pattern = {
     
     {"tar.(xyz)",   ft_string,  "%.tar%.(.-)$",          },
     
+    {"folder name", ft_string,  "/([^/]+)/[^/]*$",       },
+    
     {"cut article", ft_string,  "^[Tt][Hh][Ee]%s+(.+)", 
                                 "^[Aa][Nn]%s+(.+)", 
                                 "^[Aa]%s+(.+)", 
