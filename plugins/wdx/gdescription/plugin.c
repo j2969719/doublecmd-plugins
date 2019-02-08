@@ -4,10 +4,23 @@
 
 int DCPCALL ContentGetSupportedField(int FieldIndex, char* FieldName, char* Units, int maxlen)
 {
+	g_strlcpy(Units, "", maxlen-1);
+
 	if (FieldIndex == 0)
 	{
 		g_strlcpy(FieldName, "description", maxlen-1);
 		return ft_string;
+	}
+	else if (FieldIndex == 1)
+	{
+		g_strlcpy(FieldName, "content type", maxlen-1);
+		return ft_string;
+	}
+	else if (FieldIndex == 2)
+	{
+		g_strlcpy(FieldName, "type", maxlen-1);
+		g_strlcpy(Units, "audio|video|image", maxlen-1);
+		return ft_multiplechoice;
 	}
 	else
 		return ft_nomorefields;
@@ -21,7 +34,7 @@ int DCPCALL ContentGetDetectString(char* DetectString, int maxlen)
 
 int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void* FieldValue, int maxlen, int flags)
 {
-	if (FieldIndex == 0)
+	if (FieldIndex >= 0 && FieldIndex < 3)
 	{
 		GFile *gfile = g_file_new_for_path(FileName);
 
@@ -37,6 +50,23 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 
 		if (!content_type)
 			return ft_fieldempty;
+
+		if (FieldIndex == 1)
+		{
+			g_strlcpy((char*)FieldValue, content_type, maxlen-1);
+			return ft_string;
+		}
+		else if (FieldIndex == 2)
+		{
+			gchar **type = g_regex_split_simple("/", content_type, 0, 0);
+
+			if (!type || !type[0])
+				return ft_fieldempty;
+
+			g_strlcpy((char*)FieldValue, type[0], maxlen-1);
+			g_strfreev(type);
+			return ft_multiplechoice;
+		}
 
 		gchar *result = g_content_type_get_description(content_type);
 

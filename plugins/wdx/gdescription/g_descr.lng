@@ -1,2 +1,5 @@
 [RUS]
 description=Описание
+content type=Тип контента
+type=Тип
+audio|video|image=Аудио|Видео|Изображение
