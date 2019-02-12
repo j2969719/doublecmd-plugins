@@ -641,6 +641,22 @@ DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
   </Menu>
 </doublecmd>
 ```
+
+# convert images
+```xml
+DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
+<doublecmd>
+  <Program>
+    <ID>{138CE458-F38D-439F-AFAF-1E3623E8E13B}</ID>
+    <Icon>camera-photo</Icon>
+    <Hint>convert images</Hint>
+    <Command>mogrify</Command>
+    <Params>%[mogrify options; -format jpg *.%e1]</Params>
+    <StartPath>%D</StartPath>
+  </Program>
+</doublecmd>
+```
+
 # scripts
 
 ## copy to subdirs
