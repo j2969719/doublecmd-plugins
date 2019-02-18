@@ -4,6 +4,7 @@
 #include <sys/types.h>
 #include <pwd.h>
 #include <grp.h>
+#include <libgen.h>
 #include <unistd.h>
 #include <string.h>
 #include <math.h>
@@ -22,24 +23,27 @@ typedef struct _field
 
 #define fieldcount (sizeof(fields)/sizeof(FIELD))
 
+#define info_units "default|fast|folow symlinks|uncompress|uncompress and folow symlinks|all matches"
+#define obj_units  "file|directory|character device|block device|named pipe|symlink|socket"
+
 FIELD fields[] =
 {
-	{"Info",			ft_string,	"default|fast|folow symlinks|uncompress|uncompress and folow symlinks|all matches"},
-	{"MIME type",			ft_string,								  "default|folow symlinks"},
-	{"MIME encoding",		ft_string,								  "default|folow symlinks"},
-	{"Object type",			ft_multiplechoice,	  "file|directory|character device|block device|named pipe|symlink|socket"},
-	{"Access rights in octal",	ft_numeric_32,										"xxxx|xxx"},
-	{"User name",			ft_string,											""},
-	{"User ID",			ft_numeric_32,											""},
-	{"Group name",			ft_string,											""},
-	{"Group ID",			ft_numeric_32,											""},
-	{"Inode number",		ft_numeric_32,											""},
-	{"Size",			ft_numeric_64,											""},
-	{"Block size",			ft_numeric_32,											""},
-	{"Number of blocks",		ft_numeric_64,											""},
-	{"Number of hard links",	ft_numeric_32,											""},
-	{"Mountpoint",			ft_boolean,											""},
-	{"User access",			ft_boolean,							"read|write|execute|execute (dir)"},
+	{"Info",			ft_string,				info_units},
+	{"MIME type",			ft_string,		  "default|folow symlinks"},
+	{"MIME encoding",		ft_string,		  "default|folow symlinks"},
+	{"Object type",			ft_multiplechoice,			 obj_units},
+	{"Access rights in octal",	ft_numeric_32,				"xxxx|xxx"},
+	{"User name",			ft_string,					""},
+	{"User ID",			ft_numeric_32,					""},
+	{"Group name",			ft_string,					""},
+	{"Group ID",			ft_numeric_32,					""},
+	{"Inode number",		ft_numeric_32,					""},
+	{"Size",			ft_numeric_64,					""},
+	{"Block size",			ft_numeric_32,					""},
+	{"Number of blocks",		ft_numeric_64,					""},
+	{"Number of hard links",	ft_numeric_32,					""},
+	{"Mountpoint",			ft_boolean,					""},
+	{"User access",			ft_boolean,	"read|write|execute|execute (dir)"},
 };
 
 char* objtypevalue[7] =
@@ -97,20 +101,15 @@ int DCPCALL ContentGetDetectString(char* DetectString, int maxlen)
 
 int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void* FieldValue, int maxlen, int flags)
 {
-	char tname[PATH_MAX], pname[PATH_MAX + 4];
 	struct stat buf, bfparent;
 	const char *magic_full;
 	magic_t magic_cookie;
 	int access_how;
 
-	strlcpy(tname, FileName + strlen(FileName) - 3, 4);
+	if (strcmp(basename(FileName), "..") == 0)
+		return ft_fileerror;
 
-	if (strcmp(tname, "/..") == 0)
-		strlcpy(tname, FileName, strlen(FileName) - 2);
-	else
-		strlcpy(tname, FileName, strlen(FileName) + 1);
-
-	if (lstat(tname, &buf) != 0)
+	if (lstat(FileName, &buf) != 0)
 		return ft_fileerror;
 
 	struct passwd *pw = getpwuid(buf.st_uid);
@@ -190,7 +189,7 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 		break;
 
 	case 5:
-		strlcpy((char*)FieldValue, pw->pw_name, maxlen - 1);
+		strncpy((char*)FieldValue, pw->pw_name, maxlen - 1);
 		break;
 
 	case 6:
@@ -198,7 +197,7 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 		break;
 
 	case 7:
-		strlcpy((char*)FieldValue, gr->gr_name, maxlen - 1);
+		strncpy((char*)FieldValue, gr->gr_name, maxlen - 1);
 		break;
 
 	case 8:
@@ -226,14 +225,12 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 		break;
 
 	case 14:
-		if (strcmp(tname, "/") == 0)
+		if (strcmp(FileName, "/") == 0)
 			return ft_fileerror;
 
 		if (S_ISDIR(buf.st_mode))
 		{
-			sprintf(pname, "%s/..", tname);
-
-			if (lstat(pname, &bfparent) != 0)
+			if (lstat(dirname(FileName), &bfparent) != 0)
 				return ft_nosuchfield;
 
 			if ((buf.st_dev == bfparent.st_dev) && (buf.st_ino != bfparent.st_ino))
@@ -276,7 +273,7 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 			access_how = R_OK;
 		}
 
-		if (access(tname, access_how) == 0)
+		if (access(FileName, access_how) == 0)
 			*(int*)FieldValue = 1;
 		else
 			*(int*)FieldValue = 0;
@@ -303,7 +300,7 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 			return ft_fileerror;
 		}
 
-		magic_full = magic_file(magic_cookie, tname);
+		magic_full = magic_file(magic_cookie, FileName);
 
 		if (magic_full)
 			strlcpy((char*)FieldValue, magic_full, maxlen - 1);
