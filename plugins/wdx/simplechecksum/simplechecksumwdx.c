@@ -45,14 +45,14 @@ int DCPCALL ContentGetSupportedField(int FieldIndex, char* FieldName, char* Unit
 	if (FieldIndex < 0 || FieldIndex >= fieldcount)
 		return ft_nomorefields;
 
-	strncpy(FieldName, fields[FieldIndex].name, maxlen - 1);
-	strncpy(Units, fields[FieldIndex].unit, maxlen - 1);
+	strlcpy(FieldName, fields[FieldIndex].name, maxlen - 1);
+	strlcpy(Units, fields[FieldIndex].unit, maxlen - 1);
 	return fields[FieldIndex].type;
 }
 
 int DCPCALL ContentGetDetectString(char* DetectString, int maxlen)
 {
-	strlcpy(DetectString, _detectstring, maxlen-1);
+	strlcpy(DetectString, _detectstring, maxlen - 1);
 	return 0;
 }
 
@@ -144,7 +144,7 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 	}
 
 	fclose(inFile);
-	strncpy((char*)FieldValue, result, maxlen - 1);
+	strlcpy((char*)FieldValue, result, maxlen - 1);
 
 	return fields[FieldIndex].type;
 

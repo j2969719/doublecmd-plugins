@@ -39,7 +39,7 @@ FIELD fields[] =
 	{"Number of blocks",		ft_numeric_64,											""},
 	{"Number of hard links",	ft_numeric_32,											""},
 	{"Mountpoint",			ft_boolean,											""},
-	{"User access",			ft_boolean,								      "read|write|execute"},
+	{"User access",			ft_boolean,							"read|write|execute|execute (dir)"},
 };
 
 char* objtypevalue[7] =
@@ -84,14 +84,14 @@ int DCPCALL ContentGetSupportedField(int FieldIndex, char* FieldName, char* Unit
 	if (FieldIndex < 0 || FieldIndex >= fieldcount)
 		return ft_nomorefields;
 
-	strncpy(FieldName, fields[FieldIndex].name, maxlen - 1);
-	strncpy(Units, fields[FieldIndex].unit, maxlen - 1);
+	strlcpy(FieldName, fields[FieldIndex].name, maxlen - 1);
+	strlcpy(Units, fields[FieldIndex].unit, maxlen - 1);
 	return fields[FieldIndex].type;
 }
 
 int DCPCALL ContentGetDetectString(char* DetectString, int maxlen)
 {
-	strlcpy(DetectString, _detectstring, maxlen-1);
+	strlcpy(DetectString, _detectstring, maxlen - 1);
 	return 0;
 }
 
@@ -102,6 +102,7 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 	const char *magic_full;
 	magic_t magic_cookie;
 	int access_how;
+
 	strlcpy(tname, FileName + strlen(FileName) - 3, 4);
 
 	if (strcmp(tname, "/..") == 0)
@@ -189,7 +190,7 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 		break;
 
 	case 5:
-		strncpy((char*)FieldValue, pw->pw_name, maxlen - 1);
+		strlcpy((char*)FieldValue, pw->pw_name, maxlen - 1);
 		break;
 
 	case 6:
@@ -197,7 +198,7 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 		break;
 
 	case 7:
-		strncpy((char*)FieldValue, gr->gr_name, maxlen - 1);
+		strlcpy((char*)FieldValue, gr->gr_name, maxlen - 1);
 		break;
 
 	case 8:
@@ -263,6 +264,14 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 			access_how = X_OK;
 			break;
 
+		case 3:
+			if (S_ISDIR(buf.st_mode))
+				access_how = X_OK;
+			else
+				return ft_fileerror;
+
+			break;
+
 		default:
 			access_how = R_OK;
 		}
@@ -297,7 +306,7 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 		magic_full = magic_file(magic_cookie, tname);
 
 		if (magic_full)
-			strncpy((char*)FieldValue, magic_full, maxlen - 1);
+			strlcpy((char*)FieldValue, magic_full, maxlen - 1);
 		else
 			return ft_fieldempty;
 
