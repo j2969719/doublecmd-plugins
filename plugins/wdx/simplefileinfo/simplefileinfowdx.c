@@ -69,6 +69,7 @@ char* strlcpy(char* p, const char* p2, int maxlen)
 
 	return p;
 }
+
 int convertDecimalToOctal(int decimalNumber)
 {
 	int octalNumber = 0, i = 1;
@@ -311,5 +312,4 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 	}
 
 	return fields[FieldIndex].type;
-
 }
