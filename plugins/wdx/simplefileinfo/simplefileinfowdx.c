@@ -4,6 +4,7 @@
 #include <sys/types.h>
 #include <pwd.h>
 #include <grp.h>
+#include <unistd.h>
 #include <string.h>
 #include <math.h>
 #include <magic.h>
@@ -24,9 +25,9 @@ typedef struct _field
 FIELD fields[] =
 {
 	{"Info",			ft_string,	"default|fast|folow symlinks|uncompress|uncompress and folow symlinks|all matches"},
-	{"MIME type",			ft_string,								"default|folow symlinks"},
-	{"MIME encoding",		ft_string,								"default|folow symlinks"},
-	{"Object type",			ft_multiplechoice,	"file|directory|character device|block device|named pipe|symlink|socket"},
+	{"MIME type",			ft_string,								  "default|folow symlinks"},
+	{"MIME encoding",		ft_string,								  "default|folow symlinks"},
+	{"Object type",			ft_multiplechoice,	  "file|directory|character device|block device|named pipe|symlink|socket"},
 	{"Access rights in octal",	ft_numeric_32,										"xxxx|xxx"},
 	{"User name",			ft_string,											""},
 	{"User ID",			ft_numeric_32,											""},
@@ -38,6 +39,7 @@ FIELD fields[] =
 	{"Number of blocks",		ft_numeric_64,											""},
 	{"Number of hard links",	ft_numeric_32,											""},
 	{"Mountpoint",			ft_boolean,											""},
+	{"User access",			ft_boolean,								      "read|write|execute"},
 };
 
 char* objtypevalue[7] =
@@ -99,6 +101,7 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 	struct stat buf, bfparent;
 	const char *magic_full;
 	magic_t magic_cookie;
+	int access_how;
 	strlcpy(tname, FileName + strlen(FileName) - 3, 4);
 
 	if (strcmp(tname, "/..") == 0)
@@ -247,6 +250,30 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 		}
 
 		break;
+
+	case 15:
+	{
+		switch (UnitIndex)
+		{
+		case 1:
+			access_how = W_OK;
+			break;
+
+		case 2:
+			access_how = X_OK;
+			break;
+
+		default:
+			access_how = R_OK;
+		}
+
+		if (access(tname, access_how) == 0)
+			*(int*)FieldValue = 1;
+		else
+			*(int*)FieldValue = 0;
+
+		break;
+	}
 
 	default:
 		return ft_nosuchfield;
