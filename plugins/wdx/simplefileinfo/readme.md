@@ -17,4 +17,3 @@ Features
 > - Returns the Group ID
 > - Returns the Inode number
 > - Returns the Number of hard links
-> - Checks if the directory is a mountpoint

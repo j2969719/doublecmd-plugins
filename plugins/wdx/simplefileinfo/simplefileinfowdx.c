@@ -42,8 +42,8 @@ FIELD fields[] =
 	{"Block size",			ft_numeric_32,					""},
 	{"Number of blocks",		ft_numeric_64,					""},
 	{"Number of hard links",	ft_numeric_32,					""},
-	{"Mountpoint",			ft_boolean,					""},
-	{"User access",			ft_boolean,	"read|write|execute|execute (dir)"},
+	{"User access",			ft_boolean,	"execute (dir)|read|write|execute"},
+	{"User access (string)",	ft_string,					""},
 };
 
 char* objtypevalue[7] =
@@ -102,9 +102,10 @@ int DCPCALL ContentGetDetectString(char* DetectString, int maxlen)
 
 int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void* FieldValue, int maxlen, int flags)
 {
-	struct stat buf, bfparent;
+	struct stat buf;
 	const char *magic_full;
 	magic_t magic_cookie;
+	char access_str[3] = "---";
 	int access_how;
 
 	if (strcmp(basename(FileName), "..") == 0)
@@ -226,58 +227,48 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 		break;
 
 	case 14:
-		if (strcmp(FileName, "/") == 0)
-			return ft_fileerror;
-
-		if (S_ISDIR(buf.st_mode))
-		{
-			if (lstat(dirname(FileName), &bfparent) != 0)
-				return ft_nosuchfield;
-
-			if ((buf.st_dev == bfparent.st_dev) && (buf.st_ino != bfparent.st_ino))
-			{
-				*(int*)FieldValue = 0;
-			}
-			else
-			{
-				*(int*)FieldValue = 1;
-			}
-		}
-		else
-		{
-			return ft_fieldempty;
-		}
-
-		break;
-
-	case 15:
 	{
 		switch (UnitIndex)
 		{
 		case 1:
-			access_how = W_OK;
+			access_how = R_OK;
 			break;
 
 		case 2:
-			access_how = X_OK;
+			access_how = W_OK;
 			break;
 
 		case 3:
+			access_how = X_OK;
+			break;
+
+		default:
 			if (S_ISDIR(buf.st_mode))
 				access_how = X_OK;
 			else
 				return ft_fileerror;
-
-			break;
-
-		default:
-			access_how = R_OK;
 		}
 
 		if (access(FileName, access_how) == 0)
 			*(int*)FieldValue = 1;
 		else
 			*(int*)FieldValue = 0;
+
+		break;
+	}
+
+	case 15:
+	{
+		if (access(FileName, R_OK) == 0)
+			access_str[0] = 'r';
+
+		if (access(FileName, W_OK) == 0)
+			access_str[1] = 'w';
+
+		if (access(FileName, X_OK) == 0)
+			access_str[2] = 'x';
+
+		strlcpy((char*)FieldValue, access_str, maxlen - 1);
 
 		break;
 	}
