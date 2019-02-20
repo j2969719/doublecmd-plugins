@@ -4,12 +4,10 @@
 #include <sys/types.h>
 #include <pwd.h>
 #include <grp.h>
-#include <libgen.h>
 #include <unistd.h>
 #include <string.h>
 #include <math.h>
 #include <magic.h>
-#include <linux/limits.h>
 #include "wdxplugin.h"
 
 #define _detectstring "EXT=\"*\""
@@ -105,11 +103,9 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 	struct stat buf;
 	const char *magic_full;
 	magic_t magic_cookie;
+	mode_t mode_bits;
 	char access_str[3] = "---";
 	int access_how;
-
-	if (strcmp(basename(FileName), "..") == 0)
-		return ft_fileerror;
 
 	if (lstat(FileName, &buf) != 0)
 		return ft_fileerror;
@@ -184,9 +180,11 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 
 	case 4:
 		if (UnitIndex == 0)
-			*(int*)FieldValue = convertDecimalToOctal(buf.st_mode & (S_IRWXU | S_IRWXG | S_IRWXO | S_ISUID | S_ISGID | S_ISVTX));
+			mode_bits = S_IRWXU | S_IRWXG | S_IRWXO | S_ISUID | S_ISGID | S_ISVTX;
 		else
-			*(int*)FieldValue = convertDecimalToOctal(buf.st_mode & (S_IRWXU | S_IRWXG | S_IRWXO));
+			mode_bits = S_IRWXU | S_IRWXG | S_IRWXO;
+
+		*(int*)FieldValue = convertDecimalToOctal(buf.st_mode & mode_bits);
 
 		break;
 
