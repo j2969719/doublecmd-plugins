@@ -4,6 +4,7 @@
 #include <sys/types.h>
 #include <pwd.h>
 #include <grp.h>
+#include <errno.h>
 #include <unistd.h>
 #include <string.h>
 #include <math.h>
@@ -30,6 +31,7 @@ FIELD fields[] =
 	{"MIME type",			ft_string,		  "default|folow symlinks"},
 	{"MIME encoding",		ft_string,		  "default|folow symlinks"},
 	{"Object type",			ft_multiplechoice,			 obj_units},
+	{"Access for current user",	ft_string,					""},
 	{"Access rights in octal",	ft_numeric_32,				"xxxx|xxx"},
 	{"User name",			ft_string,					""},
 	{"User ID",			ft_numeric_32,					""},
@@ -41,7 +43,7 @@ FIELD fields[] =
 	{"Number of blocks",		ft_numeric_64,					""},
 	{"Number of hard links",	ft_numeric_32,					""},
 	{"User access",			ft_boolean,	"execute (dir)|read|write|execute"},
-	{"User access (string)",	ft_string,					""},
+	{"Symlink error",		ft_boolean,		 "no access|dangling|loop"},
 };
 
 char* objtypevalue[7] =
@@ -179,6 +181,22 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 		break;
 
 	case 4:
+	{
+		if (access(FileName, R_OK) == 0)
+			access_str[0] = 'r';
+
+		if (access(FileName, W_OK) == 0)
+			access_str[1] = 'w';
+
+		if (access(FileName, X_OK) == 0)
+			access_str[2] = 'x';
+
+		strlcpy((char*)FieldValue, access_str, maxlen - 1);
+
+		break;
+	}
+
+	case 5:
 		if (UnitIndex == 0)
 			mode_bits = S_IRWXU | S_IRWXG | S_IRWXO | S_ISUID | S_ISGID | S_ISVTX;
 		else
@@ -188,43 +206,43 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 
 		break;
 
-	case 5:
+	case 6:
 		strncpy((char*)FieldValue, pw->pw_name, maxlen - 1);
 		break;
 
-	case 6:
+	case 7:
 		*(int*)FieldValue = buf.st_uid;
 		break;
 
-	case 7:
+	case 8:
 		strncpy((char*)FieldValue, gr->gr_name, maxlen - 1);
 		break;
 
-	case 8:
+	case 9:
 		*(int*)FieldValue = buf.st_gid;
 		break;
 
-	case 9:
+	case 10:
 		*(int*)FieldValue = buf.st_ino;
 		break;
 
-	case 10:
+	case 11:
 		*(int*)FieldValue = buf.st_size;
 		break;
 
-	case 11:
+	case 12:
 		*(int*)FieldValue = buf.st_blksize;
 		break;
 
-	case 12:
+	case 13:
 		*(int*)FieldValue = buf.st_blocks;
 		break;
 
-	case 13:
+	case 14:
 		*(int*)FieldValue = buf.st_nlink;
 		break;
 
-	case 14:
+	case 15:
 	{
 		switch (UnitIndex)
 		{
@@ -244,7 +262,7 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 			if (S_ISDIR(buf.st_mode))
 				access_how = X_OK;
 			else
-				return ft_fileerror;
+				return ft_fieldempty;
 		}
 
 		if (access(FileName, access_how) == 0)
@@ -255,18 +273,43 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 		break;
 	}
 
-	case 15:
+	case 16:
 	{
-		if (access(FileName, R_OK) == 0)
-			access_str[0] = 'r';
+		if (S_ISLNK(buf.st_mode))
+		{
+			*(int*)FieldValue = 0;
 
-		if (access(FileName, W_OK) == 0)
-			access_str[1] = 'w';
+			if (access(FileName, F_OK) == -1)
+			{
+				int errsv = errno;
 
-		if (access(FileName, X_OK) == 0)
-			access_str[2] = 'x';
+				switch (UnitIndex)
+				{
+				case 1:
+				{
+					if (errsv == ENOENT)
+						*(int*)FieldValue = 1;
 
-		strlcpy((char*)FieldValue, access_str, maxlen - 1);
+					break;
+				}
+
+				case 2:
+				{
+					if (errsv == ELOOP)
+						*(int*)FieldValue = 1;
+
+					break;
+				}
+
+				default:
+					*(int*)FieldValue = 1;
+				}
+			}
+			else
+				return ft_fieldempty;
+		}
+		else
+			return ft_fileerror;
 
 		break;
 	}
