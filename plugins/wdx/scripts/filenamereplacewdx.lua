@@ -5,9 +5,10 @@ local KeepExt = false;
 local PathDelim = SysUtils.PathDelim;
 
 local RplFiles = {
-  -- filename,             delim, contains extensions
-    {"/home/user/test.csv", ",",  false}, 
-    {"/home/user/test.txt", "	", true}, 
+  -- file path,             delim, contains extensions
+    {"/home/user/test.csv",   ",", false}, 
+    {"home/user/test.txt",    "	",  true}, 
+    {"C:\\SomeDir\\winf.txt", "	", false}, 
 }
 
 local LuaUtf8, strfunc = pcall(require, "lua-utf8");
@@ -44,9 +45,9 @@ function ContentGetSupportedField(FieldIndex)
         units = "utf8|ansi|oem|koi8";
     end
     if (FieldIndex == 0) then
-        return GetFullname(DefaultFile), units, 8; -- FieldName,Units,ft_string
+        return strfunc.match(DefaultFile, "([^/\\]+)$"), units, 8; -- FieldName,Units,ft_string
     elseif (RplFiles[FieldIndex] ~= nil) then
-        return GetFullname(RplFiles[FieldIndex][1]), units, 8; -- FieldName,Units,ft_string
+        return strfunc.match(RplFiles[FieldIndex][1], "([^/\\]+)$"), units, 8; -- FieldName,Units,ft_string
     end
     return '', '', 0; -- ft_nomorefields
 end
@@ -126,7 +127,7 @@ end
 
 function GetPath(String)
     if (String == nil) then
-        return nil;
+        return '';
     end
     return strfunc.match(String, ".*" .. PathDelim);
 end
