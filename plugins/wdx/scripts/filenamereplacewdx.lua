@@ -1,7 +1,6 @@
 local DefaultFile = '';
 local Replaces = {};
 local DefaultDelim = "%s"; -- all space characters, for tab only replace with "	"
-
 local KeepExt = false;
 local PathDelim = SysUtils.PathDelim;
 
@@ -20,7 +19,6 @@ local convert = nil;
 if (LazUtf8 ~= nil) then
     convert = LazUtf8.ConvertEncoding;
 end
-
 
 function ContentSetDefaultParams(IniFileName, PlugApiVerHi, PlugApiVerLow)
     if (PathDelim == nil) then
