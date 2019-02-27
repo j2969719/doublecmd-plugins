@@ -1,6 +1,7 @@
 local DefaultFile = '';
 local Replaces = {};
-local DefaultDelim = "%s";
+local DefaultDelim = "%s"; -- all space characters, for tab only replace with "	"
+
 local KeepExt = false;
 local PathDelim = SysUtils.PathDelim;
 
@@ -14,6 +15,12 @@ local LuaUtf8, strfunc = pcall(require, "lua-utf8");
 if not LuaUtf8 then
     strfunc = string;
 end
+
+local convert = nil;
+if (LazUtf8 ~= nil) then
+    convert = LazUtf8.ConvertEncoding;
+end
+
 
 function ContentSetDefaultParams(IniFileName, PlugApiVerHi, PlugApiVerLow)
     if (PathDelim == nil) then
@@ -34,10 +41,14 @@ function ContentSetDefaultParams(IniFileName, PlugApiVerHi, PlugApiVerLow)
 end
 
 function ContentGetSupportedField(FieldIndex)
+    local units = '';
+    if (convert ~= nil) then
+        units = "utf8|ansi|oem";
+    end
     if (FieldIndex == 0) then
-        return GetFullname(DefaultFile), '', 8; -- FieldName,Units,ft_string
+        return GetFullname(DefaultFile), units, 8; -- FieldName,Units,ft_string
     elseif (RplFiles[FieldIndex] ~= nil) then
-        return GetFullname(RplFiles[FieldIndex][1]), '', 8; -- FieldName,Units,ft_string
+        return GetFullname(RplFiles[FieldIndex][1]), units, 8; -- FieldName,Units,ft_string
     end
     return '', '', 0; -- ft_nomorefields
 end
@@ -45,14 +56,14 @@ end
 function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
     local keepext = false;
     if (FieldIndex == 0) then
-        UpdateReplaces(DefaultFile, DefaultDelim);
+        UpdateReplaces(DefaultFile, DefaultDelim, UnitIndex);
         keepext = KeepExt;
     else
         local delim = RplFiles[FieldIndex][2];
         if (delim == nil) then
             delim = DefaultDelim;
         end
-        UpdateReplaces(RplFiles[FieldIndex][1], delim);
+        UpdateReplaces(RplFiles[FieldIndex][1], delim, UnitIndex);
         keepext = RplFiles[FieldIndex][3];
         if (keepext == nil) then
             keepext = KeepExt;
@@ -75,7 +86,7 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
     end
 end
 
-function UpdateReplaces(FileName, Delim)
+function UpdateReplaces(FileName, Delim, UnitIndex)
     Replaces = {};
     local delim = Delim;
     if (delim == nil) then
@@ -85,19 +96,27 @@ function UpdateReplaces(FileName, Delim)
         local file = io.open(FileName, 'r');
         if (file ~= nil) then
             for line in file:lines() do
-                if (line:match('^.') == '"') then
-                    org  = line:match('^"([^"]+)');
-                else
-                    org  = line:match('^([^' .. delim .. ']+)');
+                local target = line;
+                if (UnitIndex == 1) and (line ~= nil) then
+                    target = convert(line, "ansi", "utf8");
+                elseif (UnitIndex == 2) and (line ~= nil) then
+                    target = convert(line, "oem", "utf8");
                 end
-                if (line:match('.$') == '"') then
-                    repl = line:match('([^"]+)"$');
-                else
-                    repl = line:match('([^' .. delim .. ']+)$');
-                end
-                if (org ~= nil) and (repl ~= nil) then
-                    org  = LowerCase(org);
-                    Replaces[org] = repl;
+                if (target ~= nil) then
+                    if (strfunc.match(target, '^.') == '"') then
+                        org  = strfunc.match(target, '^"([^"]+)');
+                    else
+                        org  = strfunc.match(target, '^([^' .. delim .. ']+)');
+                    end
+                    if (strfunc.match(target, '.$') == '"') then
+                        repl = strfunc.match(target, '([^"]+)"$');
+                    else
+                        repl = strfunc.match(target, '([^' .. delim .. ']+)$');
+                    end
+                    if (org ~= nil) and (repl ~= nil) then
+                        org  = LowerCase(org);
+                        Replaces[org] = repl;
+                    end
                 end
             end
             file:close();
