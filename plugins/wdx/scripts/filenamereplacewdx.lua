@@ -41,7 +41,7 @@ end
 function ContentGetSupportedField(FieldIndex)
     local units = '';
     if (convert ~= nil) then
-        units = "utf8|ansi|oem";
+        units = "utf8|ansi|oem|koi8";
     end
     if (FieldIndex == 0) then
         return GetFullname(DefaultFile), units, 8; -- FieldName,Units,ft_string
@@ -99,6 +99,8 @@ function UpdateReplaces(FileName, Delim, UnitIndex)
                     target = convert(line, "ansi", "utf8");
                 elseif (UnitIndex == 2) and (line ~= nil) then
                     target = convert(line, "oem", "utf8");
+                elseif (UnitIndex == 3) and (line ~= nil) then
+                    target = convert(line, "koi8", "utf8");
                 end
                 if (target ~= nil) then
                     if (strfunc.match(target, '^.') == '"') then
