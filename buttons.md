@@ -388,6 +388,20 @@ DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
 </doublecmd>
 ```
 
+# find samefile(hardlink)
+```xml
+DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
+<doublecmd>
+  <Program>
+    <ID>{AD4D866A-9B86-4193-9DA4-9D78C8BEF66B}</ID>
+    <Icon>cm_search</Icon>
+    <Hint>find samefile(hardlink)</Hint>
+    <Command>find</Command>
+    <Params>%[path;%D] -samefile "%p0" %t1</Params>
+  </Program>
+</doublecmd>
+```
+
 # gio unmount
 ```xml
 DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
@@ -480,6 +494,14 @@ DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
         <Hint>Clone</Hint>
         <Command>git</Command>
         <Params>clone %[Target;] %t1</Params>
+        <StartPath>%d</StartPath>
+      </Program>
+      <Program>
+        <ID>{3521972F-963D-4B4A-B110-58224C3DCC01}</ID>
+        <Icon>cm_copy</Icon>
+        <Hint>Clone (recursive)</Hint>
+        <Command>git</Command>
+        <Params>clone --recursive %[Target;] %t1</Params>
         <StartPath>%d</StartPath>
       </Program>
       <Program>

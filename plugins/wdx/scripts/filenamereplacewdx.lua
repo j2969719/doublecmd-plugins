@@ -96,12 +96,14 @@ function UpdateReplaces(FileName, Delim, UnitIndex)
         if (file ~= nil) then
             for line in file:lines() do
                 local target = line;
-                if (UnitIndex == 1) and (line ~= nil) then
-                    target = convert(line, "ansi", "utf8");
-                elseif (UnitIndex == 2) and (line ~= nil) then
-                    target = convert(line, "oem", "utf8");
-                elseif (UnitIndex == 3) and (line ~= nil) then
-                    target = convert(line, "koi8", "utf8");
+                if (line ~= nil) and (convert ~= nil) then
+                    if (UnitIndex == 1) then
+                        target = convert(line, "ansi", "utf8");
+                    elseif (UnitIndex == 2) then
+                        target = convert(line, "oem", "utf8");
+                    elseif (UnitIndex == 3) then
+                        target = convert(line, "koi8", "utf8");
+                    end
                 end
                 if (target ~= nil) then
                     if (strfunc.match(target, '^.') == '"') then
