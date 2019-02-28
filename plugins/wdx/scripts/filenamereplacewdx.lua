@@ -1,14 +1,14 @@
 local DefaultFile = '';
 local Replaces = {};
-local DefaultDelim = "%s"; -- all space characters, for tab only replace with "	"
+local DefaultDelim = "%s"; -- all space characters, for tab only replace with "\t"
 local KeepExt = false;
 local PathDelim = SysUtils.PathDelim;
 
 local RplFiles = {
   -- file path,             delim, contains extensions
-    {"/home/user/test.csv",   ",", false}, 
-    {"home/user/test.txt",    "	",  true}, 
-    {"C:\\SomeDir\\winf.txt", "	", false}, 
+    {"/home/user/test.csv",   ",",  false}, 
+    {"home/user/test.txt",    "\t",  true}, 
+    {"C:\\SomeDir\\winf.txt", "\t", false}, 
 }
 
 local LuaUtf8, strfunc = pcall(require, "lua-utf8");
@@ -17,7 +17,25 @@ if not LuaUtf8 then
 end
 
 local convert = nil;
-if (LazUtf8 ~= nil) then
+local units = '';
+local encoding = {
+--[[
+List of supported encoding values:
+
+ Default system encoding (depends on user locale): "default",
+ Default ANSI (Windows) encoding (depends on user locale): "ansi",
+ Default OEM (DOS) encoding (depends on user locale): "oem",
+ ANSI (Windows): "cp1250", "cp1251", "cp1252", "cp1253", "cp1254", "cp1255", "cp1256", "cp1257", "cp1258",
+ OEM (DOS): "cp437", "cp850", "cp852", "cp866", "cp874", "cp932", "cp936", "cp949", "cp950",
+ ISO 8859: "iso88591", "iso88592", "iso885915",
+ Other: "macintosh", "koi8",
+http://doublecmd.github.io/doc/en/lua.html#libraryutf8
+]]
+    "ansi", 
+    "oem", 
+    "koi8", 
+}
+if LazUtf8 then
     convert = LazUtf8.ConvertEncoding;
 end
 
@@ -37,13 +55,15 @@ function ContentSetDefaultParams(IniFileName, PlugApiVerHi, PlugApiVerLow)
     if (file ~= nil) then
         file:close();
     end
+    if (convert ~= nil) then
+        units = "utf8";
+        for i = 1 , #encoding do
+            units = units .. '|' .. encoding[i];
+        end
+    end
 end
 
 function ContentGetSupportedField(FieldIndex)
-    local units = '';
-    if (convert ~= nil) then
-        units = "utf8|ansi|oem|koi8";
-    end
     if (FieldIndex == 0) then
         return strfunc.match(DefaultFile, "([^/\\]+)$"), units, 8; -- FieldName,Units,ft_string
     elseif (RplFiles[FieldIndex] ~= nil) then
@@ -97,12 +117,8 @@ function UpdateReplaces(FileName, Delim, UnitIndex)
             for line in file:lines() do
                 local target = line;
                 if (line ~= nil) and (convert ~= nil) then
-                    if (UnitIndex == 1) then
-                        target = convert(line, "ansi", "utf8");
-                    elseif (UnitIndex == 2) then
-                        target = convert(line, "oem", "utf8");
-                    elseif (UnitIndex == 3) then
-                        target = convert(line, "koi8", "utf8");
+                    if (UnitIndex > 0) and (encoding[UnitIndex] ~= nil) then
+                        target = convert(line, encoding[UnitIndex], "utf8");
                     end
                 end
                 if (target ~= nil) then
