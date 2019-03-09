@@ -68,7 +68,8 @@ gboolean SetFindData(WIN32_FIND_DATAA *FindData)
 		if ((target) && (g_strcmp0(target, _dirmark) == 0))
 		{
 			GetCurrentFileTime(&FindData->ftLastWriteTime);
-			FindData->dwFileAttributes = FILE_ATTRIBUTE_DIRECTORY;
+			FindData->dwFileAttributes = FILE_ATTRIBUTE_DIRECTORY | 0x80000000;
+			FindData->dwReserved0 = 16877;
 		}
 		else
 		{
@@ -267,7 +268,20 @@ int DCPCALL FsRenMovFile(char* OldName, char* NewName, BOOL Move, BOOL OverWrite
 		g_key_file_set_string(cfg, newgroup, newkey, value);
 		gProgressProc(gPluginNr, OldName, NewName, 50);
 		if (Move)
+		{
+			gsize count;
 			g_key_file_remove_key(cfg, group, key, NULL);
+			g_key_file_get_keys(cfg, group, &count, NULL);
+			if (count == 0)
+			{
+				gchar *parent = g_path_get_dirname(group);
+				gchar *mark = g_path_get_basename(group);
+				g_key_file_remove_key(cfg, parent, mark, NULL);
+				g_key_file_remove_group(cfg, group, NULL);
+				g_free(parent);
+				g_free(mark);
+			}
+		}
 	}
 
 	g_free(group);
@@ -285,8 +299,12 @@ int DCPCALL FsExecuteFile(HWND MainWin, char* RemoteName, char* Verb)
 	{
 		//not working
 		//return FS_EXEC_YOURSELF;
-		gchar *command = g_strdup_printf("xdg-open \"%s\"", RemoteName + 1);
+		gchar *group = g_path_get_dirname(RemoteName);
+		gchar *key = g_path_get_basename(RemoteName);
+		gchar *command = g_strdup_printf("xdg-open \"%s\"", g_key_file_get_string(cfg, group, key, NULL));
 		g_spawn_command_line_async(command, NULL);
+		g_free(group);
+		g_free(key);
 		g_free(command);
 		return FS_EXEC_OK;
 	}
