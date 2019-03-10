@@ -1,4 +1,4 @@
-# Maintainer: some guy <j2969719 at tutanota dot com>
+
 pkgname=doublecmd-plugin-adb
 _pkgname=adbplugin-x64
 pkgver=8.5
@@ -15,10 +15,10 @@ md5sums=('2ed0616b9e380a9729b44dc6b9cc67f3'
          'c9b1a8587238155b1d1bfd1027554686')
 
 package() {
-  bspatch adb_rename.wfx adb.wfx libpcre.bspatch
+  bspatch adb_rename.wfx adb.wfx64 libpcre.bspatch
   install -d "${pkgdir}/usr/lib/doublecmd/plugins/wfx/${_pkgname}"
   install -d "${pkgdir}/usr/lib/doublecmd/plugins/wfx/${_pkgname}/doc"
 
-  install -m 644 adb.wfx "${pkgdir}/usr/lib/doublecmd/plugins/wfx/${_pkgname}"
+  install -m 644 adb.wfx64 "${pkgdir}/usr/lib/doublecmd/plugins/wfx/${_pkgname}"
   install -m 644 doc/notes.txt "${pkgdir}/usr/lib/doublecmd/plugins/wfx/${_pkgname}/doc"
 }

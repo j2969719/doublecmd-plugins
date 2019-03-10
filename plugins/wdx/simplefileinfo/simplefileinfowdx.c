@@ -31,7 +31,7 @@ FIELD fields[] =
 	{"MIME type",			ft_string,		  "default|folow symlinks"},
 	{"MIME encoding",		ft_string,		  "default|folow symlinks"},
 	{"Object type",			ft_multiplechoice,			 obj_units},
-	{"Access for current user",	ft_string,					""},
+	{"Access for current user",	ft_string,				"---|----"},
 	{"Access rights in octal",	ft_numeric_32,				"xxxx|xxx"},
 	{"User name",			ft_string,					""},
 	{"User ID",			ft_numeric_32,					""},
@@ -106,8 +106,8 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 	const char *magic_full;
 	magic_t magic_cookie;
 	mode_t mode_bits;
-	char access_str[3] = "---";
-	int access_how;
+	char access_str[4] = "----";
+	int access_how, i = 0;
 
 	if (lstat(FileName, &buf) != 0)
 		return ft_fileerror;
@@ -182,14 +182,37 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 
 	case 4:
 	{
+		if (UnitIndex == 1)
+		{
+			if (S_ISDIR(buf.st_mode))
+				access_str[i] = 'd';
+			else if (S_ISCHR(buf.st_mode))
+				access_str[i] = 'c';
+			else if (S_ISBLK(buf.st_mode))
+				access_str[i] = 'b';
+			else if (S_ISFIFO(buf.st_mode))
+				access_str[i] = 'f';
+			else if (S_ISLNK(buf.st_mode))
+				access_str[i] = 'l';
+			else if (S_ISSOCK(buf.st_mode))
+				access_str[i] = 's';
+			i++;
+		}
 		if (access(FileName, R_OK) == 0)
-			access_str[0] = 'r';
+			access_str[i] = 'r';
+
+		i++;
 
 		if (access(FileName, W_OK) == 0)
-			access_str[1] = 'w';
+			access_str[i] = 'w';
+
+		i++;
 
 		if (access(FileName, X_OK) == 0)
-			access_str[2] = 'x';
+			access_str[i] = 'x';
+
+		i++;
+		access_str[i] = '\0';
 
 		strlcpy((char*)FieldValue, access_str, maxlen - 1);
 
