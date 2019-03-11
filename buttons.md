@@ -821,3 +821,21 @@ DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
 </doublecmd>
 ```
 [script MakeDir.lua](https://github.com/j2969719/doublecmd-plugins/blob/master/utils/MakeDir.lua)
+
+
+## calculate or verify checksum (auto choose)
+```xml
+DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="utf-8"?>
+<doublecmd>
+  <Command>
+    <ID>{AA396254-DDBD-4CD9-8C51-48FDDFA4F2C3}</ID>
+    <Icon>cm_checksumverify</Icon>
+    <Hint>Calculate or verify checksum (auto choose)</Hint>
+    <Command>cm_ExecuteScript</Command>
+    <Param>%COMMANDER_PATH%/scripts/CheckSum.lua</Param>
+    <Param>%"0%es</Param>
+    <Param>%"0%ps2</Param>
+  </Command>
+</doublecmd>
+```
+[script CheckSum.lua](https://github.com/j2969719/doublecmd-plugins/blob/master/utils/CheckSum.lua)
