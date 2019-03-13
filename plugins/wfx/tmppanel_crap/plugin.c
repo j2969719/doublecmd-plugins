@@ -1,5 +1,6 @@
 #include <glib.h>
 #include <string.h>
+#include <errno.h>
 #include <sys/stat.h>
 #include "wfxplugin.h"
 
@@ -295,21 +296,40 @@ int DCPCALL FsRenMovFile(char* OldName, char* NewName, BOOL Move, BOOL OverWrite
 
 int DCPCALL FsExecuteFile(HWND MainWin, char* RemoteName, char* Verb)
 {
+	int result = FS_EXEC_ERROR;
+	gchar *group = g_path_get_dirname(RemoteName);
+	gchar *key = g_path_get_basename(RemoteName);
+	gchar *path = g_key_file_get_string(cfg, group, key, NULL);
+	g_free(group);
+	g_free(key);
+
 	if (g_strcmp0(Verb, "open") == 0)
 	{
 		//not working
-		//return FS_EXEC_YOURSELF;
-		gchar *group = g_path_get_dirname(RemoteName);
-		gchar *key = g_path_get_basename(RemoteName);
-		gchar *command = g_strdup_printf("xdg-open \"%s\"", g_key_file_get_string(cfg, group, key, NULL));
+		//result = FS_EXEC_YOURSELF;
+
+		gchar *command = g_strdup_printf("xdg-open \"%s\"", path);
 		g_spawn_command_line_async(command, NULL);
-		g_free(group);
-		g_free(key);
 		g_free(command);
-		return FS_EXEC_OK;
+		result = FS_FILE_OK;
+	}
+	else if (g_ascii_strncasecmp(Verb, "chmod", 5) == 0)
+	{
+		gint i = g_ascii_strtoll(Verb+6, 0, 8);
+		if (chmod(path, i) == -1)
+		{
+			int errsv = errno;
+			gRequestProc(gPluginNr, RT_MsgOK, _plugname, strerror(errsv), NULL, 0);
+		}
+		result = FS_FILE_OK;
+	}
+	else
+	{
+		g_spawn_command_line_async("xdg-open https://www.youtube.com/watch?v=dQw4w9WgXcQ", NULL);
 	}
 
-	return FS_EXEC_OK;
+	g_free(path);
+	return result;
 }
 
 void DCPCALL FsGetDefRootName(char* DefRootName, int maxlen)
