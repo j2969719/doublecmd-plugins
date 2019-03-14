@@ -1,0 +1,55 @@
+# Maintainer: TuxSpirit<tuxspiritATarchlinuxDOTfr>
+
+pkgname=freearc
+_pkgname=FreeArc
+pkgver=0.666
+pkgrel=3
+pkgdesc="FreeArc archiver combines unexampled speed/compression ratio and multitude of features"
+license=('GPL')
+arch=('any')
+depends=('lib32-curl' 'lib32-gpm' 'lib32-ncurses')
+makedepends=('patchelf')
+url="http://freearc.org"
+source=(${_pkgname}-${pkgver}-linux-i386.tar.bz2)
+options=(!strip !emptydirs)
+# install=${pkgname}.install
+md5sums=('d522c029c733b0b7d394b489e187a687')
+
+package() {
+ cd ${srcdir}/FreeArc-${pkgver}-linux-i386/bin
+ patchelf --replace-needed libncurses.so.5 libncursesw.so arc
+ patchelf --replace-needed libgmp.so.3 libgmp.so arc
+
+ install -d -m 755 ${pkgdir}/usr/bin
+ install -d -m 755 ${pkgdir}/etc/${_pkgname}
+ install -d -m 755 ${pkgdir}/usr/lib/${_pkgname}
+ install -d -m 755 ${pkgdir}/usr/lib/${_pkgname}/{Addons,arc.languages,Codecs,Documentation,scripts}
+ install -d -m 755 ${pkgdir}/usr/lib/${_pkgname}/Addons/Benchmarking
+
+ #Binaries
+ install -m 755 ${srcdir}/FreeArc-${pkgver}-linux-i386/bin/arc ${pkgdir}/usr/bin
+ install -m 755 ${srcdir}/FreeArc-${pkgver}-linux-i386/bin/unarc ${pkgdir}/usr/bin
+
+ #Settings
+ install -m 755 ${srcdir}/FreeArc-${pkgver}-linux-i386/cfg/* ${pkgdir}/etc/${_pkgname}
+ install -m 755 ${srcdir}/FreeArc-${pkgver}-linux-i386/scripts/* ${pkgdir}/usr/lib/${_pkgname}/scripts
+
+ #User local
+ #install -m 755 ${srcdir}/freearcusercfg.sh ${pkgdir}/usr/lib/${_pkgname}/scripts/freearcusercfg.sh
+
+ #Librairies
+ install -m 755 ${srcdir}/FreeArc-${pkgver}-linux-i386/lib/{*.so,*.sfx,*.txt} ${pkgdir}/usr/lib/${_pkgname} 
+ install -m 644 ${srcdir}/FreeArc-${pkgver}-linux-i386/lib/arc.languages/* ${pkgdir}/usr/lib/${_pkgname}/arc.languages
+ #Codecs
+ install -m 644 ${srcdir}/FreeArc-${pkgver}-linux-i386/lib/Codecs/* ${pkgdir}/usr/lib/${_pkgname}/Codecs
+ #Addons 
+ install -m 644 ${srcdir}/FreeArc-${pkgver}-linux-i386/Addons/{supertest,*.arc} ${pkgdir}/usr/lib/${_pkgname}/Addons 
+ install -m 644 ${srcdir}/FreeArc-${pkgver}-linux-i386/Addons/Benchmarking/{*.rb,*.txt} ${pkgdir}/usr/lib/${_pkgname}/Addons/Benchmarking || true
+
+ #Documentations
+ install -m 644 ${srcdir}/FreeArc-${pkgver}-linux-i386/Documentation/* ${pkgdir}/usr/lib/${_pkgname}/Documentation
+ 
+ # Users - Desktop
+ #install -D -m 644 ${srcdir}/freearc.desktop ${pkgdir}/usr/share/applications/freearc.desktop
+
+}  
