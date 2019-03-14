@@ -10,10 +10,12 @@ arch=('any')
 depends=('lib32-curl' 'lib32-gpm' 'lib32-ncurses')
 makedepends=('patchelf')
 url="http://freearc.org"
-source=(${_pkgname}-${pkgver}-linux-i386.tar.bz2)
+source=(${_pkgname}-${pkgver}-linux-i386.tar.bz2
+        'arc.sh')
 options=(!strip !emptydirs)
 # install=${pkgname}.install
-md5sums=('d522c029c733b0b7d394b489e187a687')
+md5sums=('d522c029c733b0b7d394b489e187a687'
+         'f22d6ff1bbcb77a717ddd2ed0669ee4a')
 
 package() {
  cd ${srcdir}/FreeArc-${pkgver}-linux-i386/bin
@@ -27,11 +29,12 @@ package() {
  install -d -m 755 ${pkgdir}/usr/lib/${_pkgname}/Addons/Benchmarking
 
  #Binaries
- install -m 755 ${srcdir}/FreeArc-${pkgver}-linux-i386/bin/arc ${pkgdir}/usr/bin
+ install -m 755 ${srcdir}/arc.sh ${pkgdir}/usr/bin/arc
+ install -m 755 ${srcdir}/FreeArc-${pkgver}-linux-i386/bin/arc ${pkgdir}/usr/lib/${_pkgname}
  install -m 755 ${srcdir}/FreeArc-${pkgver}-linux-i386/bin/unarc ${pkgdir}/usr/bin
 
  #Settings
- install -m 755 ${srcdir}/FreeArc-${pkgver}-linux-i386/cfg/* ${pkgdir}/etc/${_pkgname}
+ install -m 644 ${srcdir}/FreeArc-${pkgver}-linux-i386/cfg/* ${pkgdir}/etc/${_pkgname}
  install -m 755 ${srcdir}/FreeArc-${pkgver}-linux-i386/scripts/* ${pkgdir}/usr/lib/${_pkgname}/scripts
 
  #User local
