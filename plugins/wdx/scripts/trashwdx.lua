@@ -30,13 +30,6 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
     if FileName:find("/%.?Trash%-?%d*/files/.-$") then
         local result;
         local year, mounth, day, hour, minutes, seconds;
-        local basename = FileName:match("[^/]+$");
-        if not SysUtils.DirectoryExists(FileName) then
-            fname = basename:match("(.+)%..+"); 
-            if (fname == nil) then
-                fname = basename;
-            end
-        end
         local fname = FileName:match("[^/]+$");
         local trashinfo = FileName:match("(.+)files/.-$") .. "info/" .. fname .. ".trashinfo";
         local file = io.open(trashinfo, 'r');
