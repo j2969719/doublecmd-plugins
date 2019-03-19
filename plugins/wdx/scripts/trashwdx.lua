@@ -1,5 +1,7 @@
 local datefmt = {
     "DD.MM.YYYY hh:mm", 
+    "YYYY.MM.DD hh:mm:ss", 
+    "YYYY-MM-DD hh:mm:ss", 
     "DD.MM.YYYY hh:mm:ss", 
     "DD.MM.YY hh:mm", 
     "DD-MM-YYYY hh:mm", 
@@ -27,7 +29,7 @@ function ContentGetSupportedField(FieldIndex)
 end
 
 function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
-    if FileName:find("/%.?Trash%-?%d*/files/.-$") then
+    if FileName:find("/%.?Trash%-?/?%d*/files/.+$") then
         local result;
         local year, mounth, day, hour, minutes, seconds;
         local fname = FileName:match("[^/]+$");
