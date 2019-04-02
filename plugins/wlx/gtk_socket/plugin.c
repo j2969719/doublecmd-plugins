@@ -48,7 +48,7 @@ const gchar *get_mime_type(const gchar *Filename)
 	if (!gfile)
 		return NULL;
 
-	GFileInfo *fileinfo = g_file_query_info(gfile, G_FILE_ATTRIBUTE_STANDARD_CONTENT_TYPE, G_FILE_QUERY_INFO_NOFOLLOW_SYMLINKS, NULL, NULL);
+	GFileInfo *fileinfo = g_file_query_info(gfile, G_FILE_ATTRIBUTE_STANDARD_CONTENT_TYPE, 0, NULL, NULL);
 
 	if (!fileinfo)
 		return NULL;

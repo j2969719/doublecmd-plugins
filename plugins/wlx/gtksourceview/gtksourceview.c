@@ -127,8 +127,7 @@ static gboolean open_file(GtkSourceBuffer *sBuf, const gchar *filename)
 	GIOChannel *io;
 	gchar *buffer;
 	gchar *ext;
-	gboolean result_uncertain;
-	gchar *content_type;
+	const gchar *content_type;
 
 	g_return_val_if_fail(sBuf != NULL, FALSE);
 	g_return_val_if_fail(filename != NULL, FALSE);
@@ -137,15 +136,17 @@ static gboolean open_file(GtkSourceBuffer *sBuf, const gchar *filename)
 	/* get the Language for source mimetype */
 	lm = g_object_get_data(G_OBJECT(sBuf), "languages-manager");
 
-	content_type = g_content_type_guess(filename, NULL, 0, &result_uncertain);
+	GFile *gfile = g_file_new_for_path(filename);
+	g_return_val_if_fail(gfile != NULL, FALSE);
+	GFileInfo *fileinfo = g_file_query_info(gfile, G_FILE_ATTRIBUTE_STANDARD_CONTENT_TYPE, 0, NULL, NULL);
+	g_return_val_if_fail(fileinfo != NULL, FALSE);
 
-	if (result_uncertain)
-	{
-		g_free(content_type);
-		content_type = NULL;
-	}
+	content_type = g_file_info_get_content_type(fileinfo);
 
 	language = gtk_source_language_manager_guess_language(lm, filename, content_type);
+
+	g_object_unref(fileinfo);
+	g_object_unref(gfile);
 
 	if (!language)
 	{
@@ -166,8 +167,6 @@ static gboolean open_file(GtkSourceBuffer *sBuf, const gchar *filename)
 			g_free(ext);
 		}
 	}
-
-	g_free(content_type);
 
 	//g_return_val_if_fail(language != NULL, FALSE);
 	if (!language)
