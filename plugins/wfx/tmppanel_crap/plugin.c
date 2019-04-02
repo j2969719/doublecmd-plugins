@@ -323,10 +323,6 @@ int DCPCALL FsExecuteFile(HWND MainWin, char* RemoteName, char* Verb)
 		}
 		result = FS_FILE_OK;
 	}
-	else
-	{
-		g_spawn_command_line_async("xdg-open https://www.youtube.com/watch?v=Dx-F6VnLezM", NULL);
-	}
 
 	g_free(path);
 	return result;
