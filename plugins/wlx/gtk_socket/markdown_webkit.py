@@ -20,7 +20,7 @@ view = WebKit2.WebView()
 plug.add(view)
 
 mdfile = open(path)
-html = markdown.markdown(mdfile.read())
+html = markdown.markdown(mdfile.read(), extensions=['extra'])
 mdfile.close()
 
 view.load_html(html)
