@@ -31,20 +31,6 @@ GdkPixbuf *get_emblem_pixbuf(char *name, int size)
 
 HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 {
-
-	enum
-	{
-		LIST_ICON,
-		LIST_FILE,
-		LIST_SIZE,
-		LIST_DATE,
-		LIST_ATTR,
-		LIST_OWNR,
-		LIST_SLNK,
-		LIST_HLNK,
-		N_COLUMNS
-	};
-
 	GtkWidget *gFix;
 	GtkWidget *scroll;
 	GtkWidget *versions;
@@ -73,6 +59,19 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 
 	if (r != ARCHIVE_OK)
 		return NULL;
+
+	enum
+	{
+		LIST_ICON,
+		LIST_FILE,
+		LIST_SIZE,
+		LIST_DATE,
+		LIST_ATTR,
+		LIST_OWNR,
+		LIST_SLNK,
+		LIST_HLNK,
+		N_COLUMNS
+	};
 
 	store = gtk_list_store_new(N_COLUMNS,
 	                           GDK_TYPE_PIXBUF,
@@ -104,7 +103,8 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 
 		totalsize = totalsize + archive_entry_size(entry);
 
-		if (pathname[strlen(pathname) - 1] == '/')
+		//if (pathname[strlen(pathname) - 1] == '/')
+		if (archive_entry_filetype(entry) == AE_IFDIR)
 			emblem = get_emblem_pixbuf("folder", 16);
 		else if (symlink || hardlink)
 			emblem = get_emblem_pixbuf("emblem-symbolic-link", 16);
@@ -144,7 +144,7 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	}
 
 	if (filters)
-		info = g_strdup_printf("%s (filters: %s), %d file(s)", archive_format_name(a), filters, archive_file_count(a));
+		info = g_strdup_printf("%s (filter(s): %s), %d file(s)", archive_format_name(a), filters, archive_file_count(a));
 	else
 		info = g_strdup_printf("%s, %d file(s)",  archive_format_name(a), archive_file_count(a));
 
@@ -168,9 +168,11 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 		gdouble res = (gdouble)buf.st_size / (gdouble)totalsize;
 
 		if (res > 1)
-			res = 1;
+			res = 0;
+		else
+			res = 1 - res;
 
-		gtk_progress_bar_set_text(GTK_PROGRESS_BAR(compr), g_strdup_printf("%d / %d", buf.st_size, totalsize));
+		//gtk_progress_bar_set_text(GTK_PROGRESS_BAR(compr), g_strdup_printf("%d / %d", buf.st_size, totalsize));
 		gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(compr), res);
 		gtk_box_pack_start(GTK_BOX(gFix), compr, FALSE, FALSE, 1);
 	}
