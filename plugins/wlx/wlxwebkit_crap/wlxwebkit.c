@@ -33,103 +33,94 @@
 #include <string.h>
 #include "wlxplugin.h"
 
-#define _detectstring "(EXT=\"HTML\")|(EXT=\"HTM\")|(EXT=\"XHTM\")|(EXT=\"XHTML\")"
-#define _inifile "settings.ini"
-#define _tempfile "/tmp/wlxwebkit_tmp.html"
+gchar *cfgpath = "";
 
-
-GtkWidget* find_child(GtkWidget* parent, const gchar* name)
+static GtkWidget *getFirstChild(GtkWidget *w)
 {
-	if (g_ascii_strcasecmp(gtk_widget_get_name((GtkWidget*)parent), (gchar*)name) == 0)
-	{
-		return parent;
-	}
+	GList *list = gtk_container_get_children(GTK_CONTAINER(w));
+	GtkWidget *result = GTK_WIDGET(list->data);
+	g_list_free(list);
+	return result;
+}
 
-	if (GTK_IS_BIN(parent))
-	{
-		GtkWidget *child = gtk_bin_get_child(GTK_BIN(parent));
-		return find_child(child, name);
-	}
+gchar *get_file_ext(const gchar *Filename)
+{
+	if (g_file_test(Filename, G_FILE_TEST_IS_DIR))
+		return NULL;
 
-	if (GTK_IS_CONTAINER(parent))
-	{
-		GList *children = gtk_container_get_children(GTK_CONTAINER(parent));
+	gchar *basename, *result, *tmpval;
 
-		while ((children = g_list_next(children)) != NULL)
+	basename = g_path_get_basename(Filename);
+	result = g_strrstr(basename, ".");
+
+	if (result)
+	{
+		if (g_strcmp0(result, basename) != 0)
 		{
-			GtkWidget* widget = find_child(children->data, name);
-
-			if (widget != NULL)
-			{
-				return widget;
-			}
+			tmpval = g_strdup_printf("%s", result + 1);
+			result = g_ascii_strdown(tmpval, -1);
+			g_free(tmpval);
 		}
+		else
+			result = NULL;
 	}
 
-	return NULL;
+	g_free(basename);
+
+	return result;
+}
+
+gchar *str_replace(gchar *text, gchar *str, gchar *repl)
+{
+	gchar **split = g_strsplit(text, str, -1);
+	gchar *result = g_strjoinv(repl, split);
+	g_strfreev(split);
+	return result;
 }
 
 HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 {
-	Dl_info dlinfo;
 	GKeyFile *cfg;
-	GError *err = NULL;
 	GtkWidget *gFix;
-	GtkWidget* webView;
-	gchar *_cfgpath = "";
-	gchar *_command;
-	gchar *_fileext;
-	gchar* fileUri;
+	GtkWidget *webView;
+	gchar *command;
+	gchar *tmpdir;
+	gchar *output;
+	gchar *fileExt;
+	gchar *fileUri;
 
-	memset(&dlinfo, 0, sizeof(dlinfo));
-
-	if (dladdr(_cfgpath, &dlinfo) != 0)
-		_cfgpath = g_strdup_printf("%s/%s", g_path_get_dirname(dlinfo.dli_fname), _inifile);
-
-	_fileext = g_strrstr(FileToLoad, ".");
-	_fileext = g_strdup_printf("%s", _fileext + 1);
-	_fileext = g_ascii_strdown(_fileext, -1);
+	fileExt = get_file_ext(FileToLoad);
 
 	cfg = g_key_file_new();
 
-	if (!g_key_file_load_from_file(cfg, _cfgpath, G_KEY_FILE_KEEP_COMMENTS, &err))
+	if (!g_key_file_load_from_file(cfg, cfgpath, G_KEY_FILE_KEEP_COMMENTS, NULL))
 		return NULL;
 	else
-	{
-		_command = g_key_file_get_string(cfg, _fileext, "command", NULL);
-
-		if (_command)
-			system(g_strdup_printf(_command, FileToLoad, _tempfile));
-		else
-		{
-			_command = g_key_file_get_string(cfg, _fileext, "command_alt", NULL);
-
-			if (_command)
-				system(g_strdup_printf(_command, _tempfile, FileToLoad));
-		}
-	}
+		command = g_key_file_get_string(cfg, fileExt, "command", NULL);
 
 	g_key_file_free(cfg);
 
-	if (err)
-		g_error_free(err);
+	if (!command)
+		return NULL;
+
+	tmpdir = g_dir_make_tmp("_dc-webkit.XXXXXX", NULL);
+	output = g_strdup_printf("%s/output.html", tmpdir);
+	command = str_replace(command, "$FILE", g_shell_quote(FileToLoad));
+	command = str_replace(command, "$HTML", g_shell_quote(output));
+
+	if (system(command) != 0)
+		return NULL;
+
+	fileUri = g_filename_to_uri(output, NULL, NULL);
 
 	gFix = gtk_scrolled_window_new(NULL, NULL);
 	gtk_container_add(GTK_CONTAINER((GtkWidget*)(ParentWin)), gFix);
+	g_object_set_data(G_OBJECT(gFix), "tmpdir", tmpdir);
 	webView = webkit_web_view_new();
 
 	// https://doublecmd.sourceforge.io/forum/viewtopic.php?f=8&t=4106&start=72#p22156
 	WebKitFaviconDatabase *database = webkit_get_favicon_database();
 	webkit_favicon_database_set_path(database, NULL);
-
-	gtk_widget_set_name(webView, "webkitfrm");
-	WebKitWebSettings *settings = webkit_web_settings_new();
-	webkit_web_view_set_settings(WEBKIT_WEB_VIEW(webView), settings);
-
-	if (_command)
-		fileUri = g_filename_to_uri(_tempfile, NULL, NULL);
-	else
-		fileUri = g_filename_to_uri(FileToLoad, NULL, NULL);
 
 	webkit_web_view_load_uri(WEBKIT_WEB_VIEW(webView), fileUri);
 
@@ -138,63 +129,20 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 
 	gtk_widget_grab_focus(webView);
 	gtk_container_add(GTK_CONTAINER(gFix), webView);
-
 	gtk_widget_show_all(gFix);
 	return gFix;
 }
 
 void DCPCALL ListCloseWindow(HWND ListWin)
 {
+	gchar *tmpdir = g_object_get_data(G_OBJECT(ListWin), "tmpdir");
 	gtk_widget_destroy(GTK_WIDGET(ListWin));
-}
 
-void DCPCALL ListGetDetectString(char* DetectString, int maxlen)
-{
-	Dl_info dlinfo;
-	GKeyFile *cfg;
-	GError *err = NULL;
-	gsize extcount;
-	gchar *detectstr;
-	gchar *_cfgpath = "";
-	gchar *_workdir;
-	gchar **ext;
-	guint index;
-
-	memset(&dlinfo, 0, sizeof(dlinfo));
-
-	if (dladdr(_cfgpath, &dlinfo) != 0)
+	if (tmpdir)
 	{
-		_workdir = g_path_get_dirname(dlinfo.dli_fname);
-		_cfgpath = g_strdup_printf("%s/%s", _workdir, _inifile);
+		system(g_strdup_printf("rm -r %s", g_shell_quote(tmpdir)));
+		g_free(tmpdir);
 	}
-
-	cfg = g_key_file_new();
-
-	if (!g_key_file_load_from_file(cfg, _cfgpath, G_KEY_FILE_KEEP_COMMENTS, &err))
-	{
-		g_print("%s: %s\n", _cfgpath, (err)->message);
-
-	}
-	else
-	{
-		detectstr = _detectstring;
-		ext = g_key_file_get_groups(cfg, &extcount);
-
-		for (index = 0; index < extcount; index++)
-		{
-			if (g_strcmp0(detectstr, "") != 0)
-				detectstr = g_strdup_printf("|%s", detectstr);
-
-			detectstr = g_strdup_printf("(EXT=\"%s\")%s", g_ascii_strup(ext[index],  -1), detectstr);
-		}
-
-		g_strlcpy(DetectString, detectstr, maxlen-1);
-	}
-
-	g_key_file_free(cfg);
-
-	if (err)
-		g_error_free(err);
 }
 
 int DCPCALL ListSearchText(HWND ListWin, char* SearchString, int SearchParameter)
@@ -208,7 +156,7 @@ int DCPCALL ListSearchText(HWND ListWin, char* SearchString, int SearchParameter
 	if (SearchParameter & lcs_backwards)
 		ss_forward = FALSE;
 
-	webkit_web_view_search_text(WEBKIT_WEB_VIEW(find_child(ListWin, "webkitfrm")),
+	webkit_web_view_search_text(WEBKIT_WEB_VIEW(getFirstChild(ListWin)),
 	                            SearchString, ss_case, ss_forward, TRUE);
 }
 
@@ -217,14 +165,24 @@ int DCPCALL ListSendCommand(HWND ListWin, int Command, int Parameter)
 	switch (Command)
 	{
 	case lc_copy :
-		webkit_web_view_copy_clipboard(WEBKIT_WEB_VIEW(find_child(ListWin, "webkitfrm")));
+		webkit_web_view_copy_clipboard(WEBKIT_WEB_VIEW(getFirstChild(ListWin)));
 		break;
 
 	case lc_selectall :
-		webkit_web_view_select_all(WEBKIT_WEB_VIEW(find_child(ListWin, "webkitfrm")));
+		webkit_web_view_select_all(WEBKIT_WEB_VIEW(getFirstChild(ListWin)));
 		break;
 
 	default :
 		return LISTPLUGIN_ERROR;
 	}
+}
+
+void DCPCALL ListSetDefaultParams(ListDefaultParamStruct* dps)
+{
+	Dl_info dlinfo;
+
+	memset(&dlinfo, 0, sizeof(dlinfo));
+
+	if (dladdr(cfgpath, &dlinfo) != 0)
+		cfgpath = g_strdup_printf("%s/settings.ini", g_path_get_dirname(dlinfo.dli_fname));
 }
