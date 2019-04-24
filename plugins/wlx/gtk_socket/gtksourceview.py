@@ -7,7 +7,7 @@ os.environ["GDK_CORE_DEVICE_EVENTS"] = "1"
 import gi
 gi.require_version('Gtk', '3.0')
 gi.require_version('GtkSource', '4')
-from gi.repository import Gtk
+from gi.repository import Gtk, Pango
 from gi.repository import GtkSource
 
 import locale
@@ -40,6 +40,8 @@ view.set_show_line_numbers(True)
 view.set_highlight_current_line(True)
 view.get_space_drawer().set_enable_matrix(True)
 view.set_editable(False)
+view.set_tab_width(8)
+view.override_font(Pango.FontDescription('mono 13'))
 
 scroll.add(view)
 plug.add(scroll)
