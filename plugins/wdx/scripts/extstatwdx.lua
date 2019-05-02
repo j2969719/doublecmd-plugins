@@ -7,6 +7,7 @@ local ext_allowed = {
 local extlist = {}
 local lastdir = ''
 local units = ''
+local bytes = 1024 -- or 1000
 
 function ContentSetDefaultParams(IniFileName, PlugApiVerHi, PlugApiVerLow)
     for i = 1, #ext_allowed do
@@ -24,13 +25,13 @@ function ContentGetSupportedField(FieldIndex)
     elseif (FieldIndex == 1) then
         return "size", units, 2;
     elseif (FieldIndex == 2) then
-        return "size K", units, 3;
+        return "size (K)", units, 3;
     elseif (FieldIndex == 3) then
-        return "size M", units, 3;
+        return "size (M)", units, 3;
     elseif (FieldIndex == 4) then
-        return "size G", units, 3;
+        return "size (G)", units, 3;
     elseif (FieldIndex == 5) then
-        return "size T", units, 3;
+        return "size (T)", units, 3;
     elseif (FieldIndex == 6) then
         return "tooltip", "default|recursively", 8;
     end
@@ -67,7 +68,7 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
             elseif (FieldIndex == 1) and (extlist[ext] ~= nil) then
                 return extlist[ext]["size"];
             elseif (extlist[ext] ~= nil) then
-                return extlist[ext]["size"] / math.pow(1024, FieldIndex - 1);
+                return extlist[ext]["size"] / math.pow(bytes, FieldIndex - 1);
             end
         end
     end
@@ -103,14 +104,14 @@ function chkdir(path, recursive)
 end
 
 function strsize(size)
-    if (size > math.pow(1024, 4)) then
-        return string.format("%.1f T", size / math.pow(1024, 4));
-    elseif (size > math.pow(1024, 3)) then
-        return string.format("%.1f G", size / math.pow(1024, 3));
-    elseif (size > math.pow(1024, 2)) then
-        return string.format("%.1f M", size / math.pow(1024, 2));
-    elseif (size > 1024) then
-        return string.format("%.1f K", size / 1024);
+    if (size > math.pow(bytes, 4)) then
+        return string.format("%.1f T", size / math.pow(bytes, 4));
+    elseif (size > math.pow(bytes, 3)) then
+        return string.format("%.1f G", size / math.pow(bytes, 3));
+    elseif (size > math.pow(bytes, 2)) then
+        return string.format("%.1f M", size / math.pow(bytes, 2));
+    elseif (size > bytes) then
+        return string.format("%.1f K", size / bytes);
     end
     return size;
 end
