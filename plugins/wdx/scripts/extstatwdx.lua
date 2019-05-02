@@ -20,10 +20,18 @@ end
 
 function ContentGetSupportedField(FieldIndex)
     if (FieldIndex == 0) then
-        return 'count', units, 2;
+        return "count", units, 2;
     elseif (FieldIndex == 1) then
-        return 'size', units, 2;
+        return "size", units, 2;
     elseif (FieldIndex == 2) then
+        return "size K", units, 3;
+    elseif (FieldIndex == 3) then
+        return "size M", units, 3;
+    elseif (FieldIndex == 4) then
+        return "size G", units, 3;
+    elseif (FieldIndex == 5) then
+        return "size T", units, 3;
+    elseif (FieldIndex == 6) then
         return "tooltip", "default|recursively", 8;
     end
     return '', '', 0; -- ft_nomorefields
@@ -33,14 +41,14 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
     if SysUtils.DirectoryExists(FileName) then
         if (lastdir ~= FileName) then
             extlist = {};
-            if (FieldIndex == 2) and (UnitIndex == 1) then
+            if (FieldIndex == 6) and (UnitIndex == 1) then
                 chkdir(FileName, true);
             else
                 chkdir(FileName, false);
             end
             lastdir = FileName;
         end
-        if (FieldIndex == 2) then
+        if (FieldIndex == 6) then
             local result = '';
             for ext, val in pairs(extlist) do
                 if string.find('|' .. units .. '|', '|' .. ext .. '|') then
@@ -58,6 +66,8 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
                 return extlist[ext]["count"];
             elseif (FieldIndex == 1) and (extlist[ext] ~= nil) then
                 return extlist[ext]["size"];
+            elseif (extlist[ext] ~= nil) then
+                return extlist[ext]["size"] / math.pow(1024, FieldIndex - 1);
             end
         end
     end
