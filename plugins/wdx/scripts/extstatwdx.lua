@@ -1,10 +1,30 @@
 
+local ext_allowed = {
+    "mp3", "flac", "ogg", "wav", 
+    "pdf", "doc", "docx", "odt", 
+}
+
 local extlist = {}
 local lastdir = ''
+local units = ''
+
+function ContentSetDefaultParams(IniFileName, PlugApiVerHi, PlugApiVerLow)
+    for i = 1, #ext_allowed do
+        if (units == '') then
+            units = ext_allowed[i];
+        else
+            units = units .. '|' .. ext_allowed[i];
+        end
+    end
+end
 
 function ContentGetSupportedField(FieldIndex)
     if (FieldIndex == 0) then
-        return 'ext stat', 'default|recursively', 8;
+        return 'count', units, 2;
+    elseif (FieldIndex == 1) then
+        return 'size', units, 2;
+    elseif (FieldIndex == 2) then
+        return "tooltip", "default|recursively", 8;
     end
     return '', '', 0; -- ft_nomorefields
 end
@@ -13,22 +33,33 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
     if SysUtils.DirectoryExists(FileName) then
         if (lastdir ~= FileName) then
             extlist = {};
-            if (UnitIndex == 1) then
+            if (FieldIndex == 2) and (UnitIndex == 1) then
                 chkdir(FileName, true);
             else
                 chkdir(FileName, false);
             end
             lastdir = FileName;
         end
-        local result = '';
-        for ext, val in pairs(extlist) do
-            if (result == '') then
-                result = ext .. ": " .. val["count"] .. ', = ' .. strsize(val["size"]);
-            else
-                result = result .. '\n' .. ext .. ": " .. val["count"] .. ', = ' .. strsize(val["size"]);
+        if (FieldIndex == 2) then
+            local result = '';
+            for ext, val in pairs(extlist) do
+                if string.find('|' .. units .. '|', '|' .. ext .. '|') then
+                    if (result == '') then
+                        result = ext .. ": " .. val["count"] .. ', ' .. strsize(val["size"]);
+                    else
+                        result = result .. '\n' .. ext .. ": " .. val["count"] .. ', ' .. strsize(val["size"]);
+                    end
+                end
             end
-        end 
-        return result; 
+            return result;
+        else
+            local ext = ext_allowed[UnitIndex + 1];
+            if (FieldIndex == 0) and (extlist[ext] ~= nil) then
+                return extlist[ext]["count"];
+            elseif (FieldIndex == 1) and (extlist[ext] ~= nil) then
+                return extlist[ext]["size"];
+            end
+        end
     end
     return nil;
 end
