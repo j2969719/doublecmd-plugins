@@ -1,56 +1,66 @@
 
-local ext_allowed = {
+local ext_allowed = { -- add extensions here
     "mp3", "flac", "ogg", "wav", 
     "pdf", "doc", "docx", "odt", 
+    
 }
+
+local notfound = "no suitable filetypes found"
+local bytes = 1024 -- or 1000
+
 
 local extlist = {}
 local lastdir = ''
-local units = ''
-local bytes = 1024 -- or 1000
+local lastmode = nil
 
-function ContentSetDefaultParams(IniFileName, PlugApiVerHi, PlugApiVerLow)
-    for i = 1, #ext_allowed do
-        if (units == '') then
-            units = ext_allowed[i];
-        else
-            units = units .. '|' .. ext_allowed[i];
-        end
+local units = ''
+for i = 1, #ext_allowed do
+    if (units == '') then
+        units = ext_allowed[i];
+    else
+        units = units .. '|' .. ext_allowed[i];
     end
 end
 
+local fields = {
+    {"count",                 2, units, false, 0}, 
+    {"count (recursively)",   2, units,  true, 0}, 
+    {"size",                  2, units, false, 0}, 
+    {"size (recursively)",    2, units,  true, 0}, 
+    {"size K",                3, units, false, 1}, 
+    {"size K (recursively)",  3, units,  true, 1}, 
+    {"size M",                3, units, false, 2}, 
+    {"size M (recursively)",  3, units,  true, 2}, 
+    {"size G",                3, units, false, 3}, 
+    {"size G (recursively)",  3, units,  true, 3}, 
+    {"size T",                3, units, false, 4}, 
+    {"size T (recursively)",  3, units,  true, 4}, 
+    {"tooltip",               8, '',    false, 0}, 
+    {"tooltip (recursively)", 8, '',     true, 0}, 
+}
+
 function ContentGetSupportedField(FieldIndex)
-    if (FieldIndex == 0) then
-        return "count", units, 2;
-    elseif (FieldIndex == 1) then
-        return "size", units, 2;
-    elseif (FieldIndex == 2) then
-        return "size (K)", units, 3;
-    elseif (FieldIndex == 3) then
-        return "size (M)", units, 3;
-    elseif (FieldIndex == 4) then
-        return "size (G)", units, 3;
-    elseif (FieldIndex == 5) then
-        return "size (T)", units, 3;
-    elseif (FieldIndex == 6) then
-        return "tooltip", "default|recursively", 8;
+    if (fields[FieldIndex + 1] ~= nil) then
+        return fields[FieldIndex + 1][1], fields[FieldIndex + 1][3], fields[FieldIndex + 1][2];
     end
     return '', '', 0; -- ft_nomorefields
 end
 
 function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
     if SysUtils.DirectoryExists(FileName) then
-        if (lastdir ~= FileName) then
+        if (lastdir ~= FileName) or (lastmode ~= fields[FieldIndex + 1][4]) then
             extlist = {};
-            if (FieldIndex == 6) and (UnitIndex == 1) then
+            if (fields[FieldIndex + 1][4] == true) then
                 chkdir(FileName, true);
             else
                 chkdir(FileName, false);
             end
             lastdir = FileName;
+            lastmode = fields[FieldIndex + 1][4];
         end
-        if (FieldIndex == 6) then
-            local result = '';
+        local result = nil;
+        if (fields[FieldIndex + 1][2] == 8) then
+            result = '';
             for ext, val in pairs(extlist) do
                 if string.find('|' .. units .. '|', '|' .. ext .. '|') then
                     if (result == '') then
@@ -60,17 +70,23 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
                     end
                 end
             end
-            return result;
+            if (result == '') then
+                result = notfound;
+            end
         else
             local ext = ext_allowed[UnitIndex + 1];
-            if (FieldIndex == 0) and (extlist[ext] ~= nil) then
-                return extlist[ext]["count"];
-            elseif (FieldIndex == 1) and (extlist[ext] ~= nil) then
-                return extlist[ext]["size"];
-            elseif (extlist[ext] ~= nil) then
-                return extlist[ext]["size"] / math.pow(bytes, FieldIndex - 1);
+            if (extlist[ext] ~= nil) then
+                if (FieldIndex < 2) then
+                    result = extlist[ext]["count"];
+                else
+                    result = extlist[ext]["size"];
+                end
+                if (fields[FieldIndex + 1][5] > 0) then
+                    result = result / math.pow(bytes, fields[FieldIndex + 1][5]);
+                end
             end
         end
+        return result;
     end
     return nil;
 end
