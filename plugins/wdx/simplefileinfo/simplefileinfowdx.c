@@ -42,7 +42,7 @@ FIELD fields[] =
 	{"Block size",			ft_numeric_32,					""},
 	{"Number of blocks",		ft_numeric_64,					""},
 	{"Number of hard links",	ft_numeric_32,					""},
-	{"User access",			ft_boolean,	"execute (dir)|read|write|execute"},
+	{"User access",			ft_boolean,	     "open dir|read|write|execute"},
 	{"Symlink error",		ft_boolean,		 "no access|dangling|loop"},
 };
 
@@ -283,9 +283,9 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 
 		default:
 			if (S_ISDIR(buf.st_mode))
-				access_how = X_OK;
+				access_how = R_OK | X_OK;
 			else
-				return ft_fieldempty;
+				return ft_fileerror;
 		}
 
 		if (access(FileName, access_how) == 0)
