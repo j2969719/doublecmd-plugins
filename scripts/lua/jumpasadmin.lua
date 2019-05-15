@@ -1,3 +1,6 @@
+-- !!! editing file in doublecmd via admin:// will change the ownership from root to user !!!
+
+
 --[[
 
 DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
