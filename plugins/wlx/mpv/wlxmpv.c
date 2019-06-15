@@ -151,13 +151,15 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 		return NULL;
 	}
 
+	g_free(command);
+
 	if ((id == 0) || (!g_spawn_async(NULL, argv, NULL, G_SPAWN_SEARCH_PATH, NULL, NULL, &mpv_pid, NULL)))
 	{
 		gtk_widget_destroy(gFix);
 		return NULL;
 	}
+
 	g_object_set_data(G_OBJECT(gFix), "pid", GINT_TO_POINTER(mpv_pid));
-	g_free(command);
 
 	gtk_widget_show_all(gFix);
 
@@ -166,7 +168,7 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 
 void DCPCALL ListCloseWindow(HWND ListWin)
 {
-	kill(GPOINTER_TO_INT(g_object_get_data(G_OBJECT(ListWin), "pid")), SIGINT);
+	kill(GPOINTER_TO_INT(g_object_get_data(G_OBJECT(ListWin), "pid")), SIGTERM);
 	gtk_widget_destroy(GTK_WIDGET(ListWin));
 }
 
