@@ -168,7 +168,7 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 
 void DCPCALL ListCloseWindow(HWND ListWin)
 {
-	kill(GPOINTER_TO_INT(g_object_get_data(G_OBJECT(ListWin), "pid")), SIGTERM);
+	kill(GPOINTER_TO_INT(g_object_get_data(G_OBJECT(ListWin), "pid")), SIGINT);
 	gtk_widget_destroy(GTK_WIDGET(ListWin));
 }
 
