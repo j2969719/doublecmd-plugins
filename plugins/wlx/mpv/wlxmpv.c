@@ -3,6 +3,7 @@
 #include <gdk/gdkx.h>
 #include <dlfcn.h>
 #include <limits.h>
+#include <signal.h>
 #include <string.h>
 #include "wlxplugin.h"
 
@@ -84,6 +85,8 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	GdkNativeWindow id;
 	GtkWidget *gFix;
 	GtkWidget *mpv;
+	GPid mpv_pid;
+	gchar **argv;
 
 	cfg = g_key_file_new();
 
@@ -139,16 +142,21 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 		id = GDK_WINDOW_XID(gtk_widget_get_window(mpv));
 	}
 
-
 	gchar *command = g_strdup_printf("%s %s --wid=%d %s", cmdstr, params, id, g_shell_quote(FileToLoad));
 
-	if ((id == 0) || (!g_spawn_command_line_async(command, NULL)))
+	if (!g_shell_parse_argv(command, NULL, &argv, NULL))
 	{
 		g_free(command);
 		gtk_widget_destroy(gFix);
 		return NULL;
 	}
 
+	if ((id == 0) || (!g_spawn_async(NULL, argv, NULL, G_SPAWN_SEARCH_PATH, NULL, NULL, &mpv_pid, NULL)))
+	{
+		gtk_widget_destroy(gFix);
+		return NULL;
+	}
+	g_object_set_data(G_OBJECT(gFix), "pid", GINT_TO_POINTER(mpv_pid));
 	g_free(command);
 
 	gtk_widget_show_all(gFix);
@@ -158,6 +166,7 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 
 void DCPCALL ListCloseWindow(HWND ListWin)
 {
+	kill(GPOINTER_TO_INT(g_object_get_data(G_OBJECT(ListWin), "pid")), SIGINT);
 	gtk_widget_destroy(GTK_WIDGET(ListWin));
 }
 
