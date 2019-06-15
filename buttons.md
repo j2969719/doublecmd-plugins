@@ -344,7 +344,7 @@ DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
     <Icon>cm_runterm</Icon>
     <Hint>system boot-up</Hint>
     <Command>sh</Command>
-    <Params>-c "systemd-analyze plot &gt; /tmp/_0curboot.svg &amp; ristretto /tmp/_0curboot.svg"</Params>
+    <Params>-c "systemd-analyze plot &gt; /tmp/_0curboot.svg &amp;&amp; ristretto /tmp/_0curboot.svg"</Params>
   </Program>
 </doublecmd>
 ```
