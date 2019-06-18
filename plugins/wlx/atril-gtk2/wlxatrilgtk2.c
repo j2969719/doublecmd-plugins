@@ -40,7 +40,7 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 		docmodel = EV_DOCUMENT_MODEL(ev_document_model_new_with_document(document));
 		view = ev_view_new();
 		ev_view_set_model(EV_VIEW(view), docmodel);
-		g_object_unref(document);
+		g_object_set_data_full(G_OBJECT(gFix), "doc", document, (GDestroyNotify)g_object_unref);
 		g_object_unref(docmodel);
 		gtk_container_add(GTK_CONTAINER(scrolled_window), view);
 		gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrolled_window),
@@ -59,7 +59,7 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	return gFix;
 }
 
-int DCPCALL ListLoadNext(HWND ParentWin,HWND PluginWin,char* FileToLoad,int ShowFlags)
+int DCPCALL ListLoadNext(HWND ParentWin, HWND PluginWin, char* FileToLoad, int ShowFlags)
 {
 	EvDocument *document;
 	EvDocumentModel *docmodel;
@@ -71,7 +71,7 @@ int DCPCALL ListLoadNext(HWND ParentWin,HWND PluginWin,char* FileToLoad,int Show
 	{
 		docmodel = EV_DOCUMENT_MODEL(ev_document_model_new_with_document(document));
 		ev_view_set_model(EV_VIEW(getFirstChild(getFirstChild(GTK_WIDGET(PluginWin)))), docmodel);
-		g_object_unref(document);
+		g_object_set_data_full(G_OBJECT(PluginWin), "doc", document, (GDestroyNotify)g_object_unref);
 		g_object_unref(docmodel);
 	}
 	else
@@ -87,7 +87,7 @@ void DCPCALL ListCloseWindow(HWND ListWin)
 
 void DCPCALL ListGetDetectString(char* DetectString, int maxlen)
 {
-	g_strlcpy(DetectString, _detectstring, maxlen-1);
+	g_strlcpy(DetectString, _detectstring, maxlen - 1);
 }
 
 int DCPCALL ListSearchDialog(HWND ListWin, int FindNext)
@@ -110,4 +110,24 @@ int DCPCALL ListSendCommand(HWND ListWin, int Command, int Parameter)
 	default :
 		return LISTPLUGIN_ERROR;
 	}
+
+	return LISTPLUGIN_OK;
+}
+
+int DCPCALL ListPrint(HWND ListWin, char* FileToPrint, char* DefPrinter, int PrintFlags, RECT* Margins)
+{
+	EvDocument *document;
+	EvPrintOperation *op;
+
+	document = g_object_get_data(G_OBJECT(ListWin), "doc");
+
+	if (EV_IS_DOCUMENT(document))
+	{
+		op  = ev_print_operation_new(document);
+		ev_print_operation_run(op, GTK_WINDOW(gtk_widget_get_toplevel(GTK_WIDGET(ListWin))));
+	}
+	else
+		return LISTPLUGIN_ERROR;
+
+	return LISTPLUGIN_OK;
 }
