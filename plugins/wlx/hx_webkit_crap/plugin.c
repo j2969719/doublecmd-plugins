@@ -44,7 +44,7 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	g_free(exsimple);
 	g_free(config);
 	g_free(output);
-		g_print(command);
+	g_print(command);
 
 	if (system(command) != 0)
 		return NULL;
@@ -127,6 +127,8 @@ int DCPCALL ListSearchText(HWND ListWin, char* SearchString, int SearchParameter
 
 	webkit_web_view_search_text(WEBKIT_WEB_VIEW(getFirstChild(ListWin)),
 	                            SearchString, ss_case, ss_forward, TRUE);
+
+	return LISTPLUGIN_OK;
 }
 
 int DCPCALL ListSendCommand(HWND ListWin, int Command, int Parameter)
@@ -144,6 +146,8 @@ int DCPCALL ListSendCommand(HWND ListWin, int Command, int Parameter)
 	default :
 		return LISTPLUGIN_ERROR;
 	}
+
+	return LISTPLUGIN_OK;
 }
 
 void DCPCALL ListSetDefaultParams(ListDefaultParamStruct* dps)
@@ -153,4 +157,12 @@ void DCPCALL ListSetDefaultParams(ListDefaultParamStruct* dps)
 
 	if (dladdr(path, &dlinfo) != 0)
 		path = g_path_get_dirname(dlinfo.dli_fname);
+}
+
+int DCPCALL ListPrint(HWND ListWin, char* FileToPrint, char* DefPrinter, int PrintFlags, RECT* Margins)
+{
+	WebKitWebFrame *frame = webkit_web_view_get_main_frame(WEBKIT_WEB_VIEW(getFirstChild(ListWin)));
+	webkit_web_frame_print(frame);
+
+	return LISTPLUGIN_OK;
 }

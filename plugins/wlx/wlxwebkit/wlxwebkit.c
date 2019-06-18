@@ -74,12 +74,14 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	return gFix;
 }
 
-int DCPCALL ListLoadNext(HWND ParentWin,HWND PluginWin,char* FileToLoad,int ShowFlags)
+int DCPCALL ListLoadNext(HWND ParentWin, HWND PluginWin, char* FileToLoad, int ShowFlags)
 {
 	gchar* fileUri = g_filename_to_uri(FileToLoad, NULL, NULL);
 	webkit_web_view_load_uri(WEBKIT_WEB_VIEW(getFirstChild(PluginWin)), fileUri);
+
 	if (fileUri)
 		g_free(fileUri);
+
 	return LISTPLUGIN_OK;
 }
 
@@ -116,6 +118,8 @@ int DCPCALL ListSearchText(HWND ListWin, char* SearchString, int SearchParameter
 		gtk_dialog_run(GTK_DIALOG(dialog));
 		gtk_widget_destroy(dialog);
 	}
+
+	return LISTPLUGIN_OK;
 }
 
 int DCPCALL ListSendCommand(HWND ListWin, int Command, int Parameter)
@@ -133,6 +137,8 @@ int DCPCALL ListSendCommand(HWND ListWin, int Command, int Parameter)
 	default :
 		return LISTPLUGIN_ERROR;
 	}
+
+	return LISTPLUGIN_OK;
 }
 
 void DCPCALL ListSetDefaultParams(ListDefaultParamStruct* dps)
@@ -149,4 +155,12 @@ void DCPCALL ListSetDefaultParams(ListDefaultParamStruct* dps)
 		                g_path_get_dirname(dlinfo.dli_fname)));
 		textdomain(GETTEXT_PACKAGE);
 	}
+}
+
+int DCPCALL ListPrint(HWND ListWin, char* FileToPrint, char* DefPrinter, int PrintFlags, RECT* Margins)
+{
+	WebKitWebFrame *frame = webkit_web_view_get_main_frame(WEBKIT_WEB_VIEW(getFirstChild(ListWin)));
+	webkit_web_frame_print(frame);
+
+	return LISTPLUGIN_OK;
 }
