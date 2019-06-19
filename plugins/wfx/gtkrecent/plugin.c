@@ -34,14 +34,27 @@ static void ShowGError(gchar *str, GError *err)
 
 gboolean SetFindData(WIN32_FIND_DATAA *FindData)
 {
+	gchar *fname = NULL;
+	unsigned long mtime;
 	memset(FindData, 0, sizeof(WIN32_FIND_DATAA));
 	struct stat buf;
 
 	if (list != NULL)
 	{
-		gchar *fname = g_filename_from_uri(gtk_recent_info_get_uri(list->data), NULL, NULL);
+		do
+		{
+			fname = g_filename_from_uri(gtk_recent_info_get_uri(list->data), NULL, NULL);
+			mtime = gtk_recent_info_get_visited(list->data);
+			gtk_recent_info_unref(list->data);
+			list = list->next;
+		}
+		while (!fname && list != NULL);
+
+		if (!fname)
+			return FALSE;
+
 		g_strlcpy(FindData->cFileName, fname, PATH_MAX);
-		UnixTimeToFileTime(gtk_recent_info_get_visited(list->data), &FindData->ftLastWriteTime);
+		UnixTimeToFileTime(mtime, &FindData->ftLastWriteTime);
 
 		if (stat(fname, &buf) != 0)
 			FindData->nFileSizeLow = 0;
@@ -57,8 +70,6 @@ gboolean SetFindData(WIN32_FIND_DATAA *FindData)
 		}
 
 		g_free(fname);
-		gtk_recent_info_unref(list->data);
-		list = list->next;
 		return TRUE;
 	}
 
