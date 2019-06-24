@@ -121,7 +121,7 @@ int DCPCALL ListPrint(HWND ListWin, char* FileToPrint, char* DefPrinter, int Pri
 
 	document = g_object_get_data(G_OBJECT(ListWin), "doc");
 
-	if (EV_IS_DOCUMENT(document))
+	if (EV_IS_DOCUMENT(document) && ev_print_operation_exists_for_document(document))
 	{
 		op  = ev_print_operation_new(document);
 		ev_print_operation_run(op, GTK_WINDOW(gtk_widget_get_toplevel(GTK_WIDGET(ListWin))));
