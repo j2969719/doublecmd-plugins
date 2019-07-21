@@ -75,3 +75,18 @@
       </Actions>
     </FileType>
 ```
+
+# CheckSum
+```xml
+    <FileType>
+      <Name>CheckSum</Name>
+      <IconFile>cm_checksumcalc</IconFile>
+      <ExtensionList>blake2b|blake2bp|tiger|sha512|sha384|sha256|sha224|sha3|sha|sfv|ripemd160|ripemd128|blake2s|blake2sp|md5|md4|haval|crc32</ExtensionList>
+      <Actions>
+        <Action>
+          <Name>open</Name>
+          <Command>cm_CheckSumVerify</Command>
+        </Action>
+      </Actions>
+    </FileType>
+```
