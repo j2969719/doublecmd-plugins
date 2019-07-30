@@ -28,7 +28,7 @@ case "${filetype}" in
 		;;
 	[Aa][Rr][Jj])
 		arj l "$file" 2>/dev/null || \
-			unarj l "$file"
+		unarj l "$file"
 		;;
 	[Cc][Aa][Bb])
 		cabextract -l "$file"
@@ -38,7 +38,7 @@ case "${filetype}" in
 		;;
 	[Rr][Aa][Rr])
 		rar v -c- "$file" 2>/dev/null || \
-			unrar v -c- "$file"
+		unrar v -c- "$file"
 		;;
 	[Aa][Ll][Zz])
 		unalz -l "$file"
@@ -77,10 +77,10 @@ case "${filetype}" in
 		pdftotext -layout -nopgbrk "$file" -
 		;;
 	[Oo][Dd][Tt])
-			odt2txt "$file"
+		odt2txt "$file"
 		;;
 	[Dd][Oo][Cc]|[Rr][Tt][Ff])
-		catdoc -w "$file" #|  iconv -f "KOI8-R" -t "UTF-8"
+		catdoc -w "$file"
 		;;
 	[Xx][Ll][Ss])
 		which xlhtml >/dev/null 2>&1 && {
@@ -88,9 +88,9 @@ case "${filetype}" in
 			xlhtml -a "$file" > "$tmp/page.html"
 			elinks -dump "$tmp/page.html"
 			rm -rf "$tmp"
-		} #|| \
-		#	xls2csv "$file" |  iconv -f "KOI8R" -t "UTF-8" || \
-		#	strings "$file"
+		} || \
+		xls2csv "$file" | sed -e 's/,,/, ,/g' | column -s, -t || \
+		strings "$file"
 		;;
 	[Xx][Ll][Ss][Xx])
 		xlsx2csv "$file" | sed -e 's/,,/, ,/g' | column -s, -t
@@ -98,7 +98,7 @@ case "${filetype}" in
 	[Dd][Vv][Ii])
 		which dvi2tty >/dev/null 2>&1 && \
 			dvi2tty "$file" || \
-			catdvi "$file"
+		catdvi "$file"
 		;;
 	[Dd][Jj][Vv][Uu]|[Dd][Jj][Vv])
 		djvused -e print-pure-txt "$file"
@@ -116,7 +116,7 @@ case "${filetype}" in
 		zpaq l "$file"
 		;;
 	[Dd][Oo][Cc][Xx])
-		#docx2txt.pl "$file" -
+		docx2txt.pl "$file" - || \
 		unzip -p "$file" | grep --text '<w:r' | sed 's/<w:p[^<\/]*>/ \
 			/g' | sed 's/<[^<]*>//g' | grep -v '^[[:space:]]*$' | sed G
 		;;
