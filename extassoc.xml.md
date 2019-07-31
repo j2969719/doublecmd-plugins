@@ -1,8 +1,11 @@
-# All files
+File associations and actions
+=============================
+
+### All files
 
 ```xml
     <FileType>
-      <Name>all files</Name>
+      <Name>All files</Name>
       <IconFile/>
       <ExtensionList>file</ExtensionList>
       <Actions>
@@ -17,14 +20,14 @@
           <Params>&lt;?ldd %p?&gt;</Params>
         </Action>
       </Actions>
-    </FileType>       
+    </FileType>
 ```
 
-# All folders
+### All folders
 
 ```xml
     <FileType>
-      <Name>all folders</Name>
+      <Name>All folders</Name>
       <IconFile/>
       <ExtensionList>folder</ExtensionList>
       <Actions>
@@ -41,15 +44,15 @@
         </Action>
       </Actions>
     </FileType>
-```    
+```
 
-# Script [fileinfo.sh](https://doublecmd.sourceforge.io/forum/viewtopic.php?f=8&t=2727)
+### Script [fileinfo.sh](https://doublecmd.sourceforge.io/forum/viewtopic.php?f=8&t=2727)
 
 ```xml
     <FileType>
       <Name>FileInfo.sh</Name>
       <IconFile/>
-      <ExtensionList>ISO|TORRENT|SO|MO|DEB|TAR|LHA|ARJ|CAB|HA|RAR|ALZ|CPIO|7Z|ACE|ARC|ZIP|ZOO|PS|PDF|ODT|DOC|XLS|DVI|DJVU|EPUB|HTML|HTM|EXE|DLL|GZ|BZ2|XZ|MSI|RTF|FB2</ExtensionList>
+      <ExtensionList>iso|torrent|so|mo|deb|tar|lha|arj|cab|ha|rar|alz|cpio|7z|ace|arc|zip|zoo|ps|pdf|odt|doc|xls|dvi|djvu|epub|html|htm|exe|dll|gz|bz2|xz|msi|rtf|fb2</ExtensionList>
       <Actions>
         <Action>
           <Name>fileinfo.sh</Name>
@@ -60,7 +63,7 @@
     </FileType>
 ```
 
-# Plugins
+### Plugins
 ```xml
     <FileType>
       <Name>Plugins</Name>
@@ -76,7 +79,7 @@
     </FileType>
 ```
 
-# CheckSum
+### Checksum (all supported DC)
 ```xml
     <FileType>
       <Name>CheckSum</Name>

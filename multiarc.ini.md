@@ -1,48 +1,102 @@
 MultiArc
 ========
 
-[UnAce](#unace), [RAR + 7Zip](#rar), [FreeArc](#freearc), [CHM](#chm), [7Zip self-extracting archive](#7zsfx), [Microsoft Windows Installer](#msi), [Inno Setup installer](#innosetup), [Nullsoft Scriptable Install System](#nsis), [Microsoft Cabinet](#cab), [InstallShield](#unshield), [MS-DOS installation compression](#szdd), [ZPAQ](#zpaq), [pakextract](#pakextract), [grpar](#grpar), [The Unarchiver](#unar), [UPX](#upx), [ZSTD](#zstd), [LZ4](#lz4), [mcm](#mcm), [BALZ](#balz), [QUAD](#quad), [PAQ8](#paq8o9), [lrzip](#lrzip), [lzop](#lzop), [Base64](#b64), [UUEncode](#uue)
+Copy-paste to `multiarc.ini` and enable in *Options* > *Archivers*:
 
-<a name="unace"><h2>UNACE</h2></a>
-```ini
-[ACE (ro)]
-Archiver=/usr/bin/unace
-Description=UNACE v2.5
-ID=2A 2A 41 43 45 2A 2A
-IDPos=<SeekID>
-Extension=ace
-Start=^  Date
-End=^listed:
-Format0=dd.tt.yy hh:mm ppppppppppp zzzzzzzzz        nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn
-List=%P v -y %AQA
-Extract=%P x -y {-p%W} {%S} %AQA @%LQA
-ExtractWithoutPath=%P e -y {-p%W} {%S} %AQA @%LQA
-Test=%P t -y %AQA
-```
+- [7Zip self-extracting archive](#7zsfx)
+- [BALZ](#balz)
+- [Base64](#b64)
+- [CHM](#chm)
+- [FreeArc](#freearc)
+- [grpar](#grpar)
+- [Inno Setup installer](#innosetup)
+- [InstallShield](#unshield)
+- [lrzip](#lrzip)
+- [LZ4](#lz4)
+- [lzop](#lzop)
+- [mcm](#mcm)
+- [Microsoft Cabinet](#cab)
+- [Microsoft Windows Installer](#msi)
+- [MS-DOS installation compression](#szdd)
+- [Nullsoft Scriptable Install System](#nsis)
+- [pakextract](#pakextract)
+- [PAQ8](#paq8o9)
+- [QUAD](#quad)
+- [RAR + 7Zip](#rar)
+- [The Unarchiver](#unar)
+- [UNACE](#unace)
+- [UPX](#upx)
+- [UUEncode](#uue)
+- [ZPAQ](#zpaq)
+- [ZSTD](#zstd)
 
-<a name="rar"><h2>RAR + 7Zip</h2></a>
+Some separate files can be found [here](multiarc) (use *Options* > *Archivers* > *Other...* > *Import*, required DC v0.9 > r8389)
+
+---
+<a name="7zsfx"><h3>7Zip self-extracting archive</h3></a>
 ```ini
-[RAR_3]
-Archiver=/usr/bin/rar
-Description=RAR 5.x - http://www.rarlab.com
-ID=52 61 72 21
+[7ZSfx]
+Archiver=/usr/bin/7z
+Description=7-Zip - www.7-zip.org
+ID=37 7A BC AF, 50 4B 03 04
 IDPos=<SeekID>
-Extension=rar
 Start=^-------------------
 End=^-------------------
 Format0=yyyy tt dd hh mm ss aaaaa zzzzzzzzzzzz pppppppppppp  n+
-List=7z -r0 l {-p%W} %AQA
-Extract=7z x -y {-p%W} {%S} %AQA @%LQU
-ExtractWithoutPath=7z e -y {-p%W} {%S} %AQA @%LQU
-Test=%P t -y {%S} %AQA
-Delete=%P d -y {%S} %AQA @%LQA
-Add=%P a -y {-p%W} {-v%V} {%S} %AQA @%LQA
-AddSelfExtract=%P a -y -sfx {-p%W} {-v%V} {%S} %AQA @%LQA
+List=%P -r0 l %AQA
+Extract=%P x -y {-p%W} {%S} %AQA @%LQU
+ExtractWithoutPath=%P e -y {-p%W} {%S} %AQA @%LQU
 PasswordQuery=Enter password
 FormMode=8
 ```
 
-<a name="freearc"><h2>FreeArc</h2></a>
+---
+<a name="balz"><h3>BALZ</h3></a>
+```ini
+[BALZ]
+Archiver=$COMMANDER_PATH/scripts/cutext
+Description=BALZ
+Extension=balz
+Format0=n+
+List=%P %AQ
+Extract=balz d %AQ %FQ
+Add=balz c{%S} %FQ %AQ
+```
+[BALZ](https://sourceforge.net/projects/balz/), script [cutext](scripts/cutext)
+
+---
+<a name="b64"><h3>Base64</h3></a>
+```ini
+[Base64]
+Archiver=%COMMANDER_PATH%/utils/base64uue
+Description=Base64
+Extension=b64
+Format0=yyyy tt dd hh mm ss aaaaa zzzzzzzzzzzz n+
+List=%P -l %AQ
+Extract=%P -d %AQ %FQ
+Add=%P -eb %AQ %FQ
+```
+Script [base64uue](utils/base64uue), [forum](https://doublecmd.sourceforge.io/forum/viewtopic.php?p=24877#p24877)
+
+---
+<a name="chm"><h3>CHM</h3></a>
+```ini
+[CHM]
+Archiver=/usr/bin/7z
+Description=Compressed Help Module
+ID=49 54 53 46
+IDPos=0
+Start=^-------------------
+End=^-------------------
+Format0=yyyy tt dd hh mm ss aaaaa zzzzzzzzzzzz pppppppppppp  n+
+List=%P -r0 l %AQA
+Extract=%P x -y {-p%W} {%S} %AQA @%LQU
+FormMode=8
+```
+
+---
+<a name="freearc"><h3>FreeArc</h3></a>
+Native Linux [binary](utils/freearc):
 ```ini
 [FreeArc]
 Archiver=/usr/bin/arc
@@ -63,6 +117,7 @@ AddSelfExtract=%P a {-p%W} {-ap%RQA} -sfx --noarcext -sclANSI {%S} -- %AQA @%LA
 PasswordQuery=Enter decryption password:
 FormMode=8
 ```
+With Wine:
 
 ```ini
 [FreeArc(wine)]
@@ -84,42 +139,160 @@ AddSelfExtract=%P a {-p%W} {-ap%RQA} -sfx --noarcext -sclUTF8 {%S} -- %AQU @%LU
 PasswordQuery=Enter decryption password:
 FormMode=10
 ```
-  [script example](https://github.com/j2969719/doublecmd-plugins/blob/master/scripts/freearc)
+Script [freearc](scripts/freearc)
 
-
-<a name="chm"><h2>CHM</h2></a>
+---
+<a name="grpar"><h3>grpar</h3></a>
 ```ini
-[CHM]
-Archiver=/usr/bin/7z
-Description=Compressed Help Module
-ID=49 54 53 46
+[GRP]
+Archiver=grpar
+Description=DUKE3D GRP
+ID=4B 65 6E 53 69 6C 76 65 72 6D 61 6E
 IDPos=0
-Start=^-------------------
-End=^-------------------
-Format0=yyyy tt dd hh mm ss aaaaa zzzzzzzzzzzz pppppppppppp  n+
-List=%P -r0 l %AQA
-Extract=%P x -y {-p%W} {%S} %AQA @%LQU
-FormMode=8
+IDSeekRange=0
+Extension=grp
+Format0=n+ (z+
+List=%P -t -v -f %AQA
+Extract=%P -x -f %AQ
 ```
+[grpar](http://github.com/martymac/grpar)
 
-<a name="7zsfx"><h2>7Zip self-extracting archive</h2></a>
+---
+<a name="innosetup"><h3>Inno Setup installer</h3></a>
 ```ini
-[7ZSfx]
-Archiver=/usr/bin/7z
-Description=7-Zip - www.7-zip.org
-ID=37 7A BC AF, 50 4B 03 04
+[InnoSetup(gog)]
+Archiver=/usr/bin/innoextract
+Description=innoextract 1.7 (GOG)
+ID=49 6E 6E 6F 20 53 65 74 75 70 20 53 65 74 75 70 20 44 61 74 61 20 28 35 2E
 IDPos=<SeekID>
-Start=^-------------------
-End=^-------------------
-Format0=yyyy tt dd hh mm ss aaaaa zzzzzzzzzzzz pppppppppppp  n+
-List=%P -r0 l %AQA
-Extract=%P x -y {-p%W} {%S} %AQA @%LQU
-ExtractWithoutPath=%P e -y {-p%W} {%S} %AQA @%LQU
-PasswordQuery=Enter password
-FormMode=8
+Format0=z+ n+
+List=%P --list-sizes -g -s %AQU
+Extract=%P -e -g -q  %AQU
+ExtractWithoutPath=%P -e -g -q  %AQU -I %FQU
+```
+```ini
+[InnoSetup]
+Archiver=/usr/bin/innoextract
+Description=innoextract 1.7
+ID=49 6E 6E 6F 20 53 65 74 75 70 20 53 65 74 75 70 20 44 61 74 61 20 28 35 2E, 49 6E 6E 6F 20 53 65 74 75 70 20 53 65 74 75 70 20 44 61 74 61 20 28 34 2E, 49 6E 6E 6F 20 53 65 74 75 70 20 53 65 74 75 70 20 44 61 74 61 20 28 33 2E, 49 6E 6E 6F 20 53 65 74 75 70 20 53 65 74 75 70 20 44 61 74 61 20 28 32 2E, 49 6E 6E 6F
+IDPos=<SeekID>
+Format0=z+ n+
+List=%P --list-sizes -s %AQU
+Extract=%P -e -q  %AQU
+ExtractWithoutPath=%P -e -q  %AQU -I %FQU
+```
+With Wine:
+
+```ini
+[InnoSetup(wine)]
+Archiver=$COMMANDER_PATH/scripts/innounp
+Description=InnoSetup без -c%R           @%LQA
+ID=49 6E 6E 6F 20 53 65 74 75 70 20 53 65 74 75 70 20 44 61 74 61 20 28 35 2E
+IDPos=<SeekID>
+Start=^--------------------------------------
+End=^--------------------------------------
+Format0=zzzzzzzzzz  yyyy.tt.dd hh:mm  nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn
+List=%P -v -m %AQA
+Extract=%P -x -m %AQ
+ExtractWithoutPath=%P -e -m %AQ %FQ
+FormMode=2
+```
+Script [innounp](scripts/innounp)
+
+---
+<a name="unshield"><h3>InstallShield</h3></a>
+```ini
+[InstallShield]
+Archiver=$COMMANDER_PATH/scripts/unshield
+Description=installshield
+ID=49 53 63 28
+IDPos=0
+IDSeekRange=0
+Start=^Cabinet
+End=^--------
+Format0=z+__n+
+List=%P l %AQA
+Extract=%P x %AQA
+FormMode=6
+```
+Script [unshield](scripts/unshield)
+
+---
+<a name="lrzip"><h3>lrzip</h3></a>
+```ini
+[lrzip]
+Archiver=$COMMANDER_PATH/scripts/cutext
+Description=lrzip
+Extension=lrz
+Format0=n+
+List=%P %AQ
+Extract=lrzip -d %AQ -o %FQ
+Add=lrzip {%S} -f %FQ -o %AQ
+```
+[lrzip](https://github.com/ckolivas/lrzip), script [cutext](scripts/cutext)
+
+---
+<a name="lz4"><h3>LZ4</h3></a>
+```ini
+[LZ4]
+Archiver=$COMMANDER_PATH/scripts/cutext
+Description=LZ4
+Extension=lz4
+Format0=n+
+List=%P %aQ
+Extract=lz4 {%S} -d %AQ %FQ
+Add=lz4 {%S} -f %FQ %AQ
+```
+Script [cutext](scripts/cutext)
+
+---
+<a name="lzop"><h3>lzop</h3></a>
+```ini
+[lzop]
+Archiver=$COMMANDER_PATH/scripts/cutext
+Description=lzop
+Extension=lzo
+Format0=n+
+List=%P %AQ
+Extract=lzop -d %AQ -o%FQ
+Add=lzop {%S} -f %FQ -o%AQ
+```
+[lzop](http://www.lzop.org/), script [cutext](scripts/cutext)
+
+---
+<a name="mcm"><h3>mcm</h3></a>
+```ini
+[mcm]
+Archiver=$COMMANDER_PATH/scripts/cutext
+Description=mcm
+ID=4D 43 4D 41 52 43 48 49 56 45
+IDPos=0
+IDSeekRange=0
+Extension=mcm
+Format0=n+
+List=%P %AQ
+Extract=mcm d %AQ %FQ
+Add=mcm -m9 %FQ %AQ
+```
+[mcm](https://github.com/mathieuchartier/mcm), script [cutext](scripts/cutext)
+
+---
+<a name="cab"><h3>Microsoft Cabinet</h3></a>
+```ini
+[CAB]
+Archiver=/usr/bin/cabextract
+Description=MSCAB
+ID=4D 53 43 46
+IDPos=<SeekID>
+Start=^-----------
+End=All done
+Format0=$z+$? dd.tt.yyyy hh:mm:ss ? n+
+List=%P -l %AQ
+Extract=%P {-F %F} %AQU
 ```
 
-<a name="msi"><h2>Microsoft Windows Installer</h2></a>
+---
+<a name="msi"><h3>Microsoft Windows Installer</h3></a>
 ```ini
 [MSI]
 Archiver=/usr/bin/7z
@@ -144,48 +317,26 @@ List=%P -l %AQA
 Extract=%P %AQA
 ```
 
-<a name="innosetup"><h2>Inno Setup installer</h2></a>
+---
+<a name="szdd"><h3>MS-DOS installation compression</h3></a>
 ```ini
-[InnoSetup(gog)]
-Archiver=/usr/bin/innoextract
-Description=innoextract 1.7 (GOG)
-ID=49 6E 6E 6F 20 53 65 74 75 70 20 53 65 74 75 70 20 44 61 74 61 20 28 35 2E
-IDPos=<SeekID>
-Format0=z+ n+
-List=%P --list-sizes -g -s %AQU
-Extract=%P -e -g -q  %AQU
-ExtractWithoutPath=%P -e -g -q  %AQU -I %FQU
-```
-```ini
-[InnoSetup]
-Archiver=/usr/bin/innoextract
-Description=innoextract 1.7
-ID=49 6E 6E 6F 20 53 65 74 75 70 20 53 65 74 75 70 20 44 61 74 61 20 28 35 2E, 49 6E 6E 6F 20 53 65 74 75 70 20 53 65 74 75 70 20 44 61 74 61 20 28 34 2E, 49 6E 6E 6F 20 53 65 74 75 70 20 53 65 74 75 70 20 44 61 74 61 20 28 33 2E, 49 6E 6E 6F 20 53 65 74 75 70 20 53 65 74 75 70 20 44 61 74 61 20 28 32 2E, 49 6E 6E 6F
-IDPos=<SeekID>
-Format0=z+ n+
-List=%P --list-sizes -s %AQU
-Extract=%P -e -q  %AQU
-ExtractWithoutPath=%P -e -q  %AQU -I %FQU
+[SZDD]
+Archiver=/usr/bin/7z
+Description=MS-DOS installation compression
+ID=53 5A 44 44 88 F0 27 33, 4B 57 41 4A 88 F0 27 D1
+IDPos=0
+IDSeekRange=0
+Start=^-------------------
+End=^-------------------
+Format0=yyyy tt dd hh mm ss aaaaa zzzzzzzzzzzz pppppppppppp  n+
+List=%P -r0 l %AQA
+Extract=%P x -y {-p%W} {%S} %AQA @%LQU
+ExtractWithoutPath=%P e -y {-p%W} {%S} %AQA @%LQU
+Test=%P t -y {%S} %AQA @%LQU
 ```
 
-```ini
-[InnoSetup(wine)]
-Archiver=$COMMANDER_PATH/scripts/innounp
-Description=InnoSetup без -c%R           @%LQA
-ID=49 6E 6E 6F 20 53 65 74 75 70 20 53 65 74 75 70 20 44 61 74 61 20 28 35 2E
-IDPos=<SeekID>
-Start=^--------------------------------------
-End=^--------------------------------------
-Format0=zzzzzzzzzz  yyyy.tt.dd hh:mm  nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn
-List=%P -v -m %AQA
-Extract=%P -x -m %AQ
-ExtractWithoutPath=%P -e -m %AQ %FQ
-FormMode=2
-```
-  [script example](https://github.com/j2969719/doublecmd-plugins/blob/master/scripts/innounp)
-
-
-<a name="nsis"><h2>Nullsoft Scriptable Install System</h2></a>
+---
+<a name="nsis"><h3>Nullsoft Scriptable Install System</h3></a>
 ```ini
 [NSIS]
 Archiver=/usr/bin/7z
@@ -212,74 +363,8 @@ Extract=%P x -y {-p%W} {%S} %AQA @%LQU
 FormMode=8
 ```
 
-<a name="cab"><h2>Microsoft Cabinet</h2></a>
-```ini
-[CAB]
-Archiver=/usr/bin/cabextract
-Description=MSCAB
-ID=4D 53 43 46
-IDPos=<SeekID>
-Start=^-----------
-End=All done
-Format0=$z+$? dd.tt.yyyy hh:mm:ss ? n+
-List=%P -l %AQ
-Extract=%P {-F %F} %AQU
-```
-
-<a name="unshield"><h2>InstallShield</h2></a>
-```ini
-[InstallShield]
-Archiver=$COMMANDER_PATH/scripts/unshield
-Description=installshield
-ID=49 53 63 28
-IDPos=0
-IDSeekRange=0
-Start=^Cabinet
-End=^--------
-Format0=z+__n+
-List=%P l %AQA
-Extract=%P x %AQA
-FormMode=6
-```
-  [script example](https://github.com/j2969719/doublecmd-plugins/blob/master/scripts/unshield)
-
-<a name="szdd"><h2>MS-DOS installation compression</h2></a>
-```ini
-[SZDD]
-Archiver=/usr/bin/7z
-Description=MS-DOS installation compression
-ID=53 5A 44 44 88 F0 27 33, 4B 57 41 4A 88 F0 27 D1
-IDPos=0
-IDSeekRange=0
-Start=^-------------------
-End=^-------------------
-Format0=yyyy tt dd hh mm ss aaaaa zzzzzzzzzzzz pppppppppppp  n+
-List=%P -r0 l %AQA
-Extract=%P x -y {-p%W} {%S} %AQA @%LQU
-ExtractWithoutPath=%P e -y {-p%W} {%S} %AQA @%LQU
-Test=%P t -y {%S} %AQA @%LQU
-```
-
-<a name="zpaq"><h2>ZPAQ</h2></a>
-```ini
-[ZPAQ]
-Archiver=/usr/bin/zpaq
-Description=zpaq
-IDSeekRange=0
-Extension=zpaq
-Start=
-End=shown
-Format0=- yyyy-tt-dd hh:mm:ss$z+$aaaaa$n+
-List=%P l %AQA
-Extract=%P x %AQA {%S} {-key %W}
-ExtractWithoutPath=
-Test=%P l %AQA -test
-Add=%P a %AQA %FQU {%S} {-key %W}
-FormMode=1
-```
-  [link](http://mattmahoney.net/dc/zpaq.html)
-
-<a name="pakextract"><h2>pakextract</h2></a>
+---
+<a name="pakextract"><h3>pakextract</h3></a>
 ```ini
 [PAK]
 Archiver=pakextract
@@ -292,24 +377,61 @@ Format0=n+ (z+
 List=%P -l %AQ
 Extract=%P %AQ
 ```
-  [link](http://github.com/yquake2/pakextract)
+[pakextract](http://github.com/yquake2/pakextract)
 
-<a name="grpar"><h2>grpar</h2></a>
+---
+<a name="paq8o9"><h3>PAQ8</h3></a>
 ```ini
-[GRP]
-Archiver=grpar
-Description=DUKE3D GRP
-ID=4B 65 6E 53 69 6C 76 65 72 6D 61 6E
-IDPos=0
-IDSeekRange=0
-Extension=grp
-Format0=n+ (z+
-List=%P -t -v -f %AQA
-Extract=%P -x -f %AQ
+[paq8o]
+Archiver=$COMMANDER_PATH/scripts/cutext
+Description=PAQ8
+Extension=paq8o9
+Format0=n+
+List=%P %AQ
+Extract=paq8o {%S} -d %AQ %RQ
+Add=paq8o {%S} %FQ %AQ
 ```
-  [link](http://github.com/martymac/grpar)
+Script [cutext](scripts/cutext)
 
-<a name="unar"><h2>The Unarchiver</h2></a>
+---
+<a name="quad"><h3>QUAD</h3></a>
+```ini
+[QUAD]
+Archiver=$COMMANDER_PATH/scripts/cutext
+Description=QUAD
+Extension=quad
+Format0=n+
+List=%P %AQ
+Extract=quad -d %AQ %FQ
+Add=quad {%S} -f %FQ %AQ
+```
+[QUAD](https://sourceforge.net/projects/quad/), script [cutext](scripts/cutext)
+
+---
+<a name="rar"><h3>RAR + 7Zip</h3></a>
+```ini
+[RAR_3]
+Archiver=/usr/bin/rar
+Description=RAR 5.x - http://www.rarlab.com
+ID=52 61 72 21
+IDPos=<SeekID>
+Extension=rar
+Start=^-------------------
+End=^-------------------
+Format0=yyyy tt dd hh mm ss aaaaa zzzzzzzzzzzz pppppppppppp  n+
+List=7z -r0 l {-p%W} %AQA
+Extract=7z x -y {-p%W} {%S} %AQA @%LQU
+ExtractWithoutPath=7z e -y {-p%W} {%S} %AQA @%LQU
+Test=%P t -y {%S} %AQA
+Delete=%P d -y {%S} %AQA @%LQA
+Add=%P a -y {-p%W} {-v%V} {%S} %AQA @%LQA
+AddSelfExtract=%P a -y -sfx {-p%W} {-v%V} {%S} %AQA @%LQA
+PasswordQuery=Enter password
+FormMode=8
+```
+
+---
+<a name="unar"><h3>The Unarchiver</h3></a>
 ```ini
 [Unarchiver]
 Archiver=
@@ -352,9 +474,28 @@ List=lsar -l %AQ
 Extract=unar -f -t -D {-p %W} %AQ %FQ
 FormMode=8
 ```
-  [link](https://theunarchiver.com/)
+[The Unarchiver](https://theunarchiver.com/)
 
-<a name="upx"><h2>UPX</h2></a>
+---
+<a name="unace"><h3>UNACE</h3></a>
+```ini
+[ACE (ro)]
+Archiver=/usr/bin/unace
+Description=UNACE v2.5
+ID=2A 2A 41 43 45 2A 2A
+IDPos=<SeekID>
+Extension=ace
+Start=^  Date
+End=^listed:
+Format0=dd.tt.yy hh:mm ppppppppppp zzzzzzzzz        nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn
+List=%P v -y %AQA
+Extract=%P x -y {-p%W} {%S} %AQA @%LQA
+ExtractWithoutPath=%P e -y {-p%W} {%S} %AQA @%LQA
+Test=%P t -y %AQA
+```
+
+---
+<a name="upx"><h3>UPX</h3></a>
 ```ini
 [UPX]
 Archiver=upx
@@ -372,149 +513,8 @@ Test=%P -t -q %AQW
 Add=%P {%S} -q -o %AQ %FQ
 ```
 
-<a name="zstd"><h2>ZSTD</h2></a>
-```ini
-[ZSTD]
-Archiver=$COMMANDER_PATH/scripts/cutext
-Description=ZSTD
-Extension=zst
-Format0=n+
-List=%P %aQ
-Extract=zstd {%S} -d %AQ -o %FQ
-Add=zstd {%S} -f %FQ -o %AQ
-```
-  [script cutext](https://github.com/j2969719/doublecmd-plugins/blob/master/scripts/cutext)
-```ini
-[TZST]
-Archiver=/usr/bin/tar
-Description=Compressed tar file (tar.zst)
-Extension=tzst
-Format0=aaaaaaaaaa zzzzzzz yyyy-tt-dd hh:mm nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn
-List=%P -tv -I zstd -f %AQA
-Extract=%P -x -I zstd {%S} -f %AQA -T %LFQA
-Add=%P -c -I zstd {%S} -f %AQA --no-recursion -T %LQA %E512
-```
-
-<a name="lz4"><h2>LZ4</h2></a>
-```ini
-[LZ4]
-Archiver=$COMMANDER_PATH/scripts/cutext
-Description=LZ4
-Extension=lz4
-Format0=n+
-List=%P %aQ
-Extract=lz4 {%S} -d %AQ %FQ
-Add=lz4 {%S} -f %FQ %AQ
-```
-  [script cutext](https://github.com/j2969719/doublecmd-plugins/blob/master/scripts/cutext)
-
-<a name="mcm"><h2>mcm</h2></a>
-```ini
-[mcm]
-Archiver=$COMMANDER_PATH/scripts/cutext
-Description=mcm
-ID=4D 43 4D 41 52 43 48 49 56 45
-IDPos=0
-IDSeekRange=0
-Extension=mcm
-Format0=n+
-List=%P %AQ
-Extract=mcm d %AQ %FQ
-Add=mcm -m9 %FQ %AQ
-```
-  [link](https://github.com/mathieuchartier/mcm)
-
-  [script cutext](https://github.com/j2969719/doublecmd-plugins/blob/master/scripts/cutext)
-
-<a name="balz"><h2>BALZ</h2></a>
-```ini
-[BALZ]
-Archiver=$COMMANDER_PATH/scripts/cutext
-Description=BALZ
-Extension=balz
-Format0=n+
-List=%P %AQ
-Extract=balz d %AQ %FQ
-Add=balz c{%S} %FQ %AQ
-```
-  [link](https://sourceforge.net/projects/balz/)
-
-  [script cutext](https://github.com/j2969719/doublecmd-plugins/blob/master/scripts/cutext)
-
-<a name="quad"><h2>QUAD</h2></a>
-```ini
-[QUAD]
-Archiver=$COMMANDER_PATH/scripts/cutext
-Description=QUAD
-Extension=quad
-Format0=n+
-List=%P %AQ
-Extract=quad -d %AQ %FQ
-Add=quad {%S} -f %FQ %AQ
-```
-  [link](https://sourceforge.net/projects/quad/)
-
-  [script cutext](https://github.com/j2969719/doublecmd-plugins/blob/master/scripts/cutext)
-
-<a name="paq8o9"><h2>PAQ8</h2></a>
-```ini
-[paq8o]
-Archiver=$COMMANDER_PATH/scripts/cutext
-Description=PAQ8
-Extension=paq8o9
-Format0=n+
-List=%P %AQ
-Extract=paq8o {%S} -d %AQ %RQ
-Add=paq8o {%S} %FQ %AQ
-```
-  [script cutext](https://github.com/j2969719/doublecmd-plugins/blob/master/scripts/cutext)
-
-<a name="lrzip"><h2>lrzip</h2></a>
-```ini
-[lrzip]
-Archiver=$COMMANDER_PATH/scripts/cutext
-Description=lrzip
-Extension=lrz
-Format0=n+
-List=%P %AQ
-Extract=lrzip -d %AQ -o %FQ
-Add=lrzip {%S} -f %FQ -o %AQ
-```
-  [link](https://github.com/ckolivas/lrzip)
-
-  [script cutext](https://github.com/j2969719/doublecmd-plugins/blob/master/scripts/cutext)
-
-<a name="lzop"><h2>lzop</h2></a>
-```ini
-[lzop]
-Archiver=$COMMANDER_PATH/scripts/cutext
-Description=lzop
-Extension=lzo
-Format0=n+
-List=%P %AQ
-Extract=lzop -d %AQ -o%FQ
-Add=lzop {%S} -f %FQ -o%AQ
-```
-  [link](http://www.lzop.org/)
-
-  [script cutext](https://github.com/j2969719/doublecmd-plugins/blob/master/scripts/cutext)
-
-<a name="b64"><h2>Base64</h2></a>
-```ini
-[Base64]
-Archiver=%COMMANDER_PATH%/utils/base64uue
-Description=Base64
-Extension=b64
-Format0=yyyy tt dd hh mm ss aaaaa zzzzzzzzzzzz n+
-List=%P -l %AQ
-Extract=%P -d %AQ %FQ
-Add=%P -eb %AQ %FQ
-```
-  [link](https://doublecmd.sourceforge.io/forum/viewtopic.php?p=24877#p24877)
-
-  [script base64uue](https://github.com/j2969719/doublecmd-plugins/blob/master/utils/base64uue)
-
-<a name="uue"><h2>UUEncode</h2></a>
+---
+<a name="uue"><h3>UUEncode</h3></a>
 ```ini
 [UUEncode]
 Archiver=%COMMANDER_PATH%/utils/base64uue
@@ -525,6 +525,49 @@ List=%P -l %AQ
 Extract=%P -d %AQ %FQ
 Add=%P -eu %AQ %FQ
 ```
-  [link](https://doublecmd.sourceforge.io/forum/viewtopic.php?p=24877#p24877)
+Script [base64uue](utils/base64uue), [forum](https://doublecmd.sourceforge.io/forum/viewtopic.php?p=24877#p24877)
 
-  [script base64uue](https://github.com/j2969719/doublecmd-plugins/blob/master/utils/base64uue)
+---
+<a name="zpaq"><h3>ZPAQ</h3></a>
+```ini
+[ZPAQ]
+Archiver=/usr/bin/zpaq
+Description=zpaq
+IDSeekRange=0
+Extension=zpaq
+Start=
+End=shown
+Format0=- yyyy-tt-dd hh:mm:ss$z+$aaaaa$n+
+List=%P l %AQA
+Extract=%P x %AQA {%S} {-key %W}
+ExtractWithoutPath=
+Test=%P l %AQA -test
+Add=%P a %AQA %FQU {%S} {-key %W}
+FormMode=1
+```
+[ZPAQ](http://mattmahoney.net/dc/zpaq.html)
+
+---
+<a name="zstd"><h3>ZSTD</h3></a>
+```ini
+[ZSTD]
+Archiver=$COMMANDER_PATH/scripts/cutext
+Description=ZSTD
+Extension=zst
+Format0=n+
+List=%P %aQ
+Extract=zstd {%S} -d %AQ -o %FQ
+Add=zstd {%S} -f %FQ -o %AQ
+```
+Script [cutext](scripts/cutext)
+
+```ini
+[TZST]
+Archiver=/usr/bin/tar
+Description=Compressed tar file (tar.zst)
+Extension=tzst
+Format0=aaaaaaaaaa zzzzzzz yyyy-tt-dd hh:mm nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn
+List=%P -tv -I zstd -f %AQA
+Extract=%P -x -I zstd {%S} -f %AQA -T %LFQA
+Add=%P -c -I zstd {%S} -f %AQA --no-recursion -T %LQA %E512
+```

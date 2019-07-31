@@ -1,6 +1,9 @@
-several buttons for the toolbar (copy-paste on the toolbar)
+Several buttons for the toolbar
+===============================
 
-# ./configure
+Copy-paste on the toolbar.
+
+### ./configure
 ```xml
 DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
 <doublecmd>
@@ -13,7 +16,8 @@ DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
   </Program>
 </doublecmd>
 ```
-# make
+
+### make
 ```xml
 DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
 <doublecmd>
@@ -27,7 +31,8 @@ DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
   </Program>
 </doublecmd>
 ```
-# makepkg
+
+### makepkg
 ```xml
 DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
 <doublecmd>
@@ -40,7 +45,8 @@ DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
   </Program>
 </doublecmd>
 ```
-# ldd
+
+### ldd
 ```xml
 DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
 <doublecmd>
@@ -54,8 +60,8 @@ DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
   </Program>
 </doublecmd>
 ```
-# pacman
 
+### pacman
 ```xml
 DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
 <doublecmd>
@@ -108,7 +114,8 @@ DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
   </Program>
 </doublecmd>
 ```
-# patch
+
+### patch
 ```xml
 DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
 <doublecmd>
@@ -152,7 +159,8 @@ DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
   </Menu>
 </doublecmd>
 ```
-# iso
+
+### iso
 ```xml
 DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
 <doublecmd>
@@ -207,7 +215,8 @@ DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
   </Menu>
 </doublecmd>
 ```
-# journalctl
+
+### journalctl
 ```xml
 DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
 <doublecmd>
@@ -255,7 +264,8 @@ DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
   </Menu>
 </doublecmd>
 ```
-# gvfs admin
+
+### gvfs admin
 ```xml
 DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
 <doublecmd>
@@ -264,11 +274,12 @@ DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
     <Icon>cm_changedir</Icon>
     <Hint>admin:///</Hint>
     <Command>cm_ChangeDir</Command>
-    <Params>admin://</Params>
+    <Params>admin:///</Params>
   </Program>
 </doublecmd>
 ```
-# gvfs webdav
+
+### gvfs webdav
 ```xml
 DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
 <doublecmd>
@@ -295,7 +306,8 @@ DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
   </Menu>
 </doublecmd>
 ```
-# trash
+
+### Trash
 ```xml
 DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
 <doublecmd>
@@ -304,7 +316,7 @@ DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
     <Icon>user-trash-symbolic</Icon>
     <Hint>trash:///</Hint>
     <Command>cm_ChangeDir</Command>
-    <Params>trash://</Params>
+    <Params>trash:///</Params>
   </Program>
 </doublecmd>
 ```
@@ -321,20 +333,22 @@ DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
   </Program>
 </doublecmd>
 ```
-# man
+
+### man
 ```xml
 DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
 <doublecmd>
   <Program>
     <ID>{EF436708-A740-4F00-8DDF-42477DC39E4B}</ID>
     <Icon>help</Icon>
-    <Hint>manual</Hint>
+    <Hint>Manual</Hint>
     <Command>man</Command>
     <Params>%t1 %[Command;%f]</Params>
   </Program>
 </doublecmd>
 ```
-# systemd-analyze plot
+
+### systemd-analyze plot
 via `ristretto`
 ```xml
 DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
@@ -342,33 +356,35 @@ DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
   <Program>
     <ID>{87A98465-2212-4757-8043-7B4BE2C5B4CF}</ID>
     <Icon>cm_runterm</Icon>
-    <Hint>system boot-up</Hint>
+    <Hint>System boot-up</Hint>
     <Command>sh</Command>
     <Params>-c "systemd-analyze plot &gt; /tmp/_0curboot.svg &amp;&amp; ristretto /tmp/_0curboot.svg"</Params>
   </Program>
 </doublecmd>
 ```
-# ncdu
+
+### Disk usage (ncdu)
 ```xml
 DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
 <doublecmd>
   <Program>
     <ID>{AD55AC39-CC71-48D3-97EB-EAF2AEB5355C}</ID>
     <Icon>baobab</Icon>
-    <Hint>disk usage</Hint>
+    <Hint>Disk usage</Hint>
     <Command>ncdu</Command>
     <Params>%t1 %p</Params>
   </Program>
 </doublecmd>
 ```
-# duplicates
+
+### Duplicates
 ```xml
 DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
 <doublecmd>
   <Program>
     <ID>{BAF5B30F-C8F9-4057-B7A6-67BE0B0D6C05}</ID>
     <Icon>cm_runterm</Icon>
-    <Hint>duplicates</Hint>
+    <Hint>Duplicates</Hint>
     <Command>find</Command>
     <Params>%d %t1 -type f -exec sha1sum '{}' ';' | sort | uniq --all-repeated=separate -w 33 | cut -c 35-</Params>
   </Program>
@@ -381,28 +397,28 @@ DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
   <Program>
     <ID>{F6F436E3-8F83-4867-A54D-B29CB9C04448}</ID>
     <Icon>cm_runterm</Icon>
-    <Hint>duplicates (save to file)</Hint>
+    <Hint>Duplicates (save to file)</Hint>
     <Command>sh</Command>
     <Params>-c "find %d -type f -exec sha1sum '{}' ';' | sort | uniq --all-repeated=separate -w 33 | cut -c 35- &gt; %[Result:;%dt/output.txt]"</Params>
   </Program>
 </doublecmd>
 ```
 
-# find samefile(hardlink)
+### Find samefile (hardlink)
 ```xml
 DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
 <doublecmd>
   <Program>
     <ID>{AD4D866A-9B86-4193-9DA4-9D78C8BEF66B}</ID>
     <Icon>cm_search</Icon>
-    <Hint>find samefile(hardlink)</Hint>
+    <Hint>Find samefile (hardlink)</Hint>
     <Command>find</Command>
     <Params>%[path;%D] -samefile "%p0" %t1</Params>
   </Program>
 </doublecmd>
 ```
 
-# gio unmount
+### gio unmount
 ```xml
 DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
 <doublecmd>
@@ -416,7 +432,7 @@ DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
 </doublecmd>
 ```
 
-# git
+### Git
 ```xml
 DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
 <doublecmd>
@@ -517,21 +533,21 @@ DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
 </doublecmd>
 ```
 
-# force internal viewer (for assigning hotkey)
+### Force internal viewer (for assigning hotkey)
 ```xml
 DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
 <doublecmd>
   <Program>
     <ID>{81124796-B4A5-453C-BE0E-3F846C8C9A5E}</ID>
     <Icon>cm_view</Icon>
-    <Hint>internal viewer</Hint>
+    <Hint>Internal viewer</Hint>
     <Command>{!DC-VIEWER}</Command>
     <Params>%p</Params>
   </Program>
 </doublecmd>
 ```
 
-# emblems
+### Emblems
 ```xml
 DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
 <doublecmd>
@@ -664,14 +680,14 @@ DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
 </doublecmd>
 ```
 
-# convert images
+### Convert images
 ```xml
 DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
 <doublecmd>
   <Program>
     <ID>{138CE458-F38D-439F-AFAF-1E3623E8E13B}</ID>
     <Icon>camera-photo</Icon>
-    <Hint>convert images</Hint>
+    <Hint>Convert images</Hint>
     <Command>mogrify</Command>
     <Params>%[mogrify options; -format jpg *.%e1]</Params>
     <StartPath>%D</StartPath>
@@ -679,16 +695,19 @@ DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
 </doublecmd>
 ```
 
-# scripts
+## Scripts
 
-## copy to subdirs
+You can change the script path, icon and description.
+
+### Copy to subdirs
+[copytosubdirs.lua](scripts/lua/copytosubdirs.lua)
 ```xml
 DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
 <doublecmd>
   <Command>
     <ID>{767A8509-B6FD-46A4-9856-7DD0FDEC8633}</ID>
     <Icon>cm_copy</Icon>
-    <Hint>copy to subdirs</Hint>
+    <Hint>Copy to subdirs</Hint>
     <Command>cm_ExecuteScript</Command>
     <Param>$COMMANDER_PATH/scripts/lua/copytosubdirs.lua</Param>
     <Param>%Dt</Param>
@@ -696,27 +715,27 @@ DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
   </Command>
 </doublecmd>
 ```
-[script copytosubdirs.lua](https://github.com/j2969719/doublecmd-plugins/blob/master/scripts/lua/copytosubdirs.lua)
 
 
-## copy to all subdirs (recursively)
+### Copy to all subdirs (recursively)
+[copytoallsubdirs.lua](scripts/lua/copytoallsubdirs.lua)
 ```xml
 DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
 <doublecmd>
   <Command>
     <ID>{767A8509-B6FD-46A4-9856-7DD0FDEC8633}</ID>
     <Icon>cm_copy</Icon>
-    <Hint>copy to all subdirs (recursively)</Hint>
+    <Hint>Copy to all subdirs (recursively)</Hint>
     <Command>cm_ExecuteScript</Command>
     <Param>$COMMANDER_PATH/scripts/lua/copytoallsubdirs.lua</Param>
     <Param>%Dt</Param>
   </Command>
 </doublecmd>
 ```
-[script copytoallsubdirs.lua](https://github.com/j2969719/doublecmd-plugins/blob/master/scripts/lua/copytoallsubdirs.lua)
 
 
-## edit symlink
+### Edit symlink
+[editsymlink.lua](scripts/lua/editsymlink.lua)
 ```xml
 DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
 <doublecmd>
@@ -730,18 +749,17 @@ DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
   </Command>
 </doublecmd>
 ```
-[script editsymlink.lua](https://github.com/j2969719/doublecmd-plugins/blob/master/scripts/lua/editsymlink.lua)
 
 
-
-## go to link path
+### Go to link path
+[gotolinkpath.lua](scripts/lua/gotolinkpath.lua)
 ```xml
 DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
 <doublecmd>
   <Command>
     <ID>{4651FC8B-CC8A-4D8B-8741-DB29D812B7E3}</ID>
     <Icon>cm_symlink</Icon>
-    <Hint>go to link path</Hint>
+    <Hint>Go to link path</Hint>
     <Command>cm_ExecuteScript</Command>
     <Param>$COMMANDER_PATH/scripts/lua/gotolinkpath.lua</Param>
     <Param>"%p1"</Param>
@@ -749,10 +767,10 @@ DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
   </Command>
 </doublecmd>
 ```
-[script gotolinkpath.lua](https://github.com/j2969719/doublecmd-plugins/blob/master/scripts/lua/gotolinkpath.lua)
 
 
-## mark all or unmark all
+### Mark all or unmark all *(cross platform)*
+[markunmark.lua](scripts/lua/markunmark.lua)
 ```xml
 DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
 <doublecmd>
@@ -766,10 +784,10 @@ DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
   </Command>
 </doublecmd>
 ```
-[script markunmark.lua](https://github.com/j2969719/doublecmd-plugins/blob/master/scripts/lua/markunmark.lua)
 
 
-## move tab to inactive panel
+### Move tab to inactive panel *(cross platform)*
+[quasimovetab.lua](scripts/lua/quasimovetab.lua)
 ```xml
 DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
 <doublecmd>
@@ -783,10 +801,10 @@ DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
   </Command>
 </doublecmd>
 ```
-[script quasimovetab.lua](https://github.com/j2969719/doublecmd-plugins/blob/master/scripts/lua/quasimovetab.lua)
 
 
-## create new file
+### Create new file *(cross platform)*
+[CreateNewFile.lua](utils/CreateNewFile.lua), [templates](utils/newfiles)
 ```xml
 DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
 <doublecmd>
@@ -801,12 +819,10 @@ DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
   </Command>
 </doublecmd>
 ```
-[script CreateNewFile.lua](https://github.com/j2969719/doublecmd-plugins/blob/master/utils/CreateNewFile.lua)
-
-[templates](https://github.com/j2969719/doublecmd-plugins/blob/master/utils/newfiles/)
 
 
-## make dir(s)
+### Make dir(s)
+[MakeDir.lua](utils/MakeDir.lua), see details in the beginning of script.
 ```xml
 DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
 <doublecmd>
@@ -820,10 +836,10 @@ DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
   </Command>
 </doublecmd>
 ```
-[script MakeDir.lua](https://github.com/j2969719/doublecmd-plugins/blob/master/utils/MakeDir.lua)
 
 
-## calculate or verify checksum (auto choose)
+### Calculate or verify checksum, auto choose *(cross platform)*
+[CheckSum.lua](utils/CheckSum.lua)
 ```xml
 DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="utf-8"?>
 <doublecmd>
@@ -838,4 +854,3 @@ DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="utf-8"?>
   </Command>
 </doublecmd>
 ```
-[script CheckSum.lua](https://github.com/j2969719/doublecmd-plugins/blob/master/utils/CheckSum.lua)
