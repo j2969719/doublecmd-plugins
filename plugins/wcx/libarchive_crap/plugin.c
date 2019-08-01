@@ -137,14 +137,12 @@ BOOL DCPCALL CanYouHandleThisFile(char *FileName)
 	archive_read_support_filter_all(a);
 	archive_read_support_format_all(a);
 	int r = archive_read_open_filename(a, FileName, 10240);
+	archive_read_free(a);
 
 	if (r != ARCHIVE_OK)
 		return false;
 	else
-	{
-		archive_read_free(a);
 		return true;
-	}
 }
 
 int DCPCALL GetPackerCaps()
