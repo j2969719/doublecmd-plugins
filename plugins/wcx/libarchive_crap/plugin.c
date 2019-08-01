@@ -44,7 +44,7 @@ int DCPCALL ReadHeader(ArcData hArcData, tHeaderData *HeaderData)
 		HeaderData->PackSize = archive_entry_size(hArcData->entry);
 		HeaderData->UnpSize = archive_entry_size(hArcData->entry);
 		HeaderData->FileTime = archive_entry_mtime(hArcData->entry);
-		HeaderData->FileAttr = archive_entry_perm(hArcData->entry);
+		HeaderData->FileAttr = archive_entry_mode(hArcData->entry);
 		return 0;
 	}
 
