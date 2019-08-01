@@ -28,7 +28,7 @@ HANDLE DCPCALL OpenArchive(tOpenArchiveData *ArchiveData)
 	if (r != ARCHIVE_OK)
 	{
 		ArchiveData->OpenResult = E_UNKNOWN_FORMAT;
-		return 0;
+		return E_SUCCESS;
 	}
 
 	return (HANDLE)handle;
@@ -53,7 +53,11 @@ int DCPCALL ReadHeaderEx(ArcData hArcData, tHeaderDataEx *HeaderDataEx)
 		HeaderDataEx->UnpSize = size & 0x00000000FFFFFFFF;
 		HeaderDataEx->FileTime = archive_entry_mtime(hArcData->entry);
 		HeaderDataEx->FileAttr = archive_entry_mode(hArcData->entry);
-		return 0;
+
+		if (archive_entry_is_encrypted(hArcData->entry))
+			HeaderDataEx->Flags |= RHDF_ENCRYPTED;
+
+		return E_SUCCESS;
 	}
 
 	return E_END_ARCHIVE;
@@ -61,31 +65,43 @@ int DCPCALL ReadHeaderEx(ArcData hArcData, tHeaderDataEx *HeaderDataEx)
 
 int DCPCALL ProcessFile(ArcData hArcData, int Operation, char *DestPath, char *DestName)
 {
+	int ret;
+	int result = E_SUCCESS;
 	size_t size;
 	la_int64_t offset;
 	const void *buff;
 
-	if (hArcData->gProcessDataProc(DestName, 0) == 0)
-		return E_EABORTED;
-
 	if (Operation == PK_EXTRACT)
 	{
-		struct archive *a = archive_write_disk_new();
 		int flags = ARCHIVE_EXTRACT_TIME | ARCHIVE_EXTRACT_PERM | ARCHIVE_EXTRACT_FFLAGS;
+
+		if (archive_entry_is_encrypted(hArcData->entry))
+			return E_NOT_SUPPORTED;
+
+		struct archive *a = archive_write_disk_new();
 		archive_entry_set_pathname(hArcData->entry, DestName);
 		archive_write_disk_set_options(a, flags);
 		archive_write_disk_set_standard_lookup(a);
 		archive_write_header(a, hArcData->entry);
 
-		while (archive_read_data_block(hArcData->archive, &buff, &size, &offset) != ARCHIVE_EOF)
+		while ((ret = archive_read_data_block(hArcData->archive, &buff, &size, &offset)) != ARCHIVE_EOF)
 		{
-			if (archive_write_data_block(a, buff, size, offset) < ARCHIVE_OK)
+			if (ret < ARCHIVE_OK)
+			{
+				printf("%s\n", archive_error_string(hArcData->archive));
+				result = E_EREAD;
+				break;
+			}
+			else if (archive_write_data_block(a, buff, size, offset) < ARCHIVE_OK)
 			{
 				printf("%s\n", archive_error_string(a));
-				archive_write_finish_entry(a);
-				archive_write_close(a);
-				archive_write_free(a);
-				return E_EWRITE;
+				result = E_EWRITE;
+				break;
+			}
+			else if (hArcData->gProcessDataProc(DestName, 0) == 0)
+			{
+				result = E_EABORTED;
+				break;
 			}
 		}
 
@@ -94,7 +110,7 @@ int DCPCALL ProcessFile(ArcData hArcData, int Operation, char *DestPath, char *D
 		archive_write_free(a);
 	}
 
-	return 0;
+	return result;
 }
 
 int DCPCALL CloseArchive(ArcData hArcData)
@@ -102,7 +118,7 @@ int DCPCALL CloseArchive(ArcData hArcData)
 	archive_read_close(hArcData->archive);
 	archive_read_free(hArcData->archive);
 	free(hArcData);
-	return 0;
+	return E_SUCCESS;
 }
 
 void DCPCALL SetProcessDataProc(ArcData hArcData, tProcessDataProc pProcessDataProc)
