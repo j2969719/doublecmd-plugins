@@ -26,6 +26,7 @@ HANDLE DCPCALL OpenArchive(tOpenArchiveData *ArchiveData)
 int DCPCALL ReadHeader(HANDLE hArcData, tHeaderData *HeaderData)
 {
 	struct archive_entry *entry;
+	memset(HeaderData, 0, sizeof(HeaderData));
 
 	if (archive_read_next_header(hArcData, &entry) == ARCHIVE_OK)
 	{
@@ -33,6 +34,7 @@ int DCPCALL ReadHeader(HANDLE hArcData, tHeaderData *HeaderData)
 		HeaderData->PackSize = archive_entry_size(entry);
 		HeaderData->UnpSize = archive_entry_size(entry);
 		HeaderData->FileTime = archive_entry_mtime(entry);
+		HeaderData->FileAttr = archive_entry_mode(entry);
 		return 0;
 	}
 
@@ -70,6 +72,7 @@ int DCPCALL ProcessFile(HANDLE hArcData, int Operation, char *DestPath, char *De
 int DCPCALL CloseArchive(HANDLE hArcData)
 {
 	archive_read_free(hArcData);
+	return 0;
 }
 
 void DCPCALL SetProcessDataProc(HANDLE hArcData, tProcessDataProc pProcessDataProc)
