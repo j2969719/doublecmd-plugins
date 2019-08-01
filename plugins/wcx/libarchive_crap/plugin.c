@@ -4,6 +4,7 @@
 #include <archive_entry.h>
 #include <string.h>
 #include "wcxplugin.h"
+#include "extension.h"
 
 typedef struct sArcData
 {
@@ -14,6 +15,21 @@ typedef struct sArcData
 } tArcData;
 
 typedef tArcData* ArcData;
+
+
+tExtensionStartupInfo* gStartupInfo;
+
+void DCPCALL ExtensionInitialize(tExtensionStartupInfo* StartupInfo)
+{
+	gStartupInfo = malloc(sizeof(tExtensionStartupInfo));
+	memcpy(gStartupInfo, StartupInfo, sizeof(tExtensionStartupInfo));
+}
+
+void DCPCALL ExtensionFinalize(void* Reserved)
+{
+	free(gStartupInfo);
+}
+
 
 HANDLE DCPCALL OpenArchive(tOpenArchiveData *ArchiveData)
 {
@@ -75,8 +91,8 @@ int DCPCALL ProcessFile(ArcData hArcData, int Operation, char *DestPath, char *D
 	{
 		int flags = ARCHIVE_EXTRACT_TIME | ARCHIVE_EXTRACT_PERM | ARCHIVE_EXTRACT_FFLAGS;
 
-		if (archive_entry_is_encrypted(hArcData->entry))
-			return E_NOT_SUPPORTED;
+		//if (archive_entry_is_encrypted(hArcData->entry))
+			//return E_NOT_SUPPORTED;
 
 		struct archive *a = archive_write_disk_new();
 		archive_entry_set_pathname(hArcData->entry, DestName);
@@ -88,14 +104,18 @@ int DCPCALL ProcessFile(ArcData hArcData, int Operation, char *DestPath, char *D
 		{
 			if (ret < ARCHIVE_OK)
 			{
-				printf("%s\n", archive_error_string(hArcData->archive));
-				result = E_EREAD;
+				//printf("%s\n", archive_error_string(hArcData->archive));
+				//result = E_EREAD;
+				gStartupInfo->MessageBox((char*)archive_error_string(hArcData->archive), NULL, 0x00000010);
+				result = E_EABORTED;
 				break;
 			}
 			else if (archive_write_data_block(a, buff, size, offset) < ARCHIVE_OK)
 			{
-				printf("%s\n", archive_error_string(a));
-				result = E_EWRITE;
+				//printf("%s\n", archive_error_string(a));
+				//result = E_EWRITE;
+				gStartupInfo->MessageBox((char*)archive_error_string(a), NULL, 0x00000010);
+				result = E_EABORTED;
 				break;
 			}
 			else if (hArcData->gProcessDataProc(DestName, 0) == 0)
@@ -147,5 +167,5 @@ BOOL DCPCALL CanYouHandleThisFile(char *FileName)
 
 int DCPCALL GetPackerCaps()
 {
-	return PK_CAPS_BY_CONTENT;
+	return PK_CAPS_SEARCHTEXT | PK_CAPS_BY_CONTENT;
 }
