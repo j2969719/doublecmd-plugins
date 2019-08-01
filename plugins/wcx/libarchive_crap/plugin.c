@@ -33,18 +33,26 @@ HANDLE DCPCALL OpenArchive(tOpenArchiveData *ArchiveData)
 
 	return (HANDLE)handle;
 }
-
-int DCPCALL ReadHeader(ArcData hArcData, tHeaderData *HeaderData)
+int DCPCALL ReadHeader(HANDLE hArcData, tHeaderData *HeaderDate)
 {
-	memset(HeaderData, 0, sizeof(HeaderData));
+	return E_NOT_SUPPORTED;
+}
+
+int DCPCALL ReadHeaderEx(ArcData hArcData, tHeaderDataEx *HeaderDataEx)
+{
+	int64_t size;
+	memset(HeaderDataEx, 0, sizeof(HeaderDataEx));
 
 	if (archive_read_next_header(hArcData->archive, &hArcData->entry) == ARCHIVE_OK)
 	{
-		strncpy(HeaderData->FileName, archive_entry_pathname(hArcData->entry), 259);
-		HeaderData->PackSize = archive_entry_size(hArcData->entry);
-		HeaderData->UnpSize = archive_entry_size(hArcData->entry);
-		HeaderData->FileTime = archive_entry_mtime(hArcData->entry);
-		HeaderData->FileAttr = archive_entry_mode(hArcData->entry);
+		strncpy(HeaderDataEx->FileName, archive_entry_pathname(hArcData->entry), sizeof(HeaderDataEx->FileName) - 1);
+		size = archive_entry_size(hArcData->entry);
+		HeaderDataEx->PackSizeHigh = (size & 0xFFFFFFFF00000000) >> 32;
+		HeaderDataEx->PackSize = size & 0x00000000FFFFFFFF;
+		HeaderDataEx->UnpSizeHigh = (size & 0xFFFFFFFF00000000) >> 32;
+		HeaderDataEx->UnpSize = size & 0x00000000FFFFFFFF;
+		HeaderDataEx->FileTime = archive_entry_mtime(hArcData->entry);
+		HeaderDataEx->FileAttr = archive_entry_mode(hArcData->entry);
 		return 0;
 	}
 
@@ -92,6 +100,8 @@ int DCPCALL ProcessFile(ArcData hArcData, int Operation, char *DestPath, char *D
 int DCPCALL CloseArchive(ArcData hArcData)
 {
 	archive_read_close(hArcData->archive);
+	archive_read_free(hArcData->archive);
+	free(hArcData);
 	return 0;
 }
 
