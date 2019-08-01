@@ -1,18 +1,29 @@
+#include <stdlib.h>
 #include <stdbool.h>
 #include <archive.h>
 #include <archive_entry.h>
 #include <string.h>
 #include "wcxplugin.h"
 
-tChangeVolProc gChangeVolProc;
-tProcessDataProc gProcessDataProc;
+typedef struct sArcData
+{
+	struct archive *archive;
+	struct archive_entry *entry;
+	tChangeVolProc gChangeVolProc;
+	tProcessDataProc gProcessDataProc;
+} tArcData;
+
+typedef tArcData* ArcData;
 
 HANDLE DCPCALL OpenArchive(tOpenArchiveData *ArchiveData)
 {
-	struct archive *a = archive_read_new();
-	archive_read_support_filter_all(a);
-	archive_read_support_format_all(a);
-	int r = archive_read_open_filename(a, ArchiveData->ArcName, 10240);
+	tArcData * handle;
+	handle = malloc(sizeof(tArcData));
+	memset(handle, 0, sizeof(tArcData));
+	handle->archive = archive_read_new();
+	archive_read_support_filter_all(handle->archive);
+	archive_read_support_format_all(handle->archive);
+	int r = archive_read_open_filename(handle->archive, ArchiveData->ArcName, 10240);
 
 	if (r != ARCHIVE_OK)
 	{
@@ -20,69 +31,78 @@ HANDLE DCPCALL OpenArchive(tOpenArchiveData *ArchiveData)
 		return 0;
 	}
 
-	return (HANDLE)a;
+	return (HANDLE)handle;
 }
 
-int DCPCALL ReadHeader(HANDLE hArcData, tHeaderData *HeaderData)
+int DCPCALL ReadHeader(ArcData hArcData, tHeaderData *HeaderData)
 {
-	struct archive_entry *entry;
 	memset(HeaderData, 0, sizeof(HeaderData));
 
-	if (archive_read_next_header(hArcData, &entry) == ARCHIVE_OK)
+	if (archive_read_next_header(hArcData->archive, &hArcData->entry) == ARCHIVE_OK)
 	{
-		strncpy(HeaderData->FileName, archive_entry_pathname(entry), 259);
-		HeaderData->PackSize = archive_entry_size(entry);
-		HeaderData->UnpSize = archive_entry_size(entry);
-		HeaderData->FileTime = archive_entry_mtime(entry);
-		HeaderData->FileAttr = archive_entry_mode(entry);
+		strncpy(HeaderData->FileName, archive_entry_pathname(hArcData->entry), 259);
+		HeaderData->PackSize = archive_entry_size(hArcData->entry);
+		HeaderData->UnpSize = archive_entry_size(hArcData->entry);
+		HeaderData->FileTime = archive_entry_mtime(hArcData->entry);
+		HeaderData->FileAttr = archive_entry_perm(hArcData->entry);
 		return 0;
 	}
 
 	return E_END_ARCHIVE;
 }
 
-int DCPCALL ProcessFile(HANDLE hArcData, int Operation, char *DestPath, char *DestName)
+int DCPCALL ProcessFile(ArcData hArcData, int Operation, char *DestPath, char *DestName)
 {
+	size_t size;
+	la_int64_t offset;
+	const void *buff;
+
+	if (hArcData->gProcessDataProc(DestName, 0) == 0)
+		return E_EABORTED;
+
 	if (Operation == PK_EXTRACT)
 	{
-		ssize_t size;
-		char buff[100];
-		FILE *f = fopen(DestName, "wb");
+		struct archive *a = archive_write_disk_new();
+		int flags = ARCHIVE_EXTRACT_TIME | ARCHIVE_EXTRACT_PERM | ARCHIVE_EXTRACT_FFLAGS;
+		archive_entry_set_pathname(hArcData->entry, DestName);
+		archive_write_disk_set_options(a, flags);
+		archive_write_disk_set_standard_lookup(a);
+		archive_write_header(a, hArcData->entry);
 
-		if (!f)
-			return E_EWRITE;
-
-		while ((size = archive_read_data(hArcData, buff, sizeof(buff))) > 0)
+		while (archive_read_data_block(hArcData->archive, &buff, &size, &offset) != ARCHIVE_EOF)
 		{
-			if (gProcessDataProc(DestName, 0) == 0)
+			if (archive_write_data_block(a, buff, size, offset) < ARCHIVE_OK)
 			{
-				fclose(f);
-				return E_EABORTED;
+				printf("%s\n", archive_error_string(a));
+				archive_write_finish_entry(a);
+				archive_write_close(a);
+				archive_write_free(a);
+				return E_EWRITE;
 			}
-
-			fwrite(buff, 1, size, f);
 		}
 
-		fclose(f);
+		archive_write_finish_entry(a);
+		archive_write_close(a);
+		archive_write_free(a);
 	}
 
 	return 0;
 }
 
-int DCPCALL CloseArchive(HANDLE hArcData)
+int DCPCALL CloseArchive(ArcData hArcData)
 {
-	archive_read_free(hArcData);
+	archive_read_close(hArcData->archive);
 	return 0;
 }
 
-void DCPCALL SetProcessDataProc(HANDLE hArcData, tProcessDataProc pProcessDataProc)
+void DCPCALL SetProcessDataProc(ArcData hArcData, tProcessDataProc pProcessDataProc)
 {
-	gProcessDataProc = pProcessDataProc;
+	hArcData->gProcessDataProc = pProcessDataProc;
 }
 
-void DCPCALL SetChangeVolProc(HANDLE hArcData, tChangeVolProc pChangeVolProc1)
+void DCPCALL SetChangeVolProc(ArcData hArcData, tChangeVolProc pChangeVolProc1)
 {
-	gChangeVolProc = pChangeVolProc1;
+	hArcData->gChangeVolProc = pChangeVolProc1;
 }
 
 BOOL DCPCALL CanYouHandleThisFile(char *FileName)
