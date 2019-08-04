@@ -90,6 +90,9 @@ Mount points: name, FS type, all/used/available size and other.
 - [diffwdx.lua](plugins/wdx/scripts/diffwdx.lua)<br>
 Search in diff file with reference file or diff from Git or SVN repository.
 
+- [djvuwdx.lua](plugins/wdx/scripts/djvuwdx.lua)<br>
+Getting some information from DjVu files and searching text. Requires `djvused` and `djvudump`.
+
 - [duwdx.lua](plugins/wdx/scripts/duwdx.lua)<br>
 Returns directory size or files on a file system.
 
