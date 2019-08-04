@@ -255,7 +255,7 @@ Displays various information about file using command line utilities.
 Attempts to use GTK3 widgets library, follow link.
 
 - [gtk_socket](plugins/wlx/gtk_socket)<br>
-Wrapper (embedding with socket help) for different scripts and utilities, follow link.
+Plugin-wrapper for embed window of different scripts and utilities, used GtkSocket (container for widgets from other processes). Works with file extensions and MIME types, see `settings.ini`.
 
 - [gtkimgview](plugins/wlx/gtkimgview)<br>
 Image viewer plugin. Supported formats (all image formats supported by GdkPixbuf, the list can be differ on your system): xpm, xbm, tif, tiff, targa, tga, svg.gz, svgz, svg, qif, qtif, ppm, pgm, pbm, pnm, png, jpg, jpe, jpeg, jpf, j2k, jpx, jpc, jp2, cur, ico, icns, gif, bmp, ani.
