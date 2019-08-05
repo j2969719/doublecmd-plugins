@@ -210,6 +210,8 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	output = g_strdup_printf("%s/output.png", tmpdir);
 	command = str_replace(command, "$FILE", g_shell_quote(FileToLoad));
 	command = str_replace(command, "$IMG", g_shell_quote(output));
+	command = str_replace(command, "$TMPDIR", g_shell_quote(tmpdir));
+	g_print("%s\n", command);
 
 	if (system(command) != 0)
 		return NULL;

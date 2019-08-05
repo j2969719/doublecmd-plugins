@@ -88,6 +88,7 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	gchar *output;
 	gchar *fileExt;
 	gchar *fileUri;
+	gchar *forcefile = NULL;
 
 	fileExt = get_file_ext(FileToLoad);
 
@@ -98,6 +99,8 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	else
 		command = g_key_file_get_string(cfg, fileExt, "command", NULL);
 
+	forcefile = g_key_file_get_string(cfg, fileExt, "forceopen", NULL);
+
 	g_key_file_free(cfg);
 
 	if (!command)
@@ -107,9 +110,14 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	output = g_strdup_printf("%s/output.html", tmpdir);
 	command = str_replace(command, "$FILE", g_shell_quote(FileToLoad));
 	command = str_replace(command, "$HTML", g_shell_quote(output));
+	command = str_replace(command, "$TMPDIR", g_shell_quote(tmpdir));
+	g_print("%s\n", command);
 
 	if (system(command) != 0)
 		return NULL;
+
+	if (forcefile)
+		output = g_strdup_printf("%s/%s", tmpdir, forcefile);
 
 	fileUri = g_filename_to_uri(output, NULL, NULL);
 
