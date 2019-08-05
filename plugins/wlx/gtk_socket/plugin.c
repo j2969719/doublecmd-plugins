@@ -72,7 +72,7 @@ static gchar *cfg_get_frmt_str(GKeyFile *Cfg, const gchar *Group)
 	}
 	else
 	{
-		tmp = g_strdup_printf("%s/%s", plug_path, cfg_value);
+		tmp = g_strdup_printf("%s/scripts/%s", plug_path, cfg_value);
 
 		if (g_file_test(tmp, G_FILE_TEST_EXISTS))
 			result = g_strdup_printf("%s %s", g_shell_quote(tmp), _frmtsrt);
