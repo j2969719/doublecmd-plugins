@@ -38,6 +38,7 @@ HANDLE DCPCALL OpenArchive(tOpenArchiveData *ArchiveData)
 	memset(handle, 0, sizeof(tArcData));
 	handle->archive = archive_read_new();
 	archive_read_support_filter_all(handle->archive);
+	archive_read_support_format_raw(handle->archive);
 	archive_read_support_format_all(handle->archive);
 	int r = archive_read_open_filename(handle->archive, ArchiveData->ArcName, 10240);
 
@@ -49,6 +50,7 @@ HANDLE DCPCALL OpenArchive(tOpenArchiveData *ArchiveData)
 
 	return (HANDLE)handle;
 }
+
 int DCPCALL ReadHeader(HANDLE hArcData, tHeaderData *HeaderDate)
 {
 	return E_NOT_SUPPORTED;
@@ -155,6 +157,7 @@ BOOL DCPCALL CanYouHandleThisFile(char *FileName)
 {
 	struct archive *a = archive_read_new();
 	archive_read_support_filter_all(a);
+	//archive_read_support_format_raw(a);
 	archive_read_support_format_all(a);
 	int r = archive_read_open_filename(a, FileName, 10240);
 	archive_read_free(a);
@@ -168,4 +171,9 @@ BOOL DCPCALL CanYouHandleThisFile(char *FileName)
 int DCPCALL GetPackerCaps()
 {
 	return PK_CAPS_SEARCHTEXT | PK_CAPS_BY_CONTENT;
+}
+
+void DCPCALL ConfigurePacker(HWND Parent, void *DllInstance)
+{
+	gStartupInfo->MessageBox((char*)archive_version_details(), NULL, 0x00000040);
 }
