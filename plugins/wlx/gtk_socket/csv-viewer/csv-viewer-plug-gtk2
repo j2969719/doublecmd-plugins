@@ -62,12 +62,13 @@ def init_view(ncolumns):
         view.append_column(column)
     return view
 
-def init_window(title, size, view):
+#def init_window(title, size, view):
+def init_window(title, xid, view):
     """Initialize and return a window."""
     scroller = gtk.ScrolledWindow()
     scroller.add(view)
     scroller.show_all()
-    window = gtk.Plug(long(size))
+    window = gtk.Plug(long(xid))
     window.add(scroller)
     window.connect("delete-event", gtk.main_quit)
     return window

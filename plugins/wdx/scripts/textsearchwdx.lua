@@ -1,8 +1,8 @@
 
 local commands = {
     ['pdf' ] = 'pdftotext -layout -nopgbrk "$FILE" -', 
-    ['djv' ] = 'djvused -e print-pure-txt "$FILE"', 
-    ['djvu'] = 'djvused -e print-pure-txt "$FILE"', 
+    ['djv' ] = 'djvused -e print-pure-txt -u "$FILE"', 
+    ['djvu'] = 'djvused -e print-pure-txt -u "$FILE"', 
     ['epub'] = 'epub2txt "$FILE"', 
     
     ['doc' ] = 'catdoc -w "$FILE"', 

@@ -152,8 +152,8 @@ IDPos=0
 IDSeekRange=0
 Extension=grp
 Format0=n+ (z+
-List=%P -t -v -f %AQA
-Extract=%P -x -f %AQ
+List=%P -t -v -f %AQ
+Extract=%P -x -f %AQ %FQ
 ```
 [grpar](http://github.com/martymac/grpar)
 

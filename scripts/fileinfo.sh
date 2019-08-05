@@ -101,7 +101,7 @@ case "${filetype}" in
 		catdvi "$file"
 		;;
 	[Dd][Jj][Vv][Uu]|[Dd][Jj][Vv])
-		djvused -e print-pure-txt "$file"
+		djvused -e print-pure-txt -u "$file"
 		;;
 	[Cc][Ss][Vv])
 		cat "$file" | sed -e 's/,,/, ,/g' | column -s, -t
