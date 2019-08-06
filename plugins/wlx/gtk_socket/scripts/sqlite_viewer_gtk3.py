@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 
 # copypasted from https://github.com/ArseniyK/sqlite_viewer
 
