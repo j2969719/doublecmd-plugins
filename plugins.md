@@ -241,10 +241,6 @@ Displays DOC, RTF, DOT, ABW, AWT, ZABW. Requires AbiWord (GTK2 version).
 - [atril-gtk2](plugins/wlx/atril-gtk2)<br>
 Displays PDF, DjVu, TIFF, PostScipt, CBR, CBZ, XPS. Requires Atril 2 (GTK2 version).
 
-- [crapmagick](plugins/wlx/crapmagick)<br>
-Displays TTF, OTF, PCX.
-If you have ImageMagick 6 (for example, Debian/Ubuntu-based distributions) then use `#include <wand/MagickWand.h>` instead `#include <MagickWand/MagickWand.h>`.
-
 - [dcpoppler](plugins/wlx/dcpoppler)<br>
 PDF Viewer.
 
@@ -262,6 +258,9 @@ Plugin-wrapper for embed window of different scripts and utilities, used GtkSock
 
 - [gtkimgview](plugins/wlx/gtkimgview)<br>
 Image viewer plugin. Supported formats (all image formats supported by GdkPixbuf, the list can be differ on your system): xpm, xbm, tif, tiff, targa, tga, svg.gz, svgz, svg, qif, qtif, ppm, pgm, pbm, pnm, png, jpg, jpe, jpeg, jpf, j2k, jpx, jpc, jp2, cur, ico, icns, gif, bmp, ani.
+
+- [gtkimgview_crap](plugins/wlx/gtkimgview_crap)<br>
+Like `gtkimgview` but for any files if you can convert it to image (see `settings.ini`).
 
 - [gtksourceview](plugins/wlx/gtksourceview)<br>
 Displays source code files with syntax highlighting. Requires `gtksourceview-2.0`.
