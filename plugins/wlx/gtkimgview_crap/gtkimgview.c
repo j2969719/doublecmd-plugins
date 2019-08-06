@@ -189,6 +189,7 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	gchar *output;
 	gchar *fileExt;
 	gchar *forcefile = NULL;
+	gchar *fallbackfile = NULL;
 
 	fileExt = get_file_ext(FileToLoad);
 
@@ -197,9 +198,11 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	if (!g_key_file_load_from_file(cfg, cfgpath, G_KEY_FILE_KEEP_COMMENTS, NULL))
 		return NULL;
 	else
+	{
 		command = g_key_file_get_string(cfg, fileExt, "command", NULL);
-
-	forcefile = g_key_file_get_string(cfg, fileExt, "forceopen", NULL);
+		forcefile = g_key_file_get_string(cfg, fileExt, "forceopen", NULL);
+		fallbackfile = g_key_file_get_string(cfg, fileExt, "fallbackopen", NULL);
+	}
 
 	g_key_file_free(cfg);
 
@@ -219,7 +222,10 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	if (forcefile)
 		output = g_strdup_printf("%s/%s", tmpdir, forcefile);
 
-	if (!g_file_test(output, G_FILE_TEST_IS_REGULAR))
+	if (!g_file_test(output, G_FILE_TEST_EXISTS) && fallbackfile)
+		output = g_strdup_printf("%s/%s", tmpdir, fallbackfile);
+
+	if (!g_file_test(output, G_FILE_TEST_EXISTS))
 		return NULL;
 
 	gFix = gtk_vbox_new(FALSE, 1);
