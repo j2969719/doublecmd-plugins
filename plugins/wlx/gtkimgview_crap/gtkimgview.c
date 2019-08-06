@@ -190,6 +190,10 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	gchar *fileExt;
 	gchar *forcefile = NULL;
 	gchar *fallbackfile = NULL;
+	gchar *bgcolor = NULL;
+	gboolean hidetoolbar;
+	GdkColor color;
+
 
 	fileExt = get_file_ext(FileToLoad);
 
@@ -202,6 +206,8 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 		command = g_key_file_get_string(cfg, fileExt, "command", NULL);
 		forcefile = g_key_file_get_string(cfg, fileExt, "forceopen", NULL);
 		fallbackfile = g_key_file_get_string(cfg, fileExt, "fallbackopen", NULL);
+		bgcolor = g_key_file_get_string(cfg, fileExt, "bgcolor", NULL);
+		hidetoolbar = g_key_file_get_boolean(cfg, fileExt, "hidetoolbar", NULL);
 	}
 
 	g_key_file_free(cfg);
@@ -311,12 +317,19 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	g_free(tstr);
 	gtk_toolbar_insert(GTK_TOOLBAR(mtb), tb_size, tb_last);
 
+	if (bgcolor)
+	{
+		gdk_color_parse(bgcolor, &color);
+		gtk_widget_modify_bg(view, GTK_STATE_NORMAL, &color);
+		g_free(bgcolor);
+	}
+
 	g_object_set_data(G_OBJECT(gFix), "tmpdir", tmpdir);
 
 	gtk_widget_grab_focus(view);
 	gtk_widget_show_all(gFix);
 
-	if (g_strcmp0(gtk_window_get_title(GTK_WINDOW(gtk_widget_get_toplevel(GTK_WIDGET(ParentWin)))), FileToLoad) != 0)
+	if (hidetoolbar || g_strcmp0(gtk_window_get_title(GTK_WINDOW(gtk_widget_get_toplevel(GTK_WIDGET(ParentWin)))), FileToLoad) != 0)
 		gtk_widget_hide(mtb);
 
 	return gFix;
