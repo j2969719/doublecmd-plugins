@@ -250,9 +250,6 @@ Displays PDF, DjVu, TIFF, PostScipt, CBR. Requires Evince 2 (GTK2 version).
 - [fileinfo](plugins/wlx/fileinfo)<br>
 Displays various information about file using command line utilities.
 
-- [gtk3test](plugins/wlx/gtk3test)<br>
-Attempts to use GTK3 widgets library, follow link.
-
 - [gtk_socket](plugins/wlx/gtk_socket)<br>
 Plugin-wrapper for embed window of different scripts and utilities, used GtkSocket (container for widgets from other processes). Works with file extensions and MIME types, see `settings.ini`.
 
@@ -292,18 +289,6 @@ Embeds Virtual Terminal Emulator (VTE) widget (GTK2 version).
 
 - [vte_ncdu](plugins/wlx/vte_ncdu)<br>
 Embeds Virtual Terminal Emulator (VTE) widget (GTK2 version) and runs `ncdu`.
-
-- [wlxdisplay](plugins/wlx/wlxdisplay)<br>
-Displays TTF, OTF, PCX. Requires `display` (ImageMagick tool).
-
-- [wlxgvim](plugins/wlx/wlxgvim)<br>
-Displays file content with GVim.
-
-- [wlxsurf](plugins/wlx/wlxsurf)<br>
-Displays Web-pages (*.htm, *.html, *.xhtml) with Surf web browser.
-
-- [wlxvimb](plugins/wlx/wlxvimb)<br>
-Displays Web-pages (*.htm, *.html, *.xhtml) with Vimb web browser.
 
 - [wlxwebkit](plugins/wlx/wlxwebkit)<br>
 The given plug-in allows to look through Web-pages (*.htm, *.html). It is based on WebKitGTK2 engine.
