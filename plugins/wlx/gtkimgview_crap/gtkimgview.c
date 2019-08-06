@@ -188,14 +188,16 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	gchar *tmpdir;
 	gchar *output;
 	gchar *fileExt;
-	gchar *forcefile = NULL;
+	gchar *outfile = NULL;
 	gchar *fallbackfile = NULL;
 	gchar *bgcolor = NULL;
 	gboolean hidetoolbar;
 	GdkColor color;
 
-
 	fileExt = get_file_ext(FileToLoad);
+
+	if (!fileExt)
+		return NULL;
 
 	cfg = g_key_file_new();
 
@@ -204,7 +206,7 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	else
 	{
 		command = g_key_file_get_string(cfg, fileExt, "command", NULL);
-		forcefile = g_key_file_get_string(cfg, fileExt, "forceopen", NULL);
+		outfile = g_key_file_get_string(cfg, fileExt, "filename", NULL);
 		fallbackfile = g_key_file_get_string(cfg, fileExt, "fallbackopen", NULL);
 		bgcolor = g_key_file_get_string(cfg, fileExt, "bgcolor", NULL);
 		hidetoolbar = g_key_file_get_boolean(cfg, fileExt, "hidetoolbar", NULL);
@@ -216,7 +218,12 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 		return NULL;
 
 	tmpdir = g_dir_make_tmp("_dc-imgview.XXXXXX", NULL);
-	output = g_strdup_printf("%s/output.png", tmpdir);
+
+	if (outfile)
+		output = g_strdup_printf("%s/%s", tmpdir, outfile);
+	else
+		output = g_strdup_printf("%s/output.png", tmpdir);
+
 	command = str_replace(command, "$FILE", g_shell_quote(FileToLoad));
 	command = str_replace(command, "$IMG", g_shell_quote(output));
 	command = str_replace(command, "$TMPDIR", g_shell_quote(tmpdir));
@@ -224,9 +231,6 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 
 	if (system(command) != 0)
 		return NULL;
-
-	if (forcefile)
-		output = g_strdup_printf("%s/%s", tmpdir, forcefile);
 
 	if (!g_file_test(output, G_FILE_TEST_EXISTS) && fallbackfile)
 		output = g_strdup_printf("%s/%s", tmpdir, fallbackfile);

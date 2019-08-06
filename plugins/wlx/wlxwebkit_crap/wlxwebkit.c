@@ -88,10 +88,13 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	gchar *output;
 	gchar *fileExt;
 	gchar *fileUri;
-	gchar *forcefile = NULL;
+	gchar *outfile = NULL;
 	gchar *fallbackfile = NULL;
 
 	fileExt = get_file_ext(FileToLoad);
+
+	if (!fileExt)
+		return NULL;
 
 	cfg = g_key_file_new();
 
@@ -100,7 +103,7 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	else
 	{
 		command = g_key_file_get_string(cfg, fileExt, "command", NULL);
-		forcefile = g_key_file_get_string(cfg, fileExt, "forceopen", NULL);
+		outfile = g_key_file_get_string(cfg, fileExt, "filename", NULL);
 		fallbackfile = g_key_file_get_string(cfg, fileExt, "fallbackopen", NULL);
 	}
 
@@ -110,7 +113,12 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 		return NULL;
 
 	tmpdir = g_dir_make_tmp("_dc-webkit.XXXXXX", NULL);
-	output = g_strdup_printf("%s/output.html", tmpdir);
+
+	if (outfile)
+		output = g_strdup_printf("%s/%s", tmpdir, outfile);
+	else
+		output = g_strdup_printf("%s/output.html", tmpdir);
+
 	command = str_replace(command, "$FILE", g_shell_quote(FileToLoad));
 	command = str_replace(command, "$HTML", g_shell_quote(output));
 	command = str_replace(command, "$TMPDIR", g_shell_quote(tmpdir));
@@ -118,9 +126,6 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 
 	if (system(command) != 0)
 		return NULL;
-
-	if (forcefile)
-		output = g_strdup_printf("%s/%s", tmpdir, forcefile);
 
 	if (!g_file_test(output, G_FILE_TEST_EXISTS) && fallbackfile)
 		output = g_strdup_printf("%s/%s", tmpdir, fallbackfile);
