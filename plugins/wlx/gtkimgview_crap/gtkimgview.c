@@ -323,6 +323,7 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 
 	if (bgcolor)
 	{
+		gtk_image_view_set_show_frame(GTK_IMAGE_VIEW(view), FALSE);
 		gdk_color_parse(bgcolor, &color);
 		gtk_widget_modify_bg(view, GTK_STATE_NORMAL, &color);
 		g_free(bgcolor);
