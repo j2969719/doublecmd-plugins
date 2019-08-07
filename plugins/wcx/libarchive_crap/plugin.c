@@ -108,7 +108,7 @@ int DCPCALL ProcessFile(ArcData hArcData, int Operation, char *DestPath, char *D
 			{
 				//printf("%s\n", archive_error_string(hArcData->archive));
 				//result = E_EREAD;
-				gStartupInfo->MessageBox((char*)archive_error_string(hArcData->archive), NULL, 0x00000010);
+				gStartupInfo->MessageBox((char*)archive_error_string(hArcData->archive), NULL, MB_OK | MB_ICONERROR);
 				result = E_EABORTED;
 				break;
 			}
@@ -116,7 +116,7 @@ int DCPCALL ProcessFile(ArcData hArcData, int Operation, char *DestPath, char *D
 			{
 				//printf("%s\n", archive_error_string(a));
 				//result = E_EWRITE;
-				gStartupInfo->MessageBox((char*)archive_error_string(a), NULL, 0x00000010);
+				gStartupInfo->MessageBox((char*)archive_error_string(a), NULL, MB_OK | MB_ICONERROR);
 				result = E_EABORTED;
 				break;
 			}
@@ -175,5 +175,5 @@ int DCPCALL GetPackerCaps()
 
 void DCPCALL ConfigurePacker(HWND Parent, void *DllInstance)
 {
-	gStartupInfo->MessageBox((char*)archive_version_details(), NULL, 0x00000040);
+	gStartupInfo->MessageBox((char*)archive_version_details(), NULL, MB_OK | MB_ICONINFORMATION);
 }
