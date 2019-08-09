@@ -120,7 +120,7 @@ int DCPCALL ProcessFile(ArcData hArcData, int Operation, char *DestPath, char *D
 				result = E_EABORTED;
 				break;
 			}
-			else if (hArcData->gProcessDataProc(DestName, 0) == 0)
+			else if (hArcData->gProcessDataProc(DestName, size) == 0)
 			{
 				result = E_EABORTED;
 				break;
