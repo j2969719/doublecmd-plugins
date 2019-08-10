@@ -1,5 +1,5 @@
 -- djvuwdx.lua
--- 2019.08.03
+-- 2019.08.10
 --
 -- Getting some information from DjVu files and searching text
 -- Fields:
@@ -10,7 +10,7 @@
 --  Search in         : text search only (for "Find files" dialog),
 --                      returns (if exists) hidden text, outline/bookmarks or metadata.
 --
--- Script uses djvudump and djvused from DjVuLibre http://djvu.sourceforge.net/
+-- Script uses djvused from DjVuLibre http://djvu.sourceforge.net/
 
 local fields = {
  {"Pages",             "", 2},
@@ -42,10 +42,10 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
     if not h then return nil end
     local out = h:read("*a")
     h:close()
-    out = string.match(out, '([^\r\n]+)')
+    out = string.match(out, '(%d+)')
     if string.len(out) >= 1 then return out end
   elseif FieldIndex == 1 then
-    local h = io.popen('djvudump "' .. FileName .. '"')
+    local h = io.popen('djvused -e dump "' .. FileName .. '"')
     if not h then return nil end
     for l in h:lines() do
       if (string.find(l, ' TXT[az] %[', 1) ~= nil) then

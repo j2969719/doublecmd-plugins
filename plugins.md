@@ -115,6 +115,11 @@ Getting MS-DOS attributes in a FAT file system. Requires `fatattr`.
 - [fb2isvalidwdx](plugins/wdx/scripts/fb2isvalidwdx)<br>
 Validating FictionBook2 (FB2) files (first test can be used with ANY XML-based files).
 
+- [filecountwdx.lua](plugins/wdx/scripts/filecountwdx.lua)<br>
+Returns file or directory count, without scanning symbolic links to folders.<br>
+For columns set only!<br>
+*cross platform*
+
 - [filenamechrstatwdx.lua](plugins/wdx/scripts/filenamechrstatwdx.lua)<br>
 Returns count of characters in file name: total, alphanumeric, spaces, letters (all, lower case or upper case letters), digits and punctuation characters. You can choose the full path, path, file name or file extension.<br>
 *cross platform*
@@ -153,7 +158,7 @@ Returns metadata from files. You can see list of fields in `fields` (first colum
 Returns some information from Arch Linux packages.
 
 - [quasiexpanderwdx.lua](plugins/wdx/scripts/quasiexpanderwdx.lua)<br>
-Returns part of file name (by delimiter).
+Returns part of file name (by delimiter).<br>
 *cross platform*
 
 - [randomcharswdx.lua](plugins/wdx/scripts/randomcharswdx.lua)<br>
