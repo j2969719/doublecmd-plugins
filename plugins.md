@@ -148,6 +148,9 @@ Search file name in custom list of file names.
 - [libextractorwdx.lua](plugins/wdx/scripts/libextractorwdx.lua)<br>
 Returns metadata from files. You can see list of fields in `fields` (first column). Requires `extract`.
 
+- [modiftimeistodaywdx.lua](plugins/wdx/scripts/modiftimeistodaywdx.lua) *(cross platform)*<br>
+The last modified time is today (not last twenty-four hours), boolean.
+
 - [pkginfowdx.lua](plugins/wdx/scripts/pkginfowdx.lua)<br>
 Returns some information from Arch Linux packages.
 
