@@ -230,13 +230,19 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	g_print("%s\n", command);
 
 	if (system(command) != 0)
+	{
+		system(g_strdup_printf("rm -r %s", g_shell_quote(tmpdir)));
 		return NULL;
+	}
 
 	if (!g_file_test(output, G_FILE_TEST_EXISTS) && fallbackfile)
 		output = g_strdup_printf("%s/%s", tmpdir, fallbackfile);
 
 	if (!g_file_test(output, G_FILE_TEST_EXISTS))
+	{
+		system(g_strdup_printf("rm -r %s", g_shell_quote(tmpdir)));
 		return NULL;
+	}
 
 	gFix = gtk_vbox_new(FALSE, 1);
 	gtk_container_add(GTK_CONTAINER(GTK_WIDGET(ParentWin)), gFix);
@@ -253,6 +259,7 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 
 	if (!pixbuf)
 	{
+		system(g_strdup_printf("rm -r %s", g_shell_quote(tmpdir)));
 		gtk_widget_destroy(gFix);
 		return NULL;
 	}

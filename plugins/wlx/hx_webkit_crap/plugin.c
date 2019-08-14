@@ -43,12 +43,20 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	                          g_shell_quote(output), g_shell_quote(config));
 	g_free(exsimple);
 	g_free(config);
-	g_free(output);
-	g_print(command);
 
 	if (system(command) != 0)
+	{
+		system(g_strdup_printf("rm -r %s", g_shell_quote(tmpdir)));
 		return NULL;
+	}
 
+	if (!g_file_test(output, G_FILE_TEST_EXISTS))
+	{
+		system(g_strdup_printf("rm -r %s", g_shell_quote(tmpdir)));
+		return NULL;
+	}
+
+	g_free(output);
 	g_free(command);
 
 	gFix = gtk_scrolled_window_new(NULL, NULL);
@@ -91,11 +99,20 @@ int DCPCALL ListLoadNext(HWND ParentWin, HWND PluginWin, char* FileToLoad, int S
 
 	g_free(exsimple);
 	g_free(config);
-	g_free(output);
 
 	if (system(command) != 0)
+	{
+		system(g_strdup_printf("rm -r %s", g_shell_quote(tmpdir)));
 		return LISTPLUGIN_ERROR;
+	}
 
+	if (!g_file_test(output, G_FILE_TEST_EXISTS))
+	{
+		system(g_strdup_printf("rm -r %s", g_shell_quote(tmpdir)));
+		return LISTPLUGIN_ERROR;
+	}
+
+	g_free(output);
 	g_free(command);
 
 	webkit_web_view_load_uri(WEBKIT_WEB_VIEW(getFirstChild(PluginWin)), fileUri);

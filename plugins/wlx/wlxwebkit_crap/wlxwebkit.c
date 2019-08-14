@@ -125,13 +125,19 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	g_print("%s\n", command);
 
 	if (system(command) != 0)
+	{
+		system(g_strdup_printf("rm -r %s", g_shell_quote(tmpdir)));
 		return NULL;
+	}
 
 	if (!g_file_test(output, G_FILE_TEST_EXISTS) && fallbackfile)
 		output = g_strdup_printf("%s/%s", tmpdir, fallbackfile);
 
 	if (!g_file_test(output, G_FILE_TEST_EXISTS))
+	{
+		system(g_strdup_printf("rm -r %s", g_shell_quote(tmpdir)));
 		return NULL;
+	}
 
 	fileUri = g_filename_to_uri(output, NULL, NULL);
 
