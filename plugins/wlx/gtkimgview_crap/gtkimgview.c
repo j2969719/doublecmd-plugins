@@ -49,6 +49,51 @@ gchar *str_replace(gchar *text, gchar *str, gchar *repl)
 	return result;
 }
 
+gchar *replace_tmpls(gchar *orig, gchar *file, gchar *tmpdir, gchar *output, gboolean quote)
+{
+	gchar *result = g_strdup(orig);
+	gchar *basename = g_path_get_basename(file);
+	gchar *plugdir = g_path_get_dirname(cfgpath);
+	gchar *filedir = g_path_get_dirname(file);
+	gchar *basenamenoext = g_strdup(basename);
+	gchar *dot = g_strrstr(basenamenoext, ".");
+
+	if (dot)
+	{
+		int offset = dot - basenamenoext;
+		basenamenoext[offset] = '\0';
+
+		if (g_strcmp0("", basenamenoext) == 0)
+			basenamenoext = g_strdup(basename);
+	}
+
+	result = str_replace(result, "$FILEDIR", quote ? g_shell_quote(filedir) : filedir);
+	result = str_replace(result, "$FILE", quote ? g_shell_quote(file) : file);
+	result = str_replace(result, "$IMG", quote ? g_shell_quote(output): output);
+	result = str_replace(result, "$TMPDIR", quote ? g_shell_quote(tmpdir) : tmpdir);
+	result = str_replace(result, "$PLUGDIR", quote ? g_shell_quote(plugdir) : plugdir);
+	result = str_replace(result, "$BASENAMENOEXT", basenamenoext);
+	result = str_replace(result, "$BASENAME", basename);
+	g_free(plugdir);
+	g_free(filedir);
+	g_free(basename);
+	g_free(basenamenoext);
+	return result;
+}
+
+gboolean isabsolute(const gchar *file)
+{
+	if (file[0] =='/')
+		return TRUE;
+	else if (g_strrstr(file, "$TMPDIR") != NULL)
+		return TRUE;
+	else if (g_strrstr(file, "$FILEDIR") != NULL)
+		return TRUE;
+	else if (g_strrstr(file, "$PLUGDIR") != NULL)
+		return TRUE;
+
+	return FALSE;
+}
 
 GtkWidget* find_child(GtkWidget* parent, const gchar* name)
 {
@@ -192,6 +237,7 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	gchar *fallbackfile = NULL;
 	gchar *bgcolor = NULL;
 	gboolean hidetoolbar;
+	gboolean keeptmp;
 	GdkColor color;
 
 	fileExt = get_file_ext(FileToLoad);
@@ -210,6 +256,7 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 		fallbackfile = g_key_file_get_string(cfg, fileExt, "fallbackopen", NULL);
 		bgcolor = g_key_file_get_string(cfg, fileExt, "bgcolor", NULL);
 		hidetoolbar = g_key_file_get_boolean(cfg, fileExt, "hidetoolbar", NULL);
+		keeptmp = g_key_file_get_boolean(cfg, fileExt, "keeptmp", NULL);
 	}
 
 	g_key_file_free(cfg);
@@ -220,27 +267,43 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	tmpdir = g_dir_make_tmp("_dc-imgview.XXXXXX", NULL);
 
 	if (outfile)
-		output = g_strdup_printf("%s/%s", tmpdir, outfile);
+	{
+		output = g_strdup(outfile);
+
+		if (!isabsolute(output))
+			output = g_strdup_printf("$TMPDIR/%s", outfile);
+
+		output = replace_tmpls(output, FileToLoad, tmpdir, NULL, FALSE);
+	}
 	else
 		output = g_strdup_printf("%s/output.png", tmpdir);
 
-	command = str_replace(command, "$FILE", g_shell_quote(FileToLoad));
-	command = str_replace(command, "$IMG", g_shell_quote(output));
-	command = str_replace(command, "$TMPDIR", g_shell_quote(tmpdir));
+	command = replace_tmpls(command, FileToLoad, tmpdir, output, TRUE);
 	g_print("%s\n", command);
 
 	if (system(command) != 0)
 	{
-		system(g_strdup_printf("rm -r %s", g_shell_quote(tmpdir)));
+		if (!keeptmp)
+			system(g_strdup_printf("rm -r %s", g_shell_quote(tmpdir)));
+
 		return NULL;
 	}
 
 	if (!g_file_test(output, G_FILE_TEST_EXISTS) && fallbackfile)
-		output = g_strdup_printf("%s/%s", tmpdir, fallbackfile);
+	{
+		output = g_strdup(fallbackfile);
+
+		if (!isabsolute(output))
+			output = g_strdup_printf("$TMPDIR/%s", fallbackfile);
+
+		output = replace_tmpls(output, FileToLoad, tmpdir, NULL, FALSE);
+	}
 
 	if (!g_file_test(output, G_FILE_TEST_EXISTS))
 	{
-		system(g_strdup_printf("rm -r %s", g_shell_quote(tmpdir)));
+		if (!keeptmp)
+			system(g_strdup_printf("rm -r %s", g_shell_quote(tmpdir)));
+
 		return NULL;
 	}
 
@@ -259,7 +322,9 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 
 	if (!pixbuf)
 	{
-		system(g_strdup_printf("rm -r %s", g_shell_quote(tmpdir)));
+		if (!keeptmp)
+			system(g_strdup_printf("rm -r %s", g_shell_quote(tmpdir)));
+
 		gtk_widget_destroy(gFix);
 		return NULL;
 	}
