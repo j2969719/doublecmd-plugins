@@ -6,6 +6,14 @@
 #include "wcxplugin.h"
 #include "extension.h"
 
+#include <linux/limits.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <libgen.h>
+
+#define errmsg(msg) gStartupInfo->MessageBox((char*)msg, NULL, MB_OK | MB_ICONERROR);
+
 typedef struct sArcData
 {
 	struct archive *archive;
@@ -16,7 +24,8 @@ typedef struct sArcData
 
 typedef tArcData* ArcData;
 
-
+tChangeVolProc gChangeVolProc;
+tProcessDataProc gProcessDataProc;
 tExtensionStartupInfo* gStartupInfo;
 
 void DCPCALL ExtensionInitialize(tExtensionStartupInfo* StartupInfo)
@@ -108,7 +117,7 @@ int DCPCALL ProcessFile(ArcData hArcData, int Operation, char *DestPath, char *D
 			{
 				//printf("%s\n", archive_error_string(hArcData->archive));
 				//result = E_EREAD;
-				gStartupInfo->MessageBox((char*)archive_error_string(hArcData->archive), NULL, MB_OK | MB_ICONERROR);
+				errmsg(archive_error_string(hArcData->archive));
 				result = E_EABORTED;
 				break;
 			}
@@ -116,7 +125,7 @@ int DCPCALL ProcessFile(ArcData hArcData, int Operation, char *DestPath, char *D
 			{
 				//printf("%s\n", archive_error_string(a));
 				//result = E_EWRITE;
-				gStartupInfo->MessageBox((char*)archive_error_string(a), NULL, MB_OK | MB_ICONERROR);
+				errmsg(archive_error_string(a));
 				result = E_EABORTED;
 				break;
 			}
@@ -145,12 +154,18 @@ int DCPCALL CloseArchive(ArcData hArcData)
 
 void DCPCALL SetProcessDataProc(ArcData hArcData, tProcessDataProc pProcessDataProc)
 {
-	hArcData->gProcessDataProc = pProcessDataProc;
+	if ((int)(long)hArcData == -1)
+		gProcessDataProc = pProcessDataProc;
+	else
+		hArcData->gProcessDataProc = pProcessDataProc;
 }
 
 void DCPCALL SetChangeVolProc(ArcData hArcData, tChangeVolProc pChangeVolProc1)
 {
-	hArcData->gChangeVolProc = pChangeVolProc1;
+	if ((int)(long)hArcData == -1)
+		gChangeVolProc = pChangeVolProc1;
+	else
+		hArcData->gChangeVolProc = pChangeVolProc1;
 }
 
 BOOL DCPCALL CanYouHandleThisFile(char *FileName)
@@ -170,10 +185,95 @@ BOOL DCPCALL CanYouHandleThisFile(char *FileName)
 
 int DCPCALL GetPackerCaps()
 {
-	return PK_CAPS_SEARCHTEXT | PK_CAPS_BY_CONTENT;
+	return PK_CAPS_NEW | PK_CAPS_MULTIPLE | PK_CAPS_SEARCHTEXT | PK_CAPS_BY_CONTENT;
 }
 
 void DCPCALL ConfigurePacker(HWND Parent, void *DllInstance)
 {
 	gStartupInfo->MessageBox((char*)archive_version_details(), NULL, MB_OK | MB_ICONINFORMATION);
+}
+
+int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddList, int Flags)
+{
+	struct archive_entry *entry;
+	struct stat st;
+	char buff[8192];
+	int len, fd;
+	char infile[PATH_MAX];
+	char pkfile[PATH_MAX];
+
+	if (access(PackedFile, F_OK) != -1)
+		return E_NOT_SUPPORTED;
+
+	const char *ext = strrchr(PackedFile, '.');
+
+	struct archive *a = archive_write_new();
+
+	if (archive_write_set_format_filter_by_ext(a, ext) < ARCHIVE_OK)
+	{
+		errmsg(archive_error_string(a));
+		archive_write_free(a);
+		return 0;
+	}
+
+	archive_write_open_filename(a, PackedFile);
+
+	while (*AddList)
+	{
+
+		strcpy(infile, SrcPath);
+		char* pos = strrchr(infile, '/');
+
+		if (pos != NULL)
+			strcpy(pos + 1, AddList);
+
+		if (!SubPath)
+			strcpy(pkfile, AddList);
+		else
+		{
+			strcpy(pkfile, SrcPath);
+			pos = strrchr(pkfile, '/');
+
+			if (pos != NULL)
+				strcpy(pos + 1, AddList);
+		}
+
+		lstat(infile, &st);
+
+		entry = archive_entry_new();
+
+		archive_entry_copy_stat(entry, &st);
+		archive_entry_set_pathname(entry, pkfile);
+
+
+		archive_write_header(a, entry);
+
+		fd = open(infile, O_RDONLY);
+
+		if (fd != -1)
+		{
+			while ((len = read(fd, buff, sizeof(buff))) > 0)
+			{
+				if (archive_write_data(a, buff, len) < ARCHIVE_OK)
+				{
+					errmsg(archive_error_string(a));
+					break;
+				}
+
+				if (gProcessDataProc(infile, len) == 0)
+					break;
+			}
+
+			close(fd);
+		}
+
+		while (*AddList++);
+	}
+
+	archive_entry_free(entry);
+	archive_write_finish_entry(a);
+	archive_write_close(a);
+	archive_write_free(a);
+
+	return 0;
 }
