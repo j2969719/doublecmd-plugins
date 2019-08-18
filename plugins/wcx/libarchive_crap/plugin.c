@@ -214,52 +214,49 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 
 	struct archive *a = archive_write_new();
 
-	if (strcmp(ext, ".zst") == 0)
+	if (strcmp(ext, ".tzst") == 0)
 	{
-		//ret = archive_write_set_format_raw(a);
 		ret = archive_write_set_format_pax_restricted(a);
+		ret = archive_write_add_filter_zstd(a);
+	}
+	else if (strcmp(ext, ".zst") == 0)
+	{
+		ret = archive_write_set_format_raw(a);
 		ret = archive_write_add_filter_zstd(a);
 	}
 	else if (strcmp(ext, ".lz4") == 0)
 	{
-		//ret = archive_write_set_format_raw(a);
-		ret = archive_write_set_format_pax_restricted(a);
+		ret = archive_write_set_format_raw(a);
 		ret = archive_write_add_filter_lz4(a);
 	}
 	else if (strcmp(ext, ".lz") == 0)
 	{
-		//ret = archive_write_set_format_raw(a);
-		ret = archive_write_set_format_pax_restricted(a);
+		ret = archive_write_set_format_raw(a);
 		ret = archive_write_add_filter_lzip(a);
 	}
 	else if (strcmp(ext, ".lzo") == 0)
 	{
-		//ret = archive_write_set_format_raw(a);
-		ret = archive_write_set_format_pax_restricted(a);
+		ret = archive_write_set_format_raw(a);
 		ret = archive_write_add_filter_lzop(a);
 	}
 	else if (strcmp(ext, ".lrz") == 0)
 	{
-		//ret = archive_write_set_format_raw(a);
-		ret = archive_write_set_format_pax_restricted(a);
+		ret = archive_write_set_format_raw(a);
 		ret = archive_write_add_filter_lrzip(a);
 	}
 	else if (strcmp(ext, ".grz") == 0)
 	{
-		//ret = archive_write_set_format_raw(a);
-		ret = archive_write_set_format_pax_restricted(a);
+		ret = archive_write_set_format_raw(a);
 		ret = archive_write_add_filter_grzip(a);
 	}
 	else if (strcmp(ext, ".b64") == 0)
 	{
 		ret = archive_write_set_format_raw(a);
-		//ret = archive_write_set_format_pax_restricted(a);
 		ret = archive_write_add_filter_b64encode(a);
 	}
 	else if (strcmp(ext, ".uue") == 0)
 	{
 		ret = archive_write_set_format_raw(a);
-		//ret = archive_write_set_format_pax_restricted(a);
 		ret = archive_write_add_filter_uuencode(a);
 	}
 	else  
@@ -336,7 +333,7 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 			asprintf(&msg, "%s: %s", infile, strerror(errsv));
 			errmsg(msg);
 			free(msg);
-			result = E_EREAD;
+			//result = E_EREAD;
 		}
 
 		if (result != E_SUCCESS)
