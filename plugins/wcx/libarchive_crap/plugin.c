@@ -1,3 +1,5 @@
+#define _GNU_SOURCE
+#include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
 #include <archive.h>
@@ -11,6 +13,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <libgen.h>
+#include <errno.h>
 
 #define errmsg(msg) gStartupInfo->MessageBox((char*)msg, NULL, MB_OK | MB_ICONERROR);
 
@@ -198,7 +201,7 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 	struct archive_entry *entry;
 	struct stat st;
 	char buff[8192];
-	int fd;
+	int fd, ret;
 	ssize_t len;
 	char infile[PATH_MAX];
 	char pkfile[PATH_MAX];
@@ -211,7 +214,58 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 
 	struct archive *a = archive_write_new();
 
-	if (archive_write_set_format_filter_by_ext(a, ext) < ARCHIVE_OK)
+	if (strcmp(ext, ".zst") == 0)
+	{
+		//ret = archive_write_set_format_raw(a);
+		ret = archive_write_set_format_pax_restricted(a);
+		ret = archive_write_add_filter_zstd(a);
+	}
+	else if (strcmp(ext, ".lz4") == 0)
+	{
+		//ret = archive_write_set_format_raw(a);
+		ret = archive_write_set_format_pax_restricted(a);
+		ret = archive_write_add_filter_lz4(a);
+	}
+	else if (strcmp(ext, ".lz") == 0)
+	{
+		//ret = archive_write_set_format_raw(a);
+		ret = archive_write_set_format_pax_restricted(a);
+		ret = archive_write_add_filter_lzip(a);
+	}
+	else if (strcmp(ext, ".lzo") == 0)
+	{
+		//ret = archive_write_set_format_raw(a);
+		ret = archive_write_set_format_pax_restricted(a);
+		ret = archive_write_add_filter_lzop(a);
+	}
+	else if (strcmp(ext, ".lrz") == 0)
+	{
+		//ret = archive_write_set_format_raw(a);
+		ret = archive_write_set_format_pax_restricted(a);
+		ret = archive_write_add_filter_lrzip(a);
+	}
+	else if (strcmp(ext, ".grz") == 0)
+	{
+		//ret = archive_write_set_format_raw(a);
+		ret = archive_write_set_format_pax_restricted(a);
+		ret = archive_write_add_filter_grzip(a);
+	}
+	else if (strcmp(ext, ".b64") == 0)
+	{
+		ret = archive_write_set_format_raw(a);
+		//ret = archive_write_set_format_pax_restricted(a);
+		ret = archive_write_add_filter_b64encode(a);
+	}
+	else if (strcmp(ext, ".uue") == 0)
+	{
+		ret = archive_write_set_format_raw(a);
+		//ret = archive_write_set_format_pax_restricted(a);
+		ret = archive_write_add_filter_uuencode(a);
+	}
+	else  
+		ret = archive_write_set_format_filter_by_ext(a, PackedFile);
+
+	if (ret < ARCHIVE_OK)
 	{
 		errmsg(archive_error_string(a));
 		archive_write_free(a);
@@ -276,7 +330,14 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 			close(fd);
 		}
 		else
+		{
+			int errsv = errno;
+			char *msg;
+			asprintf(&msg, "%s: %s", infile, strerror(errsv));
+			errmsg(msg);
+			free(msg);
 			result = E_EREAD;
+		}
 
 		if (result != E_SUCCESS)
 			break;
