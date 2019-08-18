@@ -11,7 +11,6 @@
 #include <locale.h>
 #define GETTEXT_PACKAGE "plugins"
 
-#define _detectstring "EXT=\"*\""
 #define _plgname "yavteplg.wlx"
 
 static char cfg_path[PATH_MAX];
@@ -64,9 +63,19 @@ const gchar *get_mime_type(const gchar *Filename)
 	if (!fileinfo)
 		return NULL;
 
-	const gchar *content_type = g_file_info_get_content_type(fileinfo);
+	const gchar *content_type = g_strdup(g_file_info_get_content_type(fileinfo));
+	g_object_unref(fileinfo);
+	g_object_unref(gfile);
 
 	return content_type;
+}
+
+gchar *str_replace(gchar *text, gchar *str, gchar *repl)
+{
+	gchar **split = g_strsplit(text, str, -1);
+	gchar *result = g_strjoinv(repl, split);
+	g_strfreev(split);
+	return result;
 }
 
 HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
@@ -107,7 +116,7 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 	if (!frmtcmd)
 		return NULL;
 
-	cmdstr = g_strdup_printf(frmtcmd, g_shell_quote(FileToLoad));
+	cmdstr = str_replace(frmtcmd, "$FILE", g_shell_quote(FileToLoad));
 	g_shell_parse_argv(cmdstr, &argcp, &command, NULL);
 
 	if (err)
@@ -195,7 +204,7 @@ int DCPCALL ListLoadNext(HWND ParentWin,HWND PluginWin,char* FileToLoad,int Show
 	if (!frmtcmd)
 		return LISTPLUGIN_ERROR;
 
-	cmdstr = g_strdup_printf(frmtcmd, g_shell_quote(FileToLoad));
+	cmdstr = str_replace(frmtcmd, "$FILE", g_shell_quote(FileToLoad));
 	g_shell_parse_argv(cmdstr, &argcp, &command, NULL);
 
 	if (err)
@@ -213,11 +222,6 @@ int DCPCALL ListLoadNext(HWND ParentWin,HWND PluginWin,char* FileToLoad,int Show
 void DCPCALL ListCloseWindow(HANDLE ListWin)
 {
 	gtk_widget_destroy(GTK_WIDGET(ListWin));
-}
-
-void DCPCALL ListGetDetectString(char* DetectString, int maxlen)
-{
-	g_strlcpy(DetectString, _detectstring, maxlen - 1);
 }
 
 void DCPCALL ListSetDefaultParams(ListDefaultParamStruct* dps)

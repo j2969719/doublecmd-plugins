@@ -6,9 +6,7 @@
 #include <string.h>
 #include "wlxplugin.h"
 
-#define _detectstring "EXT=\"*\""
 #define _plgname "gtk_socket.wlx"
-#define _frmtsrt "%d \"%s\""
 
 static char cfg_path[PATH_MAX];
 static char plug_path[PATH_MAX];
@@ -53,21 +51,23 @@ const gchar *get_mime_type(const gchar *Filename)
 	if (!fileinfo)
 		return NULL;
 
-	const gchar *content_type = g_file_info_get_content_type(fileinfo);
+	const gchar *content_type = g_strdup(g_file_info_get_content_type(fileinfo));
+	g_object_unref(fileinfo);
+	g_object_unref(gfile);
 
 	return content_type;
 }
 
-static gchar *cfg_get_frmt_str(GKeyFile *Cfg, const gchar *Group)
+static gchar *cfg_get_command(GKeyFile *Cfg, const gchar *Group)
 {
-	gchar *result, *cfg_value, *tmp;
+	gchar *result, *cfg_value, *tmp = NULL;
 	cfg_value = g_key_file_get_string(Cfg, Group, "script", NULL);
 
 	if (!cfg_value)
 	{
 		result = g_key_file_get_string(Cfg, Group, "command", NULL);
 
-		if ((!result) || (!g_strrstr(result, "%s")) || (!g_strrstr(result, "%d")))
+		if ((!result) || (!g_strrstr(result, "$FILE")) || (!g_strrstr(result, "$XID")))
 			result = NULL;
 	}
 	else
@@ -75,27 +75,36 @@ static gchar *cfg_get_frmt_str(GKeyFile *Cfg, const gchar *Group)
 		tmp = g_strdup_printf("%s/scripts/%s", plug_path, cfg_value);
 
 		if (g_file_test(tmp, G_FILE_TEST_EXISTS))
-			result = g_strdup_printf("%s %s", g_shell_quote(tmp), _frmtsrt);
+			result = g_strdup_printf("%s $XID $FILE", g_shell_quote(tmp));
 		else if (g_file_test(cfg_value, G_FILE_TEST_EXISTS))
-			result = g_strdup_printf("%s %s", cfg_value, _frmtsrt);
+			result = g_strdup_printf("%s $XID $FILE", cfg_value);
 		else
 			result = NULL;
 	}
 
+	if (tmp)
+		g_free(tmp);
+
 	return result;
 }
 
-gchar *cfg_find_value(GKeyFile *Cfg, const gchar *Group)
+gchar *str_replace(gchar *text, gchar *str, gchar *repl)
+{
+	gchar **split = g_strsplit(text, str, -1);
+	gchar *result = g_strjoinv(repl, split);
+	g_strfreev(split);
+	return result;
+}
+
+gchar *cfg_chk_redirect(GKeyFile *Cfg, const gchar *Group)
 {
 	gchar *result, *redirect;
 	redirect = g_key_file_get_string(Cfg, Group, "redirect", NULL);
 
 	if (redirect)
-		result = cfg_get_frmt_str(Cfg, redirect);
+		return redirect;
 	else
-		result = cfg_get_frmt_str(Cfg, Group);
-	g_free(redirect);
-	return result;
+		return g_strdup(Group);
 }
 
 HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
@@ -106,7 +115,8 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	GtkWidget *socket;
 	const gchar *file_ext, *mime_type;
 	gchar *command;
-	gchar *frmt_str = NULL;
+	gchar *group = NULL;
+	gboolean noquote;
 
 	mime_type = get_mime_type(FileToLoad);
 	file_ext = get_file_ext(FileToLoad);
@@ -118,9 +128,18 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	else
 	{
 		if (file_ext)
-			frmt_str = cfg_find_value(cfg, file_ext);
-		if (mime_type && (!file_ext || !frmt_str))
-			frmt_str = cfg_find_value(cfg, mime_type);
+		{
+			group = cfg_chk_redirect(cfg, file_ext);
+			command = cfg_get_command(cfg, group);
+		}
+
+		if (mime_type && (!file_ext || !command))
+		{
+			group = cfg_chk_redirect(cfg, mime_type);
+			command = cfg_get_command(cfg, group);
+		}
+
+		noquote = g_key_file_get_boolean(cfg, group, "noquote", NULL);
 	}
 
 	g_key_file_free(cfg);
@@ -128,7 +147,10 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	if (err)
 		g_error_free(err);
 
-	if (!frmt_str)
+	if (group)
+		g_free(group);
+
+	if (!command)
 		return NULL;
 
 	gFix = gtk_vbox_new(FALSE, 5);
@@ -137,7 +159,9 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	gtk_container_add(GTK_CONTAINER(gFix), socket);
 
 	GdkNativeWindow id = gtk_socket_get_id(GTK_SOCKET(socket));
-	command = g_strdup_printf(frmt_str, id, FileToLoad);
+
+	command = str_replace(command, "$FILE", noquote ? FileToLoad : g_shell_quote(FileToLoad));
+	command = str_replace(command, "$XID", g_strdup_printf("%d", id));
 	g_print("%s\n", command);
 
 	if (!g_spawn_command_line_async(command, NULL))
@@ -154,11 +178,6 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 void DCPCALL ListCloseWindow(HWND ListWin)
 {
 	gtk_widget_destroy(GTK_WIDGET(ListWin));
-}
-
-void DCPCALL ListGetDetectString(char* DetectString, int maxlen)
-{
-	g_strlcpy(DetectString, _detectstring, maxlen-1);
 }
 
 int DCPCALL ListSearchDialog(HWND ListWin, int FindNext)
