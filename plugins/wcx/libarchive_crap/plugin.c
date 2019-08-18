@@ -199,7 +199,7 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 	struct stat st;
 	char buff[8192];
 	int fd;
-	int len;
+	ssize_t len;
 	char infile[PATH_MAX];
 	char pkfile[PATH_MAX];
 	int result = E_SUCCESS;
