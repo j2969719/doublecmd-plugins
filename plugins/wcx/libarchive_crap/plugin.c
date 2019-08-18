@@ -199,7 +199,7 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 	struct stat st;
 	char buff[8192];
 	int fd;
-	size_t len;
+	int len;
 	char infile[PATH_MAX];
 	char pkfile[PATH_MAX];
 	int result = E_SUCCESS;
@@ -267,9 +267,10 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 				}
 
 				if (gProcessDataProc(infile, len) == 0)
+				{
 					result = E_EABORTED;
-
-				break;
+					break;
+				}
 			}
 
 			close(fd);
