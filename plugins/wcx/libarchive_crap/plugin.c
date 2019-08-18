@@ -198,9 +198,11 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 	struct archive_entry *entry;
 	struct stat st;
 	char buff[8192];
-	int len, fd;
+	int fd;
+	size_t len;
 	char infile[PATH_MAX];
 	char pkfile[PATH_MAX];
+	int result = E_SUCCESS;
 
 	if (access(PackedFile, F_OK) != -1)
 		return E_NOT_SUPPORTED;
@@ -217,6 +219,9 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 	}
 
 	archive_write_open_filename(a, PackedFile);
+	struct archive *disk = archive_read_disk_new();
+	archive_read_disk_set_standard_lookup(disk);
+	archive_read_disk_set_symlink_physical(disk);
 
 	while (*AddList)
 	{
@@ -242,38 +247,47 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 
 		entry = archive_entry_new();
 
-		archive_entry_copy_stat(entry, &st);
-		archive_entry_set_pathname(entry, pkfile);
-
-
-		archive_write_header(a, entry);
-
 		fd = open(infile, O_RDONLY);
 
 		if (fd != -1)
 		{
+			archive_entry_set_pathname(entry, infile);
+			archive_entry_copy_stat(entry, &st);
+			archive_read_disk_entry_from_file(disk, entry, fd, &st);
+			archive_entry_set_pathname(entry, pkfile);
+			archive_write_header(a, entry);
+
 			while ((len = read(fd, buff, sizeof(buff))) > 0)
 			{
 				if (archive_write_data(a, buff, len) < ARCHIVE_OK)
 				{
 					errmsg(archive_error_string(a));
+					result = E_EWRITE;
 					break;
 				}
 
 				if (gProcessDataProc(infile, len) == 0)
-					break;
+					result = E_EABORTED;
+
+				break;
 			}
 
 			close(fd);
 		}
+		else
+			result = E_EREAD;
+
+		if (result != E_SUCCESS)
+			break;
 
 		while (*AddList++);
 	}
 
+	archive_read_free(disk);
 	archive_entry_free(entry);
 	archive_write_finish_entry(a);
 	archive_write_close(a);
 	archive_write_free(a);
 
-	return 0;
+	return result;
 }
