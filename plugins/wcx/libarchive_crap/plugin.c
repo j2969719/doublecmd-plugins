@@ -188,7 +188,8 @@ BOOL DCPCALL CanYouHandleThisFile(char *FileName)
 
 int DCPCALL GetPackerCaps()
 {
-	return PK_CAPS_NEW | PK_CAPS_MULTIPLE | PK_CAPS_SEARCHTEXT | PK_CAPS_BY_CONTENT;
+	//return PK_CAPS_NEW | PK_CAPS_MULTIPLE | PK_CAPS_SEARCHTEXT | PK_CAPS_BY_CONTENT;
+	return PK_CAPS_NEW | PK_CAPS_SEARCHTEXT | PK_CAPS_BY_CONTENT;
 }
 
 void DCPCALL ConfigurePacker(HWND Parent, void *DllInstance)
@@ -262,7 +263,9 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 	else  
 		ret = archive_write_set_format_filter_by_ext(a, PackedFile);
 
-	if (ret < ARCHIVE_OK)
+	if (ret == ARCHIVE_WARN)
+		gStartupInfo->MessageBox((char*)archive_error_string(a), NULL, MB_OK | MB_ICONWARNING);
+	else if (ret < ARCHIVE_OK)
 	{
 		errmsg(archive_error_string(a));
 		archive_write_free(a);
