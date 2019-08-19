@@ -260,11 +260,18 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 		ret = archive_write_set_format_raw(a);
 		ret = archive_write_add_filter_uuencode(a);
 	}
-	else  
+	else
 		ret = archive_write_set_format_filter_by_ext(a, PackedFile);
 
 	if (ret == ARCHIVE_WARN)
-		gStartupInfo->MessageBox((char*)archive_error_string(a), NULL, MB_OK | MB_ICONWARNING);
+	{
+		if (gStartupInfo->MessageBox((char*)archive_error_string(a),
+		                             NULL, MB_OKCANCEL | MB_ICONWARNING) == ID_CANCEL)
+		{
+			archive_write_free(a);
+			return 0;
+		}
+	}
 	else if (ret < ARCHIVE_OK)
 	{
 		errmsg(archive_error_string(a));
