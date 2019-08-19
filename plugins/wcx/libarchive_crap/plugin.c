@@ -42,6 +42,14 @@ void DCPCALL ExtensionFinalize(void* Reserved)
 	free(gStartupInfo);
 }
 
+const char *archive_password_cb(struct archive *a, void *data)
+{
+	static char pass[PATH_MAX];
+	if (gStartupInfo->InputBox("Double Commander", "Please enter the password:", true, pass, PATH_MAX-1))
+		return pass;
+	else
+		return NULL;
+}
 
 HANDLE DCPCALL OpenArchive(tOpenArchiveData *ArchiveData)
 {
@@ -49,6 +57,10 @@ HANDLE DCPCALL OpenArchive(tOpenArchiveData *ArchiveData)
 	handle = malloc(sizeof(tArcData));
 	memset(handle, 0, sizeof(tArcData));
 	handle->archive = archive_read_new();
+
+	if (archive_read_set_passphrase_callback(handle->archive, NULL, archive_password_cb) < ARCHIVE_OK)
+		errmsg(archive_error_string(handle->archive));
+
 	archive_read_support_filter_all(handle->archive);
 	archive_read_support_format_raw(handle->archive);
 	archive_read_support_format_all(handle->archive);
@@ -104,9 +116,6 @@ int DCPCALL ProcessFile(ArcData hArcData, int Operation, char *DestPath, char *D
 	if (Operation == PK_EXTRACT)
 	{
 		int flags = ARCHIVE_EXTRACT_TIME | ARCHIVE_EXTRACT_PERM | ARCHIVE_EXTRACT_FFLAGS;
-
-		//if (archive_entry_is_encrypted(hArcData->entry))
-			//return E_NOT_SUPPORTED;
 
 		struct archive *a = archive_write_disk_new();
 		archive_entry_set_pathname(hArcData->entry, DestName);
@@ -225,6 +234,10 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 		ret = archive_write_set_format_raw(a);
 		ret = archive_write_add_filter_zstd(a);
 	}
+	else if (strcmp(ext, ".mtree") == 0)
+	{
+		ret = archive_write_set_format_mtree(a);
+	}
 	else if (strcmp(ext, ".lz4") == 0)
 	{
 		ret = archive_write_set_format_raw(a);
@@ -249,6 +262,11 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 	{
 		ret = archive_write_set_format_raw(a);
 		ret = archive_write_add_filter_grzip(a);
+	}
+	else if (strcmp(ext, ".lzma") == 0)
+	{
+		ret = archive_write_set_format_raw(a);
+		ret = archive_write_add_filter_lzma(a);
 	}
 	else if (strcmp(ext, ".b64") == 0)
 	{
