@@ -1,5 +1,6 @@
 *.w[cdlf]x
 *.w[cdlf]x64
+*.dsx
 *.[oa]
 *.ppu
 *.compiled

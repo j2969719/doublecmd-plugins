@@ -23,6 +23,7 @@ void DCPCALL StartSearch(int PluginNr, tDsxSearchRecord* pSearchRec)
 	char *str, *line = NULL;
 
 	asprintf(&str, "git ls-files -m %s", pSearchRec->StartPath);
+	gUpdateStatus(PluginNr, str, 0);
 
 	if ((fp = popen(str, "r")) == NULL)
 		gAddFileProc(PluginNr, "");
