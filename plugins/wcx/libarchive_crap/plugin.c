@@ -27,8 +27,10 @@ typedef struct sArcData
 
 typedef tArcData* ArcData;
 
-tChangeVolProc gChangeVolProc;
-tProcessDataProc gProcessDataProc;
+typedef void *HINSTANCE;
+
+tChangeVolProc gChangeVolProc  = NULL;
+tProcessDataProc gProcessDataProc = NULL;
 tExtensionStartupInfo* gStartupInfo;
 
 void DCPCALL ExtensionInitialize(tExtensionStartupInfo* StartupInfo)
@@ -156,28 +158,31 @@ int DCPCALL ProcessFile(ArcData hArcData, int Operation, char *DestPath, char *D
 	return result;
 }
 
-int DCPCALL CloseArchive(ArcData hArcData)
+int DCPCALL CloseArchive(HANDLE hArcData)
 {
-	archive_read_close(hArcData->archive);
-	archive_read_free(hArcData->archive);
+	ArcData handle = (ArcData)hArcData;
+	archive_read_close(handle->archive);
+	archive_read_free(handle->archive);
 	free(hArcData);
 	return E_SUCCESS;
 }
 
-void DCPCALL SetProcessDataProc(ArcData hArcData, tProcessDataProc pProcessDataProc)
+void DCPCALL SetProcessDataProc(HANDLE hArcData, tProcessDataProc pProcessDataProc)
 {
-	if ((int)(long)hArcData == -1)
+	ArcData handle = (ArcData)hArcData;
+	if ((int)(long)hArcData == -1 || !handle)
 		gProcessDataProc = pProcessDataProc;
 	else
-		hArcData->gProcessDataProc = pProcessDataProc;
+		handle->gProcessDataProc = pProcessDataProc;
 }
 
-void DCPCALL SetChangeVolProc(ArcData hArcData, tChangeVolProc pChangeVolProc1)
+void DCPCALL SetChangeVolProc(HANDLE hArcData, tChangeVolProc pChangeVolProc1)
 {
-	if ((int)(long)hArcData == -1)
+	ArcData handle = (ArcData)hArcData;
+	if ((int)(long)hArcData == -1 || !handle)
 		gChangeVolProc = pChangeVolProc1;
 	else
-		hArcData->gChangeVolProc = pChangeVolProc1;
+		handle->gChangeVolProc = pChangeVolProc1;
 }
 
 BOOL DCPCALL CanYouHandleThisFile(char *FileName)
@@ -201,7 +206,7 @@ int DCPCALL GetPackerCaps()
 	return PK_CAPS_NEW | PK_CAPS_SEARCHTEXT | PK_CAPS_BY_CONTENT;
 }
 
-void DCPCALL ConfigurePacker(HWND Parent, void *DllInstance)
+void DCPCALL ConfigurePacker(HWND Parent, HINSTANCE DllInstance)
 {
 	gStartupInfo->MessageBox((char*)archive_version_details(), NULL, MB_OK | MB_ICONINFORMATION);
 }
