@@ -7,6 +7,32 @@ tSUpdateStatusProc gUpdateStatus;
 
 gboolean stop_search;
 
+#define notext_queryf "\
+SELECT nie:url(?s) WHERE \
+{\
+ ?s a nfo:FileDataObject .\
+ ?s nie:url ?url . \
+ FILTER (STRSTARTS (?url, '%s')) . \
+ {\
+   ?s nfo:fileName ?name .\
+   FILTER (CONTAINS(LCASE(?name), LCASE('%s'))) \
+ }\
+}\
+"
+#define text_queryf "\
+SELECT nie:url(?s) WHERE \
+{\
+ ?s a nfo:FileDataObject .\
+ ?s nie:url ?url . \
+ FILTER (STRSTARTS (?url, '%s')) . \
+ ?s fts:match '%s' . \
+ {\
+   ?s nfo:fileName ?name .\
+   FILTER (CONTAINS(LCASE(?name), LCASE('%s'))) \
+ }\
+}\
+"
+
 int DCPCALL Init(tDsxDefaultParamStruct* dsp, tSAddFileProc pAddFileProc, tSUpdateStatusProc pUpdateStatus)
 {
 	gAddFileProc = pAddFileProc;
@@ -20,52 +46,53 @@ void DCPCALL StartSearch(int PluginNr, tDsxSearchRecord* pSearchRec)
 	TrackerSparqlConnection *connection;
 	TrackerSparqlCursor *cursor;
 	gsize len, term, i = 1;
-	gUpdateStatus(PluginNr, "...", 0);
+	gchar *query;
+	stop_search = FALSE;
 
-	if (pSearchRec->IsFindText && strlen(pSearchRec->FindText) > 3)
+	gUpdateStatus(PluginNr, "not found", 0);
+
+	if (pSearchRec->IsFindText)
+		query = g_strdup_printf(text_queryf, g_filename_to_uri(pSearchRec->StartPath, NULL, NULL), pSearchRec->FindText, pSearchRec->FileMask);
+	else
+		query = g_strdup_printf(notext_queryf, g_filename_to_uri(pSearchRec->StartPath, NULL, NULL), pSearchRec->FileMask);
+
+	connection = tracker_sparql_connection_get(NULL, &error);
+
+	if (connection)
 	{
-		gchar *query = "SELECT nie:url(?f) WHERE { ?f fts:match '%s' }";
-		query = g_strdup_printf(query, pSearchRec->FindText);
-		connection = tracker_sparql_connection_get(NULL, &error);
+		cursor = tracker_sparql_connection_query(connection, query, NULL, &error);
 
-		if (connection)
+		if (cursor)
 		{
-			cursor = tracker_sparql_connection_query(connection, query, NULL, &error);
-
-			if (cursor)
+			while (!stop_search && tracker_sparql_cursor_next(cursor, NULL, NULL))
 			{
-				while (tracker_sparql_cursor_next(cursor, NULL, NULL))
+				const gchar *uri = tracker_sparql_cursor_get_string(cursor, 0, NULL);
+
+				if (uri)
 				{
-					const gchar *uri = tracker_sparql_cursor_get_string(cursor, 0, NULL);
+					gchar *fname = g_filename_from_uri(uri, NULL, NULL);
 
-					if (uri)
+					if (fname)
 					{
-						//g_print("%s\n", uri);
-						gchar *fname = g_filename_from_uri(uri, NULL, NULL);
-
-						if (fname)
-						{
-							gAddFileProc(PluginNr, fname);
-							gUpdateStatus(PluginNr, fname, i++);
-						}
+						gAddFileProc(PluginNr, fname);
+						gUpdateStatus(PluginNr, fname, i++);
 					}
 				}
 			}
 		}
-
-
-		if (error)
-		{
-			gUpdateStatus(PluginNr, error->message, 0);
-			g_clear_error(&error);
-
-		}
-
-		if (connection)
-			g_object_unref(connection);
 	}
-	else
-		gUpdateStatus(PluginNr, "no text provided", 0);
+
+
+	if (error)
+	{
+		gUpdateStatus(PluginNr, error->message, 0);
+		g_clear_error(&error);
+
+	}
+
+	if (connection)
+		g_object_unref(connection);
+
 
 	gAddFileProc(PluginNr, "");
 }

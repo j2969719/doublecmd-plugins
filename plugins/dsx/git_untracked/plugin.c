@@ -22,7 +22,7 @@ void DCPCALL StartSearch(int PluginNr, tDsxSearchRecord* pSearchRec)
 	size_t i = 1, len = 0;
 	char *str, *line = NULL;
 
-	asprintf(&str, "cd '%s' && git ls-files -m '%s'", pSearchRec->StartPath, pSearchRec->FileMask);
+	asprintf(&str, "cd '%s' && git ls-files -o '%s'", pSearchRec->StartPath, pSearchRec->FileMask);
 	gUpdateStatus(PluginNr, str, 0);
 
 	if ((fp = popen(str, "r")) == NULL)
