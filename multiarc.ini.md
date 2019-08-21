@@ -30,7 +30,7 @@ Copy-paste to `multiarc.ini` and enable in *Options* > *Archivers*:
 - [ZPAQ](#zpaq)
 - [ZSTD](#zstd)
 
-Some separate files can be found [here](multiarc) (use *Options* > *Archivers* > *Other...* > *Import*, required DC v0.9 > r8389)
+Some separate files can be found [here](multiarc) (use *Options* > *Archivers* > *Other...* > *Import*, required DC v0.9)
 
 ---
 <a name="7zsfx"><h3>7Zip self-extracting archive</h3></a>
