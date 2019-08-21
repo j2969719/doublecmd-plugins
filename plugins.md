@@ -9,6 +9,8 @@ Plugins
 
 - [WLX plugins](#wlx) (Note: Currently all listed below WLX plugins works with GTK2-version of DC only.)
 
+- [DSX plugins](#dsx)
+
 ---
 <a name="wcx"><h3>WCX plugins</h3></a>
 
@@ -297,3 +299,22 @@ More usable than `vte_in_quickview` or `vte_ncdu`.
 
 - [zathura](plugins/wlx/zathura)<br>
 Displays PDF, DjVu, PostScipt, CBR. Requires `zathura`.
+
+
+---
+<a name="dsx"><h3>DSX plugins</h3></a>
+
+- [git_ignored](plugins/dsx/git_ignored)<br>
+Finds ignored files in git repository via `git ls-files -i --exclude-standard`.
+
+- [git_modified](plugins/dsx/git_modified)<br>
+Finds modified files in git repository via `git ls-files -m`.
+
+- [git_untracked](plugins/dsx/git_untracked)<br>
+Finds untracked files and other in git repository via `git ls-files -m`.
+
+- [locate_crap](plugins/dsx/locate_crap)<br>
+Search via `locate` w/o StartPath. 
+
+- [tracker_textsearch](plugins/dsx/tracker_textsearch)<br>
+Full text search using [Tracker](https://wiki.gnome.org/Projects/Tracker). 
