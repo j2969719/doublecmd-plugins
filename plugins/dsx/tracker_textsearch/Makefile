@@ -1,0 +1,10 @@
+CC = gcc
+CFLAGS = -shared -fPIC -Wl,--no-as-needed
+INCLUDES = `pkg-config --cflags --libs tracker-sparql-2.0` -I../../sdk
+PLUGNAME = tracker_textsearch.dsx
+
+all:
+		$(CC) $(CFLAGS) $(INCLUDES) plugin.c -o $(PLUGNAME)
+
+clean:
+		$(RM) $(PLUGNAME)
