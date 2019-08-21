@@ -15,7 +15,7 @@ Plugins
 <a name="wcx"><h3>WCX plugins</h3></a>
 
 - [libarchive_crap](plugins/wcx/libarchive_crap)<br>
-Simple WCX plugin (view and unpack only), based on `libarchive` ([supported formats](https://github.com/libarchive/libarchive#supported-formats)).
+Simple WCX plugin, based on `libarchive` ([supported formats](https://github.com/libarchive/libarchive#supported-formats)).
 
 
 ---
@@ -311,10 +311,10 @@ Finds ignored files in git repository via `git ls-files -i --exclude-standard`.
 Finds modified files in git repository via `git ls-files -m`.
 
 - [git_untracked](plugins/dsx/git_untracked)<br>
-Finds untracked files and other in git repository via `git ls-files -m`.
+Finds untracked files and other in git repository via `git ls-files -o`.
 
 - [locate_crap](plugins/dsx/locate_crap)<br>
-Search via `locate` w/o StartPath. 
+Search via `locate` (w/o StartPath). 
 
 - [tracker_textsearch](plugins/dsx/tracker_textsearch)<br>
 Full text search using [Tracker](https://wiki.gnome.org/Projects/Tracker). 
