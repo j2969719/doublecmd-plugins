@@ -9,3 +9,4 @@
 *.lps
 backup/
 plugins/wlx/hx_webkit_crap/redist/
+plugins/wlx/hx_webkit_qt_crap/redist/
