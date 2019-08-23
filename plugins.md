@@ -7,7 +7,7 @@ Plugins
 
 - [WFX plugins](#wfx)
 
-- [WLX plugins](#wlx) (Note: Currently all listed below WLX plugins works with GTK2-version of DC only.)
+- WLX plugins: [GTK2](#wlxgtk) (for GTK2-version of DC only), [Qt5](#wlxqt5) (for Qt5-version of DC only)
 
 - [DSX plugins](#dsx)
 
@@ -230,7 +230,7 @@ Temporary panel, see FileList description.
 
 
 ---
-<a name="wlx"><h3>WLX plugins</h3></a>
+<a name="wlxgtk"><h3>WLX plugins (GTK2)</h3></a>
 
 - [abiword-gtk2](plugins/wlx/abiword-gtk2)<br>
 Displays DOC, RTF, DOT, ABW, AWT, ZABW. Requires AbiWord (GTK2 version).
@@ -299,6 +299,19 @@ More usable than `vte_in_quickview` or `vte_ncdu`.
 
 - [zathura](plugins/wlx/zathura)<br>
 Displays PDF, DjVu, PostScipt, CBR. Requires `zathura`.
+
+
+---
+<a name="wlxqt5"><h3>WLX plugins (Qt5)</h3></a>
+
+- [fileinfo_qt](plugins/wlx/fileinfo_qt)<br>
+Displays various information about file using command line utilities.
+
+- [hx_webkit_qt_crap](plugins/wlx/hx_webkit_qt_crap)<br>
+Document viewer based on Qt5WebKit and using HTML Export from Oracle Outside In Technology.
+
+- [wlxwebkit_qt5](plugins/wlx/wlxwebkit_qt5)<br>
+The given plug-in allows to look through Web-pages (*.htm, *.html). It is based on Qt5WebKit engine.
 
 
 ---
