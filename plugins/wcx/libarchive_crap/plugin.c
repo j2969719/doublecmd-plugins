@@ -97,7 +97,10 @@ int DCPCALL ReadHeaderEx(HANDLE hArcData, tHeaderDataEx *HeaderDataEx)
 		{
 			char *filename = basename(handle->arcname);
 			char *dot = strrchr(filename, '.');
-			*dot = '\0';
+
+			if (dot != NULL)
+				*dot = '\0';
+
 			strncpy(HeaderDataEx->FileName, filename, sizeof(HeaderDataEx->FileName) - 1);
 		}
 		else
