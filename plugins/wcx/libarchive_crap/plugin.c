@@ -21,6 +21,7 @@ typedef struct sArcData
 {
 	struct archive *archive;
 	struct archive_entry *entry;
+	char arcname[PATH_MAX];
 	tChangeVolProc gChangeVolProc;
 	tProcessDataProc gProcessDataProc;
 } tArcData;
@@ -47,7 +48,8 @@ void DCPCALL ExtensionFinalize(void* Reserved)
 const char *archive_password_cb(struct archive *a, void *data)
 {
 	static char pass[PATH_MAX];
-	if (gStartupInfo->InputBox("Double Commander", "Please enter the password:", true, pass, PATH_MAX-1))
+
+	if (gStartupInfo->InputBox("Double Commander", "Please enter the password:", true, pass, PATH_MAX - 1))
 		return pass;
 	else
 		return NULL;
@@ -66,6 +68,7 @@ HANDLE DCPCALL OpenArchive(tOpenArchiveData *ArchiveData)
 	archive_read_support_filter_all(handle->archive);
 	archive_read_support_format_raw(handle->archive);
 	archive_read_support_format_all(handle->archive);
+	strncpy(handle->arcname, ArchiveData->ArcName, PATH_MAX);
 	int r = archive_read_open_filename(handle->archive, ArchiveData->ArcName, 10240);
 
 	if (r != ARCHIVE_OK)
@@ -82,24 +85,35 @@ int DCPCALL ReadHeader(HANDLE hArcData, tHeaderData *HeaderDate)
 	return E_NOT_SUPPORTED;
 }
 
-int DCPCALL ReadHeaderEx(ArcData hArcData, tHeaderDataEx *HeaderDataEx)
+int DCPCALL ReadHeaderEx(HANDLE hArcData, tHeaderDataEx *HeaderDataEx)
 {
 	int64_t size;
 	memset(HeaderDataEx, 0, sizeof(HeaderDataEx));
+	ArcData handle = (ArcData)hArcData;
 
-	if (archive_read_next_header(hArcData->archive, &hArcData->entry) == ARCHIVE_OK)
+	if (archive_read_next_header(handle->archive, &handle->entry) == ARCHIVE_OK)
 	{
-		strncpy(HeaderDataEx->FileName, archive_entry_pathname(hArcData->entry), sizeof(HeaderDataEx->FileName) - 1);
-		size = archive_entry_size(hArcData->entry);
-		HeaderDataEx->PackSizeHigh = (size & 0xFFFFFFFF00000000) >> 32;
-		HeaderDataEx->PackSize = size & 0x00000000FFFFFFFF;
-		HeaderDataEx->UnpSizeHigh = (size & 0xFFFFFFFF00000000) >> 32;
-		HeaderDataEx->UnpSize = size & 0x00000000FFFFFFFF;
-		HeaderDataEx->FileTime = archive_entry_mtime(hArcData->entry);
-		HeaderDataEx->FileAttr = archive_entry_mode(hArcData->entry);
+		if (archive_format(handle->archive) == ARCHIVE_FORMAT_RAW)
+		{
+			char *filename = basename(handle->arcname);
+			char *dot = strrchr(filename, '.');
+			*dot = '\0';
+			strncpy(HeaderDataEx->FileName, filename, sizeof(HeaderDataEx->FileName) - 1);
+		}
+		else
+		{
+			strncpy(HeaderDataEx->FileName, archive_entry_pathname(handle->entry), sizeof(HeaderDataEx->FileName) - 1);
+			size = archive_entry_size(handle->entry);
+			HeaderDataEx->PackSizeHigh = (size & 0xFFFFFFFF00000000) >> 32;
+			HeaderDataEx->PackSize = size & 0x00000000FFFFFFFF;
+			HeaderDataEx->UnpSizeHigh = (size & 0xFFFFFFFF00000000) >> 32;
+			HeaderDataEx->UnpSize = size & 0x00000000FFFFFFFF;
+			HeaderDataEx->FileTime = archive_entry_mtime(handle->entry);
+			HeaderDataEx->FileAttr = archive_entry_mode(handle->entry);
 
-		if (archive_entry_is_encrypted(hArcData->entry))
-			HeaderDataEx->Flags |= RHDF_ENCRYPTED;
+			if (archive_entry_is_encrypted(handle->entry))
+				HeaderDataEx->Flags |= RHDF_ENCRYPTED;
+		}
 
 		return E_SUCCESS;
 	}
@@ -107,31 +121,32 @@ int DCPCALL ReadHeaderEx(ArcData hArcData, tHeaderDataEx *HeaderDataEx)
 	return E_END_ARCHIVE;
 }
 
-int DCPCALL ProcessFile(ArcData hArcData, int Operation, char *DestPath, char *DestName)
+int DCPCALL ProcessFile(HANDLE hArcData, int Operation, char *DestPath, char *DestName)
 {
 	int ret;
 	int result = E_SUCCESS;
 	size_t size;
 	la_int64_t offset;
 	const void *buff;
+	ArcData handle = (ArcData)hArcData;
 
 	if (Operation == PK_EXTRACT)
 	{
 		int flags = ARCHIVE_EXTRACT_TIME | ARCHIVE_EXTRACT_PERM | ARCHIVE_EXTRACT_FFLAGS;
 
 		struct archive *a = archive_write_disk_new();
-		archive_entry_set_pathname(hArcData->entry, DestName);
+		archive_entry_set_pathname(handle->entry, DestName);
 		archive_write_disk_set_options(a, flags);
 		archive_write_disk_set_standard_lookup(a);
-		archive_write_header(a, hArcData->entry);
+		archive_write_header(a, handle->entry);
 
-		while ((ret = archive_read_data_block(hArcData->archive, &buff, &size, &offset)) != ARCHIVE_EOF)
+		while ((ret = archive_read_data_block(handle->archive, &buff, &size, &offset)) != ARCHIVE_EOF)
 		{
 			if (ret < ARCHIVE_OK)
 			{
 				//printf("%s\n", archive_error_string(hArcData->archive));
 				//result = E_EREAD;
-				errmsg(archive_error_string(hArcData->archive));
+				errmsg(archive_error_string(handle->archive));
 				result = E_EABORTED;
 				break;
 			}
@@ -143,7 +158,7 @@ int DCPCALL ProcessFile(ArcData hArcData, int Operation, char *DestPath, char *D
 				result = E_EABORTED;
 				break;
 			}
-			else if (hArcData->gProcessDataProc(DestName, size) == 0)
+			else if (handle->gProcessDataProc(DestName, size) == 0)
 			{
 				result = E_EABORTED;
 				break;
@@ -163,13 +178,14 @@ int DCPCALL CloseArchive(HANDLE hArcData)
 	ArcData handle = (ArcData)hArcData;
 	archive_read_close(handle->archive);
 	archive_read_free(handle->archive);
-	free(hArcData);
+	free(handle);
 	return E_SUCCESS;
 }
 
 void DCPCALL SetProcessDataProc(HANDLE hArcData, tProcessDataProc pProcessDataProc)
 {
 	ArcData handle = (ArcData)hArcData;
+
 	if ((int)(long)hArcData == -1 || !handle)
 		gProcessDataProc = pProcessDataProc;
 	else
@@ -179,6 +195,7 @@ void DCPCALL SetProcessDataProc(HANDLE hArcData, tProcessDataProc pProcessDataPr
 void DCPCALL SetChangeVolProc(HANDLE hArcData, tChangeVolProc pChangeVolProc1)
 {
 	ArcData handle = (ArcData)hArcData;
+
 	if ((int)(long)hArcData == -1 || !handle)
 		gChangeVolProc = pChangeVolProc1;
 	else
