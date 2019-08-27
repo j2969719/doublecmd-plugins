@@ -21,7 +21,7 @@ typedef struct sArcData
 {
 	struct archive *archive;
 	struct archive_entry *entry;
-	char arcname[PATH_MAX];
+	char arcname[PATH_MAX + 1];
 	tChangeVolProc gChangeVolProc;
 	tProcessDataProc gProcessDataProc;
 } tArcData;
@@ -217,7 +217,7 @@ BOOL DCPCALL CanYouHandleThisFile(char *FileName)
 		return true;
 }
 
-int DCPCALL GetPackerCaps()
+int DCPCALL GetPackerCaps(void)
 {
 	//return PK_CAPS_NEW | PK_CAPS_MULTIPLE | PK_CAPS_SEARCHTEXT | PK_CAPS_BY_CONTENT;
 	return PK_CAPS_NEW | PK_CAPS_SEARCHTEXT | PK_CAPS_BY_CONTENT;
