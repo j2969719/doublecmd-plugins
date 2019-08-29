@@ -34,6 +34,8 @@ tChangeVolProc gChangeVolProc  = NULL;
 tProcessDataProc gProcessDataProc = NULL;
 tExtensionStartupInfo* gStartupInfo;
 
+static char options[PATH_MAX];
+
 void DCPCALL ExtensionInitialize(tExtensionStartupInfo* StartupInfo)
 {
 	gStartupInfo = malloc(sizeof(tExtensionStartupInfo));
@@ -228,7 +230,10 @@ int DCPCALL GetPackerCaps(void)
 
 void DCPCALL ConfigurePacker(HWND Parent, HINSTANCE DllInstance)
 {
-	gStartupInfo->MessageBox((char*)archive_version_details(), NULL, MB_OK | MB_ICONINFORMATION);
+	char *msg;
+	asprintf(&msg, "%s\nOptions ($ man archive_write_set_options):", archive_version_details());
+	gStartupInfo->InputBox("Double Commander", msg, false, options, PATH_MAX - 1);
+	free(msg);
 }
 
 int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddList, int Flags)
@@ -320,6 +325,11 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 		errmsg(archive_error_string(a));
 		archive_write_free(a);
 		return 0;
+	}
+
+	if ((options[0] != '\0') && archive_write_set_options(a, options) < ARCHIVE_OK)
+	{
+		errmsg(archive_error_string(a));
 	}
 
 	archive_write_open_filename(a, PackedFile);
