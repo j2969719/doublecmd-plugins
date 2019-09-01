@@ -31,7 +31,7 @@ void DCPCALL StartSearch(int PluginNr, tDsxSearchRecord* pSearchRec)
 		command = g_strdup_printf("locate -e -i -b '%s'", pSearchRec->FileMask);
 		gUpdateStatus(PluginNr, command, 0);
 
-
+		gUpdateStatus(PluginNr, "not found", 0);
 
 		if (!g_shell_parse_argv(command, NULL, &argv, &err))
 		{
@@ -39,6 +39,7 @@ void DCPCALL StartSearch(int PluginNr, tDsxSearchRecord* pSearchRec)
 			gAddFileProc(PluginNr, "");
 		}
 
+		g_clear_error(&err);
 		flags |= G_SPAWN_SEARCH_PATH ;
 
 		if (!g_spawn_async_with_pipes(NULL, argv, NULL, flags, NULL, NULL, &pid, NULL, &fp, NULL, &err))
@@ -62,6 +63,9 @@ void DCPCALL StartSearch(int PluginNr, tDsxSearchRecord* pSearchRec)
 	}
 	else
 		gUpdateStatus(PluginNr, "Failed to launch locate...", 0);
+
+	if (err)
+		g_error_free(err);
 
 	gAddFileProc(PluginNr, "");
 }

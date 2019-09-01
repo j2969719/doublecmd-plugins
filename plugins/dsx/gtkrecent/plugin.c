@@ -37,7 +37,7 @@ void DCPCALL StartSearch(int PluginNr, tDsxSearchRecord* pSearchRec)
 		{
 			gchar *fname = g_filename_from_uri(uri, NULL, NULL);
 
-			if (fname && strncmp(fname, pSearchRec->StartPath, strlen(pSearchRec->StartPath)) == 0)
+			if (fname) // && strncmp(fname, pSearchRec->StartPath, strlen(pSearchRec->StartPath)) == 0)
 			{
 				if (g_pattern_match_string(pattern, g_path_get_basename(fname)))
 				{

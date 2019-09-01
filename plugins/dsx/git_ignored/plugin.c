@@ -28,6 +28,8 @@ void DCPCALL StartSearch(int PluginNr, tDsxSearchRecord* pSearchRec)
 	if ((fp = popen(str, "r")) == NULL)
 		gAddFileProc(PluginNr, "");
 
+	gUpdateStatus(PluginNr, "not found", 0);
+
 	while(getline(&line, &len, fp) != -1)
 		if (line && line != "")
 		{
