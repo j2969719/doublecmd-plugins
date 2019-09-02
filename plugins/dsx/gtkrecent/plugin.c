@@ -41,8 +41,44 @@ void DCPCALL StartSearch(int PluginNr, tDsxSearchRecord* pSearchRec)
 			{
 				if (g_pattern_match_string(pattern, g_path_get_basename(fname)))
 				{
-					gAddFileProc(PluginNr, fname);
-					gUpdateStatus(PluginNr, fname, i++);
+					if (pSearchRec->IsFindText)
+					{
+						gchar *contents;
+						gchar *haystack;
+						gchar *needle;
+
+						g_file_get_contents(fname, &contents, NULL, NULL);
+
+						if (contents != NULL)
+						{
+							if (pSearchRec->CaseSensitive)
+							{
+								haystack = g_strdup(contents);
+								needle = g_strdup(pSearchRec->FindText);
+							}
+							else
+							{
+								haystack = g_utf8_strdown(contents, -1);
+								needle = g_utf8_strdown(pSearchRec->FindText, -1);
+							}
+
+							g_free(contents);
+
+							if (g_strrstr(haystack, needle) != NULL)
+							{
+								gAddFileProc(PluginNr, fname);
+								gUpdateStatus(PluginNr, fname, i++);
+							}
+
+							g_free(needle);
+							g_free(haystack);
+						}
+					}
+					else
+					{
+						gAddFileProc(PluginNr, fname);
+						gUpdateStatus(PluginNr, fname, i++);
+					}
 				}
 			}
 
