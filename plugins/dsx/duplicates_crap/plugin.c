@@ -48,6 +48,8 @@ void DCPCALL StartSearch(int PluginNr, tDsxSearchRecord* pSearchRec)
 	else
 	{
 
+		gUpdateStatus(PluginNr, "not found", 0);
+
 		GIOChannel *stdout = g_io_channel_unix_new(fp);
 
 		while (!stop_search && (G_IO_STATUS_NORMAL == g_io_channel_read_line(stdout, &line, &len, &term, NULL)))

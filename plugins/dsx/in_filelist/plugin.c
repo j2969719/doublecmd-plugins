@@ -43,6 +43,8 @@ void DCPCALL StartSearch(int PluginNr, tDsxSearchRecord* pSearchRec)
 	if ((fp = fopen(inFile, "r")) != NULL)
 	{
 
+		gUpdateStatus(PluginNr, "not found", 0);
+
 		while (!stop_search && (read = getline(&line, &len, fp)) != -1)
 			if (line && line[0] != '\n')
 			{
