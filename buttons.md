@@ -386,7 +386,7 @@ DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
     <Icon>cm_runterm</Icon>
     <Hint>Duplicates</Hint>
     <Command>find</Command>
-    <Params>%d %t1 -type f -exec sha1sum '{}' ';' | sort | uniq --all-repeated=separate -w 33 | cut -c 35-</Params>
+    <Params>%d %t1 -type f -exec sha1sum '{}' ';' | sort | uniq --all-repeated=separate -w 40 | cut -c 43-</Params>
   </Program>
 </doublecmd>
 ```
@@ -399,7 +399,7 @@ DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
     <Icon>cm_runterm</Icon>
     <Hint>Duplicates (save to file)</Hint>
     <Command>sh</Command>
-    <Params>-c "find %d -type f -exec sha1sum '{}' ';' | sort | uniq --all-repeated=separate -w 33 | cut -c 35- &gt; %[Result:;%dt/output.txt]"</Params>
+    <Params>-c "find %d -type f -exec sha1sum '{}' ';' | sort | uniq --all-repeated=separate -w 40 | cut -c 43- &gt; %[Result:;%dt/output.txt]"</Params>
   </Program>
 </doublecmd>
 ```
