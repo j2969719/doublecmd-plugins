@@ -2,7 +2,7 @@
 #include <signal.h>
 #include "dsxplugin.h"
 
-#define cmdf "/bin/sh -c \"find '%s' -type f -name '%s' -exec b2sum '{}' ';' | sort | uniq --all-repeated=separate -w 128 | cut -c 131-\""
+#define cmdf "/bin/sh -c \"find '%s' -links +1 -type f -name '%s' -printf '%%20i\\t%%p\\n' | sort | uniq --all-repeated=separate -w 20 | cut -f2-\""
 
 
 tSAddFileProc gAddFileProc;
