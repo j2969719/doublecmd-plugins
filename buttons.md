@@ -386,7 +386,7 @@ DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
     <Icon>cm_runterm</Icon>
     <Hint>Duplicates</Hint>
     <Command>find</Command>
-    <Params>%d %t1 -type f -exec sha1sum "{}" ";" | sort | uniq --all-repeated=separate -w 40 | cut -c 43-</Params>
+    <Params>%"0 %t1 "%D" -type f -exec sha1sum "{}" ";" | sort | uniq --all-repeated=separate -w 40 | cut -c 43-</Params>
   </Program>
 </doublecmd>
 ```
@@ -399,7 +399,7 @@ DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
     <Icon>cm_runterm</Icon>
     <Hint>Duplicates (save to file)</Hint>
     <Command>sh</Command>
-    <Params>-c "find %d -type f -exec sha1sum '{}' ';' | sort | uniq --all-repeated=separate -w 40 | cut -c 43- &gt; %[Result:;%dt/output.txt]"</Params>
+    <Params>-c %"0 "find '%D' -type f -exec sha1sum '{}' ';' | sort | uniq --all-repeated=separate -w 40 | cut -c 43- &gt; '%[Result:;%dt/output.txt]'"</Params>
   </Program>
 </doublecmd>
 ```
@@ -413,7 +413,7 @@ DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
     <Icon>cm_search</Icon>
     <Hint>Find samefile (hardlink)</Hint>
     <Command>find</Command>
-    <Params>%[path;%D] -samefile "%p0" %t1</Params>
+    <Params>%"0 "%[path;%D]" -samefile "%p0" %t1</Params>
   </Program>
 </doublecmd>
 ```
