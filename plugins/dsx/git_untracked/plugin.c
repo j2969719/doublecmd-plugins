@@ -26,24 +26,28 @@ void DCPCALL StartSearch(int PluginNr, tDsxSearchRecord* pSearchRec)
 	gUpdateStatus(PluginNr, str, 0);
 
 	if ((fp = popen(str, "r")) == NULL)
-		gAddFileProc(PluginNr, "");
+		gUpdateStatus(PluginNr, "failed to launch command", 0);
+	else
+	{
+		gUpdateStatus(PluginNr, "not found", 0);
 
-	gUpdateStatus(PluginNr, "not found", 0);
-
-	while(getline(&line, &len, fp) != -1)
-		if (line && line != "")
-		{
-			line[strlen(line)-1] = '\0';
-			asprintf(&str, "%s%s", pSearchRec->StartPath, line);
-			if (access(str, F_OK) != -1)
+		while (getline(&line, &len, fp) != -1)
+			if (line && line != "")
 			{
-				gAddFileProc(PluginNr, str);
-				gUpdateStatus(PluginNr, str, i++);
-			}
-		}
+				line[strlen(line) - 1] = '\0';
+				asprintf(&str, "%s%s", pSearchRec->StartPath, line);
 
-	pclose(fp);
-	free(str);
+				if (access(str, F_OK) != -1)
+				{
+					gAddFileProc(PluginNr, str);
+					gUpdateStatus(PluginNr, str, i++);
+				}
+			}
+
+		pclose(fp);
+		free(str);
+	}
+
 	gAddFileProc(PluginNr, "");
 }
 

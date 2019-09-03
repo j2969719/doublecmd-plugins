@@ -38,28 +38,35 @@ void DCPCALL StartSearch(int PluginNr, tDsxSearchRecord* pSearchRec)
 			gUpdateStatus(PluginNr, g_strdup(err->message), 0);
 			gAddFileProc(PluginNr, "");
 		}
-
-		g_clear_error(&err);
-		flags |= G_SPAWN_SEARCH_PATH ;
-
-		if (!g_spawn_async_with_pipes(NULL, argv, NULL, flags, NULL, NULL, &pid, NULL, &fp, NULL, &err))
+		else
 		{
-			gAddFileProc(PluginNr, "");
+
+			g_clear_error(&err);
+			flags |= G_SPAWN_SEARCH_PATH ;
+
+			if (!g_spawn_async_with_pipes(NULL, argv, NULL, flags, NULL, NULL, &pid, NULL, &fp, NULL, &err))
+			{
+				gUpdateStatus(PluginNr, g_strdup(err->message), 0);
+				gAddFileProc(PluginNr, "");
+			}
+			else
+			{
+
+				GIOChannel *stdout = g_io_channel_unix_new(fp);
+
+				while (!stop_search && (G_IO_STATUS_NORMAL == g_io_channel_read_line(stdout, &line, &len, &term, NULL)))
+				{
+					line[term] = '\0';
+					gAddFileProc(PluginNr, line);
+					gUpdateStatus(PluginNr, line, i++);
+				}
+
+				kill(pid, SIGTERM);
+				g_spawn_close_pid(pid);
+				g_io_channel_shutdown(stdout, TRUE, NULL);
+				g_io_channel_unref(stdout);
+			}
 		}
-
-		GIOChannel *stdout = g_io_channel_unix_new(fp);
-
-		while (!stop_search && (G_IO_STATUS_NORMAL == g_io_channel_read_line(stdout, &line, &len, &term, NULL)))
-		{
-			line[term] = '\0';
-			gAddFileProc(PluginNr, line);
-			gUpdateStatus(PluginNr, line, i++);
-		}
-
-		kill(pid, SIGTERM);
-		g_spawn_close_pid(pid);
-		g_io_channel_shutdown(stdout, TRUE, NULL);
-		g_io_channel_unref(stdout);
 	}
 	else
 		gUpdateStatus(PluginNr, "Failed to launch locate...", 0);
