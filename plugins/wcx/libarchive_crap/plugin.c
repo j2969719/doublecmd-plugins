@@ -82,7 +82,7 @@ HANDLE DCPCALL OpenArchive(tOpenArchiveData *ArchiveData)
 	return (HANDLE)handle;
 }
 
-int DCPCALL ReadHeader(HANDLE hArcData, tHeaderData *HeaderDate)
+int DCPCALL ReadHeader(HANDLE hArcData, tHeaderData *HeaderData)
 {
 	return E_NOT_SUPPORTED;
 }
