@@ -317,6 +317,9 @@ The given plug-in allows to look through Web-pages (*.htm, *.html). It is based 
 ---
 <a name="dsx"><h3>DSX plugins</h3></a>
 
+- [duplicates_crap](plugins/dsx/duplicates_crap)<br>
+Find duplicates using `find` and `b2sum`. Slow, doublecmd's window may hang during search.
+
 - [git_ignored](plugins/dsx/git_ignored)<br>
 Finds ignored files in git repository via `git ls-files -i --exclude-standard`.
 
@@ -326,8 +329,23 @@ Finds modified files in git repository via `git ls-files -m`.
 - [git_untracked](plugins/dsx/git_untracked)<br>
 Finds untracked files and other in git repository via `git ls-files -o`.
 
+- [gtkrecent](plugins/dsx/gtkrecent)<br>
+Feed to listbox recent files. (GTK)
+
+- [hardlinks_crap](plugins/dsx/hardlinks_crap)<br>
+Find hardlinks using `find`. Slow, doublecmd's window may hang during search.
+
+- [in_filelist](plugins/dsx/in_filelist)<br>
+Feed to listbox files from filelist.txt.
+
 - [locate_crap](plugins/dsx/locate_crap)<br>
 Search via `locate` (w/o StartPath). 
+
+- [pacman_pkg_list](plugins/dsx/pacman_pkg_list)<br>
+Feed to listbox local files of some installed archlinux package via `pacman`. Accepts only full pkgname in FileMask.
+
+- [the_silver_searcher_crap](plugins/dsx/the_silver_searcher_crap)<br>
+Pattern matching using `the_silver_searcher`. FileMask also accepts only regexp(if filename pattern is specified, search for part of filename option must be disabled).
 
 - [tracker_textsearch](plugins/dsx/tracker_textsearch)<br>
 Full text search using [Tracker](https://wiki.gnome.org/Projects/Tracker). 
