@@ -1,5 +1,5 @@
 -- elfheaderinfo.lua (cross-platform)
--- 2019.07.20
+-- 2019.09.08
 --
 -- Some info from ELF files.
 -- Fields:
@@ -264,7 +264,7 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
     return nil
   end
   local f = io.open(FileName, 'rb')
-  fc = f:read(62)
+  local fc = f:read(62)
   f:close()
   if fc == nil then return nil end
   if (string.byte(fc, 1) == 0x7f) and (string.byte(fc, 2) == 0x45) and (string.byte(fc, 3) == 0x4c) and (string.byte(fc, 4) == 0x46) then
