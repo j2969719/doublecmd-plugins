@@ -92,6 +92,25 @@ gchar *str_replace(gchar *text, gchar *str, gchar *repl)
 	return result;
 }
 
+gchar *basenamenoext(const gchar *file)
+{
+	gchar *basename = g_path_get_basename(file);
+	gchar *result = g_strdup(basename);
+	gchar *dot = g_strrstr(result, ".");
+
+	if (dot)
+	{
+		int offset = dot - result;
+		result[offset] = '\0';
+
+		if (result[0] == '\0')
+			result = g_strdup(basename);
+	}
+
+	g_free(basename);
+	return result;
+}
+
 HANDLE DCPCALL OpenArchive(tOpenArchiveData *ArchiveData)
 {
 	tArcData *handle = g_new0(tArcData, 1);
@@ -108,12 +127,12 @@ HANDLE DCPCALL OpenArchive(tOpenArchiveData *ArchiveData)
 		const gchar *mime_type = get_mime_type(ArchiveData->ArcName);
 		const gchar *file_ext = get_file_ext(ArchiveData->ArcName);
 
-		if (g_key_file_has_group(handle->cfg, file_ext))
+		if (file_ext && g_key_file_has_group(handle->cfg, file_ext))
 		{
 			handle->files = g_key_file_get_keys(handle->cfg, file_ext, &handle->total, NULL);
 			g_strlcpy(handle->group, file_ext, GROUP_MAX);
 		}
-		else if (g_key_file_has_group(handle->cfg, mime_type))
+		else if (mime_type && g_key_file_has_group(handle->cfg, mime_type))
 		{
 			handle->files = g_key_file_get_keys(handle->cfg, mime_type, &handle->total, NULL);
 			g_strlcpy(handle->group, mime_type, GROUP_MAX);
@@ -137,8 +156,11 @@ int DCPCALL ReadHeader(HANDLE hArcData, tHeaderData *HeaderData)
 	if (handle->current > handle->total || !handle->files[handle->current])
 		return E_END_ARCHIVE;
 
-	g_strlcpy(HeaderData->FileName, handle->files[handle->current], sizeof(HeaderData->FileName) - 1);
+	gchar *filename = basenamenoext(handle->arcname);
+	filename = g_strdup_printf("%s%s", filename, handle->files[handle->current]);
+	g_strlcpy(HeaderData->FileName, filename, sizeof(HeaderData->FileName) - 1);
 	handle->current++;
+	g_free(filename);
 	return E_SUCCESS;
 
 }
@@ -211,9 +233,10 @@ void DCPCALL PackSetDefaultParams(PackDefaultParamStruct* dps)
 	if (!g_file_test(cfg_path, G_FILE_TEST_EXISTS))
 	{
 		GKeyFile *cfg = g_key_file_new();
-		g_key_file_set_string(cfg, "image/png", "output.jpg", "convert $FILE $OUTPUT");
-		g_key_file_set_comment(cfg, "image/png", "output.jpg", "filename.ext=command $FILE $OUTPUT", NULL);
-		g_key_file_set_string(cfg, "md", "output.html", "hoedown --all-span --all-block --all-flags --hard-wrap $FILE > $OUTPUT");
+		g_key_file_set_string(cfg, "image/png", ".jpg", "convert $FILE $OUTPUT");
+		g_key_file_set_comment(cfg, "image/png", ".jpg", "filename suffix=command $FILE $OUTPUT", NULL);
+		g_key_file_set_string(cfg, "image/png", "_info.txt", "identify -quiet $FILE > $OUTPUT");
+		g_key_file_set_string(cfg, "md", ".html", "hoedown --all-span --all-block --all-flags --hard-wrap $FILE > $OUTPUT");
 		g_key_file_save_to_file(cfg, cfg_path, NULL);
 		g_key_file_free(cfg);
 	}
@@ -230,7 +253,7 @@ BOOL DCPCALL CanYouHandleThisFile(char *FileName)
 
 	if (!g_key_file_load_from_file(cfg, cfg_path, G_KEY_FILE_KEEP_COMMENTS, &err))
 	{
-		errmsg((err)->message);
+		errmsg(g_strdup_printf("%s: %s", cfg_path, (err)->message));
 	}
 	else if (g_key_file_has_group(cfg, mime_type) || g_key_file_has_group(cfg, file_ext))
 	{
