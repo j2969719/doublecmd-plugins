@@ -123,7 +123,6 @@ HANDLE DCPCALL OpenArchive(tOpenArchiveData *ArchiveData)
 			ArchiveData->OpenResult = E_UNKNOWN_FORMAT;
 			return E_SUCCESS;
 		}
-
 	}
 
 	return (HANDLE)handle;
@@ -165,7 +164,10 @@ int DCPCALL ProcessFile(HANDLE hArcData, int Operation, char *DestPath, char *De
 			command = str_replace(command, "$FILE", g_shell_quote(handle->arcname));
 			command = str_replace(command, "$OUTPUT", g_shell_quote(DestName));
 			g_print("command = %s\n", command);
-			system(command);
+
+			if (system(command) != 0)
+				result = E_EWRITE;
+
 			g_free(command);
 		}
 	}
@@ -186,7 +188,6 @@ int DCPCALL GetPackerCaps(void)
 {
 	return PK_CAPS_HIDE | PK_CAPS_BY_CONTENT;
 }
-
 
 void DCPCALL SetProcessDataProc(HANDLE hArcData, tProcessDataProc pProcessDataProc)
 {
