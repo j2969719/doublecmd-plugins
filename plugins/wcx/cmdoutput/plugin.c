@@ -1,8 +1,10 @@
+#define _GNU_SOURCE
 #include <glib.h>
 #include <gio/gio.h>
+#include <dlfcn.h>
+#include <string.h>
 #include "wcxplugin.h"
 #include "extension.h"
-
 
 #define errmsg(msg) gStartupInfo->MessageBox((char*)msg, NULL, MB_OK | MB_ICONERROR);
 #define GROUP_MAX 255
@@ -157,7 +159,10 @@ int DCPCALL ReadHeader(HANDLE hArcData, tHeaderData *HeaderData)
 		return E_END_ARCHIVE;
 
 	gchar *filename = basenamenoext(handle->arcname);
-	filename = g_strdup_printf("%s%s", filename, handle->files[handle->current]);
+	if (handle->files[handle->current][0] != '.' && handle->files[handle->current][0] != '_')
+		filename = g_strdup(handle->files[handle->current]);
+	else
+		filename = g_strdup_printf("%s%s", filename, handle->files[handle->current]);
 	g_strlcpy(HeaderData->FileName, filename, sizeof(HeaderData->FileName) - 1);
 	handle->current++;
 	g_free(filename);
@@ -185,7 +190,6 @@ int DCPCALL ProcessFile(HANDLE hArcData, int Operation, char *DestPath, char *De
 		{
 			command = str_replace(command, "$FILE", g_shell_quote(handle->arcname));
 			command = str_replace(command, "$OUTPUT", g_shell_quote(DestName));
-			g_print("command = %s\n", command);
 
 			if (system(command) != 0)
 				result = E_EWRITE;
@@ -208,7 +212,7 @@ int DCPCALL CloseArchive(HANDLE hArcData)
 
 int DCPCALL GetPackerCaps(void)
 {
-	return PK_CAPS_HIDE | PK_CAPS_BY_CONTENT;
+	return PK_CAPS_HIDE | PK_CAPS_BY_CONTENT | PK_CAPS_OPTIONS;
 }
 
 void DCPCALL SetProcessDataProc(HANDLE hArcData, tProcessDataProc pProcessDataProc)
@@ -233,10 +237,25 @@ void DCPCALL PackSetDefaultParams(PackDefaultParamStruct* dps)
 	if (!g_file_test(cfg_path, G_FILE_TEST_EXISTS))
 	{
 		GKeyFile *cfg = g_key_file_new();
-		g_key_file_set_string(cfg, "image/png", ".jpg", "convert $FILE $OUTPUT");
-		g_key_file_set_comment(cfg, "image/png", ".jpg", "filename suffix=command $FILE $OUTPUT", NULL);
-		g_key_file_set_string(cfg, "image/png", "_info.txt", "identify -quiet $FILE > $OUTPUT");
-		g_key_file_set_string(cfg, "md", ".html", "hoedown --all-span --all-block --all-flags --hard-wrap $FILE > $OUTPUT");
+		Dl_info dlinfo;
+		static char default_cfg[PATH_MAX + 1];
+
+		memset(&dlinfo, 0, sizeof(dlinfo));
+
+		if (dladdr(default_cfg, &dlinfo) != 0)
+		{
+			g_strlcpy(default_cfg, dlinfo.dli_fname, PATH_MAX);
+			char *pos = strrchr(default_cfg, '/');
+
+			if (pos)
+				strcpy(pos + 1, "settings_default.ini");
+		}
+
+		if (!default_cfg || !g_key_file_load_from_file(cfg, default_cfg, G_KEY_FILE_KEEP_COMMENTS, NULL))
+		{
+			g_key_file_set_string(cfg, "image/png", ".jpg", "convert $FILE $OUTPUT");
+		}
+
 		g_key_file_save_to_file(cfg, cfg_path, NULL);
 		g_key_file_free(cfg);
 	}
