@@ -159,10 +159,12 @@ int DCPCALL ReadHeader(HANDLE hArcData, tHeaderData *HeaderData)
 		return E_END_ARCHIVE;
 
 	gchar *filename = basenamenoext(handle->arcname);
+
 	if (handle->files[handle->current][0] != '.' && handle->files[handle->current][0] != '_')
 		filename = g_strdup(handle->files[handle->current]);
 	else
 		filename = g_strdup_printf("%s%s", filename, handle->files[handle->current]);
+
 	g_strlcpy(HeaderData->FileName, filename, sizeof(HeaderData->FileName) - 1);
 	handle->current++;
 	g_free(filename);
