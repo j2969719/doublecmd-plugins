@@ -14,6 +14,9 @@ Plugins
 ---
 <a name="wcx"><h3>WCX plugins</h3></a>
 
+- [cmdoutput](plugins/wcx/cmdoutput)<br>
+View output of command line utilities on Ctrl+Page Down (see `settings_default.ini`).
+
 - [libarchive_crap](plugins/wcx/libarchive_crap)<br>
 Simple WCX plugin, based on `libarchive` ([supported formats](https://github.com/libarchive/libarchive#supported-formats)).
 
