@@ -1,0 +1,143 @@
+<UniHighlighter version="1.8.1">
+  <Info>
+    <General Name="C#" Extensions="CS"/>
+    <Author Name="Vitaly Nevzorov" Email="nevzorov@yahoo.com" Web="www.delphist.com" Copyright="Copyright (c) Vitaly Nevzorov, 2002" Company="N/A" Remark="Created based on UltraEdit:csharp.txt"/>
+    <Version Version="1" Revision="0" Date="37612.5337957176"/>
+    <History>
+    </History>
+    <Sample>
+    </Sample>
+  </Info>
+  <Scheme File="" Name=""/>
+  <Range Name="Root" Attributes="-2147483640,536870911;False:False." Style=""
+         Delimiters="!&quot;%&amp;'()*+,-./:;&lt;=&gt;?@[\]^{|}~">
+    <Rule/>
+    <Keywords Name="Keywords" Attributes="9097847,536870911;False:False." Style="">
+      <word value="as"/>
+      <word value="auto"/>
+      <word value="base"/>
+      <word value="break"/>
+      <word value="case"/>
+      <word value="catch"/>
+      <word value="const"/>
+      <word value="continue"/>
+      <word value="default"/>
+      <word value="do"/>
+      <word value="else"/>
+      <word value="event"/>
+      <word value="explicit"/>
+      <word value="extern"/>
+      <word value="false"/>
+      <word value="finally"/>
+      <word value="fixed"/>
+      <word value="for"/>
+      <word value="foreach"/>
+      <word value="goto"/>
+      <word value="if"/>
+      <word value="implicit"/>
+      <word value="in"/>
+      <word value="internal"/>
+      <word value="lock"/>
+      <word value="namespace"/>
+      <word value="null"/>
+      <word value="operator"/>
+      <word value="out"/>
+      <word value="override"/>
+      <word value="params"/>
+      <word value="private"/>
+      <word value="protected"/>
+      <word value="public"/>
+      <word value="readonly"/>
+      <word value="ref"/>
+      <word value="return"/>
+      <word value="sealed"/>
+      <word value="stackalloc"/>
+      <word value="static"/>
+      <word value="switch"/>
+      <word value="this"/>
+      <word value="throw"/>
+      <word value="true"/>
+      <word value="try"/>
+      <word value="unsafe"/>
+      <word value="using"/>
+      <word value="virtual"/>
+      <word value="void"/>
+      <word value="while"/>
+    </Keywords>
+    <Keywords Name="C# Data Types" Attributes="14001830,536870911;False:False." Style="">
+      <word value="bool"/>
+      <word value="byte"/>
+      <word value="char"/>
+      <word value="class"/>
+      <word value="decimal"/>
+      <word value="delegate"/>
+      <word value="double"/>
+      <word value="enum"/>
+      <word value="float"/>
+      <word value="int"/>
+      <word value="interface"/>
+      <word value="long"/>
+      <word value="object"/>
+      <word value="sbyte"/>
+      <word value="short"/>
+      <word value="string"/>
+      <word value="struct"/>
+      <word value="uint"/>
+      <word value="ulong"/>
+      <word value="ushort"/>
+    </Keywords>
+    <Keywords Name="C# Preprocessor Directives" Attributes="15252668,536870911;False:False." Style="">
+      <word value="#elif"/>
+      <word value="#endif"/>
+      <word value="#endregion"/>
+      <word value="#else"/>
+      <word value="#error"/>
+      <word value="#define"/>
+      <word value="#if"/>
+      <word value="#line"/>
+      <word value="#region"/>
+      <word value="#undef"/>
+      <word value="#warning"/>
+    </Keywords>
+    <Keywords Name="Operators" Attributes="6529761,536870911;False:False." Style="">
+      <word value="+"/>
+      <word value="-"/>
+      <word value="*"/>
+      <word value="?"/>
+      <word value="="/>
+      <word value="//"/>
+      <word value="/"/>
+      <word value="%"/>
+      <word value="&amp;"/>
+      <word value="&gt;"/>
+      <word value="&lt;"/>
+      <word value="^"/>
+      <word value="!"/>
+      <word value="|"/>
+      <word value=":"/>
+      <word value="checked"/>
+      <word value="is"/>
+      <word value="new"/>
+      <word value="sizeof"/>
+      <word value="typeof"/>
+      <word value="unchecked"/>
+    </Keywords>
+    <Range Name="Remarks //" Attributes="12622689,536870911;False:False." Style=""
+           Delimiters="!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^`{|}~">
+      <Rule OpenSymbol="//" CloseOnEol="True"/>
+    </Range>
+    <Range Name="Remarks /*..*/" Attributes="12622689,536870911;False:False." Style=""
+           Delimiters="!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^`{|}~">
+      <Rule OpenSymbol="/*" CloseSymbol="*/"/>
+    </Range>
+    <Range Name="Strings &quot;..&quot;" Attributes="9014201,536870911;False:False." Style=""
+           Delimiters="!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^`{|}~">
+      <Rule OpenSymbol="&quot;" CloseSymbol="&quot;"/>
+    </Range>
+    <Range Name="Strings '..'" Attributes="9014201,536870911;False:False." Style=""
+           Delimiters="!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^`{|}~">
+      <Rule OpenSymbol="'" CloseSymbol="'"/>
+    </Range>
+  </Range>
+  <CopyRight>Rule file for UniHighlighter Delphi component (Copyright(C) Fantasist(walking_in_the_sky@yahoo.com), Vit(nevzorov@yahoo.com), Vitalik(vetal-x@mail.ru), 2002-2004)</CopyRight>
+</UniHighlighter>
