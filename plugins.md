@@ -242,16 +242,16 @@ Displays DOC, RTF, DOT, ABW, AWT, ZABW. Requires AbiWord (GTK2 version).
 Displays PDF, DjVu, TIFF, PostScipt, CBR, CBZ, XPS. Requires Atril 2 (GTK2 version).
 
 - [dcpoppler](plugins/wlx/dcpoppler)<br>
-PDF Viewer.
+PDF Viewer ([original](https://yassernour.wordpress.com/2010/04/04/how-hard-to-build-a-pdf-viewer/)).
 
 - [evince2](plugins/wlx/evince2)<br>
 Displays PDF, DjVu, TIFF, PostScipt, CBR. Requires Evince 2 (GTK2 version).
 
-- [fileinfo](plugins/wlx/fileinfo) ([fileinfo](https://github.com/doublecmd/plugins/tree/master/wlx/fileinfo) fork)<br>
-Displays various information about file using command line utilities. Requires `gtksourceview-2.0`.
+- [fileinfo](plugins/wlx/fileinfo)<br>
+Displays various information about file using command line utilities. Requires `gtksourceview-2.0` ([original](https://github.com/doublecmd/doublecmd/wiki/Plugins#fileinfo)).
 
-- [gstplayer](plugins/wlx/gstplayer) ([gstplayer](https://github.com/doublecmd/plugins/tree/master/wlx/gstplayer) fork)<br>
-Simple media player plugin based on GStreamer framework. Few cosmetic changes, bit unstable.
+- [gstplayer](plugins/wlx/gstplayer)<br>
+Simple media player plugin based on GStreamer framework. Few cosmetic changes, bit unstable ([original](https://github.com/doublecmd/doublecmd/wiki/Plugins#gstplayer)).
 
 - [gtk_socket](plugins/wlx/gtk_socket)<br>
 Plugin-wrapper for embed window of different scripts and utilities, used GtkSocket (container for widgets from other processes). Works with file extensions and MIME types, see `settings.ini`.
@@ -311,7 +311,8 @@ Displays PDF, DjVu, PostScipt, CBR. Requires `zathura`.
 <a name="wlxqt5"><h3>WLX plugins (Qt5)</h3></a>
 
 - [fileinfo_qt](plugins/wlx/fileinfo_qt)<br>
-Displays various information about file using command line utilities.
+Displays various information about file using command line utilities ([original](https://github.com/doublecmd/doublecmd/wiki/Plugins#fileinfo)).
+
 
 - [hx_webkit_qt_crap](plugins/wlx/hx_webkit_qt_crap)<br>
 Document viewer based on Qt5WebKit and using HTML Export from Oracle Outside In Technology.
