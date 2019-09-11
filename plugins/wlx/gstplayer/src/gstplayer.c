@@ -267,6 +267,7 @@ static void error_cb (GstBus *bus, GstMessage *msg, CustomData *data) {
 static void eos_cb (GstBus *bus, GstMessage *msg, CustomData *data) {
   g_print ("End-Of-Stream reached.\n");
   gst_element_set_state (data->playbin, GST_STATE_READY);
+  gst_element_set_state (data->playbin, GST_STATE_PLAYING);
 }
 
 /* This function is called when the pipeline changes states. We use it to
