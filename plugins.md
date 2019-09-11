@@ -247,8 +247,11 @@ PDF Viewer.
 - [evince2](plugins/wlx/evince2)<br>
 Displays PDF, DjVu, TIFF, PostScipt, CBR. Requires Evince 2 (GTK2 version).
 
-- [fileinfo](plugins/wlx/fileinfo)<br>
-Displays various information about file using command line utilities.
+- [fileinfo](plugins/wlx/fileinfo) ([fileinfo](https://github.com/doublecmd/plugins/tree/master/wlx/fileinfo) fork)<br>
+Displays various information about file using command line utilities. Requires `gtksourceview-2.0`.
+
+- [gstplayer](plugins/wlx/gstplayer) ([gstplayer](https://github.com/doublecmd/plugins/tree/master/wlx/gstplayer) fork)<br>
+Simple media player plugin based on GStreamer framework. Few cosmetic changes, bit unstable.
 
 - [gtk_socket](plugins/wlx/gtk_socket)<br>
 Plugin-wrapper for embed window of different scripts and utilities, used GtkSocket (container for widgets from other processes). Works with file extensions and MIME types, see `settings.ini`.
