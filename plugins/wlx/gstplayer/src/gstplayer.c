@@ -13,6 +13,8 @@
 #include <gdk/gdkquartz.h>
 #endif
 
+#include <gdk/gdkkeysyms.h>
+
 #include "wlxplugin.h"
 
 #define DETECT_STRING "(EXT=\"AVI\")|(EXT=\"MKV\")|(EXT=\"FLV\")|(EXT=\"MPG\")|\
@@ -29,6 +31,10 @@ typedef struct _CustomData {
   gulong slider_update_signal_id; /* Signal ID for the slider update signal */
 
   GtkWidget *volume_slider;
+  GtkToolItem *btn_loop;
+  GtkToolItem *btn_mute;
+  GtkWidget *notebook;
+  GtkWidget *lbl_info;
 
   GstState state;                 /* Current state of the pipeline */
   gint64 duration;                /* Duration of the clip, in nanoseconds */
@@ -78,7 +84,75 @@ static gboolean playpause_cb (GtkWidget *widget, GdkEventButton *event, CustomDa
 }
 
 static void volume_cb (GtkRange *range, CustomData *data) {
-  g_object_set (data->playbin, "volume", gtk_range_get_value (range), NULL);
+  gdouble value = gtk_range_get_value (range);
+
+  if (value > 0) {
+    gtk_toggle_tool_button_set_active (GTK_TOGGLE_TOOL_BUTTON (data->btn_mute), FALSE);
+
+    if (value > 0.7)
+      gtk_tool_button_set_icon_name (GTK_TOOL_BUTTON (data->btn_mute), "audio-volume-high");
+    else if (value > 0.3)
+      gtk_tool_button_set_icon_name (GTK_TOOL_BUTTON (data->btn_mute), "audio-volume-medium");
+    else if (value > 0)
+      gtk_tool_button_set_icon_name (GTK_TOOL_BUTTON (data->btn_mute), "audio-volume-low");
+
+  } else
+    gtk_toggle_tool_button_set_active (GTK_TOGGLE_TOOL_BUTTON (data->btn_mute), TRUE);
+
+  g_object_set (data->playbin, "volume", value, NULL);
+}
+
+static void mute_cb (GtkToolItem *btn_mute, CustomData *data) {
+  if (gtk_toggle_tool_button_get_active (GTK_TOGGLE_TOOL_BUTTON (btn_mute))) {
+    gtk_tool_button_set_icon_name (GTK_TOOL_BUTTON (btn_mute), "audio-volume-muted");
+    g_object_set (data->playbin, "volume", 0, NULL);
+  } else {
+    volume_cb (GTK_RANGE (data->volume_slider), data);
+  }
+}
+
+gboolean on_key_press(GtkWidget *widget, GdkEventKey *event, CustomData *data)
+{
+  gdouble value;
+  switch (event->keyval) {
+    case GDK_KEY_m:
+      if (gtk_toggle_tool_button_get_active (GTK_TOGGLE_TOOL_BUTTON (data->btn_mute)))
+        gtk_toggle_tool_button_set_active (GTK_TOGGLE_TOOL_BUTTON (data->btn_mute), FALSE);
+      else
+        gtk_toggle_tool_button_set_active (GTK_TOGGLE_TOOL_BUTTON (data->btn_mute), TRUE);
+      return TRUE;
+
+    case GDK_KEY_space:
+      playpause_cb (NULL, NULL, data);
+      return TRUE;
+
+    case GDK_KEY_i:
+      if (gtk_notebook_get_current_page (GTK_NOTEBOOK (data->notebook)) > 0)
+        gtk_notebook_set_current_page (GTK_NOTEBOOK (data->notebook), 0);
+      else
+        gtk_notebook_set_current_page (GTK_NOTEBOOK (data->notebook), 1);
+      return TRUE;
+
+    case GDK_KEY_r:
+      if (gtk_toggle_tool_button_get_active (GTK_TOGGLE_TOOL_BUTTON (data->btn_loop)))
+        gtk_toggle_tool_button_set_active (GTK_TOGGLE_TOOL_BUTTON (data->btn_loop), FALSE);
+      else
+        gtk_toggle_tool_button_set_active (GTK_TOGGLE_TOOL_BUTTON (data->btn_loop), TRUE);
+      return TRUE;
+
+    case GDK_KEY_equal:
+      value = gtk_range_get_value (GTK_RANGE (data->volume_slider));
+      value = value + 0.05;
+      gtk_range_set_value (GTK_RANGE (data->volume_slider), value);
+      return TRUE;
+
+    case GDK_KEY_minus:
+      value = gtk_range_get_value (GTK_RANGE (data->volume_slider));
+      value = value - 0.05;
+      gtk_range_set_value (GTK_RANGE (data->volume_slider), value);
+      return TRUE;
+  }
+  return FALSE;
 }
 
 /* This function is called when the PLAY button is clicked */
@@ -137,9 +211,8 @@ static GtkWidget *create_ui (HWND ParentWin, CustomData *data) {
   GtkWidget *video_window; /* The drawing area where the video will be shown */
   GtkWidget *main_box;     /* VBox to hold main_hbox and the controls */
   GtkWidget *controls;     /* HBox to hold the buttons and the slider */
-  GtkWidget *play_button, *pause_button, *stop_button; /* Buttons */
+  GtkToolItem *play_button, *pause_button, *stop_button; /* Buttons */
   GtkWidget *scroll_window;
-  GtkWidget *notebook;
 
   main_window = gtk_vbox_new (FALSE, 0);
   gtk_container_add(GTK_CONTAINER((GtkWidget *)(ParentWin)), main_window);
@@ -152,20 +225,30 @@ static GtkWidget *create_ui (HWND ParentWin, CustomData *data) {
   g_signal_connect (video_window, "expose_event", G_CALLBACK (expose_cb), data);
   g_signal_connect (G_OBJECT (video_window), "button_press_event", G_CALLBACK (playpause_cb), data);
 
-  play_button = gtk_button_new_from_stock (GTK_STOCK_MEDIA_PLAY);
+  play_button = gtk_tool_button_new_from_stock (GTK_STOCK_MEDIA_PLAY);
   g_signal_connect (G_OBJECT (play_button), "clicked", G_CALLBACK (play_cb), data);
 
-  pause_button = gtk_button_new_from_stock (GTK_STOCK_MEDIA_PAUSE);
+  pause_button = gtk_tool_button_new_from_stock (GTK_STOCK_MEDIA_PAUSE);
   g_signal_connect (G_OBJECT (pause_button), "clicked", G_CALLBACK (pause_cb), data);
 
-  stop_button = gtk_button_new_from_stock (GTK_STOCK_MEDIA_STOP);
+  stop_button = gtk_tool_button_new_from_stock (GTK_STOCK_MEDIA_STOP);
   g_signal_connect (G_OBJECT (stop_button), "clicked", G_CALLBACK (stop_cb), data);
+
+  data->btn_loop = gtk_toggle_tool_button_new ();
+  gtk_tool_button_set_icon_name (GTK_TOOL_BUTTON (data->btn_loop), "media-playlist-repeat");
+  gtk_toggle_tool_button_set_active (GTK_TOGGLE_TOOL_BUTTON (data->btn_loop), TRUE);
+
+  data->btn_mute = gtk_toggle_tool_button_new ();
+  gtk_tool_button_set_icon_name(GTK_TOOL_BUTTON (data->btn_mute), "audio-volume-high");
+  g_signal_connect (G_OBJECT (data->btn_mute), "clicked", G_CALLBACK (mute_cb), data);
+
+  data->lbl_info = gtk_label_new (NULL);
 
   data->slider = gtk_hscale_new_with_range (0, 100, 1);
   gtk_scale_set_draw_value (GTK_SCALE (data->slider), 0);
   data->slider_update_signal_id = g_signal_connect (G_OBJECT (data->slider), "value-changed", G_CALLBACK (slider_cb), data);
 
-  data->volume_slider = gtk_hscale_new_with_range (0, 1, 0.1);
+  data->volume_slider = gtk_hscale_new_with_range (0, 1, 0.05);
   gtk_scale_set_draw_value (GTK_SCALE (data->volume_slider), 0);
   gtk_widget_set_size_request(data->volume_slider, 100, -1);
   g_signal_connect (G_OBJECT (data->volume_slider), "value-changed", G_CALLBACK (volume_cb), data);
@@ -180,18 +263,21 @@ static GtkWidget *create_ui (HWND ParentWin, CustomData *data) {
   gtk_container_add (GTK_CONTAINER (scroll_window), data->streams_list);
 
   controls = gtk_hbox_new (FALSE, 0);
-  gtk_box_pack_start (GTK_BOX (controls), play_button, FALSE, FALSE, 2);
-  gtk_box_pack_start (GTK_BOX (controls), pause_button, FALSE, FALSE, 2);
-  gtk_box_pack_start (GTK_BOX (controls), stop_button, FALSE, FALSE, 2);
+  gtk_box_pack_start (GTK_BOX (controls), GTK_WIDGET (play_button), FALSE, FALSE, 2);
+  gtk_box_pack_start (GTK_BOX (controls), GTK_WIDGET (pause_button), FALSE, FALSE, 2);
+  gtk_box_pack_start (GTK_BOX (controls), GTK_WIDGET (stop_button), FALSE, FALSE, 2);
+  gtk_box_pack_start (GTK_BOX (controls), GTK_WIDGET (data->btn_loop), FALSE, FALSE, 2);
+  gtk_box_pack_start (GTK_BOX (controls), GTK_WIDGET (data->lbl_info), TRUE, TRUE, 2);
   gtk_box_pack_end (GTK_BOX (controls), data->volume_slider, FALSE, TRUE, 2);
+  gtk_box_pack_end (GTK_BOX (controls), GTK_WIDGET (data->btn_mute), FALSE, TRUE, 2);
 
-  notebook = gtk_notebook_new ();
-  gtk_notebook_append_page (GTK_NOTEBOOK (notebook), video_window, NULL);
-  gtk_notebook_append_page (GTK_NOTEBOOK (notebook), scroll_window, NULL);
-  gtk_notebook_set_tab_pos (GTK_NOTEBOOK (notebook), GTK_POS_BOTTOM);
+  data->notebook = gtk_notebook_new ();
+  gtk_notebook_append_page (GTK_NOTEBOOK (data->notebook), video_window, NULL);
+  gtk_notebook_append_page (GTK_NOTEBOOK (data->notebook), scroll_window, NULL);
+  gtk_notebook_set_tab_pos (GTK_NOTEBOOK (data->notebook), GTK_POS_BOTTOM);
 
   main_box = gtk_vbox_new (FALSE, 0);
-  gtk_box_pack_start (GTK_BOX (main_box), notebook, TRUE, TRUE, 0);
+  gtk_box_pack_start (GTK_BOX (main_box), data->notebook, TRUE, TRUE, 0);
   gtk_box_pack_start (GTK_BOX (main_box), data->slider, FALSE, TRUE, 0);
   gtk_box_pack_start (GTK_BOX (main_box), controls, FALSE, FALSE, 0);
   gtk_container_add (GTK_CONTAINER (main_window), main_box);
@@ -265,9 +351,10 @@ static void error_cb (GstBus *bus, GstMessage *msg, CustomData *data) {
 /* This function is called when an End-Of-Stream message is posted on the bus.
  * We just set the pipeline to READY (which stops playback) */
 static void eos_cb (GstBus *bus, GstMessage *msg, CustomData *data) {
-  g_print ("End-Of-Stream reached.\n");
+  //g_print ("End-Of-Stream reached.\n");
   gst_element_set_state (data->playbin, GST_STATE_READY);
-  gst_element_set_state (data->playbin, GST_STATE_PLAYING);
+  if (gtk_toggle_tool_button_get_active (GTK_TOGGLE_TOOL_BUTTON (data->btn_loop)))
+    gst_element_set_state (data->playbin, GST_STATE_PLAYING);
 }
 
 /* This function is called when the pipeline changes states. We use it to
@@ -277,7 +364,7 @@ static void state_changed_cb (GstBus *bus, GstMessage *msg, CustomData *data) {
   gst_message_parse_state_changed (msg, &old_state, &new_state, &pending_state);
   if (GST_MESSAGE_SRC (msg) == GST_OBJECT (data->playbin)) {
     data->state = new_state;
-    g_print ("State set to %s\n", gst_element_state_get_name (new_state));
+    //g_print ("State set to %s\n", gst_element_state_get_name (new_state));
     if (old_state == GST_STATE_READY && new_state == GST_STATE_PAUSED) {
       /* For extra responsiveness, we refresh the GUI as soon as we reach the PAUSED state */
       refresh_ui (data);
@@ -334,7 +421,7 @@ static void text_add_tags (const GstTagList *list, const gchar *tag, GtkTextBuff
 static void analyze_streams (CustomData *data) {
   gint i;
   GstTagList *tags;
-  gchar *total_str;
+  gchar *total_str, *str;
   gint n_video, n_audio, n_text;
   GtkTextBuffer *text;
 
@@ -374,6 +461,13 @@ static void analyze_streams (CustomData *data) {
       gtk_text_buffer_insert_at_cursor (text, total_str, -1);
       g_free (total_str);
       gst_tag_list_foreach(tags, (GstTagForeachFunc)text_add_tags, text);
+      if (gst_tag_list_get_string (tags, GST_TAG_TITLE, &str)) {
+        gtk_label_set_text (GTK_LABEL (data->lbl_info), str);
+        if (gst_tag_list_get_string (tags, GST_TAG_ARTIST, &str))
+          gtk_label_set_text (GTK_LABEL (data->lbl_info), g_strdup_printf ("%s - %s",
+            str, gtk_label_get_text (GTK_LABEL (data->lbl_info))));
+        g_free(str);
+      }
       gst_tag_list_free (tags);
     }
   }
@@ -445,6 +539,7 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 
   /* Create the GUI */
   main_window = create_ui (ParentWin, data);
+  gtk_label_set_text (GTK_LABEL (data->lbl_info), g_path_get_basename (FileToLoad));
 
   /* Instruct the bus to emit signals for each received message, and connect to the interesting signals */
   bus = gst_element_get_bus (data->playbin);
@@ -469,8 +564,11 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 
   /* Register a function that GLib will call every second */
   data->timer = g_timeout_add_seconds (1, (GSourceFunc)refresh_ui, data);
+  mute_cb (GTK_TOOL_ITEM (data->btn_mute), data);
 
-  g_object_set_data(G_OBJECT(main_window), "custom-data", data);
+  g_object_set_data (G_OBJECT (main_window), "custom-data", data);
+  g_signal_connect (G_OBJECT (main_window), "key_press_event", G_CALLBACK (on_key_press), (gpointer)data);
+  g_signal_connect (G_OBJECT (data->notebook), "key_press_event", G_CALLBACK (on_key_press), (gpointer)data);
 
   return main_window;
 }
@@ -493,20 +591,20 @@ int DCPCALL ListLoadNext(HWND ParentWin, HWND PluginWin, char* FileToLoad, int S
   gchar *fileUri;
   CustomData *data;
   GstStateChangeReturn ret;
-  gdouble volume;
 
   data = (CustomData *)g_object_get_data(G_OBJECT(PluginWin), "custom-data");
   gtk_range_set_value (GTK_RANGE (data->slider), 0);
   data->duration = GST_CLOCK_TIME_NONE;
   gst_element_set_state (data->playbin, GST_STATE_READY);
-  g_object_get (data->playbin, "volume", &volume, NULL);
-  gtk_range_set_value (GTK_RANGE (data->volume_slider), volume);
 
   fileUri = g_filename_to_uri(FileToLoad, NULL, NULL);
   g_object_set (data->playbin, "uri", fileUri, NULL);
+  gtk_label_set_text (GTK_LABEL (data->lbl_info), g_path_get_basename (FileToLoad));
+
   if (fileUri) g_free(fileUri);
 
   ret = gst_element_set_state (data->playbin, GST_STATE_PLAYING);
+  mute_cb (GTK_TOOL_ITEM (data->btn_mute), data);
   return (ret != GST_STATE_CHANGE_FAILURE) ? (LISTPLUGIN_OK) : (LISTPLUGIN_ERROR);
 }
 
@@ -524,6 +622,7 @@ int DCPCALL ListSearchText(HWND ListWin, char* SearchString, int SearchParameter
   gboolean found;
 
   data = (CustomData *)g_object_get_data (G_OBJECT (ListWin), "custom-data");
+  gtk_notebook_set_current_page (GTK_NOTEBOOK (data->notebook), 1);
   text = gtk_text_view_get_buffer (GTK_TEXT_VIEW (data->streams_list));
   last_pos = gtk_text_buffer_get_mark (text, "last_pos");
 
