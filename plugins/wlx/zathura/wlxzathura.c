@@ -97,6 +97,9 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	g_free(command);
 	g_signal_connect(zathura, "plug-added", G_CALLBACK(plug_added), (gpointer)wspin);
 
+	if (g_strcmp0(gtk_window_get_title(GTK_WINDOW(gtk_widget_get_toplevel(GTK_WIDGET(ParentWin)))), FileToLoad) != 0)
+		gtk_widget_set_state(zathura, GTK_STATE_INSENSITIVE);
+
 	gtk_widget_show(gFix);
 
 	return gFix;

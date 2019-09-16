@@ -140,6 +140,18 @@ gboolean on_key_press(GtkWidget *widget, GdkEventKey *event, CustomData *data)
         gtk_toggle_tool_button_set_active (GTK_TOGGLE_TOOL_BUTTON (data->btn_loop), TRUE);
       return TRUE;
 
+    case GDK_KEY_Left:
+      value = gtk_range_get_value (GTK_RANGE (data->slider));
+      value = value - 1;
+      gtk_range_set_value (GTK_RANGE (data->slider), value);
+      return TRUE;
+
+    case GDK_KEY_Right:
+      value = gtk_range_get_value (GTK_RANGE (data->slider));
+      value = value + 1;
+      gtk_range_set_value (GTK_RANGE (data->slider), value);
+      return TRUE;
+
     case GDK_KEY_equal:
       value = gtk_range_get_value (GTK_RANGE (data->volume_slider));
       value = value + 0.05;
@@ -213,6 +225,7 @@ static GtkWidget *create_ui (HWND ParentWin, CustomData *data) {
   GtkWidget *controls;     /* HBox to hold the buttons and the slider */
   GtkToolItem *play_button, *pause_button, *stop_button; /* Buttons */
   GtkWidget *scroll_window;
+  GdkColor color;
 
   main_window = gtk_vbox_new (FALSE, 0);
   gtk_container_add(GTK_CONTAINER((GtkWidget *)(ParentWin)), main_window);
@@ -221,6 +234,8 @@ static GtkWidget *create_ui (HWND ParentWin, CustomData *data) {
   video_window = gtk_drawing_area_new ();
   gtk_widget_set_double_buffered (video_window, FALSE);
   gtk_widget_add_events (video_window, GDK_BUTTON_PRESS_MASK);
+  gdk_color_parse ("black", &color);
+  gtk_widget_modify_bg (video_window, GTK_STATE_NORMAL, &color);
   g_signal_connect (video_window, "realize", G_CALLBACK (realize_cb), data);
   g_signal_connect (video_window, "expose_event", G_CALLBACK (expose_cb), data);
   g_signal_connect (G_OBJECT (video_window), "button_press_event", G_CALLBACK (playpause_cb), data);
@@ -246,9 +261,11 @@ static GtkWidget *create_ui (HWND ParentWin, CustomData *data) {
 
   data->slider = gtk_hscale_new_with_range (0, 100, 1);
   gtk_scale_set_draw_value (GTK_SCALE (data->slider), 0);
+  gtk_widget_set_can_focus (data->slider, FALSE);
   data->slider_update_signal_id = g_signal_connect (G_OBJECT (data->slider), "value-changed", G_CALLBACK (slider_cb), data);
 
   data->volume_slider = gtk_hscale_new_with_range (0, 1, 0.05);
+  gtk_widget_set_can_focus (data->volume_slider, FALSE);
   gtk_scale_set_draw_value (GTK_SCALE (data->volume_slider), 0);
   gtk_widget_set_size_request(data->volume_slider, 100, -1);
   g_signal_connect (G_OBJECT (data->volume_slider), "value-changed", G_CALLBACK (volume_cb), data);
