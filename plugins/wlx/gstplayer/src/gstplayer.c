@@ -31,8 +31,10 @@ typedef struct _CustomData {
   gulong slider_update_signal_id; /* Signal ID for the slider update signal */
 
   GtkWidget *volume_slider;
+  GtkToolItem *btn_play;
   GtkToolItem *btn_loop;
   GtkToolItem *btn_mute;
+  GtkToolItem *btn_info;
   GtkWidget *notebook;
   GtkWidget *lbl_info;
 
@@ -71,18 +73,6 @@ static void realize_cb (GtkWidget *widget, CustomData *data) {
   gst_video_overlay_set_window_handle (GST_VIDEO_OVERLAY (data->playbin), window_handle);
 }
 
-static gboolean playpause_cb (GtkWidget *widget, GdkEventButton *event, CustomData *data) {
-  GstState state;
-  gst_element_get_state (data->playbin, &state, NULL, GST_CLOCK_TIME_NONE);
-
-  if (state == GST_STATE_PLAYING)
-    gst_element_set_state (data->playbin, GST_STATE_PAUSED);
-  else
-    gst_element_set_state (data->playbin, GST_STATE_PLAYING);
-
-  return TRUE;
-}
-
 static void volume_cb (GtkRange *range, CustomData *data) {
   gdouble value = gtk_range_get_value (range);
 
@@ -111,8 +101,27 @@ static void mute_cb (GtkToolItem *btn_mute, CustomData *data) {
   }
 }
 
-gboolean on_key_press(GtkWidget *widget, GdkEventKey *event, CustomData *data)
-{
+static void info_cb (GtkToolItem *btn_info, CustomData *data) {
+  if (gtk_toggle_tool_button_get_active (GTK_TOGGLE_TOOL_BUTTON (btn_info))) {
+    gtk_notebook_set_current_page (GTK_NOTEBOOK (data->notebook), 1);
+  } else {
+    gtk_notebook_set_current_page (GTK_NOTEBOOK (data->notebook), 0);
+  }
+}
+
+static void playpause_cb (GtkButton *button, CustomData *data) {
+  if (data->state == GST_STATE_PLAYING)
+    gst_element_set_state (data->playbin, GST_STATE_PAUSED);
+  else
+    gst_element_set_state (data->playbin, GST_STATE_PLAYING);
+}
+
+static gboolean on_button_press (GtkWidget *widget, GdkEventButton *event, CustomData *data) {
+  playpause_cb (NULL, data);
+  return TRUE;
+}
+
+gboolean on_key_press(GtkWidget *widget, GdkEventKey *event, CustomData *data) {
   gdouble value;
   switch (event->keyval) {
     case GDK_KEY_m:
@@ -123,14 +132,14 @@ gboolean on_key_press(GtkWidget *widget, GdkEventKey *event, CustomData *data)
       return TRUE;
 
     case GDK_KEY_space:
-      playpause_cb (NULL, NULL, data);
+      playpause_cb (NULL, data);
       return TRUE;
 
     case GDK_KEY_i:
-      if (gtk_notebook_get_current_page (GTK_NOTEBOOK (data->notebook)) > 0)
-        gtk_notebook_set_current_page (GTK_NOTEBOOK (data->notebook), 0);
+      if (gtk_toggle_tool_button_get_active (GTK_TOGGLE_TOOL_BUTTON (data->btn_info)))
+        gtk_toggle_tool_button_set_active (GTK_TOGGLE_TOOL_BUTTON (data->btn_info), FALSE);
       else
-        gtk_notebook_set_current_page (GTK_NOTEBOOK (data->notebook), 1);
+        gtk_toggle_tool_button_set_active (GTK_TOGGLE_TOOL_BUTTON (data->btn_info), TRUE);
       return TRUE;
 
     case GDK_KEY_r:
@@ -168,15 +177,17 @@ gboolean on_key_press(GtkWidget *widget, GdkEventKey *event, CustomData *data)
 }
 
 /* This function is called when the PLAY button is clicked */
+/*
 static void play_cb (GtkButton *button, CustomData *data) {
   gst_element_set_state (data->playbin, GST_STATE_PLAYING);
 }
-
+*/
 /* This function is called when the PAUSE button is clicked */
+/*
 static void pause_cb (GtkButton *button, CustomData *data) {
   gst_element_set_state (data->playbin, GST_STATE_PAUSED);
 }
-
+*/
 /* This function is called when the STOP button is clicked */
 static void stop_cb (GtkButton *button, CustomData *data) {
   gst_element_set_state (data->playbin, GST_STATE_READY);
@@ -223,7 +234,8 @@ static GtkWidget *create_ui (HWND ParentWin, CustomData *data) {
   GtkWidget *video_window; /* The drawing area where the video will be shown */
   GtkWidget *main_box;     /* VBox to hold main_hbox and the controls */
   GtkWidget *controls;     /* HBox to hold the buttons and the slider */
-  GtkToolItem *play_button, *pause_button, *stop_button; /* Buttons */
+  //GtkToolItem *play_button, *pause_button, *stop_button; /* Buttons */
+  GtkToolItem *stop_button;
   GtkWidget *scroll_window;
   GdkColor color;
 
@@ -238,14 +250,18 @@ static GtkWidget *create_ui (HWND ParentWin, CustomData *data) {
   gtk_widget_modify_bg (video_window, GTK_STATE_NORMAL, &color);
   g_signal_connect (video_window, "realize", G_CALLBACK (realize_cb), data);
   g_signal_connect (video_window, "expose_event", G_CALLBACK (expose_cb), data);
-  g_signal_connect (G_OBJECT (video_window), "button_press_event", G_CALLBACK (playpause_cb), data);
+  g_signal_connect (G_OBJECT (video_window), "button_press_event", G_CALLBACK (on_button_press), data);
 
+  data->btn_play = gtk_tool_button_new (NULL, NULL);
+  gtk_tool_button_set_icon_name (GTK_TOOL_BUTTON (data->btn_play), "media-playback-start");
+  g_signal_connect (G_OBJECT (data->btn_play), "clicked", G_CALLBACK (playpause_cb), data);
+/*
   play_button = gtk_tool_button_new_from_stock (GTK_STOCK_MEDIA_PLAY);
   g_signal_connect (G_OBJECT (play_button), "clicked", G_CALLBACK (play_cb), data);
 
   pause_button = gtk_tool_button_new_from_stock (GTK_STOCK_MEDIA_PAUSE);
   g_signal_connect (G_OBJECT (pause_button), "clicked", G_CALLBACK (pause_cb), data);
-
+*/
   stop_button = gtk_tool_button_new_from_stock (GTK_STOCK_MEDIA_STOP);
   g_signal_connect (G_OBJECT (stop_button), "clicked", G_CALLBACK (stop_cb), data);
 
@@ -256,6 +272,10 @@ static GtkWidget *create_ui (HWND ParentWin, CustomData *data) {
   data->btn_mute = gtk_toggle_tool_button_new ();
   gtk_tool_button_set_icon_name(GTK_TOOL_BUTTON (data->btn_mute), "audio-volume-high");
   g_signal_connect (G_OBJECT (data->btn_mute), "clicked", G_CALLBACK (mute_cb), data);
+
+  data->btn_info = gtk_toggle_tool_button_new ();
+  gtk_tool_button_set_icon_name (GTK_TOOL_BUTTON (data->btn_info), "dialog-information");
+  g_signal_connect (G_OBJECT (data->btn_info), "clicked", G_CALLBACK (info_cb), data);
 
   data->lbl_info = gtk_label_new (NULL);
 
@@ -280,11 +300,15 @@ static GtkWidget *create_ui (HWND ParentWin, CustomData *data) {
   gtk_container_add (GTK_CONTAINER (scroll_window), data->streams_list);
 
   controls = gtk_hbox_new (FALSE, 0);
+  gtk_box_pack_start (GTK_BOX (controls), GTK_WIDGET (data->btn_play), FALSE, FALSE, 2);
+/*
   gtk_box_pack_start (GTK_BOX (controls), GTK_WIDGET (play_button), FALSE, FALSE, 2);
   gtk_box_pack_start (GTK_BOX (controls), GTK_WIDGET (pause_button), FALSE, FALSE, 2);
+*/
   gtk_box_pack_start (GTK_BOX (controls), GTK_WIDGET (stop_button), FALSE, FALSE, 2);
   gtk_box_pack_start (GTK_BOX (controls), GTK_WIDGET (data->btn_loop), FALSE, FALSE, 2);
-  gtk_box_pack_start (GTK_BOX (controls), GTK_WIDGET (data->lbl_info), TRUE, TRUE, 2);
+  gtk_box_pack_start (GTK_BOX (controls), GTK_WIDGET (data->btn_info), FALSE, FALSE, 2);
+  //gtk_box_pack_start (GTK_BOX (controls), GTK_WIDGET (data->lbl_info), TRUE, TRUE, 2);
   gtk_box_pack_end (GTK_BOX (controls), data->volume_slider, FALSE, TRUE, 2);
   gtk_box_pack_end (GTK_BOX (controls), GTK_WIDGET (data->btn_mute), FALSE, TRUE, 2);
 
@@ -292,9 +316,11 @@ static GtkWidget *create_ui (HWND ParentWin, CustomData *data) {
   gtk_notebook_append_page (GTK_NOTEBOOK (data->notebook), video_window, NULL);
   gtk_notebook_append_page (GTK_NOTEBOOK (data->notebook), scroll_window, NULL);
   gtk_notebook_set_tab_pos (GTK_NOTEBOOK (data->notebook), GTK_POS_BOTTOM);
+  gtk_notebook_set_show_tabs (GTK_NOTEBOOK (data->notebook), FALSE);
 
   main_box = gtk_vbox_new (FALSE, 0);
   gtk_box_pack_start (GTK_BOX (main_box), data->notebook, TRUE, TRUE, 0);
+  gtk_box_pack_start (GTK_BOX (main_box), GTK_WIDGET (data->lbl_info), FALSE, TRUE, 4);
   gtk_box_pack_start (GTK_BOX (main_box), data->slider, FALSE, TRUE, 0);
   gtk_box_pack_start (GTK_BOX (main_box), controls, FALSE, FALSE, 0);
   gtk_container_add (GTK_CONTAINER (main_window), main_box);
@@ -382,6 +408,11 @@ static void state_changed_cb (GstBus *bus, GstMessage *msg, CustomData *data) {
   if (GST_MESSAGE_SRC (msg) == GST_OBJECT (data->playbin)) {
     data->state = new_state;
     //g_print ("State set to %s\n", gst_element_state_get_name (new_state));
+    if (data->state == GST_STATE_PLAYING)
+      gtk_tool_button_set_icon_name (GTK_TOOL_BUTTON (data->btn_play), "media-playback-pause");
+    else
+      gtk_tool_button_set_icon_name (GTK_TOOL_BUTTON (data->btn_play), "media-playback-start");
+
     if (old_state == GST_STATE_READY && new_state == GST_STATE_PAUSED) {
       /* For extra responsiveness, we refresh the GUI as soon as we reach the PAUSED state */
       refresh_ui (data);
@@ -639,7 +670,7 @@ int DCPCALL ListSearchText(HWND ListWin, char* SearchString, int SearchParameter
   gboolean found;
 
   data = (CustomData *)g_object_get_data (G_OBJECT (ListWin), "custom-data");
-  gtk_notebook_set_current_page (GTK_NOTEBOOK (data->notebook), 1);
+  gtk_toggle_tool_button_set_active (GTK_TOGGLE_TOOL_BUTTON (data->btn_info), TRUE);
   text = gtk_text_view_get_buffer (GTK_TEXT_VIEW (data->streams_list));
   last_pos = gtk_text_buffer_get_mark (text, "last_pos");
 
