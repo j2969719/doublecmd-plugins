@@ -408,6 +408,9 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 
 			archive_entry_set_pathname(entry, pkfile);
 			archive_write_header(a, entry);
+
+			if (gProcessDataProc(infile, st.st_size) == 0)
+				result = E_EABORTED;
 		}
 		else
 		{
