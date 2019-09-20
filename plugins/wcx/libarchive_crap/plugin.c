@@ -402,6 +402,8 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 					link[len] = '\0';
 					archive_entry_set_symlink(entry, link);
 				}
+				else
+					archive_entry_set_symlink(entry, "");
 			}
 
 			archive_entry_set_pathname(entry, pkfile);
