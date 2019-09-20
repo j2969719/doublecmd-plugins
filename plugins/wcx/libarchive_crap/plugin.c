@@ -14,6 +14,8 @@
 #include <fcntl.h>
 #include <libgen.h>
 #include <errno.h>
+#include <pwd.h>
+#include <grp.h>
 
 #define errmsg(msg) gStartupInfo->MessageBox((char*)msg, NULL, MB_OK | MB_ICONERROR);
 
@@ -89,12 +91,24 @@ int DCPCALL ReadHeader(HANDLE hArcData, tHeaderData *HeaderData)
 
 int DCPCALL ReadHeaderEx(HANDLE hArcData, tHeaderDataEx *HeaderDataEx)
 {
+	int ret;
 	int64_t size;
 	memset(HeaderDataEx, 0, sizeof(HeaderDataEx));
 	ArcData handle = (ArcData)hArcData;
 
-	if (archive_read_next_header(handle->archive, &handle->entry) == ARCHIVE_OK)
+	ret = archive_read_next_header(handle->archive, &handle->entry);
+
+	if (ret == ARCHIVE_FATAL || ret == ARCHIVE_RETRY)
 	{
+		errmsg(archive_error_string(handle->archive));
+		return E_EABORTED;
+	}
+
+	if (ret != ARCHIVE_EOF)
+	{
+		if (ret == ARCHIVE_WARN)
+			printf("libarchive: %s\n", archive_error_string(handle->archive));
+
 		if (archive_format(handle->archive) == ARCHIVE_FORMAT_RAW)
 		{
 			char *filename = basename(handle->arcname);
@@ -245,7 +259,11 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 	ssize_t len;
 	char infile[PATH_MAX];
 	char pkfile[PATH_MAX];
+	char link[PATH_MAX + 1];
 	int result = E_SUCCESS;
+
+	struct passwd *pw;
+	struct group  *gr;
 
 	if (access(PackedFile, F_OK) != -1)
 		return E_NOT_SUPPORTED;
@@ -357,46 +375,78 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 				strcpy(pos + 1, AddList);
 		}
 
-		lstat(infile, &st);
-
-		entry = archive_entry_new();
-
-		fd = open(infile, O_RDONLY);
-
-		if (fd != -1)
-		{
-			archive_entry_set_pathname(entry, infile);
-			archive_entry_copy_stat(entry, &st);
-			archive_read_disk_entry_from_file(disk, entry, fd, &st);
-			archive_entry_set_pathname(entry, pkfile);
-			archive_write_header(a, entry);
-
-			while ((len = read(fd, buff, sizeof(buff))) > 0)
-			{
-				if (archive_write_data(a, buff, len) < ARCHIVE_OK)
-				{
-					errmsg(archive_error_string(a));
-					result = E_EWRITE;
-					break;
-				}
-
-				if (gProcessDataProc(infile, len) == 0)
-				{
-					result = E_EABORTED;
-					break;
-				}
-			}
-
-			close(fd);
-		}
-		else
+		if (lstat(infile, &st) != 0)
 		{
 			int errsv = errno;
 			char *msg;
 			asprintf(&msg, "%s: %s", infile, strerror(errsv));
 			errmsg(msg);
 			free(msg);
-			//result = E_EREAD;
+			result = E_EREAD;
+		}
+
+		entry = archive_entry_new();
+
+		if (strcmp(ext, ".mtree") == 0)
+		{
+			archive_entry_copy_stat(entry, &st);
+			pw = getpwuid(st.st_uid);
+			gr = getgrgid(st.st_gid);
+			archive_entry_set_gname(entry, gr->gr_name);
+			archive_entry_set_uname(entry, pw->pw_name);
+
+			if (S_ISLNK(st.st_mode))
+			{
+				if ((len = readlink(pkfile, link, sizeof(link)-1)) != -1)
+				{
+					link[len] = '\0';
+					archive_entry_set_symlink(entry, link);
+				}
+			}
+
+			archive_entry_set_pathname(entry, pkfile);
+			archive_write_header(a, entry);
+		}
+		else
+		{
+
+			fd = open(infile, O_RDONLY);
+
+			if (fd != -1)
+			{
+				archive_entry_set_pathname(entry, infile);
+				archive_entry_copy_stat(entry, &st);
+				archive_read_disk_entry_from_file(disk, entry, fd, &st);
+				archive_entry_set_pathname(entry, pkfile);
+				archive_write_header(a, entry);
+
+				while ((len = read(fd, buff, sizeof(buff))) > 0)
+				{
+					if (archive_write_data(a, buff, len) < ARCHIVE_OK)
+					{
+						errmsg(archive_error_string(a));
+						result = E_EWRITE;
+						break;
+					}
+
+					if (gProcessDataProc(infile, len) == 0)
+					{
+						result = E_EABORTED;
+						break;
+					}
+				}
+
+				close(fd);
+			}
+			else
+			{
+				int errsv = errno;
+				char *msg;
+				asprintf(&msg, "%s: %s", infile, strerror(errsv));
+				errmsg(msg);
+				free(msg);
+				//result = E_EREAD;
+			}
 		}
 
 		if (result != E_SUCCESS)
