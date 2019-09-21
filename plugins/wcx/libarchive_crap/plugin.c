@@ -389,73 +389,80 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 			free(msg);
 			result = E_EREAD;
 		}
-
-		entry = archive_entry_new();
-
-		if (strcmp(ext, ".mtree") == 0)
-		{
-			archive_entry_copy_stat(entry, &st);
-			pw = getpwuid(st.st_uid);
-			gr = getgrgid(st.st_gid);
-			archive_entry_set_gname(entry, gr->gr_name);
-			archive_entry_set_uname(entry, pw->pw_name);
-
-			if (S_ISLNK(st.st_mode))
-			{
-				if ((len = readlink(pkfile, link, sizeof(link) - 1)) != -1)
-				{
-					link[len] = '\0';
-					archive_entry_set_symlink(entry, link);
-				}
-				else
-					archive_entry_set_symlink(entry, "");
-			}
-
-			archive_entry_set_pathname(entry, pkfile);
-			archive_write_header(a, entry);
-
-			if (gProcessDataProc(infile, st.st_size) == 0)
-				result = E_EABORTED;
-		}
 		else
 		{
 
-			fd = open(infile, O_RDONLY);
+			entry = archive_entry_new();
 
-			if (fd != -1)
+			if (strcmp(ext, ".mtree") == 0)
 			{
-				archive_entry_set_pathname(entry, infile);
 				archive_entry_copy_stat(entry, &st);
-				archive_read_disk_entry_from_file(disk, entry, fd, &st);
+				pw = getpwuid(st.st_uid);
+				gr = getgrgid(st.st_gid);
+
+				if (gr)
+					archive_entry_set_gname(entry, gr->gr_name);
+
+				if (pw)
+					archive_entry_set_uname(entry, pw->pw_name);
+
+				if (S_ISLNK(st.st_mode))
+				{
+					if ((len = readlink(pkfile, link, sizeof(link) - 1)) != -1)
+					{
+						link[len] = '\0';
+						archive_entry_set_symlink(entry, link);
+					}
+					else
+						archive_entry_set_symlink(entry, "");
+				}
+
 				archive_entry_set_pathname(entry, pkfile);
 				archive_write_header(a, entry);
 
-				while ((len = read(fd, buff, sizeof(buff))) > 0)
-				{
-					if (archive_write_data(a, buff, len) < ARCHIVE_OK)
-					{
-						errmsg(archive_error_string(a));
-						result = E_EWRITE;
-						break;
-					}
-
-					if (gProcessDataProc(infile, len) == 0)
-					{
-						result = E_EABORTED;
-						break;
-					}
-				}
-
-				close(fd);
+				if (gProcessDataProc(infile, st.st_size) == 0)
+					result = E_EABORTED;
 			}
 			else
 			{
-				int errsv = errno;
-				char *msg;
-				asprintf(&msg, "%s: %s", infile, strerror(errsv));
-				errmsg(msg);
-				free(msg);
-				//result = E_EREAD;
+
+				fd = open(infile, O_RDONLY);
+
+				if (fd != -1)
+				{
+					archive_entry_set_pathname(entry, infile);
+					archive_entry_copy_stat(entry, &st);
+					archive_read_disk_entry_from_file(disk, entry, fd, &st);
+					archive_entry_set_pathname(entry, pkfile);
+					archive_write_header(a, entry);
+
+					while ((len = read(fd, buff, sizeof(buff))) > 0)
+					{
+						if (archive_write_data(a, buff, len) < ARCHIVE_OK)
+						{
+							errmsg(archive_error_string(a));
+							result = E_EWRITE;
+							break;
+						}
+
+						if (gProcessDataProc(infile, len) == 0)
+						{
+							result = E_EABORTED;
+							break;
+						}
+					}
+
+					close(fd);
+				}
+				else
+				{
+					int errsv = errno;
+					char *msg;
+					asprintf(&msg, "%s: %s", infile, strerror(errsv));
+					errmsg(msg);
+					free(msg);
+					//result = E_EREAD;
+				}
 			}
 		}
 

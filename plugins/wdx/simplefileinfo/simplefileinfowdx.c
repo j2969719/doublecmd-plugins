@@ -230,7 +230,11 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 		break;
 
 	case 6:
-		strncpy((char*)FieldValue, pw->pw_name, maxlen - 1);
+		if (pw)
+			strncpy((char*)FieldValue, pw->pw_name, maxlen - 1);
+		else
+			return ft_fieldempty;
+
 		break;
 
 	case 7:
@@ -238,7 +242,11 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 		break;
 
 	case 8:
-		strncpy((char*)FieldValue, gr->gr_name, maxlen - 1);
+		if (gr)
+			strncpy((char*)FieldValue, gr->gr_name, maxlen - 1);
+		else
+			return ft_fieldempty;
+
 		break;
 
 	case 9:
