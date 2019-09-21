@@ -96,12 +96,17 @@ int DCPCALL ReadHeaderEx(HANDLE hArcData, tHeaderDataEx *HeaderDataEx)
 	memset(HeaderDataEx, 0, sizeof(HeaderDataEx));
 	ArcData handle = (ArcData)hArcData;
 
-	ret = archive_read_next_header(handle->archive, &handle->entry);
+	while ((ret = archive_read_next_header(handle->archive, &handle->entry)) == ARCHIVE_RETRY)
+	{
+		if (gStartupInfo->MessageBox((char*)archive_error_string(handle->archive), NULL,
+		                             MB_RETRYCANCEL | MB_ICONWARNING) == ID_CANCEL)
+			return E_EABORTED;
+	}
 
-	if (ret == ARCHIVE_FATAL || ret == ARCHIVE_RETRY)
+	if (ret == ARCHIVE_FATAL)
 	{
 		errmsg(archive_error_string(handle->archive));
-		return E_EABORTED;
+		return E_BAD_ARCHIVE;
 	}
 
 	if (ret != ARCHIVE_EOF)
@@ -397,7 +402,7 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 
 			if (S_ISLNK(st.st_mode))
 			{
-				if ((len = readlink(pkfile, link, sizeof(link)-1)) != -1)
+				if ((len = readlink(pkfile, link, sizeof(link) - 1)) != -1)
 				{
 					link[len] = '\0';
 					archive_entry_set_symlink(entry, link);
