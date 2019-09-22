@@ -260,7 +260,7 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 	struct archive_entry *entry;
 	struct stat st;
 	char buff[8192];
-	int fd, ret;
+	int fd, ret, id;
 	ssize_t len;
 	char infile[PATH_MAX];
 	char pkfile[PATH_MAX];
@@ -380,20 +380,25 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 				strcpy(pos + 1, AddList);
 		}
 
-		if (lstat(infile, &st) != 0)
+		while ((ret = lstat(infile, &st)) != 0)
 		{
 			int errsv = errno;
 			char *msg;
 			asprintf(&msg, "%s: %s", infile, strerror(errsv));
 
-			if (gStartupInfo->MessageBox(msg, NULL,
-			                             MB_OKCANCEL | MB_ICONERROR) == ID_CANCEL)
-				result = E_EREAD;
+			id = gStartupInfo->MessageBox(msg, NULL,
+			                               MB_ABORTRETRYIGNORE | MB_ICONERROR);
+
+			if (id == ID_ABORT)
+				result = E_EABORTED;
 
 			free(msg);
 
+			if (id != ID_RETRY)
+				break;
 		}
-		else
+
+		if (ret == 0)
 		{
 
 			entry = archive_entry_new();
@@ -430,7 +435,23 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 			else
 			{
 
-				fd = open(infile, O_RDONLY);
+				while ((fd = open(infile, O_RDONLY)) == -1)
+				{
+					int errsv = errno;
+					char *msg;
+					asprintf(&msg, "%s: %s", infile, strerror(errsv));
+
+					id = gStartupInfo->MessageBox(msg, NULL,
+					                               MB_ABORTRETRYIGNORE | MB_ICONERROR);
+
+					if (id == ID_ABORT)
+						result = E_EABORTED;
+
+					free(msg);
+
+					if (id != ID_RETRY)
+						break;
+				}
 
 				if (fd != -1)
 				{
@@ -457,18 +478,6 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 					}
 
 					close(fd);
-				}
-				else
-				{
-					int errsv = errno;
-					char *msg;
-					asprintf(&msg, "%s: %s", infile, strerror(errsv));
-
-					if (gStartupInfo->MessageBox(msg, NULL,
-					                             MB_OKCANCEL | MB_ICONERROR) == ID_CANCEL)
-						result = E_EREAD;
-
-					free(msg);
 				}
 			}
 		}
