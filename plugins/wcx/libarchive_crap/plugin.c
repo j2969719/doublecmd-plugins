@@ -290,6 +290,7 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 	else if (strcmp(ext, ".mtree") == 0)
 	{
 		ret = archive_write_set_format_mtree(a);
+		//ret = archive_write_set_format_mtree_classic(a);
 	}
 	else if (strcmp(ext, ".lz4") == 0)
 	{
@@ -355,7 +356,16 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 		errmsg(archive_error_string(a));
 	}
 
-	archive_write_open_filename(a, PackedFile);
+	archive_write_set_passphrase_callback(a, NULL, archive_password_cb);
+
+	if (Flags & PK_PACK_ENCRYPT)
+		// zip: traditional, aes128, aes256
+		if (archive_write_set_options(a, "encryption=traditional") < ARCHIVE_OK)
+			errmsg(archive_error_string(a));
+
+	if (archive_write_open_filename(a, PackedFile) < ARCHIVE_OK)
+		errmsg(archive_error_string(a));
+
 	struct archive *disk = archive_read_disk_new();
 	archive_read_disk_set_standard_lookup(disk);
 	archive_read_disk_set_symlink_physical(disk);
