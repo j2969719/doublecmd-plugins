@@ -385,9 +385,13 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 			int errsv = errno;
 			char *msg;
 			asprintf(&msg, "%s: %s", infile, strerror(errsv));
-			errmsg(msg);
+
+			if (gStartupInfo->MessageBox(msg, NULL,
+			                             MB_OKCANCEL | MB_ICONERROR) == ID_CANCEL)
+				result = E_EREAD;
+
 			free(msg);
-			result = E_EREAD;
+
 		}
 		else
 		{
@@ -459,9 +463,12 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 					int errsv = errno;
 					char *msg;
 					asprintf(&msg, "%s: %s", infile, strerror(errsv));
-					errmsg(msg);
+
+					if (gStartupInfo->MessageBox(msg, NULL,
+					                             MB_OKCANCEL | MB_ICONERROR) == ID_CANCEL)
+						result = E_EREAD;
+
 					free(msg);
-					//result = E_EREAD;
 				}
 			}
 		}
