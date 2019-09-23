@@ -67,8 +67,6 @@ static bool mtree_opts_nodata(void)
 			result = false;
 		else if (strstr(options, "md5") != NULL)
 			result = false;
-		else if (strstr(options, "flags") != NULL)
-			result = false;
 		else if (strstr(options, "rmd160") != NULL)
 			result = false;
 		else if (strstr(options, "sha1") != NULL)
