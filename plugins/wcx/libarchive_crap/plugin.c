@@ -16,8 +16,8 @@
 #include <errno.h>
 #include <pwd.h>
 #include <grp.h>
-
-#define errmsg(msg) gStartupInfo->MessageBox((char*)msg, NULL, MB_OK | MB_ICONERROR);
+#include <sys/ioctl.h>
+#include <linux/fs.h>
 
 typedef struct sArcData
 {
@@ -37,6 +37,7 @@ tProcessDataProc gProcessDataProc = NULL;
 tExtensionStartupInfo* gStartupInfo;
 
 static char options[PATH_MAX];
+static unsigned char lizard_magic[] = { 0x06, 0x22, 0x4D, 0x18 };
 
 void DCPCALL ExtensionInitialize(tExtensionStartupInfo* StartupInfo)
 {
@@ -47,6 +48,40 @@ void DCPCALL ExtensionInitialize(tExtensionStartupInfo* StartupInfo)
 void DCPCALL ExtensionFinalize(void* Reserved)
 {
 	free(gStartupInfo);
+}
+
+static int errmsg(const char *msg, long flags)
+{
+	return gStartupInfo->MessageBox(msg ? (char*)msg : "Unknown error", NULL, flags);
+}
+
+static bool mtree_opts_nodata(void)
+{
+	bool result = true;
+
+	if (options[0] != '\0')
+	{
+		if (strstr(options, "all") != NULL)
+			result = false;
+		else if (strstr(options, "cksum") != NULL)
+			result = false;
+		else if (strstr(options, "md5") != NULL)
+			result = false;
+		else if (strstr(options, "flags") != NULL)
+			result = false;
+		else if (strstr(options, "rmd160") != NULL)
+			result = false;
+		else if (strstr(options, "sha1") != NULL)
+			result = false;
+		else if (strstr(options, "sha256") != NULL)
+			result = false;
+		else if (strstr(options, "sha384") != NULL)
+			result = false;
+		else if (strstr(options, "sha512") != NULL)
+			result = false;
+	}
+
+	return result;
 }
 
 const char *archive_password_cb(struct archive *a, void *data)
@@ -67,9 +102,10 @@ HANDLE DCPCALL OpenArchive(tOpenArchiveData *ArchiveData)
 	handle->archive = archive_read_new();
 
 	if (archive_read_set_passphrase_callback(handle->archive, NULL, archive_password_cb) < ARCHIVE_OK)
-		errmsg(archive_error_string(handle->archive));
+		errmsg(archive_error_string(handle->archive), MB_OK | MB_ICONERROR);
 
 	archive_read_support_filter_all(handle->archive);
+	archive_read_support_filter_program_signature(handle->archive, "lizard -d", lizard_magic, sizeof(lizard_magic));
 	archive_read_support_format_raw(handle->archive);
 	archive_read_support_format_all(handle->archive);
 	strncpy(handle->arcname, ArchiveData->ArcName, PATH_MAX);
@@ -98,14 +134,14 @@ int DCPCALL ReadHeaderEx(HANDLE hArcData, tHeaderDataEx *HeaderDataEx)
 
 	while ((ret = archive_read_next_header(handle->archive, &handle->entry)) == ARCHIVE_RETRY)
 	{
-		if (gStartupInfo->MessageBox((char*)archive_error_string(handle->archive), NULL,
-		                             MB_RETRYCANCEL | MB_ICONWARNING) == ID_CANCEL)
+		if (errmsg(archive_error_string(handle->archive),
+		                MB_RETRYCANCEL | MB_ICONWARNING) == ID_CANCEL)
 			return E_EABORTED;
 	}
 
 	if (ret == ARCHIVE_FATAL)
 	{
-		errmsg(archive_error_string(handle->archive));
+		errmsg(archive_error_string(handle->archive), MB_OK | MB_ICONERROR);
 		return E_BAD_ARCHIVE;
 	}
 
@@ -170,7 +206,7 @@ int DCPCALL ProcessFile(HANDLE hArcData, int Operation, char *DestPath, char *De
 			{
 				//printf("%s\n", archive_error_string(hArcData->archive));
 				//result = E_EREAD;
-				errmsg(archive_error_string(handle->archive));
+				errmsg(archive_error_string(handle->archive), MB_OK | MB_ICONERROR);
 				result = E_EABORTED;
 				break;
 			}
@@ -178,7 +214,7 @@ int DCPCALL ProcessFile(HANDLE hArcData, int Operation, char *DestPath, char *De
 			{
 				//printf("%s\n", archive_error_string(a));
 				//result = E_EWRITE;
-				errmsg(archive_error_string(a));
+				errmsg(archive_error_string(a), MB_OK | MB_ICONERROR);
 				result = E_EABORTED;
 				break;
 			}
@@ -230,6 +266,7 @@ BOOL DCPCALL CanYouHandleThisFile(char *FileName)
 {
 	struct archive *a = archive_read_new();
 	archive_read_support_filter_all(a);
+	archive_read_support_filter_program_signature(a, "lizard -d", lizard_magic, sizeof(lizard_magic));
 	//archive_read_support_format_raw(a);
 	archive_read_support_format_all(a);
 	int r = archive_read_open_filename(a, FileName, 10240);
@@ -332,13 +369,17 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 		ret = archive_write_set_format_raw(a);
 		ret = archive_write_add_filter_uuencode(a);
 	}
+	else if (strcmp(ext, ".liz") == 0)
+	{
+		ret = archive_write_set_format_raw(a);
+		ret = archive_write_add_filter_program(a, "lizard");
+	}
 	else
 		ret = archive_write_set_format_filter_by_ext(a, PackedFile);
 
 	if (ret == ARCHIVE_WARN)
 	{
-		if (gStartupInfo->MessageBox((char*)archive_error_string(a),
-		                             NULL, MB_OKCANCEL | MB_ICONWARNING) == ID_CANCEL)
+		if (errmsg(archive_error_string(a), MB_OKCANCEL | MB_ICONWARNING) == ID_CANCEL)
 		{
 			archive_write_free(a);
 			return 0;
@@ -346,14 +387,14 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 	}
 	else if (ret < ARCHIVE_OK)
 	{
-		errmsg(archive_error_string(a));
+		errmsg(archive_error_string(a), MB_OK | MB_ICONERROR);
 		archive_write_free(a);
 		return 0;
 	}
 
 	if ((options[0] != '\0') && archive_write_set_options(a, options) < ARCHIVE_OK)
 	{
-		errmsg(archive_error_string(a));
+		errmsg(archive_error_string(a), MB_OK | MB_ICONERROR);
 	}
 
 	archive_write_set_passphrase_callback(a, NULL, archive_password_cb);
@@ -361,10 +402,10 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 	if (Flags & PK_PACK_ENCRYPT)
 		// zip: traditional, aes128, aes256
 		if (archive_write_set_options(a, "encryption=traditional") < ARCHIVE_OK)
-			errmsg(archive_error_string(a));
+			errmsg(archive_error_string(a), MB_OK | MB_ICONERROR);
 
 	if (archive_write_open_filename(a, PackedFile) < ARCHIVE_OK)
-		errmsg(archive_error_string(a));
+		errmsg(archive_error_string(a), MB_OK | MB_ICONERROR);
 
 	struct archive *disk = archive_read_disk_new();
 	archive_read_disk_set_standard_lookup(disk);
@@ -396,8 +437,7 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 			char *msg;
 			asprintf(&msg, "%s: %s", infile, strerror(errsv));
 
-			id = gStartupInfo->MessageBox(msg, NULL,
-			                               MB_ABORTRETRYIGNORE | MB_ICONERROR);
+			id = errmsg(msg, MB_ABORTRETRYIGNORE | MB_ICONERROR);
 
 			if (id == ID_ABORT)
 				result = E_EABORTED;
@@ -413,7 +453,7 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 
 			entry = archive_entry_new();
 
-			if (strcmp(ext, ".mtree") == 0)
+			if (strcmp(ext, ".mtree") == 0 && mtree_opts_nodata())
 			{
 				archive_entry_copy_stat(entry, &st);
 				pw = getpwuid(st.st_uid);
@@ -436,6 +476,31 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 						archive_entry_set_symlink(entry, "");
 				}
 
+				if ((options[0] == '\0') || (strstr(options, "!flags") == NULL))
+				{
+					int stflags;
+					if ((fd = open(infile, O_RDONLY)) == -1)
+					{
+						int errsv = errno;
+						printf("libarchive: %s: %s\n", infile, strerror(errsv));
+						/*
+						char *msg;
+						asprintf(&msg, "%s: %s", infile, strerror(errsv));
+						errmsg(msg,  MB_OK | MB_ICONWARNING);
+						free(msg);
+						*/
+					}
+
+					if (fd != -1)
+					{
+						ret = ioctl(fd, FS_IOC_GETFLAGS, &stflags);
+						if (ret == 0 && stflags != 0)
+							archive_entry_set_fflags(entry, stflags, 0);
+					}
+
+					close(fd);
+				}
+
 				archive_entry_set_pathname(entry, pkfile);
 				archive_write_header(a, entry);
 
@@ -451,8 +516,7 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 					char *msg;
 					asprintf(&msg, "%s: %s", infile, strerror(errsv));
 
-					id = gStartupInfo->MessageBox(msg, NULL,
-					                               MB_ABORTRETRYIGNORE | MB_ICONERROR);
+					id = errmsg(msg, MB_ABORTRETRYIGNORE | MB_ICONERROR | MB_DEFBUTTON3);
 
 					if (id == ID_ABORT)
 						result = E_EABORTED;
@@ -475,7 +539,7 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 					{
 						if (archive_write_data(a, buff, len) < ARCHIVE_OK)
 						{
-							errmsg(archive_error_string(a));
+							errmsg(archive_error_string(a), MB_OK | MB_ICONERROR);
 							result = E_EWRITE;
 							break;
 						}

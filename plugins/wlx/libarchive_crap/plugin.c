@@ -44,7 +44,7 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	struct archive *a;
 	struct archive_entry *entry;
 	int r;
-	gchar *info = "";
+	gchar *info = NULL;
 	gboolean symlinks = FALSE;
 	gboolean hardlinks = FALSE;
 	gboolean ownercolumn = FALSE;
@@ -85,7 +85,7 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	                           G_TYPE_STRING,
 	                           G_TYPE_STRING);
 
-	while (archive_read_next_header(a, &entry) == ARCHIVE_OK)
+	while ((r = archive_read_next_header(a, &entry)) == ARCHIVE_OK || r == ARCHIVE_WARN)
 	{
 		gtk_list_store_append(store, &iter);
 
@@ -129,27 +129,38 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 
 	}
 
-	int fc = archive_filter_count(a);
-	gchar *filters = NULL;
-
-	for (int i = 0; i < fc; i++)
+	if (r != ARCHIVE_EOF)
 	{
-		const char *fn = archive_filter_name(a, i);
-
-		if (strcmp(fn, "none") != 0)
-			if (filters)
-				filters = g_strdup_printf("%s, %s", filters, fn);
-			else
-				filters = g_strdup(fn);
+		info = g_strdup(archive_error_string(a));
+		info = g_strdup_printf("ERROR: %s", info ? info : "unknown error");
 	}
 
-	if (filters)
-		info = g_strdup_printf("%s (filter(s): %s), %d file(s)", archive_format_name(a), filters, archive_file_count(a));
-	else
-		info = g_strdup_printf("%s, %d file(s)",  archive_format_name(a), archive_file_count(a));
+	if (!info)
+	{
+		int fc = archive_filter_count(a);
+		gchar *filters = NULL;
 
-	if (filters)
-		g_free(filters);
+		for (int i = 0; i < fc; i++)
+		{
+			const char *fn = archive_filter_name(a, i);
+
+			if (strcmp(fn, "none") != 0)
+				if (filters)
+					filters = g_strdup_printf("%s, %s", filters, fn);
+				else
+					filters = g_strdup(fn);
+		}
+
+		if (filters)
+			info = g_strdup_printf("%s (filter(s): %s), %d file(s)", archive_format_name(a), filters, archive_file_count(a));
+		else
+			info = g_strdup_printf("%s, %d file(s)",  archive_format_name(a), archive_file_count(a));
+
+
+		if (filters)
+			g_free(filters);
+
+	}
 
 	archive_read_free(a);
 
