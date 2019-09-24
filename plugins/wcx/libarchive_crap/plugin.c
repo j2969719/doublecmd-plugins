@@ -202,7 +202,7 @@ int DCPCALL ProcessFile(HANDLE hArcData, int Operation, char *DestPath, char *De
 		{
 			if (ret < ARCHIVE_OK)
 			{
-				//printf("%s\n", archive_error_string(hArcData->archive));
+				//printf("libarchive: %s\n", archive_error_string(handle->archive));
 				//result = E_EREAD;
 				errmsg(archive_error_string(handle->archive), MB_OK | MB_ICONERROR);
 				result = E_EABORTED;
@@ -210,13 +210,13 @@ int DCPCALL ProcessFile(HANDLE hArcData, int Operation, char *DestPath, char *De
 			}
 			else if (archive_write_data_block(a, buff, size, offset) < ARCHIVE_OK)
 			{
-				//printf("%s\n", archive_error_string(a));
+				//printf("libarchive: %s\n", archive_error_string(a));
 				//result = E_EWRITE;
 				errmsg(archive_error_string(a), MB_OK | MB_ICONERROR);
 				result = E_EABORTED;
 				break;
 			}
-			else if (handle->gProcessDataProc(DestName, size) == 0)
+			else if (handle->gProcessDataProc && handle->gProcessDataProc(DestName, size) == 0)
 			{
 				result = E_EABORTED;
 				break;
@@ -377,11 +377,14 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 
 	if (ret == ARCHIVE_WARN)
 	{
+		printf("libarchive: %s\n", archive_error_string(a));
+		/*
 		if (errmsg(archive_error_string(a), MB_OKCANCEL | MB_ICONWARNING) == ID_CANCEL)
 		{
 			archive_write_free(a);
 			return 0;
 		}
+		*/
 	}
 	else if (ret < ARCHIVE_OK)
 	{
