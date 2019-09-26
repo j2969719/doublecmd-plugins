@@ -481,7 +481,7 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 				{
 					if (S_ISFIFO(st.st_mode))
 					{
-						asprintf(&msg, "%s: ignoring flags for named pipe, deal with it.", infile);
+						asprintf(&msg, "%s: ignoring flags for named pipe.", infile);
 						if (errmsg(msg, MB_OKCANCEL | MB_ICONWARNING) == ID_CANCEL)
 							result = E_EABORTED;
 						free(msg);
@@ -520,7 +520,7 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 			}
 			else if (S_ISFIFO(st.st_mode))
 			{
-				asprintf(&msg, "%s: ignoring named pipe, deal with it", infile);
+				asprintf(&msg, "%s: ignoring named pipe.", infile);
 				if (errmsg(msg, MB_OKCANCEL | MB_ICONWARNING) == ID_CANCEL)
 					result = E_EABORTED;
 				free(msg);
