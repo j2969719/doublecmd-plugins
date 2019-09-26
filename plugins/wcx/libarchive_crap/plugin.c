@@ -301,6 +301,7 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 	char pkfile[PATH_MAX];
 	char link[PATH_MAX + 1];
 	int result = E_SUCCESS;
+	char *msg;
 
 	struct passwd *pw;
 	struct group  *gr;
@@ -435,7 +436,6 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 		while ((ret = lstat(infile, &st)) != 0)
 		{
 			int errsv = errno;
-			char *msg;
 			asprintf(&msg, "%s: %s", infile, strerror(errsv));
 
 			id = errmsg(msg, MB_ABORTRETRYIGNORE | MB_ICONERROR);
@@ -479,27 +479,37 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 
 				if ((options[0] == '\0') || (strstr(options, "!flags") == NULL))
 				{
-					int stflags;
-					if ((fd = open(infile, O_RDONLY)) == -1)
+					if (S_ISFIFO(st.st_mode))
 					{
-						int errsv = errno;
-						printf("libarchive: %s: %s\n", infile, strerror(errsv));
-						/*
-						char *msg;
-						asprintf(&msg, "%s: %s", infile, strerror(errsv));
-						errmsg(msg,  MB_OK | MB_ICONWARNING);
+						asprintf(&msg, "%s: ignoring flags for named pipe, deal with it.", infile);
+						if (errmsg(msg, MB_OKCANCEL | MB_ICONWARNING) == ID_CANCEL)
+							result = E_EABORTED;
 						free(msg);
-						*/
 					}
-
-					if (fd != -1)
+					else
 					{
-						ret = ioctl(fd, FS_IOC_GETFLAGS, &stflags);
-						if (ret == 0 && stflags != 0)
-							archive_entry_set_fflags(entry, stflags, 0);
-					}
+						int stflags;
 
-					close(fd);
+						if ((fd = open(infile, O_RDONLY)) == -1)
+						{
+							int errsv = errno;
+							//printf("libarchive: %s: %s\n", infile, strerror(errsv));
+							asprintf(&msg, "%s: %s", infile, strerror(errsv));
+							if (errmsg(msg, MB_OKCANCEL | MB_ICONWARNING) == ID_CANCEL)
+								result = E_EABORTED;
+							free(msg);
+						}
+
+						if (fd != -1)
+						{
+							ret = ioctl(fd, FS_IOC_GETFLAGS, &stflags);
+
+							if (ret == 0 && stflags != 0)
+								archive_entry_set_fflags(entry, stflags, 0);
+						}
+
+						close(fd);
+					}
 				}
 
 				archive_entry_set_pathname(entry, pkfile);
@@ -508,13 +518,19 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 				if (gProcessDataProc(infile, st.st_size) == 0)
 					result = E_EABORTED;
 			}
+			else if (S_ISFIFO(st.st_mode))
+			{
+				asprintf(&msg, "%s: ignoring named pipe, deal with it", infile);
+				if (errmsg(msg, MB_OKCANCEL | MB_ICONWARNING) == ID_CANCEL)
+					result = E_EABORTED;
+				free(msg);
+			}
 			else
 			{
 
 				while ((fd = open(infile, O_RDONLY)) == -1)
 				{
 					int errsv = errno;
-					char *msg;
 					asprintf(&msg, "%s: %s", infile, strerror(errsv));
 
 					id = errmsg(msg, MB_ABORTRETRYIGNORE | MB_ICONERROR | MB_DEFBUTTON3);
