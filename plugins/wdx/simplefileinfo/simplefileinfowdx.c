@@ -2,6 +2,9 @@
 #include <stdlib.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <sys/ioctl.h>
+#include <linux/fs.h>
+#include <fcntl.h>
 #include <pwd.h>
 #include <grp.h>
 #include <errno.h>
@@ -21,16 +24,17 @@ typedef struct _field
 } FIELD;
 
 #define fieldcount (sizeof(fields)/sizeof(FIELD))
+#define iflags (FS_APPEND_FL|FS_COMPR_FL|FS_DIRSYNC_FL|FS_IMMUTABLE_FL|FS_JOURNAL_DATA_FL|FS_NOATIME_FL|FS_NOCOW_FL|FS_NODUMP_FL|FS_NOTAIL_FL|FS_PROJINHERIT_FL|FS_SECRM_FL|FS_SYNC_FL|FS_TOPDIR_FL|FS_UNRM_FL)
 
 #define info_units "default|fast|folow symlinks|uncompress|uncompress and folow symlinks|all matches"
-#define obj_units  "file|directory|character device|block device|named pipe|symlink|socket"
+#define flags_units  "GETFLAGS|APPEND|COMPR|DIRSYNC|IMMUTABLE|JOURNAL_DATA|NOATIME|NOCOW|NODUMP|NOTAIL|PROJINHERIT|SECRM|SYNC|TOPDIR|UNRM"
 
 FIELD fields[] =
 {
 	{"Info",			ft_string,				info_units},
 	{"MIME type",			ft_string,		  "default|folow symlinks"},
 	{"MIME encoding",		ft_string,		  "default|folow symlinks"},
-	{"Object type",			ft_multiplechoice,			 obj_units},
+	{"Inode flags",			ft_string,					""},
 	{"Access for current user",	ft_string,				"---|----"},
 	{"Access rights in octal",	ft_numeric_32,				"xxxx|xxx"},
 	{"User name",			ft_string,					""},
@@ -44,17 +48,7 @@ FIELD fields[] =
 	{"Number of hard links",	ft_numeric_32,					""},
 	{"User access",			ft_boolean,	     "open dir|read|write|execute"},
 	{"Symlink error",		ft_boolean,		 "no access|dangling|loop"},
-};
-
-char* objtypevalue[7] =
-{
-	"file",
-	"directory",
-	"character device",
-	"block device",
-	"named pipe",
-	"symlink",
-	"socket"
+	{"Inode flags (bool)",		ft_boolean,		 	       flags_units},
 };
 
 char* strlcpy(char* p, const char* p2, int maxlen)
@@ -107,7 +101,8 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 	magic_t magic_cookie;
 	mode_t mode_bits;
 	char access_str[4] = "----";
-	int access_how, i = 0;
+	char flags_str[14] = "--------------";
+	int access_how, fd, stflags, i;
 
 	if (lstat(FileName, &buf) != 0)
 		return ft_fileerror;
@@ -163,25 +158,96 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 		break;
 
 	case 3:
-		if (S_ISDIR(buf.st_mode))
-			strlcpy((char*)FieldValue, objtypevalue[1], maxlen - 1);
-		else if (S_ISCHR(buf.st_mode))
-			strlcpy((char*)FieldValue, objtypevalue[2], maxlen - 1);
-		else if (S_ISBLK(buf.st_mode))
-			strlcpy((char*)FieldValue, objtypevalue[3], maxlen - 1);
-		else if (S_ISFIFO(buf.st_mode))
-			strlcpy((char*)FieldValue, objtypevalue[4], maxlen - 1);
-		else if (S_ISLNK(buf.st_mode))
-			strlcpy((char*)FieldValue, objtypevalue[5], maxlen - 1);
-		else if (S_ISSOCK(buf.st_mode))
-			strlcpy((char*)FieldValue, objtypevalue[6], maxlen - 1);
+	{
+		if (S_ISFIFO(buf.st_mode) || (fd = open(FileName, O_RDONLY)) == -1)
+			return ft_fileerror;
 		else
-			strlcpy((char*)FieldValue, objtypevalue[0], maxlen - 1);
+		{
+			i=0;
 
+			if (ioctl(fd, FS_IOC_GETFLAGS, &stflags) == 0 && stflags != 0)
+			{
+				if (stflags & FS_APPEND_FL)
+					flags_str[i] = 'a';
+
+				i++;
+
+				if (stflags & FS_COMPR_FL)
+					flags_str[i] = 'c';
+
+				i++;
+
+				if (stflags & FS_DIRSYNC_FL)
+					flags_str[i] = 'D';
+
+				i++;
+
+				if (stflags & FS_IMMUTABLE_FL)
+					flags_str[i] = 'i';
+
+				i++;
+
+				if (stflags &  FS_JOURNAL_DATA_FL)
+					flags_str[i] = 'j';
+
+				i++;
+
+				if (stflags & FS_NOATIME_FL)
+					flags_str[i] = 'A';
+
+				i++;
+
+				if (stflags & FS_NOCOW_FL)
+					flags_str[i] = 'C';
+
+				i++;
+
+				if (stflags & FS_NODUMP_FL)
+					flags_str[i] = 'd';
+
+				i++;
+
+				if (stflags & FS_NOTAIL_FL)
+					flags_str[i] = 't';
+
+				i++;
+
+				if (stflags & FS_PROJINHERIT_FL)
+					flags_str[i] = 'P';
+
+				i++;
+
+				if (stflags & FS_SECRM_FL)
+					flags_str[i] = 's';
+
+				i++;
+
+				if (stflags & FS_SYNC_FL)
+					flags_str[i] = 'S';
+
+				i++;
+
+				if (stflags & FS_TOPDIR_FL)
+					flags_str[i] = 'T';
+
+				i++;
+
+				if (stflags & FS_UNRM_FL)
+					flags_str[i] = 'u';
+
+			}
+
+			close(fd);
+		}
+
+		strlcpy((char*)FieldValue, flags_str, maxlen - 1);
 		break;
+	}
 
 	case 4:
 	{
+		i = 0;
+
 		if (UnitIndex == 1)
 		{
 			if (S_ISDIR(buf.st_mode))
@@ -196,8 +262,10 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 				access_str[i] = 'l';
 			else if (S_ISSOCK(buf.st_mode))
 				access_str[i] = 's';
+
 			i++;
 		}
+
 		if (access(FileName, R_OK) == 0)
 			access_str[i] = 'r';
 
@@ -341,6 +409,145 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 		}
 		else
 			return ft_fileerror;
+
+		break;
+	}
+
+	case 17:
+	{
+		*(int*)FieldValue = 0;
+
+		if (S_ISFIFO(buf.st_mode) || (fd = open(FileName, O_RDONLY)) == -1)
+		{
+			if (UnitIndex > 0)
+				return ft_fileerror;
+		}
+		else
+		{
+			if (ioctl(fd, FS_IOC_GETFLAGS, &stflags) == 0 && stflags != 0)
+			{
+				switch (UnitIndex)
+				{
+				case 1:
+				{
+					if (stflags & FS_APPEND_FL)
+						*(int*)FieldValue = 1;
+
+					break;
+				}
+
+				case 2:
+				{
+					if (stflags & FS_COMPR_FL)
+						*(int*)FieldValue = 1;
+
+					break;
+				}
+
+				case 3:
+				{
+					if (stflags & FS_DIRSYNC_FL)
+						*(int*)FieldValue = 1;
+
+					break;
+				}
+
+				case 4:
+				{
+					if (stflags & FS_IMMUTABLE_FL)
+						*(int*)FieldValue = 1;
+
+					break;
+				}
+
+				case 5:
+				{
+					if (stflags &  FS_JOURNAL_DATA_FL)
+						*(int*)FieldValue = 1;
+
+					break;
+				}
+
+				case 6:
+				{
+					if (stflags & FS_NOATIME_FL)
+						*(int*)FieldValue = 1;
+
+					break;
+				}
+
+				case 7:
+				{
+					if (stflags & FS_NOCOW_FL)
+						*(int*)FieldValue = 1;
+
+					break;
+				}
+
+				case 8:
+				{
+					if (stflags & FS_NODUMP_FL)
+						*(int*)FieldValue = 1;
+
+					break;
+				}
+
+				case 9:
+				{
+					if (stflags & FS_NOTAIL_FL)
+						*(int*)FieldValue = 1;
+
+					break;
+				}
+
+				case 10:
+				{
+					if (stflags & FS_PROJINHERIT_FL)
+						*(int*)FieldValue = 1;
+
+					break;
+				}
+
+				case 11:
+				{
+					if (stflags & FS_SECRM_FL)
+						*(int*)FieldValue = 1;
+
+					break;
+				}
+
+				case 12:
+				{
+					if (stflags & FS_SYNC_FL)
+						*(int*)FieldValue = 1;
+
+					break;
+				}
+
+				case 13:
+				{
+					if (stflags & FS_TOPDIR_FL)
+						*(int*)FieldValue = 1;
+
+					break;
+				}
+
+				case 14:
+				{
+					if (stflags & FS_UNRM_FL)
+						*(int*)FieldValue = 1;
+
+					break;
+				}
+
+				default:
+					if (stflags & iflags)
+					*(int*)FieldValue = 1;
+				}
+			}
+
+			close(fd);
+		}
 
 		break;
 	}
