@@ -35,19 +35,12 @@ static gchar* get_command_string(GdkNativeWindow id, char* FileToLoad)
 	}
 	else
 	{
-		g_clear_error(&err);
-
 		params = g_key_file_get_string(cfg, "Settings", "Params", NULL);
 
 		if (!params)
 			params = " ";
 
-		extcfg = g_key_file_get_boolean(cfg, "Settings", "ExternalCfg", &err);
-
-		if (!extcfg || err)
-			extcfg = FALSE;
-		else
-			extcfg = TRUE;
+		extcfg = g_key_file_get_boolean(cfg, "Settings", "ExternalCfg", NULL);
 	}
 
 	g_key_file_free(cfg);
