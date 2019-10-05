@@ -1,4 +1,5 @@
 #include <QFile>
+#include <QFontDatabase>
 #include <QPlainTextEdit>
 
 #include <SyntaxHighlighter>
@@ -26,6 +27,14 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 	file.close();
 	view->setReadOnly(true);
 
+	QFont font = QFontDatabase::systemFont(QFontDatabase::FixedFont);
+	font.setPointSize(13);
+	view->document()->setDefaultFont(font);
+
+	if (ShowFlags & lcp_wraptext)
+		view->setLineWrapMode(QPlainTextEdit::WidgetWidth);
+	else
+		view->setLineWrapMode(QPlainTextEdit::NoWrap);
 
 	KSyntaxHighlighting::SyntaxHighlighter *highlighter = new KSyntaxHighlighting::SyntaxHighlighter();
 	highlighter->setDefinition(definition);
