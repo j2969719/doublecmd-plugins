@@ -1,6 +1,4 @@
 #include <QFile>
-#include <QDebug>
-#include <QVariant>
 #include <QPlainTextEdit>
 
 #include <SyntaxHighlighter>
@@ -31,41 +29,14 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 
 	KSyntaxHighlighting::SyntaxHighlighter *highlighter = new KSyntaxHighlighting::SyntaxHighlighter();
 	highlighter->setDefinition(definition);
-	highlighter->setTheme(repo->defaultTheme(KSyntaxHighlighting::Repository::DarkTheme));
-	//highlighter->setTheme(repo->defaultTheme(KSyntaxHighlighting::Repository::LightTheme));
+	//highlighter->setTheme(repo->defaultTheme(KSyntaxHighlighting::Repository::DarkTheme));
+	highlighter->setTheme(repo->defaultTheme(KSyntaxHighlighting::Repository::LightTheme));
 	highlighter->setDocument(view->document());
 	view->show();
 
 	return view;
 }
-/*
-int DCPCALL ListLoadNext(HWND ParentWin, HWND PluginWin, char* FileToLoad, int ShowFlags)
-{
-        KSyntaxHighlighting::Repository *repo = new KSyntaxHighlighting::Repository();
-	KSyntaxHighlighting::Definition definition = repo->definitionForFileName(FileToLoad);
 
-	if (!definition.isValid())
-              return LISTPLUGIN_ERROR;
-
-	QFile file(FileToLoad);
-
-	if (!file.open(QFile::ReadOnly | QFile::Text))
-		return LISTPLUGIN_ERROR;
-
-	QPlainTextEdit *view = (QPlainTextEdit*)PluginWin;
-
-	view->setPlainText(file.readAll());
-	file.close();
-
-	KSyntaxHighlighting::SyntaxHighlighter *highlighter = new KSyntaxHighlighting::SyntaxHighlighter();
-	highlighter->setDefinition(definition);
-	highlighter->setTheme(repo->defaultTheme(KSyntaxHighlighting::Repository::DarkTheme));
-	//highlighter->setTheme(repo->defaultTheme(KSyntaxHighlighting::Repository::LightTheme));
-	highlighter->setDocument(view->document());
-
-	return LISTPLUGIN_OK;
-}
-*/
 void DCPCALL ListCloseWindow(HANDLE ListWin)
 {
 	delete (QPlainTextEdit*)ListWin;
