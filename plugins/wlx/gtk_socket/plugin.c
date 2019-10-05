@@ -107,16 +107,26 @@ gchar *cfg_chk_redirect(GKeyFile *Cfg, const gchar *Group)
 		return g_strdup(Group);
 }
 
+static void plug_added(GtkWidget *widget, gpointer data)
+{
+	gtk_spinner_stop(GTK_SPINNER(data));
+	gtk_widget_hide(GTK_WIDGET(data));
+	gtk_widget_show(widget);
+}
+
 HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 {
 	GKeyFile *cfg;
 	GError *err = NULL;
 	GtkWidget *gFix;
 	GtkWidget *socket;
+	GtkWidget *wspin;
 	const gchar *file_ext, *mime_type;
 	gchar *command;
 	gchar *group = NULL;
 	gboolean noquote;
+	gboolean insensitive;
+	gboolean nospinner;
 
 	mime_type = get_mime_type(FileToLoad);
 	file_ext = get_file_ext(FileToLoad);
@@ -140,6 +150,8 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 		}
 
 		noquote = g_key_file_get_boolean(cfg, group, "noquote", NULL);
+		insensitive = g_key_file_get_boolean(cfg, group, "insensitive", NULL);
+		nospinner = g_key_file_get_boolean(cfg, group, "nospinner", NULL);
 	}
 
 	g_key_file_free(cfg);
@@ -156,6 +168,18 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	gFix = gtk_vbox_new(FALSE, 5);
 	gtk_container_add(GTK_CONTAINER(GTK_WIDGET(ParentWin)), gFix);
 	socket = gtk_socket_new();
+
+	if (!nospinner)
+	{
+		wspin = gtk_spinner_new();
+		gtk_spinner_start(GTK_SPINNER(wspin));
+		gtk_box_pack_start(GTK_BOX(gFix), wspin, TRUE, FALSE, 0);
+		gtk_widget_show(wspin);
+		g_signal_connect(socket, "plug-added", G_CALLBACK(plug_added), (gpointer)wspin);
+	}
+	else
+		gtk_widget_show(socket);
+
 	gtk_container_add(GTK_CONTAINER(gFix), socket);
 
 	GdkNativeWindow id = gtk_socket_get_id(GTK_SOCKET(socket));
@@ -170,7 +194,10 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 		return NULL;
 	}
 
-	gtk_widget_show_all(gFix);
+	if (insensitive && g_strcmp0(gtk_window_get_title(GTK_WINDOW(gtk_widget_get_toplevel(GTK_WIDGET(ParentWin)))), FileToLoad) != 0)
+		gtk_widget_set_state(socket, GTK_STATE_INSENSITIVE);
+
+	gtk_widget_show(gFix);
 	return gFix;
 
 }

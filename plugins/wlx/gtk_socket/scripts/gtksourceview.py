@@ -6,8 +6,9 @@ os.environ["GDK_CORE_DEVICE_EVENTS"] = "1"
 
 import gi
 gi.require_version('Gtk', '3.0')
+#gi.require_version('GtkSource', '3.0')
 gi.require_version('GtkSource', '4')
-from gi.repository import Gtk, Pango
+from gi.repository import Gtk, Pango, Gdk
 from gi.repository import GtkSource
 
 import locale
@@ -41,7 +42,12 @@ view.set_highlight_current_line(True)
 view.get_space_drawer().set_enable_matrix(True)
 view.set_editable(False)
 view.set_tab_width(8)
-view.override_font(Pango.FontDescription('mono 12'))
+#view.override_font(Pango.FontDescription('mono 12'))
+view.set_name("sourceview")
+
+cssprovider = Gtk.CssProvider()
+cssprovider.load_from_path(os.path.dirname(sys.argv[0]) + "/gtksourceview.css")
+Gtk.StyleContext.add_provider_for_screen(Gdk.Screen.get_default(), cssprovider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
 
 scroll.add(view)
 plug.add(scroll)
