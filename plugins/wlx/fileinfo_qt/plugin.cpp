@@ -1,7 +1,7 @@
 #include <QDir>
 #include <QProcess>
 #include <QFileInfo>
-#include <QTextEdit>
+#include <QPlainTextEdit>
 #include <QFontDatabase>
 
 #include <dlfcn.h>
@@ -32,15 +32,15 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 
 	QFont font = QFontDatabase::systemFont(QFontDatabase::FixedFont);
 	font.setPointSize(13);
-	QTextEdit *view = new QTextEdit((QWidget*)ParentWin);
+	QPlainTextEdit *view = new QPlainTextEdit((QWidget*)ParentWin);
 	view->document()->setDefaultFont(font);
 	view->setPlainText(output);
 	view->setReadOnly(true);
 
 	if (ShowFlags & lcp_wraptext)
-		view->setLineWrapMode(QTextEdit::WidgetWidth);
+		view->setLineWrapMode(QPlainTextEdit::WidgetWidth);
 	else
-		view->setLineWrapMode(QTextEdit::NoWrap);
+		view->setLineWrapMode(QPlainTextEdit::NoWrap);
 
 	view->show();
 
@@ -54,14 +54,14 @@ int DCPCALL ListLoadNext(HWND ParentWin, HWND PluginWin, char* FileToLoad, int S
 	if (output.isEmpty())
 		return LISTPLUGIN_ERROR;
 
-	QTextEdit *view = (QTextEdit *)PluginWin;
+	QPlainTextEdit *view = (QPlainTextEdit*)PluginWin;
 	view->setPlainText(output);
 	return LISTPLUGIN_OK;
 }
 
 void DCPCALL ListCloseWindow(HANDLE ListWin)
 {
-	delete (QTextEdit*)ListWin;
+	delete (QPlainTextEdit*)ListWin;
 }
 
 int DCPCALL ListSearchText(HWND ListWin, char* SearchString, int SearchParameter)
@@ -74,7 +74,7 @@ int DCPCALL ListSearchText(HWND ListWin, char* SearchString, int SearchParameter
 	if (SearchParameter & lcs_backwards)
 		sflags |= QTextDocument::FindBackward;
 
-	QTextEdit *view = (QTextEdit *)ListWin;
+	QPlainTextEdit *view = (QPlainTextEdit*)ListWin;
 
 	if (view->find(SearchString, sflags))
 		return LISTPLUGIN_OK;
@@ -84,7 +84,7 @@ int DCPCALL ListSearchText(HWND ListWin, char* SearchString, int SearchParameter
 
 int DCPCALL ListSendCommand(HWND ListWin, int Command, int Parameter)
 {
-	QTextEdit *view = (QTextEdit *)ListWin;
+	QPlainTextEdit *view = (QPlainTextEdit*)ListWin;
 
 	switch (Command)
 	{
@@ -98,9 +98,9 @@ int DCPCALL ListSendCommand(HWND ListWin, int Command, int Parameter)
 
 	case lc_newparams :
 		if (Parameter & lcp_wraptext)
-			view->setLineWrapMode(QTextEdit::WidgetWidth);
+			view->setLineWrapMode(QPlainTextEdit::WidgetWidth);
 		else
-			view->setLineWrapMode(QTextEdit::NoWrap);
+			view->setLineWrapMode(QPlainTextEdit::NoWrap);
 
 		break;
 
