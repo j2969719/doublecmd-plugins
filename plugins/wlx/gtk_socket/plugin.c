@@ -2,6 +2,7 @@
 #include <gtk/gtk.h>
 #include <gdk/gdkx.h>
 #include <dlfcn.h>
+#include <magic.h>
 #include <glib.h>
 #include <string.h>
 #include "wlxplugin.h"
@@ -54,6 +55,27 @@ const gchar *get_mime_type(const gchar *Filename)
 	const gchar *content_type = g_strdup(g_file_info_get_content_type(fileinfo));
 	g_object_unref(fileinfo);
 	g_object_unref(gfile);
+
+	return content_type;
+}
+
+const gchar *get_mime_type_magic(const gchar *Filename)
+{
+	const gchar *content_type;
+
+	magic_t magic_cookie = magic_open(MAGIC_MIME_TYPE);
+
+	if (!magic_cookie)
+		return NULL;
+
+	if (magic_load(magic_cookie, NULL) != 0)
+	{
+		magic_close(magic_cookie);
+		return NULL;
+	}
+
+	content_type = g_strdup(magic_file(magic_cookie, Filename));
+	magic_close(magic_cookie);
 
 	return content_type;
 }
@@ -128,15 +150,19 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	gboolean insensitive;
 	gboolean nospinner;
 
-	mime_type = get_mime_type(FileToLoad);
-	file_ext = get_file_ext(FileToLoad);
-
 	cfg = g_key_file_new();
 
 	if (!g_key_file_load_from_file(cfg, cfg_path, G_KEY_FILE_KEEP_COMMENTS, &err))
 		g_print("%s (%s): %s\n", _plgname, cfg_path, (err)->message);
 	else
 	{
+		if (g_key_file_get_boolean(cfg, _plgname, "uselibmagic", NULL))
+			mime_type = get_mime_type_magic(FileToLoad);
+		else
+			mime_type = get_mime_type(FileToLoad);
+
+		file_ext = get_file_ext(FileToLoad);
+
 		if (file_ext)
 		{
 			group = cfg_chk_redirect(cfg, file_ext);
@@ -151,7 +177,12 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 
 		noquote = g_key_file_get_boolean(cfg, group, "noquote", NULL);
 		insensitive = g_key_file_get_boolean(cfg, group, "insensitive", NULL);
-		nospinner = g_key_file_get_boolean(cfg, group, "nospinner", NULL);
+
+		nospinner = g_key_file_get_boolean(cfg, _plgname, "nospinner", NULL);
+
+		if (!nospinner)
+			nospinner = g_key_file_get_boolean(cfg, group, "nospinner", NULL);
+
 	}
 
 	g_key_file_free(cfg);
