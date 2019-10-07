@@ -190,7 +190,6 @@ Plugin-example: getting text from SQLite3 base. Requires `lsqlite3` module.<br>
 - [stringmatchwdx.lua](plugins/wdx/scripts/stringmatchwdx.lua)<br>
 Plugin-example: search text in files, fields will create with patterns.
 
-
 - [svninfowdx.lua](plugins/wdx/scripts/svninfowdx.lua)<br>
 Getting some information from local copy of SVN repository. Requires `svn`.
 
@@ -214,19 +213,19 @@ Script for using in trash folder: getting original file name and deletion date.
 PKGBUILD file for [Android ADB](http://www.uniqtec.eu/applications/android-adb.html).
 
 - [clipboard](plugins/wfx/clipboard)<br>
-View clipboard content.
+View clipboard content. (for GTK2-version of DC only)
 
 - [cmdoutput](plugins/wfx/cmdoutput)<br>
 View output of command line utilities (see `settings.ini`).
 
 - [envlist](plugins/wfx/envlist)<br>
-View list of environment variables.
+View list of environment variables. (for GTK2-version of DC only)
 
 - [filelist](plugins/wfx/filelist)<br>
 Temporary panel, virtual folder that allows keeping links to frequently used files.
 
 - [gtkrecent](plugins/wfx/gtkrecent)<br>
-View list of recently used files (also support: open, view or delete any entry).
+View list of recently used files (also support: open, view or delete any entry). (for GTK2-version of DC only)
 
 - [tmppanel_crap](plugins/wfx/tmppanel_crap)<br>
 Temporary panel, see FileList description.
@@ -257,10 +256,10 @@ Simple media player plugin based on GStreamer framework. Few cosmetic changes, b
 Plugin-wrapper for embed window of different scripts and utilities, used GtkSocket (container for widgets from other processes). Works with file extensions and MIME types, see `settings.ini`.
 
 - [gtkimgview](plugins/wlx/gtkimgview)<br>
-Image viewer plugin. Supported formats (all image formats supported by GdkPixbuf, the list can be differ on your system): xpm, xbm, tif, tiff, targa, tga, svg.gz, svgz, svg, qif, qtif, ppm, pgm, pbm, pnm, png, jpg, jpe, jpeg, jpf, j2k, jpx, jpc, jp2, cur, ico, icns, gif, bmp, ani.
+Image viewer plugin. Supported formats (all image formats supported by GdkPixbuf, the list can be differ on your system): xpm, xbm, tif, tiff, targa, tga, svg.gz, svgz, svg, qif, qtif, ppm, pgm, pbm, pnm, png, jpg, jpe, jpeg, jpf, j2k, jpx, jpc, jp2, cur, ico, icns, gif, bmp, ani.  Requires `gtkimageview` library.
 
 - [gtkimgview_crap](plugins/wlx/gtkimgview_crap)<br>
-Like `gtkimgview` but for any files if you can convert it to image (see `settings.ini`).
+Like `gtkimgview` but for any files if you can convert it to image (see `settings.ini`). Requires `gtkimageview` library.
 
 - [gtksourceview](plugins/wlx/gtksourceview)<br>
 Displays source code files with syntax highlighting. Requires `gtksourceview-2.0`.
@@ -294,7 +293,7 @@ Embeds Virtual Terminal Emulator (VTE) widget (GTK2 version).
 Embeds Virtual Terminal Emulator (VTE) widget (GTK2 version) and runs `ncdu`.
 
 - [wlxwebkit](plugins/wlx/wlxwebkit)<br>
-The given plug-in allows to look through Web-pages (*.htm, *.html). It is based on WebKitGTK2 engine.
+This plugin allows you to view HTML/XHTML files. It is based on WebKitGTK2 engine.
 
 - [wlxwebkit_crap](plugins/wlx/wlxwebkit_crap)<br>
 Like `wlxwebkit` but for any files if you can convert it to HTML file (see `settings.ini`).
@@ -313,12 +312,14 @@ Displays PDF, DjVu, PostScipt, CBR. Requires `zathura`.
 - [fileinfo_qt](plugins/wlx/fileinfo_qt)<br>
 Displays various information about file using command line utilities ([original](https://github.com/doublecmd/doublecmd/wiki/Plugins#fileinfo)).
 
-
 - [hx_webkit_qt_crap](plugins/wlx/hx_webkit_qt_crap)<br>
 Document viewer based on Qt5WebKit and using HTML Export from Oracle Outside In Technology.
 
+- [syntax-highlighting_qt](plugins/wlx/syntax-highlighting_qt)<br>
+Displays source code files with syntax highlighting. Requires `syntax-highlighting` from KF5 framework.
+
 - [wlxwebkit_qt5](plugins/wlx/wlxwebkit_qt5)<br>
-The given plug-in allows to look through Web-pages (*.htm, *.html). It is based on Qt5WebKit engine.
+This plugin allows you to view HTML/XHTML files. It is based on Qt5WebKit engine.
 
 
 ---
@@ -337,7 +338,7 @@ Finds modified files in git repository via `git ls-files -m`.
 Finds untracked files and other in git repository via `git ls-files -o`.
 
 - [gtkrecent](plugins/dsx/gtkrecent)<br>
-Feed to listbox recent files. (GTK)
+Feed to listbox recent files. (for GTK2-version of DC only)
 
 - [hardlinks_crap](plugins/dsx/hardlinks_crap)<br>
 Find hardlinks using `find`. Slow, doublecmd's window may hang during search.
