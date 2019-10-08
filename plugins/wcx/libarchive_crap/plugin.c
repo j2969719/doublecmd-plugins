@@ -18,6 +18,7 @@
 #include <grp.h>
 #include <sys/ioctl.h>
 #include <linux/fs.h>
+#include <ftw.h>
 
 typedef struct sArcData
 {
@@ -53,6 +54,33 @@ void DCPCALL ExtensionFinalize(void* Reserved)
 static int errmsg(const char *msg, long flags)
 {
 	return gStartupInfo->MessageBox(msg ? (char*)msg : "Unknown error", NULL, flags);
+}
+
+static void remove_file(const char *file)
+{
+	if (remove(file) == -1)
+	{
+		int errsv = errno;
+		printf("remove file: %s: %s\n", file, strerror(errsv));
+	}
+}
+
+static int nftw_remove_cb(const char *file, const struct stat *bif, int tflag, struct FTW *ftwbuf)
+{
+	remove_file(file);
+}
+
+static void remove_target(const char *filename)
+{
+	struct stat st;
+
+	if (lstat(filename, &st) == 0)
+	{
+		if S_ISDIR(st.st_mode)
+			nftw(filename, nftw_remove_cb, 13, FTW_DEPTH | FTW_PHYS);
+		else
+			remove_file(filename);
+	}
 }
 
 static bool mtree_opts_nodata(void)
@@ -605,12 +633,7 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 			if (pos != NULL)
 				strcpy(pos + 1, rmlist);
 
-			asprintf(&msg, "rm -rf \"%s\"", infile);
-			system(msg);
-			free(msg);
-
-			if (result != E_SUCCESS)
-				break;
+			remove_target(infile);
 
 			while (*rmlist++);
 		}
