@@ -406,7 +406,6 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 	archive_write_set_passphrase_callback(a, NULL, archive_password_cb);
 
 	if (Flags & PK_PACK_ENCRYPT)
-
 		// zip: traditional, aes128, aes256
 		if (archive_write_set_options(a, "encryption=traditional") < ARCHIVE_OK)
 			errmsg(archive_error_string(a), MB_OK | MB_ICONERROR);
@@ -420,7 +419,6 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 
 	while (*AddList)
 	{
-
 		strcpy(infile, SrcPath);
 		char* pos = strrchr(infile, '/');
 		strncpy(fname, AddList, PATH_MAX);
@@ -596,7 +594,8 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 	archive_write_close(a);
 	archive_write_free(a);
 
-	if (Flags & PK_PACK_MOVE_FILES)
+	if ((Flags & PK_PACK_MOVE_FILES) &&
+	                (errmsg("Now WILL TRY TO REMOVE the source files. Are you sure you want this?", MB_YESNO | MB_ICONWARNING) == ID_YES))
 	{
 		while (*rmlist)
 		{
