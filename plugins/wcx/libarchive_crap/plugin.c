@@ -297,11 +297,15 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 	char buff[8192];
 	int fd, ret, id;
 	ssize_t len;
+	char fname[PATH_MAX];
 	char infile[PATH_MAX];
 	char pkfile[PATH_MAX];
 	char link[PATH_MAX + 1];
 	int result = E_SUCCESS;
-	char *msg;
+	char *msg, *rmlist;
+
+	if (Flags & PK_PACK_MOVE_FILES)
+		rmlist = AddList;
 
 	struct passwd *pw;
 	struct group  *gr;
@@ -402,6 +406,7 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 	archive_write_set_passphrase_callback(a, NULL, archive_password_cb);
 
 	if (Flags & PK_PACK_ENCRYPT)
+
 		// zip: traditional, aes128, aes256
 		if (archive_write_set_options(a, "encryption=traditional") < ARCHIVE_OK)
 			errmsg(archive_error_string(a), MB_OK | MB_ICONERROR);
@@ -418,20 +423,20 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 
 		strcpy(infile, SrcPath);
 		char* pos = strrchr(infile, '/');
+		strncpy(fname, AddList, PATH_MAX);
 
 		if (pos != NULL)
-			strcpy(pos + 1, AddList);
+			strcpy(pos + 1, fname);
+		else
+			strcpy(infile, fname);
+
+		if (!(Flags & PK_PACK_SAVE_PATHS))
+			strncpy(fname, strdup(basename(fname)), PATH_MAX);
 
 		if (!SubPath)
-			strcpy(pkfile, AddList);
+			strcpy(pkfile, fname);
 		else
-		{
-			strcpy(pkfile, SrcPath);
-			pos = strrchr(pkfile, '/');
-
-			if (pos != NULL)
-				strcpy(pos + 1, AddList);
-		}
+			snprintf(pkfile, PATH_MAX, "%s/%s", SubPath, fname);
 
 		while ((ret = lstat(infile, &st)) != 0)
 		{
@@ -449,7 +454,7 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 				break;
 		}
 
-		if (ret == 0)
+		if ((ret == 0) && !(S_ISDIR(st.st_mode) && !(Flags & PK_PACK_SAVE_PATHS)))
 		{
 
 			entry = archive_entry_new();
@@ -482,8 +487,10 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 					if (S_ISFIFO(st.st_mode))
 					{
 						asprintf(&msg, "%s: ignoring flags for named pipe.", infile);
+
 						if (errmsg(msg, MB_OKCANCEL | MB_ICONWARNING) == ID_CANCEL)
 							result = E_EABORTED;
+
 						free(msg);
 					}
 					else
@@ -495,8 +502,10 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 							int errsv = errno;
 							//printf("libarchive: %s: %s\n", infile, strerror(errsv));
 							asprintf(&msg, "%s: %s", infile, strerror(errsv));
+
 							if (errmsg(msg, MB_OKCANCEL | MB_ICONWARNING) == ID_CANCEL)
 								result = E_EABORTED;
+
 							free(msg);
 						}
 
@@ -521,8 +530,10 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 			else if (S_ISFIFO(st.st_mode))
 			{
 				asprintf(&msg, "%s: ignoring named pipe.", infile);
+
 				if (errmsg(msg, MB_OKCANCEL | MB_ICONWARNING) == ID_CANCEL)
 					result = E_EABORTED;
+
 				free(msg);
 			}
 			else
@@ -584,6 +595,27 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 	archive_write_finish_entry(a);
 	archive_write_close(a);
 	archive_write_free(a);
+
+	if (Flags & PK_PACK_MOVE_FILES)
+	{
+		while (*rmlist)
+		{
+			strcpy(infile, SrcPath);
+			char* pos = strrchr(infile, '/');
+
+			if (pos != NULL)
+				strcpy(pos + 1, rmlist);
+
+			asprintf(&msg, "rm -rf \"%s\"", infile);
+			system(msg);
+			free(msg);
+
+			if (result != E_SUCCESS)
+				break;
+
+			while (*rmlist++);
+		}
+	}
 
 	return result;
 }
