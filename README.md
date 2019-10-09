@@ -21,5 +21,5 @@ Not all but most of additions for Linux only.
 [P7Z Usr](https://github.com/ikk00/p7z-usr) ([forum](https://doublecmd.sourceforge.io/forum/viewtopic.php?f=5&t=3339))<br>
 [Font info plugin for Total and Double Commanders](https://github.com/danpla/wdx_fontinfo)<br>
 [WFX plugin for popular cloud file storages](https://github.com/ivanenko/cloud_storage)<br>
-[Yandex Disk WFX plugin for Total and Double commander](https://github.com/ivanenko/ydisk_commander)
+[Yandex Disk WFX plugin for Total and Double commander](https://github.com/ivanenko/ydisk_commander)<br>
 [Environment variables WFX plugin for Double Commander](https://github.com/ivanenko/env_vars_commander)
