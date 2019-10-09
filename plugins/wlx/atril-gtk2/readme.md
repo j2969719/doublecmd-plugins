@@ -8,4 +8,4 @@ Displays PDF, DjVu, TIFF, PostScipt, CBR, CBZ, XPS.
 Requires Atril 2 (GTK2 version).
 
 ## Dependencies
-![arch](https://wiki.archlinux.org/favicon.ico) [atril-gtk2](https://aur.archlinux.org/packages/atril-gtk2)
+![arch](https://wiki.archlinux.org/favicon.ico) [atril-gtk2](../../../utils/atril-gtk2/)
