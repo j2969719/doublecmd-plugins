@@ -4,6 +4,9 @@ Displays various information about file using command line utilities. Detection 
 
 ![plug-preview](https://i.imgur.com/OqeNQE5.png)
 
+## Compatibility
+- `doublecmd-gtk2`
+
 ## Notes
 Requires `gtksourceview-2.0`.
 

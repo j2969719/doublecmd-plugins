@@ -4,6 +4,9 @@ Image viewer plugin. Supported formats (all image formats supported by GdkPixbuf
 
 ![plug-preview](https://i.imgur.com/Hb0lAHc.png)
 
+## Compatibility
+- `doublecmd-gtk2`
+
 ## Notes
 Requires `gtkimageview` library.
 

@@ -4,6 +4,9 @@ Like [gtkimgview](../gtkimgview) but for any files if you can convert it to imag
 
 ![plug-preview](https://i.imgur.com/W7Ux24Z.png)
 
+## Compatibility
+- `doublecmd-gtk2`
+
 ## Notes
 Requires `gtkimageview` library.
 

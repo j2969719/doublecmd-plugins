@@ -4,6 +4,9 @@ Displays PDF, DjVu, TIFF, PostScipt, CBR.
 
 ![plug-preview](https://i.imgur.com/bwcQoZ0.png)
 
+## Compatibility
+- `doublecmd-gtk2`
+
 ## Notes
 Requires deprecated Evince 2 (GTK2 version).
 

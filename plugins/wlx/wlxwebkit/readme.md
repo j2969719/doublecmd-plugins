@@ -4,6 +4,9 @@ This plugin allows you to view HTML/XHTML files. It is based on WebKitGTK2 engin
 
 ![plug-preview](https://i.imgur.com/2cTQkxF.png)
 
+## Compatibility
+- `doublecmd-gtk2`
+
 ## Notes
 Requires deprecated version of `webkit` compiled with GTK2 support.
 

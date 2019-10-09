@@ -4,6 +4,9 @@ Displays PDF, DjVu, TIFF, PostScipt, CBR, CBZ, XPS.
 
 ![plug-preview](https://i.imgur.com/bwcQoZ0.png)
 
+## Compatibility
+- `doublecmd-gtk2`
+
 ## Notes
 Requires Atril 2 (GTK2 version).
 

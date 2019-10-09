@@ -4,6 +4,9 @@ Displays file content with `libarchive` ([supported formats](https://github.com/
 
 ![plug-preview](https://i.imgur.com/VDl0VFI.png)
 
+## Compatibility
+- `doublecmd-gtk2`
+
 ## Notes
 Requires `libarchive` library.
 

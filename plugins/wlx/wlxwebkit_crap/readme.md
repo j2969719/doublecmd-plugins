@@ -4,6 +4,9 @@ Like [wlxwebkit](../wlxwebkit) but for any files if you can convert it to HTML f
 
 ![plug-preview](https://i.imgur.com/Tjw9dMc.png)
 
+## Compatibility
+- `doublecmd-gtk2`
+
 ## Notes
 Requires deprecated version of `webkit` compiled with GTK2 support.
 

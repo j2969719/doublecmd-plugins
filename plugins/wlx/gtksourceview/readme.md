@@ -4,6 +4,9 @@ Displays source code files with syntax highlighting.
 
 ![plug-preview](https://i.imgur.com/x1n1N9X.png)
 
+## Compatibility
+- `doublecmd-gtk2`
+
 ## Notes
 Requires `gtksourceview-2.0`.
 

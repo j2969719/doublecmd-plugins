@@ -4,6 +4,9 @@ Displays DOC, RTF, DOT, ABW, AWT, ZABW.
 
 ![plug-preview](https://i.imgur.com/uBNDWdK.png)
 
+## Compatibility
+- `doublecmd-gtk2`
+
 ## Notes
 Requires AbiWord (GTK2 version).
 
