@@ -38,15 +38,18 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 	}
 
 	QWebView *webView = new QWebView((QWidget*)ParentWin);
-	webView->load(QUrl::fromLocalFile(output));
 	webView->setProperty("tempdir", tmpdir.path());
+
+	webView->setStyleSheet("background-color:white;");
+
+	webView->load(QUrl::fromLocalFile(output));
 	webView->show();
 	return webView;
 }
 
 void DCPCALL ListCloseWindow(HANDLE ListWin)
 {
-	QWebView *webView = (QWebView *)ListWin;
+	QWebView *webView = (QWebView*)ListWin;
 	QDir tmpdir(webView->property("tempdir").toString());
 	tmpdir.removeRecursively();
 	delete webView;
@@ -62,14 +65,14 @@ int DCPCALL ListSearchText(HWND ListWin, char* SearchString, int SearchParameter
 	if (SearchParameter & lcs_backwards)
 		sflags |= QWebPage::FindBackward;
 
-	QWebView *webView = (QWebView *)ListWin;
+	QWebView *webView = (QWebView*)ListWin;
 	webView->findText(SearchString, sflags);
 	return LISTPLUGIN_OK;
 }
 
 int DCPCALL ListSendCommand(HWND ListWin, int Command, int Parameter)
 {
-	QWebView *webView = (QWebView *)ListWin;
+	QWebView *webView = (QWebView*)ListWin;
 
 	switch (Command)
 	{

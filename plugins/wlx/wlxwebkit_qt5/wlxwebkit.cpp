@@ -7,6 +7,9 @@
 HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 {
 	QWebView *webView = new QWebView((QWidget*)ParentWin);
+
+	webView->setStyleSheet("background-color:white;");
+
 	webView->load(QUrl::fromLocalFile(FileToLoad));
 	webView->show();
 	return webView;
@@ -19,7 +22,7 @@ void DCPCALL ListCloseWindow(HANDLE ListWin)
 
 int DCPCALL ListLoadNext(HWND ParentWin, HWND PluginWin, char* FileToLoad, int ShowFlags)
 {
-	QWebView *webView = (QWebView *)PluginWin;
+	QWebView *webView = (QWebView*)PluginWin;
 	webView->load(QUrl::fromLocalFile(FileToLoad));
 	return LISTPLUGIN_OK;
 }
@@ -39,14 +42,14 @@ int DCPCALL ListSearchText(HWND ListWin, char* SearchString, int SearchParameter
 	if (SearchParameter & lcs_backwards)
 		sflags |= QWebPage::FindBackward;
 
-	QWebView *webView = (QWebView *)ListWin;
+	QWebView *webView = (QWebView*)ListWin;
 	webView->findText(SearchString, sflags);
 	return LISTPLUGIN_OK;
 }
 
 int DCPCALL ListSendCommand(HWND ListWin, int Command, int Parameter)
 {
-	QWebView *webView = (QWebView *)ListWin;
+	QWebView *webView = (QWebView*)ListWin;
 
 	switch (Command)
 	{
