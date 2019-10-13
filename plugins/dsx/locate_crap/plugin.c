@@ -1,6 +1,15 @@
+#define _GNU_SOURCE
 #include <glib.h>
 #include <signal.h>
 #include "dsxplugin.h"
+
+#include <dlfcn.h>
+
+#include <libintl.h>
+#include <locale.h>
+
+#define _(STRING) gettext(STRING)
+#define GETTEXT_PACKAGE "plugins"
 
 tSAddFileProc gAddFileProc;
 tSUpdateStatusProc gUpdateStatus;
@@ -11,6 +20,26 @@ int DCPCALL Init(tDsxDefaultParamStruct* dsp, tSAddFileProc pAddFileProc, tSUpda
 {
 	gAddFileProc = pAddFileProc;
 	gUpdateStatus = pUpdateStatus;
+
+	Dl_info dlinfo;
+	static char plg_path[PATH_MAX];
+	const char* loc_dir = "langs";
+
+	memset(&dlinfo, 0, sizeof(dlinfo));
+
+	if (dladdr(plg_path, &dlinfo) != 0)
+	{
+		strncpy(plg_path, dlinfo.dli_fname, PATH_MAX);
+		char *pos = strrchr(plg_path, '/');
+
+		if (pos)
+			strcpy(pos + 1, loc_dir);
+
+		setlocale (LC_ALL, "");
+		bindtextdomain(GETTEXT_PACKAGE, plg_path);
+		textdomain(GETTEXT_PACKAGE);
+	}
+
 	return 0;
 }
 
@@ -31,7 +60,7 @@ void DCPCALL StartSearch(int PluginNr, tDsxSearchRecord* pSearchRec)
 		command = g_strdup_printf("locate -e -i -b '%s'", pSearchRec->FileMask);
 		gUpdateStatus(PluginNr, command, 0);
 
-		gUpdateStatus(PluginNr, "not found", 0);
+		gUpdateStatus(PluginNr, _("not found"), 0);
 
 		if (!g_shell_parse_argv(command, NULL, &argv, &err))
 		{
@@ -69,7 +98,7 @@ void DCPCALL StartSearch(int PluginNr, tDsxSearchRecord* pSearchRec)
 		}
 	}
 	else
-		gUpdateStatus(PluginNr, "Failed to launch locate...", 0);
+		gUpdateStatus(PluginNr, _("failed to launch locate..."), 0);
 
 	if (err)
 		g_error_free(err);

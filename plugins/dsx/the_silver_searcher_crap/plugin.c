@@ -1,6 +1,15 @@
+#define _GNU_SOURCE
 #include <glib.h>
 #include <signal.h>
 #include "dsxplugin.h"
+
+#include <dlfcn.h>
+
+#include <libintl.h>
+#include <locale.h>
+
+#define _(STRING) gettext(STRING)
+#define GETTEXT_PACKAGE "plugins"
 
 tSAddFileProc gAddFileProc;
 tSUpdateStatusProc gUpdateStatus;
@@ -11,6 +20,26 @@ int DCPCALL Init(tDsxDefaultParamStruct* dsp, tSAddFileProc pAddFileProc, tSUpda
 {
 	gAddFileProc = pAddFileProc;
 	gUpdateStatus = pUpdateStatus;
+
+	Dl_info dlinfo;
+	static char plg_path[PATH_MAX];
+	const char* loc_dir = "langs";
+
+	memset(&dlinfo, 0, sizeof(dlinfo));
+
+	if (dladdr(plg_path, &dlinfo) != 0)
+	{
+		strncpy(plg_path, dlinfo.dli_fname, PATH_MAX);
+		char *pos = strrchr(plg_path, '/');
+
+		if (pos)
+			strcpy(pos + 1, loc_dir);
+
+		setlocale (LC_ALL, "");
+		bindtextdomain(GETTEXT_PACKAGE, plg_path);
+		textdomain(GETTEXT_PACKAGE);
+	}
+
 	return 0;
 }
 
@@ -50,7 +79,7 @@ void DCPCALL StartSearch(int PluginNr, tDsxSearchRecord* pSearchRec)
 
 				if (g_spawn_async_with_pipes(NULL, argv, NULL, flags, NULL, NULL, &pid, NULL, &fp, NULL, &err))
 				{
-					gUpdateStatus(PluginNr, "not found", 0);
+					gUpdateStatus(PluginNr, _("not found"), 0);
 					GIOChannel *stdout = g_io_channel_unix_new(fp);
 
 					while (!stop_search && (G_IO_STATUS_NORMAL == g_io_channel_read_line(stdout, &line, &len, &term, NULL)))
@@ -70,10 +99,10 @@ void DCPCALL StartSearch(int PluginNr, tDsxSearchRecord* pSearchRec)
 			}
 		}
 		else
-			gUpdateStatus(PluginNr, "no text pattern provided", 0);
+			gUpdateStatus(PluginNr, _("no text pattern provided"), 0);
 	}
 	else
-		gUpdateStatus(PluginNr, "failed to launch ag...", 0);
+		gUpdateStatus(PluginNr, _("failed to launch ag..."), 0);
 
 	if (err)
 		g_error_free(err);

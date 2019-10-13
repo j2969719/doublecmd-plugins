@@ -1,9 +1,16 @@
+#define _GNU_SOURCE
 #include <glib.h>
 #include <signal.h>
 #include "dsxplugin.h"
 
-#define cmdf "/bin/sh -c \"find '%s' -links +1 -type f -name '%s' -printf '%%20i\\t%%p\\n' | sort | uniq --all-repeated=separate -w 20 | cut -f2-\""
+#include <dlfcn.h>
 
+#include <libintl.h>
+#include <locale.h>
+
+#define cmdf "/bin/sh -c \"find '%s' -links +1 -type f -name '%s' -printf '%%20i\\t%%p\\n' | sort | uniq --all-repeated=separate -w 20 | cut -f2-\""
+#define _(STRING) gettext(STRING)
+#define GETTEXT_PACKAGE "plugins"
 
 tSAddFileProc gAddFileProc;
 tSUpdateStatusProc gUpdateStatus;
@@ -14,6 +21,26 @@ int DCPCALL Init(tDsxDefaultParamStruct* dsp, tSAddFileProc pAddFileProc, tSUpda
 {
 	gAddFileProc = pAddFileProc;
 	gUpdateStatus = pUpdateStatus;
+
+	Dl_info dlinfo;
+	static char plg_path[PATH_MAX];
+	const char* loc_dir = "langs";
+
+	memset(&dlinfo, 0, sizeof(dlinfo));
+
+	if (dladdr(plg_path, &dlinfo) != 0)
+	{
+		strncpy(plg_path, dlinfo.dli_fname, PATH_MAX);
+		char *pos = strrchr(plg_path, '/');
+
+		if (pos)
+			strcpy(pos + 1, loc_dir);
+
+		setlocale (LC_ALL, "");
+		bindtextdomain(GETTEXT_PACKAGE, plg_path);
+		textdomain(GETTEXT_PACKAGE);
+	}
+
 	return 0;
 }
 
@@ -47,7 +74,7 @@ void DCPCALL StartSearch(int PluginNr, tDsxSearchRecord* pSearchRec)
 	else
 	{
 
-		gUpdateStatus(PluginNr, "not found", 0);
+		gUpdateStatus(PluginNr, _("not found"), 0);
 
 		GIOChannel *stdout = g_io_channel_unix_new(fp);
 

@@ -1,6 +1,15 @@
+#define _GNU_SOURCE
 #include <glib.h>
 #include <libtracker-sparql/tracker-sparql.h>
 #include "dsxplugin.h"
+
+#include <dlfcn.h>
+
+#include <libintl.h>
+#include <locale.h>
+
+#define _(STRING) gettext(STRING)
+#define GETTEXT_PACKAGE "plugins"
 
 tSAddFileProc gAddFileProc;
 tSUpdateStatusProc gUpdateStatus;
@@ -37,6 +46,26 @@ int DCPCALL Init(tDsxDefaultParamStruct* dsp, tSAddFileProc pAddFileProc, tSUpda
 {
 	gAddFileProc = pAddFileProc;
 	gUpdateStatus = pUpdateStatus;
+
+	Dl_info dlinfo;
+	static char plg_path[PATH_MAX];
+	const char* loc_dir = "langs";
+
+	memset(&dlinfo, 0, sizeof(dlinfo));
+
+	if (dladdr(plg_path, &dlinfo) != 0)
+	{
+		strncpy(plg_path, dlinfo.dli_fname, PATH_MAX);
+		char *pos = strrchr(plg_path, '/');
+
+		if (pos)
+			strcpy(pos + 1, loc_dir);
+
+		setlocale (LC_ALL, "");
+		bindtextdomain(GETTEXT_PACKAGE, plg_path);
+		textdomain(GETTEXT_PACKAGE);
+	}
+
 	return 0;
 }
 
@@ -49,7 +78,7 @@ void DCPCALL StartSearch(int PluginNr, tDsxSearchRecord* pSearchRec)
 	gchar *query;
 	stop_search = FALSE;
 
-	gUpdateStatus(PluginNr, "not found", 0);
+	gUpdateStatus(PluginNr, _("not found"), 0);
 
 	if (pSearchRec->IsFindText)
 		query = g_strdup_printf(text_queryf, g_filename_to_uri(pSearchRec->StartPath, NULL, NULL), pSearchRec->FindText, pSearchRec->FileMask);

@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-01-26 16:51+0300\n"
-"PO-Revision-Date: 2019-01-26 16:51+0300\n"
+"POT-Creation-Date: 2019-10-13 12:21+0300\n"
+"PO-Revision-Date: 2019-10-13 12:23+0300\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "Language: ru\n"
@@ -39,63 +39,76 @@ msgstr ""
 msgid "hit ctrl+q or type 'exit' to remove grab"
 msgstr ""
 
-#: ../wlx/imagemagick/wlximagemagick.c:172 ../wlx/gtkimgview/gtkimgview.c:199
+#: ../wlx/imagemagick/wlximagemagick.c:172
+#: ../wlx/gtkimgview_crap/gtkimgview.c:336 ../wlx/gtkimgview/gtkimgview.c:199
 msgid "Zoom In"
 msgstr "Увеличить"
 
-#: ../wlx/imagemagick/wlximagemagick.c:177 ../wlx/gtkimgview/gtkimgview.c:204
+#: ../wlx/imagemagick/wlximagemagick.c:177
+#: ../wlx/gtkimgview_crap/gtkimgview.c:341 ../wlx/gtkimgview/gtkimgview.c:204
 msgid "Zoom Out"
 msgstr "Уменьшить"
 
-#: ../wlx/imagemagick/wlximagemagick.c:182 ../wlx/gtkimgview/gtkimgview.c:209
+#: ../wlx/imagemagick/wlximagemagick.c:182
+#: ../wlx/gtkimgview_crap/gtkimgview.c:346 ../wlx/gtkimgview/gtkimgview.c:209
 msgid "Original Size"
 msgstr "Исходный размер"
 
-#: ../wlx/imagemagick/wlximagemagick.c:187 ../wlx/gtkimgview/gtkimgview.c:214
-#: ../wlx/dcpoppler/wlxPView.c:468 ../wlx/dcpoppler/wlxPView.c:469
+#: ../wlx/imagemagick/wlximagemagick.c:187
+#: ../wlx/gtkimgview_crap/gtkimgview.c:351 ../wlx/gtkimgview/gtkimgview.c:214
+#: ../wlx/dcpoppler/wlxPView.c:417 ../wlx/dcpoppler/wlxPView.c:418
 msgid "Fit"
 msgstr "Вместить"
 
-#: ../wlx/imagemagick/wlximagemagick.c:195 ../wlx/gtkimgview/gtkimgview.c:222
+#: ../wlx/imagemagick/wlximagemagick.c:195
+#: ../wlx/gtkimgview_crap/gtkimgview.c:359 ../wlx/gtkimgview/gtkimgview.c:222
 msgid "Copy to Clipboard"
 msgstr "Копировать в буфер"
 
 #: ../wlx/imagemagick/wlximagemagick.c:198
-#: ../wlx/imagemagick/wlximagemagick.c:201 ../wlx/gtkimgview/gtkimgview.c:225
+#: ../wlx/imagemagick/wlximagemagick.c:201
+#: ../wlx/gtkimgview_crap/gtkimgview.c:362
+#: ../wlx/gtkimgview_crap/gtkimgview.c:365 ../wlx/gtkimgview/gtkimgview.c:225
 #: ../wlx/gtkimgview/gtkimgview.c:228
 msgid "Rotate"
 msgstr "Повернуть"
 
 #: ../wlx/imagemagick/wlximagemagick.c:204
-#: ../wlx/imagemagick/wlximagemagick.c:207 ../wlx/gtkimgview/gtkimgview.c:231
+#: ../wlx/imagemagick/wlximagemagick.c:207
+#: ../wlx/gtkimgview_crap/gtkimgview.c:368
+#: ../wlx/gtkimgview_crap/gtkimgview.c:371 ../wlx/gtkimgview/gtkimgview.c:231
 #: ../wlx/gtkimgview/gtkimgview.c:234
 msgid "Rotate Clockwise"
 msgstr "Повернуть по часовой стрелке"
 
 #: ../wlx/imagemagick/wlximagemagick.c:210
-#: ../wlx/imagemagick/wlximagemagick.c:213 ../wlx/gtkimgview/gtkimgview.c:237
+#: ../wlx/imagemagick/wlximagemagick.c:213
+#: ../wlx/gtkimgview_crap/gtkimgview.c:374
+#: ../wlx/gtkimgview_crap/gtkimgview.c:377 ../wlx/gtkimgview/gtkimgview.c:237
 #: ../wlx/gtkimgview/gtkimgview.c:240
 msgid "Flip Horizontally"
 msgstr "Отразить по горизонтали"
 
 #: ../wlx/imagemagick/wlximagemagick.c:216
-#: ../wlx/imagemagick/wlximagemagick.c:219 ../wlx/gtkimgview/gtkimgview.c:243
+#: ../wlx/imagemagick/wlximagemagick.c:219
+#: ../wlx/gtkimgview_crap/gtkimgview.c:380
+#: ../wlx/gtkimgview_crap/gtkimgview.c:383 ../wlx/gtkimgview/gtkimgview.c:243
 #: ../wlx/gtkimgview/gtkimgview.c:246
 msgid "Flip Vertically"
 msgstr "Отразить по вертикали"
 
-#: ../wlx/wlxwebkit/wlxwebkit.c:115 ../wlx/yet_another_vte_plugin/plugin.c:282
-#: ../wlx/gtksourceview/gtksourceview.c:304 ../wlx/fileinfo/fileinfo.c:382
+#: ../wlx/wlxwebkit/wlxwebkit.c:117 ../wlx/yet_another_vte_plugin/plugin.c:286
+#: ../wlx/gtksourceview/gtksourceview.c:303 ../wlx/fileinfo/fileinfo.c:382
 #: ../wlx/mimescript/mimescriptwlx.c:290
 #, c-format
 msgid "\"%s\" not found!"
 msgstr "\"%s\" не найден!"
 
-#: ../wlx/gtksourceview/gtksourceview.c:177
+#: ../wlx/gtksourceview/gtksourceview.c:176
 msgid "Language:"
 msgstr ""
 
-#: ../wlx/gtksourceview/gtksourceview.c:191
+#: ../wlx/gtksourceview/gtksourceview.c:190
 msgid "Failed to set encoding"
 msgstr ""
 
@@ -107,21 +120,21 @@ msgstr "Воспроизвести анимацию"
 msgid "Stop Animation"
 msgstr "Остановить анимацию"
 
-#: ../wlx/dcpoppler/wlxPView.c:102
+#: ../wlx/dcpoppler/wlxPView.c:136
 msgid "Scale ~x"
 msgstr "Масштаб ~x"
 
-#: ../wlx/dcpoppler/wlxPView.c:298 ../wlx/dcpoppler/wlxPView.c:477
-#: ../wlx/dcpoppler/wlxPView.c:478
+#: ../wlx/dcpoppler/wlxPView.c:255 ../wlx/dcpoppler/wlxPView.c:425
+#: ../wlx/dcpoppler/wlxPView.c:426
 msgid "Text"
 msgstr "Текст"
 
-#: ../wlx/dcpoppler/wlxPView.c:325 ../wlx/dcpoppler/wlxPView.c:483
-#: ../wlx/dcpoppler/wlxPView.c:484
+#: ../wlx/dcpoppler/wlxPView.c:283 ../wlx/dcpoppler/wlxPView.c:431
+#: ../wlx/dcpoppler/wlxPView.c:432
 msgid "Info"
 msgstr "Информация"
 
-#: ../wlx/dcpoppler/wlxPView.c:329
+#: ../wlx/dcpoppler/wlxPView.c:287
 #, c-format
 msgid ""
 "Title: %s\n"
@@ -140,22 +153,53 @@ msgstr ""
 "Ключевые слова: %s\n"
 "Версия: %s"
 
-#: ../wlx/dcpoppler/wlxPView.c:346
+#: ../wlx/dcpoppler/wlxPView.c:305
 msgid "metadata not found"
 msgstr "Метаданные не найдены"
 
-#: ../wlx/dcpoppler/wlxPView.c:422 ../wlx/dcpoppler/wlxPView.c:423
+#: ../wlx/dcpoppler/wlxPView.c:368 ../wlx/dcpoppler/wlxPView.c:369
 msgid "First page"
 msgstr "Первая страница"
 
-#: ../wlx/dcpoppler/wlxPView.c:428 ../wlx/dcpoppler/wlxPView.c:429
+#: ../wlx/dcpoppler/wlxPView.c:374 ../wlx/dcpoppler/wlxPView.c:375
 msgid "Previous page"
 msgstr "Предыдущая страница"
 
-#: ../wlx/dcpoppler/wlxPView.c:434 ../wlx/dcpoppler/wlxPView.c:435
+#: ../wlx/dcpoppler/wlxPView.c:380 ../wlx/dcpoppler/wlxPView.c:381
 msgid "Next page"
 msgstr "Следующая страница"
 
-#: ../wlx/dcpoppler/wlxPView.c:440 ../wlx/dcpoppler/wlxPView.c:441
+#: ../wlx/dcpoppler/wlxPView.c:386 ../wlx/dcpoppler/wlxPView.c:387
 msgid "Last page"
 msgstr "Последняя страница"
+
+#: ../dsx/git_untracked/plugin.c:57 ../dsx/pacman_pkg_list/plugin.c:71
+#: ../dsx/lslocks/plugin.c:58 ../dsx/git_ignored/plugin.c:57
+#: ../dsx/git_modified/plugin.c:58
+msgid "failed to launch command"
+msgstr "не удалось выполнить команду"
+
+#: ../dsx/git_untracked/plugin.c:60 ../dsx/tracker_textsearch/plugin.c:81
+#: ../dsx/in_filelist/plugin.c:74 ../dsx/duplicates_crap/plugin.c:77
+#: ../dsx/the_silver_searcher_crap/plugin.c:82 ../dsx/locate_crap/plugin.c:63
+#: ../dsx/pacman_pkg_list/plugin.c:74 ../dsx/gtkrecent/plugin.c:56
+#: ../dsx/hardlinks_crap/plugin.c:77 ../dsx/lslocks/plugin.c:61
+#: ../dsx/git_ignored/plugin.c:60 ../dsx/git_modified/plugin.c:61
+msgid "not found"
+msgstr "не найдено"
+
+#: ../dsx/the_silver_searcher_crap/plugin.c:102
+msgid "no text pattern provided"
+msgstr ""
+
+#: ../dsx/the_silver_searcher_crap/plugin.c:105
+msgid "failed to launch ag..."
+msgstr "не удалось запустить ag..."
+
+#: ../dsx/locate_crap/plugin.c:101
+msgid "failed to launch locate..."
+msgstr "не удалось запустить locate..."
+
+#: ../dsx/pacman_pkg_list/plugin.c:96
+msgid "enter pkgname"
+msgstr ""

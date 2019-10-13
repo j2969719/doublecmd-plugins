@@ -23,10 +23,11 @@ gboolean UnixTimeToFileTime(unsigned long mtime, LPFILETIME ft)
 	return TRUE;
 }
 
-static void ShowGError(gchar *str, GError *err)
+static void ShowGError(GError *err)
 {
 	GtkWidget *dialog = gtk_message_dialog_new(NULL,
-	                    GTK_DIALOG_MODAL, GTK_MESSAGE_ERROR, GTK_BUTTONS_OK, "%s: %s", str, (err)->message);
+	                    GTK_DIALOG_MODAL, GTK_MESSAGE_ERROR, GTK_BUTTONS_OK, "%s",
+	                    (err)->message ? (err)->message : "Unknown error.");
 	gtk_window_set_title(GTK_WINDOW(dialog), _plugname);
 	gtk_dialog_run(GTK_DIALOG(dialog));
 	gtk_widget_destroy(dialog);
@@ -124,7 +125,7 @@ BOOL DCPCALL FsDeleteFile(char* RemoteName)
 	{
 		if (err)
 		{
-			ShowGError("%s", err);
+			ShowGError(err);
 			g_error_free(err);
 		}
 
