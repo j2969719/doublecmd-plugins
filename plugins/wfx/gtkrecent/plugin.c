@@ -121,19 +121,23 @@ BOOL DCPCALL FsDeleteFile(char* RemoteName)
 	gchar *uri = g_filename_to_uri(RemoteName + 1, NULL, NULL);
 	GError *err = NULL;
 
+	if (!uri)
+		return FALSE;
+
 	if (!gtk_recent_manager_remove_item(manager, uri, &err))
 	{
-		if (err)
-		{
-			ShowGError(err);
-			g_error_free(err);
-		}
+		uri = g_strdup_printf("file:/%s", RemoteName);
 
-		g_free(uri);
-		return FALSE;
+		if (err && !gtk_recent_manager_remove_item(manager, uri, NULL))
+			ShowGError(err);
+
 	}
 
+	if (err)
+		g_error_free(err);
+
 	g_free(uri);
+
 	return TRUE;
 }
 
