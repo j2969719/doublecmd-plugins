@@ -129,6 +129,14 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 
 	}
 
+
+	if (archive_format(a) == ARCHIVE_FORMAT_EMPTY)
+	{
+		archive_read_close(a);
+		archive_read_free(a);
+		return NULL;
+	}
+
 	if (r != ARCHIVE_EOF)
 	{
 		info = g_strdup(archive_error_string(a));
@@ -162,6 +170,7 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 
 	}
 
+	archive_read_close(a);
 	archive_read_free(a);
 
 	gFix = gtk_vbox_new(FALSE, 5);
@@ -172,7 +181,7 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 
 	struct stat buf;
 
-	if (stat(FileToLoad, &buf) == 0)
+	if (totalsize > 0 && stat(FileToLoad, &buf) == 0)
 	{
 		GtkWidget *compr = gtk_progress_bar_new();
 
