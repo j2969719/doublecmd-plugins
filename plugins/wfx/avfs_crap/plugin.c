@@ -20,7 +20,6 @@ tLogProc gLogProc;
 tRequestProc gRequestProc;
 tExtensionStartupInfo* gStartupInfo;
 
-DIR *cur;
 //static char base[PATH_MAX + 1] = "/home/user/tst.diff#patchfs";
 static char base[PATH_MAX + 1] = "/#ftp:ftp.funet.fi/pub/Linux";
 static char path[PATH_MAX + 1];
@@ -45,7 +44,7 @@ void UnixTimeToFileTime(time_t t, LPFILETIME pft)
 	pft->dwHighDateTime = ll >> 32;
 }
 
-bool SetFindData(WIN32_FIND_DATAA *FindData)
+bool SetFindData(DIR *cur, WIN32_FIND_DATAA *FindData)
 {
 	struct dirent *ent;
 	struct stat buf;
@@ -94,22 +93,27 @@ int DCPCALL FsInit(int PluginNr, tProgressProc pProgressProc, tLogProc pLogProc,
 HANDLE DCPCALL FsFindFirst(char* Path, WIN32_FIND_DATAA *FindData)
 {
 	snprintf(path, PATH_MAX, "%s%s", base, Path);
-	cur = virt_opendir(path);
+	DIR *cur = virt_opendir(path);
 
-	if (cur != NULL && SetFindData(FindData) == true)
-		return (HANDLE)(1985);
+	if (cur != NULL && SetFindData(cur, FindData) == true)
+		return (HANDLE)cur;
 
 	return (HANDLE)(-1);
 }
 
 BOOL DCPCALL FsFindNext(HANDLE Hdl, WIN32_FIND_DATAA *FindData)
 {
-	return SetFindData(FindData);
+	DIR *cur = (DIR*)Hdl;
+	return SetFindData(cur, FindData);
 }
 
 int DCPCALL FsFindClose(HANDLE Hdl)
 {
-	virt_closedir(cur);
+	DIR *cur = (DIR*)Hdl;
+
+	if (cur != NULL)
+		virt_closedir(cur);
+
 	return 0;
 }
 
@@ -174,7 +178,6 @@ int DCPCALL FsGetFile(char* RemoteName, char* LocalName, int CopyFlags, RemoteIn
 
 int DCPCALL FsExecuteFile(HWND MainWin, char* RemoteName, char* Verb)
 {
-
 	if (strcmp(Verb, "open") == 0)
 		return FS_EXEC_YOURSELF;
 
