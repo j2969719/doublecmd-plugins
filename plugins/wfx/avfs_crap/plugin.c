@@ -14,8 +14,6 @@
 
 #define Int32x32To64(a,b) ((int64_t)(a)*(int64_t)(b))
 
-#define ANSWER_TO_THE_ULTIMATE_QUESTION_OF_LIFE_THE_UNIVERSE_AND_EVERYTHING 42
-
 typedef struct sAVFSDirData
 {
 	DIR *cur;
@@ -28,8 +26,6 @@ tLogProc gLogProc;
 tRequestProc gRequestProc;
 tExtensionStartupInfo* gStartupInfo;
 
-//static char gAVFSPath[PATH_MAX] = "/home/user/tst.diff#patchfs";
-//static char gAVFSPath[PATH_MAX] = "/home/user/tst.zip#";
 static char gAVFSPath[PATH_MAX] = "/#ftp:ftp.funet.fi/pub/Linux";
 
 char* strlcpy(char* p, const char* p2, int maxlen)
@@ -64,14 +60,6 @@ bool SetFindData(DIR *cur, char *path, WIN32_FIND_DATAA *FindData)
 	{
 		memset(FindData, 0, sizeof(WIN32_FIND_DATAA));
 
-/*
-		if (ent->d_type == DT_DIR)
-		{
-			printf("\tSetFindData: ent->d_type == DT_DIR\n");
-			FindData->dwFileAttributes = FILE_ATTRIBUTE_DIRECTORY;
-		}
-*/
-
 		snprintf(lpath, sizeof(lpath), "%s/%s", path, ent->d_name);
 
 		if (virt_stat(lpath, &buf) == 0)
@@ -87,17 +75,11 @@ bool SetFindData(DIR *cur, char *path, WIN32_FIND_DATAA *FindData)
 			FindData->dwFileAttributes |= FILE_ATTRIBUTE_UNIX_MODE;
 			FindData->dwReserved0 = buf.st_mode;
 		}
-		else
-			printf("\tSetFindData: virt_stat failed for %s\n", ent->d_name);
 
 		strlcpy(FindData->cFileName, ent->d_name, PATH_MAX - 1);
 
-		printf("\tSetFindData for %s\n", FindData->cFileName);
-
 		return true;
 	}
-
-	printf("\tSetFindData = false\n");
 
 	return false;
 }
@@ -120,8 +102,6 @@ HANDLE DCPCALL FsFindFirst(char* Path, WIN32_FIND_DATAA *FindData)
 	snprintf(dirdata->path, sizeof(dirdata->path), "%s%s", gAVFSPath, Path);
 	dirdata->cur = virt_opendir(dirdata->path);
 
-	printf("===================\nFsFindFirst in %s (%s)\n", dirdata->path, gAVFSPath);
-
 	if (dirdata->cur != NULL && SetFindData(dirdata->cur, dirdata->path, FindData) == true)
 		return (HANDLE)dirdata;
 
@@ -132,16 +112,12 @@ BOOL DCPCALL FsFindNext(HANDLE Hdl, WIN32_FIND_DATAA *FindData)
 {
 	tAVFSDirData *dirdata = (tAVFSDirData*)Hdl;
 
-	printf("FsFindNext in %s (%s)\n", dirdata->path, gAVFSPath);
-
 	return SetFindData(dirdata->cur, dirdata->path, FindData);
 }
 
 int DCPCALL FsFindClose(HANDLE Hdl)
 {
 	tAVFSDirData *dirdata = (tAVFSDirData*)Hdl;
-
-	printf("\nFsFindClose in %s (%s)\n===================\n", dirdata->path, gAVFSPath);
 
 	if (dirdata->cur != NULL)
 		virt_closedir(dirdata->cur);
@@ -221,96 +197,6 @@ int DCPCALL FsExecuteFile(HWND MainWin, char* RemoteName, char* Verb)
 
 void DCPCALL FsStatusInfo(char* RemoteDir, int InfoStartEnd, int InfoOperation)
 {
-	char *msg = malloc(sizeof(char) * ANSWER_TO_THE_ULTIMATE_QUESTION_OF_LIFE_THE_UNIVERSE_AND_EVERYTHING);
-	memset(msg, 0, sizeof(msg));
-
-	switch (InfoOperation)
-	{
-	case FS_STATUS_OP_LIST:
-		strcat(msg, "\n>>> FS_STATUS_OP_LIST");
-		break;
-
-	case FS_STATUS_OP_GET_SINGLE:
-		strcat(msg, "\n>>> FS_STATUS_OP_GET_SINGLE");
-		break;
-
-	case FS_STATUS_OP_GET_MULTI:
-		strcat(msg, "\n>>> FS_STATUS_OP_GET_MULTI");
-		break;
-
-	case FS_STATUS_OP_PUT_SINGLE:
-		strcat(msg, "\n>>> FS_STATUS_OP_PUT_SINGLE");
-		break;
-
-	case FS_STATUS_OP_PUT_MULTI:
-		strcat(msg, "\n>>> FS_STATUS_OP_PUT_MULTI");
-		break;
-
-	case FS_STATUS_OP_RENMOV_SINGLE:
-		strcat(msg, "\n>>> FS_STATUS_OP_RENMOV_SINGLE");
-		break;
-
-	case FS_STATUS_OP_RENMOV_MULTI:
-		strcat(msg, "\n>>> FS_STATUS_OP_RENMOV_MULTI");
-		break;
-
-	case FS_STATUS_OP_DELETE:
-		strcat(msg, "\n FS_STATUS_OP_DELETE");
-		break;
-
-	case FS_STATUS_OP_ATTRIB:
-		strcat(msg, "\n>>> FS_STATUS_OP_ATTRIB");
-		break;
-
-	case FS_STATUS_OP_MKDIR:
-		strcat(msg, "\n>>> FS_STATUS_OP_MKDIR");
-		break;
-
-	case FS_STATUS_OP_EXEC:
-		strcat(msg, "\n>>> FS_STATUS_OP_EXEC");
-		break;
-
-	case FS_STATUS_OP_CALCSIZE:
-		strcat(msg, "\n>>> FS_STATUS_OP_CALCSIZE");
-		break;
-
-	case FS_STATUS_OP_SEARCH:
-		strcat(msg, "\n>>> FS_STATUS_OP_SEARCH");
-		break;
-
-	case FS_STATUS_OP_SEARCH_TEXT:
-		strcat(msg, "\n>>> FS_STATUS_OP_SEARCH_TEXT");
-		break;
-
-	case FS_STATUS_OP_SYNC_SEARCH:
-		strcat(msg, "\n>>> FS_STATUS_OP_SYNC_SEARCH");
-		break;
-
-	case FS_STATUS_OP_SYNC_GET:
-		strcat(msg, "\n>>> FS_STATUS_OP_SYNC_GET");
-		break;
-
-	case FS_STATUS_OP_SYNC_PUT:
-		strcat(msg, "\n>>> FS_STATUS_OP_SYNC_PUT");
-		break;
-
-	case FS_STATUS_OP_GET_MULTI_THREAD:
-		strcat(msg, "\n>>> FS_STATUS_OP_GET_MULTI_THREAD");
-		break;
-
-	case FS_STATUS_OP_PUT_MULTI_THREAD:
-		strcat(msg, "\n>>> FS_STATUS_OP_PUT_MULTI_THREAD");
-		break;
-	}
-
-	if (InfoStartEnd == FS_STATUS_START)
-		strcat(msg, " Start\n");
-	else if (InfoStartEnd == FS_STATUS_END)
-		strcat(msg, " End\n");
-
-	printf(msg);
-	free(msg);
-
 	if (strcmp(RemoteDir, "/") == 0)
 	{
 		if (InfoStartEnd == FS_STATUS_START && InfoOperation == FS_STATUS_OP_LIST)
