@@ -206,6 +206,7 @@ int DCPCALL FsInit(int PluginNr, tProgressProc pProgressProc, tLogProc pLogProc,
 	gProgressProc = pProgressProc;
 	gLogProc = pLogProc;
 	gRequestProc = pRequestProc;
+	ShowAVFSPathDlg();
 	return 0;
 }
 
@@ -307,17 +308,10 @@ int DCPCALL FsExecuteFile(HWND MainWin, char* RemoteName, char* Verb)
 {
 	if (strcmp(Verb, "open") == 0)
 		return FS_EXEC_YOURSELF;
+	else if (strcmp(Verb, "properties") == 0)
+		ShowAVFSPathDlg();
 
 	return FS_EXEC_OK;
-}
-
-void DCPCALL FsStatusInfo(char* RemoteDir, int InfoStartEnd, int InfoOperation)
-{
-	if (strcmp(RemoteDir, "/") == 0)
-	{
-		if (InfoStartEnd == FS_STATUS_START && InfoOperation == FS_STATUS_OP_LIST)
-			ShowAVFSPathDlg();
-	}
 }
 
 void DCPCALL FsSetDefaultParams(FsDefaultParamStruct* dps)
