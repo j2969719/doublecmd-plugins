@@ -1,61 +1,93 @@
 object DialogBox: TDialogBox
   AnchorSideBottom.Side = asrBottom
+  Left = 334
+  Height = 465
+  Top = 144
+  Width = 578
+  Anchors = [akBottom]
   BorderIcons = [biSystemMenu]
   BorderStyle = bsDialog
   Caption = 'AVFS'
-  Left = 2264
-  Height = 465
-  Top = 186
-  Width = 432
-  Anchors = [akBottom]
-  ClientHeight = 164
-  ClientWidth = 432
+  ClientHeight = 465
+  ClientWidth = 578
   OnShow = DialogBoxShow
   Position = poScreenCenter
   LCLVersion = '2.0.5.0'
   object lblAVFSPath: TLabel
-    Left = 10
-    Height = 23
-    Top = 8
-    Width = 412
+    AnchorSideLeft.Control = cmbPath
+    AnchorSideTop.Control = Owner
+    Left = 15
+    Height = 15
+    Top = 10
+    Width = 70
+    BorderSpacing.Left = 5
+    BorderSpacing.Top = 10
     Caption = 'AFVS Path:'
     ParentColor = False
   end
   object cmbPath: TComboBox
+    AnchorSideLeft.Control = Owner
+    AnchorSideLeft.Side = asrCenter
+    AnchorSideTop.Control = chkLocalFile
+    AnchorSideTop.Side = asrBottom
     Left = 10
-    Height = 23
-    Top = 28
-    Width = 412
+    Height = 28
+    Top = 34
+    Width = 559
+    BorderSpacing.Top = 5
+    ItemHeight = 0
+    TabOrder = 1
     Text = '/#'
-    ParentColor = False
   end
   object chkLocalFile: TCheckBox
-    Left = 10
+    AnchorSideTop.Control = lblAVFSPath
+    AnchorSideTop.Side = asrCenter
+    AnchorSideRight.Control = cmbPath
+    AnchorSideRight.Side = asrBottom
+    Left = 450
     Height = 23
-    Top = 60
-    Width = 412
+    Top = 6
+    Width = 119
+    Anchors = [akTop, akRight]
     Caption = 'Open local file'
+    Color = clDefault
     OnChange = CheckBoxChange
     ParentColor = False
+    TabOrder = 2
   end
   object fneLocalFile: TFileNameEdit
-    Left = 6
-    Height = 23
-    Top = 83
-    Width = 412
+    AnchorSideLeft.Control = Owner
+    AnchorSideLeft.Side = asrCenter
+    AnchorSideTop.Control = cmbPath
+    AnchorSideTop.Side = asrBottom
+    Left = 10
+    Height = 28
+    Top = 67
+    Width = 559
     FilterIndex = 0
     HideDirectories = False
     ButtonWidth = 23
     NumGlyphs = 1
-    BorderSpacing.Top = 4
+    BorderSpacing.Top = 5
     MaxLength = 0
-    TabOrder = 1
+    TabOrder = 3
   end
   object mInfo: TMemo
-    Left = 8
-    Height = 300
-    Top = 120
-    Width = 412
+    AnchorSideLeft.Control = Owner
+    AnchorSideLeft.Side = asrCenter
+    AnchorSideTop.Control = fneLocalFile
+    AnchorSideTop.Side = asrBottom
+    AnchorSideRight.Control = Owner
+    AnchorSideRight.Side = asrCenter
+    AnchorSideBottom.Control = btnCancel
+    Left = 9
+    Height = 314
+    Top = 100
+    Width = 560
+    Anchors = [akTop, akLeft, akRight, akBottom]
+    BorderSpacing.Top = 5
+    BorderSpacing.Bottom = 5
+    Font.Name = 'Monospace'
     Lines.Strings = (
       'Format of an AVFS Path'
       '----------------------'
@@ -157,35 +189,49 @@ object DialogBox: TDialogBox
       '  #ulha              lha archives'
       '  #uzoo              zoo archives'
     )
+    ParentFont = False
     ReadOnly = True
-    Font.Name = 'Monospace'
     ScrollBars = ssBoth
-    TabOrder = 0
+    TabOrder = 4
+    TabStop = False
     WantTabs = True
     WordWrap = False
   end
   object btnCancel: TBitBtn
-    Left = 250
-    Height = 32
-    Top = 422
-    Width = 85
+    AnchorSideTop.Side = asrBottom
+    AnchorSideRight.Control = btnOK
+    AnchorSideBottom.Control = Owner
+    AnchorSideBottom.Side = asrBottom
+    Left = 343
+    Height = 36
+    Top = 419
+    Width = 110
+    Anchors = [akRight, akBottom]
+    BorderSpacing.Right = 5
+    BorderSpacing.Bottom = 10
     Cancel = True
     DefaultCaption = True
     Kind = bkCancel
     ModalResult = 2
-    TabOrder = 1
     OnClick = ButtonClick
+    TabOrder = 5
   end
   object btnOK: TBitBtn
-    Left = 345
-    Height = 32
-    Top = 422
-    Width = 75
+    AnchorSideTop.Control = btnCancel
+    AnchorSideTop.Side = asrCenter
+    AnchorSideRight.Control = Owner
+    AnchorSideRight.Side = asrBottom
+    Left = 458
+    Height = 36
+    Top = 419
+    Width = 110
+    Anchors = [akTop, akRight]
+    BorderSpacing.Right = 10
     Default = True
     DefaultCaption = True
     Kind = bkOK
     ModalResult = 1
-    TabOrder = 0
     OnClick = ButtonClick
+    TabOrder = 0
   end
 end
