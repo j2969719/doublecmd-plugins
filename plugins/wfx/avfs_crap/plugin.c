@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <fcntl.h>
+#include <dlfcn.h>
 #include <unistd.h>
 #include <linux/limits.h>
 #include <sys/stat.h>
@@ -26,7 +27,10 @@ tLogProc gLogProc;
 tRequestProc gRequestProc;
 tExtensionStartupInfo* gStartupInfo;
 
-static char gAVFSPath[PATH_MAX] = "/#ftp:ftp.funet.fi/pub/Linux";
+static char gAVFSPath[PATH_MAX] = "/#avfsstat";
+static char gLFMPath[PATH_MAX];
+static char gHistoryFile[PATH_MAX];
+int gListItems = 0;
 
 char* strlcpy(char* p, const char* p2, int maxlen)
 {
@@ -82,6 +86,118 @@ bool SetFindData(DIR *cur, char *path, WIN32_FIND_DATAA *FindData)
 	}
 
 	return false;
+}
+
+intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr_t wParam, intptr_t lParam)
+{
+	FILE *fp;
+	size_t len = 0;
+	ssize_t read = 0;
+	int i = 0;
+	bool localfile = false;
+	char *path = NULL, *file = NULL, *line = NULL;
+
+	switch (Msg)
+	{
+	case DN_INITDIALOG:
+		gStartupInfo->SendDlgMsg(pDlg, "fneLocalFile", DM_ENABLE, (intptr_t)localfile, 0);
+		gStartupInfo->SendDlgMsg(pDlg, "cmbPath", DM_ENABLE, (intptr_t)!localfile, 0);
+
+		gListItems = 0;
+
+		if ((fp = fopen(gHistoryFile, "r")) != NULL)
+		{
+			while (((read = getline(&line, &len, fp)) != -1) && gListItems < 10)
+			{
+				if (line[read - 1] == '\n')
+					line[read - 1] = '\0';
+
+				strlcpy(line, strdup(line), PATH_MAX);
+				gStartupInfo->SendDlgMsg(pDlg, "cmbPath", DM_LISTADD, (intptr_t)line, 0);
+				gListItems++;
+			}
+
+			fclose(fp);
+		}
+
+		if (gListItems == 0)
+		{
+			gStartupInfo->SendDlgMsg(pDlg, "cmbPath", DM_LISTADD, (intptr_t)gAVFSPath, 0);
+			gListItems++;
+		}
+
+		gStartupInfo->SendDlgMsg(pDlg, "cmbPath", DM_LISTSETITEMINDEX, 0, 0);
+
+		break;
+
+	case DN_CLICK:
+		if (strcmp(DlgItemName, "btnOK") == 0)
+		{
+			path = strdup((char*)gStartupInfo->SendDlgMsg(pDlg, "cmbPath", DM_GETTEXT, 0, 0));
+			file = strdup((char*)gStartupInfo->SendDlgMsg(pDlg, "fneLocalFile", DM_GETTEXT, 0, 0));
+			localfile = (bool*)gStartupInfo->SendDlgMsg(pDlg, "chkLocalFile", DM_GETCHECK, 0, 0);
+
+			if (localfile && file != NULL && file[0] != '\0')
+			{
+				if (strrchr(file, '#') == NULL)
+					snprintf(gAVFSPath, sizeof(gAVFSPath), "%s#", file);
+				else
+					strlcpy(gAVFSPath, file, sizeof(gAVFSPath));
+			}
+			else if (path != NULL && path[0] != '\0')
+				strlcpy(gAVFSPath, path, sizeof(gAVFSPath));
+			else
+				strlcpy(gAVFSPath, "/#avfsstat", sizeof(gAVFSPath));
+
+			if ((fp = fopen(gHistoryFile, "w")) != NULL)
+			{
+				fprintf(fp, "%s\n", gAVFSPath);
+
+				for (i = 0; i < gListItems; i++)
+				{
+					line = strdup((char*)gStartupInfo->SendDlgMsg(pDlg, "cmbPath", DM_LISTGETITEM, i, 0));
+
+					if (line != NULL && (strcmp(gAVFSPath, line) != 0))
+						fprintf(fp, "%s\n", line);
+				}
+
+				fclose(fp);
+			}
+
+			gStartupInfo->SendDlgMsg(pDlg, DlgItemName, DM_CLOSE, 3, 0);
+		}
+
+		break;
+
+	case DN_CHANGE:
+		if (strcmp(DlgItemName, "chkLocalFile") == 0)
+		{
+			localfile = (bool*)gStartupInfo->SendDlgMsg(pDlg, "chkLocalFile", DM_GETCHECK, 0, 0);
+			gStartupInfo->SendDlgMsg(pDlg, "fneLocalFile", DM_ENABLE, (intptr_t)localfile, 0);
+			gStartupInfo->SendDlgMsg(pDlg, "cmbPath", DM_ENABLE, (intptr_t)!localfile, 0);
+		}
+
+		break;
+	}
+
+	if (file)
+		free(file);
+
+	if (path)
+		free(path);
+
+	if (line)
+		free(line);
+
+	return 0;
+}
+
+static void ShowAVFSPathDlg(void)
+{
+	if (access(gLFMPath, F_OK) != 0)
+		gRequestProc(gPluginNr, RT_TargetDir, "AVFS", "Enter AVFS path:", gAVFSPath, sizeof(gAVFSPath) - 1);
+	else
+		gStartupInfo->DialogBoxLFMFile(gLFMPath, DlgProc);
 }
 
 int DCPCALL FsInit(int PluginNr, tProgressProc pProgressProc, tLogProc pLogProc, tRequestProc pRequestProc)
@@ -200,21 +316,38 @@ void DCPCALL FsStatusInfo(char* RemoteDir, int InfoStartEnd, int InfoOperation)
 	if (strcmp(RemoteDir, "/") == 0)
 	{
 		if (InfoStartEnd == FS_STATUS_START && InfoOperation == FS_STATUS_OP_LIST)
-			gRequestProc(gPluginNr, RT_TargetDir, "AVFS", "Enter AVFS path:", gAVFSPath, sizeof(gAVFSPath) - 1);
+			ShowAVFSPathDlg();
 	}
 }
 
 void DCPCALL FsSetDefaultParams(FsDefaultParamStruct* dps)
 {
+	Dl_info dlinfo;
+	const char* lfm_name = "dialog.lfm";
 
+	strlcpy(gHistoryFile, dps->DefaultIniName, PATH_MAX);
+	char *pos = strrchr(gHistoryFile, '/');
+
+	if (pos)
+		strcpy(pos + 1, "AVFSRecent.txt");
+
+	memset(&dlinfo, 0, sizeof(dlinfo));
+
+	if (dladdr(lfm_name, &dlinfo) != 0)
+	{
+		strlcpy(gLFMPath, dlinfo.dli_fname, PATH_MAX);
+		pos = strrchr(gLFMPath, '/');
+
+		if (pos)
+			strcpy(pos + 1, lfm_name);
+	}
 }
 
 void DCPCALL FsGetDefRootName(char* DefRootName, int maxlen)
 {
-	strlcpy(DefRootName, "avfs-tst", maxlen - 1);
+	strlcpy(DefRootName, "AVFS", maxlen - 1);
 }
 
-/*
 void DCPCALL ExtensionInitialize(tExtensionStartupInfo* StartupInfo)
 {
 	gStartupInfo = malloc(sizeof(tExtensionStartupInfo));
@@ -225,4 +358,4 @@ void DCPCALL ExtensionFinalize(void* Reserved)
 {
 	free(gStartupInfo);
 }
-*/
+

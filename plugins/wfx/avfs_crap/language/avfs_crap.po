@@ -1,0 +1,15 @@
+msgid ""
+msgstr "Content-Type: text/plain; charset=UTF-8"
+
+#: tdialogbox.caption
+msgctxt "tdialogbox.caption"
+msgid "AFVS"
+msgstr ""
+
+#: tdialogbox.lblAVFSPath.caption
+msgid "AFVS Path:"
+msgstr ""
+
+#: tdialogbox.chkLocalFile.caption
+msgid "Open local file"
+msgstr ""
