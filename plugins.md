@@ -153,6 +153,9 @@ Search file name in custom list of file names.
 - [libextractorwdx.lua](plugins/wdx/scripts/libextractorwdx.lua)<br>
 Returns metadata from files. You can see list of fields in `fields` (first column). Requires `extract`.
 
+- [lslockswdx.lua](plugins/wdx/scripts/lslockswdx.lua)<br>
+List local system locks.
+
 - [modiftimeistodaywdx.lua](plugins/wdx/scripts/modiftimeistodaywdx.lua) *(cross platform)*<br>
 The last modified time is today (not last twenty-four hours), boolean.
 
@@ -211,6 +214,9 @@ Script for using in trash folder: getting original file name and deletion date.
 
 - [adbplugin-x64](plugins/wfx/adbplugin-x64)<br>
 PKGBUILD file for [Android ADB](http://www.uniqtec.eu/applications/android-adb.html).
+
+- [avfs_crap](plugins/wfx/avfs_crap)<br>
+Simple wfx plugin for [AVFS](http://avf.sourceforge.net/) (read-only).
 
 - [clipboard](plugins/wfx/clipboard)<br>
 View clipboard content. (for GTK2-version of DC only)
@@ -348,6 +354,9 @@ Feed to listbox files from filelist.txt.
 
 - [locate_crap](plugins/dsx/locate_crap)<br>
 Search via `locate` (w/o StartPath). 
+
+- [lslocks](plugins/dsx/lslocks)<br>
+List local system locks.
 
 - [pacman_pkg_list](plugins/dsx/pacman_pkg_list)<br>
 Feed to listbox local files of some installed archlinux package via `pacman`. Accepts only full pkgname in FileMask.
