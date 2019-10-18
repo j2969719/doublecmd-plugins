@@ -450,6 +450,8 @@ int DCPCALL FsRenMovFile(char* OldName, char* NewName, BOOL Move, BOOL OverWrite
 	char buff[8192];
 	char oldpath[PATH_MAX];
 	char newpath[PATH_MAX];
+	struct stat buf;
+	struct utimbuf ubuf;
 	int result = FS_FILE_OK;
 
 	snprintf(oldpath, sizeof(oldpath), "%s%s", gAVFSPath, OldName);
@@ -517,6 +519,14 @@ int DCPCALL FsRenMovFile(char* OldName, char* NewName, BOOL Move, BOOL OverWrite
 
 			if (result ==  FS_FILE_OK && ri->Attr > 0)
 				virt_chmod(newpath, ri->Attr);
+
+			if (virt_stat(oldpath, &buf) == 0)
+			{
+				ubuf.actime = buf.st_atime;
+				ubuf.modtime = buf.st_mtime;
+				virt_utime(newpath, &ubuf);
+			}
+
 		}
 		else
 			result = FS_FILE_WRITEERROR;
