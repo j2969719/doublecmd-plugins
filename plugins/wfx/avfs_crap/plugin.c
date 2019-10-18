@@ -526,7 +526,7 @@ BOOL DCPCALL FsDeleteFile(char* RemoteName)
 	if (virt_remove(rpath) == -1)
 	{
 		int errsv = errno;
-		printf("virt_remove (%s): %s", rpath, strerror(errsv));
+		printf("virt_remove (%s): %s\n", rpath, strerror(errsv));
 		return false;
 	}
 
@@ -542,7 +542,7 @@ BOOL DCPCALL FsRemoveDir(char* RemoteName)
 	if (virt_rmdir(rpath) == -1)
 	{
 		int errsv = errno;
-		printf("virt_rmdir (%s): %s", rpath, strerror(errsv));
+		printf("virt_rmdir (%s): %s\n", rpath, strerror(errsv));
 		return false;
 	}
 
