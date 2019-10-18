@@ -220,7 +220,13 @@ HANDLE DCPCALL FsFindFirst(char* Path, WIN32_FIND_DATAA *FindData)
 	memset(dirdata, 0, sizeof(tAVFSDirData));
 
 	snprintf(dirdata->path, sizeof(dirdata->path), "%s%s", gAVFSPath, Path);
-	dirdata->cur = virt_opendir(dirdata->path);
+
+	if ((dirdata->cur = virt_opendir(dirdata->path)) == NULL)
+	{
+		int errsv = errno;
+		gStartupInfo->MessageBox(strerror(errsv), "AVFS", MB_OK | MB_ICONERROR);
+		return (HANDLE)(-1);
+	}
 
 	if (dirdata->cur != NULL && SetFindData(dirdata->cur, dirdata->path, FindData) == true)
 		return (HANDLE)dirdata;
