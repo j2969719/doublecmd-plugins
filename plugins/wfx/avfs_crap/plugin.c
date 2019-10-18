@@ -3,6 +3,7 @@
 #include <stdbool.h>
 #include <fcntl.h>
 #include <dlfcn.h>
+#include <errno.h>
 #include <unistd.h>
 #include <linux/limits.h>
 #include <sys/stat.h>
@@ -75,6 +76,8 @@ bool SetFindData(DIR *cur, char *path, WIN32_FIND_DATAA *FindData)
 			FindData->nFileSizeLow = buf.st_size & 0x00000000FFFFFFFF;
 
 			UnixTimeToFileTime(buf.st_mtime, &FindData->ftLastWriteTime);
+			UnixTimeToFileTime(buf.st_atime, &FindData->ftLastAccessTime);
+			UnixTimeToFileTime(buf.st_mtime, &FindData->ftCreationTime);
 
 			FindData->dwFileAttributes |= FILE_ATTRIBUTE_UNIX_MODE;
 			FindData->dwReserved0 = buf.st_mode;
@@ -263,7 +266,7 @@ int DCPCALL FsGetFile(char* RemoteName, char* LocalName, int CopyFlags, RemoteIn
 	if (ifd == -1)
 		return FS_FILE_READERROR;
 
-	ofd = open(LocalName, O_WRONLY | O_CREAT | O_TRUNC, S_IRWXU);
+	ofd = open(LocalName, O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR);
 
 	if (ofd > -1)
 	{
@@ -272,7 +275,10 @@ int DCPCALL FsGetFile(char* RemoteName, char* LocalName, int CopyFlags, RemoteIn
 		while ((len = virt_read(ifd, buff, sizeof(buff))) > 0)
 		{
 			if (write(ofd, buff, len) == -1)
+			{
 				result = FS_FILE_WRITEERROR;
+				break;
+			}
 
 			total += len;
 
@@ -292,12 +298,13 @@ int DCPCALL FsGetFile(char* RemoteName, char* LocalName, int CopyFlags, RemoteIn
 		}
 
 		close(ofd);
+
+		if (ri->Attr > 0)
+			chmod(LocalName, ri->Attr);
+
 	}
 	else
 		result = FS_FILE_WRITEERROR;
-
-	if (ri->Attr > 0)
-		chmod(LocalName, ri->Attr);
 
 	virt_close(ifd);
 
@@ -306,12 +313,240 @@ int DCPCALL FsGetFile(char* RemoteName, char* LocalName, int CopyFlags, RemoteIn
 
 int DCPCALL FsExecuteFile(HWND MainWin, char* RemoteName, char* Verb)
 {
-	if (strcmp(Verb, "open") == 0)
+	if (strncmp(Verb, "open", 4) == 0)
 		return FS_EXEC_YOURSELF;
-	else if (strcmp(Verb, "properties") == 0)
+	else if (strncmp(Verb, "quote", 5) == 0)
+		gStartupInfo->MessageBox(strerror(EOPNOTSUPP), "AVFS", MB_OK | MB_ICONERROR);
+	else if (strncmp(Verb, "chmod", 5) == 0)
+	{
+		int mode = strtoll(Verb + 6, 0, 8);
+		char rpath[PATH_MAX];
+		snprintf(rpath, sizeof(rpath), "%s%s", gAVFSPath, RemoteName);
+
+		if (virt_chmod(rpath, mode) == -1)
+		{
+			int errsv = errno;
+			char msg[PATH_MAX];
+			snprintf(msg, sizeof(msg), "virt_chmod (%s): %s", rpath, strerror(errsv));
+			gStartupInfo->MessageBox(msg, "AVFS", MB_OK | MB_ICONERROR);
+			return false;
+		}
+	}
+	else if (strncmp(Verb, "properties", 10) == 0)
 		ShowAVFSPathDlg();
 
 	return FS_EXEC_OK;
+}
+
+BOOL DCPCALL FsMkDir(char* Path)
+{
+	char rpath[PATH_MAX];
+
+	snprintf(rpath, sizeof(rpath), "%s%s", gAVFSPath, Path);
+
+	if (virt_mkdir(rpath, S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH) == -1)
+	{
+		int errsv = errno;
+		char msg[PATH_MAX];
+		snprintf(msg, sizeof(msg), "virt_mkdir (%s): %s", rpath, strerror(errsv));
+		gStartupInfo->MessageBox(msg, "AVFS", MB_OK | MB_ICONERROR);
+		return false;
+	}
+
+	return true;
+}
+
+int DCPCALL FsPutFile(char* LocalName, char* RemoteName, int CopyFlags)
+{
+	int ifd, ofd, done;
+	ssize_t len, total = 0;
+	char rpath[PATH_MAX];
+	char buff[8192];
+	struct stat buf;
+	struct utimbuf ubuf;
+	int result = FS_FILE_OK;
+
+	snprintf(rpath, sizeof(rpath), "%s%s", gAVFSPath, RemoteName);
+
+	if ((CopyFlags == 0) && (virt_access(rpath, F_OK) == 0))
+		return FS_FILE_EXISTS;
+
+	if (gProgressProc(gPluginNr, LocalName, rpath, 0) == 1)
+		return FS_FILE_USERABORT;
+
+	if ((stat(LocalName, &buf) != 0) || !S_ISREG(buf.st_mode))
+		return FS_FILE_READERROR;
+
+	ifd = open(LocalName, O_RDONLY);
+
+	if (ifd == -1)
+		return FS_FILE_READERROR;
+
+	ofd = virt_open(rpath, O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR);
+
+	if (ofd > -1)
+	{
+		while ((len = read(ifd, buff, sizeof(buff))) > 0)
+		{
+			if (virt_write(ofd, buff, len) == -1)
+			{
+				result = FS_FILE_WRITEERROR;
+				break;
+			}
+
+			total += len;
+
+			if (buf.st_size > 0)
+				done = total * 100 / buf.st_size;
+			else
+				done = 0;
+
+			if (done > 100)
+				done = 100;
+
+			if (gProgressProc(gPluginNr, LocalName, rpath, done) == 1)
+			{
+				result = FS_FILE_USERABORT;
+				break;
+			}
+		}
+
+		if (result ==  FS_FILE_OK)
+		{
+			if (buf.st_mode > 0)
+				virt_chmod(rpath, buf.st_mode);
+
+
+			ubuf.actime = buf.st_atime;
+			ubuf.modtime = buf.st_mtime;
+			virt_utime(rpath, &ubuf);
+		}
+
+		virt_close(ofd);
+	}
+	else
+		result = FS_FILE_WRITEERROR;
+
+	close(ifd);
+
+	return result;
+}
+
+int DCPCALL FsRenMovFile(char* OldName, char* NewName, BOOL Move, BOOL OverWrite, RemoteInfoStruct* ri)
+{
+	int ifd, ofd, done;
+	ssize_t len, total = 0;
+	char buff[8192];
+	char oldpath[PATH_MAX];
+	char newpath[PATH_MAX];
+	int result = FS_FILE_OK;
+
+	snprintf(oldpath, sizeof(oldpath), "%s%s", gAVFSPath, OldName);
+	snprintf(newpath, sizeof(newpath), "%s%s", gAVFSPath, NewName);
+
+	if (gProgressProc(gPluginNr, oldpath, newpath, 0) == 1)
+		return FS_FILE_USERABORT;
+
+	if (!OverWrite && (virt_access(newpath, F_OK) == 0))
+		return FS_FILE_EXISTS;
+
+	if (Move)
+	{
+		if (virt_rename(oldpath, newpath) == -1)
+		{
+			int errsv = errno;
+			char msg[PATH_MAX];
+			snprintf(msg, sizeof(msg), "virt_rename (%s): %s", newpath, strerror(errsv));
+			gStartupInfo->MessageBox(msg, "AVFS", MB_OK | MB_ICONERROR);
+			return FS_FILE_OK;
+		}
+
+		if (gProgressProc(gPluginNr, oldpath, newpath, 100) == 1)
+			return FS_FILE_USERABORT;
+	}
+	else
+	{
+		ifd = virt_open(oldpath, O_RDONLY, 0);
+
+		if (ifd == -1)
+			return FS_FILE_READERROR;
+
+		ofd = virt_open(newpath, O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR);
+
+		if (ofd > -1)
+		{
+			size_t rsize = ((int64_t)ri->SizeHigh << 32) | ri->SizeLow;
+
+			while ((len = virt_read(ifd, buff, sizeof(buff))) > 0)
+			{
+				if (virt_write(ofd, buff, len) == -1)
+				{
+					result = FS_FILE_WRITEERROR;
+					break;
+				}
+
+				total += len;
+
+				if (rsize > 0)
+					done = total * 100 / rsize;
+				else
+					done = 0;
+
+				if (done > 100)
+					done = 100;
+
+				if (gProgressProc(gPluginNr, oldpath, newpath, done) == 1)
+				{
+					result = FS_FILE_USERABORT;
+					break;
+				}
+			}
+
+			virt_close(ofd);
+
+			if (result ==  FS_FILE_OK && ri->Attr > 0)
+				virt_chmod(newpath, ri->Attr);
+		}
+		else
+			result = FS_FILE_WRITEERROR;
+
+		virt_close(ifd);
+	}
+
+	return FS_FILE_OK;
+
+}
+
+BOOL DCPCALL FsDeleteFile(char* RemoteName)
+{
+	char rpath[PATH_MAX];
+
+	snprintf(rpath, sizeof(rpath), "%s%s", gAVFSPath, RemoteName);
+
+	if (virt_remove(rpath) == -1)
+	{
+		int errsv = errno;
+		printf("virt_remove (%s): %s", rpath, strerror(errsv));
+		return false;
+	}
+
+	return true;
+}
+
+BOOL DCPCALL FsRemoveDir(char* RemoteName)
+{
+	char rpath[PATH_MAX];
+
+	snprintf(rpath, sizeof(rpath), "%s%s", gAVFSPath, RemoteName);
+
+	if (virt_rmdir(rpath) == -1)
+	{
+		int errsv = errno;
+		printf("virt_rmdir (%s): %s", rpath, strerror(errsv));
+		return false;
+	}
+
+	return true;
 }
 
 void DCPCALL FsSetDefaultParams(FsDefaultParamStruct* dps)
@@ -352,4 +587,3 @@ void DCPCALL ExtensionFinalize(void* Reserved)
 {
 	free(gStartupInfo);
 }
-
