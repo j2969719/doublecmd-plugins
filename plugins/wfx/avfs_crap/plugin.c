@@ -53,17 +53,6 @@ void UnixTimeToFileTime(time_t t, LPFILETIME pft)
 	pft->dwHighDateTime = ll >> 32;
 }
 
-time_t FileTimeToTime_t(FILETIME ft)
-{
-	time_t result;
-
-	result = (int64_t)ft.dwHighDateTime << 32;
-	result = result + (uint32_t)ft.dwLowDateTime;
-	result = (result - 116444736000000000) / 10000000;
-
-	return result;
-}
-
 bool SetFindData(DIR *cur, char *path, WIN32_FIND_DATAA *FindData)
 {
 	struct dirent *ent;
@@ -326,9 +315,13 @@ int DCPCALL FsGetFile(char* RemoteName, char* LocalName, int CopyFlags, RemoteIn
 		if (ri->Attr > 0)
 			chmod(LocalName, ri->Attr);
 
-			ubuf.actime = 0;
-			ubuf.modtime = FileTimeToTime_t(ri->LastWriteTime);
+		if (virt_stat(rpath, &buf) == 0)
+		{
+			ubuf.actime = buf.st_atime;
+			ubuf.modtime = buf.st_mtime;
 			utime(LocalName, &ubuf);
+		}
+
 	}
 	else
 		result = FS_FILE_WRITEERROR;
@@ -536,9 +529,12 @@ int DCPCALL FsRenMovFile(char* OldName, char* NewName, BOOL Move, BOOL OverWrite
 			if (result ==  FS_FILE_OK && ri->Attr > 0)
 				virt_chmod(newpath, ri->Attr);
 
-			ubuf.actime = 0;
-			ubuf.modtime = FileTimeToTime_t(ri->LastWriteTime);
-			virt_utime(newpath, &ubuf);
+			if (virt_stat(oldpath, &buf) == 0)
+			{
+				ubuf.actime = buf.st_atime;
+				ubuf.modtime = buf.st_mtime;
+				virt_utime(newpath, &ubuf);
+			}
 
 		}
 		else
