@@ -110,7 +110,7 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 
 		if ((fp = fopen(gHistoryFile, "r")) != NULL)
 		{
-			while (((read = getline(&line, &len, fp)) != -1) && gListItems < 10)
+			while (((read = getline(&line, &len, fp)) != -1) && gListItems < 25)
 			{
 				if (line[read - 1] == '\n')
 					line[read - 1] = '\0';
@@ -224,7 +224,12 @@ HANDLE DCPCALL FsFindFirst(char* Path, WIN32_FIND_DATAA *FindData)
 	if ((dirdata->cur = virt_opendir(dirdata->path)) == NULL)
 	{
 		int errsv = errno;
-		gStartupInfo->MessageBox(strerror(errsv), "AVFS", MB_OK | MB_ICONERROR);
+
+		if (Path[0] == '/' && Path[1] == '\0')
+			gStartupInfo->MessageBox(strerror(errsv), "AVFS", MB_OK | MB_ICONERROR);
+		else
+			printf("%s: %s\n", dirdata->path, strerror(errsv));
+
 		return (HANDLE)(-1);
 	}
 
