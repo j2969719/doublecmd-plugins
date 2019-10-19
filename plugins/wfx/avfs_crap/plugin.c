@@ -32,6 +32,7 @@ static char gAVFSPath[PATH_MAX] = "/#avfsstat";
 static char gLFMPath[PATH_MAX];
 static char gHistoryFile[PATH_MAX];
 int gListItems = 0;
+bool gAbortCD = false;
 
 char* strlcpy(char* p, const char* p2, int maxlen)
 {
@@ -105,7 +106,7 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 	case DN_INITDIALOG:
 		gStartupInfo->SendDlgMsg(pDlg, "fneLocalFile", DM_ENABLE, (intptr_t)localfile, 0);
 		gStartupInfo->SendDlgMsg(pDlg, "cmbPath", DM_ENABLE, (intptr_t)!localfile, 0);
-
+		gAbortCD = false;
 		gListItems = 0;
 
 		if ((fp = fopen(gHistoryFile, "r")) != NULL)
@@ -134,7 +135,7 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 		break;
 
 	case DN_CLICK:
-		if (strcmp(DlgItemName, "btnOK") == 0)
+		if (strncmp(DlgItemName, "btnOK", 5) == 0)
 		{
 			path = strdup((char*)gStartupInfo->SendDlgMsg(pDlg, "cmbPath", DM_GETTEXT, 0, 0));
 			file = strdup((char*)gStartupInfo->SendDlgMsg(pDlg, "fneLocalFile", DM_GETTEXT, 0, 0));
@@ -167,13 +168,18 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 				fclose(fp);
 			}
 
-			gStartupInfo->SendDlgMsg(pDlg, DlgItemName, DM_CLOSE, 3, 0);
+			gStartupInfo->SendDlgMsg(pDlg, DlgItemName, DM_CLOSE, 1, 0);
+		}
+		else if (strncmp(DlgItemName, "btnCancel", 9) == 0)
+		{
+			gAbortCD = true;
+			gStartupInfo->SendDlgMsg(pDlg, DlgItemName, DM_CLOSE, 2, 0);
 		}
 
 		break;
 
 	case DN_CHANGE:
-		if (strcmp(DlgItemName, "chkLocalFile") == 0)
+		if (strncmp(DlgItemName, "chkLocalFile", 12) == 0)
 		{
 			localfile = (bool*)gStartupInfo->SendDlgMsg(pDlg, "chkLocalFile", DM_GETCHECK, 0, 0);
 			gStartupInfo->SendDlgMsg(pDlg, "fneLocalFile", DM_ENABLE, (intptr_t)localfile, 0);
@@ -219,19 +225,22 @@ HANDLE DCPCALL FsFindFirst(char* Path, WIN32_FIND_DATAA *FindData)
 	dirdata = malloc(sizeof(tAVFSDirData));
 	memset(dirdata, 0, sizeof(tAVFSDirData));
 
-	snprintf(dirdata->path, sizeof(dirdata->path), "%s%s", gAVFSPath, Path);
-
-	if ((dirdata->cur = virt_opendir(dirdata->path)) == NULL)
+	do
 	{
-		int errsv = errno;
+		snprintf(dirdata->path, sizeof(dirdata->path), "%s%s", gAVFSPath, Path);
 
-		if (Path[0] == '/' && Path[1] == '\0')
-			gStartupInfo->MessageBox(strerror(errsv), "AVFS", MB_OK | MB_ICONERROR);
-		else
-			printf("%s: %s\n", dirdata->path, strerror(errsv));
+		if ((dirdata->cur = virt_opendir(dirdata->path)) == NULL)
+		{
+			int errsv = errno;
+			char msg[PATH_MAX];
+			snprintf(msg, sizeof(msg), "%s: %s", dirdata->path, strerror(errsv));
+			gStartupInfo->MessageBox(msg, "AVFS", MB_OK | MB_ICONERROR);
+		}
 
-		return (HANDLE)(-1);
+		if (dirdata->cur == NULL && Path[1] == '\0')
+			ShowAVFSPathDlg();
 	}
+	while (dirdata->cur == NULL && Path[1] == '\0' && !gAbortCD);
 
 	if (dirdata->cur != NULL && SetFindData(dirdata->cur, dirdata->path, FindData) == true)
 		return (HANDLE)dirdata;
