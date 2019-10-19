@@ -139,7 +139,7 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 		{
 			path = strdup((char*)gStartupInfo->SendDlgMsg(pDlg, "cmbPath", DM_GETTEXT, 0, 0));
 			file = strdup((char*)gStartupInfo->SendDlgMsg(pDlg, "fneLocalFile", DM_GETTEXT, 0, 0));
-			localfile = (bool*)gStartupInfo->SendDlgMsg(pDlg, "chkLocalFile", DM_GETCHECK, 0, 0);
+			localfile = (bool)gStartupInfo->SendDlgMsg(pDlg, "chkLocalFile", DM_GETCHECK, 0, 0);
 
 			if (localfile && file != NULL && file[0] != '\0')
 			{
@@ -181,7 +181,7 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 	case DN_CHANGE:
 		if (strncmp(DlgItemName, "chkLocalFile", 12) == 0)
 		{
-			localfile = (bool*)gStartupInfo->SendDlgMsg(pDlg, "chkLocalFile", DM_GETCHECK, 0, 0);
+			localfile = (bool)gStartupInfo->SendDlgMsg(pDlg, "chkLocalFile", DM_GETCHECK, 0, 0);
 			gStartupInfo->SendDlgMsg(pDlg, "fneLocalFile", DM_ENABLE, (intptr_t)localfile, 0);
 			gStartupInfo->SendDlgMsg(pDlg, "cmbPath", DM_ENABLE, (intptr_t)!localfile, 0);
 		}
@@ -204,7 +204,7 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 static void ShowAVFSPathDlg(void)
 {
 	if (access(gLFMPath, F_OK) != 0)
-		gRequestProc(gPluginNr, RT_TargetDir, "AVFS", "Enter AVFS path:", gAVFSPath, sizeof(gAVFSPath) - 1);
+		gAbortCD = !(bool)gStartupInfo->InputBox("AVFS", "Enter AVFS path:", false, gAVFSPath, sizeof(gAVFSPath) - 1);
 	else
 		gStartupInfo->DialogBoxLFMFile(gLFMPath, DlgProc);
 }
