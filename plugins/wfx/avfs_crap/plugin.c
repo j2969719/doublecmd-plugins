@@ -148,7 +148,7 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 				else
 					strlcpy(gAVFSPath, file, sizeof(gAVFSPath));
 			}
-			else if (path != NULL && path[0] != '\0')
+			else if (!localfile && path != NULL && path[0] != '\0')
 				strlcpy(gAVFSPath, path, sizeof(gAVFSPath));
 			else
 				strlcpy(gAVFSPath, "/#avfsstat", sizeof(gAVFSPath));
