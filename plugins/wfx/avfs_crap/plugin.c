@@ -54,6 +54,14 @@ void UnixTimeToFileTime(time_t t, LPFILETIME pft)
 	pft->dwHighDateTime = ll >> 32;
 }
 
+unsigned long FileTimeToUnixTime(LPFILETIME ft)
+{
+	int64_t ll = ft->dwHighDateTime;
+	ll = (ll << 32) | ft->dwLowDateTime;
+	ll = (ll - 116444736000000000) / 10000000;
+	return (unsigned long)ll;
+}
+
 bool SetFindData(DIR *cur, char *path, WIN32_FIND_DATAA *FindData)
 {
 	struct dirent *ent;
@@ -586,6 +594,37 @@ BOOL DCPCALL FsRemoveDir(char* RemoteName)
 	}
 
 	return true;
+}
+
+BOOL DCPCALL FsSetTime(char* RemoteName, FILETIME *CreationTime, FILETIME *LastAccessTime, FILETIME *LastWriteTime)
+{
+	struct stat buf;
+	struct utimbuf ubuf;
+	char rpath[PATH_MAX];
+
+	snprintf(rpath, sizeof(rpath), "%s%s", gAVFSPath, RemoteName);
+
+	if (LastAccessTime != NULL || LastWriteTime != NULL)
+	{
+
+		if (virt_stat(rpath, &buf) == 0)
+		{
+			if (LastAccessTime != NULL)
+				ubuf.actime = FileTimeToUnixTime(LastAccessTime);
+			else
+				ubuf.actime = buf.st_atime;
+
+			if (LastWriteTime != NULL)
+				ubuf.modtime = FileTimeToUnixTime(LastWriteTime);
+			else
+				ubuf.modtime = buf.st_mtime;
+
+			if (virt_utime(rpath, &ubuf) == 0)
+				return true;
+		}
+	}
+
+	return false;
 }
 
 void DCPCALL FsSetDefaultParams(FsDefaultParamStruct* dps)
