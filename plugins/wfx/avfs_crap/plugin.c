@@ -86,7 +86,8 @@ bool SetFindData(DIR *cur, char *path, WIN32_FIND_DATAA *FindData)
 
 			UnixTimeToFileTime(buf.st_mtime, &FindData->ftLastWriteTime);
 			UnixTimeToFileTime(buf.st_atime, &FindData->ftLastAccessTime);
-			UnixTimeToFileTime(buf.st_mtime, &FindData->ftCreationTime);
+			FindData->ftCreationTime.dwHighDateTime = 0xFFFFFFFF;
+			FindData->ftCreationTime.dwLowDateTime = 0xFFFFFFFE;
 
 			FindData->dwFileAttributes |= FILE_ATTRIBUTE_UNIX_MODE;
 			FindData->dwReserved0 = buf.st_mode;
