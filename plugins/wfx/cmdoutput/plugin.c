@@ -2,23 +2,23 @@
 #include <glib.h>
 #include <dlfcn.h>
 #include <string.h>
-#include "extension.h"
+#include <errno.h>
 #include "wfxplugin.h"
 
-#define _plugname "CMDOutput"
-#define _inifile "settings.ini"
-#define _filesize 1024
+typedef struct sVFSDirData
+{
+	gboolean groups;
+	gchar **files;
+	gsize i;
+} tVFSDirData;
 
 int gPluginNr;
 tProgressProc gProgressProc;
 tLogProc gLogProc;
 tRequestProc gRequestProc;
-GKeyFile *cfg;
-gboolean groups;
-gchar **files;
-gsize i;
+GKeyFile *gCfg;
 
-void GetCurrentFileTime(LPFILETIME ft)
+void SetCurrentFileTime(LPFILETIME ft)
 {
 	gint64 ll = g_get_real_time();
 	ll = ll * 10 + 116444736000000000;
@@ -26,20 +26,30 @@ void GetCurrentFileTime(LPFILETIME ft)
 	ft->dwHighDateTime = ll >> 32;
 }
 
-gboolean SetFindData(WIN32_FIND_DATAA *FindData)
+gboolean SetFindData(tVFSDirData *dirdata, WIN32_FIND_DATAA *FindData)
 {
 	memset(FindData, 0, sizeof(WIN32_FIND_DATAA));
 
-	if (files[i] != NULL)
+	if (dirdata->files[dirdata->i] != NULL)
 	{
-		g_strlcpy(FindData->cFileName, files[i], PATH_MAX);
-		GetCurrentFileTime(&FindData->ftLastWriteTime);
+		g_strlcpy(FindData->cFileName, dirdata->files[dirdata->i], PATH_MAX);
+		SetCurrentFileTime(&FindData->ftCreationTime);
+		SetCurrentFileTime(&FindData->ftLastAccessTime);
+		SetCurrentFileTime(&FindData->ftLastWriteTime);
 
-		if (groups == TRUE)
-			FindData->dwFileAttributes = FILE_ATTRIBUTE_DIRECTORY;
+		if (dirdata->groups == TRUE)
+		{
+			FindData->dwFileAttributes = FILE_ATTRIBUTE_DIRECTORY | 0x80000000;
+			FindData->dwReserved0 = 16877;
+		}
+		else
+		{
+			FindData->dwFileAttributes |= FILE_ATTRIBUTE_UNIX_MODE;
+			FindData->nFileSizeLow = 1024;
+			FindData->dwReserved0 = 420;
+		}
 
-		FindData->nFileSizeLow = _filesize;
-		i++;
+		dirdata->i++;
 		return TRUE;
 	}
 
@@ -52,22 +62,31 @@ int DCPCALL FsInit(int PluginNr, tProgressProc pProgressProc, tLogProc pLogProc,
 	gProgressProc = pProgressProc;
 	gLogProc = pLogProc;
 	gRequestProc = pRequestProc;
+
 	Dl_info dlinfo;
 	GError *err = NULL;
 	gchar *cfgpath = "";
+	const gchar *inifile = "settings.ini";
 
 	memset(&dlinfo, 0, sizeof(dlinfo));
 
 	if (dladdr(cfgpath, &dlinfo) != 0)
 	{
 		cfgpath = g_path_get_dirname(dlinfo.dli_fname);
-		cfgpath = g_strdup_printf("%s/%s", cfgpath, _inifile);
+		cfgpath = g_strdup_printf("%s/%s", cfgpath, inifile);
 	}
 
-	cfg = g_key_file_new();
+	gCfg = g_key_file_new();
 
-	if (!g_key_file_load_from_file(cfg, cfgpath, G_KEY_FILE_KEEP_COMMENTS, &err))
-		g_print("%s(%s): %s\n", _plugname, cfgpath, (err)->message);
+	if (!g_key_file_load_from_file(gCfg, cfgpath, G_KEY_FILE_KEEP_COMMENTS, &err))
+	{
+		gchar *msg = g_strdup_printf("%s: %s", cfgpath, (err)->message);
+		gRequestProc(gPluginNr, RT_MsgOK, NULL, msg, NULL, 0);
+		g_free(msg);
+	}
+
+	if (cfgpath)
+		g_free(cfgpath);
 
 	if (err)
 		g_error_free(err);
@@ -77,48 +96,60 @@ int DCPCALL FsInit(int PluginNr, tProgressProc pProgressProc, tLogProc pLogProc,
 
 HANDLE DCPCALL FsFindFirst(char* Path, WIN32_FIND_DATAA *FindData)
 {
-	gsize count;
-	memset(FindData, 0, sizeof(WIN32_FIND_DATAA));
-	i = 0;
+	tVFSDirData *dirdata;
 
-	if (files)
-		g_strfreev(files);
+	dirdata = g_new0(tVFSDirData, 1);
 
-	if (g_strcmp0(Path, "/") == 0)
-	{
-		files = g_key_file_get_groups(cfg, &count);
-		groups = TRUE;
-	}
-	else
-	{
-		files = g_key_file_get_keys(cfg, Path + 1, &count, NULL);
-	}
-
-	if (SetFindData(FindData))
-		return (HANDLE)(1985);
-	else
+	if (dirdata == NULL)
 		return (HANDLE)(-1);
+
+	dirdata->i = 0;
+
+	if (Path[1] == '\0')
+	{
+		dirdata->files = g_key_file_get_groups(gCfg, NULL);
+		dirdata->groups = TRUE;
+	}
+	else
+	{
+		dirdata->files = g_key_file_get_keys(gCfg, Path + 1, NULL, NULL);
+		dirdata->groups = FALSE;
+	}
+
+	if (dirdata->files != NULL && SetFindData(dirdata, FindData))
+		return (HANDLE)dirdata;
+
+	if (dirdata->files != NULL)
+		g_strfreev(dirdata->files);
+
+	g_free(dirdata);
+
+	return (HANDLE)(-1);
 }
 
 
 BOOL DCPCALL FsFindNext(HANDLE Hdl, WIN32_FIND_DATAA *FindData)
 {
-	if (SetFindData(FindData))
-		return TRUE;
-	else
-		return FALSE;
+	tVFSDirData *dirdata = (tVFSDirData*)Hdl;
+
+	return SetFindData(dirdata, FindData);
 }
 
 int DCPCALL FsFindClose(HANDLE Hdl)
 {
-	if (groups == TRUE)
-		groups = FALSE;
+	tVFSDirData *dirdata = (tVFSDirData*)Hdl;
+
+	if (dirdata->files != NULL)
+		g_strfreev(dirdata->files);
+
+	g_free(dirdata);
 
 	return 0;
 }
 
 int DCPCALL FsGetFile(char* RemoteName, char* LocalName, int CopyFlags, RemoteInfoStruct* ri)
 {
+	int result = FS_FILE_OK;
 	int err = gProgressProc(gPluginNr, RemoteName, LocalName, 0);
 	GError *gerr = NULL;
 
@@ -130,37 +161,47 @@ int DCPCALL FsGetFile(char* RemoteName, char* LocalName, int CopyFlags, RemoteIn
 
 	gchar **target = g_strsplit(RemoteName + 1, "/", 2);
 
-	gchar *cmdsrt = g_key_file_get_string(cfg, target[0], target[1], &gerr);
+	gchar *cmdsrt = g_key_file_get_string(gCfg, target[0], target[1], &gerr);
 
 	if (gerr)
 	{
-		g_print("%s(%s/%s): %s\n", _plugname, target[0], target[1], (gerr)->message);
+		gRequestProc(gPluginNr, RT_MsgOK, NULL, (gerr)->message, NULL, 0);
 		g_error_free(gerr);
+	}
+	else
+	{
+		gchar *command = g_strdup_printf(cmdsrt, LocalName, LocalName);
+
+		if (system(command) == -1)
+			result = FS_FILE_WRITEERROR;
+
+		g_free(command);
 	}
 
 	if (target)
 		g_strfreev(target);
 
-	gchar *command = g_strdup_printf(cmdsrt, LocalName, LocalName);
-	g_print("%s: %s\n", _plugname, command);
+	if (cmdsrt)
+		g_free(cmdsrt);
 
-	if (system(command) == -1)
-		return FS_FILE_WRITEERROR;
+	gProgressProc(gPluginNr, RemoteName, LocalName, 100);
 
-	return FS_FILE_OK;
+	return result;
 }
 
 int DCPCALL FsExecuteFile(HWND MainWin, char* RemoteName, char* Verb)
 {
-	if (g_strcmp0(Verb, "open") == 0)
+	if (strncmp(Verb, "open", 5) == 0)
 	{
 		return FS_EXEC_YOURSELF;
 	}
+	else
+		gRequestProc(gPluginNr, RT_MsgOK, NULL, strerror(EOPNOTSUPP), NULL, 0);
 
-	return FS_EXEC_OK;
+	return FS_EXEC_ERROR;
 }
 
 void DCPCALL FsGetDefRootName(char* DefRootName, int maxlen)
 {
-	g_strlcpy(DefRootName, _plugname, maxlen - 1);
+	g_strlcpy(DefRootName, "CMDOutput", maxlen - 1);
 }

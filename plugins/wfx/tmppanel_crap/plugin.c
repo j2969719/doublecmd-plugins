@@ -1,25 +1,29 @@
 #include <glib.h>
-#include <string.h>
+#include <glib/gstdio.h>
+#include <fcntl.h>
 #include <errno.h>
+#include <utime.h>
+#include <sys/types.h>
 #include <sys/stat.h>
+#include <string.h>
 #include "wfxplugin.h"
 
-#define _plugname "tmppanel_crap"
-#define _inifile "tmppanel_crap.ini"
-#define _dirmark "folder"
-
 #define Int32x32To64(a,b) ((gint64)(a)*(gint64)(b))
+
+typedef struct sVFSDirData
+{
+	gchar **files;
+	gchar group[PATH_MAX];
+	gsize ifile;
+} tVFSDirData;
 
 int gPluginNr;
 tProgressProc gProgressProc;
 tLogProc gLogProc;
 tRequestProc gRequestProc;
-GKeyFile *cfg;
-gchar *cfgpath = "";
 
-gchar **files;
-gchar currentgroup[PATH_MAX];
-gsize ifile;
+GKeyFile *gCfg;
+gchar *gCfgPath = "";
 
 
 gboolean UnixTimeToFileTime(unsigned long mtime, LPFILETIME ft)
@@ -30,7 +34,16 @@ gboolean UnixTimeToFileTime(unsigned long mtime, LPFILETIME ft)
 	return TRUE;
 }
 
-void GetCurrentFileTime(LPFILETIME ft)
+unsigned long FileTimeToUnixTime(LPFILETIME ft)
+{
+	gint64 ll = ft->dwHighDateTime;
+	ll = (ll << 32) | ft->dwLowDateTime;
+	ll = (ll - 116444736000000000) / 10000000;
+	return (unsigned long)ll;
+}
+
+
+static void SetCurrentFileTime(LPFILETIME ft)
 {
 	gint64 ll = g_get_real_time();
 	ll = ll * 10 + 116444736000000000;
@@ -38,48 +51,43 @@ void GetCurrentFileTime(LPFILETIME ft)
 	ft->dwHighDateTime = ll >> 32;
 }
 
-gboolean SaveCfgFile(void)
+static void try_free_str(gchar *str)
 {
-	GError *err = NULL;
-
-	if (!g_key_file_save_to_file(cfg, cfgpath, &err))
-	{
-		//g_print("%s(%s): %s\n", _plugname, cfgpath, (err)->message);
-		gRequestProc(gPluginNr, RT_MsgOK, _plugname, (err)->message, NULL, 0);
-
-		if (err)
-			g_error_free(err);
-
-		return FALSE;
-	}
-
-	return TRUE;
+	if (str)
+		g_free(str);
 }
 
-gboolean SetFindData(WIN32_FIND_DATAA *FindData)
+gboolean SetFindData(tVFSDirData *dirdata, WIN32_FIND_DATAA *FindData)
 {
-	memset(FindData, 0, sizeof(WIN32_FIND_DATAA));
 	struct stat buf;
 
-	if ((files) && (files[ifile] != NULL))
-	{
-		g_strlcpy(FindData->cFileName, files[ifile], PATH_MAX);
-		gchar *target = g_key_file_get_string(cfg, currentgroup, files[ifile], NULL);
+	memset(FindData, 0, sizeof(WIN32_FIND_DATAA));
 
-		if ((target) && (g_strcmp0(target, _dirmark) == 0))
+	if (!dirdata->files)
+		return FALSE;
+
+	char *file = dirdata->files[dirdata->ifile];
+
+	if (file != NULL)
+	{
+		g_strlcpy(FindData->cFileName, file, PATH_MAX);
+		gchar *target = g_key_file_get_string(gCfg, dirdata->group, file, NULL);
+
+		if ((target) && (strncmp(target, "folder", 6) == 0))
 		{
-			GetCurrentFileTime(&FindData->ftLastWriteTime);
-			FindData->dwFileAttributes = FILE_ATTRIBUTE_DIRECTORY | 0x80000000;
+			SetCurrentFileTime(&FindData->ftLastWriteTime);
+			FindData->dwFileAttributes = FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_UNIX_MODE;
 			FindData->dwReserved0 = 16877;
 		}
 		else
 		{
 			if ((lstat(target, &buf) == 0))
 			{
-				FindData->nFileSizeLow = buf.st_size;
+				FindData->nFileSizeHigh = (buf.st_size & 0xFFFFFFFF00000000) >> 32;
+				FindData->nFileSizeLow = buf.st_size & 0x00000000FFFFFFFF;
 				FindData->ftCreationTime.dwHighDateTime = 0xFFFFFFFF;
 				FindData->ftCreationTime.dwLowDateTime = 0xFFFFFFFE;
-				FindData->dwFileAttributes |= 0x80000000;
+				FindData->dwFileAttributes |= FILE_ATTRIBUTE_UNIX_MODE;
 				FindData->dwReserved0 = buf.st_mode;
 				UnixTimeToFileTime(buf.st_mtime, &FindData->ftLastWriteTime);
 				UnixTimeToFileTime(buf.st_atime, &FindData->ftLastAccessTime);
@@ -87,11 +95,11 @@ gboolean SetFindData(WIN32_FIND_DATAA *FindData)
 			else
 			{
 				FindData->nFileSizeLow = 0;
-				GetCurrentFileTime(&FindData->ftLastWriteTime);
+				SetCurrentFileTime(&FindData->ftLastWriteTime);
 			}
 		}
 
-		ifile++;
+		dirdata->ifile++;
 		return TRUE;
 	}
 
@@ -104,31 +112,44 @@ int DCPCALL FsInit(int PluginNr, tProgressProc pProgressProc, tLogProc pLogProc,
 	gProgressProc = pProgressProc;
 	gLogProc = pLogProc;
 	gRequestProc = pRequestProc;
+
 	return 0;
 }
 
 HANDLE DCPCALL FsFindFirst(char* Path, WIN32_FIND_DATAA *FindData)
 {
-	SaveCfgFile();
-	gsize count;
-	ifile = 0;
-	g_strlcpy(currentgroup, Path, PATH_MAX);
+	tVFSDirData *dirdata;
 
-	if ((g_strcmp0(currentgroup, "/") != 0) && (currentgroup[(strlen(currentgroup) - 1)] == '/'))
-		currentgroup[(strlen(currentgroup) - 1)] = '\0';
+	dirdata = g_new0(tVFSDirData, 1);
 
-	files = g_key_file_get_keys(cfg, currentgroup, &count, NULL);
-
-	if (SetFindData(FindData))
-		return (HANDLE)(1985);
-	else
+	if (dirdata == NULL)
 		return (HANDLE)(-1);
+
+	dirdata->ifile = 0;
+	g_strlcpy(dirdata->group, Path, PATH_MAX);
+
+	if (dirdata->group[1] != '\0' && dirdata->group[(strlen(dirdata->group) - 1)] == '/')
+		dirdata->group[(strlen(dirdata->group) - 1)] = '\0';
+
+	dirdata->files = g_key_file_get_keys(gCfg, dirdata->group, NULL, NULL);
+
+	if (dirdata->files != NULL && SetFindData(dirdata, FindData))
+		return (HANDLE)dirdata;
+
+	if (dirdata->files != NULL)
+		g_strfreev(dirdata->files);
+
+	g_free(dirdata);
+
+	return (HANDLE)(-1);
 }
 
 
 BOOL DCPCALL FsFindNext(HANDLE Hdl, WIN32_FIND_DATAA *FindData)
 {
-	if (SetFindData(FindData))
+	tVFSDirData *dirdata = (tVFSDirData*)Hdl;
+
+	if (SetFindData(dirdata, FindData))
 		return TRUE;
 	else
 		return FALSE;
@@ -136,6 +157,14 @@ BOOL DCPCALL FsFindNext(HANDLE Hdl, WIN32_FIND_DATAA *FindData)
 
 int DCPCALL FsFindClose(HANDLE Hdl)
 {
+	tVFSDirData *dirdata = (tVFSDirData*)Hdl;
+
+
+	if (dirdata->files != NULL)
+		g_strfreev(dirdata->files);
+
+	g_free(dirdata);
+
 	return 0;
 }
 
@@ -148,14 +177,14 @@ BOOL DCPCALL FsGetLocalName(char* RemoteName, int maxlen)
 {
 	gchar *group = g_path_get_dirname(RemoteName);
 	gchar *key = g_path_get_basename(RemoteName);
-	gchar *result = g_key_file_get_string(cfg, group, key, NULL);
-	g_free(group);
-	g_free(key);
+	gchar *result = g_key_file_get_string(gCfg, group, key, NULL);
+	try_free_str(group);
+	try_free_str(key);
 
 	if (result)
 	{
 		g_strlcpy(RemoteName, result, maxlen - 1);
-		g_free(result);
+		try_free_str(result);
 		return TRUE;
 	}
 	else
@@ -164,18 +193,20 @@ BOOL DCPCALL FsGetLocalName(char* RemoteName, int maxlen)
 
 BOOL DCPCALL FsMkDir(char* Path)
 {
+	gboolean result = FALSE;
 	gchar *group = g_path_get_dirname(Path);
 	gchar *key = g_path_get_basename(Path);
 
-	if (!g_key_file_has_key(cfg, group, key, NULL))
+	if (!g_key_file_has_key(gCfg, group, key, NULL))
 	{
-		g_key_file_set_string(cfg, group, key, _dirmark);
-		SaveCfgFile();
+		g_key_file_set_string(gCfg, group, key, "folder");
+		result = TRUE;
 	}
 
-	g_free(group);
-	g_free(key);
-	return TRUE;
+	try_free_str(group);
+	try_free_str(key);
+
+	return result;
 }
 
 BOOL DCPCALL FsRemoveDir(char* RemoteName)
@@ -184,15 +215,15 @@ BOOL DCPCALL FsRemoveDir(char* RemoteName)
 	gchar *group = g_path_get_dirname(RemoteName);
 	gchar *key = g_path_get_basename(RemoteName);
 
-	if (g_key_file_remove_key(cfg, group, key, NULL))
+	if (g_key_file_remove_key(gCfg, group, key, NULL))
 	{
-		g_key_file_remove_group(cfg, RemoteName, NULL);
-		//if (SaveCfgFile())
+		g_key_file_remove_group(gCfg, RemoteName, NULL);
 		result = TRUE;
 	}
 
-	g_free(group);
-	g_free(key);
+	try_free_str(group);
+	try_free_str(key);
+
 	return result;
 }
 
@@ -202,14 +233,12 @@ BOOL DCPCALL FsDeleteFile(char* RemoteName)
 	gchar *group = g_path_get_dirname(RemoteName);
 	gchar *key = g_path_get_basename(RemoteName);
 
-	if (g_key_file_remove_key(cfg, group, key, NULL))
-	{
-		//if (SaveCfgFile())
+	if (g_key_file_remove_key(gCfg, group, key, NULL))
 		result = TRUE;
-	}
 
-	g_free(group);
-	g_free(key);
+	try_free_str(group);
+	try_free_str(key);
+
 	return result;
 
 }
@@ -221,31 +250,24 @@ int DCPCALL FsPutFile(char* LocalName, char* RemoteName, int CopyFlags)
 	if (err)
 		return FS_FILE_USERABORT;
 
-	struct stat buf;
-
-	if ((stat(LocalName, &buf) != 0) || (!S_ISREG(buf.st_mode)))
-		return FS_FILE_OK;
-
+	int result = FS_FILE_OK;
 	gchar *group = g_path_get_dirname(RemoteName);
 	gchar *key = g_path_get_basename(RemoteName);
+	gchar *value = g_key_file_get_string(gCfg, group, key, NULL);
 
-	if ((CopyFlags == 0) && (g_key_file_has_key(cfg, group, key, NULL)))
-	{
-		g_free(group);
-		g_free(key);
-		return FS_FILE_EXISTS;
-	}
+	if ((CopyFlags == 0) && (g_key_file_has_key(gCfg, group, key, NULL)))
+		result = FS_FILE_EXISTS;
+	else if (value && strncmp(value, "folder", 6) == 0)
+		result = FS_FILE_WRITEERROR;
+	else
+		g_key_file_set_string(gCfg, group, key, LocalName);
 
-	g_key_file_set_string(cfg, group, key, LocalName);
-	g_free(group);
-	g_free(key);
-	gProgressProc(gPluginNr, RemoteName, LocalName, 50);
-
-	//if (!SaveCfgFile())
-	//	return FS_FILE_WRITEERROR;
-
+	try_free_str(group);
+	try_free_str(key);
+	try_free_str(value);
 	gProgressProc(gPluginNr, RemoteName, LocalName, 100);
-	return FS_FILE_OK;
+
+	return result;
 }
 
 int DCPCALL FsRenMovFile(char* OldName, char* NewName, BOOL Move, BOOL OverWrite, RemoteInfoStruct* ri)
@@ -258,39 +280,31 @@ int DCPCALL FsRenMovFile(char* OldName, char* NewName, BOOL Move, BOOL OverWrite
 	int result = FS_FILE_OK;
 	gchar *group = g_path_get_dirname(OldName);
 	gchar *key = g_path_get_basename(OldName);
-	gchar *value = g_key_file_get_string(cfg, group, key, NULL);
+	gchar *value = g_key_file_get_string(gCfg, group, key, NULL);
 	gchar *newgroup = g_path_get_dirname(NewName);
 	gchar *newkey = g_path_get_basename(NewName);
 
-	if ((OverWrite == FALSE) && (g_key_file_has_key(cfg, newgroup, newkey, NULL)))
+	if ((OverWrite == FALSE) && (g_key_file_has_key(gCfg, newgroup, newkey, NULL)))
 		result = FS_FILE_EXISTS;
+	else if (value && strncmp(value, "folder", 6) == 0)
+		result = FS_FILE_WRITEERROR;
 	else
 	{
-		g_key_file_set_string(cfg, newgroup, newkey, value);
+		g_key_file_set_string(gCfg, newgroup, newkey, value);
 		gProgressProc(gPluginNr, OldName, NewName, 50);
+
 		if (Move)
-		{
-			gsize count;
-			g_key_file_remove_key(cfg, group, key, NULL);
-			g_key_file_get_keys(cfg, group, &count, NULL);
-			if (count == 0)
-			{
-				gchar *parent = g_path_get_dirname(group);
-				gchar *mark = g_path_get_basename(group);
-				g_key_file_remove_key(cfg, parent, mark, NULL);
-				g_key_file_remove_group(cfg, group, NULL);
-				g_free(parent);
-				g_free(mark);
-			}
-		}
+			g_key_file_remove_key(gCfg, group, key, NULL);
+
 	}
 
-	g_free(group);
-	g_free(key);
-	g_free(value);
-	g_free(newgroup);
-	g_free(newkey);
+	try_free_str(group);
+	try_free_str(key);
+	try_free_str(value);
+	try_free_str(newgroup);
+	try_free_str(newkey);
 	gProgressProc(gPluginNr, OldName, NewName, 100);
+
 	return result;
 }
 
@@ -299,50 +313,117 @@ int DCPCALL FsExecuteFile(HWND MainWin, char* RemoteName, char* Verb)
 	int result = FS_EXEC_ERROR;
 	gchar *group = g_path_get_dirname(RemoteName);
 	gchar *key = g_path_get_basename(RemoteName);
-	gchar *path = g_key_file_get_string(cfg, group, key, NULL);
-	g_free(group);
-	g_free(key);
+	gchar *path = g_key_file_get_string(gCfg, group, key, NULL);
+	try_free_str(group);
+	try_free_str(key);
 
-	if (g_strcmp0(Verb, "open") == 0)
+	if (strncmp(Verb, "open", 5) == 0)
 	{
-		//not working
-		//result = FS_EXEC_YOURSELF;
-
 		gchar *command = g_strdup_printf("xdg-open \"%s\"", path);
 		g_spawn_command_line_async(command, NULL);
-		g_free(command);
+		try_free_str(command);
 		result = FS_FILE_OK;
 	}
-	else if (g_ascii_strncasecmp(Verb, "chmod", 5) == 0)
+	else if (strncmp(path, "folder", 6) != 0 && strncmp(Verb, "chmod", 5) == 0)
 	{
-		gint i = g_ascii_strtoll(Verb+6, 0, 8);
+		gint i = g_ascii_strtoll(Verb + 6, 0, 8);
+
 		if (chmod(path, i) == -1)
 		{
 			int errsv = errno;
-			gRequestProc(gPluginNr, RT_MsgOK, _plugname, strerror(errsv), NULL, 0);
+			gRequestProc(gPluginNr, RT_MsgOK, NULL, strerror(errsv), NULL, 0);
 		}
+
 		result = FS_FILE_OK;
 	}
+	else
+		gRequestProc(gPluginNr, RT_MsgOK, NULL, strerror(EOPNOTSUPP), NULL, 0);
 
-	g_free(path);
+	try_free_str(path);
+
 	return result;
+}
+
+BOOL DCPCALL FsSetTime(char* RemoteName, FILETIME *CreationTime, FILETIME *LastAccessTime, FILETIME *LastWriteTime)
+{
+	struct stat buf;
+	struct utimbuf ubuf;
+	gboolean result = FALSE;
+
+	if (LastAccessTime != NULL || LastWriteTime != NULL)
+	{
+
+		gchar *group = g_path_get_dirname(RemoteName);
+		gchar *key = g_path_get_basename(RemoteName);
+		gchar *value = g_key_file_get_string(gCfg, group, key, NULL);
+
+		if (value && strncmp(value, "folder", 6) != 0 && g_stat(value, &buf) == 0)
+		{
+			if (LastAccessTime != NULL)
+				ubuf.actime = FileTimeToUnixTime(LastAccessTime);
+			else
+				ubuf.actime = buf.st_atime;
+
+			if (LastWriteTime != NULL)
+				ubuf.modtime = FileTimeToUnixTime(LastWriteTime);
+			else
+				ubuf.modtime = buf.st_mtime;
+
+			if (utime(value, &ubuf) == 0)
+				result = TRUE;
+		}
+
+		try_free_str(group);
+		try_free_str(key);
+		try_free_str(value);
+	}
+
+
+	return result;
+}
+
+void DCPCALL FsStatusInfo(char* RemoteDir, int InfoStartEnd, int InfoOperation)
+{
+	switch (InfoOperation)
+	{
+	case FS_STATUS_OP_PUT_SINGLE:
+	case FS_STATUS_OP_PUT_MULTI:
+	case FS_STATUS_OP_RENMOV_SINGLE:
+	case FS_STATUS_OP_RENMOV_MULTI:
+	case FS_STATUS_OP_DELETE:
+	case FS_STATUS_OP_MKDIR:
+
+		if (InfoStartEnd == FS_STATUS_END)
+		{
+			GError *err = NULL;
+
+			if (!g_key_file_save_to_file(gCfg, gCfgPath, &err))
+				gRequestProc(gPluginNr, RT_MsgOK, NULL, (err)->message, NULL, 0);
+
+			if (err)
+				g_error_free(err);
+		}
+
+		break;
+	}
 }
 
 void DCPCALL FsGetDefRootName(char* DefRootName, int maxlen)
 {
-	g_strlcpy(DefRootName, _plugname, maxlen - 1);
+	g_strlcpy(DefRootName, "tmppanel_crap", maxlen - 1);
 }
 
 void DCPCALL FsSetDefaultParams(FsDefaultParamStruct* dps)
 {
 	GError *err = NULL;
+	const gchar *inifile = "tmppanel_crap.ini";
 
-	cfgpath = g_strdup_printf("%s/%s", g_path_get_dirname(dps->DefaultIniName), _inifile);
+	gCfgPath = g_strdup_printf("%s/%s", g_path_get_dirname(dps->DefaultIniName), inifile);
 
-	cfg = g_key_file_new();
+	gCfg = g_key_file_new();
 
-	if (!g_key_file_load_from_file(cfg, cfgpath, G_KEY_FILE_KEEP_COMMENTS, &err))
-		g_print("%s(%s): %s\n", _plugname, cfgpath, (err)->message);
+	if (!g_key_file_load_from_file(gCfg, gCfgPath, G_KEY_FILE_KEEP_COMMENTS, &err))
+		g_print("(%s): %s\n", gCfgPath, (err)->message);
 
 	if (err)
 		g_error_free(err);

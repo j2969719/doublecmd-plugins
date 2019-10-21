@@ -3,21 +3,39 @@
 #include <stdbool.h>
 #include <linux/limits.h>
 #include <sys/stat.h>
-#include <string.h>
+#include <libgen.h>
+#include <errno.h>
 #include <time.h>
+#include <utime.h>
+#include <string.h>
 #include "wfxplugin.h"
-
 
 #define _plugname "FileList"
 #define _filename "filelist.txt"
 #define _inFile "/tmp/doublecmd-filelist.txt"
 #define Int32x32To64(a,b) ((int64_t)(a)*(int64_t)(b))
 
+typedef struct sField
+{
+	char *name;
+	int type;
+	char *unit;
+} tField;
+
+#define fieldcount (sizeof(fields)/sizeof(tField))
+
+tField fields[] =
+{
+	{"Basename",		ft_string,	""},
+	{"BasenameNoExt",	ft_string,	""},
+	{"Dirname",		ft_string,	""},
+};
+
 int gPluginNr;
 tProgressProc gProgressProc;
 tLogProc gLogProc;
 tRequestProc gRequestProc;
-FILE *fp;
+
 char inFile[PATH_MAX];
 
 char* strlcpy(char* p, const char* p2, int maxlen)
@@ -40,6 +58,32 @@ void UnixTimeToFileTime(time_t t, LPFILETIME pft)
 	pft->dwHighDateTime = ll >> 32;
 }
 
+unsigned long FileTimeToUnixTime(LPFILETIME ft)
+{
+	int64_t ll = ft->dwHighDateTime;
+	ll = (ll << 32) | ft->dwLowDateTime;
+	ll = (ll - 116444736000000000) / 10000000;
+	return (unsigned long)ll;
+}
+
+static char *basenamenoext(char *file)
+{
+	char *str = basename(file);
+	char *result = strdup(str);
+	char *dot = strrchr(result, '.');
+
+	if (dot)
+	{
+		int offset = dot - result;
+		result[offset] = '\0';
+
+		if (result[0] == '\0')
+			result = strdup(str);
+	}
+
+	return result;
+}
+
 bool getFileFromList(FILE *List, WIN32_FIND_DATAA *FindData)
 {
 	char *line = NULL;
@@ -50,7 +94,7 @@ bool getFileFromList(FILE *List, WIN32_FIND_DATAA *FindData)
 
 	memset(FindData, 0, sizeof(WIN32_FIND_DATAA));
 
-	while ((read = getline(&line, &len, fp)) != -1)
+	while ((read = getline(&line, &len, List)) != -1)
 	{
 		if (line[read - 1] == '\n')
 			line[read - 1] = '\0';
@@ -122,16 +166,18 @@ int DCPCALL FsInit(int PluginNr, tProgressProc pProgressProc, tLogProc pLogProc,
 HANDLE DCPCALL FsFindFirst(char* Path, WIN32_FIND_DATAA *FindData)
 {
 
-	fp = fopen(inFile, "r");
+	FILE *fp = fopen(inFile, "r");
 
 	if ((fp != NULL) && (getFileFromList(fp, FindData)))
-		return (HANDLE)(1985);
+		return (HANDLE)fp;
 
 	return (HANDLE)(-1);
 }
 
 BOOL DCPCALL FsFindNext(HANDLE Hdl, WIN32_FIND_DATAA *FindData)
 {
+	FILE *fp = (FILE*)Hdl;
+
 	if (getFileFromList(fp, FindData))
 		return true;
 
@@ -140,6 +186,7 @@ BOOL DCPCALL FsFindNext(HANDLE Hdl, WIN32_FIND_DATAA *FindData)
 
 int DCPCALL FsFindClose(HANDLE Hdl)
 {
+	FILE *fp = (FILE*)Hdl;
 	fclose(fp);
 	return 0;
 }
@@ -232,8 +279,93 @@ int DCPCALL FsExecuteFile(HWND MainWin, char* RemoteName, char* Verb)
 		system(command);
 		free(command);
 	}
+	else if (strncmp(Verb, "chmod", 5) == 0)
+	{
+		int mode = strtoll(Verb + 6, 0, 8);
+
+		if (chmod(RemoteName + 1, mode) == -1)
+			return FS_EXEC_ERROR;
+	}
+	else
+		gRequestProc(gPluginNr, RT_MsgOK, NULL, strerror(EOPNOTSUPP), NULL, 0);
 
 	return FS_EXEC_OK;
+}
+
+BOOL DCPCALL FsSetTime(char* RemoteName, FILETIME *CreationTime, FILETIME *LastAccessTime, FILETIME *LastWriteTime)
+{
+	struct stat buf;
+	struct utimbuf ubuf;
+
+	if (LastAccessTime != NULL || LastWriteTime != NULL)
+	{
+
+		if (stat(RemoteName + 1, &buf) == 0)
+		{
+			if (LastAccessTime != NULL)
+				ubuf.actime = FileTimeToUnixTime(LastAccessTime);
+			else
+				ubuf.actime = buf.st_atime;
+
+			if (LastWriteTime != NULL)
+				ubuf.modtime = FileTimeToUnixTime(LastWriteTime);
+			else
+				ubuf.modtime = buf.st_mtime;
+
+			if (utime(RemoteName + 1, &ubuf) == 0)
+				return true;
+		}
+	}
+
+	return false;
+}
+
+int DCPCALL FsContentGetSupportedField(int FieldIndex, char* FieldName, char* Units, int maxlen)
+{
+	if (FieldIndex < 0 || FieldIndex >= fieldcount)
+		return ft_nomorefields;
+
+	strlcpy(FieldName, fields[FieldIndex].name, maxlen - 1);
+	strlcpy(Units, fields[FieldIndex].unit, maxlen - 1);
+	return fields[FieldIndex].type;
+}
+
+int DCPCALL FsContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void* FieldValue, int maxlen, int flags)
+{
+	int result = fields[FieldIndex].type;
+	char *strvalue = NULL;
+
+	switch (FieldIndex)
+	{
+	case 0:
+		strvalue = basename(FileName);
+
+		if (strvalue)
+			strlcpy((char*)FieldValue, strvalue, maxlen - 1);
+		else
+			result = ft_fieldempty;
+		break;
+	case 1:
+		strvalue = basenamenoext(FileName);
+
+		if (strvalue)
+			strlcpy((char*)FieldValue, strvalue, maxlen - 1);
+		else
+			result = ft_fieldempty;
+		break;
+	case 3:
+		strvalue = dirname(FileName);
+
+		if (strvalue)
+			strlcpy((char*)FieldValue, strvalue, maxlen - 1);
+		else
+			result = ft_fieldempty;
+		break;
+	default:
+		result = ft_nosuchfield;
+	}
+
+	return result;
 }
 
 
