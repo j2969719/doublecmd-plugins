@@ -254,6 +254,12 @@ HANDLE DCPCALL FsFindFirst(char* Path, WIN32_FIND_DATAA *FindData)
 	if (dirdata->cur != NULL && SetFindData(dirdata->cur, dirdata->path, FindData) == true)
 		return (HANDLE)dirdata;
 
+	if (dirdata->cur != NULL)
+		virt_closedir(dirdata->cur);
+
+	if (dirdata != NULL)
+		free(dirdata);
+
 	return (HANDLE)(-1);
 }
 
@@ -270,6 +276,9 @@ int DCPCALL FsFindClose(HANDLE Hdl)
 
 	if (dirdata->cur != NULL)
 		virt_closedir(dirdata->cur);
+
+	if (dirdata != NULL)
+		free(dirdata);
 
 	return 0;
 }
