@@ -216,16 +216,13 @@ Script for using in trash folder: getting original file name and deletion date.
 PKGBUILD file for [Android ADB](http://www.uniqtec.eu/applications/android-adb.html).
 
 - [avfs_crap](plugins/wfx/avfs_crap)<br>
-Simple wfx plugin for [AVFS](http://avf.sourceforge.net/) (read-only).
+Simple wfx plugin for [AVFS](http://avf.sourceforge.net/).
 
 - [clipboard](plugins/wfx/clipboard)<br>
 View clipboard content. (for GTK2-version of DC only)
 
 - [cmdoutput](plugins/wfx/cmdoutput)<br>
 View output of command line utilities (see `settings.ini`).
-
-- [envlist](plugins/wfx/envlist)<br>
-View list of environment variables. (for GTK2-version of DC only)
 
 - [filelist](plugins/wfx/filelist)<br>
 Temporary panel, virtual folder that allows keeping links to frequently used files.
