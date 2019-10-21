@@ -232,6 +232,10 @@ HANDLE DCPCALL FsFindFirst(char* Path, WIN32_FIND_DATAA *FindData)
 {
 	tAVFSDirData *dirdata;
 	dirdata = malloc(sizeof(tAVFSDirData));
+
+	if (dirdata == NULL)
+		return (HANDLE)(-1);
+
 	memset(dirdata, 0, sizeof(tAVFSDirData));
 
 	do

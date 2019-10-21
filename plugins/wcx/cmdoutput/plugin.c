@@ -116,6 +116,13 @@ gchar *basenamenoext(const gchar *file)
 HANDLE DCPCALL OpenArchive(tOpenArchiveData *ArchiveData)
 {
 	tArcData *handle = g_new0(tArcData, 1);
+
+	if (handle == NULL)
+	{
+		ArchiveData->OpenResult = E_NO_MEMORY;
+		return E_SUCCESS;
+	}
+
 	g_strlcpy(handle->arcname, ArchiveData->ArcName, PATH_MAX);
 	handle->cfg = g_key_file_new();
 
@@ -166,6 +173,7 @@ int DCPCALL ReadHeader(HANDLE hArcData, tHeaderData *HeaderData)
 		filename = g_strdup_printf("%s%s", filename, handle->files[handle->current]);
 
 	g_strlcpy(HeaderData->FileName, filename, sizeof(HeaderData->FileName) - 1);
+	HeaderData->UnpSize = 1024;
 	handle->current++;
 	g_free(filename);
 	return E_SUCCESS;
