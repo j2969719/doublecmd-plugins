@@ -11,7 +11,7 @@ depends=('doublecmd' 'android-tools' 'pcre')
 makedepends=('patchelf')
 options=(!strip)
 source=('http://www.myklos.org/download/adbplugin-x64.zip')
-md5sums=('874a837f996604b3aeee04095e43a1a3')
+md5sums=('159a1cd83be0a8fb97f32175a65dc06b')
 
 package() {
   patchelf --replace-needed libpcre.so.3 libpcre.so adb_rename.wfx
