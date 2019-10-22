@@ -1,0 +1,2 @@
+F7 - new connection.
+Alt+Enter - edit existing.

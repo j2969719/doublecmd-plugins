@@ -1,0 +1,180 @@
+object DialogBox: TDialogBox
+  Left = 248
+  Height = 256
+  Top = 165
+  Width = 376
+  BorderStyle = bsDialog
+  Caption = 'Properties'
+  ClientHeight = 256
+  ClientWidth = 376
+  OnShow = DialogBoxShow
+  Position = poScreenCenter
+  LCLVersion = '2.0.5.0'
+  object lblName: TLabel
+    AnchorSideLeft.Control = Owner
+    AnchorSideTop.Control = Owner
+    AnchorSideRight.Control = Owner
+    AnchorSideRight.Side = asrCenter
+    AnchorSideBottom.Control = cbURI
+    AnchorSideBottom.Side = asrCenter
+    Left = 15
+    Height = 27
+    Top = 15
+    Width = 1
+    Anchors = [akTop, akLeft, akBottom]
+    BorderSpacing.Left = 15
+    BorderSpacing.Top = 15
+    BorderSpacing.Right = 30
+    ParentColor = False
+  end
+  object cbURI: TComboBox
+    AnchorSideLeft.Control = Owner
+    AnchorSideTop.Control = Owner
+    AnchorSideRight.Control = Owner
+    AnchorSideRight.Side = asrBottom
+    AnchorSideBottom.Control = edURI
+    AnchorSideBottom.Side = asrBottom
+    Left = 216
+    Height = 28
+    Top = 15
+    Width = 150
+    Anchors = [akTop, akRight]
+    BorderSpacing.Left = 10
+    BorderSpacing.Top = 15
+    BorderSpacing.Right = 10
+    ItemHeight = 0
+    OnChange = ComboBoxChange
+    TabOrder = 5
+    TabStop = False
+    Visible = False
+  end
+  object edURI: TEdit
+    AnchorSideLeft.Control = Owner
+    AnchorSideTop.Control = lblName
+    AnchorSideTop.Side = asrBottom
+    AnchorSideRight.Control = Owner
+    AnchorSideRight.Side = asrBottom
+    AnchorSideBottom.Control = cbURI
+    AnchorSideBottom.Side = asrBottom
+    Left = 10
+    Height = 28
+    Top = 52
+    Width = 356
+    Anchors = [akTop, akLeft, akRight]
+    BorderSpacing.Left = 10
+    BorderSpacing.Top = 10
+    BorderSpacing.Right = 10
+    TabOrder = 1
+  end
+  object lblLogin: TLabel
+    AnchorSideLeft.Control = Owner
+    AnchorSideTop.Control = edUser
+    AnchorSideTop.Side = asrCenter
+    AnchorSideRight.Control = edUser
+    Left = 10
+    Height = 15
+    Top = 102
+    Width = 77
+    BorderSpacing.Left = 10
+    Caption = 'User name:'
+    ParentColor = False
+  end
+  object lblPasswd: TLabel
+    AnchorSideLeft.Control = Owner
+    AnchorSideTop.Control = edPasswd
+    AnchorSideTop.Side = asrCenter
+    AnchorSideRight.Control = lblLogin
+    AnchorSideRight.Side = asrBottom
+    Left = 10
+    Height = 15
+    Top = 135
+    Width = 77
+    Anchors = [akTop, akLeft, akRight]
+    BorderSpacing.Left = 10
+    Caption = 'Password:'
+    ParentColor = False
+  end
+  object edUser: TEdit
+    AnchorSideLeft.Control = edPasswd
+    AnchorSideTop.Control = edURI
+    AnchorSideTop.Side = asrBottom
+    AnchorSideRight.Control = edURI
+    AnchorSideRight.Side = asrBottom
+    Left = 97
+    Height = 28
+    Top = 95
+    Width = 269
+    Anchors = [akTop, akLeft, akRight]
+    BorderSpacing.Top = 15
+    TabOrder = 2
+  end
+  object edPasswd: TEdit
+    AnchorSideLeft.Control = lblPasswd
+    AnchorSideLeft.Side = asrBottom
+    AnchorSideTop.Control = edUser
+    AnchorSideTop.Side = asrBottom
+    AnchorSideRight.Control = edUser
+    AnchorSideRight.Side = asrBottom
+    Left = 97
+    Height = 28
+    Top = 128
+    Width = 269
+    Anchors = [akTop, akLeft, akRight]
+    BorderSpacing.Left = 10
+    BorderSpacing.Top = 5
+    EchoMode = emPassword
+    PasswordChar = '*'
+    TabOrder = 3
+  end
+  object chkAnon: TCheckBox
+    AnchorSideTop.Control = edPasswd
+    AnchorSideTop.Side = asrBottom
+    AnchorSideRight.Control = edPasswd
+    AnchorSideRight.Side = asrBottom
+    Left = 263
+    Height = 23
+    Top = 161
+    Width = 103
+    Anchors = [akTop, akRight]
+    BorderSpacing.Top = 5
+    Caption = 'Anonymous'
+    OnChange = CheckBoxChange
+    TabOrder = 4
+  end
+  object btnOK: TBitBtn
+    AnchorSideRight.Control = chkAnon
+    AnchorSideRight.Side = asrBottom
+    AnchorSideBottom.Control = Owner
+    AnchorSideBottom.Side = asrBottom
+    Left = 256
+    Height = 36
+    Top = 205
+    Width = 110
+    Anchors = [akRight, akBottom]
+    BorderSpacing.Bottom = 15
+    Default = True
+    DefaultCaption = True
+    Kind = bkOK
+    ModalResult = 1
+    OnClick = ButtonClick
+    TabOrder = 0
+  end
+  object btnCancel: TBitBtn
+    AnchorSideTop.Control = btnOK
+    AnchorSideRight.Control = btnOK
+    AnchorSideBottom.Control = btnOK
+    AnchorSideBottom.Side = asrBottom
+    Left = 136
+    Height = 36
+    Top = 205
+    Width = 110
+    Anchors = [akTop, akRight, akBottom]
+    BorderSpacing.Right = 10
+    Cancel = True
+    DefaultCaption = True
+    Kind = bkCancel
+    ModalResult = 2
+    OnClick = ButtonClick
+    TabOrder = 6
+  end
+end
