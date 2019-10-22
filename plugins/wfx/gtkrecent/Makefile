@@ -1,6 +1,6 @@
 CC = gcc
 CFLAGS = -shared -fPIC -Wl,--no-as-needed
-INCLUDES = `pkg-config --cflags --libs gtk+-3.0` -I../../sdk
+INCLUDES = `pkg-config --cflags --libs gtk+-2.0` -I../../sdk
 PLUGNAME = gtkrecent.wfx
 
 all:

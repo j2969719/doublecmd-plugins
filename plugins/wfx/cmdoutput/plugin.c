@@ -4,6 +4,7 @@
 #include <string.h>
 #include <errno.h>
 #include "wfxplugin.h"
+#include "extension.h"
 
 typedef struct sVFSDirData
 {
@@ -204,4 +205,15 @@ int DCPCALL FsExecuteFile(HWND MainWin, char* RemoteName, char* Verb)
 void DCPCALL FsGetDefRootName(char* DefRootName, int maxlen)
 {
 	g_strlcpy(DefRootName, "CMDOutput", maxlen - 1);
+}
+
+void DCPCALL ExtensionInitialize(tExtensionStartupInfo* StartupInfo)
+{
+
+}
+
+void DCPCALL ExtensionFinalize(void* Reserved)
+{
+	if (gCfg)
+		g_key_file_free(gCfg);
 }

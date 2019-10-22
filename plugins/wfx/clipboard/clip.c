@@ -113,9 +113,9 @@ static gboolean SetFindData(tVFSDirData *dirdata, WIN32_FIND_DATAA *FindData)
 	{
 		FindData->nFileSizeLow = 1024;
 		g_strlcpy(FindData->cFileName, gEntries[dirdata->i - 1], PATH_MAX);
+		GetCurrentFileTime(&FindData->ftCreationTime);
+		GetCurrentFileTime(&FindData->ftLastAccessTime);
 		GetCurrentFileTime(&FindData->ftLastWriteTime);
-		FindData->ftCreationTime.dwHighDateTime = 0xFFFFFFFF;
-		FindData->ftCreationTime.dwLowDateTime = 0xFFFFFFFE;
 		FindData->dwFileAttributes = 0;
 		return found;
 	}

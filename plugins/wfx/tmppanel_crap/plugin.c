@@ -7,6 +7,7 @@
 #include <sys/stat.h>
 #include <string.h>
 #include "wfxplugin.h"
+#include "extension.h"
 
 #define Int32x32To64(a,b) ((gint64)(a)*(gint64)(b))
 
@@ -427,4 +428,18 @@ void DCPCALL FsSetDefaultParams(FsDefaultParamStruct* dps)
 
 	if (err)
 		g_error_free(err);
+}
+
+void DCPCALL ExtensionInitialize(tExtensionStartupInfo* StartupInfo)
+{
+
+}
+
+void DCPCALL ExtensionFinalize(void* Reserved)
+{
+	if (gCfg)
+		g_key_file_free(gCfg);
+
+	if (gCfgPath)
+		g_free(gCfgPath);
 }
