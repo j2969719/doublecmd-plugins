@@ -1,11 +1,11 @@
 object DialogBox: TDialogBox
   Left = 248
-  Height = 251
+  Height = 281
   Top = 165
   Width = 376
   BorderStyle = bsDialog
   Caption = 'Properties'
-  ClientHeight = 251
+  ClientHeight = 281
   ClientWidth = 376
   OnShow = DialogBoxShow
   Position = poScreenCenter
@@ -75,11 +75,25 @@ object DialogBox: TDialogBox
     AnchorSideRight.Control = edUser
     Left = 10
     Height = 15
-    Top = 104
+    Top = 137
     Width = 75
     BorderSpacing.Left = 10
     Caption = 'User name:'
     ParentColor = False
+  end
+  object chkDomain: TCheckBox
+    AnchorSideLeft.Control = lblLogin
+    AnchorSideTop.Control = edDomain
+    AnchorSideTop.Side = asrCenter
+    Left = 10
+    Height = 23
+    Top = 90
+    Width = 81
+    Caption = 'Domain:'
+    Color = clDefault
+    ParentColor = False
+    OnChange = CheckBoxChange
+    TabOrder = 2
   end
   object lblPasswd: TLabel
     AnchorSideLeft.Control = Owner
@@ -89,7 +103,7 @@ object DialogBox: TDialogBox
     AnchorSideRight.Side = asrBottom
     Left = 10
     Height = 15
-    Top = 137
+    Top = 170
     Width = 75
     Anchors = [akTop, akLeft, akRight]
     BorderSpacing.Left = 10
@@ -98,17 +112,33 @@ object DialogBox: TDialogBox
   end
   object edUser: TEdit
     AnchorSideLeft.Control = edPasswd
-    AnchorSideTop.Control = edURI
+    AnchorSideTop.Control = edDomain
     AnchorSideTop.Side = asrBottom
     AnchorSideRight.Control = edURI
     AnchorSideRight.Side = asrBottom
     Left = 95
     Height = 28
-    Top = 97
+    Top = 130
     Width = 271
     Anchors = [akTop, akLeft, akRight]
     BorderSpacing.Top = 15
-    TabOrder = 2
+    TabOrder = 4
+  end
+  object edDomain: TEdit
+    AnchorSideLeft.Control = edUser
+    AnchorSideTop.Control = edURI
+    AnchorSideTop.Side = asrBottom
+    AnchorSideRight.Control = edUser
+    AnchorSideRight.Side = asrBottom
+    Left = 95
+    Height = 28
+    Top = 87
+    Width = 271
+    Anchors = [akTop, akLeft, akRight]
+    BorderSpacing.Top = 5
+    Enabled = False
+    TabOrder = 3
+    Text = 'WORKGROUP'
   end
   object edPasswd: TEdit
     AnchorSideLeft.Control = lblPasswd
@@ -119,14 +149,14 @@ object DialogBox: TDialogBox
     AnchorSideRight.Side = asrBottom
     Left = 95
     Height = 28
-    Top = 130
+    Top = 163
     Width = 271
     Anchors = [akTop, akLeft, akRight]
     BorderSpacing.Left = 10
     BorderSpacing.Top = 5
     EchoMode = emPassword
     PasswordChar = '*'
-    TabOrder = 3
+    TabOrder = 5
   end
   object chkAnon: TCheckBox
     AnchorSideTop.Control = edPasswd
@@ -135,13 +165,13 @@ object DialogBox: TDialogBox
     AnchorSideRight.Side = asrBottom
     Left = 182
     Height = 23
-    Top = 163
+    Top = 196
     Width = 184
     Anchors = [akTop, akRight]
     BorderSpacing.Top = 5
     Caption = 'Anonymous (if possible)'
     OnChange = CheckBoxChange
-    TabOrder = 4
+    TabOrder = 6
   end
   object btnOK: TBitBtn
     AnchorSideRight.Control = chkAnon
@@ -150,7 +180,7 @@ object DialogBox: TDialogBox
     AnchorSideBottom.Side = asrBottom
     Left = 271
     Height = 30
-    Top = 206
+    Top = 236
     Width = 95
     Anchors = [akRight, akBottom]
     BorderSpacing.Bottom = 15
@@ -159,7 +189,7 @@ object DialogBox: TDialogBox
     Kind = bkOK
     ModalResult = 1
     OnClick = ButtonClick
-    TabOrder = 5
+    TabOrder = 7
   end
   object btnCancel: TBitBtn
     AnchorSideTop.Control = btnOK
@@ -168,7 +198,7 @@ object DialogBox: TDialogBox
     AnchorSideBottom.Side = asrBottom
     Left = 166
     Height = 30
-    Top = 206
+    Top = 236
     Width = 95
     Anchors = [akRight, akBottom]
     BorderSpacing.Right = 10
@@ -177,6 +207,6 @@ object DialogBox: TDialogBox
     Kind = bkCancel
     ModalResult = 2
     OnClick = ButtonClick
-    TabOrder = 6
+    TabOrder = 8
   end
 end

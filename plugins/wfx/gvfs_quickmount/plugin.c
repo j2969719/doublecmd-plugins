@@ -51,6 +51,7 @@ static void SetLastAccessTime(gint64 ll, LPFILETIME ft)
 
 intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr_t wParam, intptr_t lParam)
 {
+	gsize len;
 	gboolean bval;
 	gchar *value = NULL;
 	const gchar * const *schemes;
@@ -88,10 +89,16 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 			value = g_key_file_get_string(gCfg, gConnection, "Password", NULL);
 
 			if (value)
+			{
+				value = (gchar*)g_base64_decode(g_strdup(value), &len);
 				gStartupInfo->SendDlgMsg(pDlg, "edPasswd", DM_SETTEXT, (intptr_t)value, 0);
+			}
 
 			bval = g_key_file_get_boolean(gCfg, gConnection, "Anonymous", NULL);
 			gStartupInfo->SendDlgMsg(pDlg, "chkAnon", DM_SETCHECK, (intptr_t)bval, 0);
+
+			bval = g_key_file_has_key(gCfg, gConnection, "Domain", NULL);
+			gStartupInfo->SendDlgMsg(pDlg, "chkDomain", DM_SETCHECK, (intptr_t)bval, 0);
 		}
 
 		break;
@@ -104,6 +111,7 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 			value = g_strdup((gchar*)gStartupInfo->SendDlgMsg(pDlg, "edUser", DM_GETTEXT, 0, 0));
 			g_key_file_set_string(gCfg, gConnection, "User", value);
 			value = g_strdup((gchar*)gStartupInfo->SendDlgMsg(pDlg, "edPasswd", DM_GETTEXT, 0, 0));
+			value = g_base64_encode((guchar*)g_strdup(value), strlen(value));
 			g_key_file_set_string(gCfg, gConnection, "Password", value);
 			bval = (gboolean)gStartupInfo->SendDlgMsg(pDlg, "chkAnon", DM_GETCHECK, 0, 0);
 
@@ -111,6 +119,16 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 				g_key_file_set_boolean(gCfg, gConnection, "Anonymous", bval);
 			else if (g_key_file_has_key(gCfg, gConnection, "Anonymous", NULL))
 				g_key_file_set_boolean(gCfg, gConnection, "Anonymous", bval);
+
+			bval = (gboolean)gStartupInfo->SendDlgMsg(pDlg, "chkDomain", DM_GETCHECK, 0, 0);
+
+			if (bval)
+			{
+				value = g_strdup((gchar*)gStartupInfo->SendDlgMsg(pDlg, "edDomain", DM_GETTEXT, 0, 0));
+				g_key_file_set_string(gCfg, gConnection, "Domain", value);
+			}
+			else
+				g_key_file_remove_key(gCfg, gConnection, "Domain", NULL);
 
 			gStartupInfo->SendDlgMsg(pDlg, DlgItemName, DM_CLOSE, 1, 0);
 		}
@@ -127,6 +145,11 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 			bval = (gboolean)gStartupInfo->SendDlgMsg(pDlg, "chkAnon", DM_GETCHECK, 0, 0);
 			gStartupInfo->SendDlgMsg(pDlg, "edUser", DM_ENABLE, (intptr_t)!bval, 0);
 			gStartupInfo->SendDlgMsg(pDlg, "edPasswd", DM_ENABLE, (intptr_t)!bval, 0);
+		}
+		else if (strncmp(DlgItemName, "chkDomain", 9) == 0)
+		{
+			bval = (gboolean)gStartupInfo->SendDlgMsg(pDlg, "chkDomain", DM_GETCHECK, 0, 0);
+			gStartupInfo->SendDlgMsg(pDlg, "edDomain", DM_ENABLE, (intptr_t)bval, 0);
 		}
 		else if (strncmp(DlgItemName, "cbURI", 5) == 0)
 		{
@@ -183,14 +206,18 @@ static void ask_password_cb(GMountOperation *op, const char *msg, const char *us
 
 		if (value && value[0] != '\0')
 			g_mount_operation_set_username(op, value);
-		else if (gRequestProc(gPluginNr, RT_UserName, (char*)msg, NULL, value, MAX_PATH))
-			g_mount_operation_set_username(op, value);
 		else
 		{
-			g_mount_operation_reply(op, G_MOUNT_OPERATION_ABORTED);
-			return;
-		}
+			value = g_strdup(user);
 
+			if (gRequestProc(gPluginNr, RT_UserName, (char*)msg, NULL, value, MAX_PATH))
+				g_mount_operation_set_username(op, value);
+			else
+			{
+				g_mount_operation_reply(op, G_MOUNT_OPERATION_ABORTED);
+				return;
+			}
+		}
 	}
 
 	if (flags & G_ASK_PASSWORD_NEED_PASSWORD)
@@ -210,12 +237,21 @@ static void ask_password_cb(GMountOperation *op, const char *msg, const char *us
 
 	if (flags & G_ASK_PASSWORD_NEED_DOMAIN)
 	{
-		if (gRequestProc(gPluginNr, RT_Other, (char*)msg, "Domain:", value, MAX_PATH))
+		value = g_key_file_get_string(gCfg, gConnection, "Domain", NULL);
+
+		if (value && value[0] != '\0')
 			g_mount_operation_set_domain(op, value);
 		else
 		{
-			g_mount_operation_reply(op, G_MOUNT_OPERATION_ABORTED);
-			return;
+			value = g_strdup(domain);
+
+			if (gRequestProc(gPluginNr, RT_Other, (char*)msg, "Domain:", value, MAX_PATH))
+				g_mount_operation_set_domain(op, value);
+			else
+			{
+				g_mount_operation_reply(op, G_MOUNT_OPERATION_ABORTED);
+				return;
+			}
 		}
 	}
 
