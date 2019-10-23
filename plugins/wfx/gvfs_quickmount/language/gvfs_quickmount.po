@@ -15,5 +15,5 @@ msgid "Password:"
 msgstr ""
 
 #: tdialogbox.chkanon.caption
-msgid "Anonymous"
+msgid "Anonymous (if possible)"
 msgstr ""

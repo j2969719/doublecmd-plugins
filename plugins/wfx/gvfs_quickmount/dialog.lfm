@@ -1,11 +1,11 @@
 object DialogBox: TDialogBox
   Left = 248
-  Height = 256
+  Height = 251
   Top = 165
   Width = 376
   BorderStyle = bsDialog
   Caption = 'Properties'
-  ClientHeight = 256
+  ClientHeight = 251
   ClientWidth = 376
   OnShow = DialogBoxShow
   Position = poScreenCenter
@@ -13,18 +13,18 @@ object DialogBox: TDialogBox
   object lblName: TLabel
     AnchorSideLeft.Control = Owner
     AnchorSideTop.Control = Owner
-    AnchorSideRight.Control = Owner
-    AnchorSideRight.Side = asrCenter
+    AnchorSideRight.Control = cbURI
     AnchorSideBottom.Control = cbURI
     AnchorSideBottom.Side = asrCenter
     Left = 15
-    Height = 27
+    Height = 29
     Top = 15
-    Width = 1
-    Anchors = [akTop, akLeft, akBottom]
+    Width = 191
+    Anchors = [akTop, akLeft, akRight, akBottom]
     BorderSpacing.Left = 15
     BorderSpacing.Top = 15
-    BorderSpacing.Right = 30
+    BorderSpacing.Right = 10
+    Layout = tlCenter
     ParentColor = False
   end
   object cbURI: TComboBox
@@ -35,17 +35,19 @@ object DialogBox: TDialogBox
     AnchorSideBottom.Control = edURI
     AnchorSideBottom.Side = asrBottom
     Left = 216
-    Height = 28
+    Height = 30
     Top = 15
     Width = 150
     Anchors = [akTop, akRight]
+    AutoSize = False
     BorderSpacing.Left = 10
     BorderSpacing.Top = 15
     BorderSpacing.Right = 10
     ItemHeight = 0
     OnChange = ComboBoxChange
-    TabOrder = 5
-    TabStop = False
+    Sorted = True
+    Style = csDropDownList
+    TabOrder = 0
     Visible = False
   end
   object edURI: TEdit
@@ -58,7 +60,7 @@ object DialogBox: TDialogBox
     AnchorSideBottom.Side = asrBottom
     Left = 10
     Height = 28
-    Top = 52
+    Top = 54
     Width = 356
     Anchors = [akTop, akLeft, akRight]
     BorderSpacing.Left = 10
@@ -73,8 +75,8 @@ object DialogBox: TDialogBox
     AnchorSideRight.Control = edUser
     Left = 10
     Height = 15
-    Top = 102
-    Width = 77
+    Top = 104
+    Width = 75
     BorderSpacing.Left = 10
     Caption = 'User name:'
     ParentColor = False
@@ -87,8 +89,8 @@ object DialogBox: TDialogBox
     AnchorSideRight.Side = asrBottom
     Left = 10
     Height = 15
-    Top = 135
-    Width = 77
+    Top = 137
+    Width = 75
     Anchors = [akTop, akLeft, akRight]
     BorderSpacing.Left = 10
     Caption = 'Password:'
@@ -100,10 +102,10 @@ object DialogBox: TDialogBox
     AnchorSideTop.Side = asrBottom
     AnchorSideRight.Control = edURI
     AnchorSideRight.Side = asrBottom
-    Left = 97
+    Left = 95
     Height = 28
-    Top = 95
-    Width = 269
+    Top = 97
+    Width = 271
     Anchors = [akTop, akLeft, akRight]
     BorderSpacing.Top = 15
     TabOrder = 2
@@ -115,10 +117,10 @@ object DialogBox: TDialogBox
     AnchorSideTop.Side = asrBottom
     AnchorSideRight.Control = edUser
     AnchorSideRight.Side = asrBottom
-    Left = 97
+    Left = 95
     Height = 28
-    Top = 128
-    Width = 269
+    Top = 130
+    Width = 271
     Anchors = [akTop, akLeft, akRight]
     BorderSpacing.Left = 10
     BorderSpacing.Top = 5
@@ -131,13 +133,13 @@ object DialogBox: TDialogBox
     AnchorSideTop.Side = asrBottom
     AnchorSideRight.Control = edPasswd
     AnchorSideRight.Side = asrBottom
-    Left = 263
+    Left = 182
     Height = 23
-    Top = 161
-    Width = 103
+    Top = 163
+    Width = 184
     Anchors = [akTop, akRight]
     BorderSpacing.Top = 5
-    Caption = 'Anonymous'
+    Caption = 'Anonymous (if possible)'
     OnChange = CheckBoxChange
     TabOrder = 4
   end
@@ -146,10 +148,10 @@ object DialogBox: TDialogBox
     AnchorSideRight.Side = asrBottom
     AnchorSideBottom.Control = Owner
     AnchorSideBottom.Side = asrBottom
-    Left = 256
-    Height = 36
-    Top = 205
-    Width = 110
+    Left = 271
+    Height = 30
+    Top = 206
+    Width = 95
     Anchors = [akRight, akBottom]
     BorderSpacing.Bottom = 15
     Default = True
@@ -157,18 +159,18 @@ object DialogBox: TDialogBox
     Kind = bkOK
     ModalResult = 1
     OnClick = ButtonClick
-    TabOrder = 0
+    TabOrder = 5
   end
   object btnCancel: TBitBtn
     AnchorSideTop.Control = btnOK
     AnchorSideRight.Control = btnOK
     AnchorSideBottom.Control = btnOK
     AnchorSideBottom.Side = asrBottom
-    Left = 136
-    Height = 36
-    Top = 205
-    Width = 110
-    Anchors = [akTop, akRight, akBottom]
+    Left = 166
+    Height = 30
+    Top = 206
+    Width = 95
+    Anchors = [akRight, akBottom]
     BorderSpacing.Right = 10
     Cancel = True
     DefaultCaption = True

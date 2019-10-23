@@ -65,12 +65,9 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 
 		if (!bval)
 		{
-			value = g_strdup("URI schemes");
-			gStartupInfo->SendDlgMsg(pDlg, "cbURI", DM_SETTEXT, (intptr_t)value, 0);
-			value = g_strdup("ftp://");
-			gStartupInfo->SendDlgMsg(pDlg, "edURI", DM_SETTEXT, (intptr_t)value, 0);
 			gStartupInfo->SendDlgMsg(pDlg, "cbURI", DM_SHOWITEM, 1, 0);
-			schemes = g_vfs_get_supported_uri_schemes (g_vfs_get_default());
+			schemes = g_vfs_get_supported_uri_schemes(g_vfs_get_default());
+
 			for (; *schemes; schemes++)
 			{
 				gStartupInfo->SendDlgMsg(pDlg, "cbURI", DM_LISTADD, (intptr_t)*schemes, 0);
@@ -96,6 +93,7 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 			bval = g_key_file_get_boolean(gCfg, gConnection, "Anonymous", NULL);
 			gStartupInfo->SendDlgMsg(pDlg, "chkAnon", DM_SETCHECK, (intptr_t)bval, 0);
 		}
+
 		break;
 
 	case DN_CLICK:
@@ -326,7 +324,7 @@ int DCPCALL FsExecuteFile(HWND MainWin, char* RemoteName, char* Verb)
 			g_strlcpy(gConnection, RemoteName + 1, PATH_MAX);
 			gchar *uri = g_key_file_get_string(gCfg, gConnection, "URI", NULL);
 
-			if (uri)
+			if (uri && uri[0] != '\0')
 			{
 				GFile *f = g_file_new_for_uri(uri);
 				g_strlcpy(RemoteName, uri, PATH_MAX);
