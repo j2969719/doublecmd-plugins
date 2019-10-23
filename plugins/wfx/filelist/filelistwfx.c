@@ -108,12 +108,13 @@ bool getFileFromList(FILE *List, WIN32_FIND_DATAA *FindData)
 
 	if (found)
 	{
-		FindData->nFileSizeLow = buf.st_size;
+		FindData->nFileSizeHigh = (buf.st_size & 0xFFFFFFFF00000000) >> 32;
+		FindData->nFileSizeLow = buf.st_size & 0x00000000FFFFFFFF;
 		strlcpy(FindData->cFileName, line, PATH_MAX);
 		FindData->ftCreationTime.dwHighDateTime = 0xFFFFFFFF;
 		FindData->ftCreationTime.dwLowDateTime = 0xFFFFFFFE;
 
-		FindData->dwFileAttributes |= 0x80000000;
+		FindData->dwFileAttributes |= FILE_ATTRIBUTE_UNIX_MODE;
 		FindData->dwReserved0 = buf.st_mode;
 
 		UnixTimeToFileTime(buf.st_mtime, &FindData->ftLastWriteTime);

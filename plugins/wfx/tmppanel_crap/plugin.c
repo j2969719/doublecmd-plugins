@@ -383,32 +383,6 @@ BOOL DCPCALL FsSetTime(char* RemoteName, FILETIME *CreationTime, FILETIME *LastA
 	return result;
 }
 
-void DCPCALL FsStatusInfo(char* RemoteDir, int InfoStartEnd, int InfoOperation)
-{
-	switch (InfoOperation)
-	{
-	case FS_STATUS_OP_PUT_SINGLE:
-	case FS_STATUS_OP_PUT_MULTI:
-	case FS_STATUS_OP_RENMOV_SINGLE:
-	case FS_STATUS_OP_RENMOV_MULTI:
-	case FS_STATUS_OP_DELETE:
-	case FS_STATUS_OP_MKDIR:
-
-		if (InfoStartEnd == FS_STATUS_END)
-		{
-			GError *err = NULL;
-
-			if (!g_key_file_save_to_file(gCfg, gCfgPath, &err))
-				gRequestProc(gPluginNr, RT_MsgOK, NULL, (err)->message, NULL, 0);
-
-			if (err)
-				g_error_free(err);
-		}
-
-		break;
-	}
-}
-
 void DCPCALL FsGetDefRootName(char* DefRootName, int maxlen)
 {
 	g_strlcpy(DefRootName, "tmppanel_crap", maxlen - 1);
@@ -437,6 +411,8 @@ void DCPCALL ExtensionInitialize(tExtensionStartupInfo* StartupInfo)
 
 void DCPCALL ExtensionFinalize(void* Reserved)
 {
+	g_key_file_save_to_file(gCfg, gCfgPath, NULL);
+
 	if (gCfg)
 		g_key_file_free(gCfg);
 
