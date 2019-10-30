@@ -164,6 +164,7 @@ int DCPCALL ReadHeaderEx(HANDLE hArcData, tHeaderDataEx *HeaderDataEx)
 	int64_t size;
 	memset(HeaderDataEx, 0, sizeof(HeaderDataEx));
 	ArcData handle = (ArcData)hArcData;
+	char *filename = NULL;
 
 	while ((ret = archive_read_next_header(handle->archive, &handle->entry)) == ARCHIVE_RETRY)
 	{
@@ -185,17 +186,32 @@ int DCPCALL ReadHeaderEx(HANDLE hArcData, tHeaderDataEx *HeaderDataEx)
 
 		if (archive_format(handle->archive) == ARCHIVE_FORMAT_RAW)
 		{
-			char *filename = basename(handle->arcname);
-			char *dot = strrchr(filename, '.');
+			filename = basename(handle->arcname);
 
-			if (dot != NULL)
-				*dot = '\0';
+			if (filename)
+			{
+				char *dot = strrchr(filename, '.');
 
-			strncpy(HeaderDataEx->FileName, filename, sizeof(HeaderDataEx->FileName) - 1);
+				if (dot != NULL)
+					*dot = '\0';
+
+				strncpy(HeaderDataEx->FileName, filename, sizeof(HeaderDataEx->FileName) - 1);
+			}
 		}
 		else
 		{
-			strncpy(HeaderDataEx->FileName, archive_entry_pathname(handle->entry), sizeof(HeaderDataEx->FileName) - 1);
+			filename = (char*)archive_entry_pathname(handle->entry);
+
+			if (!filename)
+				strncpy(HeaderDataEx->FileName, "<!!!ERROR!!!>", sizeof(HeaderDataEx->FileName) - 1);
+			else
+			{
+				if (filename[0] == '/')
+					strncpy(HeaderDataEx->FileName, filename + 1, sizeof(HeaderDataEx->FileName) - 1);
+				else
+					strncpy(HeaderDataEx->FileName, filename, sizeof(HeaderDataEx->FileName) - 1);
+			}
+
 			size = archive_entry_size(handle->entry);
 			HeaderDataEx->PackSizeHigh = (size & 0xFFFFFFFF00000000) >> 32;
 			HeaderDataEx->PackSize = size & 0x00000000FFFFFFFF;
@@ -441,9 +457,11 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 	archive_write_set_passphrase_callback(a, NULL, archive_password_cb);
 
 	if (Flags & PK_PACK_ENCRYPT)
+	{
 		// zip: traditional, aes128, aes256
 		if (archive_write_set_options(a, "encryption=traditional") < ARCHIVE_OK)
 			errmsg(archive_error_string(a), MB_OK | MB_ICONERROR);
+	}
 
 	if (archive_write_open_filename(a, PackedFile) < ARCHIVE_OK)
 		errmsg(archive_error_string(a), MB_OK | MB_ICONERROR);
