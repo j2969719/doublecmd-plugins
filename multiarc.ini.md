@@ -288,7 +288,7 @@ Start=^-----------
 End=All done
 Format0=$z+$? dd.tt.yyyy hh:mm:ss ? n+
 List=%P -l %AQ
-Extract=%P {-F %F} %AQU
+Extract=%P %AQU
 ```
 
 ---
