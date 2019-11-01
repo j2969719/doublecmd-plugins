@@ -19,6 +19,7 @@
 #include <sys/ioctl.h>
 #include <linux/fs.h>
 #include <ftw.h>
+#include <limits.h>
 
 typedef struct sArcData
 {
@@ -502,6 +503,9 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 		else
 			snprintf(pkfile, PATH_MAX, "%s/%s", SubPath, fname);
 
+		if (gProcessDataProc(infile, 0) == 0)
+			result = E_EABORTED;
+
 		while ((ret = lstat(infile, &st)) != 0)
 		{
 			int errsv = errno;
@@ -588,7 +592,7 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 				archive_entry_set_pathname(entry, pkfile);
 				archive_write_header(a, entry);
 
-				if (gProcessDataProc(infile, st.st_size) == 0)
+				if (st.st_size < INT_MAX && gProcessDataProc(infile, st.st_size) == 0)
 					result = E_EABORTED;
 			}
 			else if (S_ISFIFO(st.st_mode))
@@ -668,6 +672,9 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 						archive_entry_set_symlink(entry, "");
 
 					archive_write_header(a, entry);
+
+					if (st.st_size < INT_MAX)
+						gProcessDataProc(infile, st.st_size);
 				}
 			}
 		}
