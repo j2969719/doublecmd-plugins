@@ -607,7 +607,7 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 			else
 			{
 
-				while ((fd = open(infile, O_RDONLY)) == -1)
+				while ((fd = open(infile, O_RDONLY)) == -1 && !S_ISLNK(st.st_mode))
 				{
 					int errsv = errno;
 					asprintf(&msg, "%s: %s", infile, strerror(errsv));
