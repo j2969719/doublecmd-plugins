@@ -30,15 +30,17 @@ typedef struct sArcData
 } tArcData;
 
 typedef tArcData* ArcData;
-
 typedef void *HINSTANCE;
+
+#define BUFF_SIZE 8192
+
+static unsigned char lizard_magic[] = { 0x06, 0x22, 0x4D, 0x18 };
 
 tChangeVolProc gChangeVolProc  = NULL;
 tProcessDataProc gProcessDataProc = NULL;
-tExtensionStartupInfo* gStartupInfo;
-
-static char options[PATH_MAX];
-static unsigned char lizard_magic[] = { 0x06, 0x22, 0x4D, 0x18 };
+tExtensionStartupInfo* gStartupInfo = NULL;
+static char gOptions[PATH_MAX];
+bool gMtreeClasic = false;
 
 void DCPCALL ExtensionInitialize(tExtensionStartupInfo* StartupInfo)
 {
@@ -87,27 +89,99 @@ static bool mtree_opts_nodata(void)
 {
 	bool result = true;
 
-	if (options[0] != '\0')
+	if (gOptions[0] != '\0')
 	{
-		if (strstr(options, "all") != NULL)
+		if (strstr(gOptions, "all") != NULL)
 			result = false;
-		else if (strstr(options, "cksum") != NULL)
+		else if (strstr(gOptions, "cksum") != NULL)
 			result = false;
-		else if (strstr(options, "md5") != NULL)
+		else if (strstr(gOptions, "md5") != NULL)
 			result = false;
-		else if (strstr(options, "rmd160") != NULL)
+		else if (strstr(gOptions, "rmd160") != NULL)
 			result = false;
-		else if (strstr(options, "sha1") != NULL)
+		else if (strstr(gOptions, "sha1") != NULL)
 			result = false;
-		else if (strstr(options, "sha256") != NULL)
+		else if (strstr(gOptions, "sha256") != NULL)
 			result = false;
-		else if (strstr(options, "sha384") != NULL)
+		else if (strstr(gOptions, "sha384") != NULL)
 			result = false;
-		else if (strstr(options, "sha512") != NULL)
+		else if (strstr(gOptions, "sha512") != NULL)
 			result = false;
 	}
 
 	return result;
+}
+
+static int archive_set_format_filter(struct archive *a, const char*ext)
+{
+	int ret;
+
+	if (strcmp(ext, ".tzst") == 0)
+	{
+		ret = archive_write_set_format_pax_restricted(a);
+		ret = archive_write_add_filter_zstd(a);
+	}
+	else if (strcmp(ext, ".zst") == 0)
+	{
+		ret = archive_write_set_format_raw(a);
+		ret = archive_write_add_filter_zstd(a);
+	}
+	else if (strcmp(ext, ".mtree") == 0)
+	{
+		if (gMtreeClasic)
+			ret = archive_write_set_format_mtree_classic(a);
+		else
+			ret = archive_write_set_format_mtree(a);
+	}
+	else if (strcmp(ext, ".lz4") == 0)
+	{
+		ret = archive_write_set_format_raw(a);
+		ret = archive_write_add_filter_lz4(a);
+	}
+	else if (strcmp(ext, ".lz") == 0)
+	{
+		ret = archive_write_set_format_raw(a);
+		ret = archive_write_add_filter_lzip(a);
+	}
+	else if (strcmp(ext, ".lzo") == 0)
+	{
+		ret = archive_write_set_format_raw(a);
+		ret = archive_write_add_filter_lzop(a);
+	}
+	else if (strcmp(ext, ".lrz") == 0)
+	{
+		ret = archive_write_set_format_raw(a);
+		ret = archive_write_add_filter_lrzip(a);
+	}
+	else if (strcmp(ext, ".grz") == 0)
+	{
+		ret = archive_write_set_format_raw(a);
+		ret = archive_write_add_filter_grzip(a);
+	}
+	else if (strcmp(ext, ".lzma") == 0)
+	{
+		ret = archive_write_set_format_raw(a);
+		ret = archive_write_add_filter_lzma(a);
+	}
+	else if (strcmp(ext, ".b64") == 0)
+	{
+		ret = archive_write_set_format_raw(a);
+		ret = archive_write_add_filter_b64encode(a);
+	}
+	else if (strcmp(ext, ".uue") == 0)
+	{
+		ret = archive_write_set_format_raw(a);
+		ret = archive_write_add_filter_uuencode(a);
+	}
+	else if (strcmp(ext, ".liz") == 0)
+	{
+		ret = archive_write_set_format_raw(a);
+		ret = archive_write_add_filter_program(a, "lizard");
+	}
+	else
+		ret = archive_write_set_format_filter_by_ext(a, ext);
+
+	return ret;
 }
 
 const char *archive_password_cb(struct archive *a, void *data)
@@ -339,7 +413,7 @@ void DCPCALL ConfigurePacker(HWND Parent, HINSTANCE DllInstance)
 {
 	char *msg;
 	asprintf(&msg, "%s\nOptions ($ man archive_write_set_options):", archive_version_details());
-	gStartupInfo->InputBox("Double Commander", msg, false, options, PATH_MAX - 1);
+	gStartupInfo->InputBox("Double Commander", msg, false, gOptions, PATH_MAX - 1);
 	free(msg);
 }
 
@@ -347,7 +421,7 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 {
 	struct archive_entry *entry;
 	struct stat st;
-	char buff[8192];
+	char buff[BUFF_SIZE];
 	int fd, ret, id;
 	ssize_t len;
 	char fname[PATH_MAX];
@@ -370,70 +444,7 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 
 	struct archive *a = archive_write_new();
 
-	if (strcmp(ext, ".tzst") == 0)
-	{
-		ret = archive_write_set_format_pax_restricted(a);
-		ret = archive_write_add_filter_zstd(a);
-	}
-	else if (strcmp(ext, ".zst") == 0)
-	{
-		ret = archive_write_set_format_raw(a);
-		ret = archive_write_add_filter_zstd(a);
-	}
-	else if (strcmp(ext, ".mtree") == 0)
-	{
-		ret = archive_write_set_format_mtree(a);
-		//ret = archive_write_set_format_mtree_classic(a);
-	}
-	else if (strcmp(ext, ".lz4") == 0)
-	{
-		ret = archive_write_set_format_raw(a);
-		ret = archive_write_add_filter_lz4(a);
-	}
-	else if (strcmp(ext, ".lz") == 0)
-	{
-		ret = archive_write_set_format_raw(a);
-		ret = archive_write_add_filter_lzip(a);
-	}
-	else if (strcmp(ext, ".lzo") == 0)
-	{
-		ret = archive_write_set_format_raw(a);
-		ret = archive_write_add_filter_lzop(a);
-	}
-	else if (strcmp(ext, ".lrz") == 0)
-	{
-		ret = archive_write_set_format_raw(a);
-		ret = archive_write_add_filter_lrzip(a);
-	}
-	else if (strcmp(ext, ".grz") == 0)
-	{
-		ret = archive_write_set_format_raw(a);
-		ret = archive_write_add_filter_grzip(a);
-	}
-	else if (strcmp(ext, ".lzma") == 0)
-	{
-		ret = archive_write_set_format_raw(a);
-		ret = archive_write_add_filter_lzma(a);
-	}
-	else if (strcmp(ext, ".b64") == 0)
-	{
-		ret = archive_write_set_format_raw(a);
-		ret = archive_write_add_filter_b64encode(a);
-	}
-	else if (strcmp(ext, ".uue") == 0)
-	{
-		ret = archive_write_set_format_raw(a);
-		ret = archive_write_add_filter_uuencode(a);
-	}
-	else if (strcmp(ext, ".liz") == 0)
-	{
-		ret = archive_write_set_format_raw(a);
-		ret = archive_write_add_filter_program(a, "lizard");
-	}
-	else
-		ret = archive_write_set_format_filter_by_ext(a, PackedFile);
-
-	if (ret == ARCHIVE_WARN)
+	if ((ret = archive_set_format_filter(a, ext)) == ARCHIVE_WARN)
 	{
 		printf("libarchive: %s\n", archive_error_string(a));
 		/*
@@ -451,7 +462,7 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 		return 0;
 	}
 
-	if ((options[0] != '\0') && archive_write_set_options(a, options) < ARCHIVE_OK)
+	if ((gOptions[0] != '\0') && archive_write_set_options(a, gOptions) < ARCHIVE_OK)
 	{
 		errmsg(archive_error_string(a), MB_OK | MB_ICONERROR);
 	}
@@ -535,7 +546,7 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 						archive_entry_set_symlink(entry, "");
 				}
 
-				if ((options[0] == '\0') || (strstr(options, "!flags") == NULL))
+				if ((gOptions[0] == '\0') || (strstr(gOptions, "!flags") == NULL))
 				{
 					if (S_ISFIFO(st.st_mode))
 					{
@@ -633,6 +644,30 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 					}
 
 					close(fd);
+				}
+				else if (S_ISLNK(st.st_mode) && result != E_EABORTED)
+				{
+					archive_entry_copy_stat(entry, &st);
+					archive_entry_set_pathname(entry, pkfile);
+					pw = getpwuid(st.st_uid);
+					gr = getgrgid(st.st_gid);
+
+					if (gr)
+						archive_entry_set_gname(entry, gr->gr_name);
+
+					if (pw)
+						archive_entry_set_uname(entry, pw->pw_name);
+
+
+					if ((len = readlink(pkfile, link, sizeof(link) - 1)) != -1)
+					{
+						link[len] = '\0';
+						archive_entry_set_symlink(entry, link);
+					}
+					else
+						archive_entry_set_symlink(entry, "");
+
+					archive_write_header(a, entry);
 				}
 			}
 		}
