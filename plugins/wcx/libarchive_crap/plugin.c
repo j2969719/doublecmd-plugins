@@ -231,6 +231,13 @@ HANDLE DCPCALL OpenArchive(tOpenArchiveData *ArchiveData)
 {
 	tArcData * handle;
 	handle = malloc(sizeof(tArcData));
+
+	if (handle == NULL)
+	{
+		ArchiveData->OpenResult = E_NO_MEMORY;
+		return E_SUCCESS;
+	}
+
 	memset(handle, 0, sizeof(tArcData));
 	handle->archive = archive_read_new();
 
