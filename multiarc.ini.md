@@ -287,9 +287,22 @@ IDPos=<SeekID>
 Start=^-----------
 End=All done
 Format0=$z+$? dd.tt.yyyy hh:mm:ss ? n+
-List=%P -l %AQ
-Extract=%P %AQU
+List=%PQU -l %AQU
+Extract=%PQU %AQU
 ```
+```ini
+[CAB_2]
+Archiver=$COMMANDER_PATH/scripts/unpack_all
+Description=MSCAB (script unpack_all)
+ID=4D 53 43 46
+IDPos=<SeekID>
+Start=^-----------
+End=All done
+Format0=$z+$? dd.tt.yyyy hh:mm:ss ? n+
+List=cabextract -l %AQU
+Extract=%PQU @%LQU 'cabextract %AQU'
+```
+Script [unpack_all](scripts/unpack_all)
 
 ---
 <a name="msi"><h3>Microsoft Windows Installer</h3></a>
@@ -374,10 +387,22 @@ IDPos=0
 IDSeekRange=0
 Extension=sin
 Format0=n+ (z+
-List=%P -l %AQ
-Extract=%P %AQ
+List=%PQU -l %AQU
+Extract=%PQU %AQU
 ```
-[pakextract](http://github.com/yquake2/pakextract)
+```ini
+[PAK_2]
+Archiver=$COMMANDER_PATH/scripts/unpack_all
+Description=Quake/Quake II pak file or Sin .sin (script unpack_all)
+ID=50 41 43 4B
+IDPos=0
+IDSeekRange=0
+Extension=sin
+Format0=n+ (z+
+List=pakextract -l %AQ
+Extract=%PQU @%LQU 'pakextract %AQU'
+```
+[pakextract](http://github.com/yquake2/pakextract), script [unpack_all](scripts/unpack_all)
 
 ---
 <a name="paq8o9"><h3>PAQ8</h3></a>
