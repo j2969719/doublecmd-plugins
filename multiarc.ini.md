@@ -326,9 +326,20 @@ Description=Microsoft Windows Installer (msiextract)
 ID=D0 CF 11 E0
 IDPos=0
 Format0=n+
-List=%P -l %AQA
-Extract=%P %AQA
+List=%PQU -l %AQU
+Extract=%PQU %AQU
 ```
+```ini
+[MSI_3]
+Archiver=$COMMANDER_PATH/scripts/unpack_all
+Description=Microsoft Windows Installer (msiextract, script unpack_all)
+ID=D0 CF 11 E0
+IDPos=0
+Format0=n+
+List=msiextract -l %AQU
+Extract=%PQU @%LQU 'msiextract %AQU'
+```
+Script [unpack_all](scripts/unpack_all)
 
 ---
 <a name="szdd"><h3>MS-DOS installation compression</h3></a>
