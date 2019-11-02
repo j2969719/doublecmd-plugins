@@ -99,6 +99,7 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 
 			bval = g_key_file_has_key(gCfg, gConnection, "Domain", NULL);
 			gStartupInfo->SendDlgMsg(pDlg, "chkDomain", DM_SETCHECK, (intptr_t)bval, 0);
+			gStartupInfo->SendDlgMsg(pDlg, "edDomain", DM_ENABLE, (intptr_t)bval, 0);
 		}
 
 		break;
