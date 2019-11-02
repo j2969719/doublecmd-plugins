@@ -1,0 +1,15 @@
+#!/bin/sh
+
+tempdir=$(mktemp -d /tmp/multiarc.XXXXX)
+target=$PWD
+command=${@:2}
+filelist=${1:1}
+
+pushd $tempdir
+
+eval $command
+xargs -a "$filelist" cp --parents -Pft "$target"
+
+popd
+
+rm -r -f "$tempdir"
