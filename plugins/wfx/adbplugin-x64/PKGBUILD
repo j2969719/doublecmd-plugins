@@ -10,8 +10,10 @@ license=('unknown')
 depends=('doublecmd' 'android-tools' 'pcre')
 makedepends=('patchelf')
 options=(!strip)
-source=('http://www.myklos.org/download/adbplugin-x64.zip')
-md5sums=('159a1cd83be0a8fb97f32175a65dc06b')
+source=('http://www.myklos.org/download/adbplugin-x64.zip'
+	'adb.ico')
+md5sums=('159a1cd83be0a8fb97f32175a65dc06b'
+	 'e1387bf693c7e2831c45654ecb534992')
 
 package() {
   patchelf --replace-needed libpcre.so.3 libpcre.so adb_rename.wfx
@@ -20,4 +22,5 @@ package() {
 
   install -m 644 adb_rename.wfx "${pkgdir}/usr/lib/doublecmd/plugins/wfx/${_pkgname}/adb.wfx64"
   install -m 644 doc/notes.txt "${pkgdir}/usr/lib/doublecmd/plugins/wfx/${_pkgname}/doc"
+  install -m 644 adb.ico "${pkgdir}/usr/lib/doublecmd/plugins/wfx/${_pkgname}"
 }
