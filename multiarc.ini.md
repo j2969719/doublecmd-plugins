@@ -300,7 +300,7 @@ Start=^-----------
 End=All done
 Format0=$z+$? dd.tt.yyyy hh:mm:ss ? n+
 List=cabextract -l %AQU
-Extract=%PQU @%LQU 'cabextract %AQU'
+Extract=%PQU %LQU 'cabextract %AQU'
 ```
 Script [unpack_all](scripts/unpack_all)
 
@@ -337,7 +337,7 @@ ID=D0 CF 11 E0
 IDPos=0
 Format0=n+
 List=msiextract -l %AQU
-Extract=%PQU @%LQU 'msiextract %AQU'
+Extract=%PQU %LQU 'msiextract %AQU'
 ```
 Script [unpack_all](scripts/unpack_all)
 
@@ -411,7 +411,7 @@ IDSeekRange=0
 Extension=sin
 Format0=n+ (z+
 List=pakextract -l %AQ
-Extract=%PQU @%LQU 'pakextract %AQU'
+Extract=%PQU %LQU 'pakextract %AQU'
 ```
 [pakextract](http://github.com/yquake2/pakextract), script [unpack_all](scripts/unpack_all)
 
