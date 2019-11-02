@@ -691,7 +691,7 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 	archive_write_close(a);
 	archive_write_free(a);
 
-	if ((Flags & PK_PACK_MOVE_FILES) &&
+	if ((Flags & PK_PACK_MOVE_FILES && result == E_SUCCESS) &&
 	                (errmsg("Now WILL TRY TO REMOVE the source files. Are you sure you want this?", MB_YESNO | MB_ICONWARNING) == ID_YES))
 	{
 		while (*rmlist)
