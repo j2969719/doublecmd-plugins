@@ -336,7 +336,7 @@ int DCPCALL FsExecuteFile(HWND MainWin, char* RemoteName, char* Verb)
 			if (buf.st_mode & S_IXUSR)
 				command = g_shell_quote(RemoteName + 1);
 			else
-				command = g_strdup_printf("gio open %s", g_shell_quote(RemoteName + 1));
+				command = g_strdup_printf("xdg-open %s", g_shell_quote(RemoteName + 1));
 
 			g_spawn_command_line_async(command, NULL);
 
