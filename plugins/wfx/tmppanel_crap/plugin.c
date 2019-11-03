@@ -1,5 +1,6 @@
 #include <glib.h>
 #include <glib/gstdio.h>
+#include <gio/gio.h>
 #include <fcntl.h>
 #include <errno.h>
 #include <utime.h>
@@ -17,6 +18,12 @@ typedef struct sVFSDirData
 	gchar group[PATH_MAX];
 	gsize ifile;
 } tVFSDirData;
+
+typedef struct sCopyInfo
+{
+	gchar *in_file;
+	gchar *out_file;
+} tCopyInfo;
 
 int gPluginNr;
 tProgressProc gProgressProc;
@@ -56,6 +63,18 @@ static void try_free_str(gchar *str)
 {
 	if (str)
 		g_free(str);
+}
+
+static void copy_progress_cb(goffset current_num_bytes, goffset total_num_bytes, gpointer user_data)
+{
+	tCopyInfo *info = (tCopyInfo*)user_data;
+
+	gint64 res = 0;
+
+	if (current_num_bytes > 0)
+		res = current_num_bytes * 100 / total_num_bytes;
+
+	gProgressProc(gPluginNr, info->in_file, info->out_file, res);
 }
 
 gboolean SetFindData(tVFSDirData *dirdata, WIN32_FIND_DATAA *FindData)
@@ -190,6 +209,55 @@ BOOL DCPCALL FsGetLocalName(char* RemoteName, int maxlen)
 	}
 	else
 		return FALSE;
+}
+
+int DCPCALL FsGetFile(char* RemoteName, char* LocalName, int CopyFlags, RemoteInfoStruct* ri)
+{
+	int result = FS_FILE_OK;
+	GError *err = NULL;
+
+	if (gProgressProc(gPluginNr, RemoteName, LocalName, 0))
+		return FS_FILE_USERABORT;
+
+	if ((CopyFlags == 0) && (g_file_test(LocalName, G_FILE_TEST_EXISTS)))
+		return FS_FILE_EXISTS;
+
+	gchar *group = g_path_get_dirname(RemoteName);
+	gchar *key = g_path_get_basename(RemoteName);
+	gchar *realname = g_key_file_get_string(gCfg, group, key, NULL);
+	try_free_str(group);
+	try_free_str(key);
+
+	if (realname)
+	{
+		tCopyInfo *info = g_new0(tCopyInfo, 1);
+		info->in_file = g_strdup(realname);
+		info->out_file = g_strdup(LocalName);
+		GFile *src = g_file_new_for_path(info->in_file);
+		GFile *dest = g_file_new_for_path(info->out_file);
+
+		if (!g_file_copy(src, dest, G_FILE_COPY_OVERWRITE | G_FILE_COPY_NOFOLLOW_SYMLINKS | G_FILE_COPY_ALL_METADATA, NULL, copy_progress_cb, (gpointer)info, &err))
+		{
+			result = FS_FILE_WRITEERROR;
+
+			if (err)
+			{
+				gRequestProc(gPluginNr, RT_MsgOK, NULL, (err)->message, NULL, 0);
+				g_error_free(err);
+			}
+		}
+
+		try_free_str(info->in_file);
+		try_free_str(info->out_file);
+		try_free_str(realname);
+		g_object_unref(src);
+		g_object_unref(dest);
+		g_free(info);
+	}
+	else
+		result = FS_FILE_READERROR;
+
+	return result;
 }
 
 BOOL DCPCALL FsMkDir(char* Path)

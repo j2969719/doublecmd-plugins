@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <fcntl.h>
+#include <unistd.h>
 #include <linux/limits.h>
 #include <sys/stat.h>
 #include <libgen.h>
@@ -270,6 +272,90 @@ int DCPCALL FsPutFile(char* LocalName, char* RemoteName, int CopyFlags)
 	return FS_FILE_WRITEERROR;
 }
 
+int DCPCALL FsGetFile(char* RemoteName, char* LocalName, int CopyFlags, RemoteInfoStruct* ri)
+{
+	int ifd, ofd, done;
+	ssize_t len, total = 0;
+	char rpath[PATH_MAX];
+	char dpath[PATH_MAX];
+	char buff[8192];
+	struct stat buf;
+	struct utimbuf ubuf;
+	int result = FS_FILE_OK;
+
+	strlcpy(rpath, RemoteName + 1, PATH_MAX);
+
+	if (strlen(LocalName) > strlen(rpath) && strstr(LocalName, RemoteName))
+	{
+		strlcpy(dpath, LocalName, strlen(LocalName) - strlen(rpath));
+		strncat(dpath, basename(LocalName), PATH_MAX);
+	}
+	else
+		strlcpy(dpath, LocalName, PATH_MAX);
+
+	if ((CopyFlags == 0) && (access(dpath, F_OK) == 0))
+		return FS_FILE_EXISTS;
+
+	if (gProgressProc(gPluginNr, rpath, dpath, 0) == 1)
+		return FS_FILE_USERABORT;
+
+	ifd = open(rpath, O_RDONLY);
+
+	if (ifd == -1)
+		return FS_FILE_READERROR;
+
+	ofd = open(dpath, O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR);
+
+	if (ofd > -1)
+	{
+		size_t rsize = ((int64_t)ri->SizeHigh << 32) | ri->SizeLow;
+
+		while ((len = read(ifd, buff, sizeof(buff))) > 0)
+		{
+			if (write(ofd, buff, len) == -1)
+			{
+				result = FS_FILE_WRITEERROR;
+				break;
+			}
+
+			total += len;
+
+			if (rsize > 0)
+				done = total * 100 / rsize;
+			else
+				done = 0;
+
+			if (done > 100)
+				done = 100;
+
+			if (gProgressProc(gPluginNr, rpath, LocalName, done) == 1)
+			{
+				result = FS_FILE_USERABORT;
+				break;
+			}
+		}
+
+		close(ofd);
+
+		if (ri->Attr > 0)
+			chmod(dpath, ri->Attr);
+
+		if (stat(rpath, &buf) == 0)
+		{
+			ubuf.actime = buf.st_atime;
+			ubuf.modtime = buf.st_mtime;
+			utime(dpath, &ubuf);
+		}
+
+	}
+	else
+		result = FS_FILE_WRITEERROR;
+
+	close(ifd);
+
+	return result;
+}
+
 int DCPCALL FsExecuteFile(HWND MainWin, char* RemoteName, char* Verb)
 {
 	if (strcmp(Verb, "open") == 0)
@@ -345,7 +431,9 @@ int DCPCALL FsContentGetValue(char* FileName, int FieldIndex, int UnitIndex, voi
 			strlcpy((char*)FieldValue, strvalue, maxlen - 1);
 		else
 			result = ft_fieldempty;
+
 		break;
+
 	case 1:
 		strvalue = basenamenoext(FileName);
 
@@ -353,7 +441,9 @@ int DCPCALL FsContentGetValue(char* FileName, int FieldIndex, int UnitIndex, voi
 			strlcpy((char*)FieldValue, strvalue, maxlen - 1);
 		else
 			result = ft_fieldempty;
+
 		break;
+
 	case 3:
 		strvalue = dirname(FileName);
 
@@ -361,7 +451,9 @@ int DCPCALL FsContentGetValue(char* FileName, int FieldIndex, int UnitIndex, voi
 			strlcpy((char*)FieldValue, strvalue, maxlen - 1);
 		else
 			result = ft_fieldempty;
+
 		break;
+
 	default:
 		result = ft_nosuchfield;
 	}

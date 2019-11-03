@@ -1,5 +1,6 @@
 #include <glib.h>
 #include <glib/gstdio.h>
+#include <gio/gio.h>
 #include <gtk/gtk.h>
 #include <fcntl.h>
 #include <utime.h>
@@ -23,6 +24,12 @@ typedef struct sField
 	int type;
 	char *unit;
 } tField;
+
+typedef struct sCopyInfo
+{
+	gchar in_file[PATH_MAX];
+	gchar out_file[PATH_MAX];
+} tCopyInfo;
 
 #define fieldcount (sizeof(fields)/sizeof(tField))
 
@@ -72,6 +79,18 @@ static gchar *basenamenoext(const gchar *file)
 
 	g_free(basename);
 	return result;
+}
+
+static void copy_progress_cb(goffset current_num_bytes, goffset total_num_bytes, gpointer user_data)
+{
+	tCopyInfo *info = (tCopyInfo*)user_data;
+
+	gint64 res = 0;
+
+	if (current_num_bytes > 0)
+		res = current_num_bytes * 100 / total_num_bytes;
+
+	gProgressProc(gPluginNr, info->in_file, info->out_file, res);
 }
 
 gboolean SetFindData(tVFSDirData *dirdata, WIN32_FIND_DATAA *FindData)
@@ -189,6 +208,53 @@ int DCPCALL FsFindClose(HANDLE Hdl)
 	g_free(dirdata);
 
 	return 0;
+}
+
+int DCPCALL FsGetFile(char* RemoteName, char* LocalName, int CopyFlags, RemoteInfoStruct* ri)
+{
+	int result = FS_FILE_OK;
+	GError *err = NULL;
+
+	if (gProgressProc(gPluginNr, RemoteName, LocalName, 0))
+		return FS_FILE_USERABORT;
+
+	tCopyInfo *info = g_new0(tCopyInfo, 1);
+
+	g_strlcpy(info->in_file, RemoteName + 1, PATH_MAX);
+
+	if (strlen(LocalName) > strlen(info->in_file) && strstr(LocalName, RemoteName))
+	{
+		g_strlcpy(info->out_file, LocalName, strlen(LocalName) - (strlen(info->in_file) - 1));
+		strncat(info->out_file, g_path_get_basename(LocalName), PATH_MAX);
+	}
+	else
+		g_strlcpy(info->out_file, LocalName, PATH_MAX);
+
+	if (CopyFlags == 0 && g_file_test(info->out_file, G_FILE_TEST_EXISTS))
+	{
+		g_free(info);
+		return FS_FILE_EXISTS;
+	}
+
+	GFile *src = g_file_new_for_path(info->in_file);
+	GFile *dest = g_file_new_for_path(info->out_file);
+
+	if (!g_file_copy(src, dest, G_FILE_COPY_OVERWRITE | G_FILE_COPY_NOFOLLOW_SYMLINKS | G_FILE_COPY_ALL_METADATA, NULL, copy_progress_cb, (gpointer)info, &err))
+	{
+		result = FS_FILE_WRITEERROR;
+
+		if (err)
+		{
+			gRequestProc(gPluginNr, RT_MsgOK, NULL, (err)->message, NULL, 0);
+			g_error_free(err);
+		}
+	}
+
+	g_object_unref(src);
+	g_object_unref(dest);
+	g_free(info);
+
+	return result;
 }
 
 BOOL DCPCALL FsDeleteFile(char* RemoteName)
@@ -328,7 +394,9 @@ int DCPCALL FsContentGetValue(char* FileName, int FieldIndex, int UnitIndex, voi
 			g_strlcpy((char*)FieldValue, strvalue, maxlen - 1);
 		else
 			result = ft_fieldempty;
+
 		break;
+
 	case 1:
 		strvalue = basenamenoext(FileName);
 
@@ -336,7 +404,9 @@ int DCPCALL FsContentGetValue(char* FileName, int FieldIndex, int UnitIndex, voi
 			g_strlcpy((char*)FieldValue, strvalue, maxlen - 1);
 		else
 			result = ft_fieldempty;
+
 		break;
+
 	case 3:
 		strvalue = g_path_get_dirname(FileName);
 
@@ -344,7 +414,9 @@ int DCPCALL FsContentGetValue(char* FileName, int FieldIndex, int UnitIndex, voi
 			g_strlcpy((char*)FieldValue, strvalue, maxlen - 1);
 		else
 			result = ft_fieldempty;
+
 		break;
+
 	default:
 		result = ft_nosuchfield;
 	}
