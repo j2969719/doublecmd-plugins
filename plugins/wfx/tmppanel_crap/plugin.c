@@ -71,7 +71,7 @@ static void copy_progress_cb(goffset current_num_bytes, goffset total_num_bytes,
 
 	gint64 res = 0;
 
-	if (current_num_bytes > 0)
+	if (total_num_bytes > 0)
 		res = current_num_bytes * 100 / total_num_bytes;
 
 	gProgressProc(gPluginNr, info->in_file, info->out_file, res);
@@ -230,6 +230,12 @@ int DCPCALL FsGetFile(char* RemoteName, char* LocalName, int CopyFlags, RemoteIn
 
 	if (realname)
 	{
+		if (g_strcmp0(realname, LocalName) == 0)
+		{
+			try_free_str(realname);
+			return FS_FILE_NOTSUPPORTED;
+		}
+
 		tCopyInfo *info = g_new0(tCopyInfo, 1);
 		info->in_file = g_strdup(realname);
 		info->out_file = g_strdup(LocalName);

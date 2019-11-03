@@ -293,6 +293,10 @@ int DCPCALL FsGetFile(char* RemoteName, char* LocalName, int CopyFlags, RemoteIn
 	else
 		strlcpy(dpath, LocalName, PATH_MAX);
 
+
+	if (strcmp(dpath, rpath) == 0)
+		return FS_FILE_NOTSUPPORTED;
+
 	if ((CopyFlags == 0) && (access(dpath, F_OK) == 0))
 		return FS_FILE_EXISTS;
 
@@ -328,7 +332,7 @@ int DCPCALL FsGetFile(char* RemoteName, char* LocalName, int CopyFlags, RemoteIn
 			if (done > 100)
 				done = 100;
 
-			if (gProgressProc(gPluginNr, rpath, LocalName, done) == 1)
+			if (gProgressProc(gPluginNr, rpath, dpath, done) == 1)
 			{
 				result = FS_FILE_USERABORT;
 				break;
