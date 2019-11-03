@@ -365,10 +365,22 @@ int DCPCALL FsExecuteFile(HWND MainWin, char* RemoteName, char* Verb)
 	if (strcmp(Verb, "open") == 0)
 	{
 //		return FS_EXEC_YOURSELF;
-		char *command = malloc(strlen(RemoteName) + 12);;
-		sprintf(command, "xdg-open \"%s\"", RemoteName + 1);
-		system(command);
-		free(command);
+
+		struct stat buf;
+		char *command = malloc(strlen(RemoteName) + 12);
+
+		if (stat(RemoteName + 1, &buf) == 0)
+		{
+			if (buf.st_mode & S_IXUSR)
+				sprintf(command, "\"%s\"", RemoteName + 1);
+			else
+				sprintf(command, "xdg-open \"%s\"", RemoteName + 1);
+
+			system(command);
+			free(command);
+		}
+		else
+			return FS_EXEC_ERROR;
 	}
 	else if (strncmp(Verb, "chmod", 5) == 0)
 	{

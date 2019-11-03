@@ -385,6 +385,8 @@ int DCPCALL FsRenMovFile(char* OldName, char* NewName, BOOL Move, BOOL OverWrite
 
 int DCPCALL FsExecuteFile(HWND MainWin, char* RemoteName, char* Verb)
 {
+	struct stat buf;
+	gchar *command = NULL;
 	int result = FS_EXEC_ERROR;
 	gchar *group = g_path_get_dirname(RemoteName);
 	gchar *key = g_path_get_basename(RemoteName);
@@ -394,10 +396,17 @@ int DCPCALL FsExecuteFile(HWND MainWin, char* RemoteName, char* Verb)
 
 	if (strncmp(Verb, "open", 5) == 0)
 	{
-		gchar *command = g_strdup_printf("xdg-open \"%s\"", path);
-		g_spawn_command_line_async(command, NULL);
-		try_free_str(command);
-		result = FS_FILE_OK;
+		if (stat(path, &buf) == 0)
+		{
+			if (buf.st_mode & S_IXUSR)
+				command = g_shell_quote(path);
+			else
+				command = g_strdup_printf("gio open %s", g_shell_quote(path));
+
+			g_spawn_command_line_async(command, NULL);
+			try_free_str(command);
+			result = FS_FILE_OK;
+		}
 	}
 	else if (strncmp(path, "folder", 6) != 0 && strncmp(Verb, "chmod", 5) == 0)
 	{

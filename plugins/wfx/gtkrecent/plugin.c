@@ -324,14 +324,27 @@ BOOL DCPCALL FsGetLocalName(char* RemoteName, int maxlen)
 
 int DCPCALL FsExecuteFile(HWND MainWin, char* RemoteName, char* Verb)
 {
+	struct stat buf;
+	gchar *command = NULL;
 	int result = FS_EXEC_OK;
 
 	if (strncmp(Verb, "open", 5) == 0)
 	{
 		//rresult = FS_EXEC_YOURSELF;
-		gchar *command = g_strdup_printf("xdg-open %s", g_shell_quote(RemoteName + 1));
-		g_spawn_command_line_async(command, NULL);
-		g_free(command);
+		if (stat(RemoteName + 1, &buf) == 0)
+		{
+			if (buf.st_mode & S_IXUSR)
+				command = g_shell_quote(RemoteName + 1);
+			else
+				command = g_strdup_printf("gio open %s", g_shell_quote(RemoteName + 1));
+
+			g_spawn_command_line_async(command, NULL);
+
+			if (command)
+				g_free(command);
+		}
+		else
+			result = FS_EXEC_ERROR;
 		//g_strlcpy(RemoteName, g_strdup(RemoteName + 1), PATH_MAX);
 		//result = FS_EXEC_SYMLINK;
 	}
@@ -345,7 +358,7 @@ int DCPCALL FsExecuteFile(HWND MainWin, char* RemoteName, char* Verb)
 	else
 		gRequestProc(gPluginNr, RT_MsgOK, NULL, strerror(EOPNOTSUPP), NULL, 0);
 
-	return FS_EXEC_OK;
+	return result;
 }
 
 BOOL DCPCALL FsSetTime(char* RemoteName, FILETIME *CreationTime, FILETIME *LastAccessTime, FILETIME *LastWriteTime)
