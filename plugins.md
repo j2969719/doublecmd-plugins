@@ -230,6 +230,9 @@ Temporary panel, virtual folder that allows keeping links to frequently used fil
 - [gtkrecent](plugins/wfx/gtkrecent)<br>
 View list of recently used files (also support: open, view or delete any entry). (for GTK2-version of DC only)
 
+- [gvfs_quickmount](plugins/wfx/gvfs_quickmount)<br>
+Mounting gvfs resources with automatic password entry (stored in ini file). F7 - new connection, Alt+Enter - edit existing.
+
 - [tmppanel_crap](plugins/wfx/tmppanel_crap)<br>
 Temporary panel, see FileList description.
 
