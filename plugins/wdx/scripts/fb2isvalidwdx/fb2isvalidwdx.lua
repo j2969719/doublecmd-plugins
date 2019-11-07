@@ -1,5 +1,5 @@
 -- fb2isvalidwdx.lua (Unix-like only)
--- 2019.04.30
+-- 2019.11.07
 
 local p
 
@@ -21,8 +21,9 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
     ps  = '--well-formed'
   else
     if p == nil then
-      p = debug.getinfo(1).short_src
-      local i, j = string.find(s, '/.*/')
+      p = debug.getinfo(1).source
+      if string.sub(p, 1, 1) == '@' then p = string.sub(p, 2, -1) end
+      local i, j = string.find(p, '/.*/')
       if i == nil then return nil end
       p = string.sub(p, i, j) .. 'fb2-xsd/'
     end

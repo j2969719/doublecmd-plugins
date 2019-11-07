@@ -1,5 +1,5 @@
 fb2isvalidwdx.lua (Unix-like only)
-2019.04.30
+2019.11.07
 
 Validating FictionBook2 (FB2) files (boolean, returns true or false).
 
