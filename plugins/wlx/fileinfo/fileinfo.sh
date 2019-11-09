@@ -1,74 +1,70 @@
 #!/bin/bash
 
-#(EXT="ISO")|(EXT="TORRENT")|(EXT="SO")|(EXT="MO")|(EXT="DEB")|(EXT="TAR")|(EXT="LHA")|(EXT="ARJ")|(EXT="CAB")|(EXT="HA")|(EXT="RAR")|(EXT="ALZ")|(EXT="CPIO")|(EXT="7Z")|(EXT="ACE")|(EXT="ARC")|(EXT="ZIP")|(EXT="ZOO")|(EXT="PS")|(EXT="PDF")|(EXT="ODT")|(EXT="DOC")|(EXT="XLS")|(EXT="DVI")|(EXT="DJVU")|(EXT="EPUB")|(EXT="HTML")|(EXT="HTM")|(EXT="EXE")|(EXT="DLL")|(EXT="GZ")|(EXT="BZ2")|(EXT="XZ")|(EXT="MSI")|(EXT="RTF")|(EXT="FB2")
-
 file=$1
 filetype="${1##*.}"
-#echo "$filetype"
-file -b "$1"
-#du -h –max-depth=1 "$1"
+
 case "${filetype}" in
 	[Tt][Oo][Rr][Rr][Ee][Nn][Tt])
 		ctorrent -x "$file" || transmission-show "$file"
 		;;
 	[Ss][Oo])
-		nm -C -D "$file"
+		file -b "$file" && nm -C -D "$file"
 		;;
 	[Mm][Oo])
-		msgunfmt "$file" || cat "$file"
+		file -b "$file" && msgunfmt "$file" || cat "$file"
 		;;
 	[Dd][Ee][Bb])
 		dpkg-deb -I "$file" && echo && dpkg-deb -c "$file"
 		;;
 	[Tt][Aa][Rr])
-		tar tvvf - < "${file}"
+		file -b "$file" && tar tvvf - < "${file}"
 		;;
 	[Ll][Hh][Aa])
-		lha l "$file"
+		file -b "$file" && lha l "$file"
 		;;
 	[Aa][Rr][Jj])
-		arj l "$file" 2>/dev/null || \
+		file -b "$file" && arj l "$file" 2>/dev/null || \
 		unarj l "$file"
 		;;
 	[Cc][Aa][Bb])
-		cabextract -l "$file"
+		file -b "$file" && cabextract -l "$file"
 		;;
 	[Hh][Aa])
-		ha lf "$file"
+		file -b "$file" && ha lf "$file"
 		;;
 	[Rr][Aa][Rr])
-		rar v -c- "$file" 2>/dev/null || \
+		file -b "$file" && rar v -c- "$file" 2>/dev/null || \
 		unrar v -c- "$file"
 		;;
 	[Aa][Ll][Zz])
-		unalz -l "$file"
+		file -b "$file" && unalz -l "$file"
 		;;
 	[Aa][Rr][Cc])
-		arc l "$file"
+		file -b "$file" && arc l "$file"
 		;;
 	[Cc][Pp][Ii][Oo])
-		cpio -itv < "$file" 2>/dev/null
+		file -b "$file" && cpio -itv < "$file" 2>/dev/null
 		;;
 	7[Zz]|[Ii][Mm][Gg]|[Ii][Mm][Aa]|[Vv][Mm][Dd][Kk])
 		7za l "$file" 2>/dev/null || 7z l "$file"
 		;;
 	[Gg][Zz]|[Xx][Zz]|[Bb][Zz]2|[Ll][Zz][Mm][Aa]|[Tt][Xx][Zz]|[Tt][Gg][Zz]|[Tt][Bb][Zz]|[Tt][Ll][Zz])
-		tar -tvf "$file"
+		file -b "$file" && tar -tvf "$file"
 		;;
 	[Aa][Cc][Ee])
-		unace v -y "$file"
+		file -b "$file" && unace v -y "$file"
 		;;
 	[Aa][Rr][Cc])
-		arc l "$file"
+		file -b "$file" && arc l "$file"
 		;;
 	[Zz][Ii][Pp])
 		7z l "$file" || unzip -v "$file"
 		;;
 	[Zz][Oo][Oo])
-		zoo l "$file"
+		file -b "$file" && zoo l "$file"
 		;;
 	[Mm][Ss][Ii])
-		msiinfo suminfo "$file" && msiextract -l "$file"
+		file -b "$file" && msiinfo suminfo "$file" && msiextract -l "$file"
 		;;
 	[Pp][Ss])
 		ps2ascii "$file"
@@ -113,16 +109,12 @@ case "${filetype}" in
 		strings | cat "$file" |  iconv -f "866" -t "UTF-8"
 		;;
 	[Zz][Pp][Aa][Qq])
-		zpaq l "$file"
+		file -b "$file" && zpaq l "$file"
 		;;
 	[Dd][Oo][Cc][Xx])
 		docx2txt.pl "$file" - || \
 		unzip -p "$file" | grep --text '<w:r' | sed 's/<w:p[^<\/]*>/ \
 			/g' | sed 's/<[^<]*>//g' | grep -v '^[[:space:]]*$' | sed G
-		;;
-	[Ee][Xx][Ee]|[Dd][Ll][Ll])
-		exiftool "$file" || \
-		wrestool --extract --raw --type=version "$file" |  strings -el
 		;;
 	[Ff][Bb][2])
 		xsltproc $COMMANDER_PATH/scripts/FB2_2_txt_ru.xsl "$file" |  iconv -f "windows-1251" -t "UTF-8"
@@ -133,13 +125,16 @@ case "${filetype}" in
 	[Hh][Tt][Mm][Ll]|[Hh][Tt][Mm])
 		links -dump "$file" 2>/dev/null || w3m -dump "$file" 2>/dev/null || lynx -dump "$file"
 		;;
+	[Cc][Rr][Tt]|[Cc][Ee][Rr]|[Pp][Ee][Mm])
+		keytool -printcert -v -file "$file" || \
+		openssl crl2pkcs7 -nocrl -certfile "$file" | openssl pkcs7 -print_certs -text
+		;;
 	*)
 		case "$(file -b --mime-type $file)" in
-			"application/x-executable")
-				nm -C -D "$file" && ldd  "$file"
-				;;
-			"application/x-sharedlib")
-				nm -C -D "$file" && ldd  "$file"
+			"application/x-executable"|"application/x-sharedlib")
+				file -b "$file"
+				ldd  "$file" | grep "not found"
+				readelf -a "$file"
 				;;
 			"application/zip")
 				7z l "$file" || unzip -v "$file"
@@ -147,9 +142,14 @@ case "${filetype}" in
 			"application/x-sqlite3")
 				sqlite3 "$file" .dbinfo .dump
 				;;
-			#"inode/directory")
-				#cd "$file" && du -h --apparent-size | sort -hr
-				#;;
+			"inode/directory")
+				stat "$file"
+				;;
+			"application/x-dosexec")
+				exiftool  "$file" || \
+				wrestool --extract --raw --type=version "$file" |  strings -el
+				readpe -A "$file"
+				;;
 		esac
 		;;
 esac

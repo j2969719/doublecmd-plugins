@@ -26,17 +26,6 @@
 #include <locale.h>
 #define GETTEXT_PACKAGE "plugins"
 
-#define DETECT_STRING "\
-(EXT=\"ISO\")|(EXT=\"TORRENT\")|(EXT=\"SO\")|(EXT=\"MO\")|\
-(EXT=\"DEB\")|(EXT=\"TAR\")|(EXT=\"LHA\")|(EXT=\"ARJ\")|\
-(EXT=\"CAB\")|(EXT=\"HA\")|(EXT=\"RAR\")|(EXT=\"ALZ\")|\
-(EXT=\"CPIO\")|(EXT=\"7Z\")|(EXT=\"ACE\")|(EXT=\"ARC\")|\
-(EXT=\"ZIP\")|(EXT=\"ZOO\")|(EXT=\"PS\")|(EXT=\"PDF\")|\
-(EXT=\"ODT\")|(EXT=\"DOC\")|(EXT=\"XLS\")|(EXT=\"DVI\")|\
-(EXT=\"DJVU\")|(EXT=\"EPUB\")|(EXT=\"HTML\")|(EXT=\"HTM\")|\
-(EXT=\"EXE\")|(EXT=\"DLL\")|(EXT=\"GZ\")|(EXT=\"BZ2\")|\
-(EXT=\"XZ\")|(EXT=\"MSI\")|(EXT=\"ZPAQ\")|(EXT=\"IMA\")|\
-(EXT=\"IMG\")"
 #define _enc_default "UTF-8"
 #define _enc_ansi "CP1251"
 #define _enc_dos "866"
@@ -149,6 +138,12 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 	}
 
 	g_free(command);
+
+	if (!buf1)
+		return NULL;
+	else if (buf1[0] == '\0')
+		g_free(buf1);
+		return NULL;
 
 	gFix = gtk_vbox_new(FALSE, 5);
 	gtk_container_add(GTK_CONTAINER((GtkWidget*)(ParentWin)), gFix);
@@ -334,11 +329,6 @@ void DCPCALL ListSetDefaultParams(ListDefaultParamStruct* dps)
 
 	if (err)
 		g_error_free(err);
-}
-
-void DCPCALL ListGetDetectString(char* DetectString, int maxlen)
-{
-	g_strlcpy(DetectString, DETECT_STRING, maxlen-1);
 }
 
 int DCPCALL ListSearchText(HWND ListWin, char* SearchString, int SearchParameter)
