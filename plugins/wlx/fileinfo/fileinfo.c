@@ -142,8 +142,10 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 	if (!buf1)
 		return NULL;
 	else if (buf1[0] == '\0')
+	{
 		g_free(buf1);
 		return NULL;
+	}
 
 	gFix = gtk_vbox_new(FALSE, 5);
 	gtk_container_add(GTK_CONTAINER((GtkWidget*)(ParentWin)), gFix);
