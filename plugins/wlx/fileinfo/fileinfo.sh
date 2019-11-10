@@ -7,9 +7,6 @@ case "${filetype}" in
 	[Tt][Oo][Rr][Rr][Ee][Nn][Tt])
 		ctorrent -x "$file" || transmission-show "$file"
 		;;
-	[Ss][Oo])
-		file -b "$file" && nm -C -D "$file"
-		;;
 	[Mm][Oo])
 		file -b "$file" && msgunfmt "$file" || cat "$file"
 		;;
@@ -49,7 +46,14 @@ case "${filetype}" in
 		7za l "$file" 2>/dev/null || 7z l "$file"
 		;;
 	[Gg][Zz]|[Xx][Zz]|[Bb][Zz]2|[Ll][Zz][Mm][Aa]|[Tt][Xx][Zz]|[Tt][Gg][Zz]|[Tt][Bb][Zz]|[Tt][Ll][Zz])
-		file -b "$file" && tar -tvf "$file"
+		file -b "$file" && tar -tvf "$file" || zcat "$file" ||\
+			xzcat "$file" || bzcat "$file"
+		;;
+	[Zz][Ss][Tt])
+		file -b "$file" && tar -tvf "$file" || zstdcat "$file"
+		;;
+	[Ll][Zz]4)
+		file -b "$file" && lz4 -dc "$file" 2>/dev/null | tar -tvvf - || lz4 -dc "$file" 2>/dev/null | cat
 		;;
 	[Aa][Cc][Ee])
 		file -b "$file" && unace v -y "$file"
@@ -130,11 +134,12 @@ case "${filetype}" in
 		openssl crl2pkcs7 -nocrl -certfile "$file" | openssl pkcs7 -print_certs -text
 		;;
 	*)
-		case "$(file -b --mime-type $file)" in
-			"application/x-executable"|"application/x-sharedlib")
+		case `file -b --mime-type -L "$file"` in
+			"application/x-executable"|"application/x-sharedlib"|"application/x-pie-executable")
 				file -b "$file"
 				ldd  "$file" | grep "not found"
 				readelf -a "$file"
+				nm -CD "$file"
 				;;
 			"application/zip")
 				7z l "$file" || unzip -v "$file"

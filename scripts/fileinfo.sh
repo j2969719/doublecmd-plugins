@@ -134,7 +134,7 @@ case "${filetype}" in
 		links -dump "$file" 2>/dev/null || w3m -dump "$file" 2>/dev/null || lynx -dump "$file"
 		;;
 	*)
-		case "$(file -b --mime-type $file)" in
+		case `file -b --mime-type -L "$file"` in
 			"application/x-executable")
 				nm -C -D "$file" && ldd  "$file"
 				;;
