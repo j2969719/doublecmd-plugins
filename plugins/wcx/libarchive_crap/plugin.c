@@ -457,8 +457,8 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 			{
 				gStartupInfo->SendDlgMsg(pDlg, "edISOBootLoadSeg", DM_ENABLE, 1, 0);
 				gStartupInfo->SendDlgMsg(pDlg, "edISOBootLoadSize", DM_ENABLE, 1, 0);
-				textfield_get_option(pDlg, "edISOBootLoadSeg", "publisher", strval);
-				textfield_get_option(pDlg, "edISOBootLoadSize", "publisher", strval);
+				textfield_get_option(pDlg, "edISOBootLoadSeg", "boot-load-seg", strval);
+				textfield_get_option(pDlg, "edISOBootLoadSize", "boot-load-size", strval);
 			}
 
 			numval = (int)gStartupInfo->SendDlgMsg(pDlg, "cbZISOfs", DM_LISTGETITEMINDEX, 0, 0);
