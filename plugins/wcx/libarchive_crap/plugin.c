@@ -271,7 +271,6 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 		gStartupInfo->SendDlgMsg(pDlg, "chkClassic", DM_SETCHECK, (intptr_t)gMtreeClasic, 0);
 		snprintf(strval, PATH_MAX, "%s", archive_version_details());
 		gStartupInfo->SendDlgMsg(pDlg, "lblInfo", DM_SETTEXT, (intptr_t)strval, 0);
-		gStartupInfo->SendDlgMsg(pDlg, "gbZISOFSExclude", DM_ENABLE, 0, 0);
 		gStartupInfo->SendDlgMsg(pDlg, "cbZISOCompLvl", DM_ENABLE, 0, 0);
 
 		break;
@@ -287,21 +286,6 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 		}
 		else if (strncmp(DlgItemName, "btnClear", 8) == 0)
 			gStartupInfo->SendDlgMsg(pDlg, "edOptions", DM_SETTEXT, 0, 0);
-		else if (strcmp(DlgItemName, "bntZISOExclude") == 0)
-		{
-			strncpy(strval, (char*)gStartupInfo->SendDlgMsg(pDlg, "edOptions", DM_GETTEXT, 0, 0), PATH_MAX);
-
-			if (strstr(strval, "zisofs=direct") != NULL)
-			{
-				strncpy(strval, (char*)gStartupInfo->SendDlgMsg(pDlg, "edZISOExclude", DM_GETTEXT, 0, 0), PATH_MAX);
-
-				if (strval[0] != '\0')
-				{
-					snprintf(strval, PATH_MAX, "%s,zisofs-exclude=%s", (char*)gStartupInfo->SendDlgMsg(pDlg, "edOptions", DM_GETTEXT, 0, 0), strdup(strval));
-					gStartupInfo->SendDlgMsg(pDlg, "edOptions", DM_SETTEXT, (intptr_t)strval, 0);
-				}
-			}
-		}
 
 		break;
 
@@ -425,18 +409,11 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 				snprintf(strval, PATH_MAX, "%siso-level=%d", strdup(strval), numval + 1);
 			}
 
-			checkbox_get_option(pDlg, "chkISOAllowLDots", "allow-ldots", false, strval);
-			checkbox_get_option(pDlg, "chkISOAllowLowercase", "allow-lowercase", false, strval);
-			checkbox_get_option(pDlg, "chkISOAllowMultidot", "allow-multidot", false, strval);
-			checkbox_get_option(pDlg, "chkISOAllowPeriod", "allow-period", false, strval);
-			checkbox_get_option(pDlg, "chkISOAllowPvdLowercase", "allow-pvd-lowercase", false, strval);
-			checkbox_get_option(pDlg, "chkISOAllowSharpTilde", "allow-sharp-tilde", false, strval);
 			checkbox_get_option(pDlg, "chkISOAllowVernum", "allow-vernum", true, strval);
 			checkbox_get_option(pDlg, "chkISOJoliet", "joliet", true, strval);
 			checkbox_get_option(pDlg, "chkISOLimitDepth", "limit-depth", true, strval);
 			checkbox_get_option(pDlg, "chkISOLimitDirs", "limit-dirs", true, strval);
 			checkbox_get_option(pDlg, "chkISOPad", "pad", true, strval);
-			checkbox_get_option(pDlg, "chkISORelaxedFilenames", "relaxed-filenames", false, strval);
 			checkbox_get_option(pDlg, "chkISORockridge", "rockridge", true, strval);
 
 			textfield_get_option(pDlg, "edISOBoot", "boot", strval);
@@ -461,18 +438,12 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 				textfield_get_option(pDlg, "edISOBootLoadSize", "boot-load-size", strval);
 			}
 
-			numval = (int)gStartupInfo->SendDlgMsg(pDlg, "cbZISOfs", DM_LISTGETITEMINDEX, 0, 0);
+			checkbox_get_option(pDlg, "chkZISOfs", "zisofs", false, strval);
+			bval = (bool)gStartupInfo->SendDlgMsg(pDlg, "chkZISOfs", DM_GETCHECK, 0, 0);
 
-			if (numval > 0)
+			if (bval)
 			{
-				if (numval == 1)
-					gStartupInfo->SendDlgMsg(pDlg, "gbZISOFSExclude", DM_ENABLE, 1, 0);
-				else
-					gStartupInfo->SendDlgMsg(pDlg, "gbZISOFSExclude", DM_ENABLE, 0, 0);
-
 				gStartupInfo->SendDlgMsg(pDlg, "cbZISOCompLvl", DM_ENABLE, 1, 0);
-
-				textfield_get_option(pDlg, "cbZISOfs", "zisofs", strval);
 
 				numval = (int)gStartupInfo->SendDlgMsg(pDlg, "cbZISOCompLvl", DM_LISTGETITEMINDEX, 0, 0);
 
@@ -485,10 +456,7 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 				}
 			}
 			else
-			{
-				gStartupInfo->SendDlgMsg(pDlg, "gbZISOFSExclude", DM_ENABLE, 0, 0);
 				gStartupInfo->SendDlgMsg(pDlg, "cbZISOCompLvl", DM_ENABLE, 0, 0);
-			}
 
 			if (strcmp(strval, "iso9660:") != 0)
 				gStartupInfo->SendDlgMsg(pDlg, "edOptions", DM_SETTEXT, (intptr_t)strval, 0);
