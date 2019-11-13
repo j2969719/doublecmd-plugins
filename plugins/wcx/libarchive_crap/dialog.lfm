@@ -154,7 +154,7 @@ object DialogBox: TDialogBox
           Left = 355
           Height = 25
           Top = 10
-          Width = 100
+          Width = 153
           BorderSpacing.Left = 5
           ItemHeight = 0
           Items.Strings = (
@@ -245,7 +245,7 @@ object DialogBox: TDialogBox
           Left = 183
           Height = 25
           Top = 10
-          Width = 100
+          Width = 153
           BorderSpacing.Left = 5
           BorderSpacing.Top = 10
           ItemHeight = 0
@@ -729,9 +729,9 @@ object DialogBox: TDialogBox
           Left = 5
           Height = 15
           Top = 10
-          Width = 67
+          Width = 71
           BorderSpacing.Left = 5
-          Caption = 'Volume ID'
+          Caption = 'Volume ID:'
           ParentColor = False
         end
         object lblAbstractFile: TLabel
@@ -881,10 +881,10 @@ object DialogBox: TDialogBox
           AnchorSideLeft.Side = asrBottom
           AnchorSideTop.Control = chkISOLimitDepth
           AnchorSideTop.Side = asrBottom
-          Left = 401
+          Left = 357
           Height = 25
           Top = 61
-          Width = 100
+          Width = 153
           BorderSpacing.Left = 5
           BorderSpacing.Top = 5
           ItemHeight = 0
@@ -907,7 +907,7 @@ object DialogBox: TDialogBox
         object lblZISOCompLvl: TLabel
           AnchorSideTop.Control = cbZISOCompLvl
           AnchorSideTop.Side = asrCenter
-          Left = 271
+          Left = 227
           Height = 15
           Top = 66
           Width = 125
