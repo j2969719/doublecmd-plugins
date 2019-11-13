@@ -18,7 +18,7 @@ Plugins
 View output of command line utilities on Ctrl+Page Down (see `settings_default.ini`).
 
 - [libarchive_crap](plugins/wcx/libarchive_crap)<br>
-Simple WCX plugin, based on `libarchive` ([supported formats](https://github.com/libarchive/libarchive#supported-formats)).
+A horrible attempt to make a simple WCX plugin based on `libarchive` ([supported formats](https://github.com/libarchive/libarchive#supported-formats) + [lizard](https://github.com/inikep/lizard)).
 
 
 ---
