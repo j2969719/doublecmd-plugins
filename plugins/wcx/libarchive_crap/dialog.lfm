@@ -13,7 +13,7 @@ object DialogBox: TDialogBox
   object pcOptions: TPageControl
     AnchorSideBottom.Control = lblInfo
     Left = 0
-    Height = 342
+    Height = 337
     Top = 0
     Width = 534
     ActivePage = tsGeneral
@@ -25,23 +25,24 @@ object DialogBox: TDialogBox
     object tsGeneral: TTabSheet
       AnchorSideRight.Side = asrBottom
       Caption = 'General'
-      ClientHeight = 311
+      ClientHeight = 306
       ClientWidth = 530
       object gbZip: TGroupBox
         AnchorSideLeft.Control = tsGeneral
         AnchorSideTop.Control = tsGeneral
         AnchorSideRight.Control = tsGeneral
         AnchorSideRight.Side = asrBottom
+        AnchorSideBottom.Control = gbFilters
         Left = 5
-        Height = 179
+        Height = 230
         Top = 5
         Width = 520
-        Anchors = [akTop, akLeft, akRight]
+        Anchors = [akTop, akLeft, akRight, akBottom]
         BorderSpacing.Left = 5
         BorderSpacing.Top = 5
         BorderSpacing.Right = 5
         Caption = 'Zip'
-        ClientHeight = 160
+        ClientHeight = 211
         ClientWidth = 516
         TabOrder = 0
         object cbZipCompression: TComboBox
@@ -117,7 +118,7 @@ object DialogBox: TDialogBox
           AnchorSideTop.Side = asrCenter
           Left = 16
           Height = 15
-          Top = 130
+          Top = 122
           Width = 73
           Anchors = [akTop]
           Caption = 'Encryption:'
@@ -125,16 +126,15 @@ object DialogBox: TDialogBox
         end
         object cbEncrypt: TComboBox
           AnchorSideLeft.Control = cbZipCompression
-          AnchorSideTop.Control = chkZip64
+          AnchorSideTop.Control = cbZipCharset
           AnchorSideTop.Side = asrBottom
           AnchorSideBottom.Control = gbZip
           AnchorSideBottom.Side = asrBottom
           Left = 115
           Height = 25
-          Top = 125
+          Top = 117
           Width = 100
-          Anchors = [akLeft, akBottom]
-          BorderSpacing.Top = 15
+          BorderSpacing.Top = 10
           BorderSpacing.Bottom = 10
           ItemHeight = 0
           ItemIndex = 0
@@ -192,7 +192,7 @@ object DialogBox: TDialogBox
           AnchorSideTop.Side = asrCenter
           Left = 16
           Height = 15
-          Top = 84
+          Top = 85
           Width = 193
           Caption = 'Charset for filenames (iconv):'
           ParentColor = False
@@ -203,7 +203,7 @@ object DialogBox: TDialogBox
           AnchorSideTop.Control = chkZip64
           AnchorSideTop.Side = asrBottom
           Left = 219
-          Height = 26
+          Height = 29
           Top = 78
           Width = 156
           BorderSpacing.Left = 10
@@ -230,7 +230,7 @@ object DialogBox: TDialogBox
         AnchorSideBottom.Side = asrBottom
         Left = 5
         Height = 66
-        Top = 240
+        Top = 235
         Width = 520
         Anchors = [akLeft, akRight, akBottom]
         BorderSpacing.Bottom = 5
@@ -279,7 +279,7 @@ object DialogBox: TDialogBox
     end
     object tsMTREE: TTabSheet
       Caption = 'MTREE'
-      ClientHeight = 311
+      ClientHeight = 306
       ClientWidth = 530
       object gbMtreeGeneral: TGroupBox
         AnchorSideLeft.Control = tsMTREE
@@ -584,23 +584,25 @@ object DialogBox: TDialogBox
     end
     object tsISO: TTabSheet
       Caption = 'ISO9660'
-      ClientHeight = 311
+      ClientHeight = 306
       ClientWidth = 530
       object gbISOMetadata: TGroupBox
         AnchorSideLeft.Control = tsISO
         AnchorSideTop.Control = tsISO
         AnchorSideRight.Control = tsISO
         AnchorSideRight.Side = asrBottom
+        AnchorSideBottom.Control = gbISOFilenames
         Left = 5
-        Height = 115
+        Height = 142
         Top = 5
         Width = 520
-        Anchors = [akTop, akLeft, akRight]
+        Anchors = [akTop, akLeft, akRight, akBottom]
         BorderSpacing.Left = 5
         BorderSpacing.Top = 5
         BorderSpacing.Right = 5
+        BorderSpacing.Bottom = 5
         Caption = 'Metadata'
-        ClientHeight = 96
+        ClientHeight = 123
         ClientWidth = 516
         TabOrder = 0
         object edISOAbstractFile: TEdit
@@ -608,8 +610,8 @@ object DialogBox: TDialogBox
           AnchorSideTop.Control = edISOApplicationID
           AnchorSideTop.Side = asrBottom
           Left = 129
-          Height = 24
-          Top = 63
+          Height = 29
+          Top = 73
           Width = 132
           BorderSpacing.Top = 5
           OnChange = EditChange
@@ -619,7 +621,7 @@ object DialogBox: TDialogBox
           AnchorSideLeft.Control = edISOApplicationID
           AnchorSideTop.Control = gbISOMetadata
           Left = 129
-          Height = 24
+          Height = 29
           Top = 5
           Width = 132
           BorderSpacing.Top = 5
@@ -633,8 +635,8 @@ object DialogBox: TDialogBox
           AnchorSideTop.Control = edISOVolumeID
           AnchorSideTop.Side = asrBottom
           Left = 129
-          Height = 24
-          Top = 34
+          Height = 29
+          Top = 39
           Width = 132
           BorderSpacing.Left = 5
           BorderSpacing.Top = 5
@@ -644,7 +646,7 @@ object DialogBox: TDialogBox
         object edISOCopyrightFile: TEdit
           AnchorSideTop.Control = edISOVolumeID
           Left = 376
-          Height = 24
+          Height = 29
           Top = 5
           Width = 132
           OnChange = EditChange
@@ -653,8 +655,8 @@ object DialogBox: TDialogBox
         object edISOPublisher: TEdit
           AnchorSideTop.Control = edISOApplicationID
           Left = 376
-          Height = 24
-          Top = 34
+          Height = 29
+          Top = 39
           Width = 132
           OnChange = EditChange
           TabOrder = 4
@@ -662,8 +664,8 @@ object DialogBox: TDialogBox
         object edISOBiblioFile: TEdit
           AnchorSideTop.Control = edISOAbstractFile
           Left = 376
-          Height = 24
-          Top = 63
+          Height = 29
+          Top = 73
           Width = 132
           OnChange = EditChange
           TabOrder = 5
@@ -674,7 +676,7 @@ object DialogBox: TDialogBox
           AnchorSideTop.Side = asrCenter
           Left = 271
           Height = 15
-          Top = 68
+          Top = 80
           Width = 65
           Caption = 'Biblio file:'
           ParentColor = False
@@ -686,7 +688,7 @@ object DialogBox: TDialogBox
           AnchorSideTop.Side = asrCenter
           Left = 271
           Height = 15
-          Top = 39
+          Top = 46
           Width = 88
           BorderSpacing.Left = 10
           Caption = 'Publisher file:'
@@ -699,7 +701,7 @@ object DialogBox: TDialogBox
           AnchorSideTop.Side = asrCenter
           Left = 271
           Height = 15
-          Top = 10
+          Top = 12
           Width = 91
           BorderSpacing.Left = 10
           Caption = 'Copyright file:'
@@ -711,7 +713,7 @@ object DialogBox: TDialogBox
           AnchorSideTop.Side = asrCenter
           Left = 5
           Height = 15
-          Top = 39
+          Top = 46
           Width = 119
           Caption = 'Application ID file:'
           ParentColor = False
@@ -722,7 +724,7 @@ object DialogBox: TDialogBox
           AnchorSideTop.Side = asrCenter
           Left = 5
           Height = 15
-          Top = 10
+          Top = 12
           Width = 67
           BorderSpacing.Left = 5
           Caption = 'Volume ID'
@@ -734,7 +736,7 @@ object DialogBox: TDialogBox
           AnchorSideTop.Side = asrCenter
           Left = 5
           Height = 15
-          Top = 68
+          Top = 80
           Width = 82
           Caption = 'Abstract file:'
           ParentColor = False
@@ -749,13 +751,13 @@ object DialogBox: TDialogBox
         AnchorSideBottom.Control = tsISO
         AnchorSideBottom.Side = asrBottom
         Left = 5
-        Height = 176
-        Top = 130
+        Height = 149
+        Top = 152
         Width = 520
         Anchors = [akLeft, akRight, akBottom]
         BorderSpacing.Bottom = 5
         Caption = 'Filename and size extensions'
-        ClientHeight = 157
+        ClientHeight = 130
         ClientWidth = 516
         TabOrder = 1
         object chkISOAllowLDots: TCheckBox
@@ -804,9 +806,9 @@ object DialogBox: TDialogBox
           TabOrder = 4
         end
         object chkISOAllowSharpTilde: TCheckBox
-          Left = 8
+          Left = 360
           Height = 23
-          Top = 128
+          Top = 80
           Width = 135
           Caption = 'Allow sharp tilde'
           OnChange = CheckBoxChange
@@ -894,7 +896,7 @@ object DialogBox: TDialogBox
           AnchorSideRight.Control = cbISOLevel
           Left = 202
           Height = 15
-          Top = 128
+          Top = 107
           Width = 65
           Anchors = [akTop, akRight]
           BorderSpacing.Right = 5
@@ -904,14 +906,14 @@ object DialogBox: TDialogBox
         object cbISOLevel: TComboBox
           Left = 272
           Height = 25
-          Top = 123
+          Top = 102
           Width = 236
           ItemHeight = 0
           Items.Strings = (
-            'Filenames - 8.3 uppercase, directory names - 8 uppercase, size limit <= 4GiB'
-            'Filenames - 30 uppercase, 30-character extension, directory names - 30 uppercase, size limit <= 4GiB'
-            'Filenames - 30 uppercase, 30-character extension, directory names - 30 uppercase, size limit > 4GiB'
-            'Filenames may be up to 193 characters and may include arbitrary characters, size limit > 4GiB'
+            '1'
+            '2'
+            '3'
+            '4'
           )
           OnChange = ComboBoxChange
           Style = csDropDownList
@@ -921,29 +923,32 @@ object DialogBox: TDialogBox
     end
     object tsISOBoot: TTabSheet
       Caption = 'ISO9660 (boot)'
-      ClientHeight = 311
+      ClientHeight = 306
       ClientWidth = 530
       object gbISOBootGeneral: TGroupBox
         AnchorSideLeft.Control = tsISOBoot
         AnchorSideTop.Control = tsISOBoot
         AnchorSideRight.Control = tsISOBoot
         AnchorSideRight.Side = asrBottom
+        AnchorSideBottom.Control = tsISOBoot
+        AnchorSideBottom.Side = asrBottom
         Left = 5
-        Height = 179
+        Height = 296
         Top = 5
         Width = 520
-        Anchors = [akTop, akLeft, akRight]
+        Anchors = [akTop, akLeft, akRight, akBottom]
         BorderSpacing.Left = 5
         BorderSpacing.Top = 5
         BorderSpacing.Right = 5
+        BorderSpacing.Bottom = 5
         Caption = 'General'
-        ClientHeight = 160
+        ClientHeight = 277
         ClientWidth = 516
         TabOrder = 0
         object edISOBoot: TEdit
           AnchorSideTop.Control = gbISOBootGeneral
           Left = 168
-          Height = 24
+          Height = 29
           Top = 5
           Width = 182
           BorderSpacing.Top = 5
@@ -954,8 +959,8 @@ object DialogBox: TDialogBox
           AnchorSideTop.Control = edISOBoot
           AnchorSideTop.Side = asrBottom
           Left = 168
-          Height = 24
-          Top = 34
+          Height = 29
+          Top = 39
           Width = 182
           BorderSpacing.Top = 5
           OnChange = EditChange
@@ -964,10 +969,13 @@ object DialogBox: TDialogBox
         object edISOBootLoadSeg: TEdit
           AnchorSideTop.Control = cbISOBootType
           AnchorSideTop.Side = asrBottom
+          AnchorSideRight.Control = edISOBootLoadSize
+          AnchorSideRight.Side = asrBottom
           Left = 329
-          Height = 24
-          Top = 93
+          Height = 29
+          Top = 103
           Width = 182
+          Anchors = [akTop, akLeft, akRight]
           BorderSpacing.Top = 5
           OnChange = EditChange
           TabOrder = 2
@@ -978,8 +986,8 @@ object DialogBox: TDialogBox
           AnchorSideRight.Control = gbISOBootGeneral
           AnchorSideRight.Side = asrBottom
           Left = 329
-          Height = 24
-          Top = 122
+          Height = 29
+          Top = 137
           Width = 182
           Anchors = [akTop, akLeft, akRight]
           BorderSpacing.Top = 5
@@ -995,7 +1003,7 @@ object DialogBox: TDialogBox
           AnchorSideRight.Side = asrBottom
           Left = 384
           Height = 23
-          Top = 6
+          Top = 8
           Width = 127
           Anchors = [akTop, akLeft, akRight]
           BorderSpacing.Right = 5
@@ -1008,10 +1016,13 @@ object DialogBox: TDialogBox
           AnchorSideLeft.Side = asrBottom
           AnchorSideTop.Control = edISOBootCatalog
           AnchorSideTop.Side = asrBottom
+          AnchorSideRight.Control = edISOBootLoadSize
+          AnchorSideRight.Side = asrBottom
           Left = 329
           Height = 25
-          Top = 63
+          Top = 73
           Width = 182
+          Anchors = [akTop, akLeft, akRight]
           BorderSpacing.Left = 5
           BorderSpacing.Top = 5
           ItemHeight = 0
@@ -1031,7 +1042,7 @@ object DialogBox: TDialogBox
           AnchorSideTop.Side = asrCenter
           Left = 5
           Height = 15
-          Top = 10
+          Top = 12
           Width = 158
           BorderSpacing.Left = 5
           Caption = 'El Torito boot image file:'
@@ -1043,7 +1054,7 @@ object DialogBox: TDialogBox
           AnchorSideTop.Side = asrCenter
           Left = 5
           Height = 15
-          Top = 68
+          Top = 78
           Width = 319
           Caption = 'Boot semantics used by the El Torito boot image:'
           ParentColor = False
@@ -1054,7 +1065,7 @@ object DialogBox: TDialogBox
           AnchorSideTop.Side = asrCenter
           Left = 5
           Height = 15
-          Top = 127
+          Top = 144
           Width = 297
           Caption = 'The number of 512-byte sectors to be loaded:'
           ParentColor = False
@@ -1065,7 +1076,7 @@ object DialogBox: TDialogBox
           AnchorSideTop.Side = asrCenter
           Left = 5
           Height = 15
-          Top = 98
+          Top = 110
           Width = 306
           Caption = 'Segment for a no-emulation boot image (HEX):'
           ParentColor = False
@@ -1076,7 +1087,7 @@ object DialogBox: TDialogBox
           AnchorSideTop.Side = asrCenter
           Left = 5
           Height = 15
-          Top = 39
+          Top = 46
           Width = 141
           Caption = 'El Torito boot catalog:'
           ParentColor = False
@@ -1085,7 +1096,7 @@ object DialogBox: TDialogBox
     end
     object tsZISOfs: TTabSheet
       Caption = 'ISO9660 (zisofs)'
-      ClientHeight = 311
+      ClientHeight = 306
       ClientWidth = 530
       object gbZISOFSGeneral: TGroupBox
         AnchorSideLeft.Control = tsZISOfs
@@ -1094,7 +1105,7 @@ object DialogBox: TDialogBox
         AnchorSideRight.Control = tsZISOfs
         AnchorSideRight.Side = asrBottom
         Left = 5
-        Height = 88
+        Height = 96
         Top = 80
         Width = 520
         Anchors = [akTop, akLeft, akRight]
@@ -1102,7 +1113,7 @@ object DialogBox: TDialogBox
         BorderSpacing.Top = 10
         BorderSpacing.Right = 5
         Caption = 'General'
-        ClientHeight = 69
+        ClientHeight = 77
         ClientWidth = 516
         TabOrder = 0
         object cbZISOfs: TComboBox
@@ -1200,13 +1211,13 @@ object DialogBox: TDialogBox
         AnchorSideRight.Control = gbZISOFSGeneral
         AnchorSideRight.Side = asrBottom
         Left = 5
-        Height = 59
-        Top = 173
+        Height = 67
+        Top = 181
         Width = 520
         Anchors = [akTop, akLeft, akRight]
         BorderSpacing.Top = 5
         Caption = 'Exclude'
-        ClientHeight = 40
+        ClientHeight = 48
         ClientWidth = 516
         TabOrder = 1
         object lblZISOExclude: TLabel
@@ -1215,7 +1226,7 @@ object DialogBox: TDialogBox
           AnchorSideTop.Side = asrCenter
           Left = 5
           Height = 15
-          Top = 10
+          Top = 12
           Width = 295
           BorderSpacing.Left = 5
           Caption = 'Add filename that should not be compressed:'
@@ -1224,7 +1235,7 @@ object DialogBox: TDialogBox
         object edZISOExclude: TEdit
           AnchorSideTop.Control = gbZISOFSExclude
           Left = 304
-          Height = 24
+          Height = 29
           Top = 5
           Width = 120
           BorderSpacing.Top = 5
@@ -1237,7 +1248,7 @@ object DialogBox: TDialogBox
           AnchorSideBottom.Control = edZISOExclude
           AnchorSideBottom.Side = asrBottom
           Left = 429
-          Height = 24
+          Height = 29
           Top = 5
           Width = 83
           Anchors = [akTop, akLeft, akBottom]
@@ -1298,8 +1309,8 @@ object DialogBox: TDialogBox
     AnchorSideRight.Control = btnClear
     AnchorSideBottom.Control = btnOK
     Left = 5
-    Height = 24
-    Top = 397
+    Height = 29
+    Top = 392
     Width = 430
     Anchors = [akLeft, akRight, akBottom]
     BorderSpacing.Left = 5
@@ -1313,7 +1324,7 @@ object DialogBox: TDialogBox
     AnchorSideBottom.Control = edOptions
     Left = 10
     Height = 15
-    Top = 377
+    Top = 372
     Width = 335
     Anchors = [akLeft, akBottom]
     BorderSpacing.Left = 5
@@ -1330,7 +1341,7 @@ object DialogBox: TDialogBox
     AnchorSideBottom.Control = lblOptions
     Left = 10
     Height = 15
-    Top = 352
+    Top = 347
     Width = 99
     Anchors = [akLeft, akBottom]
     BorderSpacing.Bottom = 10
@@ -1344,8 +1355,8 @@ object DialogBox: TDialogBox
     AnchorSideBottom.Control = edOptions
     AnchorSideBottom.Side = asrBottom
     Left = 440
-    Height = 24
-    Top = 397
+    Height = 29
+    Top = 392
     Width = 89
     Anchors = [akTop, akRight, akBottom]
     BorderSpacing.Right = 5
