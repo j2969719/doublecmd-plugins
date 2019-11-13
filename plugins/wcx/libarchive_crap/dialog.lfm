@@ -1,0 +1,1356 @@
+object DialogBox: TDialogBox
+  Left = 263
+  Height = 471
+  Top = 171
+  Width = 534
+  BorderStyle = bsDialog
+  Caption = 'Options'
+  ClientHeight = 471
+  ClientWidth = 534
+  OnCreate = DialogBoxShow
+  Position = poDefault
+  LCLVersion = '2.0.7.0'
+  object pcOptions: TPageControl
+    AnchorSideBottom.Control = lblInfo
+    Left = 0
+    Height = 342
+    Top = 0
+    Width = 534
+    ActivePage = tsGeneral
+    Align = alTop
+    Anchors = [akTop, akLeft, akRight, akBottom]
+    BorderSpacing.Bottom = 10
+    TabIndex = 0
+    TabOrder = 0
+    object tsGeneral: TTabSheet
+      AnchorSideRight.Side = asrBottom
+      Caption = 'General'
+      ClientHeight = 311
+      ClientWidth = 530
+      object gbZip: TGroupBox
+        AnchorSideLeft.Control = tsGeneral
+        AnchorSideTop.Control = tsGeneral
+        AnchorSideRight.Control = tsGeneral
+        AnchorSideRight.Side = asrBottom
+        Left = 5
+        Height = 179
+        Top = 5
+        Width = 520
+        Anchors = [akTop, akLeft, akRight]
+        BorderSpacing.Left = 5
+        BorderSpacing.Top = 5
+        BorderSpacing.Right = 5
+        Caption = 'Zip'
+        ClientHeight = 160
+        ClientWidth = 516
+        TabOrder = 0
+        object cbZipCompression: TComboBox
+          AnchorSideLeft.Control = lblCompression
+          AnchorSideLeft.Side = asrBottom
+          AnchorSideTop.Control = gbZip
+          Left = 115
+          Height = 25
+          Top = 10
+          Width = 100
+          BorderSpacing.Left = 10
+          BorderSpacing.Top = 10
+          ItemHeight = 0
+          Items.Strings = (
+            'deflate'
+            'store'
+          )
+          OnChange = ComboBoxChange
+          Style = csDropDownList
+          TabOrder = 0
+        end
+        object lblCompression: TLabel
+          AnchorSideTop.Control = cbZipCompression
+          AnchorSideTop.Side = asrCenter
+          Left = 16
+          Height = 15
+          Top = 15
+          Width = 89
+          Caption = 'Compression:'
+          ParentColor = False
+        end
+        object chkZipExperimental: TCheckBox
+          AnchorSideLeft.Control = lblZipCompLvl
+          AnchorSideTop.Control = chkZip64
+          Left = 265
+          Height = 23
+          Top = 45
+          Width = 113
+          BorderSpacing.Left = 40
+          Caption = 'Experimental'
+          OnChange = CheckBoxChange
+          TabOrder = 1
+        end
+        object chkZipFakeCRC32: TCheckBox
+          AnchorSideLeft.Control = cbZipCompression
+          AnchorSideTop.Control = chkZip64
+          Left = 115
+          Height = 23
+          Top = 45
+          Width = 98
+          Caption = 'FakeCRC32'
+          OnChange = CheckBoxChange
+          TabOrder = 2
+        end
+        object chkZip64: TCheckBox
+          AnchorSideLeft.Control = lblCompression
+          AnchorSideTop.Control = cbZipCompression
+          AnchorSideTop.Side = asrBottom
+          Left = 16
+          Height = 23
+          Top = 45
+          Width = 63
+          BorderSpacing.Top = 10
+          Caption = 'Zip64'
+          Checked = True
+          OnChange = CheckBoxChange
+          State = cbChecked
+          TabOrder = 3
+        end
+        object lblEncrypt: TLabel
+          AnchorSideLeft.Control = edOptions
+          AnchorSideTop.Control = cbEncrypt
+          AnchorSideTop.Side = asrCenter
+          Left = 16
+          Height = 15
+          Top = 130
+          Width = 73
+          Anchors = [akTop]
+          Caption = 'Encryption:'
+          ParentColor = False
+        end
+        object cbEncrypt: TComboBox
+          AnchorSideLeft.Control = cbZipCompression
+          AnchorSideTop.Control = chkZip64
+          AnchorSideTop.Side = asrBottom
+          AnchorSideBottom.Control = gbZip
+          AnchorSideBottom.Side = asrBottom
+          Left = 115
+          Height = 25
+          Top = 125
+          Width = 100
+          Anchors = [akLeft, akBottom]
+          BorderSpacing.Top = 15
+          BorderSpacing.Bottom = 10
+          ItemHeight = 0
+          ItemIndex = 0
+          Items.Strings = (
+            'traditional'
+            'aes128'
+            'aes256'
+          )
+          Style = csDropDownList
+          TabOrder = 4
+          Text = 'traditional'
+        end
+        object cbZipCompLvl: TComboBox
+          AnchorSideLeft.Control = lblZipCompLvl
+          AnchorSideLeft.Side = asrBottom
+          AnchorSideTop.Control = cbZipCompression
+          Left = 355
+          Height = 25
+          Top = 10
+          Width = 100
+          BorderSpacing.Left = 5
+          ItemHeight = 0
+          Items.Strings = (
+            '0 (least effort)'
+            '1'
+            '2'
+            '3'
+            '4'
+            '5'
+            '6 (default)'
+            '7'
+            '8'
+            '9 (most effort)'
+          )
+          OnChange = ComboBoxChange
+          Style = csDropDownList
+          TabOrder = 5
+        end
+        object lblZipCompLvl: TLabel
+          AnchorSideLeft.Control = cbZipCompression
+          AnchorSideLeft.Side = asrBottom
+          AnchorSideTop.Control = cbZipCompression
+          AnchorSideTop.Side = asrCenter
+          Left = 225
+          Height = 15
+          Top = 15
+          Width = 125
+          BorderSpacing.Left = 10
+          Caption = 'Compression level:'
+          ParentColor = False
+        end
+        object lblZipCharset: TLabel
+          AnchorSideLeft.Control = lblCompression
+          AnchorSideTop.Control = cbZipCharset
+          AnchorSideTop.Side = asrCenter
+          Left = 16
+          Height = 15
+          Top = 84
+          Width = 193
+          Caption = 'Charset for filenames (iconv):'
+          ParentColor = False
+        end
+        object cbZipCharset: TComboBox
+          AnchorSideLeft.Control = lblZipCharset
+          AnchorSideLeft.Side = asrBottom
+          AnchorSideTop.Control = chkZip64
+          AnchorSideTop.Side = asrBottom
+          Left = 219
+          Height = 26
+          Top = 78
+          Width = 156
+          BorderSpacing.Left = 10
+          BorderSpacing.Top = 10
+          ItemHeight = 0
+          Items.Strings = (
+            'UTF-8'
+            'CP1251'
+            '866'
+            'LATIN1'
+          )
+          MaxLength = 255
+          OnChange = ComboBoxChange
+          TabOrder = 6
+        end
+      end
+      object gbFilters: TGroupBox
+        AnchorSideLeft.Control = gbZip
+        AnchorSideTop.Control = gbZip
+        AnchorSideTop.Side = asrBottom
+        AnchorSideRight.Control = gbZip
+        AnchorSideRight.Side = asrBottom
+        AnchorSideBottom.Control = tsGeneral
+        AnchorSideBottom.Side = asrBottom
+        Left = 5
+        Height = 66
+        Top = 240
+        Width = 520
+        Anchors = [akLeft, akRight, akBottom]
+        BorderSpacing.Bottom = 5
+        Caption = 'Filters (gzip/xz/zst etc)'
+        ClientHeight = 47
+        ClientWidth = 516
+        TabOrder = 1
+        object cbGZ: TComboBox
+          AnchorSideLeft.Control = lblGZ
+          AnchorSideLeft.Side = asrBottom
+          AnchorSideTop.Control = gbFilters
+          Left = 183
+          Height = 25
+          Top = 10
+          Width = 100
+          BorderSpacing.Left = 5
+          BorderSpacing.Top = 10
+          ItemHeight = 0
+          Items.Strings = (
+            '0 (least effort)'
+            '1'
+            '2'
+            '3'
+            '4'
+            '5'
+            '6 (default)'
+            '7'
+            '8'
+            '9 (most effort)'
+          )
+          OnChange = ComboBoxChange
+          Style = csDropDownList
+          TabOrder = 0
+        end
+        object lblGZ: TLabel
+          AnchorSideTop.Control = cbGZ
+          AnchorSideTop.Side = asrCenter
+          Left = 16
+          Height = 15
+          Top = 15
+          Width = 162
+          Caption = 'Force compression level:'
+          ParentColor = False
+        end
+      end
+    end
+    object tsMTREE: TTabSheet
+      Caption = 'MTREE'
+      ClientHeight = 311
+      ClientWidth = 530
+      object gbMtreeGeneral: TGroupBox
+        AnchorSideLeft.Control = tsMTREE
+        AnchorSideTop.Control = tsMTREE
+        AnchorSideRight.Control = tsMTREE
+        AnchorSideRight.Side = asrBottom
+        Left = 5
+        Height = 56
+        Top = 5
+        Width = 520
+        Anchors = [akTop, akLeft, akRight]
+        BorderSpacing.Left = 5
+        BorderSpacing.Top = 5
+        BorderSpacing.Right = 5
+        Caption = 'General'
+        ClientHeight = 37
+        ClientWidth = 516
+        TabOrder = 0
+        object chkMtreeAll: TCheckBox
+          AnchorSideLeft.Control = gbMtreeGeneral
+          AnchorSideTop.Control = gbMtreeGeneral
+          AnchorSideTop.Side = asrCenter
+          Left = 5
+          Height = 23
+          Top = 7
+          Width = 43
+          BorderSpacing.Left = 5
+          Caption = 'All'
+          OnChange = CheckBoxChange
+          TabOrder = 0
+        end
+        object chkMtreeUseSet: TCheckBox
+          AnchorSideTop.Control = chkMtreeAll
+          Left = 112
+          Height = 23
+          Top = 7
+          Width = 76
+          Caption = 'Use Set'
+          OnChange = CheckBoxChange
+          TabOrder = 1
+        end
+        object chkClassic: TCheckBox
+          AnchorSideTop.Control = chkMtreeAll
+          Left = 256
+          Height = 23
+          Top = 7
+          Width = 72
+          Caption = 'Classic'
+          TabOrder = 2
+        end
+        object chkMtreeIndent: TCheckBox
+          AnchorSideTop.Control = chkMtreeAll
+          Left = 384
+          Height = 23
+          Top = 7
+          Width = 67
+          Caption = 'Indent'
+          OnChange = CheckBoxChange
+          TabOrder = 3
+        end
+      end
+      object gbMtreeAttr: TGroupBox
+        AnchorSideLeft.Control = gbMtreeGeneral
+        AnchorSideTop.Control = gbMtreeGeneral
+        AnchorSideTop.Side = asrBottom
+        AnchorSideRight.Control = gbMtreeGeneral
+        AnchorSideRight.Side = asrBottom
+        Left = 5
+        Height = 115
+        Top = 76
+        Width = 520
+        Anchors = [akTop, akLeft, akRight]
+        BorderSpacing.Top = 15
+        Caption = 'Attr'
+        ClientHeight = 96
+        ClientWidth = 516
+        TabOrder = 1
+        object chkMtreeDevice: TCheckBox
+          Left = 256
+          Height = 23
+          Top = 61
+          Width = 71
+          Caption = 'Device'
+          Checked = True
+          OnChange = CheckBoxChange
+          State = cbChecked
+          TabOrder = 0
+        end
+        object chkMtreeFlags: TCheckBox
+          Left = 112
+          Height = 23
+          Top = 61
+          Width = 61
+          Caption = 'Flags'
+          Checked = True
+          OnChange = CheckBoxChange
+          State = cbChecked
+          TabOrder = 1
+        end
+        object chkMtreeGid: TCheckBox
+          AnchorSideLeft.Control = chkMtreeSize
+          AnchorSideTop.Control = chkMtreeSize
+          AnchorSideTop.Side = asrBottom
+          Left = 5
+          Height = 23
+          Top = 33
+          Width = 83
+          BorderSpacing.Top = 5
+          Caption = 'Group ID'
+          Checked = True
+          OnChange = CheckBoxChange
+          State = cbChecked
+          TabOrder = 2
+        end
+        object chkMtreeGname: TCheckBox
+          Left = 112
+          Height = 23
+          Top = 33
+          Width = 108
+          Caption = 'Group Name'
+          Checked = True
+          OnChange = CheckBoxChange
+          State = cbChecked
+          TabOrder = 3
+        end
+        object chkMtreeLink: TCheckBox
+          Left = 384
+          Height = 23
+          Top = 5
+          Width = 53
+          Caption = 'Link'
+          Checked = True
+          OnChange = CheckBoxChange
+          State = cbChecked
+          TabOrder = 4
+        end
+        object chkMtreeMode: TCheckBox
+          Left = 256
+          Height = 23
+          Top = 5
+          Width = 62
+          Caption = 'Mode'
+          Checked = True
+          OnChange = CheckBoxChange
+          State = cbChecked
+          TabOrder = 5
+        end
+        object chkMtreeNlink: TCheckBox
+          AnchorSideLeft.Control = chkMtreeGid
+          AnchorSideTop.Control = chkMtreeGid
+          AnchorSideTop.Side = asrBottom
+          Left = 5
+          Height = 23
+          Top = 61
+          Width = 60
+          BorderSpacing.Top = 5
+          Caption = 'Nlink'
+          Checked = True
+          OnChange = CheckBoxChange
+          State = cbChecked
+          TabOrder = 6
+        end
+        object chkMtreeSize: TCheckBox
+          AnchorSideLeft.Control = gbMtreeAttr
+          AnchorSideTop.Control = gbMtreeAttr
+          Left = 5
+          Height = 23
+          Top = 5
+          Width = 53
+          BorderSpacing.Left = 5
+          BorderSpacing.Top = 5
+          Caption = 'Size'
+          Checked = True
+          OnChange = CheckBoxChange
+          State = cbChecked
+          TabOrder = 7
+        end
+        object chkMtreeTime: TCheckBox
+          Left = 112
+          Height = 23
+          Top = 5
+          Width = 59
+          Caption = 'Time'
+          Checked = True
+          OnChange = CheckBoxChange
+          State = cbChecked
+          TabOrder = 8
+        end
+        object chkMtreeUid: TCheckBox
+          Left = 256
+          Height = 23
+          Top = 33
+          Width = 74
+          Caption = 'User ID'
+          Checked = True
+          OnChange = CheckBoxChange
+          State = cbChecked
+          TabOrder = 9
+        end
+        object chkMtreeUname: TCheckBox
+          Left = 384
+          Height = 23
+          Top = 33
+          Width = 93
+          Caption = 'Username'
+          Checked = True
+          OnChange = CheckBoxChange
+          State = cbChecked
+          TabOrder = 10
+        end
+      end
+      object gbMtreeCkSum: TGroupBox
+        AnchorSideLeft.Control = gbMtreeAttr
+        AnchorSideTop.Control = gbMtreeAttr
+        AnchorSideTop.Side = asrBottom
+        AnchorSideRight.Control = gbMtreeAttr
+        AnchorSideRight.Side = asrBottom
+        AnchorSideBottom.Control = tsMTREE
+        AnchorSideBottom.Side = asrBottom
+        Left = 5
+        Height = 80
+        Top = 196
+        Width = 520
+        Anchors = [akTop, akLeft, akRight]
+        BorderSpacing.Top = 5
+        Caption = 'CkSum'
+        ClientHeight = 61
+        ClientWidth = 516
+        TabOrder = 2
+        object chkMtreeCksum: TCheckBox
+          AnchorSideLeft.Control = gbMtreeCkSum
+          AnchorSideTop.Control = gbMtreeCkSum
+          Left = 5
+          Height = 23
+          Top = 5
+          Width = 72
+          BorderSpacing.Left = 5
+          BorderSpacing.Top = 5
+          Caption = 'CkSum'
+          OnChange = CheckBoxChange
+          TabOrder = 0
+        end
+        object chkMtreeMd5: TCheckBox
+          Left = 112
+          Height = 23
+          Top = 5
+          Width = 56
+          Caption = 'MD5'
+          OnChange = CheckBoxChange
+          TabOrder = 1
+        end
+        object chkMtreeRmd160: TCheckBox
+          Left = 256
+          Height = 23
+          Top = 5
+          Width = 81
+          Caption = 'RMD160'
+          OnChange = CheckBoxChange
+          TabOrder = 2
+        end
+        object chkMtreeSha1: TCheckBox
+          AnchorSideLeft.Control = chkMtreeCksum
+          AnchorSideTop.Control = chkMtreeCksum
+          AnchorSideTop.Side = asrBottom
+          Left = 5
+          Height = 23
+          Top = 33
+          Width = 61
+          BorderSpacing.Top = 5
+          Caption = 'SHA1'
+          OnChange = CheckBoxChange
+          TabOrder = 3
+        end
+        object chkMtreeSha256: TCheckBox
+          Left = 256
+          Height = 23
+          Top = 33
+          Width = 77
+          Caption = 'SHA256'
+          OnChange = CheckBoxChange
+          TabOrder = 4
+        end
+        object chkMtreeSha384: TCheckBox
+          Left = 384
+          Height = 23
+          Top = 32
+          Width = 77
+          Caption = 'SHA384'
+          OnChange = CheckBoxChange
+          TabOrder = 5
+        end
+        object chkMtreeSha512: TCheckBox
+          Left = 112
+          Height = 23
+          Top = 33
+          Width = 77
+          Caption = 'SHA512'
+          OnChange = CheckBoxChange
+          TabOrder = 6
+        end
+      end
+    end
+    object tsISO: TTabSheet
+      Caption = 'ISO9660'
+      ClientHeight = 311
+      ClientWidth = 530
+      object gbISOMetadata: TGroupBox
+        AnchorSideLeft.Control = tsISO
+        AnchorSideTop.Control = tsISO
+        AnchorSideRight.Control = tsISO
+        AnchorSideRight.Side = asrBottom
+        Left = 5
+        Height = 115
+        Top = 5
+        Width = 520
+        Anchors = [akTop, akLeft, akRight]
+        BorderSpacing.Left = 5
+        BorderSpacing.Top = 5
+        BorderSpacing.Right = 5
+        Caption = 'Metadata'
+        ClientHeight = 96
+        ClientWidth = 516
+        TabOrder = 0
+        object edISOAbstractFile: TEdit
+          AnchorSideLeft.Control = edISOVolumeID
+          AnchorSideTop.Control = edISOApplicationID
+          AnchorSideTop.Side = asrBottom
+          Left = 129
+          Height = 24
+          Top = 63
+          Width = 132
+          BorderSpacing.Top = 5
+          OnChange = EditChange
+          TabOrder = 0
+        end
+        object edISOVolumeID: TEdit
+          AnchorSideLeft.Control = edISOApplicationID
+          AnchorSideTop.Control = gbISOMetadata
+          Left = 129
+          Height = 24
+          Top = 5
+          Width = 132
+          BorderSpacing.Top = 5
+          MaxLength = 32
+          OnChange = EditChange
+          TabOrder = 1
+        end
+        object edISOApplicationID: TEdit
+          AnchorSideLeft.Control = lblApplicationID
+          AnchorSideLeft.Side = asrBottom
+          AnchorSideTop.Control = edISOVolumeID
+          AnchorSideTop.Side = asrBottom
+          Left = 129
+          Height = 24
+          Top = 34
+          Width = 132
+          BorderSpacing.Left = 5
+          BorderSpacing.Top = 5
+          OnChange = EditChange
+          TabOrder = 2
+        end
+        object edISOCopyrightFile: TEdit
+          AnchorSideTop.Control = edISOVolumeID
+          Left = 376
+          Height = 24
+          Top = 5
+          Width = 132
+          OnChange = EditChange
+          TabOrder = 3
+        end
+        object edISOPublisher: TEdit
+          AnchorSideTop.Control = edISOApplicationID
+          Left = 376
+          Height = 24
+          Top = 34
+          Width = 132
+          OnChange = EditChange
+          TabOrder = 4
+        end
+        object edISOBiblioFile: TEdit
+          AnchorSideTop.Control = edISOAbstractFile
+          Left = 376
+          Height = 24
+          Top = 63
+          Width = 132
+          OnChange = EditChange
+          TabOrder = 5
+        end
+        object lblBiblioFile: TLabel
+          AnchorSideLeft.Control = lblPublisher
+          AnchorSideTop.Control = edISOBiblioFile
+          AnchorSideTop.Side = asrCenter
+          Left = 271
+          Height = 15
+          Top = 68
+          Width = 65
+          Caption = 'Biblio file:'
+          ParentColor = False
+        end
+        object lblPublisher: TLabel
+          AnchorSideLeft.Control = edISOApplicationID
+          AnchorSideLeft.Side = asrBottom
+          AnchorSideTop.Control = edISOPublisher
+          AnchorSideTop.Side = asrCenter
+          Left = 271
+          Height = 15
+          Top = 39
+          Width = 88
+          BorderSpacing.Left = 10
+          Caption = 'Publisher file:'
+          ParentColor = False
+        end
+        object lblCopyrightFile: TLabel
+          AnchorSideLeft.Control = edISOVolumeID
+          AnchorSideLeft.Side = asrBottom
+          AnchorSideTop.Control = edISOCopyrightFile
+          AnchorSideTop.Side = asrCenter
+          Left = 271
+          Height = 15
+          Top = 10
+          Width = 91
+          BorderSpacing.Left = 10
+          Caption = 'Copyright file:'
+          ParentColor = False
+        end
+        object lblApplicationID: TLabel
+          AnchorSideLeft.Control = lblVolumeID
+          AnchorSideTop.Control = edISOApplicationID
+          AnchorSideTop.Side = asrCenter
+          Left = 5
+          Height = 15
+          Top = 39
+          Width = 119
+          Caption = 'Application ID file:'
+          ParentColor = False
+        end
+        object lblVolumeID: TLabel
+          AnchorSideLeft.Control = gbISOMetadata
+          AnchorSideTop.Control = edISOVolumeID
+          AnchorSideTop.Side = asrCenter
+          Left = 5
+          Height = 15
+          Top = 10
+          Width = 67
+          BorderSpacing.Left = 5
+          Caption = 'Volume ID'
+          ParentColor = False
+        end
+        object lblAbstractFile: TLabel
+          AnchorSideLeft.Control = lblVolumeID
+          AnchorSideTop.Control = edISOAbstractFile
+          AnchorSideTop.Side = asrCenter
+          Left = 5
+          Height = 15
+          Top = 68
+          Width = 82
+          Caption = 'Abstract file:'
+          ParentColor = False
+        end
+      end
+      object gbISOFilenames: TGroupBox
+        AnchorSideLeft.Control = gbISOMetadata
+        AnchorSideTop.Control = gbISOMetadata
+        AnchorSideTop.Side = asrBottom
+        AnchorSideRight.Control = gbISOMetadata
+        AnchorSideRight.Side = asrBottom
+        AnchorSideBottom.Control = tsISO
+        AnchorSideBottom.Side = asrBottom
+        Left = 5
+        Height = 176
+        Top = 130
+        Width = 520
+        Anchors = [akLeft, akRight, akBottom]
+        BorderSpacing.Bottom = 5
+        Caption = 'Filename and size extensions'
+        ClientHeight = 157
+        ClientWidth = 516
+        TabOrder = 1
+        object chkISOAllowLDots: TCheckBox
+          Left = 8
+          Height = 23
+          Top = 8
+          Width = 146
+          Caption = 'Allow leading dots'
+          OnChange = CheckBoxChange
+          TabOrder = 0
+        end
+        object chkISOAllowLowercase: TCheckBox
+          Left = 8
+          Height = 23
+          Top = 32
+          Width = 132
+          Caption = 'Allow lowercase'
+          OnChange = CheckBoxChange
+          TabOrder = 1
+        end
+        object chkISOAllowMultidot: TCheckBox
+          Left = 8
+          Height = 23
+          Top = 80
+          Width = 121
+          Caption = 'Allow multidot'
+          OnChange = CheckBoxChange
+          TabOrder = 2
+        end
+        object chkISOAllowPeriod: TCheckBox
+          Left = 8
+          Height = 23
+          Top = 56
+          Width = 157
+          Caption = 'Allow trailing period'
+          OnChange = CheckBoxChange
+          TabOrder = 3
+        end
+        object chkISOAllowPvdLowercase: TCheckBox
+          Left = 8
+          Height = 23
+          Top = 104
+          Width = 163
+          Caption = 'Allow PVD lowercase'
+          OnChange = CheckBoxChange
+          TabOrder = 4
+        end
+        object chkISOAllowSharpTilde: TCheckBox
+          Left = 8
+          Height = 23
+          Top = 128
+          Width = 135
+          Caption = 'Allow sharp tilde'
+          OnChange = CheckBoxChange
+          TabOrder = 5
+        end
+        object chkISOAllowVernum: TCheckBox
+          Left = 200
+          Height = 23
+          Top = 8
+          Width = 116
+          Caption = 'Allow vernum'
+          Checked = True
+          OnChange = CheckBoxChange
+          State = cbChecked
+          TabOrder = 6
+        end
+        object chkISOJoliet: TCheckBox
+          Left = 200
+          Height = 23
+          Top = 32
+          Width = 59
+          Caption = 'Joliet'
+          Checked = True
+          OnChange = CheckBoxChange
+          State = cbChecked
+          TabOrder = 7
+        end
+        object chkISOLimitDepth: TCheckBox
+          Left = 200
+          Height = 23
+          Top = 80
+          Width = 100
+          Caption = 'Limit depth'
+          Checked = True
+          OnChange = CheckBoxChange
+          State = cbChecked
+          TabOrder = 8
+        end
+        object chkISOLimitDirs: TCheckBox
+          Left = 200
+          Height = 23
+          Top = 56
+          Width = 87
+          Caption = 'Limit dirs'
+          Checked = True
+          OnChange = CheckBoxChange
+          State = cbChecked
+          TabOrder = 9
+        end
+        object chkISOPad: TCheckBox
+          Left = 360
+          Height = 23
+          Top = 8
+          Width = 49
+          Caption = 'Pad'
+          Checked = True
+          OnChange = CheckBoxChange
+          State = cbChecked
+          TabOrder = 10
+        end
+        object chkISORockridge: TCheckBox
+          Left = 360
+          Height = 23
+          Top = 32
+          Width = 91
+          Caption = 'Rockridge'
+          Checked = True
+          OnChange = CheckBoxChange
+          State = cbChecked
+          TabOrder = 11
+        end
+        object chkISORelaxedFilenames: TCheckBox
+          Left = 360
+          Height = 23
+          Top = 56
+          Width = 146
+          Caption = 'Relaxed filenames'
+          OnChange = CheckBoxChange
+          TabOrder = 12
+        end
+        object lblISOLevel: TLabel
+          AnchorSideLeft.Control = cbISOLevel
+          AnchorSideTop.Control = cbISOLevel
+          AnchorSideTop.Side = asrCenter
+          AnchorSideRight.Control = cbISOLevel
+          Left = 202
+          Height = 15
+          Top = 128
+          Width = 65
+          Anchors = [akTop, akRight]
+          BorderSpacing.Right = 5
+          Caption = 'ISO Level:'
+          ParentColor = False
+        end
+        object cbISOLevel: TComboBox
+          Left = 272
+          Height = 25
+          Top = 123
+          Width = 236
+          ItemHeight = 0
+          Items.Strings = (
+            'Filenames - 8.3 uppercase, directory names - 8 uppercase, size limit <= 4GiB'
+            'Filenames - 30 uppercase, 30-character extension, directory names - 30 uppercase, size limit <= 4GiB'
+            'Filenames - 30 uppercase, 30-character extension, directory names - 30 uppercase, size limit > 4GiB'
+            'Filenames may be up to 193 characters and may include arbitrary characters, size limit > 4GiB'
+          )
+          OnChange = ComboBoxChange
+          Style = csDropDownList
+          TabOrder = 13
+        end
+      end
+    end
+    object tsISOBoot: TTabSheet
+      Caption = 'ISO9660 (boot)'
+      ClientHeight = 311
+      ClientWidth = 530
+      object gbISOBootGeneral: TGroupBox
+        AnchorSideLeft.Control = tsISOBoot
+        AnchorSideTop.Control = tsISOBoot
+        AnchorSideRight.Control = tsISOBoot
+        AnchorSideRight.Side = asrBottom
+        Left = 5
+        Height = 179
+        Top = 5
+        Width = 520
+        Anchors = [akTop, akLeft, akRight]
+        BorderSpacing.Left = 5
+        BorderSpacing.Top = 5
+        BorderSpacing.Right = 5
+        Caption = 'General'
+        ClientHeight = 160
+        ClientWidth = 516
+        TabOrder = 0
+        object edISOBoot: TEdit
+          AnchorSideTop.Control = gbISOBootGeneral
+          Left = 168
+          Height = 24
+          Top = 5
+          Width = 182
+          BorderSpacing.Top = 5
+          OnChange = EditChange
+          TabOrder = 0
+        end
+        object edISOBootCatalog: TEdit
+          AnchorSideTop.Control = edISOBoot
+          AnchorSideTop.Side = asrBottom
+          Left = 168
+          Height = 24
+          Top = 34
+          Width = 182
+          BorderSpacing.Top = 5
+          OnChange = EditChange
+          TabOrder = 1
+        end
+        object edISOBootLoadSeg: TEdit
+          AnchorSideTop.Control = cbISOBootType
+          AnchorSideTop.Side = asrBottom
+          Left = 329
+          Height = 24
+          Top = 93
+          Width = 182
+          BorderSpacing.Top = 5
+          OnChange = EditChange
+          TabOrder = 2
+        end
+        object edISOBootLoadSize: TEdit
+          AnchorSideTop.Control = edISOBootLoadSeg
+          AnchorSideTop.Side = asrBottom
+          AnchorSideRight.Control = gbISOBootGeneral
+          AnchorSideRight.Side = asrBottom
+          Left = 329
+          Height = 24
+          Top = 122
+          Width = 182
+          Anchors = [akTop, akLeft, akRight]
+          BorderSpacing.Top = 5
+          BorderSpacing.Right = 5
+          NumbersOnly = True
+          OnChange = EditChange
+          TabOrder = 3
+        end
+        object chkISOBootInfoTable: TCheckBox
+          AnchorSideTop.Control = edISOBoot
+          AnchorSideTop.Side = asrCenter
+          AnchorSideRight.Control = gbISOBootGeneral
+          AnchorSideRight.Side = asrBottom
+          Left = 384
+          Height = 23
+          Top = 6
+          Width = 127
+          Anchors = [akTop, akLeft, akRight]
+          BorderSpacing.Right = 5
+          Caption = 'Boot Info Table'
+          OnChange = CheckBoxChange
+          TabOrder = 4
+        end
+        object cbISOBootType: TComboBox
+          AnchorSideLeft.Control = lblISOBootType
+          AnchorSideLeft.Side = asrBottom
+          AnchorSideTop.Control = edISOBootCatalog
+          AnchorSideTop.Side = asrBottom
+          Left = 329
+          Height = 25
+          Top = 63
+          Width = 182
+          BorderSpacing.Left = 5
+          BorderSpacing.Top = 5
+          ItemHeight = 0
+          Items.Strings = (
+            ''
+            'no-emulation'
+            'fd'
+            'hd'
+          )
+          OnChange = ComboBoxChange
+          Style = csDropDownList
+          TabOrder = 5
+        end
+        object lblISOBoot: TLabel
+          AnchorSideLeft.Control = gbISOBootGeneral
+          AnchorSideTop.Control = edISOBoot
+          AnchorSideTop.Side = asrCenter
+          Left = 5
+          Height = 15
+          Top = 10
+          Width = 158
+          BorderSpacing.Left = 5
+          Caption = 'El Torito boot image file:'
+          ParentColor = False
+        end
+        object lblISOBootType: TLabel
+          AnchorSideLeft.Control = lblISOBoot
+          AnchorSideTop.Control = cbISOBootType
+          AnchorSideTop.Side = asrCenter
+          Left = 5
+          Height = 15
+          Top = 68
+          Width = 319
+          Caption = 'Boot semantics used by the El Torito boot image:'
+          ParentColor = False
+        end
+        object lblISOBootLoadSize: TLabel
+          AnchorSideLeft.Control = lblISOBoot
+          AnchorSideTop.Control = edISOBootLoadSize
+          AnchorSideTop.Side = asrCenter
+          Left = 5
+          Height = 15
+          Top = 127
+          Width = 297
+          Caption = 'The number of 512-byte sectors to be loaded:'
+          ParentColor = False
+        end
+        object lblISOBootLoadSeg: TLabel
+          AnchorSideLeft.Control = lblISOBoot
+          AnchorSideTop.Control = edISOBootLoadSeg
+          AnchorSideTop.Side = asrCenter
+          Left = 5
+          Height = 15
+          Top = 98
+          Width = 306
+          Caption = 'Segment for a no-emulation boot image (HEX):'
+          ParentColor = False
+        end
+        object lblISOBootCatalog: TLabel
+          AnchorSideLeft.Control = lblISOBoot
+          AnchorSideTop.Control = edISOBootCatalog
+          AnchorSideTop.Side = asrCenter
+          Left = 5
+          Height = 15
+          Top = 39
+          Width = 141
+          Caption = 'El Torito boot catalog:'
+          ParentColor = False
+        end
+      end
+    end
+    object tsZISOfs: TTabSheet
+      Caption = 'ISO9660 (zisofs)'
+      ClientHeight = 311
+      ClientWidth = 530
+      object gbZISOFSGeneral: TGroupBox
+        AnchorSideLeft.Control = tsZISOfs
+        AnchorSideTop.Control = lblZISOFSInfo
+        AnchorSideTop.Side = asrBottom
+        AnchorSideRight.Control = tsZISOfs
+        AnchorSideRight.Side = asrBottom
+        Left = 5
+        Height = 88
+        Top = 80
+        Width = 520
+        Anchors = [akTop, akLeft, akRight]
+        BorderSpacing.Left = 5
+        BorderSpacing.Top = 10
+        BorderSpacing.Right = 5
+        Caption = 'General'
+        ClientHeight = 69
+        ClientWidth = 516
+        TabOrder = 0
+        object cbZISOfs: TComboBox
+          AnchorSideLeft.Control = cbZISOCompLvl
+          AnchorSideTop.Control = gbZISOFSGeneral
+          Left = 135
+          Height = 25
+          Top = 5
+          Width = 100
+          BorderSpacing.Top = 5
+          ItemHeight = 0
+          Items.Strings = (
+            ''
+            'direct'
+            'indirect'
+          )
+          OnChange = ComboBoxChange
+          Style = csDropDownList
+          TabOrder = 0
+        end
+        object cbZISOCompLvl: TComboBox
+          AnchorSideLeft.Control = lblZISOCompLvl
+          AnchorSideLeft.Side = asrBottom
+          AnchorSideTop.Control = cbZISOfs
+          AnchorSideTop.Side = asrBottom
+          Left = 135
+          Height = 25
+          Top = 35
+          Width = 100
+          BorderSpacing.Left = 5
+          BorderSpacing.Top = 5
+          ItemHeight = 0
+          Items.Strings = (
+            '0 (least effort)'
+            '1'
+            '2'
+            '3'
+            '4'
+            '5'
+            '6 (default)'
+            '7'
+            '8'
+            '9 (most effort)'
+          )
+          OnChange = ComboBoxChange
+          Style = csDropDownList
+          TabOrder = 1
+        end
+        object lblZISOfs: TLabel
+          AnchorSideLeft.Control = gbZISOFSGeneral
+          AnchorSideTop.Control = cbZISOfs
+          AnchorSideTop.Side = asrCenter
+          Left = 5
+          Height = 15
+          Top = 10
+          Width = 80
+          BorderSpacing.Left = 5
+          Caption = 'ZISOfs type:'
+          ParentColor = False
+        end
+        object lblZISOCompLvl: TLabel
+          AnchorSideLeft.Control = lblZISOfs
+          AnchorSideTop.Control = cbZISOCompLvl
+          AnchorSideTop.Side = asrCenter
+          Left = 5
+          Height = 15
+          Top = 40
+          Width = 125
+          Caption = 'Compression level:'
+          ParentColor = False
+        end
+      end
+      object lblZISOFSInfo: TLabel
+        AnchorSideLeft.Control = tsZISOfs
+        AnchorSideTop.Control = tsZISOfs
+        AnchorSideRight.Control = tsZISOfs
+        AnchorSideRight.Side = asrBottom
+        Left = 10
+        Height = 60
+        Top = 10
+        Width = 510
+        Anchors = [akTop, akLeft, akRight]
+        BorderSpacing.Left = 10
+        BorderSpacing.Top = 10
+        BorderSpacing.Right = 10
+        Caption = 'The zisofs extensions permit each file to be independently compressed using a gzip-compatible compression.  This can provide significant size savings, but requires the reading system to have support for these extensions.  These extensions are disabled by default.'
+        ParentColor = False
+        ParentFont = False
+        WordWrap = True
+      end
+      object gbZISOFSExclude: TGroupBox
+        AnchorSideLeft.Control = gbZISOFSGeneral
+        AnchorSideTop.Control = gbZISOFSGeneral
+        AnchorSideTop.Side = asrBottom
+        AnchorSideRight.Control = gbZISOFSGeneral
+        AnchorSideRight.Side = asrBottom
+        Left = 5
+        Height = 59
+        Top = 173
+        Width = 520
+        Anchors = [akTop, akLeft, akRight]
+        BorderSpacing.Top = 5
+        Caption = 'Exclude'
+        ClientHeight = 40
+        ClientWidth = 516
+        TabOrder = 1
+        object lblZISOExclude: TLabel
+          AnchorSideLeft.Control = gbZISOFSExclude
+          AnchorSideTop.Control = edZISOExclude
+          AnchorSideTop.Side = asrCenter
+          Left = 5
+          Height = 15
+          Top = 10
+          Width = 295
+          BorderSpacing.Left = 5
+          Caption = 'Add filename that should not be compressed:'
+          ParentColor = False
+        end
+        object edZISOExclude: TEdit
+          AnchorSideTop.Control = gbZISOFSExclude
+          Left = 304
+          Height = 24
+          Top = 5
+          Width = 120
+          BorderSpacing.Top = 5
+          TabOrder = 0
+        end
+        object bntZISOExclude: TButton
+          AnchorSideLeft.Control = edZISOExclude
+          AnchorSideLeft.Side = asrBottom
+          AnchorSideTop.Control = edZISOExclude
+          AnchorSideBottom.Control = edZISOExclude
+          AnchorSideBottom.Side = asrBottom
+          Left = 429
+          Height = 24
+          Top = 5
+          Width = 83
+          Anchors = [akTop, akLeft, akBottom]
+          BorderSpacing.Left = 5
+          Caption = 'Exclude'
+          OnClick = ButtonClick
+          TabOrder = 1
+        end
+      end
+    end
+  end
+  object btnOK: TBitBtn
+    AnchorSideTop.Control = pcOptions
+    AnchorSideTop.Side = asrBottom
+    AnchorSideRight.Control = pcOptions
+    AnchorSideRight.Side = asrBottom
+    AnchorSideBottom.Control = Owner
+    AnchorSideBottom.Side = asrBottom
+    Left = 422
+    Height = 30
+    Top = 431
+    Width = 102
+    Anchors = [akRight, akBottom]
+    BorderSpacing.Top = 10
+    BorderSpacing.Right = 10
+    BorderSpacing.Bottom = 10
+    Default = True
+    DefaultCaption = True
+    Kind = bkOK
+    ModalResult = 1
+    OnClick = ButtonClick
+    TabOrder = 1
+  end
+  object btnCancel: TBitBtn
+    AnchorSideTop.Control = pcOptions
+    AnchorSideTop.Side = asrBottom
+    AnchorSideRight.Control = btnOK
+    AnchorSideBottom.Control = btnOK
+    AnchorSideBottom.Side = asrBottom
+    Left = 322
+    Height = 30
+    Top = 431
+    Width = 95
+    Anchors = [akRight, akBottom]
+    BorderSpacing.Top = 10
+    BorderSpacing.Right = 5
+    Cancel = True
+    DefaultCaption = True
+    Kind = bkCancel
+    ModalResult = 2
+    OnClick = ButtonClick
+    TabOrder = 2
+  end
+  object edOptions: TEdit
+    AnchorSideLeft.Control = Owner
+    AnchorSideTop.Control = pcOptions
+    AnchorSideTop.Side = asrBottom
+    AnchorSideRight.Control = btnClear
+    AnchorSideBottom.Control = btnOK
+    Left = 5
+    Height = 24
+    Top = 397
+    Width = 430
+    Anchors = [akLeft, akRight, akBottom]
+    BorderSpacing.Left = 5
+    BorderSpacing.Right = 5
+    ParentShowHint = False
+    TabOrder = 3
+  end
+  object lblOptions: TLabel
+    AnchorSideLeft.Control = edOptions
+    AnchorSideTop.Control = edOptions
+    AnchorSideBottom.Control = edOptions
+    Left = 10
+    Height = 15
+    Top = 377
+    Width = 335
+    Anchors = [akLeft, akBottom]
+    BorderSpacing.Left = 5
+    BorderSpacing.Bottom = 5
+    Caption = 'Current Options ($ man archive_write_set_options):'
+    ParentColor = False
+  end
+  object lblInfo: TLabel
+    AnchorSideLeft.Control = lblOptions
+    AnchorSideTop.Control = btnOK
+    AnchorSideTop.Side = asrCenter
+    AnchorSideRight.Control = btnClear
+    AnchorSideRight.Side = asrBottom
+    AnchorSideBottom.Control = lblOptions
+    Left = 10
+    Height = 15
+    Top = 352
+    Width = 99
+    Anchors = [akLeft, akBottom]
+    BorderSpacing.Bottom = 10
+    Caption = '<Version info>'
+    ParentColor = False
+  end
+  object btnClear: TButton
+    AnchorSideTop.Control = edOptions
+    AnchorSideRight.Control = Owner
+    AnchorSideRight.Side = asrBottom
+    AnchorSideBottom.Control = edOptions
+    AnchorSideBottom.Side = asrBottom
+    Left = 440
+    Height = 24
+    Top = 397
+    Width = 89
+    Anchors = [akTop, akRight, akBottom]
+    BorderSpacing.Right = 5
+    Caption = 'Clear'
+    OnClick = ButtonClick
+    TabOrder = 4
+  end
+end

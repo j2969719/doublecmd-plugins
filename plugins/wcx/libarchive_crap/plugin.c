@@ -19,6 +19,8 @@
 #include <sys/ioctl.h>
 #include <linux/fs.h>
 #include <ftw.h>
+#include <fnmatch.h>
+#include <dlfcn.h>
 #include <limits.h>
 
 typedef struct sArcData
@@ -41,12 +43,29 @@ tChangeVolProc gChangeVolProc  = NULL;
 tProcessDataProc gProcessDataProc = NULL;
 tExtensionStartupInfo* gStartupInfo = NULL;
 static char gOptions[PATH_MAX];
+static char gEncryption[PATH_MAX] = "encryption=traditional";
+static char gLFMPath[PATH_MAX];
 bool gMtreeClasic = false;
+
 
 void DCPCALL ExtensionInitialize(tExtensionStartupInfo* StartupInfo)
 {
+	Dl_info dlinfo;
+	const char* lfm_name = "dialog.lfm";
+
 	gStartupInfo = malloc(sizeof(tExtensionStartupInfo));
 	memcpy(gStartupInfo, StartupInfo, sizeof(tExtensionStartupInfo));
+
+	memset(&dlinfo, 0, sizeof(dlinfo));
+
+	if (dladdr(lfm_name, &dlinfo) != 0)
+	{
+		strncpy(gLFMPath, dlinfo.dli_fname, PATH_MAX);
+		char *pos = strrchr(gLFMPath, '/');
+
+		if (pos)
+			strcpy(pos + 1, lfm_name);
+	}
 }
 
 void DCPCALL ExtensionFinalize(void* Reserved)
@@ -174,6 +193,16 @@ static int archive_set_format_filter(struct archive *a, const char*ext)
 		ret = archive_write_set_format_raw(a);
 		ret = archive_write_add_filter_uuencode(a);
 	}
+	else if (strcmp(ext, ".gz") == 0)
+	{
+		ret = archive_write_set_format_raw(a);
+		ret = archive_write_add_filter_gzip(a);
+	}
+	else if (strcmp(ext, ".xz") == 0)
+	{
+		ret = archive_write_set_format_raw(a);
+		ret = archive_write_add_filter_xz(a);
+	}
 	else if (strcmp(ext, ".liz") == 0)
 	{
 		ret = archive_write_set_format_raw(a);
@@ -193,6 +222,288 @@ const char *archive_password_cb(struct archive *a, void *data)
 		return pass;
 	else
 		return NULL;
+}
+
+static void checkbox_get_option(uintptr_t pDlg, char* DlgItemName, const char* optstr, bool defval, char *strval)
+{
+	bool chk = (bool)gStartupInfo->SendDlgMsg(pDlg, DlgItemName, DM_GETCHECK, 0, 0);
+
+	if ((chk && !defval) || (!chk && defval))
+	{
+		if (strval[strlen(strval) - 1] != ':')
+			strcat(strval, ",");
+
+		if (!chk && defval)
+			strcat(strval, "!");
+
+		strcat(strval, optstr);
+	}
+}
+
+static void textfield_get_option(uintptr_t pDlg, char* DlgItemName, const char* optstr, char *strval)
+{
+	char *tmpval = malloc(PATH_MAX);
+	memset(tmpval, 0, sizeof(strval));
+	strncpy(tmpval, (char*)gStartupInfo->SendDlgMsg(pDlg, DlgItemName, DM_GETTEXT, 0, 0), PATH_MAX);
+
+	if (tmpval[0] != '\0')
+	{
+		if (strval[strlen(strval) - 1] != ':')
+			strcat(strval, ",");
+
+		snprintf(strval, PATH_MAX, "%s%s=%s", strdup(strval), optstr, tmpval);
+	}
+
+	free(tmpval);
+}
+
+intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr_t wParam, intptr_t lParam)
+{
+	int numval;
+	bool bval;
+	char *strval = malloc(PATH_MAX);
+	memset(strval, 0, sizeof(strval));
+
+	switch (Msg)
+	{
+	case DN_INITDIALOG:
+		gStartupInfo->SendDlgMsg(pDlg, "edOptions", DM_SETTEXT, (intptr_t)gOptions, 0);
+		gStartupInfo->SendDlgMsg(pDlg, "chkClassic", DM_SETCHECK, (intptr_t)gMtreeClasic, 0);
+		snprintf(strval, PATH_MAX, "%s", archive_version_details());
+		gStartupInfo->SendDlgMsg(pDlg, "lblInfo", DM_SETTEXT, (intptr_t)strval, 0);
+		gStartupInfo->SendDlgMsg(pDlg, "gbZISOFSExclude", DM_ENABLE, 0, 0);
+		gStartupInfo->SendDlgMsg(pDlg, "cbZISOCompLvl", DM_ENABLE, 0, 0);
+
+		break;
+
+	case DN_CLICK:
+		if (strncmp(DlgItemName, "btnOK", 5) == 0)
+		{
+			strncpy(gOptions, (char*)gStartupInfo->SendDlgMsg(pDlg, "edOptions", DM_GETTEXT, 0, 0), PATH_MAX);
+			gMtreeClasic = (bool)gStartupInfo->SendDlgMsg(pDlg, "chkClassic", DM_GETCHECK, 0, 0);
+			snprintf(gEncryption, PATH_MAX, "encryption=%s", (char*)gStartupInfo->SendDlgMsg(pDlg, "cbEncrypt", DM_GETTEXT, 0, 0));
+
+			gStartupInfo->SendDlgMsg(pDlg, DlgItemName, DM_CLOSE, 1, 0);
+		}
+		else if (strncmp(DlgItemName, "btnClear", 8) == 0)
+			gStartupInfo->SendDlgMsg(pDlg, "edOptions", DM_SETTEXT, 0, 0);
+		else if (strcmp(DlgItemName, "bntZISOExclude") == 0)
+		{
+			strncpy(strval, (char*)gStartupInfo->SendDlgMsg(pDlg, "edOptions", DM_GETTEXT, 0, 0), PATH_MAX);
+
+			if (strstr(strval, "zisofs=direct") != NULL)
+			{
+				strncpy(strval, (char*)gStartupInfo->SendDlgMsg(pDlg, "edZISOExclude", DM_GETTEXT, 0, 0), PATH_MAX);
+
+				if (strval[0] != '\0')
+				{
+					snprintf(strval, PATH_MAX, "%s,zisofs-exclude=%s", (char*)gStartupInfo->SendDlgMsg(pDlg, "edOptions", DM_GETTEXT, 0, 0), strdup(strval));
+					gStartupInfo->SendDlgMsg(pDlg, "edOptions", DM_SETTEXT, (intptr_t)strval, 0);
+				}
+			}
+		}
+
+		break;
+
+	case DN_CHANGE:
+		if (strncmp(DlgItemName, "chkMtree", 8) == 0)
+		{
+			bval = (bool)gStartupInfo->SendDlgMsg(pDlg, "chkMtreeAll", DM_GETCHECK, 0, 0);
+			gStartupInfo->SendDlgMsg(pDlg, "chkMtreeCksum", DM_ENABLE, (intptr_t)!bval, 0);
+			gStartupInfo->SendDlgMsg(pDlg, "chkMtreeDevice", DM_ENABLE, (intptr_t)!bval, 0);
+			gStartupInfo->SendDlgMsg(pDlg, "chkMtreeFlags", DM_ENABLE, (intptr_t)!bval, 0);
+			gStartupInfo->SendDlgMsg(pDlg, "chkMtreeGid", DM_ENABLE, (intptr_t)!bval, 0);
+			gStartupInfo->SendDlgMsg(pDlg, "chkMtreeGname", DM_ENABLE, (intptr_t)!bval, 0);
+			gStartupInfo->SendDlgMsg(pDlg, "chkMtreeIndent", DM_ENABLE, (intptr_t)!bval, 0);
+			gStartupInfo->SendDlgMsg(pDlg, "chkMtreeLink", DM_ENABLE, (intptr_t)!bval, 0);
+			gStartupInfo->SendDlgMsg(pDlg, "chkMtreeMd5", DM_ENABLE, (intptr_t)!bval, 0);
+			gStartupInfo->SendDlgMsg(pDlg, "chkMtreeMode", DM_ENABLE, (intptr_t)!bval, 0);
+			gStartupInfo->SendDlgMsg(pDlg, "chkMtreeNlink", DM_ENABLE, (intptr_t)!bval, 0);
+			gStartupInfo->SendDlgMsg(pDlg, "chkMtreeRmd160", DM_ENABLE, (intptr_t)!bval, 0);
+			gStartupInfo->SendDlgMsg(pDlg, "chkMtreeSha1", DM_ENABLE, (intptr_t)!bval, 0);
+			gStartupInfo->SendDlgMsg(pDlg, "chkMtreeSha256", DM_ENABLE, (intptr_t)!bval, 0);
+			gStartupInfo->SendDlgMsg(pDlg, "chkMtreeSha384", DM_ENABLE, (intptr_t)!bval, 0);
+			gStartupInfo->SendDlgMsg(pDlg, "chkMtreeSha512", DM_ENABLE, (intptr_t)!bval, 0);
+			gStartupInfo->SendDlgMsg(pDlg, "chkMtreeSize", DM_ENABLE, (intptr_t)!bval, 0);
+			gStartupInfo->SendDlgMsg(pDlg, "chkMtreeTime", DM_ENABLE, (intptr_t)!bval, 0);
+			gStartupInfo->SendDlgMsg(pDlg, "chkMtreeUid", DM_ENABLE, (intptr_t)!bval, 0);
+			gStartupInfo->SendDlgMsg(pDlg, "chkMtreeUname", DM_ENABLE, (intptr_t)!bval, 0);
+
+			strncpy(strval, "mtree:", PATH_MAX);
+
+			if (bval)
+				checkbox_get_option(pDlg, "chkMtreeAll", "all", false, strval);
+			else
+			{
+				checkbox_get_option(pDlg, "chkMtreeCksum", "cksum", false, strval);
+				checkbox_get_option(pDlg, "chkMtreeDevice", "device", true, strval);
+				checkbox_get_option(pDlg, "chkMtreeFlags", "flags", true, strval);
+				checkbox_get_option(pDlg, "chkMtreeGid", "gid", true, strval);
+				checkbox_get_option(pDlg, "chkMtreeGname", "gname", true, strval);
+				checkbox_get_option(pDlg, "chkMtreeIndent", "indent", false, strval);
+				checkbox_get_option(pDlg, "chkMtreeLink", "link", true, strval);
+				checkbox_get_option(pDlg, "chkMtreeMd5", "md5", false, strval);
+				checkbox_get_option(pDlg, "chkMtreeMode", "mode", true, strval);
+				checkbox_get_option(pDlg, "chkMtreeNlink", "nlink", true, strval);
+				checkbox_get_option(pDlg, "chkMtreeRmd160", "rmd160", false, strval);
+				checkbox_get_option(pDlg, "chkMtreeSha1", "sha1", false, strval);
+				checkbox_get_option(pDlg, "chkMtreeSha256", "sha256", false, strval);
+				checkbox_get_option(pDlg, "chkMtreeSha384", "sha384", false, strval);
+				checkbox_get_option(pDlg, "chkMtreeSha512", "sha512", false, strval);
+				checkbox_get_option(pDlg, "chkMtreeSize", "size", true, strval);
+				checkbox_get_option(pDlg, "chkMtreeTime", "time", true, strval);
+				checkbox_get_option(pDlg, "chkMtreeUid", "uid", true, strval);
+				checkbox_get_option(pDlg, "chkMtreeUname", "uname", true, strval);
+			}
+
+			checkbox_get_option(pDlg, "chkMtreeUseSet", "use-set", false, strval);
+
+			if (strcmp(strval, "mtree:") != 0)
+				gStartupInfo->SendDlgMsg(pDlg, "edOptions", DM_SETTEXT, (intptr_t)strval, 0);
+			else
+				gStartupInfo->SendDlgMsg(pDlg, "edOptions", DM_SETTEXT, 0, 0);
+		}
+		else if (strncmp(DlgItemName, "cbGZ", 5) == 0)
+		{
+			numval = (int)gStartupInfo->SendDlgMsg(pDlg, "cbGZ", DM_LISTGETITEMINDEX, 0, 0);
+
+			if (numval > -1)
+			{
+				snprintf(strval, PATH_MAX, "compression-level=%d", numval);
+				gStartupInfo->SendDlgMsg(pDlg, "edOptions", DM_SETTEXT, (intptr_t)strval, 0);
+			}
+		}
+		else if (strstr(DlgItemName, "Zip") != NULL)
+		{
+			numval = (int)gStartupInfo->SendDlgMsg(pDlg, "cbZipCompression", DM_LISTGETITEMINDEX, 0, 0);
+
+			if (numval > -1)
+			{
+				snprintf(strval, PATH_MAX, "zip:compression=%s", (char*)gStartupInfo->SendDlgMsg(pDlg, "cbZipCompression", DM_GETTEXT, 0, 0));
+			}
+			else
+				strncpy(strval, "zip:", PATH_MAX);
+
+			numval = (int)gStartupInfo->SendDlgMsg(pDlg, "cbZipCompLvl", DM_LISTGETITEMINDEX, 0, 0);
+
+			if (numval > -1)
+			{
+				if (strval[strlen(strval) - 1] != ':')
+					strcat(strval, ",");
+
+				snprintf(strval, PATH_MAX, "%scompression-level=%d", strdup(strval), numval);
+			}
+
+			textfield_get_option(pDlg, "cbZipCharset", "hdrcharset", strval);
+			checkbox_get_option(pDlg, "chkZipExperimental", "experimental", false, strval);
+			checkbox_get_option(pDlg, "chkZipFakeCRC32", "fakecrc32", false, strval);
+			checkbox_get_option(pDlg, "chkZip64", "zip64", true, strval);
+
+
+			if (strcmp(strval, "zip:") != 0)
+				gStartupInfo->SendDlgMsg(pDlg, "edOptions", DM_SETTEXT, (intptr_t)strval, 0);
+			else
+				gStartupInfo->SendDlgMsg(pDlg, "edOptions", DM_SETTEXT, 0, 0);
+		}
+		else if (strstr(DlgItemName, "ISO") != NULL)
+		{
+			strncpy(strval, "iso9660:", PATH_MAX);
+			textfield_get_option(pDlg, "edISOVolumeID", "volume-id", strval);
+			textfield_get_option(pDlg, "edISOAbstractFile", "abstract-file", strval);
+			textfield_get_option(pDlg, "edISOApplicationID", "application-id", strval);
+			textfield_get_option(pDlg, "edISOCopyrightFile", "copyright-file", strval);
+			textfield_get_option(pDlg, "edISOPublisher", "publisher", strval);
+			textfield_get_option(pDlg, "edISOBiblioFile", "biblio-file", strval);
+
+			numval = (int)gStartupInfo->SendDlgMsg(pDlg, "cbISOLevel", DM_LISTGETITEMINDEX, 0, 0);
+
+			if (numval > -1)
+			{
+				if (strval[strlen(strval) - 1] != ':')
+					strcat(strval, ",");
+
+				snprintf(strval, PATH_MAX, "%siso-level=%d", strdup(strval), numval + 1);
+			}
+
+			checkbox_get_option(pDlg, "chkISOAllowLDots", "allow-ldots", false, strval);
+			checkbox_get_option(pDlg, "chkISOAllowLowercase", "allow-lowercase", false, strval);
+			checkbox_get_option(pDlg, "chkISOAllowMultidot", "allow-multidot", false, strval);
+			checkbox_get_option(pDlg, "chkISOAllowPeriod", "allow-period", false, strval);
+			checkbox_get_option(pDlg, "chkISOAllowPvdLowercase", "allow-pvd-lowercase", false, strval);
+			checkbox_get_option(pDlg, "chkISOAllowSharpTilde", "allow-sharp-tilde", false, strval);
+			checkbox_get_option(pDlg, "chkISOAllowVernum", "allow-vernum", true, strval);
+			checkbox_get_option(pDlg, "chkISOJoliet", "joliet", true, strval);
+			checkbox_get_option(pDlg, "chkISOLimitDepth", "limit-depth", true, strval);
+			checkbox_get_option(pDlg, "chkISOLimitDirs", "limit-dirs", true, strval);
+			checkbox_get_option(pDlg, "chkISOPad", "pad", true, strval);
+			checkbox_get_option(pDlg, "chkISORelaxedFilenames", "relaxed-filenames", false, strval);
+			checkbox_get_option(pDlg, "chkISORockridge", "rockridge", true, strval);
+
+			textfield_get_option(pDlg, "edISOBoot", "boot", strval);
+			textfield_get_option(pDlg, "edISOBootCatalog", "boot-catalog", strval);
+			textfield_get_option(pDlg, "cbISOBootType", "boot-type", strval);
+			checkbox_get_option(pDlg, "chkISOBootInfoTable", "boot-info-table", false, strval);
+
+
+			numval = (int)gStartupInfo->SendDlgMsg(pDlg, "cbISOBootType", DM_LISTGETITEMINDEX, 0, 0);
+
+			if (numval > 0)
+			{
+				gStartupInfo->SendDlgMsg(pDlg, "edISOBootLoadSeg", DM_ENABLE, 0, 0);
+				gStartupInfo->SendDlgMsg(pDlg, "edISOBootLoadSize", DM_ENABLE, 0, 0);
+
+			}
+			else
+			{
+				gStartupInfo->SendDlgMsg(pDlg, "edISOBootLoadSeg", DM_ENABLE, 1, 0);
+				gStartupInfo->SendDlgMsg(pDlg, "edISOBootLoadSize", DM_ENABLE, 1, 0);
+				textfield_get_option(pDlg, "edISOBootLoadSeg", "publisher", strval);
+				textfield_get_option(pDlg, "edISOBootLoadSize", "publisher", strval);
+			}
+
+			numval = (int)gStartupInfo->SendDlgMsg(pDlg, "cbZISOfs", DM_LISTGETITEMINDEX, 0, 0);
+
+			if (numval > 0)
+			{
+				if (numval == 1)
+					gStartupInfo->SendDlgMsg(pDlg, "gbZISOFSExclude", DM_ENABLE, 1, 0);
+				else
+					gStartupInfo->SendDlgMsg(pDlg, "gbZISOFSExclude", DM_ENABLE, 0, 0);
+
+				gStartupInfo->SendDlgMsg(pDlg, "cbZISOCompLvl", DM_ENABLE, 1, 0);
+
+				textfield_get_option(pDlg, "cbZISOfs", "zisofs", strval);
+
+				numval = (int)gStartupInfo->SendDlgMsg(pDlg, "cbZISOCompLvl", DM_LISTGETITEMINDEX, 0, 0);
+
+				if (numval > -1)
+				{
+					if (strval[strlen(strval) - 1] != ':')
+						strcat(strval, ",");
+
+					snprintf(strval, PATH_MAX, "%scompression-level=%d", strdup(strval), numval);
+				}
+			}
+			else
+			{
+				gStartupInfo->SendDlgMsg(pDlg, "gbZISOFSExclude", DM_ENABLE, 0, 0);
+				gStartupInfo->SendDlgMsg(pDlg, "cbZISOCompLvl", DM_ENABLE, 0, 0);
+			}
+
+			if (strcmp(strval, "iso9660:") != 0)
+				gStartupInfo->SendDlgMsg(pDlg, "edOptions", DM_SETTEXT, (intptr_t)strval, 0);
+			else
+				gStartupInfo->SendDlgMsg(pDlg, "edOptions", DM_SETTEXT, 0, 0);
+
+		}
+		else
+			printf("マッチョアネーム？\n");
+
+		break;
+	}
+
+	free(strval);
+	return 0;
 }
 
 HANDLE DCPCALL OpenArchive(tOpenArchiveData *ArchiveData)
@@ -406,16 +717,20 @@ BOOL DCPCALL CanYouHandleThisFile(char *FileName)
 
 int DCPCALL GetPackerCaps(void)
 {
-	//return PK_CAPS_NEW | PK_CAPS_MULTIPLE | PK_CAPS_SEARCHTEXT | PK_CAPS_BY_CONTENT;
-	return PK_CAPS_NEW | PK_CAPS_SEARCHTEXT | PK_CAPS_BY_CONTENT;
+	return PK_CAPS_NEW | PK_CAPS_SEARCHTEXT | PK_CAPS_BY_CONTENT | PK_CAPS_OPTIONS;
 }
 
 void DCPCALL ConfigurePacker(HWND Parent, HINSTANCE DllInstance)
 {
-	char *msg;
-	asprintf(&msg, "%s\nOptions ($ man archive_write_set_options):", archive_version_details());
-	gStartupInfo->InputBox("Double Commander", msg, false, gOptions, PATH_MAX - 1);
-	free(msg);
+	if (access(gLFMPath, F_OK) != 0)
+	{
+		char *msg;
+		asprintf(&msg, "%s\nCurrent Options ($ man archive_write_set_options):", archive_version_details());
+		gStartupInfo->InputBox("Double Commander", msg, false, gOptions, PATH_MAX - 1);
+		free(msg);
+	}
+	else
+		gStartupInfo->DialogBoxLFMFile(gLFMPath, DlgProc);
 }
 
 int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddList, int Flags)
@@ -430,31 +745,27 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 	char pkfile[PATH_MAX];
 	char link[PATH_MAX + 1];
 	int result = E_SUCCESS;
-	char *msg, *rmlist;
-
-	if (Flags & PK_PACK_MOVE_FILES)
-		rmlist = AddList;
-
+	char *msg, *rmlist, *skiplist, *tmpfn = NULL;
+	bool skip_file, set_encrypt = false;
+	size_t rsize;
+	const void *rbuff;
+	la_int64_t roffset;
 	struct passwd *pw;
 	struct group  *gr;
 
-	if (access(PackedFile, F_OK) != -1)
+	const char *ext = strrchr(PackedFile, '.');
+
+	if (!ext)
 		return E_NOT_SUPPORTED;
 
-	const char *ext = strrchr(PackedFile, '.');
+	if (Flags & PK_PACK_MOVE_FILES)
+		rmlist = AddList;
 
 	struct archive *a = archive_write_new();
 
 	if ((ret = archive_set_format_filter(a, ext)) == ARCHIVE_WARN)
 	{
 		printf("libarchive: %s\n", archive_error_string(a));
-		/*
-		if (errmsg(archive_error_string(a), MB_OKCANCEL | MB_ICONWARNING) == ID_CANCEL)
-		{
-			archive_write_free(a);
-			return 0;
-		}
-		*/
 	}
 	else if (ret < ARCHIVE_OK)
 	{
@@ -463,25 +774,137 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 		return 0;
 	}
 
-	if ((gOptions[0] != '\0') && archive_write_set_options(a, gOptions) < ARCHIVE_OK)
+	if (access(PackedFile, F_OK) != -1)
 	{
-		errmsg(archive_error_string(a), MB_OK | MB_ICONERROR);
+		if (errmsg("Options for compression, encryption etc will be LOST. Are you sure you want this?", MB_YESNO | MB_ICONWARNING) != ID_YES)
+			result = E_EABORTED;
+		else
+		{
+			strncpy(infile, PackedFile, PATH_MAX);
+			tmpfn = tempnam(dirname(infile), "arc_");
+
+			if (archive_format(a) == ARCHIVE_FORMAT_RAW)
+			{
+				if (strstr(PackedFile, ".tar.") != NULL)
+					archive_write_set_format_pax_restricted(a);
+				else
+					result = E_NOT_SUPPORTED;
+			}
+		}
+
+		if (result == E_SUCCESS)
+		{
+			struct archive *org = archive_read_new();
+
+			archive_read_support_filter_all(org);
+			archive_read_support_filter_program_signature(org, "lizard -d", lizard_magic, sizeof(lizard_magic));
+			archive_read_support_format_raw(org);
+			archive_read_support_format_all(org);
+			archive_read_set_passphrase_callback(org, NULL, archive_password_cb);
+
+
+			if (archive_read_open_filename(org, PackedFile, 10240) < ARCHIVE_OK)
+			{
+				errmsg(archive_error_string(org), MB_OK | MB_ICONERROR);
+				result = E_EWRITE;
+			}
+
+			if (result == E_SUCCESS && archive_write_open_filename(a, tmpfn) < ARCHIVE_OK)
+			{
+				errmsg(archive_error_string(a), MB_OK | MB_ICONERROR);
+				result = E_EWRITE;
+			}
+
+			if (result == E_SUCCESS)
+			{
+				while (archive_read_next_header(org, &entry) == ARCHIVE_OK)
+				{
+					skiplist = AddList;
+					strncpy(infile, archive_entry_pathname(entry), PATH_MAX);
+					skip_file = false;
+
+					while (*skiplist)
+					{
+						strncpy(fname, skiplist, PATH_MAX);
+
+						if (!(Flags & PK_PACK_SAVE_PATHS))
+							strncpy(fname, strdup(basename(fname)), PATH_MAX);
+
+						if (!SubPath)
+							strcpy(pkfile, fname);
+						else
+							snprintf(pkfile, PATH_MAX, "%s/%s", SubPath, fname);
+
+						if (strncmp(pkfile, infile, PATH_MAX) == 0)
+						{
+							skip_file = true;
+							break;
+						}
+
+						while (*skiplist++);
+					}
+
+					if (!skip_file)
+					{
+						archive_write_header(a, entry);
+
+						while (archive_read_data_block(org, &rbuff, &rsize, &roffset) != ARCHIVE_EOF)
+						{
+							if (archive_write_data(a, rbuff, rsize) < ARCHIVE_OK)
+							{
+								errmsg(archive_error_string(a), MB_OK | MB_ICONERROR);
+								result = E_EWRITE;
+								break;
+							}
+
+							if (gProcessDataProc(tmpfn, 0) == 0)
+							{
+								result = E_EABORTED;
+								break;
+							}
+						}
+					}
+
+				}
+
+				archive_read_close(org);
+				archive_read_free(org);
+			}
+		}
+
+		if (result != E_SUCCESS)
+		{
+			if (tmpfn)
+				free(tmpfn);
+
+			return result;
+		}
 	}
-
-	archive_write_set_passphrase_callback(a, NULL, archive_password_cb);
-
-	if (Flags & PK_PACK_ENCRYPT)
+	else
 	{
-		// zip: traditional, aes128, aes256
-		if (archive_write_set_options(a, "encryption=traditional") < ARCHIVE_OK)
+
+		if ((gOptions[0] != '\0') && archive_write_set_options(a, gOptions) < ARCHIVE_OK)
+		{
+			errmsg(archive_error_string(a), MB_OK | MB_ICONERROR);
+		}
+
+
+		archive_write_set_passphrase_callback(a, NULL, archive_password_cb);
+
+		if (Flags & PK_PACK_ENCRYPT)
+		{
+			if (archive_write_set_options(a, gEncryption) < ARCHIVE_OK)
+				errmsg(archive_error_string(a), MB_OK | MB_ICONERROR);
+		}
+
+		if (archive_write_open_filename(a, PackedFile) < ARCHIVE_OK)
 			errmsg(archive_error_string(a), MB_OK | MB_ICONERROR);
 	}
 
-	if (archive_write_open_filename(a, PackedFile) < ARCHIVE_OK)
-		errmsg(archive_error_string(a), MB_OK | MB_ICONERROR);
-
 	struct archive *disk = archive_read_disk_new();
+
 	archive_read_disk_set_standard_lookup(disk);
+
 	archive_read_disk_set_symlink_physical(disk);
 
 	while (*AddList)
@@ -662,7 +1085,6 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 					if (pw)
 						archive_entry_set_uname(entry, pw->pw_name);
 
-
 					if ((len = readlink(pkfile, link, sizeof(link) - 1)) != -1)
 					{
 						link[len] = '\0';
@@ -692,7 +1114,7 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 	archive_write_free(a);
 
 	if ((Flags & PK_PACK_MOVE_FILES && result == E_SUCCESS) &&
-	                (errmsg("Now WILL TRY TO REMOVE the source files. Are you sure you want this?", MB_YESNO | MB_ICONWARNING) == ID_YES))
+	                (errmsg("Now WILL TRY to REMOVE ALL (including SKIPPED!) source files. Are you sure you want this?", MB_YESNO | MB_ICONWARNING) == ID_YES))
 	{
 		while (*rmlist)
 		{
@@ -707,6 +1129,142 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 			while (*rmlist++);
 		}
 	}
+
+	if (tmpfn)
+	{
+		if (result == E_SUCCESS)
+			rename(tmpfn, PackedFile);
+
+		free(tmpfn);
+	}
+
+	return result;
+}
+
+int DCPCALL DeleteFiles(char *PackedFile, char *DeleteList)
+{
+	size_t size;
+	la_int64_t offset;
+	const void *buff;
+	bool skip_file;
+	char infile[PATH_MAX];
+	char rmfile[PATH_MAX];
+	char *rmlist, *tmpfn = NULL;
+	struct archive_entry *entry;
+	int ret, result = E_SUCCESS;
+
+	const char *ext = strrchr(PackedFile, '.');
+
+	struct archive *a = archive_write_new();
+
+	if ((ret = archive_set_format_filter(a, ext)) == ARCHIVE_WARN)
+	{
+		printf("libarchive: %s\n", archive_error_string(a));
+	}
+	else if (ret < ARCHIVE_OK)
+	{
+		errmsg(archive_error_string(a), MB_OK | MB_ICONERROR);
+		archive_write_free(a);
+		return 0;
+	}
+
+	if (errmsg("Options for compression, encryption etc will be LOST. Are you sure you want this?", MB_YESNO | MB_ICONWARNING) != ID_YES)
+		result = E_EABORTED;
+	else
+	{
+		strncpy(infile, PackedFile, PATH_MAX);
+		tmpfn = tempnam(dirname(infile), "arc_");
+
+		if (archive_format(a) == ARCHIVE_FORMAT_RAW)
+		{
+			if (strstr(PackedFile, ".tar.") != NULL)
+				archive_write_set_format_pax_restricted(a);
+			else
+				result = E_NOT_SUPPORTED;
+		}
+	}
+
+	if (result == E_SUCCESS)
+	{
+		struct archive *org = archive_read_new();
+
+		archive_read_support_filter_all(org);
+		archive_read_support_filter_program_signature(org, "lizard -d", lizard_magic, sizeof(lizard_magic));
+		archive_read_support_format_raw(org);
+		archive_read_support_format_all(org);
+		archive_read_set_passphrase_callback(org, NULL, archive_password_cb);
+
+		if (archive_read_open_filename(org, PackedFile, 10240) < ARCHIVE_OK)
+		{
+			errmsg(archive_error_string(org), MB_OK | MB_ICONERROR);
+			result = E_EWRITE;
+		}
+
+		if (result == E_SUCCESS && archive_write_open_filename(a, tmpfn) < ARCHIVE_OK)
+		{
+			errmsg(archive_error_string(a), MB_OK | MB_ICONERROR);
+			result = E_EWRITE;
+		}
+
+		if (result == E_SUCCESS)
+		{
+			while (archive_read_next_header(org, &entry) == ARCHIVE_OK)
+			{
+				skip_file = false;
+				rmlist = DeleteList;
+				strncpy(infile, archive_entry_pathname(entry), PATH_MAX);
+
+				while (*rmlist)
+				{
+					strncpy(rmfile, rmlist, PATH_MAX);
+
+					if (strncmp(rmfile + strlen(rmfile) - 4, "/*.*", 4) == 0)
+						rmfile[strlen(rmfile) - 2] = 0;
+
+					if (fnmatch(rmfile, infile, FNM_CASEFOLD) == 0)
+					{
+						skip_file = true;
+						break;
+					}
+
+					while (*rmlist++);
+				}
+
+				if (!skip_file)
+				{
+					archive_write_header(a, entry);
+
+					while (archive_read_data_block(org, (const void**)&buff, &size, &offset) != ARCHIVE_EOF)
+					{
+						if (archive_write_data(a, buff, size) < ARCHIVE_OK)
+						{
+							errmsg(archive_error_string(a), MB_OK | MB_ICONERROR);
+							result = E_EWRITE;
+							break;
+						}
+
+						if (gProcessDataProc(tmpfn, 0) == 0)
+						{
+							result = E_EABORTED;
+							break;
+						}
+					}
+				}
+			}
+
+			archive_read_close(org);
+			archive_read_free(org);
+			archive_write_finish_entry(a);
+			archive_write_close(a);
+			archive_write_free(a);
+		}
+	}
+
+	if (result == E_SUCCESS)
+		rename(tmpfn, PackedFile);
+
+	if (tmpfn)
+		free(tmpfn);
 
 	return result;
 }
