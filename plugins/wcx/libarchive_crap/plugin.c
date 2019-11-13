@@ -90,6 +90,7 @@ static void remove_file(const char *file)
 static int nftw_remove_cb(const char *file, const struct stat *bif, int tflag, struct FTW *ftwbuf)
 {
 	remove_file(file);
+	return 0;
 }
 
 static void remove_target(const char *filename)
@@ -243,7 +244,7 @@ static void checkbox_get_option(uintptr_t pDlg, char* DlgItemName, const char* o
 static void textfield_get_option(uintptr_t pDlg, char* DlgItemName, const char* optstr, char *strval)
 {
 	char *tmpval = malloc(PATH_MAX);
-	memset(tmpval, 0, sizeof(strval));
+	memset(tmpval, 0, PATH_MAX);
 	strncpy(tmpval, (char*)gStartupInfo->SendDlgMsg(pDlg, DlgItemName, DM_GETTEXT, 0, 0), PATH_MAX);
 
 	if (tmpval[0] != '\0')
@@ -262,7 +263,7 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 	int numval;
 	bool bval;
 	char *strval = malloc(PATH_MAX);
-	memset(strval, 0, sizeof(strval));
+	memset(strval, 0, PATH_MAX);
 
 	switch (Msg)
 	{
@@ -464,8 +465,6 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 				gStartupInfo->SendDlgMsg(pDlg, "edOptions", DM_SETTEXT, 0, 0);
 
 		}
-		else
-			printf("マッチョアネーム？\n");
 
 		break;
 	}
@@ -714,7 +713,7 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 	char link[PATH_MAX + 1];
 	int result = E_SUCCESS;
 	char *msg, *rmlist, *skiplist, *tmpfn = NULL;
-	bool skip_file, set_encrypt = false;
+	bool skip_file;
 	size_t rsize;
 	const void *rbuff;
 	la_int64_t roffset;
