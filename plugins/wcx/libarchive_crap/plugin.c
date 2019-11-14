@@ -656,8 +656,15 @@ int DCPCALL ProcessFile(HANDLE hArcData, int Operation, char *DestPath, char *De
 	const void *buff;
 	ArcData handle = (ArcData)hArcData;
 
-	if (Operation == PK_EXTRACT)
+	if (Operation == PK_EXTRACT && !DestPath)
 	{
+		int fd = open(DestName, O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+
+		if (fd == -1)
+			return E_ECREATE;
+		else
+			close(fd);
+
 		int flags = ARCHIVE_EXTRACT_TIME | ARCHIVE_EXTRACT_PERM | ARCHIVE_EXTRACT_FFLAGS;
 
 		struct archive *a = archive_write_disk_new();
@@ -767,7 +774,7 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 	struct archive_entry *entry;
 	struct stat st;
 	char buff[BUFF_SIZE];
-	int fd, ret, id;
+	int fd, ofd, ret, id;
 	ssize_t len;
 	char fname[PATH_MAX];
 	char infile[PATH_MAX];
@@ -812,23 +819,28 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 			strncpy(infile, PackedFile, PATH_MAX);
 			tmpfn = tempnam(dirname(infile), "arc_");
 
-			if (archive_format(a) == ARCHIVE_FORMAT_RAW)
+			if (access(tmpfn, F_OK) != -1)
+				result = E_EWRITE;
+			else
 			{
-				if (strstr(PackedFile, ".tar.") != NULL)
-					archive_write_set_format_pax_restricted(a);
-				else
-					result = E_NOT_SUPPORTED;
-			}
+				if (archive_format(a) == ARCHIVE_FORMAT_RAW)
+				{
+					if (strstr(PackedFile, ".tar.") != NULL)
+						archive_write_set_format_pax_restricted(a);
+					else
+						result = E_NOT_SUPPORTED;
+				}
 
-			if (gOptions[0] != '\0')
-			{
-				asprintf(&msg, "Use these options '%s'?", gOptions);
+				if (gOptions[0] != '\0')
+				{
+					asprintf(&msg, "Use these options '%s'?", gOptions);
 
-				if (errmsg(msg, MB_YESNO | MB_ICONQUESTION) == ID_YES)
-					if (archive_write_set_options(a, gOptions) < ARCHIVE_OK)
-						errmsg(archive_error_string(a), MB_OK | MB_ICONWARNING);
+					if (errmsg(msg, MB_YESNO | MB_ICONQUESTION) == ID_YES)
+						if (archive_write_set_options(a, gOptions) < ARCHIVE_OK)
+							errmsg(archive_error_string(a), MB_OK | MB_ICONWARNING);
 
-				free(msg);
+					free(msg);
+				}
 			}
 		}
 
@@ -849,7 +861,10 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 				result = E_EWRITE;
 			}
 
-			if (result == E_SUCCESS && archive_write_open_filename(a, tmpfn) < ARCHIVE_OK)
+			if (result == E_SUCCESS && (ofd = open(tmpfn, O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)) == -1)
+				result = E_EWRITE;
+
+			if (result == E_SUCCESS && archive_write_open_fd(a, ofd) < ARCHIVE_OK)
 			{
 				errmsg(archive_error_string(a), MB_OK | MB_ICONERROR);
 				result = E_EWRITE;
@@ -928,7 +943,6 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 			errmsg(archive_error_string(a), MB_OK | MB_ICONWARNING);
 		}
 
-
 		if (archive_filter_code(a, 0) == ARCHIVE_FILTER_UU)
 		{
 			asprintf(&msg, "name=%s", AddList);
@@ -960,185 +974,72 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 				errmsg(archive_error_string(a), MB_OK | MB_ICONERROR);
 		}
 
-		if (archive_write_open_filename(a, PackedFile) < ARCHIVE_OK)
+		ofd = open(PackedFile, O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+
+		if (ofd == -1)
+			result = E_ECREATE;
+		else if (archive_write_open_fd(a, ofd) < ARCHIVE_OK)
+		{
 			errmsg(archive_error_string(a), MB_OK | MB_ICONERROR);
+			result = E_ECREATE;
+		}
 	}
 
-	struct archive *disk = archive_read_disk_new();
-
-	archive_read_disk_set_standard_lookup(disk);
-
-	archive_read_disk_set_symlink_physical(disk);
-
-	while (*AddList)
+	if (result == E_SUCCESS)
 	{
-		strcpy(infile, SrcPath);
-		char* pos = strrchr(infile, '/');
-		strncpy(fname, AddList, PATH_MAX);
 
-		if (pos != NULL)
-			strcpy(pos + 1, fname);
-		else
-			strcpy(infile, fname);
+		struct archive *disk = archive_read_disk_new();
 
-		if (!(Flags & PK_PACK_SAVE_PATHS))
-			strncpy(fname, strdup(basename(fname)), PATH_MAX);
+		archive_read_disk_set_standard_lookup(disk);
 
-		if (!SubPath)
-			strcpy(pkfile, fname);
-		else
-			snprintf(pkfile, PATH_MAX, "%s/%s", SubPath, fname);
+		archive_read_disk_set_symlink_physical(disk);
 
-		if (gProcessDataProc(infile, 0) == 0)
-			result = E_EABORTED;
-
-		while ((ret = lstat(infile, &st)) != 0)
+		while (*AddList)
 		{
-			int errsv = errno;
-			asprintf(&msg, "%s: %s", infile, strerror(errsv));
+			strcpy(infile, SrcPath);
+			char* pos = strrchr(infile, '/');
+			strncpy(fname, AddList, PATH_MAX);
 
-			id = errmsg(msg, MB_ABORTRETRYIGNORE | MB_ICONERROR);
+			if (pos != NULL)
+				strcpy(pos + 1, fname);
+			else
+				strcpy(infile, fname);
 
-			if (id == ID_ABORT)
+			if (!(Flags & PK_PACK_SAVE_PATHS))
+				strncpy(fname, strdup(basename(fname)), PATH_MAX);
+
+			if (!SubPath)
+				strcpy(pkfile, fname);
+			else
+				snprintf(pkfile, PATH_MAX, "%s/%s", SubPath, fname);
+
+			if (gProcessDataProc(infile, 0) == 0)
 				result = E_EABORTED;
 
-			free(msg);
-
-			if (id != ID_RETRY)
-				break;
-		}
-
-		if ((ret == 0) && !(S_ISDIR(st.st_mode) && !(Flags & PK_PACK_SAVE_PATHS)))
-		{
-
-			entry = archive_entry_new();
-
-			if (strcmp(ext, ".mtree") == 0 && mtree_opts_nodata())
+			while ((ret = lstat(infile, &st)) != 0)
 			{
-				archive_entry_copy_stat(entry, &st);
-				pw = getpwuid(st.st_uid);
-				gr = getgrgid(st.st_gid);
+				int errsv = errno;
+				asprintf(&msg, "%s: %s", infile, strerror(errsv));
 
-				if (gr)
-					archive_entry_set_gname(entry, gr->gr_name);
+				id = errmsg(msg, MB_ABORTRETRYIGNORE | MB_ICONERROR);
 
-				if (pw)
-					archive_entry_set_uname(entry, pw->pw_name);
-
-				if (S_ISLNK(st.st_mode))
-				{
-					if ((len = readlink(pkfile, link, sizeof(link) - 1)) != -1)
-					{
-						link[len] = '\0';
-						archive_entry_set_symlink(entry, link);
-					}
-					else
-						archive_entry_set_symlink(entry, "");
-				}
-
-				if ((gOptions[0] == '\0') || (strstr(gOptions, "!flags") == NULL))
-				{
-					if (S_ISFIFO(st.st_mode))
-					{
-						asprintf(&msg, "%s: ignoring flags for named pipe.", infile);
-
-						if (errmsg(msg, MB_OKCANCEL | MB_ICONWARNING) == ID_CANCEL)
-							result = E_EABORTED;
-
-						free(msg);
-					}
-					else
-					{
-						int stflags;
-
-						if ((fd = open(infile, O_RDONLY)) == -1)
-						{
-							int errsv = errno;
-							//printf("libarchive: %s: %s\n", infile, strerror(errsv));
-							asprintf(&msg, "%s: %s", infile, strerror(errsv));
-
-							if (errmsg(msg, MB_OKCANCEL | MB_ICONWARNING) == ID_CANCEL)
-								result = E_EABORTED;
-
-							free(msg);
-						}
-
-						if (fd != -1)
-						{
-							ret = ioctl(fd, FS_IOC_GETFLAGS, &stflags);
-
-							if (ret == 0 && stflags != 0)
-								archive_entry_set_fflags(entry, stflags, 0);
-						}
-
-						close(fd);
-					}
-				}
-
-				archive_entry_set_pathname(entry, pkfile);
-				archive_write_header(a, entry);
-
-				if (st.st_size < INT_MAX && gProcessDataProc(infile, st.st_size) == 0)
-					result = E_EABORTED;
-			}
-			else if (S_ISFIFO(st.st_mode))
-			{
-				asprintf(&msg, "%s: ignoring named pipe.", infile);
-
-				if (errmsg(msg, MB_OKCANCEL | MB_ICONWARNING) == ID_CANCEL)
+				if (id == ID_ABORT)
 					result = E_EABORTED;
 
 				free(msg);
+
+				if (id != ID_RETRY)
+					break;
 			}
-			else
+
+			if ((ret == 0) && !(S_ISDIR(st.st_mode) && !(Flags & PK_PACK_SAVE_PATHS)))
 			{
 
-				while ((fd = open(infile, O_RDONLY)) == -1 && !S_ISLNK(st.st_mode))
-				{
-					int errsv = errno;
-					asprintf(&msg, "%s: %s", infile, strerror(errsv));
+				entry = archive_entry_new();
 
-					id = errmsg(msg, MB_ABORTRETRYIGNORE | MB_ICONERROR | MB_DEFBUTTON3);
-
-					if (id == ID_ABORT)
-						result = E_EABORTED;
-
-					free(msg);
-
-					if (id != ID_RETRY)
-						break;
-				}
-
-				if (fd != -1)
-				{
-					archive_entry_set_pathname(entry, infile);
-					archive_entry_copy_stat(entry, &st);
-					archive_read_disk_entry_from_file(disk, entry, fd, &st);
-					archive_entry_set_pathname(entry, pkfile);
-					archive_write_header(a, entry);
-
-					while ((len = read(fd, buff, sizeof(buff))) > 0)
-					{
-						if (archive_write_data(a, buff, len) < ARCHIVE_OK)
-						{
-							errmsg(archive_error_string(a), MB_OK | MB_ICONERROR);
-							result = E_EWRITE;
-							break;
-						}
-
-						if (gProcessDataProc(infile, len) == 0)
-						{
-							result = E_EABORTED;
-							break;
-						}
-					}
-
-					close(fd);
-				}
-				else if (S_ISLNK(st.st_mode) && result != E_EABORTED)
+				if (strcmp(ext, ".mtree") == 0 && mtree_opts_nodata())
 				{
 					archive_entry_copy_stat(entry, &st);
-					archive_entry_set_pathname(entry, pkfile);
 					pw = getpwuid(st.st_uid);
 					gr = getgrgid(st.st_gid);
 
@@ -1148,33 +1049,161 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 					if (pw)
 						archive_entry_set_uname(entry, pw->pw_name);
 
-					if ((len = readlink(pkfile, link, sizeof(link) - 1)) != -1)
+					if (S_ISLNK(st.st_mode))
 					{
-						link[len] = '\0';
-						archive_entry_set_symlink(entry, link);
+						if ((len = readlink(pkfile, link, sizeof(link) - 1)) != -1)
+						{
+							link[len] = '\0';
+							archive_entry_set_symlink(entry, link);
+						}
+						else
+							archive_entry_set_symlink(entry, "");
 					}
-					else
-						archive_entry_set_symlink(entry, "");
 
+					if ((gOptions[0] == '\0') || (strstr(gOptions, "!flags") == NULL))
+					{
+						if (S_ISFIFO(st.st_mode))
+						{
+							asprintf(&msg, "%s: ignoring flags for named pipe.", infile);
+
+							if (errmsg(msg, MB_OKCANCEL | MB_ICONWARNING) == ID_CANCEL)
+								result = E_EABORTED;
+
+							free(msg);
+						}
+						else
+						{
+							int stflags;
+
+							if ((fd = open(infile, O_RDONLY)) == -1)
+							{
+								int errsv = errno;
+								//printf("libarchive: %s: %s\n", infile, strerror(errsv));
+								asprintf(&msg, "%s: %s", infile, strerror(errsv));
+
+								if (errmsg(msg, MB_OKCANCEL | MB_ICONWARNING) == ID_CANCEL)
+									result = E_EABORTED;
+
+								free(msg);
+							}
+
+							if (fd != -1)
+							{
+								ret = ioctl(fd, FS_IOC_GETFLAGS, &stflags);
+
+								if (ret == 0 && stflags != 0)
+									archive_entry_set_fflags(entry, stflags, 0);
+							}
+
+							close(fd);
+						}
+					}
+
+					archive_entry_set_pathname(entry, pkfile);
 					archive_write_header(a, entry);
 
-					if (st.st_size < INT_MAX)
-						gProcessDataProc(infile, st.st_size);
+					if (st.st_size < INT_MAX && gProcessDataProc(infile, st.st_size) == 0)
+						result = E_EABORTED;
+				}
+				else if (S_ISFIFO(st.st_mode))
+				{
+					asprintf(&msg, "%s: ignoring named pipe.", infile);
+
+					if (errmsg(msg, MB_OKCANCEL | MB_ICONWARNING) == ID_CANCEL)
+						result = E_EABORTED;
+
+					free(msg);
+				}
+				else
+				{
+
+					while ((fd = open(infile, O_RDONLY)) == -1 && !S_ISLNK(st.st_mode))
+					{
+						int errsv = errno;
+						asprintf(&msg, "%s: %s", infile, strerror(errsv));
+
+						id = errmsg(msg, MB_ABORTRETRYIGNORE | MB_ICONERROR | MB_DEFBUTTON3);
+
+						if (id == ID_ABORT)
+							result = E_EABORTED;
+
+						free(msg);
+
+						if (id != ID_RETRY)
+							break;
+					}
+
+					if (fd != -1)
+					{
+						archive_entry_set_pathname(entry, infile);
+						archive_entry_copy_stat(entry, &st);
+						archive_read_disk_entry_from_file(disk, entry, fd, &st);
+						archive_entry_set_pathname(entry, pkfile);
+						archive_write_header(a, entry);
+
+						while ((len = read(fd, buff, sizeof(buff))) > 0)
+						{
+							if (archive_write_data(a, buff, len) < ARCHIVE_OK)
+							{
+								errmsg(archive_error_string(a), MB_OK | MB_ICONERROR);
+								result = E_EWRITE;
+								break;
+							}
+
+							if (gProcessDataProc(infile, len) == 0)
+							{
+								result = E_EABORTED;
+								break;
+							}
+						}
+
+						close(fd);
+					}
+					else if (S_ISLNK(st.st_mode) && result != E_EABORTED)
+					{
+						archive_entry_copy_stat(entry, &st);
+						archive_entry_set_pathname(entry, pkfile);
+						pw = getpwuid(st.st_uid);
+						gr = getgrgid(st.st_gid);
+
+						if (gr)
+							archive_entry_set_gname(entry, gr->gr_name);
+
+						if (pw)
+							archive_entry_set_uname(entry, pw->pw_name);
+
+						if ((len = readlink(pkfile, link, sizeof(link) - 1)) != -1)
+						{
+							link[len] = '\0';
+							archive_entry_set_symlink(entry, link);
+						}
+						else
+							archive_entry_set_symlink(entry, "");
+
+						archive_write_header(a, entry);
+
+						if (st.st_size < INT_MAX)
+							gProcessDataProc(infile, st.st_size);
+					}
 				}
 			}
+
+			if (result != E_SUCCESS)
+				break;
+
+			while (*AddList++);
 		}
 
-		if (result != E_SUCCESS)
-			break;
-
-		while (*AddList++);
+		archive_read_free(disk);
+		archive_entry_free(entry);
+		archive_write_finish_entry(a);
 	}
 
-	archive_read_free(disk);
-	archive_entry_free(entry);
-	archive_write_finish_entry(a);
 	archive_write_close(a);
 	archive_write_free(a);
+
+	if (ofd > -1)
+		close(ofd);
 
 	if ((Flags & PK_PACK_MOVE_FILES && result == E_SUCCESS) &&
 	                (errmsg("Now WILL TRY to REMOVE ALL (including SKIPPED!) source files. Are you sure you want this?", MB_YESNO | MB_ICONWARNING) == ID_YES))
@@ -1214,7 +1243,7 @@ int DCPCALL DeleteFiles(char *PackedFile, char *DeleteList)
 	char rmfile[PATH_MAX];
 	char *msg, *rmlist, *tmpfn = NULL;
 	struct archive_entry *entry;
-	int ret, result = E_SUCCESS;
+	int ofd, ret, result = E_SUCCESS;
 
 	const char *ext = strrchr(PackedFile, '.');
 
@@ -1238,23 +1267,28 @@ int DCPCALL DeleteFiles(char *PackedFile, char *DeleteList)
 		strncpy(infile, PackedFile, PATH_MAX);
 		tmpfn = tempnam(dirname(infile), "arc_");
 
-		if (archive_format(a) == ARCHIVE_FORMAT_RAW)
+		if (access(tmpfn, F_OK) != -1)
+			result = E_EWRITE;
+		else
 		{
-			if (strstr(PackedFile, ".tar.") != NULL)
-				archive_write_set_format_pax_restricted(a);
-			else
-				result = E_NOT_SUPPORTED;
-		}
+			if (archive_format(a) == ARCHIVE_FORMAT_RAW)
+			{
+				if (strstr(PackedFile, ".tar.") != NULL)
+					archive_write_set_format_pax_restricted(a);
+				else
+					result = E_NOT_SUPPORTED;
+			}
 
-		if (gOptions[0] != '\0')
-		{
-			asprintf(&msg, "Use these options '%s'?", gOptions);
+			if (gOptions[0] != '\0')
+			{
+				asprintf(&msg, "Use these options '%s'?", gOptions);
 
-			if (errmsg(msg, MB_YESNO | MB_ICONQUESTION) == ID_YES)
-				if (archive_write_set_options(a, gOptions) < ARCHIVE_OK)
-					errmsg(archive_error_string(a), MB_OK | MB_ICONWARNING);
+				if (errmsg(msg, MB_YESNO | MB_ICONQUESTION) == ID_YES)
+					if (archive_write_set_options(a, gOptions) < ARCHIVE_OK)
+						errmsg(archive_error_string(a), MB_OK | MB_ICONWARNING);
 
-			free(msg);
+				free(msg);
+			}
 		}
 	}
 
@@ -1274,7 +1308,10 @@ int DCPCALL DeleteFiles(char *PackedFile, char *DeleteList)
 			result = E_EWRITE;
 		}
 
-		if (result == E_SUCCESS && archive_write_open_filename(a, tmpfn) < ARCHIVE_OK)
+		if (result == E_SUCCESS && (ofd = open(tmpfn, O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)) == -1)
+			result = E_EWRITE;
+
+		if (result == E_SUCCESS && archive_write_open_fd(a, ofd) < ARCHIVE_OK)
 		{
 			errmsg(archive_error_string(a), MB_OK | MB_ICONERROR);
 			result = E_EWRITE;
@@ -1331,6 +1368,10 @@ int DCPCALL DeleteFiles(char *PackedFile, char *DeleteList)
 			archive_write_finish_entry(a);
 			archive_write_close(a);
 			archive_write_free(a);
+
+			if (ofd > -1)
+				close(ofd);
+
 		}
 	}
 
