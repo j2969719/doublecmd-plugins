@@ -112,7 +112,9 @@ static bool mtree_opts_nodata(void)
 
 	if (gOptions[0] != '\0')
 	{
-		if (strstr(gOptions, "all") != NULL)
+		if (strstr(gOptions, "dironly") != NULL)
+			result = true;
+		else if (strstr(gOptions, "all") != NULL)
 			result = false;
 		else if (strstr(gOptions, "cksum") != NULL)
 			result = false;
@@ -294,25 +296,8 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 		if (strncmp(DlgItemName, "chkMtree", 8) == 0)
 		{
 			bval = (bool)gStartupInfo->SendDlgMsg(pDlg, "chkMtreeAll", DM_GETCHECK, 0, 0);
-			gStartupInfo->SendDlgMsg(pDlg, "chkMtreeCksum", DM_ENABLE, (intptr_t)!bval, 0);
-			gStartupInfo->SendDlgMsg(pDlg, "chkMtreeDevice", DM_ENABLE, (intptr_t)!bval, 0);
-			gStartupInfo->SendDlgMsg(pDlg, "chkMtreeFlags", DM_ENABLE, (intptr_t)!bval, 0);
-			gStartupInfo->SendDlgMsg(pDlg, "chkMtreeGid", DM_ENABLE, (intptr_t)!bval, 0);
-			gStartupInfo->SendDlgMsg(pDlg, "chkMtreeGname", DM_ENABLE, (intptr_t)!bval, 0);
-			gStartupInfo->SendDlgMsg(pDlg, "chkMtreeIndent", DM_ENABLE, (intptr_t)!bval, 0);
-			gStartupInfo->SendDlgMsg(pDlg, "chkMtreeLink", DM_ENABLE, (intptr_t)!bval, 0);
-			gStartupInfo->SendDlgMsg(pDlg, "chkMtreeMd5", DM_ENABLE, (intptr_t)!bval, 0);
-			gStartupInfo->SendDlgMsg(pDlg, "chkMtreeMode", DM_ENABLE, (intptr_t)!bval, 0);
-			gStartupInfo->SendDlgMsg(pDlg, "chkMtreeNlink", DM_ENABLE, (intptr_t)!bval, 0);
-			gStartupInfo->SendDlgMsg(pDlg, "chkMtreeRmd160", DM_ENABLE, (intptr_t)!bval, 0);
-			gStartupInfo->SendDlgMsg(pDlg, "chkMtreeSha1", DM_ENABLE, (intptr_t)!bval, 0);
-			gStartupInfo->SendDlgMsg(pDlg, "chkMtreeSha256", DM_ENABLE, (intptr_t)!bval, 0);
-			gStartupInfo->SendDlgMsg(pDlg, "chkMtreeSha384", DM_ENABLE, (intptr_t)!bval, 0);
-			gStartupInfo->SendDlgMsg(pDlg, "chkMtreeSha512", DM_ENABLE, (intptr_t)!bval, 0);
-			gStartupInfo->SendDlgMsg(pDlg, "chkMtreeSize", DM_ENABLE, (intptr_t)!bval, 0);
-			gStartupInfo->SendDlgMsg(pDlg, "chkMtreeTime", DM_ENABLE, (intptr_t)!bval, 0);
-			gStartupInfo->SendDlgMsg(pDlg, "chkMtreeUid", DM_ENABLE, (intptr_t)!bval, 0);
-			gStartupInfo->SendDlgMsg(pDlg, "chkMtreeUname", DM_ENABLE, (intptr_t)!bval, 0);
+			gStartupInfo->SendDlgMsg(pDlg, "gbMtreeAttr", DM_ENABLE, (intptr_t)!bval, 0);
+			gStartupInfo->SendDlgMsg(pDlg, "gbMtreeCkSum", DM_ENABLE, (intptr_t)!bval, 0);
 
 			strncpy(strval, "mtree:", PATH_MAX);
 
@@ -325,7 +310,6 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 				checkbox_get_option(pDlg, "chkMtreeFlags", "flags", true, strval);
 				checkbox_get_option(pDlg, "chkMtreeGid", "gid", true, strval);
 				checkbox_get_option(pDlg, "chkMtreeGname", "gname", true, strval);
-				checkbox_get_option(pDlg, "chkMtreeIndent", "indent", false, strval);
 				checkbox_get_option(pDlg, "chkMtreeLink", "link", true, strval);
 				checkbox_get_option(pDlg, "chkMtreeMd5", "md5", false, strval);
 				checkbox_get_option(pDlg, "chkMtreeMode", "mode", true, strval);
@@ -339,24 +323,44 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 				checkbox_get_option(pDlg, "chkMtreeTime", "time", true, strval);
 				checkbox_get_option(pDlg, "chkMtreeUid", "uid", true, strval);
 				checkbox_get_option(pDlg, "chkMtreeUname", "uname", true, strval);
+				checkbox_get_option(pDlg, "chkMtreeResdevice", "resdevice", false, strval);
 			}
 
+			checkbox_get_option(pDlg, "chkMtreeDirsOnly", "dironly", false, strval);
 			checkbox_get_option(pDlg, "chkMtreeUseSet", "use-set", false, strval);
+			checkbox_get_option(pDlg, "chkMtreeIndent", "indent", false, strval);
 
 			if (strcmp(strval, "mtree:") != 0)
 				gStartupInfo->SendDlgMsg(pDlg, "edOptions", DM_SETTEXT, (intptr_t)strval, 0);
 			else
 				gStartupInfo->SendDlgMsg(pDlg, "edOptions", DM_SETTEXT, 0, 0);
 		}
-		else if (strncmp(DlgItemName, "cbGZ", 5) == 0)
+		else if (strncmp(DlgItemName, "cb7Z", 4) == 0)
 		{
-			numval = (int)gStartupInfo->SendDlgMsg(pDlg, "cbGZ", DM_LISTGETITEMINDEX, 0, 0);
+			numval = (int)gStartupInfo->SendDlgMsg(pDlg, "cb7ZCompression", DM_LISTGETITEMINDEX, 0, 0);
 
 			if (numval > -1)
 			{
-				snprintf(strval, PATH_MAX, "compression-level=%d", numval);
-				gStartupInfo->SendDlgMsg(pDlg, "edOptions", DM_SETTEXT, (intptr_t)strval, 0);
+				snprintf(strval, PATH_MAX, "7zip:compression=%s", (char*)gStartupInfo->SendDlgMsg(pDlg, "cb7ZCompression", DM_GETTEXT, 0, 0));
 			}
+			else
+				strncpy(strval, "7zip:", PATH_MAX);
+
+			numval = (int)gStartupInfo->SendDlgMsg(pDlg, "cb7ZCompLvl", DM_LISTGETITEMINDEX, 0, 0);
+
+			if (numval > -1)
+			{
+				if (strval[strlen(strval) - 1] != ':')
+					strcat(strval, ",");
+
+				snprintf(strval, PATH_MAX, "%scompression-level=%d", strdup(strval), numval);
+			}
+
+			if (strcmp(strval, "7zip:") != 0)
+				gStartupInfo->SendDlgMsg(pDlg, "edOptions", DM_SETTEXT, (intptr_t)strval, 0);
+			else
+				gStartupInfo->SendDlgMsg(pDlg, "edOptions", DM_SETTEXT, 0, 0);
+
 		}
 		else if (strstr(DlgItemName, "Zip") != NULL)
 		{
@@ -464,6 +468,64 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 			else
 				gStartupInfo->SendDlgMsg(pDlg, "edOptions", DM_SETTEXT, 0, 0);
 
+		}
+		else if (strstr(DlgItemName, "Filters") != NULL)
+		{
+			if (strcmp(DlgItemName, "cbFiltersZSTDComprLvl") == 0)
+			{
+				strncpy(strval, "zstd:", PATH_MAX);
+
+				numval = (int)gStartupInfo->SendDlgMsg(pDlg, "cbFiltersZSTDComprLvl", DM_LISTGETITEMINDEX, 0, 0);
+
+				if (numval > -1)
+				{
+					gStartupInfo->SendDlgMsg(pDlg, "cbFiltersCompLvl", DM_SETTEXT, 0, 0);
+					snprintf(strval, PATH_MAX, "%scompression-level=%d", strdup(strval), numval + 1);
+				}
+			}
+			else if (strstr(DlgItemName, "FiltersLZ4") != NULL)
+			{
+				strncpy(strval, "lz4:", PATH_MAX);
+				checkbox_get_option(pDlg, "chkFiltersLZ4StreamChksum", "stream-checksum", true, strval);
+				checkbox_get_option(pDlg, "chkFiltersLZ4BlockChksum", "block-checksum", true, strval);
+				checkbox_get_option(pDlg, "chkFiltersLZ4BlockDependence", "block-dependence", false, strval);
+				textfield_get_option(pDlg, "cbFiltersLZ4BlockSize", "block-size", strval);
+			}
+			else if (strcmp(DlgItemName, "chkFiltersGZTimestamp") == 0)
+			{
+				strncpy(strval, "gzip:", PATH_MAX);
+				checkbox_get_option(pDlg, "chkFiltersGZTimestamp", "timestamp", true, strval);
+			}
+			else if (strcmp(DlgItemName, "edFiltersLZMAThreads") == 0)
+			{
+				strncpy(strval, "lzma:", PATH_MAX);
+				textfield_get_option(pDlg, "edFiltersLZMAThreads", "threads", strval);
+			}
+			else if (strcmp(DlgItemName, "cbFiltersLrzipCompr") == 0)
+			{
+				strncpy(strval, "lrzip:", PATH_MAX);
+				textfield_get_option(pDlg, "cbFiltersLrzipCompr", "compression", strval);
+			}
+
+			numval = (int)gStartupInfo->SendDlgMsg(pDlg, "cbFiltersCompLvl", DM_LISTGETITEMINDEX, 0, 0);
+
+			if (numval > -1)
+			{
+				if (strval[strlen(strval) - 1] == ':')
+					snprintf(strval, PATH_MAX, "compression-level=%d", numval);
+				else
+				{
+					if (strval[strlen(strval) - 1] != '\0')
+						strcat(strval, ",");
+
+					snprintf(strval, PATH_MAX, "%scompression-level=%d", strdup(strval), numval);
+				}
+			}
+
+			if (strval[strlen(strval) - 1] != ':')
+				gStartupInfo->SendDlgMsg(pDlg, "edOptions", DM_SETTEXT, (intptr_t)strval, 0);
+			else
+				gStartupInfo->SendDlgMsg(pDlg, "edOptions", DM_SETTEXT, 0, 0);
 		}
 
 		break;
@@ -757,6 +819,17 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 				else
 					result = E_NOT_SUPPORTED;
 			}
+
+			if (gOptions[0] != '\0')
+			{
+				asprintf(&msg, "Use these options '%s'?", gOptions);
+
+				if (errmsg(msg, MB_YESNO | MB_ICONQUESTION) == ID_YES)
+					if (archive_write_set_options(a, gOptions) < ARCHIVE_OK)
+						errmsg(archive_error_string(a), MB_OK | MB_ICONWARNING);
+
+				free(msg);
+			}
 		}
 
 		if (result == E_SUCCESS)
@@ -852,9 +925,32 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 
 		if ((gOptions[0] != '\0') && archive_write_set_options(a, gOptions) < ARCHIVE_OK)
 		{
-			errmsg(archive_error_string(a), MB_OK | MB_ICONERROR);
+			errmsg(archive_error_string(a), MB_OK | MB_ICONWARNING);
 		}
 
+
+		if (archive_filter_code(a, 0) == ARCHIVE_FILTER_UU)
+		{
+			asprintf(&msg, "name=%s", AddList);
+			archive_write_set_options(a, msg);
+
+			strcpy(infile, SrcPath);
+			char* pos = strrchr(infile, '/');
+			strncpy(fname, AddList, PATH_MAX);
+
+			if (pos != NULL)
+				strcpy(pos + 1, fname);
+			else
+				strcpy(infile, fname);
+
+			if (stat(infile, &st) == 0)
+			{
+				asprintf(&msg, "mode=%o", st.st_mode);
+				archive_write_set_options(a, msg);
+			}
+
+			free(msg);
+		}
 
 		archive_write_set_passphrase_callback(a, NULL, archive_password_cb);
 
@@ -1116,7 +1212,7 @@ int DCPCALL DeleteFiles(char *PackedFile, char *DeleteList)
 	bool skip_file;
 	char infile[PATH_MAX];
 	char rmfile[PATH_MAX];
-	char *rmlist, *tmpfn = NULL;
+	char *msg, *rmlist, *tmpfn = NULL;
 	struct archive_entry *entry;
 	int ret, result = E_SUCCESS;
 
@@ -1148,6 +1244,17 @@ int DCPCALL DeleteFiles(char *PackedFile, char *DeleteList)
 				archive_write_set_format_pax_restricted(a);
 			else
 				result = E_NOT_SUPPORTED;
+		}
+
+		if (gOptions[0] != '\0')
+		{
+			asprintf(&msg, "Use these options '%s'?", gOptions);
+
+			if (errmsg(msg, MB_YESNO | MB_ICONQUESTION) == ID_YES)
+				if (archive_write_set_options(a, gOptions) < ARCHIVE_OK)
+					errmsg(archive_error_string(a), MB_OK | MB_ICONWARNING);
+
+			free(msg);
 		}
 	}
 
