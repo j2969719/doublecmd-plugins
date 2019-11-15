@@ -45,16 +45,28 @@ tExtensionStartupInfo* gStartupInfo = NULL;
 static char gOptions[PATH_MAX];
 static char gEncryption[PATH_MAX] = "encryption=traditional";
 static char gLFMPath[PATH_MAX];
-bool gMtreeClasic = false;
+static bool gMtreeClasic = false;
+static bool gMtreeCheckFS = false;
+static bool gReadCompat2x = false;
+static bool gReadIgnoreCRC = false;
+static bool gReadMacExt = false;
+static bool gReadDisableJoliet = false;
+static bool gReadDisableRockridge = false;
+static bool gExtension = false;
+static char gReadCharset[256];
+static int  gTarFormat = ARCHIVE_FORMAT_TAR;
 
 
 void DCPCALL ExtensionInitialize(tExtensionStartupInfo* StartupInfo)
 {
+	printf("----> ExtensionInitialize\n");
 	Dl_info dlinfo;
 	const char* lfm_name = "dialog.lfm";
 
 	gStartupInfo = malloc(sizeof(tExtensionStartupInfo));
 	memcpy(gStartupInfo, StartupInfo, sizeof(tExtensionStartupInfo));
+
+	gExtension = true;
 
 	memset(&dlinfo, 0, sizeof(dlinfo));
 
@@ -70,7 +82,11 @@ void DCPCALL ExtensionInitialize(tExtensionStartupInfo* StartupInfo)
 
 void DCPCALL ExtensionFinalize(void* Reserved)
 {
-	free(gStartupInfo);
+	printf("----> ExtensionFinalize\n");
+	if (gExtension && gStartupInfo != NULL)
+		free(gStartupInfo);
+
+	gExtension = false;
 }
 
 static int errmsg(const char *msg, long flags)
@@ -139,74 +155,111 @@ static int archive_set_format_filter(struct archive *a, const char*ext)
 {
 	int ret;
 
-	if (strcmp(ext, ".tzst") == 0)
+	if (strcasecmp(ext, ".tzst") == 0)
 	{
-		ret = archive_write_set_format_pax_restricted(a);
+		ret = archive_write_set_format(a, gTarFormat);
 		ret = archive_write_add_filter_zstd(a);
 	}
-	else if (strcmp(ext, ".zst") == 0)
+	else if (strcasecmp(ext, ".zst") == 0)
 	{
 		ret = archive_write_set_format_raw(a);
 		ret = archive_write_add_filter_zstd(a);
 	}
-	else if (strcmp(ext, ".mtree") == 0)
+	else if (strcasecmp(ext, ".mtree") == 0)
 	{
 		if (gMtreeClasic)
 			ret = archive_write_set_format_mtree_classic(a);
 		else
 			ret = archive_write_set_format_mtree(a);
 	}
-	else if (strcmp(ext, ".lz4") == 0)
+	else if (strcasecmp(ext, ".lz4") == 0)
 	{
 		ret = archive_write_set_format_raw(a);
 		ret = archive_write_add_filter_lz4(a);
 	}
-	else if (strcmp(ext, ".lz") == 0)
+	else if (strcasecmp(ext, ".lz") == 0)
 	{
 		ret = archive_write_set_format_raw(a);
 		ret = archive_write_add_filter_lzip(a);
 	}
-	else if (strcmp(ext, ".lzo") == 0)
+	else if (strcasecmp(ext, ".lzo") == 0)
 	{
 		ret = archive_write_set_format_raw(a);
 		ret = archive_write_add_filter_lzop(a);
 	}
-	else if (strcmp(ext, ".lrz") == 0)
+	else if (strcasecmp(ext, ".lrz") == 0)
 	{
 		ret = archive_write_set_format_raw(a);
 		ret = archive_write_add_filter_lrzip(a);
 	}
-	else if (strcmp(ext, ".grz") == 0)
+	else if (strcasecmp(ext, ".grz") == 0)
 	{
 		ret = archive_write_set_format_raw(a);
 		ret = archive_write_add_filter_grzip(a);
 	}
-	else if (strcmp(ext, ".lzma") == 0)
+	else if (strcasecmp(ext, ".lzma") == 0)
 	{
 		ret = archive_write_set_format_raw(a);
 		ret = archive_write_add_filter_lzma(a);
 	}
-	else if (strcmp(ext, ".b64") == 0)
+	else if (strcasecmp(ext, ".b64") == 0)
 	{
 		ret = archive_write_set_format_raw(a);
 		ret = archive_write_add_filter_b64encode(a);
 	}
-	else if (strcmp(ext, ".uue") == 0)
+	else if (strcasecmp(ext, ".uue") == 0)
 	{
 		ret = archive_write_set_format_raw(a);
 		ret = archive_write_add_filter_uuencode(a);
 	}
-	else if (strcmp(ext, ".gz") == 0)
+	else if (strcasecmp(ext, ".gz") == 0)
 	{
 		ret = archive_write_set_format_raw(a);
 		ret = archive_write_add_filter_gzip(a);
 	}
-	else if (strcmp(ext, ".xz") == 0)
+	else if (strcasecmp(ext, ".xz") == 0)
 	{
 		ret = archive_write_set_format_raw(a);
 		ret = archive_write_add_filter_xz(a);
 	}
-	else if (strcmp(ext, ".liz") == 0)
+	else if (strcasecmp(ext, ".z") == 0)
+	{
+		ret = archive_write_set_format_raw(a);
+		ret = archive_write_add_filter_compress(a);
+	}
+	else if (strcasecmp(ext, ".bz2") == 0)
+	{
+		ret = archive_write_set_format_raw(a);
+		ret = archive_write_add_filter_bzip2(a);
+	}
+	else if (strcasecmp(ext, ".warc") == 0)
+	{
+		ret = archive_write_set_format_warc(a);
+	}
+	else if (strcasecmp(ext, ".xar") == 0)
+	{
+		ret = archive_write_set_format_xar(a);
+	}
+	else if (strcasecmp(ext, ".tar") == 0)
+	{
+		ret = archive_write_set_format(a, gTarFormat);
+	}
+	else if (strcasecmp(ext, ".tgz") == 0)
+	{
+		ret = archive_write_set_format(a, gTarFormat);
+		ret = archive_write_add_filter_gzip(a);
+	}
+	else if (strcasecmp(ext, ".tbz2") == 0)
+	{
+		ret = archive_write_set_format(a, gTarFormat);
+		ret = archive_write_add_filter_bzip2(a);
+	}
+	else if (strcasecmp(ext, ".txz") == 0)
+	{
+		ret = archive_write_set_format(a, gTarFormat);
+		ret = archive_write_add_filter_xz(a);
+	}
+	else if (strcasecmp(ext, ".liz") == 0)
 	{
 		ret = archive_write_set_format_raw(a);
 		ret = archive_write_add_filter_program(a, "lizard");
@@ -276,6 +329,38 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 		gStartupInfo->SendDlgMsg(pDlg, "lblInfo", DM_SETTEXT, (intptr_t)strval, 0);
 		gStartupInfo->SendDlgMsg(pDlg, "cbZISOCompLvl", DM_ENABLE, 0, 0);
 
+		switch (gTarFormat)
+		{
+		case ARCHIVE_FORMAT_TAR_USTAR:
+			numval = 1;
+			break;
+
+		case ARCHIVE_FORMAT_TAR_PAX_INTERCHANGE:
+			numval = 2;
+			break;
+
+		case ARCHIVE_FORMAT_TAR_PAX_RESTRICTED:
+			numval = 3;
+			break;
+
+		case ARCHIVE_FORMAT_TAR_GNUTAR:
+			numval = 4;
+			break;
+
+		default:
+			numval = 0;
+		}
+
+		gStartupInfo->SendDlgMsg(pDlg, "cbTarFormat", DM_LISTSETITEMINDEX, numval, 0);
+
+		gStartupInfo->SendDlgMsg(pDlg, "cbReadCharset", DM_SETTEXT, (intptr_t)gReadCharset, 0);
+		gStartupInfo->SendDlgMsg(pDlg, "chkReadCompat2x", DM_SETCHECK, (intptr_t)gReadCompat2x, 0);
+		gStartupInfo->SendDlgMsg(pDlg, "chkReadMtreeckfs", DM_SETCHECK, (intptr_t)gMtreeCheckFS, 0);
+		gStartupInfo->SendDlgMsg(pDlg, "chkReadMacExt", DM_SETCHECK, (intptr_t)gReadMacExt, 0);
+		gStartupInfo->SendDlgMsg(pDlg, "chkReadJoliet", DM_SETCHECK, (intptr_t)gReadDisableJoliet, 0);
+		gStartupInfo->SendDlgMsg(pDlg, "chkReadRockridge", DM_SETCHECK, (intptr_t)gReadDisableRockridge, 0);
+		gStartupInfo->SendDlgMsg(pDlg, "chkReadIgnoreCRC", DM_SETCHECK, (intptr_t)gReadIgnoreCRC, 0);
+
 		break;
 
 	case DN_CLICK:
@@ -334,6 +419,63 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 				gStartupInfo->SendDlgMsg(pDlg, "edOptions", DM_SETTEXT, (intptr_t)strval, 0);
 			else
 				gStartupInfo->SendDlgMsg(pDlg, "edOptions", DM_SETTEXT, 0, 0);
+		}
+		else if (strcmp(DlgItemName, "cbReadCharset") == 0)
+		{
+			strncpy(gReadCharset, (char*)gStartupInfo->SendDlgMsg(pDlg, "cbReadCharset", DM_GETTEXT, 0, 0), 255);
+		}
+		else if (strcmp(DlgItemName, "chkReadMtreeckfs") == 0)
+		{
+			gMtreeCheckFS = (bool)gStartupInfo->SendDlgMsg(pDlg, "chkReadMtreeckfs", DM_GETCHECK, 0, 0);
+		}
+		else if (strcmp(DlgItemName, "chkReadCompat2x") == 0)
+		{
+			gReadCompat2x = (bool)gStartupInfo->SendDlgMsg(pDlg, "chkReadCompat2x", DM_GETCHECK, 0, 0);
+		}
+		else if (strcmp(DlgItemName, "chkReadIgnoreCRC") == 0)
+		{
+			gReadIgnoreCRC = (bool)gStartupInfo->SendDlgMsg(pDlg, "chkReadIgnoreCRC", DM_GETCHECK, 0, 0);
+		}
+		else if (strcmp(DlgItemName, "chkReadMacExt") == 0)
+		{
+			gReadMacExt = (bool)gStartupInfo->SendDlgMsg(pDlg, "chkReadMacExt", DM_GETCHECK, 0, 0);
+		}
+		else if (strcmp(DlgItemName, "chkReadJoliet") == 0)
+		{
+			gReadDisableJoliet = (bool)gStartupInfo->SendDlgMsg(pDlg, "chkReadJoliet", DM_GETCHECK, 0, 0);
+		}
+		else if (strcmp(DlgItemName, "chkReadRockridge") == 0)
+		{
+			gReadDisableRockridge = (bool)gStartupInfo->SendDlgMsg(pDlg, "chkReadRockridge", DM_GETCHECK, 0, 0);
+		}
+		else if (strncmp(DlgItemName, "cbTar", 5) == 0)
+		{
+			numval = (int)gStartupInfo->SendDlgMsg(pDlg, "cbTarFormat", DM_LISTGETITEMINDEX, 0, 0);
+
+			if (numval > -1)
+			{
+				switch (numval)
+				{
+				case 1:
+					gTarFormat = ARCHIVE_FORMAT_TAR_USTAR;
+					break;
+
+				case 2:
+					gTarFormat = ARCHIVE_FORMAT_TAR_PAX_INTERCHANGE;
+					break;
+
+				case 3:
+					gTarFormat = ARCHIVE_FORMAT_TAR_PAX_RESTRICTED;
+					break;
+
+				case 4:
+					gTarFormat = ARCHIVE_FORMAT_TAR_GNUTAR;
+					break;
+
+				default:
+					gTarFormat = ARCHIVE_FORMAT_TAR;
+				}
+			}
 		}
 		else if (strncmp(DlgItemName, "cb7Z", 4) == 0)
 		{
@@ -557,6 +699,32 @@ HANDLE DCPCALL OpenArchive(tOpenArchiveData *ArchiveData)
 	archive_read_support_format_raw(handle->archive);
 	archive_read_support_format_all(handle->archive);
 	strncpy(handle->arcname, ArchiveData->ArcName, PATH_MAX);
+
+	if (gMtreeCheckFS && strcasestr(ArchiveData->ArcName, ".mtree") != NULL)
+		archive_read_set_options(handle->archive, "checkfs");
+	else if ((gReadDisableJoliet || gReadDisableRockridge) && strcasestr(ArchiveData->ArcName, ".iso") != NULL)
+	{
+		if (gReadDisableJoliet)
+			archive_read_set_options(handle->archive, "!joliet");
+
+		if (gReadDisableRockridge)
+			archive_read_set_options(handle->archive, "!rockridge");
+	}
+	else
+	{
+		if (gReadIgnoreCRC)
+			archive_read_set_options(handle->archive, "ignorecrc32");
+
+		if (gReadMacExt)
+			archive_read_set_options(handle->archive, "mac-ext");
+
+		if (gReadCompat2x)
+			archive_read_set_options(handle->archive, "compat-2x");
+
+		if (gReadCharset[0] != '\0')
+			archive_read_set_format_option(handle->archive, NULL, "hdrcharset", gReadCharset);
+	}
+
 	int r = archive_read_open_filename(handle->archive, ArchiveData->ArcName, 10240);
 
 	if (r != ARCHIVE_OK)
@@ -581,10 +749,11 @@ int DCPCALL ReadHeaderEx(HANDLE hArcData, tHeaderDataEx *HeaderDataEx)
 	ArcData handle = (ArcData)hArcData;
 	char *filename = NULL;
 
-	while ((ret = archive_read_next_header(handle->archive, &handle->entry)) == ARCHIVE_RETRY)
+	while ((ret = archive_read_next_header(handle->archive, &handle->entry)) == ARCHIVE_RETRY ||
+	                (ret == ARCHIVE_OK && strcmp(".", archive_entry_pathname(handle->entry)) == 0))
 	{
-		if (errmsg(archive_error_string(handle->archive),
-		                MB_RETRYCANCEL | MB_ICONWARNING) == ID_CANCEL)
+		if (ret == ARCHIVE_RETRY && errmsg(archive_error_string(handle->archive),
+		                                   MB_RETRYCANCEL | MB_ICONWARNING) == ID_CANCEL)
 			return E_EABORTED;
 	}
 
@@ -625,6 +794,8 @@ int DCPCALL ReadHeaderEx(HANDLE hArcData, tHeaderDataEx *HeaderDataEx)
 			{
 				if (filename[0] == '/')
 					strncpy(HeaderDataEx->FileName, filename + 1, sizeof(HeaderDataEx->FileName) - 1);
+				else if (filename[0] == '.' && filename[1] == '/')
+					strncpy(HeaderDataEx->FileName, filename + 2, sizeof(HeaderDataEx->FileName) - 1);
 				else
 					strncpy(HeaderDataEx->FileName, filename, sizeof(HeaderDataEx->FileName) - 1);
 			}
@@ -825,9 +996,7 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 			{
 				if (archive_format(a) == ARCHIVE_FORMAT_RAW)
 				{
-					if (strstr(PackedFile, ".tar.") != NULL)
-						archive_write_set_format_pax_restricted(a);
-					else
+					if (strcasestr(PackedFile, ".tar.") == NULL || archive_write_set_format(a, gTarFormat)  < ARCHIVE_OK)
 						result = E_NOT_SUPPORTED;
 				}
 
@@ -1273,9 +1442,7 @@ int DCPCALL DeleteFiles(char *PackedFile, char *DeleteList)
 		{
 			if (archive_format(a) == ARCHIVE_FORMAT_RAW)
 			{
-				if (strstr(PackedFile, ".tar.") != NULL)
-					archive_write_set_format_pax_restricted(a);
-				else
+				if (strcasestr(PackedFile, ".tar.") == NULL || archive_write_set_format(a, gTarFormat)  < ARCHIVE_OK)
 					result = E_NOT_SUPPORTED;
 			}
 
