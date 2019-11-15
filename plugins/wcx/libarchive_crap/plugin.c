@@ -59,14 +59,15 @@ static int  gTarFormat = ARCHIVE_FORMAT_TAR;
 
 void DCPCALL ExtensionInitialize(tExtensionStartupInfo* StartupInfo)
 {
-	printf("----> ExtensionInitialize\n");
 	Dl_info dlinfo;
 	const char* lfm_name = "dialog.lfm";
 
-	gStartupInfo = malloc(sizeof(tExtensionStartupInfo));
-	memcpy(gStartupInfo, StartupInfo, sizeof(tExtensionStartupInfo));
-
-	gExtension = true;
+	if (!gExtension)
+	{
+		gStartupInfo = malloc(sizeof(tExtensionStartupInfo));
+		memcpy(gStartupInfo, StartupInfo, sizeof(tExtensionStartupInfo));
+		gExtension = true;
+	}
 
 	memset(&dlinfo, 0, sizeof(dlinfo));
 
@@ -82,7 +83,6 @@ void DCPCALL ExtensionInitialize(tExtensionStartupInfo* StartupInfo)
 
 void DCPCALL ExtensionFinalize(void* Reserved)
 {
-	printf("----> ExtensionFinalize\n");
 	if (gExtension && gStartupInfo != NULL)
 		free(gStartupInfo);
 
@@ -91,7 +91,13 @@ void DCPCALL ExtensionFinalize(void* Reserved)
 
 static int errmsg(const char *msg, long flags)
 {
-	return gStartupInfo->MessageBox(msg ? (char*)msg : "Unknown error", NULL, flags);
+	if (gStartupInfo)
+		return gStartupInfo->MessageBox(msg ? (char*)msg : "Unknown error", NULL, flags);
+	else
+	{
+		printf("(gStartupInfo->MessageBox, gStartupInfo == NULL): %s", msg);
+		return ID_ABORT;
+	}
 }
 
 static void remove_file(const char *file)
@@ -753,7 +759,7 @@ int DCPCALL ReadHeaderEx(HANDLE hArcData, tHeaderDataEx *HeaderDataEx)
 	                (ret == ARCHIVE_OK && strcmp(".", archive_entry_pathname(handle->entry)) == 0))
 	{
 		if (ret == ARCHIVE_RETRY && errmsg(archive_error_string(handle->archive),
-		                                   MB_RETRYCANCEL | MB_ICONWARNING) == ID_CANCEL)
+		                                   MB_RETRYCANCEL | MB_ICONWARNING) != ID_RETRY)
 			return E_EABORTED;
 	}
 
@@ -929,7 +935,9 @@ int DCPCALL GetPackerCaps(void)
 
 void DCPCALL ConfigurePacker(HWND Parent, HINSTANCE DllInstance)
 {
-	if (access(gLFMPath, F_OK) != 0)
+	if (!gStartupInfo)
+		printf("ConfigurePacker: gStartupInfo == NULL\n");
+	else if (access(gLFMPath, F_OK) != 0)
 	{
 		char *msg;
 		asprintf(&msg, "%s\nCurrent Options ($ man archive_write_set_options):", archive_version_details());
