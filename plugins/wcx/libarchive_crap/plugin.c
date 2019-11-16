@@ -52,28 +52,42 @@ static bool gReadIgnoreCRC = false;
 static bool gReadMacExt = false;
 static bool gReadDisableJoliet = false;
 static bool gReadDisableRockridge = false;
-static bool gExtension = false;
+static bool gCanHandleRAW = false;
+static bool gReadSkipDot = true;
+static bool gNotabene = true;
 static char gReadCharset[256];
 static int  gTarFormat = ARCHIVE_FORMAT_TAR;
 
+
+char* strlcpy(char* p, const char* p2, int maxlen)
+{
+	if ((int)strlen(p2) >= maxlen)
+	{
+		strncpy(p, p2, maxlen);
+		p[maxlen] = 0;
+	}
+	else
+		strcpy(p, p2);
+
+	return p;
+}
 
 void DCPCALL ExtensionInitialize(tExtensionStartupInfo* StartupInfo)
 {
 	Dl_info dlinfo;
 	const char* lfm_name = "dialog.lfm";
 
-	if (!gExtension)
+	if (gStartupInfo == NULL)
 	{
 		gStartupInfo = malloc(sizeof(tExtensionStartupInfo));
 		memcpy(gStartupInfo, StartupInfo, sizeof(tExtensionStartupInfo));
-		gExtension = true;
 	}
 
 	memset(&dlinfo, 0, sizeof(dlinfo));
 
 	if (dladdr(lfm_name, &dlinfo) != 0)
 	{
-		strncpy(gLFMPath, dlinfo.dli_fname, PATH_MAX);
+		strlcpy(gLFMPath, dlinfo.dli_fname, PATH_MAX);
 		char *pos = strrchr(gLFMPath, '/');
 
 		if (pos)
@@ -83,10 +97,10 @@ void DCPCALL ExtensionInitialize(tExtensionStartupInfo* StartupInfo)
 
 void DCPCALL ExtensionFinalize(void* Reserved)
 {
-	if (gExtension && gStartupInfo != NULL)
+	if (gStartupInfo != NULL)
 		free(gStartupInfo);
 
-	gExtension = false;
+	gStartupInfo = NULL;
 }
 
 static int errmsg(const char *msg, long flags)
@@ -286,6 +300,160 @@ const char *archive_password_cb(struct archive *a, void *data)
 		return NULL;
 }
 
+int archive_repack_existing(struct archive *a, char* filename, char** tmpfn, int ofd, char* headlist, char* subpath, int flags)
+{
+	size_t size;
+	la_int64_t offset;
+	const void *buff;
+	bool skip_file;
+	char fname[PATH_MAX];
+	char infile[PATH_MAX];
+	char rmfile[PATH_MAX];
+	char *msg, *skiplist;
+	struct archive_entry *entry;
+	int result = E_SUCCESS;
+	size_t fsize, csize, prcnt;
+
+	if (archive_filter_code(a, 0) == ARCHIVE_FILTER_UU)
+		return E_NOT_SUPPORTED;
+	else if (archive_format(a) == ARCHIVE_FORMAT_RAW)
+	{
+		if (strcasestr(filename, ".tar.") == NULL || archive_write_set_format(a, gTarFormat)  < ARCHIVE_OK)
+			return E_NOT_SUPPORTED;
+	}
+
+	if (gNotabene && errmsg("Options for compression, encryption etc will be LOST. Are you sure you want this?", MB_YESNO | MB_ICONWARNING) != ID_YES)
+		return E_EABORTED;
+	else
+	{
+		strlcpy(infile, filename, PATH_MAX);
+		*tmpfn = tempnam(dirname(infile), "arc_");
+
+		if (gOptions[0] != '\0')
+		{
+			asprintf(&msg, "Use these options '%s'?", gOptions);
+
+			if (errmsg(msg, MB_YESNO | MB_ICONQUESTION) == ID_YES)
+				if (archive_write_set_options(a, gOptions) < ARCHIVE_OK)
+					errmsg(archive_error_string(a), MB_OK | MB_ICONWARNING);
+
+			free(msg);
+		}
+	}
+
+
+	struct archive *org = archive_read_new();
+
+	archive_read_support_filter_all(org);
+
+	archive_read_support_filter_program_signature(org, "lizard -d", lizard_magic, sizeof(lizard_magic));
+
+	archive_read_support_format_raw(org);
+
+	archive_read_support_format_all(org);
+
+	archive_read_set_passphrase_callback(org, NULL, archive_password_cb);
+
+	if (archive_read_open_filename(org, filename, 10240) < ARCHIVE_OK)
+	{
+		errmsg(archive_error_string(org), MB_OK | MB_ICONERROR);
+		result = E_EWRITE;
+	}
+	else
+	{
+
+		if (*tmpfn == NULL || access(*tmpfn, F_OK) != -1)
+			result = E_EWRITE;
+		else if ((ofd = open(*tmpfn, O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)) == -1)
+			result = E_EWRITE;
+		else if (archive_write_open_fd(a, ofd) < ARCHIVE_OK)
+		{
+			errmsg(archive_error_string(a), MB_OK | MB_ICONERROR);
+			result = E_EWRITE;
+		}
+
+		while (result == E_SUCCESS && archive_read_next_header(org, &entry) == ARCHIVE_OK)
+		{
+			fsize = archive_entry_size(entry);
+			csize = 0;
+
+			skiplist = headlist;
+			strlcpy(infile, archive_entry_pathname(entry), PATH_MAX);
+			skip_file = false;
+
+			while (*skiplist)
+			{
+				strlcpy(fname, skiplist, PATH_MAX);
+
+				if (!(flags & PK_PACK_SAVE_PATHS))
+					strlcpy(fname, strdup(basename(fname)), PATH_MAX);
+
+				if (!subpath)
+					strcpy(rmfile, fname);
+				else
+					snprintf(rmfile, PATH_MAX, "%s/%s", subpath, fname);
+
+				if (strncmp(rmfile + strlen(rmfile) - 4, "/*.*", 4) == 0)
+					rmfile[strlen(rmfile) - 2] = 0;
+
+				if (strcmp(rmfile, infile) == 0 || fnmatch(rmfile, infile, FNM_CASEFOLD) == 0)
+				{
+					skip_file = true;
+					break;
+				}
+
+				while (*skiplist++);
+			}
+
+			if (!skip_file)
+			{
+				archive_write_header(a, entry);
+
+				while (archive_read_data_block(org, &buff, &size, &offset) != ARCHIVE_EOF)
+				{
+					if (archive_write_data(a, buff, size) < ARCHIVE_OK)
+					{
+						errmsg(archive_error_string(a), MB_OK | MB_ICONERROR);
+						result = E_EWRITE;
+						break;
+					}
+
+					if (fsize > 0)
+					{
+						csize += size;
+						prcnt = csize * 100 / fsize;
+					}
+					else
+						prcnt = 0;
+
+					if (gProcessDataProc(infile, -(1000 + prcnt)) == 0)
+					{
+						result = E_EABORTED;
+						break;
+					}
+				}
+			}
+		}
+
+		archive_read_close(org);
+	}
+
+	archive_read_free(org);
+
+
+	if (result != E_SUCCESS)
+	{
+		if (*tmpfn != NULL)
+		{
+			remove_file(*tmpfn);
+			free(*tmpfn);
+			*tmpfn = NULL;
+		}
+	}
+
+	return result;
+}
+
 static void checkbox_get_option(uintptr_t pDlg, char* DlgItemName, const char* optstr, bool defval, char *strval)
 {
 	bool chk = (bool)gStartupInfo->SendDlgMsg(pDlg, DlgItemName, DM_GETCHECK, 0, 0);
@@ -306,7 +474,7 @@ static void textfield_get_option(uintptr_t pDlg, char* DlgItemName, const char* 
 {
 	char *tmpval = malloc(PATH_MAX);
 	memset(tmpval, 0, PATH_MAX);
-	strncpy(tmpval, (char*)gStartupInfo->SendDlgMsg(pDlg, DlgItemName, DM_GETTEXT, 0, 0), PATH_MAX);
+	strlcpy(tmpval, (char*)gStartupInfo->SendDlgMsg(pDlg, DlgItemName, DM_GETTEXT, 0, 0), PATH_MAX);
 
 	if (tmpval[0] != '\0')
 	{
@@ -366,13 +534,16 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 		gStartupInfo->SendDlgMsg(pDlg, "chkReadJoliet", DM_SETCHECK, (intptr_t)gReadDisableJoliet, 0);
 		gStartupInfo->SendDlgMsg(pDlg, "chkReadRockridge", DM_SETCHECK, (intptr_t)gReadDisableRockridge, 0);
 		gStartupInfo->SendDlgMsg(pDlg, "chkReadIgnoreCRC", DM_SETCHECK, (intptr_t)gReadIgnoreCRC, 0);
+		gStartupInfo->SendDlgMsg(pDlg, "chkReadDetectRAW", DM_SETCHECK, (intptr_t)gCanHandleRAW, 0);
+		gStartupInfo->SendDlgMsg(pDlg, "chkReadSkipDot", DM_SETCHECK, (intptr_t)gReadSkipDot, 0);
+		gStartupInfo->SendDlgMsg(pDlg, "chkDisclaimer", DM_SETCHECK, (intptr_t)gNotabene, 0);
 
 		break;
 
 	case DN_CLICK:
 		if (strncmp(DlgItemName, "btnOK", 5) == 0)
 		{
-			strncpy(gOptions, (char*)gStartupInfo->SendDlgMsg(pDlg, "edOptions", DM_GETTEXT, 0, 0), PATH_MAX);
+			strlcpy(gOptions, (char*)gStartupInfo->SendDlgMsg(pDlg, "edOptions", DM_GETTEXT, 0, 0), PATH_MAX);
 			gMtreeClasic = (bool)gStartupInfo->SendDlgMsg(pDlg, "chkClassic", DM_GETCHECK, 0, 0);
 			snprintf(gEncryption, PATH_MAX, "encryption=%s", (char*)gStartupInfo->SendDlgMsg(pDlg, "cbEncrypt", DM_GETTEXT, 0, 0));
 
@@ -390,7 +561,7 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 			gStartupInfo->SendDlgMsg(pDlg, "gbMtreeAttr", DM_ENABLE, (intptr_t)!bval, 0);
 			gStartupInfo->SendDlgMsg(pDlg, "gbMtreeCkSum", DM_ENABLE, (intptr_t)!bval, 0);
 
-			strncpy(strval, "mtree:", PATH_MAX);
+			strlcpy(strval, "mtree:", PATH_MAX);
 
 			if (bval)
 				checkbox_get_option(pDlg, "chkMtreeAll", "all", false, strval);
@@ -428,7 +599,7 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 		}
 		else if (strcmp(DlgItemName, "cbReadCharset") == 0)
 		{
-			strncpy(gReadCharset, (char*)gStartupInfo->SendDlgMsg(pDlg, "cbReadCharset", DM_GETTEXT, 0, 0), 255);
+			strlcpy(gReadCharset, (char*)gStartupInfo->SendDlgMsg(pDlg, "cbReadCharset", DM_GETTEXT, 0, 0), 255);
 		}
 		else if (strcmp(DlgItemName, "chkReadMtreeckfs") == 0)
 		{
@@ -453,6 +624,18 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 		else if (strcmp(DlgItemName, "chkReadRockridge") == 0)
 		{
 			gReadDisableRockridge = (bool)gStartupInfo->SendDlgMsg(pDlg, "chkReadRockridge", DM_GETCHECK, 0, 0);
+		}
+		else if (strcmp(DlgItemName, "chkReadDetectRAW") == 0)
+		{
+			gCanHandleRAW = (bool)gStartupInfo->SendDlgMsg(pDlg, "chkReadDetectRAW", DM_GETCHECK, 0, 0);
+		}
+		else if (strcmp(DlgItemName, "chkReadSkipDot") == 0)
+		{
+			gReadSkipDot = (bool)gStartupInfo->SendDlgMsg(pDlg, "chkReadSkipDot", DM_GETCHECK, 0, 0);
+		}
+		else if (strcmp(DlgItemName, "chkDisclaimer") == 0)
+		{
+			gNotabene = (bool)gStartupInfo->SendDlgMsg(pDlg, "chkDisclaimer", DM_GETCHECK, 0, 0);
 		}
 		else if (strncmp(DlgItemName, "cbTar", 5) == 0)
 		{
@@ -492,7 +675,7 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 				snprintf(strval, PATH_MAX, "7zip:compression=%s", (char*)gStartupInfo->SendDlgMsg(pDlg, "cb7ZCompression", DM_GETTEXT, 0, 0));
 			}
 			else
-				strncpy(strval, "7zip:", PATH_MAX);
+				strlcpy(strval, "7zip:", PATH_MAX);
 
 			numval = (int)gStartupInfo->SendDlgMsg(pDlg, "cb7ZCompLvl", DM_LISTGETITEMINDEX, 0, 0);
 
@@ -519,7 +702,7 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 				snprintf(strval, PATH_MAX, "zip:compression=%s", (char*)gStartupInfo->SendDlgMsg(pDlg, "cbZipCompression", DM_GETTEXT, 0, 0));
 			}
 			else
-				strncpy(strval, "zip:", PATH_MAX);
+				strlcpy(strval, "zip:", PATH_MAX);
 
 			numval = (int)gStartupInfo->SendDlgMsg(pDlg, "cbZipCompLvl", DM_LISTGETITEMINDEX, 0, 0);
 
@@ -544,7 +727,7 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 		}
 		else if (strstr(DlgItemName, "ISO") != NULL)
 		{
-			strncpy(strval, "iso9660:", PATH_MAX);
+			strlcpy(strval, "iso9660:", PATH_MAX);
 			textfield_get_option(pDlg, "edISOVolumeID", "volume-id", strval);
 			textfield_get_option(pDlg, "edISOAbstractFile", "abstract-file", strval);
 			textfield_get_option(pDlg, "edISOApplicationID", "application-id", strval);
@@ -621,7 +804,7 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 		{
 			if (strcmp(DlgItemName, "cbFiltersZSTDComprLvl") == 0)
 			{
-				strncpy(strval, "zstd:", PATH_MAX);
+				strlcpy(strval, "zstd:", PATH_MAX);
 
 				numval = (int)gStartupInfo->SendDlgMsg(pDlg, "cbFiltersZSTDComprLvl", DM_LISTGETITEMINDEX, 0, 0);
 
@@ -633,7 +816,7 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 			}
 			else if (strstr(DlgItemName, "FiltersLZ4") != NULL)
 			{
-				strncpy(strval, "lz4:", PATH_MAX);
+				strlcpy(strval, "lz4:", PATH_MAX);
 				checkbox_get_option(pDlg, "chkFiltersLZ4StreamChksum", "stream-checksum", true, strval);
 				checkbox_get_option(pDlg, "chkFiltersLZ4BlockChksum", "block-checksum", true, strval);
 				checkbox_get_option(pDlg, "chkFiltersLZ4BlockDependence", "block-dependence", false, strval);
@@ -641,17 +824,17 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 			}
 			else if (strcmp(DlgItemName, "chkFiltersGZTimestamp") == 0)
 			{
-				strncpy(strval, "gzip:", PATH_MAX);
+				strlcpy(strval, "gzip:", PATH_MAX);
 				checkbox_get_option(pDlg, "chkFiltersGZTimestamp", "timestamp", true, strval);
 			}
 			else if (strcmp(DlgItemName, "edFiltersLZMAThreads") == 0)
 			{
-				strncpy(strval, "lzma:", PATH_MAX);
+				strlcpy(strval, "lzma:", PATH_MAX);
 				textfield_get_option(pDlg, "edFiltersLZMAThreads", "threads", strval);
 			}
 			else if (strcmp(DlgItemName, "cbFiltersLrzipCompr") == 0)
 			{
-				strncpy(strval, "lrzip:", PATH_MAX);
+				strlcpy(strval, "lrzip:", PATH_MAX);
 				textfield_get_option(pDlg, "cbFiltersLrzipCompr", "compression", strval);
 			}
 
@@ -704,7 +887,7 @@ HANDLE DCPCALL OpenArchive(tOpenArchiveData *ArchiveData)
 	archive_read_support_filter_program_signature(handle->archive, "lizard -d", lizard_magic, sizeof(lizard_magic));
 	archive_read_support_format_raw(handle->archive);
 	archive_read_support_format_all(handle->archive);
-	strncpy(handle->arcname, ArchiveData->ArcName, PATH_MAX);
+	strlcpy(handle->arcname, ArchiveData->ArcName, PATH_MAX);
 
 	if (gMtreeCheckFS && strcasestr(ArchiveData->ArcName, ".mtree") != NULL)
 		archive_read_set_options(handle->archive, "checkfs");
@@ -756,7 +939,7 @@ int DCPCALL ReadHeaderEx(HANDLE hArcData, tHeaderDataEx *HeaderDataEx)
 	char *filename = NULL;
 
 	while ((ret = archive_read_next_header(handle->archive, &handle->entry)) == ARCHIVE_RETRY ||
-	                (ret == ARCHIVE_OK && strcmp(".", archive_entry_pathname(handle->entry)) == 0))
+	                (gReadSkipDot && (ret == ARCHIVE_OK && strcmp(".", archive_entry_pathname(handle->entry)) == 0)))
 	{
 		if (ret == ARCHIVE_RETRY && errmsg(archive_error_string(handle->archive),
 		                                   MB_RETRYCANCEL | MB_ICONWARNING) != ID_RETRY)
@@ -785,25 +968,25 @@ int DCPCALL ReadHeaderEx(HANDLE hArcData, tHeaderDataEx *HeaderDataEx)
 				if (dot != NULL)
 					*dot = '\0';
 
-				strncpy(HeaderDataEx->FileName, filename, sizeof(HeaderDataEx->FileName) - 1);
+				strlcpy(HeaderDataEx->FileName, filename, sizeof(HeaderDataEx->FileName) - 1);
 			}
 			else
-				strncpy(HeaderDataEx->FileName, "<!!!ERROR!!!>", sizeof(HeaderDataEx->FileName) - 1);
+				strlcpy(HeaderDataEx->FileName, "<!!!ERROR!!!>", sizeof(HeaderDataEx->FileName) - 1);
 		}
 		else
 		{
 			filename = (char*)archive_entry_pathname(handle->entry);
 
 			if (!filename)
-				strncpy(HeaderDataEx->FileName, "<!!!ERROR!!!>", sizeof(HeaderDataEx->FileName) - 1);
+				strlcpy(HeaderDataEx->FileName, "<!!!ERROR!!!>", sizeof(HeaderDataEx->FileName) - 1);
 			else
 			{
 				if (filename[0] == '/')
-					strncpy(HeaderDataEx->FileName, filename + 1, sizeof(HeaderDataEx->FileName) - 1);
-				else if (filename[0] == '.' && filename[1] == '/')
-					strncpy(HeaderDataEx->FileName, filename + 2, sizeof(HeaderDataEx->FileName) - 1);
+					strlcpy(HeaderDataEx->FileName, filename + 1, sizeof(HeaderDataEx->FileName) - 1);
+				else if (gReadSkipDot && filename[0] == '.' && filename[1] == '/')
+					strlcpy(HeaderDataEx->FileName, filename + 2, sizeof(HeaderDataEx->FileName) - 1);
 				else
-					strncpy(HeaderDataEx->FileName, filename, sizeof(HeaderDataEx->FileName) - 1);
+					strlcpy(HeaderDataEx->FileName, filename, sizeof(HeaderDataEx->FileName) - 1);
 			}
 
 			size = archive_entry_size(handle->entry);
@@ -917,7 +1100,10 @@ BOOL DCPCALL CanYouHandleThisFile(char *FileName)
 	struct archive *a = archive_read_new();
 	archive_read_support_filter_all(a);
 	archive_read_support_filter_program_signature(a, "lizard -d", lizard_magic, sizeof(lizard_magic));
-	//archive_read_support_format_raw(a);
+
+	if (gCanHandleRAW)
+		archive_read_support_format_raw(a);
+
 	archive_read_support_format_all(a);
 	int r = archive_read_open_filename(a, FileName, 10240);
 	archive_read_free(a);
@@ -953,18 +1139,14 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 	struct archive_entry *entry;
 	struct stat st;
 	char buff[BUFF_SIZE];
-	int fd, ofd, ret, id;
+	int fd, ofd = -1, ret, id;
 	ssize_t len;
 	char fname[PATH_MAX];
 	char infile[PATH_MAX];
 	char pkfile[PATH_MAX];
 	char link[PATH_MAX + 1];
 	int result = E_SUCCESS;
-	char *msg, *rmlist, *skiplist, *tmpfn = NULL;
-	bool skip_file;
-	size_t rsize;
-	const void *rbuff;
-	la_int64_t roffset;
+	char *msg, *rmlist = NULL, *tmpfn = NULL;
 	struct passwd *pw;
 	struct group  *gr;
 
@@ -990,128 +1172,7 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 	}
 
 	if (access(PackedFile, F_OK) != -1)
-	{
-		if (errmsg("Options for compression, encryption etc will be LOST. Are you sure you want this?", MB_YESNO | MB_ICONWARNING) != ID_YES)
-			result = E_EABORTED;
-		else
-		{
-			strncpy(infile, PackedFile, PATH_MAX);
-			tmpfn = tempnam(dirname(infile), "arc_");
-
-			if (access(tmpfn, F_OK) != -1)
-				result = E_EWRITE;
-			else
-			{
-				if (archive_format(a) == ARCHIVE_FORMAT_RAW)
-				{
-					if (strcasestr(PackedFile, ".tar.") == NULL || archive_write_set_format(a, gTarFormat)  < ARCHIVE_OK)
-						result = E_NOT_SUPPORTED;
-				}
-
-				if (gOptions[0] != '\0')
-				{
-					asprintf(&msg, "Use these options '%s'?", gOptions);
-
-					if (errmsg(msg, MB_YESNO | MB_ICONQUESTION) == ID_YES)
-						if (archive_write_set_options(a, gOptions) < ARCHIVE_OK)
-							errmsg(archive_error_string(a), MB_OK | MB_ICONWARNING);
-
-					free(msg);
-				}
-			}
-		}
-
-		if (result == E_SUCCESS)
-		{
-			struct archive *org = archive_read_new();
-
-			archive_read_support_filter_all(org);
-			archive_read_support_filter_program_signature(org, "lizard -d", lizard_magic, sizeof(lizard_magic));
-			archive_read_support_format_raw(org);
-			archive_read_support_format_all(org);
-			archive_read_set_passphrase_callback(org, NULL, archive_password_cb);
-
-
-			if (archive_read_open_filename(org, PackedFile, 10240) < ARCHIVE_OK)
-			{
-				errmsg(archive_error_string(org), MB_OK | MB_ICONERROR);
-				result = E_EWRITE;
-			}
-
-			if (result == E_SUCCESS && (ofd = open(tmpfn, O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)) == -1)
-				result = E_EWRITE;
-
-			if (result == E_SUCCESS && archive_write_open_fd(a, ofd) < ARCHIVE_OK)
-			{
-				errmsg(archive_error_string(a), MB_OK | MB_ICONERROR);
-				result = E_EWRITE;
-			}
-
-			if (result == E_SUCCESS)
-			{
-				while (archive_read_next_header(org, &entry) == ARCHIVE_OK)
-				{
-					skiplist = AddList;
-					strncpy(infile, archive_entry_pathname(entry), PATH_MAX);
-					skip_file = false;
-
-					while (*skiplist)
-					{
-						strncpy(fname, skiplist, PATH_MAX);
-
-						if (!(Flags & PK_PACK_SAVE_PATHS))
-							strncpy(fname, strdup(basename(fname)), PATH_MAX);
-
-						if (!SubPath)
-							strcpy(pkfile, fname);
-						else
-							snprintf(pkfile, PATH_MAX, "%s/%s", SubPath, fname);
-
-						if (strncmp(pkfile, infile, PATH_MAX) == 0)
-						{
-							skip_file = true;
-							break;
-						}
-
-						while (*skiplist++);
-					}
-
-					if (!skip_file)
-					{
-						archive_write_header(a, entry);
-
-						while (archive_read_data_block(org, &rbuff, &rsize, &roffset) != ARCHIVE_EOF)
-						{
-							if (archive_write_data(a, rbuff, rsize) < ARCHIVE_OK)
-							{
-								errmsg(archive_error_string(a), MB_OK | MB_ICONERROR);
-								result = E_EWRITE;
-								break;
-							}
-
-							if (gProcessDataProc(tmpfn, 0) == 0)
-							{
-								result = E_EABORTED;
-								break;
-							}
-						}
-					}
-
-				}
-
-				archive_read_close(org);
-				archive_read_free(org);
-			}
-		}
-
-		if (result != E_SUCCESS)
-		{
-			if (tmpfn)
-				free(tmpfn);
-
-			return result;
-		}
-	}
+		result = archive_repack_existing(a, PackedFile, &tmpfn, ofd, AddList, SubPath, Flags);
 	else
 	{
 
@@ -1127,7 +1188,7 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 
 			strcpy(infile, SrcPath);
 			char* pos = strrchr(infile, '/');
-			strncpy(fname, AddList, PATH_MAX);
+			strlcpy(fname, AddList, PATH_MAX);
 
 			if (pos != NULL)
 				strcpy(pos + 1, fname);
@@ -1164,18 +1225,15 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 
 	if (result == E_SUCCESS)
 	{
-
 		struct archive *disk = archive_read_disk_new();
-
 		archive_read_disk_set_standard_lookup(disk);
-
 		archive_read_disk_set_symlink_physical(disk);
 
 		while (*AddList)
 		{
 			strcpy(infile, SrcPath);
 			char* pos = strrchr(infile, '/');
-			strncpy(fname, AddList, PATH_MAX);
+			strlcpy(fname, AddList, PATH_MAX);
 
 			if (pos != NULL)
 				strcpy(pos + 1, fname);
@@ -1183,7 +1241,7 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 				strcpy(infile, fname);
 
 			if (!(Flags & PK_PACK_SAVE_PATHS))
-				strncpy(fname, strdup(basename(fname)), PATH_MAX);
+				strlcpy(fname, strdup(basename(fname)), PATH_MAX);
 
 			if (!SubPath)
 				strcpy(pkfile, fname);
@@ -1363,6 +1421,8 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 							gProcessDataProc(infile, st.st_size);
 					}
 				}
+
+				archive_entry_free(entry);
 			}
 
 			if (result != E_SUCCESS)
@@ -1372,7 +1432,6 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 		}
 
 		archive_read_free(disk);
-		archive_entry_free(entry);
 		archive_write_finish_entry(a);
 	}
 
@@ -1383,7 +1442,7 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 		close(ofd);
 
 	if ((Flags & PK_PACK_MOVE_FILES && result == E_SUCCESS) &&
-	                (errmsg("Now WILL TRY to REMOVE ALL (including SKIPPED!) source files. Are you sure you want this?", MB_YESNO | MB_ICONWARNING) == ID_YES))
+	                (!gNotabene || errmsg("Now WILL TRY to REMOVE ALL (including SKIPPED!) source files. Are you sure you want this?", MB_YESNO | MB_ICONWARNING) == ID_YES))
 	{
 		while (*rmlist)
 		{
@@ -1403,6 +1462,8 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 	{
 		if (result == E_SUCCESS)
 			rename(tmpfn, PackedFile);
+		else
+			remove_file(tmpfn);
 
 		free(tmpfn);
 	}
@@ -1412,15 +1473,8 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 
 int DCPCALL DeleteFiles(char *PackedFile, char *DeleteList)
 {
-	size_t size;
-	la_int64_t offset;
-	const void *buff;
-	bool skip_file;
-	char infile[PATH_MAX];
-	char rmfile[PATH_MAX];
-	char *msg, *rmlist, *tmpfn = NULL;
-	struct archive_entry *entry;
-	int ofd, ret, result = E_SUCCESS;
+	char *tmpfn = NULL;
+	int ofd = -1, ret, result = E_SUCCESS;
 
 	const char *ext = strrchr(PackedFile, '.');
 
@@ -1437,118 +1491,14 @@ int DCPCALL DeleteFiles(char *PackedFile, char *DeleteList)
 		return 0;
 	}
 
-	if (errmsg("Options for compression, encryption etc will be LOST. Are you sure you want this?", MB_YESNO | MB_ICONWARNING) != ID_YES)
-		result = E_EABORTED;
-	else
-	{
-		strncpy(infile, PackedFile, PATH_MAX);
-		tmpfn = tempnam(dirname(infile), "arc_");
+	result = archive_repack_existing(a, PackedFile, &tmpfn, ofd, DeleteList, NULL, PK_PACK_SAVE_PATHS);
+	gProcessDataProc(PackedFile, -100);
+	archive_write_finish_entry(a);
+	archive_write_close(a);
+	archive_write_free(a);
 
-		if (access(tmpfn, F_OK) != -1)
-			result = E_EWRITE;
-		else
-		{
-			if (archive_format(a) == ARCHIVE_FORMAT_RAW)
-			{
-				if (strcasestr(PackedFile, ".tar.") == NULL || archive_write_set_format(a, gTarFormat)  < ARCHIVE_OK)
-					result = E_NOT_SUPPORTED;
-			}
-
-			if (gOptions[0] != '\0')
-			{
-				asprintf(&msg, "Use these options '%s'?", gOptions);
-
-				if (errmsg(msg, MB_YESNO | MB_ICONQUESTION) == ID_YES)
-					if (archive_write_set_options(a, gOptions) < ARCHIVE_OK)
-						errmsg(archive_error_string(a), MB_OK | MB_ICONWARNING);
-
-				free(msg);
-			}
-		}
-	}
-
-	if (result == E_SUCCESS)
-	{
-		struct archive *org = archive_read_new();
-
-		archive_read_support_filter_all(org);
-		archive_read_support_filter_program_signature(org, "lizard -d", lizard_magic, sizeof(lizard_magic));
-		archive_read_support_format_raw(org);
-		archive_read_support_format_all(org);
-		archive_read_set_passphrase_callback(org, NULL, archive_password_cb);
-
-		if (archive_read_open_filename(org, PackedFile, 10240) < ARCHIVE_OK)
-		{
-			errmsg(archive_error_string(org), MB_OK | MB_ICONERROR);
-			result = E_EWRITE;
-		}
-
-		if (result == E_SUCCESS && (ofd = open(tmpfn, O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)) == -1)
-			result = E_EWRITE;
-
-		if (result == E_SUCCESS && archive_write_open_fd(a, ofd) < ARCHIVE_OK)
-		{
-			errmsg(archive_error_string(a), MB_OK | MB_ICONERROR);
-			result = E_EWRITE;
-		}
-
-		if (result == E_SUCCESS)
-		{
-			while (archive_read_next_header(org, &entry) == ARCHIVE_OK)
-			{
-				skip_file = false;
-				rmlist = DeleteList;
-				strncpy(infile, archive_entry_pathname(entry), PATH_MAX);
-
-				while (*rmlist)
-				{
-					strncpy(rmfile, rmlist, PATH_MAX);
-
-					if (strncmp(rmfile + strlen(rmfile) - 4, "/*.*", 4) == 0)
-						rmfile[strlen(rmfile) - 2] = 0;
-
-					if (fnmatch(rmfile, infile, FNM_CASEFOLD) == 0)
-					{
-						skip_file = true;
-						break;
-					}
-
-					while (*rmlist++);
-				}
-
-				if (!skip_file)
-				{
-					archive_write_header(a, entry);
-
-					while (archive_read_data_block(org, (const void**)&buff, &size, &offset) != ARCHIVE_EOF)
-					{
-						if (archive_write_data(a, buff, size) < ARCHIVE_OK)
-						{
-							errmsg(archive_error_string(a), MB_OK | MB_ICONERROR);
-							result = E_EWRITE;
-							break;
-						}
-
-						if (gProcessDataProc(tmpfn, 0) == 0)
-						{
-							result = E_EABORTED;
-							break;
-						}
-					}
-				}
-			}
-
-			archive_read_close(org);
-			archive_read_free(org);
-			archive_write_finish_entry(a);
-			archive_write_close(a);
-			archive_write_free(a);
-
-			if (ofd > -1)
-				close(ofd);
-
-		}
-	}
+	if (ofd > -1)
+		close(ofd);
 
 	if (result == E_SUCCESS)
 		rename(tmpfn, PackedFile);

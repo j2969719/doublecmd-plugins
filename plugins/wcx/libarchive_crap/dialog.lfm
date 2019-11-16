@@ -1,7 +1,7 @@
 object DialogBox: TDialogBox
-  Left = 326
+  Left = 303
   Height = 487
-  Top = 88
+  Top = 158
   Width = 534
   ActiveControl = pcOptions
   BorderStyle = bsDialog
@@ -428,7 +428,7 @@ object DialogBox: TDialogBox
           AnchorSideLeft.Control = lblCompression
           AnchorSideLeft.Side = asrBottom
           AnchorSideTop.Control = gbZip
-          Left = 115
+          Left = 109
           Height = 25
           Top = 10
           Width = 100
@@ -444,19 +444,21 @@ object DialogBox: TDialogBox
           TabOrder = 0
         end
         object lblCompression: TLabel
+          AnchorSideLeft.Control = gbZip
           AnchorSideTop.Control = cbZipCompression
           AnchorSideTop.Side = asrCenter
-          Left = 16
+          Left = 10
           Height = 15
           Top = 15
           Width = 89
+          BorderSpacing.Left = 10
           Caption = 'Compression:'
           ParentColor = False
         end
         object chkZipExperimental: TCheckBox
           AnchorSideLeft.Control = lblZipCompLvl
           AnchorSideTop.Control = chkZip64
-          Left = 265
+          Left = 259
           Height = 23
           Top = 45
           Width = 113
@@ -468,7 +470,7 @@ object DialogBox: TDialogBox
         object chkZipFakeCRC32: TCheckBox
           AnchorSideLeft.Control = cbZipCompression
           AnchorSideTop.Control = chkZip64
-          Left = 115
+          Left = 109
           Height = 23
           Top = 45
           Width = 98
@@ -480,7 +482,7 @@ object DialogBox: TDialogBox
           AnchorSideLeft.Control = lblCompression
           AnchorSideTop.Control = cbZipCompression
           AnchorSideTop.Side = asrBottom
-          Left = 16
+          Left = 10
           Height = 23
           Top = 45
           Width = 63
@@ -492,14 +494,13 @@ object DialogBox: TDialogBox
           TabOrder = 3
         end
         object lblEncrypt: TLabel
-          AnchorSideLeft.Control = edOptions
+          AnchorSideLeft.Control = lblCompression
           AnchorSideTop.Control = cbEncrypt
           AnchorSideTop.Side = asrCenter
-          Left = 16
+          Left = 10
           Height = 15
           Top = 119
           Width = 73
-          Anchors = [akTop]
           Caption = 'Encryption:'
           ParentColor = False
         end
@@ -509,7 +510,7 @@ object DialogBox: TDialogBox
           AnchorSideTop.Side = asrBottom
           AnchorSideBottom.Control = gbZip
           AnchorSideBottom.Side = asrBottom
-          Left = 115
+          Left = 109
           Height = 25
           Top = 114
           Width = 100
@@ -530,7 +531,7 @@ object DialogBox: TDialogBox
           AnchorSideLeft.Control = lblZipCompLvl
           AnchorSideLeft.Side = asrBottom
           AnchorSideTop.Control = cbZipCompression
-          Left = 355
+          Left = 349
           Height = 25
           Top = 10
           Width = 153
@@ -557,7 +558,7 @@ object DialogBox: TDialogBox
           AnchorSideLeft.Side = asrBottom
           AnchorSideTop.Control = cbZipCompression
           AnchorSideTop.Side = asrCenter
-          Left = 225
+          Left = 219
           Height = 15
           Top = 15
           Width = 125
@@ -569,7 +570,7 @@ object DialogBox: TDialogBox
           AnchorSideLeft.Control = lblCompression
           AnchorSideTop.Control = cbZipCharset
           AnchorSideTop.Side = asrCenter
-          Left = 16
+          Left = 10
           Height = 15
           Top = 84
           Width = 193
@@ -581,7 +582,7 @@ object DialogBox: TDialogBox
           AnchorSideLeft.Side = asrBottom
           AnchorSideTop.Control = chkZip64
           AnchorSideTop.Side = asrBottom
-          Left = 219
+          Left = 213
           Height = 26
           Top = 78
           Width = 156
@@ -608,30 +609,33 @@ object DialogBox: TDialogBox
         AnchorSideBottom.Control = tsGeneral
         AnchorSideBottom.Side = asrBottom
         Left = 5
-        Height = 72
+        Height = 78
         Top = 244
         Width = 520
         Anchors = [akTop, akLeft, akRight, akBottom]
         BorderSpacing.Bottom = 5
         Caption = '7Zip'
-        ClientHeight = 53
+        ClientHeight = 59
         ClientWidth = 516
         TabOrder = 1
         object lbl7ZCompression: TLabel
-          AnchorSideTop.Control = cbZipCompression
+          AnchorSideLeft.Control = gb7Zip
+          AnchorSideTop.Control = cb7ZCompression
           AnchorSideTop.Side = asrCenter
-          Left = 16
+          Left = 10
           Height = 15
           Top = 15
           Width = 89
+          BorderSpacing.Left = 10
           Caption = 'Compression:'
           ParentColor = False
         end
         object lbl7ZCompLvl: TLabel
           AnchorSideLeft.Control = cb7ZCompression
           AnchorSideLeft.Side = asrBottom
+          AnchorSideTop.Control = cb7ZCompLvl
           AnchorSideTop.Side = asrCenter
-          Left = 225
+          Left = 219
           Height = 15
           Top = 15
           Width = 125
@@ -643,7 +647,7 @@ object DialogBox: TDialogBox
           AnchorSideLeft.Control = lbl7ZCompLvl
           AnchorSideLeft.Side = asrBottom
           AnchorSideTop.Control = cb7ZCompression
-          Left = 355
+          Left = 349
           Height = 25
           Top = 10
           Width = 153
@@ -669,7 +673,7 @@ object DialogBox: TDialogBox
           AnchorSideLeft.Control = lbl7ZCompression
           AnchorSideLeft.Side = asrBottom
           AnchorSideTop.Control = gb7Zip
-          Left = 115
+          Left = 109
           Height = 25
           Top = 10
           Width = 100
@@ -744,13 +748,14 @@ object DialogBox: TDialogBox
           TabOrder = 2
         end
         object chkMtreeDirsOnly: TCheckBox
-          AnchorSideLeft.Control = chkMtreeAll
+          AnchorSideLeft.Control = gbMtreeGeneral
           AnchorSideTop.Control = gbMtreeGeneral
           AnchorSideTop.Side = asrCenter
           Left = 5
           Height = 23
           Top = 9
           Width = 84
+          BorderSpacing.Left = 5
           Caption = 'Dirs only'
           OnChange = CheckBoxChange
           TabOrder = 3
@@ -1035,7 +1040,7 @@ object DialogBox: TDialogBox
         AnchorSideRight.Side = asrBottom
         AnchorSideBottom.Control = gbISOExtensions
         Left = 5
-        Height = 192
+        Height = 198
         Top = 5
         Width = 520
         Anchors = [akTop, akLeft, akRight, akBottom]
@@ -1044,7 +1049,7 @@ object DialogBox: TDialogBox
         BorderSpacing.Right = 5
         BorderSpacing.Bottom = 5
         Caption = 'Metadata'
-        ClientHeight = 173
+        ClientHeight = 179
         ClientWidth = 516
         TabOrder = 0
         object edISOAbstractFile: TEdit
@@ -1206,7 +1211,7 @@ object DialogBox: TDialogBox
         AnchorSideBottom.Side = asrBottom
         Left = 5
         Height = 114
-        Top = 202
+        Top = 208
         Width = 520
         Anchors = [akLeft, akRight, akBottom]
         BorderSpacing.Bottom = 5
@@ -1382,7 +1387,7 @@ object DialogBox: TDialogBox
         AnchorSideBottom.Control = tsISOBoot
         AnchorSideBottom.Side = asrBottom
         Left = 5
-        Height = 311
+        Height = 317
         Top = 5
         Width = 520
         Anchors = [akTop, akLeft, akRight, akBottom]
@@ -1391,7 +1396,7 @@ object DialogBox: TDialogBox
         BorderSpacing.Right = 5
         BorderSpacing.Bottom = 5
         Caption = 'General'
-        ClientHeight = 292
+        ClientHeight = 298
         ClientWidth = 516
         TabOrder = 0
         object edISOBoot: TEdit
@@ -1556,7 +1561,7 @@ object DialogBox: TDialogBox
         AnchorSideBottom.Control = tsReadOpt
         AnchorSideBottom.Side = asrBottom
         Left = 5
-        Height = 107
+        Height = 131
         Top = 5
         Width = 520
         Anchors = [akTop, akLeft, akRight]
@@ -1565,7 +1570,7 @@ object DialogBox: TDialogBox
         BorderSpacing.Right = 5
         BorderSpacing.Bottom = 5
         Caption = 'General'
-        ClientHeight = 88
+        ClientHeight = 112
         ClientWidth = 516
         TabOrder = 0
         object chkReadCompat2x: TCheckBox
@@ -1614,6 +1619,40 @@ object DialogBox: TDialogBox
           Caption = 'Charset for filenames (iconv):'
           ParentColor = False
         end
+        object chkReadDetectRAW: TCheckBox
+          AnchorSideLeft.Control = gbReadGeneral
+          AnchorSideTop.Control = chkReadCompat2x
+          AnchorSideTop.Side = asrBottom
+          AnchorSideRight.Control = gbReadGeneral
+          AnchorSideRight.Side = asrBottom
+          Left = 10
+          Height = 23
+          Top = 79
+          Width = 432
+          BorderSpacing.Left = 10
+          BorderSpacing.Top = 10
+          Caption = 'Try to detect raw data even with cm__OpenArchive (Ctrl+PgDn)'
+          OnChange = CheckBoxChange
+          TabOrder = 2
+        end
+        object chkReadSkipDot: TCheckBox
+          AnchorSideLeft.Control = chkReadCompat2x
+          AnchorSideLeft.Side = asrBottom
+          AnchorSideTop.Control = chkReadCompat2x
+          AnchorSideRight.Control = gbReadGeneral
+          AnchorSideRight.Side = asrBottom
+          Left = 359
+          Height = 23
+          Top = 46
+          Width = 147
+          Alignment = taLeftJustify
+          Anchors = [akTop, akRight]
+          BorderSpacing.Left = 20
+          BorderSpacing.Right = 10
+          Caption = 'Ignore [.] directory'
+          OnChange = CheckBoxChange
+          TabOrder = 3
+        end
       end
       object gbReadISO: TGroupBox
         AnchorSideLeft.Control = gbReadGeneral
@@ -1621,13 +1660,16 @@ object DialogBox: TDialogBox
         AnchorSideTop.Side = asrBottom
         AnchorSideRight.Control = gbReadGeneral
         AnchorSideRight.Side = asrBottom
+        AnchorSideBottom.Control = tsReadOpt
+        AnchorSideBottom.Side = asrBottom
         Left = 5
-        Height = 60
-        Top = 237
+        Height = 61
+        Top = 261
         Width = 520
-        Anchors = [akTop, akLeft, akRight]
+        Anchors = [akTop, akLeft, akRight, akBottom]
+        BorderSpacing.Bottom = 5
         Caption = 'ISO9660'
-        ClientHeight = 41
+        ClientHeight = 42
         ClientWidth = 516
         TabOrder = 1
         object chkReadJoliet: TCheckBox
@@ -1636,7 +1678,7 @@ object DialogBox: TDialogBox
           AnchorSideTop.Side = asrCenter
           Left = 10
           Height = 23
-          Top = 9
+          Top = 10
           Width = 104
           BorderSpacing.Left = 10
           Caption = 'Ignore Joliet'
@@ -1644,12 +1686,12 @@ object DialogBox: TDialogBox
           TabOrder = 0
         end
         object chkReadRockridge: TCheckBox
-          AnchorSideLeft.Control = cbReadCharset
           AnchorSideTop.Control = chkReadJoliet
           Left = 213
           Height = 23
-          Top = 9
+          Top = 10
           Width = 136
+          Anchors = [akTop]
           Caption = 'Ignore Rockridge'
           OnChange = CheckBoxChange
           TabOrder = 1
@@ -1663,7 +1705,7 @@ object DialogBox: TDialogBox
         AnchorSideRight.Side = asrBottom
         Left = 5
         Height = 60
-        Top = 177
+        Top = 201
         Width = 520
         Anchors = [akTop, akLeft, akRight]
         Caption = 'Zip'
@@ -1684,12 +1726,12 @@ object DialogBox: TDialogBox
           TabOrder = 0
         end
         object chkReadMacExt: TCheckBox
-          AnchorSideLeft.Control = cbReadCharset
           AnchorSideTop.Control = chkReadIgnoreCRC
           Left = 213
           Height = 23
           Top = 9
           Width = 168
+          Anchors = [akTop]
           Caption = 'Force mac extensions'
           OnChange = CheckBoxChange
           TabOrder = 1
@@ -1703,7 +1745,7 @@ object DialogBox: TDialogBox
         AnchorSideRight.Side = asrBottom
         Left = 5
         Height = 60
-        Top = 117
+        Top = 141
         Width = 520
         Anchors = [akTop, akLeft, akRight]
         Caption = 'MTREE'
@@ -1813,6 +1855,7 @@ object DialogBox: TDialogBox
     BorderSpacing.Bottom = 10
     Caption = '<Version info>'
     ParentColor = False
+    WordWrap = True
   end
   object btnClear: TButton
     AnchorSideTop.Control = edOptions
@@ -1829,5 +1872,19 @@ object DialogBox: TDialogBox
     Caption = 'Clear'
     OnClick = ButtonClick
     TabOrder = 4
+  end
+  object chkDisclaimer: TCheckBox
+    AnchorSideLeft.Control = lblInfo
+    AnchorSideTop.Control = btnCancel
+    AnchorSideTop.Side = asrCenter
+    Left = 10
+    Height = 23
+    Top = 451
+    Width = 96
+    Caption = 'Disclaimer'
+    Checked = True
+    OnChange = CheckBoxChange
+    State = cbChecked
+    TabOrder = 5
   end
 end
