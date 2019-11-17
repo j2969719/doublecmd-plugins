@@ -41,9 +41,9 @@ tField fields[] =
 };
 
 int gPluginNr;
-tProgressProc gProgressProc;
-tLogProc gLogProc;
-tRequestProc gRequestProc;
+tProgressProc gProgressProc = NULL;
+tLogProc gLogProc = NULL;
+tRequestProc gRequestProc = NULL;
 GtkRecentManager *gManager;
 
 gboolean UnixTimeToFileTime(unsigned long mtime, LPFILETIME ft)
@@ -355,7 +355,7 @@ int DCPCALL FsExecuteFile(HWND MainWin, char* RemoteName, char* Verb)
 		if (g_chmod(RemoteName + 1, mode) == -1)
 			result = FS_EXEC_ERROR;
 	}
-	else
+	else if (gRequestProc)
 		gRequestProc(gPluginNr, RT_MsgOK, NULL, strerror(EOPNOTSUPP), NULL, 0);
 
 	return result;

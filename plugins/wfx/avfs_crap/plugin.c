@@ -23,10 +23,10 @@ typedef struct sAVFSDirData
 } tAVFSDirData;
 
 int gPluginNr;
-tProgressProc gProgressProc;
-tLogProc gLogProc;
-tRequestProc gRequestProc;
-tExtensionStartupInfo* gStartupInfo;
+tProgressProc gProgressProc = NULL;
+tLogProc gLogProc = NULL;
+tRequestProc gRequestProc = NULL;
+tExtensionStartupInfo* gStartupInfo = NULL;
 
 static char gAVFSPath[PATH_MAX] = "/#avfsstat";
 static char gLFMPath[PATH_MAX];
@@ -212,10 +212,11 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 
 static void ShowAVFSPathDlg(void)
 {
-	if (access(gLFMPath, F_OK) != 0)
-		gAbortCD = !(bool)gStartupInfo->InputBox("AVFS", "Enter AVFS path:", false, gAVFSPath, sizeof(gAVFSPath) - 1);
-	else
-		gStartupInfo->DialogBoxLFMFile(gLFMPath, DlgProc);
+	if (gStartupInfo != NULL)
+		if (access(gLFMPath, F_OK) != 0)
+			gAbortCD = !(bool)gStartupInfo->InputBox("AVFS", "Enter AVFS path:", false, gAVFSPath, sizeof(gAVFSPath) - 1);
+		else
+			gStartupInfo->DialogBoxLFMFile(gLFMPath, DlgProc);
 }
 
 int DCPCALL FsInit(int PluginNr, tProgressProc pProgressProc, tLogProc pLogProc, tRequestProc pRequestProc)
@@ -650,7 +651,7 @@ void DCPCALL FsSetDefaultParams(FsDefaultParamStruct* dps)
 	char *pos = strrchr(gHistoryFile, '/');
 
 	if (pos)
-		strcpy(pos + 1, "AVFSRecent.txt");
+		strcpy(pos + 1, "history_avfs.txt");
 
 	memset(&dlinfo, 0, sizeof(dlinfo));
 
@@ -671,11 +672,17 @@ void DCPCALL FsGetDefRootName(char* DefRootName, int maxlen)
 
 void DCPCALL ExtensionInitialize(tExtensionStartupInfo* StartupInfo)
 {
-	gStartupInfo = malloc(sizeof(tExtensionStartupInfo));
-	memcpy(gStartupInfo, StartupInfo, sizeof(tExtensionStartupInfo));
+	if (gStartupInfo == NULL)
+	{
+		gStartupInfo = malloc(sizeof(tExtensionStartupInfo));
+		memcpy(gStartupInfo, StartupInfo, sizeof(tExtensionStartupInfo));
+	}
 }
 
 void DCPCALL ExtensionFinalize(void* Reserved)
 {
-	free(gStartupInfo);
+	if (gStartupInfo != NULL)
+		free(gStartupInfo);
+
+	gStartupInfo = NULL;
 }

@@ -18,10 +18,10 @@ typedef struct sVFSDirData
 } tVFSDirData;
 
 int gPluginNr;
-tProgressProc gProgressProc;
-tLogProc gLogProc;
-tRequestProc gRequestProc;
-tExtensionStartupInfo* gStartupInfo;
+tProgressProc gProgressProc = NULL;
+tLogProc gLogProc = NULL;
+tRequestProc gRequestProc = NULL;
+tExtensionStartupInfo* gStartupInfo = NULL;
 
 GKeyFile *gCfg;
 gchar *gCfgPath = "";
@@ -33,6 +33,8 @@ static void try_free_str(gchar *str)
 {
 	if (str)
 		g_free(str);
+
+	str = NULL;
 }
 
 void UnixTimeToFileTime(time_t t, LPFILETIME pft)
@@ -169,7 +171,7 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 
 static void ShowCFGDlg(void)
 {
-	if (gLFMPath[0] != '\0')
+	if (gStartupInfo && gLFMPath[0] != '\0')
 	{
 		if (g_file_test(gLFMPath, G_FILE_TEST_EXISTS))
 			gStartupInfo->DialogBoxLFMFile(gLFMPath, DlgProc);
@@ -540,8 +542,11 @@ void DCPCALL FsSetDefaultParams(FsDefaultParamStruct* dps)
 
 void DCPCALL ExtensionInitialize(tExtensionStartupInfo* StartupInfo)
 {
-	gStartupInfo = malloc(sizeof(tExtensionStartupInfo));
-	memcpy(gStartupInfo, StartupInfo, sizeof(tExtensionStartupInfo));
+	if (gStartupInfo == NULL)
+	{
+		gStartupInfo = malloc(sizeof(tExtensionStartupInfo));
+		memcpy(gStartupInfo, StartupInfo, sizeof(tExtensionStartupInfo));
+	}
 }
 
 void DCPCALL ExtensionFinalize(void* Reserved)
@@ -556,7 +561,10 @@ void DCPCALL ExtensionFinalize(void* Reserved)
 	try_free_str(gInfoPath);
 	try_free_str(gLFMPath);
 
-	free(gStartupInfo);
+	if (gStartupInfo != NULL)
+		free(gStartupInfo);
+
+	gStartupInfo = NULL;
 }
 
 void DCPCALL FsGetDefRootName(char* DefRootName, int maxlen)

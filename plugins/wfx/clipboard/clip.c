@@ -26,9 +26,9 @@ tField fields[] =
 };
 
 int gPluginNr;
-tProgressProc gProgressProc;
-tLogProc gLogProc;
-tRequestProc gRequestProc;
+tProgressProc gProgressProc = NULL;
+tLogProc gLogProc = NULL;
+tRequestProc gRequestProc = NULL;
 
 gboolean gSetContent;
 GtkClipboard *gClipboard;
@@ -318,7 +318,7 @@ int DCPCALL FsExecuteFile(HWND MainWin, char* RemoteName, char* Verb)
 	{
 		return FS_EXEC_YOURSELF;
 	}
-	else
+	else if (gRequestProc)
 		gRequestProc(gPluginNr, RT_MsgOK, NULL, strerror(EOPNOTSUPP), NULL, 0);
 
 	return FS_EXEC_OK;

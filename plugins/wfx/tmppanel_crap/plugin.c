@@ -26,9 +26,9 @@ typedef struct sCopyInfo
 } tCopyInfo;
 
 int gPluginNr;
-tProgressProc gProgressProc;
-tLogProc gLogProc;
-tRequestProc gRequestProc;
+tProgressProc gProgressProc = NULL;
+tLogProc gLogProc = NULL;
+tRequestProc gRequestProc = NULL;
 
 GKeyFile *gCfg;
 gchar *gCfgPath = "";
@@ -396,7 +396,7 @@ int DCPCALL FsExecuteFile(HWND MainWin, char* RemoteName, char* Verb)
 
 	if (strncmp(Verb, "open", 5) == 0)
 	{
-		if (stat(path, &buf) == 0)
+		if (path && stat(path, &buf) == 0)
 		{
 			if (buf.st_mode & S_IXUSR)
 				command = g_shell_quote(path);
@@ -408,7 +408,7 @@ int DCPCALL FsExecuteFile(HWND MainWin, char* RemoteName, char* Verb)
 			result = FS_FILE_OK;
 		}
 	}
-	else if (strncmp(path, "folder", 6) != 0 && strncmp(Verb, "chmod", 5) == 0)
+	else if (path && strncmp(path, "folder", 6) != 0 && strncmp(Verb, "chmod", 5) == 0)
 	{
 		gint i = g_ascii_strtoll(Verb + 6, 0, 8);
 
@@ -420,7 +420,7 @@ int DCPCALL FsExecuteFile(HWND MainWin, char* RemoteName, char* Verb)
 
 		result = FS_FILE_OK;
 	}
-	else
+	else if (gRequestProc)
 		gRequestProc(gPluginNr, RT_MsgOK, NULL, strerror(EOPNOTSUPP), NULL, 0);
 
 	try_free_str(path);

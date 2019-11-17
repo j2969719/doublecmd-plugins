@@ -125,7 +125,7 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 	FILE *info;
 	char *line = NULL;
 	size_t len = 0;
-	ssize_t read;
+	ssize_t lread;
 
 	switch (Msg)
 	{
@@ -136,22 +136,40 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 
 		if ((info = fopen(lpath, "r")) != NULL)
 		{
-			while ((read = getline(&line, &len, info)) != -1)
+			while ((lread = getline(&line, &len, info)) != -1)
 			{
-				if (line[read - 1] == '\n')
-					line[read - 1] = '\0';
+				if (line[lread - 1] == '\n')
+					line[lread - 1] = '\0';
 
 				for (int i = 0; i < statuslcount; i++)
 				{
 					if (strncmp(line, gStatusLines[i].name, strlen(gStatusLines[i].name)) == 0)
 					{
-						gDialogApi->SendDlgMsg(pDlg, gStatusLines[i].control, DM_SETTEXT, (intptr_t)strdup(line + strlen(gStatusLines[i].name) + 1), 0);
+						gDialogApi->SendDlgMsg(pDlg, gStatusLines[i].control, DM_SETTEXT, (intptr_t)line + strlen(gStatusLines[i].name) + 1, 0);
 						break;
 					}
 				}
 			}
 
 			fclose(info);
+		}
+
+		snprintf(lpath, PATH_MAX, "/proc/%s/cmdline", gLastPath);
+		int fd;
+		if ((fd = open(lpath, O_RDONLY)) > 0)
+		{
+			memset(lpath, 0, PATH_MAX);
+			if ((lread = read(fd, lpath, PATH_MAX-1)) > 0)
+			{
+				for (int i=0; i<lread; i++)
+				{
+					if (lpath[i] == '\0')
+						lpath[i] = ' ';
+				}
+
+				gDialogApi->SendDlgMsg(pDlg, "mCmdline", DM_SETTEXT, (intptr_t)lpath, 0);
+			}
+			close(fd);
 		}
 
 		break;

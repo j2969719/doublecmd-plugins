@@ -14,9 +14,9 @@ typedef struct sVFSDirData
 } tVFSDirData;
 
 int gPluginNr;
-tProgressProc gProgressProc;
-tLogProc gLogProc;
-tRequestProc gRequestProc;
+tProgressProc gProgressProc = NULL;
+tLogProc gLogProc = NULL;
+tRequestProc gRequestProc = NULL;
 GKeyFile *gCfg;
 
 void SetCurrentFileTime(LPFILETIME ft)
@@ -196,7 +196,7 @@ int DCPCALL FsExecuteFile(HWND MainWin, char* RemoteName, char* Verb)
 	{
 		return FS_EXEC_YOURSELF;
 	}
-	else
+	else if (gRequestProc)
 		gRequestProc(gPluginNr, RT_MsgOK, NULL, strerror(EOPNOTSUPP), NULL, 0);
 
 	return FS_EXEC_ERROR;

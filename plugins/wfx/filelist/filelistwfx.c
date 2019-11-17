@@ -34,9 +34,9 @@ tField fields[] =
 };
 
 int gPluginNr;
-tProgressProc gProgressProc;
-tLogProc gLogProc;
-tRequestProc gRequestProc;
+tProgressProc gProgressProc = NULL;
+tLogProc gLogProc = NULL;
+tRequestProc gRequestProc = NULL;
 
 char inFile[PATH_MAX];
 
@@ -389,7 +389,7 @@ int DCPCALL FsExecuteFile(HWND MainWin, char* RemoteName, char* Verb)
 		if (chmod(RemoteName + 1, mode) == -1)
 			return FS_EXEC_ERROR;
 	}
-	else
+	else if (gRequestProc)
 		gRequestProc(gPluginNr, RT_MsgOK, NULL, strerror(EOPNOTSUPP), NULL, 0);
 
 	return FS_EXEC_OK;

@@ -1,12 +1,12 @@
 object DialogBox: TDialogBox
   Left = 303
-  Height = 201
+  Height = 260
   Top = 158
   Width = 421
   AutoSize = True
   BorderStyle = bsDialog
   Caption = 'Properties'
-  ClientHeight = 201
+  ClientHeight = 260
   ClientWidth = 421
   OnCreate = DialogBoxShow
   Position = poScreenCenter
@@ -45,7 +45,7 @@ object DialogBox: TDialogBox
     AnchorSideBottom.Side = asrBottom
     Left = 287
     Height = 29
-    Top = 159
+    Top = 219
     Width = 124
     Anchors = [akTop, akRight]
     BorderSpacing.Top = 25
@@ -98,7 +98,7 @@ object DialogBox: TDialogBox
     AnchorSideRight.Side = asrBottom
     Left = 335
     Height = 24
-    Top = 110
+    Top = 170
     Width = 76
     Anchors = [akTop, akLeft, akRight]
     OnChange = EditChange
@@ -114,7 +114,7 @@ object DialogBox: TDialogBox
     AnchorSideRight.Side = asrBottom
     Left = 58
     Height = 24
-    Top = 110
+    Top = 170
     Width = 198
     Anchors = [akTop, akLeft, akRight]
     BorderSpacing.Top = 5
@@ -125,12 +125,12 @@ object DialogBox: TDialogBox
   object edVmSize: TEdit
     AnchorSideLeft.Control = lblVmSize
     AnchorSideLeft.Side = asrBottom
-    AnchorSideTop.Control = edName
+    AnchorSideTop.Control = mCmdline
     AnchorSideTop.Side = asrBottom
     AnchorSideRight.Control = lblVmPeak
     Left = 68
     Height = 24
-    Top = 54
+    Top = 114
     Width = 139
     Alignment = taRightJustify
     Anchors = [akTop, akLeft, akRight]
@@ -147,7 +147,7 @@ object DialogBox: TDialogBox
     AnchorSideRight.Side = asrBottom
     Left = 280
     Height = 24
-    Top = 54
+    Top = 114
     Width = 131
     Alignment = taRightJustify
     Anchors = [akTop, akLeft, akRight]
@@ -175,7 +175,7 @@ object DialogBox: TDialogBox
     AnchorSideTop.Side = asrCenter
     Left = 304
     Height = 15
-    Top = 115
+    Top = 175
     Width = 26
     BorderSpacing.Left = 15
     Caption = 'PID:'
@@ -187,7 +187,7 @@ object DialogBox: TDialogBox
     AnchorSideTop.Side = asrCenter
     Left = 10
     Height = 15
-    Top = 115
+    Top = 175
     Width = 43
     BorderSpacing.Left = 10
     Caption = 'Name:'
@@ -199,7 +199,7 @@ object DialogBox: TDialogBox
     AnchorSideTop.Side = asrCenter
     Left = 10
     Height = 15
-    Top = 59
+    Top = 119
     Width = 53
     Caption = 'VmSize:'
     ParentColor = False
@@ -210,7 +210,7 @@ object DialogBox: TDialogBox
     AnchorSideRight.Control = edVmPeak
     Left = 217
     Height = 15
-    Top = 59
+    Top = 119
     Width = 58
     Anchors = [akTop, akRight]
     BorderSpacing.Right = 5
@@ -225,7 +225,7 @@ object DialogBox: TDialogBox
     AnchorSideRight.Side = asrBottom
     Left = 5
     Height = 17
-    Top = 88
+    Top = 148
     Width = 411
     Caption = 'Parent'
     Anchors = [akTop, akLeft, akRight]
@@ -235,5 +235,24 @@ object DialogBox: TDialogBox
     BorderSpacing.Right = 5
     Font.Style = [fsBold]
     ParentFont = False
+  end
+  object mCmdline: TMemo
+    AnchorSideLeft.Control = lblName
+    AnchorSideTop.Control = edName
+    AnchorSideTop.Side = asrBottom
+    AnchorSideRight.Control = edPid
+    AnchorSideRight.Side = asrBottom
+    Left = 10
+    Height = 55
+    Top = 49
+    Width = 401
+    Anchors = [akTop, akLeft, akRight]
+    BorderSpacing.Top = 5
+    Lines.Strings = (
+      'Cmdline N/A'
+    )
+    ReadOnly = True
+    ScrollBars = ssAutoVertical
+    TabOrder = 7
   end
 end
