@@ -1,0 +1,239 @@
+object DialogBox: TDialogBox
+  Left = 303
+  Height = 201
+  Top = 158
+  Width = 421
+  AutoSize = True
+  BorderStyle = bsDialog
+  Caption = 'Properties'
+  ClientHeight = 201
+  ClientWidth = 421
+  OnCreate = DialogBoxShow
+  Position = poScreenCenter
+  LCLVersion = '2.0.7.0'
+  object lblPid: TLabel
+    AnchorSideLeft.Control = lblState
+    AnchorSideLeft.Side = asrBottom
+    AnchorSideTop.Control = edPid
+    AnchorSideTop.Side = asrCenter
+    Left = 304
+    Height = 15
+    Top = 25
+    Width = 26
+    BorderSpacing.Left = 15
+    Caption = 'PID:'
+    ParentColor = False
+  end
+  object lblName: TLabel
+    AnchorSideLeft.Control = Owner
+    AnchorSideTop.Control = edName
+    AnchorSideTop.Side = asrCenter
+    Left = 10
+    Height = 15
+    Top = 25
+    Width = 43
+    BorderSpacing.Left = 10
+    Caption = 'Name:'
+    ParentColor = False
+  end
+  object btnClose: TBitBtn
+    AnchorSideTop.Control = edPpid
+    AnchorSideTop.Side = asrBottom
+    AnchorSideRight.Control = Owner
+    AnchorSideRight.Side = asrBottom
+    AnchorSideBottom.Control = Owner
+    AnchorSideBottom.Side = asrBottom
+    Left = 287
+    Height = 29
+    Top = 159
+    Width = 124
+    Anchors = [akTop, akRight]
+    BorderSpacing.Top = 25
+    BorderSpacing.Right = 10
+    BorderSpacing.Bottom = 10
+    Cancel = True
+    DefaultCaption = True
+    Kind = bkClose
+    OnClick = ButtonClick
+    TabOrder = 0
+  end
+  object edPid: TEdit
+    AnchorSideLeft.Control = lblPid
+    AnchorSideLeft.Side = asrBottom
+    AnchorSideTop.Control = edName
+    AnchorSideRight.Control = Owner
+    AnchorSideRight.Side = asrBottom
+    Left = 335
+    Height = 24
+    Top = 20
+    Width = 76
+    Anchors = [akTop, akLeft, akRight]
+    BorderSpacing.Left = 5
+    BorderSpacing.Right = 10
+    ReadOnly = True
+    TabOrder = 1
+    Text = 'N/A'
+  end
+  object edName: TEdit
+    AnchorSideLeft.Control = lblName
+    AnchorSideLeft.Side = asrBottom
+    AnchorSideTop.Control = Owner
+    AnchorSideRight.Control = Owner
+    AnchorSideRight.Side = asrBottom
+    Left = 58
+    Height = 24
+    Top = 20
+    Width = 198
+    BorderSpacing.Left = 5
+    BorderSpacing.Top = 20
+    BorderSpacing.Right = 10
+    ReadOnly = True
+    TabOrder = 2
+    Text = 'N/A'
+  end
+  object edPpid: TEdit
+    AnchorSideLeft.Control = edPid
+    AnchorSideTop.Control = edParentName
+    AnchorSideRight.Control = edPid
+    AnchorSideRight.Side = asrBottom
+    Left = 335
+    Height = 24
+    Top = 110
+    Width = 76
+    Anchors = [akTop, akLeft, akRight]
+    OnChange = EditChange
+    ReadOnly = True
+    TabOrder = 3
+    Text = 'N/A'
+  end
+  object edParentName: TEdit
+    AnchorSideLeft.Control = edName
+    AnchorSideTop.Control = divParent
+    AnchorSideTop.Side = asrBottom
+    AnchorSideRight.Control = edName
+    AnchorSideRight.Side = asrBottom
+    Left = 58
+    Height = 24
+    Top = 110
+    Width = 198
+    Anchors = [akTop, akLeft, akRight]
+    BorderSpacing.Top = 5
+    ReadOnly = True
+    TabOrder = 4
+    Text = 'N/A'
+  end
+  object edVmSize: TEdit
+    AnchorSideLeft.Control = lblVmSize
+    AnchorSideLeft.Side = asrBottom
+    AnchorSideTop.Control = edName
+    AnchorSideTop.Side = asrBottom
+    AnchorSideRight.Control = lblVmPeak
+    Left = 68
+    Height = 24
+    Top = 54
+    Width = 139
+    Alignment = taRightJustify
+    Anchors = [akTop, akLeft, akRight]
+    BorderSpacing.Left = 5
+    BorderSpacing.Top = 10
+    BorderSpacing.Right = 10
+    ReadOnly = True
+    TabOrder = 5
+    Text = 'N/A'
+  end
+  object edVmPeak: TEdit
+    AnchorSideTop.Control = edVmSize
+    AnchorSideRight.Control = edPid
+    AnchorSideRight.Side = asrBottom
+    Left = 280
+    Height = 24
+    Top = 54
+    Width = 131
+    Alignment = taRightJustify
+    Anchors = [akTop, akLeft, akRight]
+    ReadOnly = True
+    TabOrder = 6
+    Text = 'N/A'
+  end
+  object lblState: TLabel
+    AnchorSideLeft.Control = edName
+    AnchorSideLeft.Side = asrBottom
+    AnchorSideTop.Control = lblPid
+    Left = 266
+    Height = 15
+    Top = 25
+    Width = 23
+    BorderSpacing.Left = 5
+    BorderSpacing.Right = 5
+    Caption = 'N/A'
+    ParentColor = False
+  end
+  object lblPPid: TLabel
+    AnchorSideLeft.Control = lblState
+    AnchorSideLeft.Side = asrBottom
+    AnchorSideTop.Control = edPpid
+    AnchorSideTop.Side = asrCenter
+    Left = 304
+    Height = 15
+    Top = 115
+    Width = 26
+    BorderSpacing.Left = 15
+    Caption = 'PID:'
+    ParentColor = False
+  end
+  object lblPName: TLabel
+    AnchorSideLeft.Control = Owner
+    AnchorSideTop.Control = edParentName
+    AnchorSideTop.Side = asrCenter
+    Left = 10
+    Height = 15
+    Top = 115
+    Width = 43
+    BorderSpacing.Left = 10
+    Caption = 'Name:'
+    ParentColor = False
+  end
+  object lblVmSize: TLabel
+    AnchorSideLeft.Control = lblName
+    AnchorSideTop.Control = edVmSize
+    AnchorSideTop.Side = asrCenter
+    Left = 10
+    Height = 15
+    Top = 59
+    Width = 53
+    Caption = 'VmSize:'
+    ParentColor = False
+  end
+  object lblVmPeak: TLabel
+    AnchorSideTop.Control = edVmPeak
+    AnchorSideTop.Side = asrCenter
+    AnchorSideRight.Control = edVmPeak
+    Left = 217
+    Height = 15
+    Top = 59
+    Width = 58
+    Anchors = [akTop, akRight]
+    BorderSpacing.Right = 5
+    Caption = 'VmPeak:'
+    ParentColor = False
+  end
+  object divParent: TDividerBevel
+    AnchorSideLeft.Control = Owner
+    AnchorSideTop.Control = edVmSize
+    AnchorSideTop.Side = asrBottom
+    AnchorSideRight.Control = Owner
+    AnchorSideRight.Side = asrBottom
+    Left = 5
+    Height = 17
+    Top = 88
+    Width = 411
+    Caption = 'Parent'
+    Anchors = [akTop, akLeft, akRight]
+    BevelStyle = bsRaised
+    BorderSpacing.Left = 5
+    BorderSpacing.Top = 10
+    BorderSpacing.Right = 5
+    Font.Style = [fsBold]
+    ParentFont = False
+  end
+end
