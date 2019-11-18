@@ -460,8 +460,8 @@ int DCPCALL FsContentGetValue(char* FileName, int FieldIndex, int UnitIndex, voi
 
 		break;
 
-	case 3:
-		strvalue = dirname(FileName);
+	case 2:
+		strvalue = dirname(FileName + 1);
 
 		if (strvalue)
 			strlcpy((char*)FieldValue, strvalue, maxlen - 1);

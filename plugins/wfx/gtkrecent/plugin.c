@@ -426,8 +426,8 @@ int DCPCALL FsContentGetValue(char* FileName, int FieldIndex, int UnitIndex, voi
 
 		break;
 
-	case 3:
-		strvalue = g_path_get_dirname(FileName);
+	case 2:
+		strvalue = g_path_get_dirname(FileName + 1);
 
 		if (strvalue)
 			g_strlcpy((char*)FieldValue, strvalue, maxlen - 1);

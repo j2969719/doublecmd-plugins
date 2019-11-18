@@ -28,6 +28,7 @@ typedef struct sStatusLines
 {
 	char *name;
 	char *control;
+	int  type;
 } tStatusLines;
 
 int gPluginNr;
@@ -41,12 +42,61 @@ static char gLastPath[PATH_MAX];
 
 tStatusLines gStatusLines[] =
 {
-	{"Name:",	"edName"},
-	{"Pid:",	"edPid"},
-	{"PPid:",	"edPpid"},
-	{"State:",	"lblState"},
-	{"VmSize:",	"edVmSize"},
-	{"VmPeak:",	"edVmPeak"},
+	{"Name:",			"edName", 	    ft_string},
+	{"Pid:",			"edPid",	ft_numeric_32},
+	{"PPid:",			"edPpid",	ft_numeric_32},
+	{"State:",			"lblState",	    ft_string},
+	{"VmSize:",			"edVmSize",	    ft_string},
+	{"VmPeak:",			"edVmPeak",	    ft_string},
+	{"Umask:",			NULL,		    ft_string},
+	{"Tgid:",			NULL,		ft_numeric_32},
+	{"Ngid:",			NULL,		ft_numeric_32},
+	{"TracerPid:",			NULL,		ft_numeric_32},
+	{"Uid:",			NULL,		    ft_string},
+	{"Gid:",			NULL,		    ft_string},
+	{"FDSize:",			NULL,		ft_numeric_32},
+	{"Groups:",			NULL,		    ft_string},
+	{"NStgid:",			NULL,		ft_numeric_32},
+	{"NSpid:",			NULL,		ft_numeric_32},
+	{"NSpgid:",			NULL,		ft_numeric_32},
+	{"NSsid:",			NULL,		ft_numeric_32},
+	{"VmLck:",			"edVmLck",	    ft_string},
+	{"VmPin:",			NULL,		    ft_string},
+	{"VmHWM:",			"edVmHWM",	    ft_string},
+	{"VmRSS:",		 	"edVmRSS",	    ft_string},
+	{"RssAnon:",			NULL,		    ft_string},
+	{"RssFile:",			NULL,		    ft_string},
+	{"RssShmem:",			NULL,		    ft_string},
+	{"VmData:",			NULL,		    ft_string},
+	{"VmStk:",			NULL,		    ft_string},
+	{"VmExe:",			NULL,		    ft_string},
+	{"VmLib:",			NULL,		    ft_string},
+	{"VmPTE:",			NULL,		    ft_string},
+	{"VmSwap:",		  	"edVmSwap",	    ft_string},
+	{"HugetlbPages:",		NULL,		    ft_string},
+	{"CoreDumping:",		NULL,		    ft_string},
+	{"THP_enabled:",		NULL,		    ft_string},
+	{"Threads:",			NULL,		ft_numeric_32},
+	{"SigQ:",			NULL,		    ft_string},
+	{"SigPnd:",			NULL,		    ft_string},
+	{"ShdPnd:",			NULL,		    ft_string},
+	{"SigBlk:",			NULL,		    ft_string},
+	{"SigIgn:",			NULL,		    ft_string},
+	{"SigCgt:",			NULL,		    ft_string},
+	{"CapInh:",			NULL,		    ft_string},
+	{"CapPrm:",			NULL,		    ft_string},
+	{"CapEff:",			NULL,		    ft_string},
+	{"CapBnd:",			NULL,		    ft_string},
+	{"CapAmb:",			NULL,		    ft_string},
+	{"NoNewPrivs:",			NULL,		    ft_string},
+	{"Seccomp:",			NULL,		    ft_string},
+	{"Speculation_Store_Bypass:",	NULL,		    ft_string},
+	{"Cpus_allowed:",		NULL,		    ft_string},
+	{"Cpus_allowed_list:",		NULL,		    ft_string},
+	{"Mems_allowed:",		NULL,		    ft_string},
+	{"Mems_allowed_list:",		NULL,		    ft_string},
+	{"voluntary_ctxt_switches:",	NULL,		    ft_string},
+	{"nonvoluntary_ctxt_switches:",	NULL,		    ft_string},
 };
 
 #define statuslcount (sizeof(gStatusLines)/sizeof(tStatusLines))
@@ -106,8 +156,13 @@ bool SetFindData(tVFSDirData *dirdata, WIN32_FIND_DATAA *FindData)
 
 				if (info)
 				{
+					int vmsize, rssize;
 					int64_t size = 0;
-					fscanf(info, "%d ", &size);
+					fscanf(info, "%d %d ", &vmsize, &rssize);
+
+					if (rssize > 0)
+						size = (int64_t)rssize * (int64_t)sysconf(_SC_PAGESIZE);
+
 					FindData->nFileSizeHigh = (size & 0xFFFFFFFF00000000) >> 32;
 					FindData->nFileSizeLow = size & 0x00000000FFFFFFFF;
 					fclose(info);
@@ -143,7 +198,7 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 
 				for (int i = 0; i < statuslcount; i++)
 				{
-					if (strncmp(line, gStatusLines[i].name, strlen(gStatusLines[i].name)) == 0)
+					if (gStatusLines[i].control && strncmp(line, gStatusLines[i].name, strlen(gStatusLines[i].name)) == 0)
 					{
 						gDialogApi->SendDlgMsg(pDlg, gStatusLines[i].control, DM_SETTEXT, (intptr_t)line + strlen(gStatusLines[i].name) + 1, 0);
 						break;
@@ -156,12 +211,14 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 
 		snprintf(lpath, PATH_MAX, "/proc/%s/cmdline", gLastPath);
 		int fd;
+
 		if ((fd = open(lpath, O_RDONLY)) > 0)
 		{
 			memset(lpath, 0, PATH_MAX);
-			if ((lread = read(fd, lpath, PATH_MAX-1)) > 0)
+
+			if ((lread = read(fd, lpath, PATH_MAX - 1)) > 0)
 			{
-				for (int i=0; i<lread; i++)
+				for (int i = 0; i < lread - 1; i++)
 				{
 					if (lpath[i] == '\0')
 						lpath[i] = ' ';
@@ -169,6 +226,7 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 
 				gDialogApi->SendDlgMsg(pDlg, "mCmdline", DM_SETTEXT, (intptr_t)lpath, 0);
 			}
+
 			close(fd);
 		}
 
@@ -204,6 +262,29 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 					fscanf(info, "Name:\t%100[^\n]s", name);
 					gDialogApi->SendDlgMsg(pDlg, "edParentName", DM_SETTEXT, (intptr_t)name, 0);
 					fclose(info);
+				}
+			}
+		}
+		else if (strncmp(DlgItemName, "edVm", 4) == 0)
+		{
+			line = strdup((char*)gDialogApi->SendDlgMsg(pDlg, DlgItemName, DM_GETTEXT, 0, 0));
+			len = strlen(line);
+
+			if (len > 7 && len + 2 < PATH_MAX)
+			{
+				if (len > 7 && line[len - 3] == ' ' && line[len - 7] != ' ')
+				{
+					strlcpy(lpath, line, len - 6);
+					strcat(lpath, " ");
+					strcat(lpath, line + len - 6);
+					gDialogApi->SendDlgMsg(pDlg, DlgItemName, DM_SETTEXT, (intptr_t)lpath, 0);
+				}
+				else if (len > 11 && line[len - 3] == ' ' && line[len - 11] != ' ')
+				{
+					strlcpy(lpath, line, len - 10);
+					strcat(lpath, " ");
+					strcat(lpath, line + len - 10);
+					gDialogApi->SendDlgMsg(pDlg, DlgItemName, DM_SETTEXT, (intptr_t)lpath, 0);
 				}
 			}
 		}
@@ -382,6 +463,70 @@ void DCPCALL FsSetDefaultParams(FsDefaultParamStruct* dps)
 		if (pos)
 			strcpy(pos + 1, lfm_name);
 	}
+}
+
+int DCPCALL FsContentGetSupportedField(int FieldIndex, char* FieldName, char* Units, int maxlen)
+{
+	if (FieldIndex < 0 || FieldIndex >= statuslcount)
+		return ft_nomorefields;
+
+	int len = strlen(gStatusLines[FieldIndex].name);
+
+	if (len < 0 || len > maxlen)
+		return ft_nomorefields;
+
+	strlcpy(FieldName, gStatusLines[FieldIndex].name, len - 1);
+	strlcpy(Units, "", maxlen - 1);
+	return gStatusLines[FieldIndex].type;
+}
+
+int DCPCALL FsContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void* FieldValue, int maxlen, int flags)
+{
+	int result = ft_fieldempty;
+	char lpath[PATH_MAX];
+	FILE *info;
+	char *line = NULL;
+	size_t len = 0;
+	ssize_t lread;
+
+	char *dot = strrchr(FileName, '.');
+
+	if (dot != NULL)
+	{
+		snprintf(lpath, PATH_MAX, "/proc/%s/status", dot + 1);
+
+		if ((info = fopen(lpath, "r")) != NULL)
+		{
+			while ((lread = getline(&line, &len, info)) != -1)
+			{
+				if (line[lread - 1] == '\n')
+					line[lread - 1] = '\0';
+
+				if (strncmp(line, gStatusLines[FieldIndex].name, strlen(gStatusLines[FieldIndex].name)) == 0)
+				{
+					if (line + strlen(gStatusLines[FieldIndex].name) + 1)
+					{
+						if (gStatusLines[FieldIndex].type == ft_string)
+							strlcpy((char*)FieldValue, line + strlen(gStatusLines[FieldIndex].name) + 1, maxlen - 1);
+						else if (gStatusLines[FieldIndex].type == ft_numeric_32)
+							*(int*)FieldValue = atoi(line + strlen(gStatusLines[FieldIndex].name) + 1);
+
+						result = gStatusLines[FieldIndex].type;
+					}
+
+					break;
+				}
+			}
+
+			fclose(info);
+		}
+		else
+			result = ft_fileerror;
+	}
+	else
+		result = ft_fileerror;
+
+	return result;
 }
 
 void DCPCALL FsGetDefRootName(char* DefRootName, int maxlen)
