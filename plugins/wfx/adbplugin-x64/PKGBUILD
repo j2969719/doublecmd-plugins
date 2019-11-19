@@ -10,7 +10,7 @@ license=('unknown')
 depends=('doublecmd' 'android-tools' 'pcre')
 makedepends=('patchelf')
 options=(!strip)
-source=('http://www.myklos.org/download/adbplugin-x64.zip'
+source=('https://www.uniqtec.eu/download/adb/adbplugin-linux-x64.zip'
 	'adb.ico')
 md5sums=('159a1cd83be0a8fb97f32175a65dc06b'
 	 'e1387bf693c7e2831c45654ecb534992')
