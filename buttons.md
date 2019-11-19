@@ -695,6 +695,20 @@ DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
 </doublecmd>
 ```
 
+### Show file properties window (default filemanger)
+```xml
+DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
+<doublecmd>
+  <Program>
+    <ID>{C31D381F-2B47-4F19-8D0B-C797FD6857E2}</ID>
+    <Icon>cm_fileproperties</Icon>
+    <Hint>File Properties...</Hint>
+    <Command>dbus-send</Command>
+    <Params>%"0 --dest=org.freedesktop.FileManager1 --type=method_call /org/freedesktop/FileManager1 org.freedesktop.FileManager1.ShowItemProperties array:string:%p0{"file:}{",} string:"0"</Params>
+  </Program>
+</doublecmd>
+```
+
 ## Scripts
 
 You can change the script path, icon and description.
