@@ -233,6 +233,9 @@ View list of recently used files (also support: open, view or delete any entry).
 - [gvfs_quickmount](plugins/wfx/gvfs_quickmount)<br>
 Mounting gvfs resources with automatic password entry (stored in ini file). F7 - new connection, Alt+Enter - edit existing.
 
+- [proclst](plugins/wfx/proclst)<br>
+View a list of running processes.
+
 - [tmppanel_crap](plugins/wfx/tmppanel_crap)<br>
 Temporary panel, see FileList description.
 
