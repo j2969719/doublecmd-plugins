@@ -91,9 +91,7 @@ if ba == true then
       if #nd > 0 then
         for i = 1, #nd do
           tmp = SysUtils.CreateDirectory(nd[i])
-          if tmp == false then
-            msg = msg .. '\n' .. nd[i]
-          end
+          if tmp == false then msg = msg .. '\n' .. nd[i] end
         end
         if string.len(msg) > 8 then Dialogs.MessageBox(msg, 'Make dir(s)', 0x0030) end
       else

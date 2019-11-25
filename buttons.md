@@ -835,7 +835,7 @@ DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
 ```
 
 
-### Make dir(s)
+### Make dir(s) *(cross platform)*
 [MakeDir.lua](utils/MakeDir.lua), see details in the beginning of script.
 ```xml
 DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
