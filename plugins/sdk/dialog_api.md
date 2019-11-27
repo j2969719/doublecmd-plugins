@@ -1,6 +1,13 @@
 Extension (Dialog) API
 ==========
 
+Double Commander's Extension API, which allows to create platform-independent dialog windows in plugins.
+
+Supported [plugin API](https://github.com/doublecmd/doublecmd/wiki/Plugins-development):
+
+- `WCX`
+- `WFX`
+
 # Functions
 
 ## ExtensionInitialize
