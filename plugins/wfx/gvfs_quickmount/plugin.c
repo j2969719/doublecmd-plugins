@@ -296,7 +296,7 @@ HANDLE DCPCALL FsFindFirst(char* Path, WIN32_FIND_DATAA *FindData)
 
 	memset(FindData, 0, sizeof(WIN32_FIND_DATAA));
 
-	g_strlcpy(FindData->cFileName, "!ReadMe.txt", PATH_MAX - 1);
+	g_strlcpy(FindData->cFileName, "!ReadMe.txt", MAX_PATH - 1);
 
 	if (stat(gInfoPath, &buf) == 0)
 	{
@@ -321,7 +321,7 @@ BOOL DCPCALL FsFindNext(HANDLE Hdl, WIN32_FIND_DATAA *FindData)
 		return FALSE;
 	else
 	{
-		g_strlcpy(FindData->cFileName, dirdata->groups[dirdata->i], PATH_MAX - 1);
+		g_strlcpy(FindData->cFileName, dirdata->groups[dirdata->i], MAX_PATH - 1);
 		FindData->dwFileAttributes |= FILE_ATTRIBUTE_REPARSE_POINT;
 		FindData->nFileSizeLow = 404;
 		FindData->ftCreationTime.dwHighDateTime = 0xFFFFFFFF;
@@ -366,7 +366,7 @@ int DCPCALL FsExecuteFile(HWND MainWin, char* RemoteName, char* Verb)
 			if (uri && uri[0] != '\0')
 			{
 				GFile *f = g_file_new_for_uri(uri);
-				g_strlcpy(RemoteName, uri, PATH_MAX);
+				g_strlcpy(RemoteName, uri, MAX_PATH - 1);
 				try_free_str(uri);
 
 				GMountOperation *op = g_mount_operation_new();

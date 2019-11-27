@@ -90,7 +90,7 @@ gboolean SetFindData(tVFSDirData *dirdata, WIN32_FIND_DATAA *FindData)
 
 	if (file != NULL)
 	{
-		g_strlcpy(FindData->cFileName, file, PATH_MAX);
+		g_strlcpy(FindData->cFileName, file, MAX_PATH - 1);
 		gchar *target = g_key_file_get_string(gCfg, dirdata->group, file, NULL);
 
 		if ((target) && (strncmp(target, "folder", 6) == 0))

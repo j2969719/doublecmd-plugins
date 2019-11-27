@@ -33,7 +33,7 @@ gboolean SetFindData(tVFSDirData *dirdata, WIN32_FIND_DATAA *FindData)
 
 	if (dirdata->files[dirdata->i] != NULL)
 	{
-		g_strlcpy(FindData->cFileName, dirdata->files[dirdata->i], PATH_MAX);
+		g_strlcpy(FindData->cFileName, dirdata->files[dirdata->i], MAX_PATH - 1);
 		SetCurrentFileTime(&FindData->ftCreationTime);
 		SetCurrentFileTime(&FindData->ftLastAccessTime);
 		SetCurrentFileTime(&FindData->ftLastWriteTime);

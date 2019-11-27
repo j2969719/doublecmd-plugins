@@ -93,7 +93,7 @@ bool SetFindData(DIR *cur, char *path, WIN32_FIND_DATAA *FindData)
 			FindData->dwReserved0 = buf.st_mode;
 		}
 
-		strlcpy(FindData->cFileName, ent->d_name, PATH_MAX - 1);
+		strlcpy(FindData->cFileName, ent->d_name, MAX_PATH - 1);
 
 		return true;
 	}

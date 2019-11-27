@@ -25,19 +25,26 @@ typedef tArcData* ArcData;
 typedef void *HINSTANCE;
 
 tProcessDataProc gProcessDataProc = NULL;
-tExtensionStartupInfo* gStartupInfo;
+tExtensionStartupInfo* gStartupInfo = NULL;
 
 static gchar *cfg_path;
 
 void DCPCALL ExtensionInitialize(tExtensionStartupInfo* StartupInfo)
 {
-	gStartupInfo = malloc(sizeof(tExtensionStartupInfo));
-	memcpy(gStartupInfo, StartupInfo, sizeof(tExtensionStartupInfo));
+	if (gStartupInfo == NULL)
+	{
+		gStartupInfo = malloc(sizeof(tExtensionStartupInfo));
+		memcpy(gStartupInfo, StartupInfo, sizeof(tExtensionStartupInfo));
+	}
 }
 
 void DCPCALL ExtensionFinalize(void* Reserved)
 {
-	free(gStartupInfo);
+	if (gStartupInfo != NULL)
+		free(gStartupInfo);
+
+	if (cfg_path)
+		g_free(cfg_path);
 }
 
 gchar *get_file_ext(const gchar *Filename)
@@ -200,9 +207,15 @@ int DCPCALL ProcessFile(HANDLE hArcData, int Operation, char *DestPath, char *De
 		{
 			command = str_replace(command, "$FILE", g_shell_quote(handle->arcname));
 			command = str_replace(command, "$OUTPUT", g_shell_quote(DestName));
+			//g_print("%s\n", command);
 
 			if (system(command) != 0)
-				result = E_EWRITE;
+			{
+				gchar *msg = g_strdup_printf("Failed to execute command \"%s\"", command);
+				errmsg(msg);
+				g_free(msg);
+				result = E_EABORTED;
+			}
 
 			g_free(command);
 		}
@@ -301,7 +314,7 @@ BOOL DCPCALL CanYouHandleThisFile(char *FileName)
 
 void DCPCALL ConfigurePacker(HWND Parent, HINSTANCE DllInstance)
 {
-	gchar *command = g_strdup_printf("xdg-open \"%s\"", cfg_path);
+	gchar *command = g_strdup_printf("xdg-open %s", g_shell_quote(cfg_path));
 	system(command);
 	g_free(command);
 }
