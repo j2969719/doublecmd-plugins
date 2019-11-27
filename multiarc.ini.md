@@ -472,7 +472,7 @@ FormMode=8
 ```ini
 [Unarchiver]
 Archiver=unar
-Description=The Unarchiver - https://unarchiver.c3.cx
+Description=The Unarchiver - https://theunarchiver.com/
 Extension=sit,sitx,zoo,cpt,sea,ark,sue,pak
 Start======
 End=^(Flags
@@ -485,7 +485,7 @@ FormMode=8
 ```ini
 [Unarchiver_2]
 Archiver=unar
-Description=The Unarchiver - https://unarchiver.c3.cx
+Description=The Unarchiver - https://theunarchiver.com/
 ID=25 50 44 46, D0 CF 11 E0 A1 B1 1A E1, 43 57 53
 IDPos=0, <SeekID>
 Start======
@@ -499,7 +499,7 @@ FormMode=8
 ```ini
 [ARC]
 Archiver=unar
-Description=old ARC
+Description=old ARC via The Unarchiver - https://theunarchiver.com/
 ID=1A 02, 1A 03, 1A 04, 1A 08, 1A 09
 IDPos=0
 IDSeekRange=0
@@ -569,7 +569,7 @@ Script [base64uue](utils/base64uue), [forum](https://doublecmd.sourceforge.io/fo
 ```ini
 [ZPAQ]
 Archiver=zpaq
-Description=zpaq
+Description=ZPAQ - http://mattmahoney.net/dc/zpaq.html
 IDSeekRange=0
 Extension=zpaq
 Start=
@@ -589,7 +589,7 @@ FormMode=1
 ```ini
 [ZSTD]
 Archiver=$COMMANDER_PATH/scripts/cutext
-Description=ZSTD
+Description=Zstandard - http://www.zstd.net
 Extension=zst
 Format0=n+
 List=%P %aQ
