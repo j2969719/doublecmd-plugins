@@ -329,7 +329,7 @@ DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
   <Program>
     <ID>{F2ECCCAD-76BF-40D7-8CA5-F97DD97E62F1}</ID>
     <Icon>trashcan_empty</Icon>
-    <Hint>Очистить корзину</Hint>
+    <Hint>Empty trash</Hint>
     <Command>sh</Command>
     <Params>-c "if (zenity --question --text=\"Empty trash?\") then (echo \"1\" ; sleep 1; gio trash --empty; echo \"99\" ; sleep 1) | (zenity --progress --auto-close --title=\"Processing\" --percentage=1) fi"</Params>
   </Program>
