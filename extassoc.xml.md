@@ -1,5 +1,7 @@
 File associations and actions
-=============================
+-----------------------------
+
+*See details in [DC help file](http://doublecmd.github.io/doc/en/help.html#cm_FileAssoc)*
 
 ### All files
 

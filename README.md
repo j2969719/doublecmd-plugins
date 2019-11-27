@@ -1,18 +1,15 @@
 Additions for Double Commander
-=====================================
-
-## 1. Plugins [>>](plugins.md)
-
-## 2. External archivers [>>](multiarc.ini.md)
-*(for MultiArc, see [DC help file](http://doublecmd.github.io/doc/en/multiarc.html))*
-
-## 3. Several buttons for the toolbar [>>](buttons.md)
-
-## 4. File associations and actions [>>](extassoc.xml.md)
+------------------------------
 
 Not all but most of additions for Linux only.
 
-![preview](https://repository-images.githubusercontent.com/97732523/23c14800-6a78-11e9-88c8-64b2054ca4f7)
+### 1. Plugins [>>](plugins.md)
+
+### 2. External archivers (for MultiArc) [>>](multiarc.ini.md)
+
+### 3. Several buttons for the toolbar [>>](buttons.md)
+
+### 4. File associations and actions [>>](extassoc.xml.md)
 
 ---
 ### Also see:

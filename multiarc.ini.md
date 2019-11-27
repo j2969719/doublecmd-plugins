@@ -1,7 +1,10 @@
 MultiArc
-========
+--------
 
-Copy-paste to `multiarc.ini` and enable in *Options* > *Archivers*:
+*See details in [DC help file](http://doublecmd.github.io/doc/en/multiarc.html)*
+
+Copy-paste to `multiarc.ini` and enable in *Options* > *Archivers*.<br>
+Also some separate files can be found [here](multiarc) (use *Options* > *Archivers* > *Other...* > *Import*).
 
 - [7Zip self-extracting archive](#7zsfx)
 - [BALZ](#balz)
@@ -29,8 +32,6 @@ Copy-paste to `multiarc.ini` and enable in *Options* > *Archivers*:
 - [UUEncode](#uue)
 - [ZPAQ](#zpaq)
 - [ZSTD](#zstd)
-
-Some separate files can be found [here](multiarc) (use *Options* > *Archivers* > *Other...* > *Import*, required DC v0.9)
 
 ---
 <a name="7zsfx"><h3>7Zip self-extracting archive</h3></a>

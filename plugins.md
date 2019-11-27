@@ -1,5 +1,5 @@
 Plugins
-=======
+-------
 
 - [WCX plugins](#wcx)
 
@@ -102,7 +102,7 @@ Getting some information from DjVu files and searching text. Requires `djvused`.
 Returns directory size or files on a file system.
 
 - [elfheaderinfo.lua](plugins/wdx/scripts/elfheaderinfo.lua) *(cross platform)*<br>
-Getting some ELF header information.<br>
+Getting some ELF header information.
 
 - [encawdx.lua](plugins/wdx/scripts/encawdx.lua)<br>
 Detection of file encoding. Requires `enca`.
@@ -121,16 +121,16 @@ Validating FictionBook2 (FB2) files (first test can be used with ANY XML-based f
 
 - [filecountwdx.lua](plugins/wdx/scripts/filecountwdx.lua) *(cross platform)*<br>
 Returns file or directory count, without scanning symbolic links to folders.<br>
-For columns set only!<br>
+For columns set only!
 
 - [filenamechrstatwdx.lua](plugins/wdx/scripts/filenamechrstatwdx.lua) *(cross platform)*<br>
-Returns count of characters in file name: total, alphanumeric, spaces, letters (all, lower case or upper case letters), digits and punctuation characters. You can choose the full path, path, file name or file extension.<br>
+Returns count of characters in file name: total, alphanumeric, spaces, letters (all, lower case or upper case letters), digits and punctuation characters. You can choose the full path, path, file name or file extension.
 
 - [filenamematchwdx.lua](plugins/wdx/scripts/filenamematchwdx.lua) *(cross platform)*<br>
-Returns part of file name for sorting (getting title, volume, chapter, etc).<br>
+Returns part of file name for sorting (getting title, volume, chapter, etc).
 
 - [filenamereplacewdx.lua](plugins/wdx/scripts/filenamereplacewdx.lua) *(cross platform)*<br>
-Returns new file name after replacing total or part of file name by the list (see and edit `RplFiles` in the beginning of script).<br>
+Returns new file name after replacing total or part of file name by the list (see and edit `RplFiles` in the beginning of script).
 
 - [fixfilenamewdx.lua](plugins/wdx/scripts/fixfilenamewdx.lua)<br>
 Fixing file name encoding with `iconv`.
@@ -145,7 +145,7 @@ Getting MS-DOS attributes in a FAT file system. Requires `getfattr`.
 Getting some information from local copy of Git repository. Requires `git`.
 
 - [hexdecheaderwdx.lua](plugins/wdx/scripts/hexdecheaderwdx.lua) and [hexheaderwdx.lua](plugins/wdx/scripts/hexheaderwdx.lua) *(cross platform)*<br>
-Examples: search by hex value. Now Double Commander can do it itself.<br>
+Examples: search by hex value. Now Double Commander can do it itself.
 
 - [infilelistwdx.lua](plugins/wdx/scripts/infilelistwdx.lua)<br>
 Search file name in custom list of file names.
@@ -163,16 +163,16 @@ The last modified time is today (not last twenty-four hours), boolean.
 Returns some information from Arch Linux packages.
 
 - [quasiexpanderwdx.lua](plugins/wdx/scripts/quasiexpanderwdx.lua) *(cross platform)*<br>
-Returns part of file name (by delimiter).<br>
+Returns part of file name (by delimiter).
 
 - [randomcharswdx.lua](plugins/wdx/scripts/randomcharswdx.lua) *(cross platform)*<br>
-Returns random alphanumeric character(s) (case-sensitive), by default up to 10.<br>
+Returns random alphanumeric character(s) (case-sensitive), by default up to 10.
 
 - [ru2enutf8wdx.lua](plugins/wdx/scripts/ru2enutf8wdx.lua) *(cross platform)*<br>
-Converts keyboard layout Ru <> En. Requires `luautf8` module.<br>
+Converts keyboard layout Ru <> En. Requires `luautf8` module.
 
 - [ru2enwdx.lua](plugins/wdx/scripts/ru2enwdx.lua) *(cross platform)*<br>
-Converts keyboard layout Ru <> En.<br>
+Converts keyboard layout Ru <> En.
 
 - [scrtiptfileinfowdx.lua](plugins/wdx/scripts/scrtiptfileinfowdx.lua)<br>
 Returns various information about file using command line utilities. Uses [fileinfo.sh](scripts/fileinfo.sh).
@@ -182,13 +182,13 @@ Getting SELinux file labels.
 
 - [someaudioext4findfileswdx.lua](plugins/wdx/scripts/someaudioext4findfileswdx.lua) *(cross platform)*<br>
 Checking if file(s) exists in folder by extension. List of file extensions (edit manually): table `extlist` in the beginning of script.<br>
-For "Find files" dialog.<br>
+For "Find files" dialog.
 
 - [somefilesindirwdx.lua](plugins/wdx/scripts/somefilesindirwdx.lua) *(cross platform)*<br>
-Like script above but for columns set.<br>
+Like script above but for columns set.
 
 - [sqlitetxtsearchwdx.lua](plugins/wdx/scripts/sqlitetxtsearchwdx.lua) *(cross platform)*<br>
-Plugin-example: getting text from SQLite3 base. Requires `lsqlite3` module.<br>
+Plugin-example: getting text from SQLite3 base. Requires `lsqlite3` module.
 
 - [stringmatchwdx.lua](plugins/wdx/scripts/stringmatchwdx.lua)<br>
 Plugin-example: search text in files, fields will create with patterns.

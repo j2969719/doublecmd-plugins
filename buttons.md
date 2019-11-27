@@ -1,5 +1,7 @@
 Several buttons for the toolbar
-===============================
+-------------------------------
+
+*See details in [DC help file](http://doublecmd.github.io/doc/en/toolbar.html)*
 
 Copy-paste on the toolbar.
 
