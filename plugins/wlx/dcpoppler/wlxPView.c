@@ -74,6 +74,7 @@ static void view_set_page(guint page_num, CustomData *data)
 	gboolean sig_value, scale_set, fit_page;
 	guint pbox_width, pbox_height;
 	cairo_t *cr;
+	gchar *info;
 
 	page = poppler_document_get_page(data->document, page_num);
 	poppler_page_get_size(page, &width, &height);
@@ -131,9 +132,12 @@ static void view_set_page(guint page_num, CustomData *data)
 
 	data->current_page = page_num;
 
-	gtk_label_set_text(GTK_LABEL(data->lbl_info), g_strdup_printf(" / %d : %dx%d  ",
-	                   data->total_pages, (guint)width, (guint)height));
-	gtk_button_set_label(GTK_BUTTON(data->btn_scale), g_strdup_printf("%s%.1f", _("Scale ~x"), scale));
+	info = g_strdup_printf(" / %d : %dx%d  ", data->total_pages, (guint)width, (guint)height);
+	gtk_label_set_text(GTK_LABEL(data->lbl_info), info);
+	g_free(info);
+	info = g_strdup_printf("%s%.1f", _("Scale ~x"), scale);
+	gtk_button_set_label(GTK_BUTTON(data->btn_scale), info);
+	g_free(info);
 
 	g_signal_emit_by_name(G_OBJECT(data->scrolled_window), "scroll-child",
 	                      GTK_SCROLL_START, FALSE, &sig_value);
@@ -450,7 +454,10 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 		g_free(fileUri);
 
 	if (!data->document)
+	{
+		g_free(data);
 		return NULL;
+	}
 
 	main_vbox = create_ui(ParentWin, data);
 	g_object_set_data(G_OBJECT(main_vbox), "custom-data", data);
@@ -515,8 +522,11 @@ void DCPCALL ListSetDefaultParams(ListDefaultParamStruct* dps)
 	if (dladdr(dir_f, &dlinfo) != 0)
 	{
 		setlocale(LC_ALL, "");
-		bindtextdomain(GETTEXT_PACKAGE, g_strdup_printf(dir_f,
-		                g_path_get_dirname(dlinfo.dli_fname)));
+		gchar *plugdir = g_path_get_dirname(dlinfo.dli_fname);
+		gchar *langdir = g_strdup_printf(dir_f, plugdir);
+		g_free(plugdir);
+		bindtextdomain(GETTEXT_PACKAGE, langdir);
+		g_free(langdir);
 		textdomain(GETTEXT_PACKAGE);
 	}
 }

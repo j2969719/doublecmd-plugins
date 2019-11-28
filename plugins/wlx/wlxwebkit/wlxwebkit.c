@@ -151,8 +151,11 @@ void DCPCALL ListSetDefaultParams(ListDefaultParamStruct* dps)
 	if (dladdr(dir_f, &dlinfo) != 0)
 	{
 		setlocale(LC_ALL, "");
-		bindtextdomain(GETTEXT_PACKAGE, g_strdup_printf(dir_f,
-		                g_path_get_dirname(dlinfo.dli_fname)));
+		gchar *plugdir = g_path_get_dirname(dlinfo.dli_fname);
+		gchar *langdir = g_strdup_printf(dir_f, plugdir);
+		g_free(plugdir);
+		bindtextdomain(GETTEXT_PACKAGE, langdir);
+		g_free(langdir);
 		textdomain(GETTEXT_PACKAGE);
 	}
 }

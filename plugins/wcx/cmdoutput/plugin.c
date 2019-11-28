@@ -47,7 +47,7 @@ void DCPCALL ExtensionFinalize(void* Reserved)
 		g_free(cfg_path);
 }
 
-gchar *get_file_ext(const gchar *Filename)
+static gchar *get_file_ext(const gchar *Filename)
 {
 	if (g_file_test(Filename, G_FILE_TEST_IS_DIR))
 		return NULL;
@@ -74,7 +74,7 @@ gchar *get_file_ext(const gchar *Filename)
 	return result;
 }
 
-const gchar *get_mime_type(const gchar *Filename)
+static gchar *get_mime_type(const gchar *Filename)
 {
 	GFile *gfile = g_file_new_for_path(Filename);
 
@@ -86,22 +86,37 @@ const gchar *get_mime_type(const gchar *Filename)
 	if (!fileinfo)
 		return NULL;
 
-	const gchar *content_type = g_strdup(g_file_info_get_content_type(fileinfo));
+	gchar *content_type = g_strdup(g_file_info_get_content_type(fileinfo));
 	g_object_unref(fileinfo);
 	g_object_unref(gfile);
 
 	return content_type;
 }
 
-gchar *str_replace(gchar *text, gchar *str, gchar *repl)
+static gchar *str_replace(gchar *text, gchar *str, gchar *repl, gboolean quote)
 {
+	gchar *result = NULL;
+
+	if (!str || !repl || !text)
+		return result;
+
 	gchar **split = g_strsplit(text, str, -1);
-	gchar *result = g_strjoinv(repl, split);
+
+	if (quote)
+	{
+		gchar *quoted_repl = g_shell_quote(repl);
+		result = g_strjoinv(quoted_repl, split);
+		g_free(quoted_repl);
+	}
+	else
+		result = g_strjoinv(repl, split);
+
 	g_strfreev(split);
+
 	return result;
 }
 
-gchar *basenamenoext(const gchar *file)
+static gchar *basenamenoext(const gchar *file)
 {
 	gchar *basename = g_path_get_basename(file);
 	gchar *result = g_strdup(basename);
@@ -140,8 +155,8 @@ HANDLE DCPCALL OpenArchive(tOpenArchiveData *ArchiveData)
 	}
 	else
 	{
-		const gchar *mime_type = get_mime_type(ArchiveData->ArcName);
-		const gchar *file_ext = get_file_ext(ArchiveData->ArcName);
+		gchar *mime_type = get_mime_type(ArchiveData->ArcName);
+		gchar *file_ext = get_file_ext(ArchiveData->ArcName);
 
 		if (file_ext && g_key_file_has_group(handle->cfg, file_ext))
 		{
@@ -158,6 +173,13 @@ HANDLE DCPCALL OpenArchive(tOpenArchiveData *ArchiveData)
 			ArchiveData->OpenResult = E_UNKNOWN_FORMAT;
 			return E_SUCCESS;
 		}
+
+		if (mime_type)
+			g_free(mime_type);
+
+		if (file_ext)
+			g_free(file_ext);
+
 	}
 
 	return (HANDLE)handle;
@@ -205,9 +227,8 @@ int DCPCALL ProcessFile(HANDLE hArcData, int Operation, char *DestPath, char *De
 		}
 		else if (command)
 		{
-			command = str_replace(command, "$FILE", g_shell_quote(handle->arcname));
-			command = str_replace(command, "$OUTPUT", g_shell_quote(DestName));
-			//g_print("%s\n", command);
+			command = str_replace(command, "$FILE", handle->arcname, TRUE);
+			command = str_replace(command, "$OUTPUT", DestName, TRUE);
 
 			if (system(command) != 0)
 			{
@@ -255,7 +276,9 @@ void DCPCALL SetChangeVolProc(HANDLE hArcData, tChangeVolProc pChangeVolProc1)
 
 void DCPCALL PackSetDefaultParams(PackDefaultParamStruct* dps)
 {
-	cfg_path = g_strdup_printf("%s/wcx_cmdoutput.ini", g_path_get_dirname(dps->DefaultIniName));
+	gchar *ini_dirname = g_path_get_dirname(dps->DefaultIniName);
+	cfg_path = g_strdup_printf("%s/wcx_cmdoutput.ini", ini_dirname);
+	g_free(ini_dirname);
 
 	if (!g_file_test(cfg_path, G_FILE_TEST_EXISTS))
 	{
@@ -290,17 +313,24 @@ BOOL DCPCALL CanYouHandleThisFile(char *FileName)
 	gboolean result = FALSE;
 	GKeyFile *cfg = g_key_file_new();
 
-	const gchar *mime_type = get_mime_type(FileName);
-	const gchar *file_ext = get_file_ext(FileName);
+	gchar *mime_type = get_mime_type(FileName);
+	gchar *file_ext = get_file_ext(FileName);
 
 	if (!g_key_file_load_from_file(cfg, cfg_path, G_KEY_FILE_KEEP_COMMENTS, &err))
 	{
-		errmsg(g_strdup_printf("%s: %s", cfg_path, (err)->message));
+		gchar *msg = g_strdup_printf("%s: %s", cfg_path, (err)->message);
+		errmsg(msg);
+		g_free(msg);
 	}
-	else if (g_key_file_has_group(cfg, mime_type) || g_key_file_has_group(cfg, file_ext))
-	{
+	else if ((mime_type && g_key_file_has_group(cfg, mime_type)) ||
+	                (file_ext && g_key_file_has_group(cfg, file_ext)))
 		result = TRUE;
-	}
+
+	if (mime_type)
+		g_free(mime_type);
+
+	if (file_ext)
+		g_free(file_ext);
 
 	if (err)
 		g_error_free(err);
@@ -309,12 +339,13 @@ BOOL DCPCALL CanYouHandleThisFile(char *FileName)
 		g_key_file_free(cfg);
 
 	return result;
-
 }
 
 void DCPCALL ConfigurePacker(HWND Parent, HINSTANCE DllInstance)
 {
-	gchar *command = g_strdup_printf("xdg-open %s", g_shell_quote(cfg_path));
+	gchar *quted_path = g_shell_quote(cfg_path);
+	gchar *command = g_strdup_printf("xdg-open %s", quted_path);
 	system(command);
+	g_free(quted_path);
 	g_free(command);
 }

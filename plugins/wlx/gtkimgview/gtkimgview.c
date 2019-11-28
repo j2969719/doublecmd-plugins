@@ -289,36 +289,6 @@ void DCPCALL ListCloseWindow(HWND ListWin)
 	gtk_widget_destroy(GTK_WIDGET(ListWin));
 }
 
-void DCPCALL ListGetDetectString(char* DetectString, int maxlen)
-{
-	GSList *l, *list;
-	gchar *detectstr = "", **ext;
-	gint i;
-
-	list = gdk_pixbuf_get_formats();
-
-	for (l = list; l != NULL; l = l->next)
-	{
-		GdkPixbufFormat *format = (GdkPixbufFormat*)l->data;
-		ext = gdk_pixbuf_format_get_extensions(format);
-
-		for (i = 0; ext[i] != NULL; i++)
-		{
-			if (g_strcmp0(detectstr, "") != 0)
-				detectstr = g_strdup_printf("|%s", detectstr);
-
-			detectstr = g_strdup_printf("(EXT=\"%s\")%s", ext[i], detectstr);
-		}
-	}
-
-	g_strlcpy(DetectString, detectstr, maxlen-1);
-	g_free(ext);
-	g_free(detectstr);
-	g_slist_free(l);
-	g_slist_free(list);
-
-}
-
 int DCPCALL ListSendCommand(HWND ListWin, int Command, int Parameter)
 {
 	switch (Command)
@@ -350,8 +320,11 @@ void DCPCALL ListSetDefaultParams(ListDefaultParamStruct* dps)
 	if (dladdr(dir_f, &dlinfo) != 0)
 	{
 		setlocale(LC_ALL, "");
-		bindtextdomain(GETTEXT_PACKAGE, g_strdup_printf(dir_f,
-		                g_path_get_dirname(dlinfo.dli_fname)));
+		gchar *plugdir = g_path_get_dirname(dlinfo.dli_fname);
+		gchar *langdir = g_strdup_printf(dir_f, plugdir);
+		g_free(plugdir);
+		bindtextdomain(GETTEXT_PACKAGE, langdir);
+		g_free(langdir);
 		textdomain(GETTEXT_PACKAGE);
 	}
 }

@@ -373,19 +373,27 @@ static void tags_cb (GstElement *playbin, gint stream, CustomData *data) {
 static void error_cb (GstBus *bus, GstMessage *msg, CustomData *data) {
   GError *err;
   gchar *debug_info;
+  gchar *str;
   GtkTextBuffer *text;
 
   /* Print error details on the screen */
   gst_message_parse_error (msg, &err, &debug_info);
 
   text = gtk_text_view_get_buffer (GTK_TEXT_VIEW (data->streams_list));
-  gtk_text_buffer_insert_at_cursor (text, g_strdup_printf ("\nError received from element %s: %s\n", GST_OBJECT_NAME (msg->src), err->message), -1);
-  gtk_text_buffer_insert_at_cursor (text, g_strdup_printf ("Debugging information: %s\n", debug_info ? debug_info : "none"), -1);
+
+  str = g_strdup_printf ("\nError received from element %s: %s\n", GST_OBJECT_NAME (msg->src), err->message);
+  gtk_text_buffer_insert_at_cursor (text, str, -1);
+  g_free (str);
+  str = g_strdup_printf ("Debugging information: %s\n", debug_info ? debug_info : "none");
+  gtk_text_buffer_insert_at_cursor (text, str, -1);
+  g_free (str);
 
   //g_printerr ("Error received from element %s: %s\n", GST_OBJECT_NAME (msg->src), err->message);
   //g_printerr ("Debugging information: %s\n", debug_info ? debug_info : "none");
   g_clear_error (&err);
   g_free (debug_info);
+
+  gtk_toggle_tool_button_set_active (GTK_TOGGLE_TOOL_BUTTON (data->btn_info), TRUE);
 
   /* Set the pipeline to READY (which stops playback) */
   gst_element_set_state (data->playbin, GST_STATE_READY);
