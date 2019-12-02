@@ -259,6 +259,8 @@ int DCPCALL ListSendCommand(HWND ListWin, int Command, int Parameter)
 	default :
 		return LISTPLUGIN_ERROR;
 	}
+
+	return LISTPLUGIN_OK;
 }
 
 int DCPCALL ListSearchText(HWND ListWin, char* SearchString, int SearchParameter)
@@ -267,7 +269,7 @@ int DCPCALL ListSearchText(HWND ListWin, char* SearchString, int SearchParameter
 	GRegexCompileFlags flags;
 
 	if (!(SearchParameter & lcs_matchcase))
-		flags |= G_REGEX_CASELESS;
+		flags = G_REGEX_CASELESS;
 
 	GRegex *regex =  g_regex_new(SearchString, flags, 0, NULL);
 	VteTerminal *terminal = VTE_TERMINAL(getFirstChild(getFirstChild(ListWin)));
@@ -287,4 +289,6 @@ int DCPCALL ListSearchText(HWND ListWin, char* SearchString, int SearchParameter
 		gtk_dialog_run(GTK_DIALOG(dialog));
 		gtk_widget_destroy(dialog);
 	}
+
+	return LISTPLUGIN_OK;
 }

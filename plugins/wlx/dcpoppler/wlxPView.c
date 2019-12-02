@@ -65,6 +65,7 @@ static gboolean canvas_expose_event(GtkWidget *widget, GdkEventExpose *event, Cu
 	cairo_set_source_surface(cr, data->surface, 0, 0);
 	cairo_paint(cr);
 	cairo_destroy(cr);
+	return TRUE;
 }
 
 static void view_set_page(guint page_num, CustomData *data)

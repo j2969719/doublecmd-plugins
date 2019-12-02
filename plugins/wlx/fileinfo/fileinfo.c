@@ -228,8 +228,12 @@ void DCPCALL ListSetDefaultParams(ListDefaultParamStruct* dps)
 		if (pos)
 			strcpy(pos + 1, cfg_file);
 
-		setlocale (LC_ALL, "");
-		bindtextdomain(GETTEXT_PACKAGE, g_strdup_printf("%s/langs", g_path_get_dirname(dlinfo.dli_fname)));
+		setlocale(LC_ALL, "");
+		gchar *plugdir = g_path_get_dirname(dlinfo.dli_fname);
+		gchar *langdir = g_strdup_printf("%s/langs", plugdir);
+		g_free(plugdir);
+		bindtextdomain(GETTEXT_PACKAGE, langdir);
+		g_free(langdir);
 		textdomain(GETTEXT_PACKAGE);
 	}
 
@@ -375,6 +379,8 @@ int DCPCALL ListSearchText(HWND ListWin, char* SearchString, int SearchParameter
 		gtk_dialog_run(GTK_DIALOG(dialog));
 		gtk_widget_destroy(dialog);
 	}
+
+	return LISTPLUGIN_OK;
 }
 
 int DCPCALL ListSendCommand(HWND ListWin, int Command, int Parameter)
@@ -400,4 +406,6 @@ int DCPCALL ListSendCommand(HWND ListWin, int Command, int Parameter)
 	default :
 		return LISTPLUGIN_ERROR;
 	}
+
+	return LISTPLUGIN_OK;
 }

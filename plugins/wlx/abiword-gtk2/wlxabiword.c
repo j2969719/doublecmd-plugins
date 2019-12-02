@@ -51,6 +51,8 @@ int DCPCALL ListSearchText(HWND ListWin, char* SearchString, int SearchParameter
 		abi_widget_find_next(ABI_WIDGET(ListWin), TRUE);
 	else
 		abi_widget_find_next(ABI_WIDGET(ListWin), FALSE);
+
+	return LISTPLUGIN_OK;
 }
 
 int DCPCALL ListSendCommand(HWND ListWin, int Command, int Parameter)
@@ -68,4 +70,6 @@ int DCPCALL ListSendCommand(HWND ListWin, int Command, int Parameter)
 	default :
 		return LISTPLUGIN_ERROR;
 	}
+
+	return LISTPLUGIN_OK;
 }

@@ -60,7 +60,6 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 	const char* cfg_file = "settings.ini";
 	const gchar *content_type;
 	static char path[PATH_MAX];
-	GFileInfo *fileinfo;
 	GKeyFile *cfg;
 	GError *err = NULL;
 	Dl_info dlinfo;
@@ -291,6 +290,8 @@ int DCPCALL ListSearchText(HWND ListWin, char* SearchString, int SearchParameter
 		gtk_dialog_run(GTK_DIALOG(dialog));
 		gtk_widget_destroy(dialog);
 	}
+
+	return LISTPLUGIN_OK;
 }
 
 int DCPCALL ListSendCommand(HWND ListWin, int Command, int Parameter)
@@ -316,4 +317,6 @@ int DCPCALL ListSendCommand(HWND ListWin, int Command, int Parameter)
 	default :
 		return LISTPLUGIN_ERROR;
 	}
+
+	return LISTPLUGIN_OK;
 }
