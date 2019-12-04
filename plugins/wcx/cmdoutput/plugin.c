@@ -230,6 +230,7 @@ int DCPCALL ProcessFile(HANDLE hArcData, int Operation, char *DestPath, char *De
 			gchar *tmp = str_replace(command, "$FILE", handle->arcname, TRUE);
 			g_free(command);
 			command = str_replace(tmp, "$OUTPUT", DestName, TRUE);
+			g_free(tmp);
 
 			if (system(command) != 0)
 			{
