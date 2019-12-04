@@ -1,6 +1,6 @@
 CC = gcc
 CFLAGS = -shared -fPIC -Wl,--no-as-needed
-INCLUDES = `pkg-config --cflags --libs libgcrypt` -I../../sdk
+INCLUDES = -lgcrypt -lgpg-error -I../../sdk
 
 
 all:
