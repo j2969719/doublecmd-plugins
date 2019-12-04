@@ -317,7 +317,6 @@ static void tb_info_clicked(GtkToolItem *toolbtn, CustomData *data)
 	gtk_widget_show(mlabel);
 	gtk_widget_grab_focus(scroll);
 	gtk_widget_show(dialog);
-	g_free(mtext);
 	g_free(itext);
 }
 

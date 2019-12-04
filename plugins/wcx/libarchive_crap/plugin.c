@@ -934,7 +934,7 @@ int DCPCALL ReadHeaderEx(HANDLE hArcData, tHeaderDataEx *HeaderDataEx)
 {
 	int ret;
 	int64_t size;
-	memset(HeaderDataEx, 0, sizeof(HeaderDataEx));
+	memset(HeaderDataEx, 0, sizeof(&HeaderDataEx));
 	ArcData handle = (ArcData)hArcData;
 	char *filename = NULL;
 

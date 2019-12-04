@@ -188,7 +188,7 @@ HANDLE DCPCALL OpenArchive(tOpenArchiveData *ArchiveData)
 
 int DCPCALL ReadHeader(HANDLE hArcData, tHeaderData *HeaderData)
 {
-	memset(HeaderData, 0, sizeof(HeaderData));
+	memset(HeaderData, 0, sizeof(&HeaderData));
 	ArcData handle = (ArcData)hArcData;
 
 	if (handle->current > handle->total || !handle->files[handle->current])
@@ -227,8 +227,9 @@ int DCPCALL ProcessFile(HANDLE hArcData, int Operation, char *DestPath, char *De
 		}
 		else if (command)
 		{
-			command = str_replace(command, "$FILE", handle->arcname, TRUE);
-			command = str_replace(command, "$OUTPUT", DestName, TRUE);
+			gchar *tmp = str_replace(command, "$FILE", handle->arcname, TRUE);
+			g_free(command);
+			command = str_replace(tmp, "$OUTPUT", DestName, TRUE);
 
 			if (system(command) != 0)
 			{
@@ -297,7 +298,7 @@ void DCPCALL PackSetDefaultParams(PackDefaultParamStruct* dps)
 				strcpy(pos + 1, "settings_default.ini");
 		}
 
-		if (!default_cfg || !g_key_file_load_from_file(cfg, default_cfg, G_KEY_FILE_KEEP_COMMENTS, NULL))
+		if (!g_key_file_load_from_file(cfg, default_cfg, G_KEY_FILE_KEEP_COMMENTS, NULL))
 		{
 			g_key_file_set_string(cfg, "image/png", ".jpg", "convert $FILE $OUTPUT");
 		}
