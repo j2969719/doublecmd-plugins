@@ -23,6 +23,8 @@
 #include <dlfcn.h>
 #include <limits.h>
 
+#include <glib.h>
+
 typedef struct sArcData
 {
 	struct archive *archive;
@@ -36,8 +38,6 @@ typedef tArcData* ArcData;
 typedef void *HINSTANCE;
 
 #define BUFF_SIZE 8192
-
-static unsigned char lizard_magic[] = { 0x06, 0x22, 0x4D, 0x18 };
 
 tChangeVolProc gChangeVolProc  = NULL;
 tProcessDataProc gProcessDataProc = NULL;
@@ -57,6 +57,9 @@ static bool gReadSkipDot = true;
 static bool gNotabene = true;
 static char gReadCharset[256];
 static int  gTarFormat = ARCHIVE_FORMAT_TAR;
+
+GKeyFile *gCfg;
+gchar *gCfgPath = NULL;
 
 
 char* strlcpy(char* p, const char* p2, int maxlen)
@@ -101,6 +104,51 @@ void DCPCALL ExtensionFinalize(void* Reserved)
 		free(gStartupInfo);
 
 	gStartupInfo = NULL;
+
+
+	g_key_file_set_string(gCfg, "Global", "LastOptions", gOptions);
+	g_key_file_set_integer(gCfg, "Global", "TarFormat", gTarFormat);
+	g_key_file_set_boolean(gCfg, "Global", "ReadSkipDot", gReadSkipDot);
+	g_key_file_set_boolean(gCfg, "Global", "MtreeClasic", gMtreeClasic);
+	g_key_file_set_boolean(gCfg, "Global", "MtreeCheckFS", gMtreeCheckFS);
+	g_key_file_set_boolean(gCfg, "Global", "CanHandleRAW", gCanHandleRAW);
+	g_key_file_set_boolean(gCfg, "Global", "ShowDisclaimer", gNotabene);
+
+	g_key_file_save_to_file(gCfg, gCfgPath, NULL);
+	g_key_file_free(gCfg);
+
+	if (gCfgPath)
+		g_free(gCfgPath);
+}
+
+void DCPCALL PackSetDefaultParams(PackDefaultParamStruct* dps)
+{
+	gCfg = g_key_file_new();
+
+	gchar *cfg_dir = g_path_get_dirname(dps->DefaultIniName);
+	gCfgPath = g_strdup_printf("%s/libarchive_crap.ini", cfg_dir);
+	g_free(cfg_dir);
+
+	if (g_key_file_load_from_file(gCfg, gCfgPath, G_KEY_FILE_KEEP_COMMENTS, NULL))
+	{
+		gchar *value = g_key_file_get_string(gCfg, "Global", "LastOptions", NULL);
+
+		if (value)
+			strlcpy(gOptions, value, PATH_MAX);
+
+		gMtreeClasic = g_key_file_get_boolean(gCfg, "Global", "MtreeClasic", NULL);
+		gMtreeCheckFS = g_key_file_get_boolean(gCfg, "Global", "MtreeCheckFS", NULL);
+		gCanHandleRAW = g_key_file_get_boolean(gCfg, "Global", "CanHandleRAW", NULL);
+		gNotabene = g_key_file_get_boolean(gCfg, "Global", "ShowDisclaimer", NULL);
+		gReadSkipDot = g_key_file_get_boolean(gCfg, "Global", "ReadSkipDot", NULL);
+		gTarFormat = g_key_file_get_integer(gCfg, "Global", "TarFormat", NULL);
+	}
+	else
+	{
+		g_key_file_set_string(gCfg, ".liz", "read_cmd", "lizard -d");
+		g_key_file_set_string(gCfg, ".liz", "write_cmd", "lizard");
+		g_key_file_set_string(gCfg, ".liz", "signature", "06 22 4D 18");
+	}
 }
 
 static int errmsg(const char *msg, long flags)
@@ -142,6 +190,66 @@ static void remove_target(const char *filename)
 	}
 }
 
+static unsigned char* hex_to_uchar(char* str, size_t *res_size)
+{
+	char *p;
+	size_t i = 0;
+	unsigned int chr;
+
+	size_t len = strlen(str);
+
+	if (len < 2)
+		return NULL;
+
+	*res_size = (len + 1) / 3;
+	unsigned char *result = (unsigned char*)malloc(*res_size);
+
+	for (p = str; *p; p += 3, i++)
+	{
+		if (sscanf(p, "%02X", &chr) != 1)
+			break;
+
+		result[i] = (unsigned char)chr;
+	}
+
+	return result;
+}
+
+static void add_read_programs_from_cfg(struct archive *a)
+{
+	gsize length;
+	size_t signature_size;
+	gchar *hex = NULL, *cmd = NULL;
+	gchar **groups = g_key_file_get_groups(gCfg, &length);
+
+	if (groups)
+	{
+		for (int i = 0; i < length; i++)
+		{
+			if (groups[i][0] == '.')
+			{
+				signature_size = 0;
+				hex = g_key_file_get_string(gCfg, groups[i], "signature", NULL);
+				cmd = g_key_file_get_string(gCfg, groups[i], "read_cmd", NULL);
+
+				if (cmd)
+				{
+					if (hex)
+					{
+						unsigned char *signature = hex_to_uchar(hex, &signature_size);
+						archive_read_support_filter_program_signature(a, cmd, signature, signature_size);
+						free(signature);
+					}
+					else
+						archive_read_support_filter_program(a, cmd);
+				}
+			}
+		}
+
+		g_strfreev(groups);
+	}
+}
+
 static bool mtree_opts_nodata(void)
 {
 	bool result = true;
@@ -175,6 +283,17 @@ static int archive_set_format_filter(struct archive *a, const char*ext)
 {
 	int ret;
 
+	if (g_key_file_has_key(gCfg, ext, "write_cmd", NULL))
+	{
+		ret = archive_write_set_format_raw(a);
+		gchar *cmd = g_key_file_get_string(gCfg, ext, "write_cmd", NULL);
+
+		if (cmd)
+			ret = archive_write_add_filter_program(a, cmd);
+		else
+			ret = ARCHIVE_FATAL;
+	}
+	else
 	if (strcasecmp(ext, ".tzst") == 0)
 	{
 		ret = archive_write_set_format(a, gTarFormat);
@@ -279,11 +398,6 @@ static int archive_set_format_filter(struct archive *a, const char*ext)
 		ret = archive_write_set_format(a, gTarFormat);
 		ret = archive_write_add_filter_xz(a);
 	}
-	else if (strcasecmp(ext, ".liz") == 0)
-	{
-		ret = archive_write_set_format_raw(a);
-		ret = archive_write_add_filter_program(a, "lizard");
-	}
 	else
 		ret = archive_write_set_format_filter_by_ext(a, ext);
 
@@ -346,7 +460,7 @@ int archive_repack_existing(struct archive *a, char* filename, char** tmpfn, int
 
 	archive_read_support_filter_all(org);
 
-	archive_read_support_filter_program_signature(org, "lizard -d", lizard_magic, sizeof(lizard_magic));
+	add_read_programs_from_cfg(org);
 
 	archive_read_support_format_raw(org);
 
@@ -884,7 +998,7 @@ HANDLE DCPCALL OpenArchive(tOpenArchiveData *ArchiveData)
 		errmsg(archive_error_string(handle->archive), MB_OK | MB_ICONERROR);
 
 	archive_read_support_filter_all(handle->archive);
-	archive_read_support_filter_program_signature(handle->archive, "lizard -d", lizard_magic, sizeof(lizard_magic));
+	add_read_programs_from_cfg(handle->archive);
 	archive_read_support_format_raw(handle->archive);
 	archive_read_support_format_all(handle->archive);
 	strlcpy(handle->arcname, ArchiveData->ArcName, PATH_MAX);
@@ -1099,7 +1213,7 @@ BOOL DCPCALL CanYouHandleThisFile(char *FileName)
 {
 	struct archive *a = archive_read_new();
 	archive_read_support_filter_all(a);
-	archive_read_support_filter_program_signature(a, "lizard -d", lizard_magic, sizeof(lizard_magic));
+	add_read_programs_from_cfg(a);
 
 	if (gCanHandleRAW)
 		archive_read_support_format_raw(a);
