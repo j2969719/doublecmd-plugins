@@ -106,19 +106,26 @@ void DCPCALL ExtensionFinalize(void* Reserved)
 	gStartupInfo = NULL;
 
 
-	g_key_file_set_string(gCfg, "Global", "LastOptions", gOptions);
-	g_key_file_set_integer(gCfg, "Global", "TarFormat", gTarFormat);
-	g_key_file_set_boolean(gCfg, "Global", "ReadSkipDot", gReadSkipDot);
-	g_key_file_set_boolean(gCfg, "Global", "MtreeClasic", gMtreeClasic);
-	g_key_file_set_boolean(gCfg, "Global", "MtreeCheckFS", gMtreeCheckFS);
-	g_key_file_set_boolean(gCfg, "Global", "CanHandleRAW", gCanHandleRAW);
-	g_key_file_set_boolean(gCfg, "Global", "ShowDisclaimer", gNotabene);
+	if (gCfg != NULL)
+	{
+		g_key_file_load_from_file(gCfg, gCfgPath, G_KEY_FILE_KEEP_COMMENTS, NULL);
+		g_key_file_set_string(gCfg, "Global", "LastOptions", gOptions);
+		g_key_file_set_integer(gCfg, "Global", "TarFormat", gTarFormat);
+		g_key_file_set_boolean(gCfg, "Global", "ReadSkipDot", gReadSkipDot);
+		g_key_file_set_boolean(gCfg, "Global", "MtreeClasic", gMtreeClasic);
+		g_key_file_set_boolean(gCfg, "Global", "MtreeCheckFS", gMtreeCheckFS);
+		g_key_file_set_boolean(gCfg, "Global", "CanHandleRAW", gCanHandleRAW);
+		g_key_file_set_boolean(gCfg, "Global", "ShowDisclaimer", gNotabene);
 
-	g_key_file_save_to_file(gCfg, gCfgPath, NULL);
-	g_key_file_free(gCfg);
+		g_key_file_save_to_file(gCfg, gCfgPath, NULL);
+		g_key_file_free(gCfg);
+	}
 
 	if (gCfgPath)
 		g_free(gCfgPath);
+
+	gCfg = NULL;
+	gCfgPath = NULL;
 }
 
 void DCPCALL PackSetDefaultParams(PackDefaultParamStruct* dps)
@@ -148,6 +155,7 @@ void DCPCALL PackSetDefaultParams(PackDefaultParamStruct* dps)
 		g_key_file_set_string(gCfg, ".liz", "read_cmd", "lizard -d");
 		g_key_file_set_string(gCfg, ".liz", "write_cmd", "lizard");
 		g_key_file_set_string(gCfg, ".liz", "signature", "06 22 4D 18");
+		g_key_file_save_to_file(gCfg, gCfgPath, NULL);
 	}
 }
 
@@ -215,7 +223,7 @@ static unsigned char* hex_to_uchar(char* str, size_t *res_size)
 	return result;
 }
 
-static void add_read_programs_from_cfg(struct archive *a)
+static void add_read_programs_from_cfg(struct archive *a, const char*ext)
 {
 	gsize length;
 	size_t signature_size;
@@ -240,7 +248,7 @@ static void add_read_programs_from_cfg(struct archive *a)
 						archive_read_support_filter_program_signature(a, cmd, signature, signature_size);
 						free(signature);
 					}
-					else
+					else if (ext != NULL && strcasecmp(ext, groups[i]) == 0)
 						archive_read_support_filter_program(a, cmd);
 				}
 			}
@@ -414,7 +422,7 @@ const char *archive_password_cb(struct archive *a, void *data)
 		return NULL;
 }
 
-int archive_repack_existing(struct archive *a, char* filename, char** tmpfn, int ofd, char* headlist, char* subpath, int flags)
+int archive_repack_existing(struct archive *a, char* filename, char** tmpfn, int ofd, char* headlist, char* subpath, int flags, const char *ext)
 {
 	size_t size;
 	la_int64_t offset;
@@ -460,7 +468,7 @@ int archive_repack_existing(struct archive *a, char* filename, char** tmpfn, int
 
 	archive_read_support_filter_all(org);
 
-	add_read_programs_from_cfg(org);
+	add_read_programs_from_cfg(org, ext);
 
 	archive_read_support_format_raw(org);
 
@@ -998,7 +1006,8 @@ HANDLE DCPCALL OpenArchive(tOpenArchiveData *ArchiveData)
 		errmsg(archive_error_string(handle->archive), MB_OK | MB_ICONERROR);
 
 	archive_read_support_filter_all(handle->archive);
-	add_read_programs_from_cfg(handle->archive);
+	const char *ext = strrchr(ArchiveData->ArcName, '.');
+	add_read_programs_from_cfg(handle->archive, ext);
 	archive_read_support_format_raw(handle->archive);
 	archive_read_support_format_all(handle->archive);
 	strlcpy(handle->arcname, ArchiveData->ArcName, PATH_MAX);
@@ -1211,9 +1220,10 @@ void DCPCALL SetChangeVolProc(HANDLE hArcData, tChangeVolProc pChangeVolProc1)
 
 BOOL DCPCALL CanYouHandleThisFile(char *FileName)
 {
+	const char *ext = strrchr(FileName, '.');
 	struct archive *a = archive_read_new();
 	archive_read_support_filter_all(a);
-	add_read_programs_from_cfg(a);
+	add_read_programs_from_cfg(a, ext);
 
 	if (gCanHandleRAW)
 		archive_read_support_format_raw(a);
@@ -1286,7 +1296,7 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 	}
 
 	if (access(PackedFile, F_OK) != -1)
-		result = archive_repack_existing(a, PackedFile, &tmpfn, ofd, AddList, SubPath, Flags);
+		result = archive_repack_existing(a, PackedFile, &tmpfn, ofd, AddList, SubPath, Flags, ext);
 	else
 	{
 
@@ -1605,7 +1615,7 @@ int DCPCALL DeleteFiles(char *PackedFile, char *DeleteList)
 		return 0;
 	}
 
-	result = archive_repack_existing(a, PackedFile, &tmpfn, ofd, DeleteList, NULL, PK_PACK_SAVE_PATHS);
+	result = archive_repack_existing(a, PackedFile, &tmpfn, ofd, DeleteList, NULL, PK_PACK_SAVE_PATHS, ext);
 	gProcessDataProc(PackedFile, -100);
 	archive_write_finish_entry(a);
 	archive_write_close(a);
