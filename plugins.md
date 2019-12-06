@@ -58,7 +58,7 @@ Mount points: name, FS type and other.
 Basic information about PDF.
 
 - [simplechecksum](plugins/wdx/simplechecksum)<br>
-Plugin is able to calculate and display hash values for any file. Supported algorithms: CRC32, MD5, SHA1, SHA256 and SHA512. Can be used to search files by hash value.
+Plugin is able to calculate and display hash values for any file. Can be used to search files by hash value.
 
 - [simplefileinfo](plugins/wdx/simplefileinfo)<br>
 A small wdx-plugin for Double Commander which provides additional information about the file via libmagic and stat.
