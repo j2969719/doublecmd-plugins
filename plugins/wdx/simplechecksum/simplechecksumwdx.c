@@ -29,7 +29,7 @@ FIELD fields[] =
 	{"CRC32",		ft_string,		GCRY_MD_CRC32},
 	{"CRC24 RFC2440",	ft_string,	GCRY_MD_CRC24_RFC2440},
 	{"CRC32 RFC1510",	ft_string,	GCRY_MD_CRC32_RFC1510},
-	{"GOST R 34.11-94 ",	ft_string,	 GCRY_MD_GOSTR3411_94},
+	{"GOST R 34.11-94",	ft_string,	 GCRY_MD_GOSTR3411_94},
 	{"GOST R 34.11-CP",	ft_string,	 GCRY_MD_GOSTR3411_CP},
 	{"HAVAL",		ft_string,		GCRY_MD_HAVAL},
 	{"MD2",			ft_string,		  GCRY_MD_MD2},
