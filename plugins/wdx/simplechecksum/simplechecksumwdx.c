@@ -1,6 +1,6 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <gcrypt.h>
-#include <linux/limits.h>
 #include <sys/stat.h>
 #include <string.h>
 #include "wdxplugin.h"
@@ -18,39 +18,39 @@ typedef struct _field
 
 FIELD fields[] =
 {
-	{"BLAKE2b 160",		ft_string,	  GCRY_MD_BLAKE2B_160},
-	{"BLAKE2b 256",		ft_string,	  GCRY_MD_BLAKE2B_256},
-	{"BLAKE2b 384",		ft_string,	  GCRY_MD_BLAKE2B_384},
-	{"BLAKE2b 512",		ft_string,	  GCRY_MD_BLAKE2B_512},
-	{"BLAKE2s 128",		ft_string,	  GCRY_MD_BLAKE2S_128},
-	{"BLAKE2s 160",		ft_string,	  GCRY_MD_BLAKE2S_160},
-	{"BLAKE2s 224",		ft_string,	  GCRY_MD_BLAKE2S_224},
-	{"BLAKE2s 256",		ft_string,	  GCRY_MD_BLAKE2S_256},
-	{"CRC32",		ft_string,		GCRY_MD_CRC32},
-	{"CRC24 RFC2440",	ft_string,	GCRY_MD_CRC24_RFC2440},
-	{"CRC32 RFC1510",	ft_string,	GCRY_MD_CRC32_RFC1510},
-	{"GOST R 34.11-94",	ft_string,	 GCRY_MD_GOSTR3411_94},
-	{"GOST R 34.11-CP",	ft_string,	 GCRY_MD_GOSTR3411_CP},
-	{"HAVAL",		ft_string,		GCRY_MD_HAVAL},
-	{"MD2",			ft_string,		  GCRY_MD_MD2},
-	{"MD4",			ft_string,		  GCRY_MD_MD4},
-	{"MD5",			ft_string,		  GCRY_MD_MD5},
-	{"RIPEMD-160",		ft_string,	       GCRY_MD_RMD160},
-	{"SHA1",		ft_string,		 GCRY_MD_SHA1},
-	{"SHA2 224",		ft_string,	       GCRY_MD_SHA224},
-	{"SHA2 256",		ft_string,	       GCRY_MD_SHA256},
-	{"SHA2 384",		ft_string,	       GCRY_MD_SHA384},
-	{"SHA2 512",		ft_string,	       GCRY_MD_SHA512},
-	{"SHA3 224",		ft_string,	     GCRY_MD_SHA3_224},
-	{"SHA3 256",		ft_string,	     GCRY_MD_SHA3_256},
-	{"SHA3 384",		ft_string,	     GCRY_MD_SHA3_384},
-	{"SHA3 512",		ft_string,	     GCRY_MD_SHA3_512},
-	{"Stribog 256",		ft_string,	   GCRY_MD_STRIBOG256},
-	{"Stribog 512",		ft_string,	   GCRY_MD_STRIBOG512},
-	{"Tiger",		ft_string,		GCRY_MD_TIGER},
-	{"Tiger1",		ft_string,	       GCRY_MD_TIGER1},
-	{"Tiger2",		ft_string,	       GCRY_MD_TIGER2},
-	{"Whirlpool",		ft_string,	    GCRY_MD_WHIRLPOOL},
+	{"BLAKE2b 160",		ft_string,	321   /* GCRY_MD_BLAKE2B_160 */},
+	{"BLAKE2b 256",		ft_string,	320   /* GCRY_MD_BLAKE2B_256 */},
+	{"BLAKE2b 384",		ft_string,	319   /* GCRY_MD_BLAKE2B_384 */},
+	{"BLAKE2b 512",		ft_string,	318   /* GCRY_MD_BLAKE2B_512 */},
+	{"BLAKE2s 128",		ft_string,	325   /* GCRY_MD_BLAKE2S_128 */},
+	{"BLAKE2s 160",		ft_string,	324   /* GCRY_MD_BLAKE2S_160 */},
+	{"BLAKE2s 224",		ft_string,	323   /* GCRY_MD_BLAKE2S_224 */},
+	{"BLAKE2s 256",		ft_string,	322   /* GCRY_MD_BLAKE2S_256 */},
+	{"CRC32",		ft_string,	302	    /* GCRY_MD_CRC32 */},
+	{"CRC24 RFC2440",	ft_string,	304 /* GCRY_MD_CRC24_RFC2440 */},
+	{"CRC32 RFC1510",	ft_string,	303 /* GCRY_MD_CRC32_RFC1510 */},
+	{"GOST R 34.11-94",	ft_string,	308  /* GCRY_MD_GOSTR3411_94 */},
+	{"GOST R 34.11-CP",	ft_string,	311  /* GCRY_MD_GOSTR3411_CP */},
+	{"HAVAL",		ft_string,	7	    /* GCRY_MD_HAVAL */},
+	{"MD2",			ft_string,	5	      /* GCRY_MD_MD2 */},
+	{"MD4",			ft_string,	301	      /* GCRY_MD_MD4 */},
+	{"MD5",			ft_string,	1 	      /* GCRY_MD_MD5 */},
+	{"RIPEMD-160",		ft_string,	3	   /* GCRY_MD_RMD160 */},
+	{"SHA1",		ft_string,	2	     /* GCRY_MD_SHA1 */},
+	{"SHA2 224",		ft_string,	11	   /* GCRY_MD_SHA224 */},
+	{"SHA2 256",		ft_string,	8 	   /* GCRY_MD_SHA256 */},
+	{"SHA2 384",		ft_string,	9	   /* GCRY_MD_SHA384 */},
+	{"SHA2 512",		ft_string,	10	   /* GCRY_MD_SHA512 */},
+	{"SHA3 224",		ft_string,	312	 /* GCRY_MD_SHA3_224 */},
+	{"SHA3 256",		ft_string,	313	 /* GCRY_MD_SHA3_256 */},
+	{"SHA3 384",		ft_string,	314	 /* GCRY_MD_SHA3_384 */},
+	{"SHA3 512",		ft_string,	315	 /* GCRY_MD_SHA3_512 */},
+	{"Stribog 256",		ft_string,	309    /* GCRY_MD_STRIBOG256 */},
+	{"Stribog 512",		ft_string,	310    /* GCRY_MD_STRIBOG512 */},
+	{"Tiger",		ft_string,	6	    /* GCRY_MD_TIGER */},
+	{"Tiger1",		ft_string,	306	   /* GCRY_MD_TIGER1 */},
+	{"Tiger2",		ft_string,	307	   /* GCRY_MD_TIGER2 */},
+	{"Whirlpool",		ft_string,	305	/* GCRY_MD_WHIRLPOOL */},
 };
 
 char* strlcpy(char* p, const char* p2, int maxlen)
@@ -72,18 +72,12 @@ int DCPCALL ContentGetSupportedField(int FieldIndex, char* FieldName, char* Unit
 		return ft_nomorefields;
 
 	strlcpy(FieldName, fields[FieldIndex].name, maxlen - 1);
-	strlcpy(Units, "", maxlen - 1);
+	strlcpy(Units, "Lowercase|Uppercase", maxlen - 1);
 	return fields[FieldIndex].type;
 }
 
 int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void* FieldValue, int maxlen, int flags)
 {
-	if (flags && CONTENT_DELAYIFSLOW)
-		return ft_delayed;
-
-	if (FieldIndex < 0 || FieldIndex >= fieldcount)
-		return ft_nosuchfield;
-
 	size_t i, bytes;
 	unsigned char data[BUFF_SIZE];
 	char* result = NULL;
@@ -93,11 +87,21 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 	gcry_md_hd_t h;
 	gcry_error_t err;
 
-	if (stat(FileName, &buf))
+	if (FieldIndex < 0 || FieldIndex >= fieldcount)
+		return ft_fieldempty;
+
+	if (stat(FileName, &buf) != 0)
 		return ft_fileerror;
 
 	if (!S_ISREG(buf.st_mode))
 		return ft_fileerror;
+
+	if (flags && CONTENT_DELAYIFSLOW)
+	{
+		strlcpy((char*)FieldValue, "???", maxlen - 1);
+		return ft_delayed;
+		//return ft_ondemand;
+	}
 
 	FILE *inFile = fopen(FileName, "rb");
 
@@ -126,7 +130,12 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 		memset(result, 0, res_size);
 
 		for (i = 0; i < digestlen; i++)
-			sprintf(&result[i * 2], "%02x", digest[i]);
+		{
+			if (UnitIndex == 1)
+				sprintf(&result[i * 2], "%02X", digest[i]);
+			else
+				sprintf(&result[i * 2], "%02x", digest[i]);
+		}
 	}
 
 	fclose(inFile);
