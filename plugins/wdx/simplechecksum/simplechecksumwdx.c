@@ -72,7 +72,12 @@ int DCPCALL ContentGetSupportedField(int FieldIndex, char* FieldName, char* Unit
 		return ft_nomorefields;
 
 	strlcpy(FieldName, fields[FieldIndex].name, maxlen - 1);
-	strlcpy(Units, "Lowercase|Uppercase", maxlen - 1);
+
+	if (gcry_md_get_algo_dlen(fields[FieldIndex].algo) == 0)
+		strlcpy(Units, "<not supported>", maxlen - 1);
+	else
+		strlcpy(Units, "Lowercase|Uppercase", maxlen - 1);
+
 	return fields[FieldIndex].type;
 }
 
