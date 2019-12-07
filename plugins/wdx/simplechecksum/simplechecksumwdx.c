@@ -83,7 +83,7 @@ int DCPCALL ContentGetSupportedField(int FieldIndex, char* FieldName, char* Unit
 
 int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void* FieldValue, int maxlen, int flags)
 {
-	size_t i, bytes;
+	size_t i, bytes, res_size;
 	unsigned char data[BUFF_SIZE];
 	char* result = NULL;
 	unsigned char* digest;
@@ -127,8 +127,11 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 	digest = gcry_md_read(h, fields[FieldIndex].algo);
 	digestlen = gcry_md_get_algo_dlen(fields[FieldIndex].algo);
 
-	size_t res_size = (size_t)digestlen * sizeof(char) * 2 + 1;
-	result = (char*)malloc(res_size);
+	if (digestlen > 0)
+	{
+		res_size = (size_t)digestlen * sizeof(char) * 2 + 1;
+		result = (char*)malloc(res_size);
+	}
 
 	if (result != NULL)
 	{
