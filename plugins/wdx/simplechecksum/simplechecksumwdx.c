@@ -95,7 +95,7 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 	if (FieldIndex < 0 || FieldIndex >= fieldcount)
 		return ft_fieldempty;
 
-	if (stat(FileName, &buf) != 0)
+	if (lstat(FileName, &buf) != 0)
 		return ft_fileerror;
 
 	if (!S_ISREG(buf.st_mode))

@@ -426,7 +426,7 @@ BOOL DCPCALL FsGetLocalName(char* RemoteName, int maxlen)
 
 	if (dot != NULL)
 	{
-		snprintf(RemoteName, maxlen - 1, "/proc/%s/status", strdup(dot + 1));
+		snprintf(RemoteName, maxlen - 1, "/proc/%s/status", dot + 1);
 		return true;
 	}
 
@@ -525,6 +525,9 @@ int DCPCALL FsContentGetValue(char* FileName, int FieldIndex, int UnitIndex, voi
 	}
 	else
 		result = ft_fileerror;
+
+	if (line)
+		free(line);
 
 	return result;
 }
