@@ -415,19 +415,22 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 
 	while (*AddList)
 	{
-		snprintf(path, PATH_MAX, "%s%s", SrcPath, AddList);
-
-		char *hash = calc_hash(algo, path, gProcessDataProc);
-
-		if (hash)
+		if (AddList[strlen(AddList) - 1] != '/')
 		{
-			fprintf(fp, "%s *%s\n", hash, AddList);
-			free(hash);
-		}
-		else
-		{
-			fclose(fp);
-			return E_NOT_SUPPORTED;
+			snprintf(path, PATH_MAX, "%s%s", SrcPath, AddList);
+
+			char *hash = calc_hash(algo, path, gProcessDataProc);
+
+			if (hash)
+			{
+				fprintf(fp, "%s *%s\n", hash, AddList);
+				free(hash);
+			}
+			else
+			{
+				fclose(fp);
+				return E_NOT_SUPPORTED;
+			}
 		}
 
 		while (*AddList++);
