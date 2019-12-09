@@ -1,3 +1,9 @@
+## Notes
+- abandoned
+- potentially dangerous
+- some limitations
+
+
 |ext|flags|notes|
 |---|---|---|
 |`tzst`|<ul><li>- [x] create new archives</li><li>- [x] contain multiple files</li><li>- [x] modify existing archives</li></ul>||
