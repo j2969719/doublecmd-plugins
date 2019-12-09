@@ -418,6 +418,9 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 	const char *ext = strrchr(PackedFile, '.');
 	int algo = get_algo_from_ext(ext);
 
+	if (gcry_md_get_algo_dlen(algo) == 0)
+		return E_NOT_SUPPORTED;
+
 	if ((fp = fopen(PackedFile, "a")) == NULL)
 		return E_EWRITE;
 
@@ -434,10 +437,17 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 				fprintf(fp, "%s *%s\n", hash, AddList);
 				free(hash);
 			}
+			else if (gProcessDataProc(path, 0) == 0)
+				break;
 			else
 			{
-				fclose(fp);
-				return E_NOT_SUPPORTED;
+				char *msg;
+				asprintf(&msg, "Unable to compute hash (%s) of \"%s\".", gcry_md_algo_name(algo), path);
+
+				if (errmsg(msg, MB_OKCANCEL | MB_ICONERROR) == ID_CANCEL)
+					break;
+
+				free(msg);
 			}
 		}
 

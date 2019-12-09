@@ -15,7 +15,7 @@
 |`lrz`|<ul><li>- [x] create new archives</li><li>- [ ] contain multiple files</li><li>- [x] modify existing archives</li></ul>||
 |`grz`|<ul><li>- [x] create new archives</li><li>- [ ] contain multiple files</li><li>- [x] modify existing archives</li></ul>||
 |`lzma`|<ul><li>- [x] create new archives</li><li>- [ ] contain multiple files</li><li>- [x] modify existing archives</li></ul>||
-|`uue_b64`|<ul><li>- [x] create new archives</li><li>- [ ] contain multiple files</li><li>- [ ] modify existing archives</li></ul>|base64-variant of the uuencode format|
+|`b64u`|<ul><li>- [x] create new archives</li><li>- [ ] contain multiple files</li><li>- [ ] modify existing archives</li></ul>|base64-variant of the uuencode format|
 |`uue`|<ul><li>- [x] create new archives</li><li>- [ ] contain multiple files</li><li>- [ ] modify existing archives</li></ul>||
 |`gz`|<ul><li>- [x] create new archives</li><li>- [ ] contain multiple files</li><li>- [x] modify existing archives</li></ul>||
 |`xz`|<ul><li>- [x] create new archives</li><li>- [ ] contain multiple files</li><li>- [x] modify existing archives</li></ul>||
