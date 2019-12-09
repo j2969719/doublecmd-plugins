@@ -276,6 +276,7 @@ int DCPCALL ReadHeaderEx(HANDLE hArcData, tHeaderDataEx *HeaderDataEx)
 	struct stat buf;
 	int rc;
 	int ovector[OVECCOUNT];
+	char str_file[PATH_MAX];
 
 	memset(HeaderDataEx, 0, sizeof(&HeaderDataEx));
 	ArcData handle = (ArcData)hArcData;
@@ -304,15 +305,22 @@ int DCPCALL ReadHeaderEx(HANDLE hArcData, tHeaderDataEx *HeaderDataEx)
 		start = line + ovector[4];
 		length = ovector[5] - ovector[4];
 
-		if (length < sizeof(HeaderDataEx->FileName))
-			strlcpy(HeaderDataEx->FileName, start, length);
+
+		if (length < PATH_MAX)
+			strlcpy(str_file, start, length);
 		else
-			strlcpy(HeaderDataEx->FileName, start, sizeof(HeaderDataEx->FileName) - 1);
+			strlcpy(str_file, start, PATH_MAX);
 
 		if (start[0] != '/')
-			snprintf(handle->last_path, PATH_MAX, "%s/%s", handle->dir_path, HeaderDataEx->FileName);
+		{
+			strlcpy(HeaderDataEx->FileName, str_file, sizeof(HeaderDataEx->FileName) - 1);
+			snprintf(handle->last_path, PATH_MAX, "%s/%s", handle->dir_path, str_file);
+		}
 		else
-			strlcpy(handle->last_path, HeaderDataEx->FileName, PATH_MAX);
+		{
+			strlcpy(HeaderDataEx->FileName, str_file+1, sizeof(HeaderDataEx->FileName) - 1);
+			strlcpy(handle->last_path, str_file, PATH_MAX);
+		}
 
 		if (lstat(handle->last_path, &buf) == 0)
 		{
