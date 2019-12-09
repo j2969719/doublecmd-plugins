@@ -12,7 +12,7 @@
 #include "wcxplugin.h"
 #include "extension.h"
 
-#define BUFF_SIZE 1024
+#define BUFF_SIZE 4096
 #define OVECCOUNT 30
 
 typedef struct sArcData

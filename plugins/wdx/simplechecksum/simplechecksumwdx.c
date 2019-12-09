@@ -5,7 +5,7 @@
 #include <string.h>
 #include "wdxplugin.h"
 
-#define BUFF_SIZE 1024
+#define BUFF_SIZE 4096
 
 typedef struct _field
 {
