@@ -349,7 +349,7 @@ static int archive_set_format_filter(struct archive *a, const char*ext)
 		ret = archive_write_set_format_raw(a);
 		ret = archive_write_add_filter_lzma(a);
 	}
-	else if (strcasecmp(ext, ".b64") == 0)
+	else if (strcasecmp(ext, ".uue_b64") == 0)
 	{
 		ret = archive_write_set_format_raw(a);
 		ret = archive_write_add_filter_b64encode(a);
