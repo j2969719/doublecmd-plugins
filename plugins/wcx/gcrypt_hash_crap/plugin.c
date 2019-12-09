@@ -239,7 +239,7 @@ HANDLE DCPCALL OpenArchive(tOpenArchiveData *ArchiveData)
 		return E_SUCCESS;
 	}
 
-	handle->re = pcre_compile("^([a-f0-9]+)\\s\\*([^\\n]+)$", 0, &err, &erroffset, NULL);
+	handle->re = pcre_compile("^([a-f0-9]+)\\s+\\*?([^\\n]+)$", 0, &err, &erroffset, NULL);
 
 	if (handle->re == NULL)
 	{
