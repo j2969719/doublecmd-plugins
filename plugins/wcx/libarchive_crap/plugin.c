@@ -1281,6 +1281,7 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 	char *msg, *rmlist = NULL, *tmpfn = NULL;
 	struct passwd *pw;
 	struct group  *gr;
+	size_t csize, prcnt;
 
 	const char *ext = strrchr(PackedFile, '.');
 
@@ -1507,6 +1508,7 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 						archive_read_disk_entry_from_file(disk, entry, fd, &st);
 						archive_entry_set_pathname(entry, pkfile);
 						archive_write_header(a, entry);
+						csize = 0;
 
 						while ((len = read(fd, buff, sizeof(buff))) > 0)
 						{
@@ -1518,6 +1520,20 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 							}
 
 							if (gProcessDataProc(infile, len) == 0)
+							{
+								result = E_EABORTED;
+								break;
+							}
+
+							if (st.st_size > 0)
+							{
+								csize += len;
+								prcnt = csize * 100 / st.st_size;
+							}
+							else
+								prcnt = 0;
+
+							if (gProcessDataProc(infile, -(1000 + prcnt)) == 0)
 							{
 								result = E_EABORTED;
 								break;
