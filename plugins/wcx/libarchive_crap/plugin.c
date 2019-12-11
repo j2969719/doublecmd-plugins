@@ -433,7 +433,7 @@ int archive_repack_existing(struct archive *a, char* filename, char** tmpfn, int
 	char rmfile[PATH_MAX];
 	char *msg, *skiplist;
 	struct archive_entry *entry;
-	int result = E_SUCCESS;
+	int result = E_SUCCESS, ret, ret_header;
 	size_t fsize, csize, prcnt;
 
 	if (archive_filter_code(a, 0) == ARCHIVE_FILTER_UU)
@@ -479,7 +479,7 @@ int archive_repack_existing(struct archive *a, char* filename, char** tmpfn, int
 	if (archive_read_open_filename(org, filename, 10240) < ARCHIVE_OK)
 	{
 		errmsg(archive_error_string(org), MB_OK | MB_ICONERROR);
-		result = E_EWRITE;
+		result = E_EREAD;
 	}
 	else
 	{
@@ -494,7 +494,7 @@ int archive_repack_existing(struct archive *a, char* filename, char** tmpfn, int
 			result = E_EWRITE;
 		}
 
-		while (result == E_SUCCESS && archive_read_next_header(org, &entry) == ARCHIVE_OK)
+		while (result == E_SUCCESS && (ret_header = archive_read_next_header(org, &entry)) == ARCHIVE_OK)
 		{
 			fsize = archive_entry_size(entry);
 			csize = 0;
@@ -531,9 +531,15 @@ int archive_repack_existing(struct archive *a, char* filename, char** tmpfn, int
 			{
 				archive_write_header(a, entry);
 
-				while (archive_read_data_block(org, &buff, &size, &offset) != ARCHIVE_EOF)
+				while ((ret = archive_read_data_block(org, &buff, &size, &offset)) != ARCHIVE_EOF)
 				{
-					if (archive_write_data(a, buff, size) < ARCHIVE_OK)
+					if (ret < ARCHIVE_OK)
+					{
+						errmsg(archive_error_string(org), MB_OK | MB_ICONERROR);
+						result = E_EABORTED;
+						break;
+					}
+					else if (archive_write_data(a, buff, size) < ARCHIVE_OK)
 					{
 						errmsg(archive_error_string(a), MB_OK | MB_ICONERROR);
 						result = E_EWRITE;
@@ -562,6 +568,8 @@ int archive_repack_existing(struct archive *a, char* filename, char** tmpfn, int
 
 	archive_read_free(org);
 
+	if (ret_header < ARCHIVE_OK)
+		result = E_EREAD;
 
 	if (result != E_SUCCESS)
 	{
