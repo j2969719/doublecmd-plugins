@@ -161,6 +161,24 @@ static char* calc_hash(int algo, char *path, tProcessDataProc proc)
 	char* result = NULL;
 	unsigned char* digest;
 	unsigned int digestlen;
+	struct stat buf;
+	size_t csize = 0, prcnt;
+
+	if (lstat(path, &buf) != 0)
+		return NULL;
+
+	if (S_ISLNK(buf.st_mode))
+	{
+		if (stat(path, &buf) != 0 || !S_ISREG(buf.st_mode))
+			return NULL;
+
+		char *msg;
+		asprintf(&msg, "\"%s\" is not a regular file.", path);
+		errmsg(msg, MB_OK | MB_ICONWARNING);
+		free(msg);
+	}
+	else if (!S_ISREG(buf.st_mode))
+		return NULL;
 
 	FILE *inFile = fopen(path, "rb");
 
@@ -185,6 +203,16 @@ static char* calc_hash(int algo, char *path, tProcessDataProc proc)
 		}
 
 		gcry_md_write(h, data, bytes);
+
+		if (buf.st_size > 0)
+		{
+			csize += bytes;
+			prcnt = csize * 100 / buf.st_size;
+		}
+		else
+			prcnt = 0;
+
+		proc(path, -(1000 + prcnt));
 	}
 
 	digest = gcry_md_read(h, algo);
