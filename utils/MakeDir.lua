@@ -1,5 +1,5 @@
 -- MakeDir.lua (cross-platform)
--- 2019.11.24
+-- 2019.12.15
 --
 -- Creating directories with additional features.
 -- You can use absolute name (/path/to/newdir), relative to current path (to/newdir) or only name (newdir).
@@ -70,6 +70,11 @@ end
 local msg
 local ba, dn = Dialogs.InputQuery('Make dir(s)', 'Enter name:', false, 'new')
 if ba == true then
+  -- delete trailing space(s)
+  dn = string.gsub(dn, '^[ \t]+', '')
+  dn = string.gsub(dn, '[ \t]+$', '')
+  dn = string.gsub(dn, '([ \t]+)([\\/|])', '%2')
+  dn = string.gsub(dn, '([\\/|])([ \t]+)', '%1')
   if SysUtils.PathDelim == '/' then
     local cmd = 'mkdir -p'
     if #params == 2 then cmd = 'mkdir -m ' .. params[2] .. ' -p' end
