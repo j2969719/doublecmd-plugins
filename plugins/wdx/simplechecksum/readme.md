@@ -15,7 +15,7 @@ Note: Bold text is checksums which available in DC (internal commands `cm_CheckS
 - CRC24 RFC2440
 - CRC32 RFC1510
 - GOST R 34.11-94
-- GOST R 34.11-CP
+- GOST R 34.11-CryptoPro
 - **HAVAL**
 - MD2
 - **MD4**
