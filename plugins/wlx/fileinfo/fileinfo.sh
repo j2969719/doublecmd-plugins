@@ -1,4 +1,4 @@
-#!/bin/bash
+.#!/bin/bash
 
 file=$1
 filetype="${1##*.}"
@@ -56,7 +56,7 @@ case "${filetype}" in
 		file -b "$file" && lz4 -dc "$file" 2>/dev/null | tar -tvvf - || lz4 -dc "$file" 2>/dev/null | cat
 		;;
 	[Aa][Cc][Ee])
-		file -b "$file" && unace v -y "$file"
+		file -b "$file" && unace v -y "$file" </dev/random
 		;;
 	[Aa][Rr][Cc])
 		file -b "$file" && arc l "$file"
