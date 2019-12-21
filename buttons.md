@@ -870,3 +870,6 @@ DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="utf-8"?>
   </Command>
 </doublecmd>
 ```
+
+### Marker *(cross platform)*
+See description and details [here](utils/marker)
