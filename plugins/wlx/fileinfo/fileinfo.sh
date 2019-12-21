@@ -1,4 +1,4 @@
-.#!/bin/bash
+#!/bin/bash
 
 file=$1
 filetype="${1##*.}"
