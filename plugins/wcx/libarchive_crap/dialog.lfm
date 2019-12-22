@@ -1561,7 +1561,7 @@ object DialogBox: TDialogBox
         AnchorSideBottom.Control = tsReadOpt
         AnchorSideBottom.Side = asrBottom
         Left = 5
-        Height = 131
+        Height = 147
         Top = 5
         Width = 520
         Anchors = [akTop, akLeft, akRight]
@@ -1570,7 +1570,7 @@ object DialogBox: TDialogBox
         BorderSpacing.Right = 5
         BorderSpacing.Bottom = 5
         Caption = 'General'
-        ClientHeight = 112
+        ClientHeight = 128
         ClientWidth = 516
         TabOrder = 0
         object chkReadCompat2x: TCheckBox
@@ -1627,10 +1627,10 @@ object DialogBox: TDialogBox
           AnchorSideRight.Side = asrBottom
           Left = 10
           Height = 23
-          Top = 79
+          Top = 74
           Width = 432
           BorderSpacing.Left = 10
-          BorderSpacing.Top = 10
+          BorderSpacing.Top = 5
           Caption = 'Try to detect raw data even with cm__OpenArchive (Ctrl+PgDn)'
           OnChange = CheckBoxChange
           TabOrder = 2
@@ -1653,6 +1653,19 @@ object DialogBox: TDialogBox
           OnChange = CheckBoxChange
           TabOrder = 3
         end
+        object chkReadTarOnly: TCheckBox
+          AnchorSideLeft.Control = chkReadDetectRAW
+          AnchorSideTop.Control = chkReadDetectRAW
+          AnchorSideTop.Side = asrBottom
+          Left = 10
+          Height = 23
+          Top = 102
+          Width = 434
+          BorderSpacing.Top = 5
+          Caption = 'Prevent reading formats other than Tar and compression filters'
+          OnChange = CheckBoxChange
+          TabOrder = 4
+        end
       end
       object gbReadISO: TGroupBox
         AnchorSideLeft.Control = gbReadGeneral
@@ -1663,13 +1676,13 @@ object DialogBox: TDialogBox
         AnchorSideBottom.Control = tsReadOpt
         AnchorSideBottom.Side = asrBottom
         Left = 5
-        Height = 61
-        Top = 261
+        Height = 45
+        Top = 277
         Width = 520
         Anchors = [akTop, akLeft, akRight, akBottom]
         BorderSpacing.Bottom = 5
         Caption = 'ISO9660'
-        ClientHeight = 42
+        ClientHeight = 26
         ClientWidth = 516
         TabOrder = 1
         object chkReadJoliet: TCheckBox
@@ -1678,7 +1691,7 @@ object DialogBox: TDialogBox
           AnchorSideTop.Side = asrCenter
           Left = 10
           Height = 23
-          Top = 10
+          Top = 2
           Width = 104
           BorderSpacing.Left = 10
           Caption = 'Ignore Joliet'
@@ -1689,7 +1702,7 @@ object DialogBox: TDialogBox
           AnchorSideTop.Control = chkReadJoliet
           Left = 213
           Height = 23
-          Top = 10
+          Top = 2
           Width = 136
           Anchors = [akTop]
           Caption = 'Ignore Rockridge'
@@ -1705,7 +1718,7 @@ object DialogBox: TDialogBox
         AnchorSideRight.Side = asrBottom
         Left = 5
         Height = 60
-        Top = 201
+        Top = 217
         Width = 520
         Anchors = [akTop, akLeft, akRight]
         Caption = 'Zip'
@@ -1745,7 +1758,7 @@ object DialogBox: TDialogBox
         AnchorSideRight.Side = asrBottom
         Left = 5
         Height = 60
-        Top = 141
+        Top = 157
         Width = 520
         Anchors = [akTop, akLeft, akRight]
         Caption = 'MTREE'

@@ -53,6 +53,7 @@ static bool gReadMacExt = false;
 static bool gReadDisableJoliet = false;
 static bool gReadDisableRockridge = false;
 static bool gCanHandleRAW = false;
+static bool gOnlyTarFormat = false;
 static bool gReadSkipDot = true;
 static bool gNotabene = true;
 static char gReadCharset[256];
@@ -116,6 +117,7 @@ void DCPCALL ExtensionFinalize(void* Reserved)
 		g_key_file_set_boolean(gCfg, "Global", "MtreeCheckFS", gMtreeCheckFS);
 		g_key_file_set_boolean(gCfg, "Global", "CanHandleRAW", gCanHandleRAW);
 		g_key_file_set_boolean(gCfg, "Global", "ShowDisclaimer", gNotabene);
+		g_key_file_set_boolean(gCfg, "Global", "OpenOnlyTar", gOnlyTarFormat);
 
 		g_key_file_save_to_file(gCfg, gCfgPath, NULL);
 		g_key_file_free(gCfg);
@@ -149,6 +151,7 @@ void DCPCALL PackSetDefaultParams(PackDefaultParamStruct* dps)
 		gNotabene = g_key_file_get_boolean(gCfg, "Global", "ShowDisclaimer", NULL);
 		gReadSkipDot = g_key_file_get_boolean(gCfg, "Global", "ReadSkipDot", NULL);
 		gTarFormat = g_key_file_get_integer(gCfg, "Global", "TarFormat", NULL);
+		gOnlyTarFormat = g_key_file_get_boolean(gCfg, "Global", "OpenOnlyTar", NULL);
 	}
 	else
 	{
@@ -668,6 +671,8 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 		gStartupInfo->SendDlgMsg(pDlg, "chkReadSkipDot", DM_SETCHECK, (intptr_t)gReadSkipDot, 0);
 		gStartupInfo->SendDlgMsg(pDlg, "chkDisclaimer", DM_SETCHECK, (intptr_t)gNotabene, 0);
 
+		gStartupInfo->SendDlgMsg(pDlg, "chkReadTarOnly", DM_SETCHECK, (intptr_t)gOnlyTarFormat, 0);
+
 		break;
 
 	case DN_CLICK:
@@ -758,6 +763,10 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 		else if (strcmp(DlgItemName, "chkReadDetectRAW") == 0)
 		{
 			gCanHandleRAW = (bool)gStartupInfo->SendDlgMsg(pDlg, "chkReadDetectRAW", DM_GETCHECK, 0, 0);
+		}
+		else if (strcmp(DlgItemName, "chkReadTarOnly") == 0)
+		{
+			gOnlyTarFormat = (bool)gStartupInfo->SendDlgMsg(pDlg, "chkReadTarOnly", DM_GETCHECK, 0, 0);
 		}
 		else if (strcmp(DlgItemName, "chkReadSkipDot") == 0)
 		{
@@ -1017,7 +1026,12 @@ HANDLE DCPCALL OpenArchive(tOpenArchiveData *ArchiveData)
 	const char *ext = strrchr(ArchiveData->ArcName, '.');
 	add_read_programs_from_cfg(handle->archive, ext);
 	archive_read_support_format_raw(handle->archive);
-	archive_read_support_format_all(handle->archive);
+
+	if (gOnlyTarFormat)
+		archive_read_support_format_by_code(handle->archive, gTarFormat);
+	else
+		archive_read_support_format_all(handle->archive);
+
 	strlcpy(handle->arcname, ArchiveData->ArcName, PATH_MAX);
 
 	if (gMtreeCheckFS && strcasestr(ArchiveData->ArcName, ".mtree") != NULL)
@@ -1068,6 +1082,8 @@ int DCPCALL ReadHeaderEx(HANDLE hArcData, tHeaderDataEx *HeaderDataEx)
 	memset(HeaderDataEx, 0, sizeof(&HeaderDataEx));
 	ArcData handle = (ArcData)hArcData;
 	char *filename = NULL;
+	char arcname[PATH_MAX + 1];
+	struct stat st;
 
 	while ((ret = archive_read_next_header(handle->archive, &handle->entry)) == ARCHIVE_RETRY ||
 	                (gReadSkipDot && (ret == ARCHIVE_OK && strcmp(".", archive_entry_pathname(handle->entry)) == 0)))
@@ -1090,7 +1106,8 @@ int DCPCALL ReadHeaderEx(HANDLE hArcData, tHeaderDataEx *HeaderDataEx)
 
 		if (archive_format(handle->archive) == ARCHIVE_FORMAT_RAW)
 		{
-			filename = basename(handle->arcname);
+			strlcpy(arcname, handle->arcname, PATH_MAX);
+			filename = basename(arcname);
 
 			if (filename)
 			{
@@ -1100,6 +1117,16 @@ int DCPCALL ReadHeaderEx(HANDLE hArcData, tHeaderDataEx *HeaderDataEx)
 					*dot = '\0';
 
 				strlcpy(HeaderDataEx->FileName, filename, sizeof(HeaderDataEx->FileName) - 1);
+
+				if (stat(handle->arcname, &st) == 0)
+				{
+					HeaderDataEx->PackSizeHigh = (st.st_size & 0xFFFFFFFF00000000) >> 32;
+					HeaderDataEx->PackSize = st.st_size & 0x00000000FFFFFFFF;
+					HeaderDataEx->UnpSizeHigh = (st.st_size & 0xFFFFFFFF00000000) >> 32;
+					HeaderDataEx->UnpSize = st.st_size & 0x00000000FFFFFFFF;
+					HeaderDataEx->FileTime = st.st_mtime;
+					HeaderDataEx->FileAttr = S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH;
+				}
 			}
 			else
 				strlcpy(HeaderDataEx->FileName, "<!!!ERROR!!!>", sizeof(HeaderDataEx->FileName) - 1);
@@ -1236,7 +1263,11 @@ BOOL DCPCALL CanYouHandleThisFile(char *FileName)
 	if (gCanHandleRAW)
 		archive_read_support_format_raw(a);
 
-	archive_read_support_format_all(a);
+	if (gOnlyTarFormat)
+		archive_read_support_format_by_code(a, gTarFormat);
+	else
+		archive_read_support_format_all(a);
+
 	int r = archive_read_open_filename(a, FileName, 10240);
 	archive_read_free(a);
 
