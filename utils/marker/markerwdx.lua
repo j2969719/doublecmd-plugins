@@ -35,7 +35,7 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
       return nil
     end
   end
-  local h, err = io.open(dbn, 'r')
+  local h = io.open(dbn, 'r')
   if h == nil then return nil end
   local l, n, k, r
   for l in h:lines() do
