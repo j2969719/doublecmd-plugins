@@ -413,7 +413,9 @@ int DCPCALL FsExecuteFile(HWND MainWin, char* RemoteName, char* Verb)
 	else if (strncmp(Verb, "quote", 5) == 0)
 	{
 		snprintf(RemoteName, MAX_PATH, "/proc/%s/", Verb+6);
-		return FS_EXEC_SYMLINK;
+
+		if (access(RemoteName, F_OK) == 0)
+			return FS_EXEC_SYMLINK;
 	}
 
 	return FS_EXEC_ERROR;
