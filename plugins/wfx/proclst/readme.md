@@ -13,7 +13,7 @@ View a list of running processes.
 
 ### command line
 
-`<pid>` (ext column) or `self` - change dir to `/proc/<pid>/`
+`<pid>` (ext column) or `self` - change dir to `/proc/<pid>/` (required dc >r9178)
 
 ### button examples
 <details>
