@@ -41,7 +41,7 @@ FIELD fields[] =
 	{"User ID",			ft_numeric_32,					""},
 	{"Group name",			ft_string,					""},
 	{"Group ID",			ft_numeric_32,					""},
-	{"Inode number",		ft_numeric_32,					""},
+	{"Inode number",		ft_numeric_64,					""},
 	{"Size",			ft_numeric_64,					""},
 	{"Block size",			ft_numeric_32,					""},
 	{"Number of blocks",		ft_numeric_64,					""},
@@ -322,11 +322,11 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 		break;
 
 	case 10:
-		*(int*)FieldValue = buf.st_ino;
+		*(int64_t*)FieldValue = buf.st_ino;
 		break;
 
 	case 11:
-		*(int*)FieldValue = buf.st_size;
+		*(int64_t*)FieldValue = buf.st_size;
 		break;
 
 	case 12:
@@ -334,7 +334,7 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 		break;
 
 	case 13:
-		*(int*)FieldValue = buf.st_blocks;
+		*(int64_t*)FieldValue = buf.st_blocks;
 		break;
 
 	case 14:

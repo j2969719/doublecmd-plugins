@@ -3,14 +3,14 @@
 #include <dirent.h>
 #include <math.h>
 #include <sys/stat.h>
-#include <linux/limits.h>
+#include <unistd.h>
 #include <string.h>
 #include "wdxplugin.h"
 
-uint64_t calcdirszie(const char *name)
+static int64_t calcdirszie(const char *name)
 {
 	DIR *dir;
-	uint64_t size = 0;
+	int64_t size = 0;
 	struct dirent *ent;
 	struct stat buf;
 
@@ -23,7 +23,7 @@ uint64_t calcdirszie(const char *name)
 				if (ent->d_type == DT_REG)
 				{
 					char file[PATH_MAX];
-					sprintf(file, "%s/%s", name, ent->d_name);
+					snprintf(file, PATH_MAX, "%s/%s", name, ent->d_name);
 
 					if (stat(file, &buf) == 0)
 						size += buf.st_size;
@@ -32,7 +32,7 @@ uint64_t calcdirszie(const char *name)
 				if (ent->d_type == DT_DIR)
 				{
 					char path[PATH_MAX];
-					sprintf(path, "%s/%s", name, ent->d_name);
+					snprintf(path, PATH_MAX, "%s/%s", name, ent->d_name);
 					size += calcdirszie(path);
 				}
 			}
@@ -44,7 +44,7 @@ uint64_t calcdirszie(const char *name)
 	return size;
 }
 
-double sizecnv(uint64_t size, int bytes, int bpow)
+static double sizecnv(int64_t size, int bytes, int bpow)
 {
 	double pb = pow(bytes, bpow);
 	return round(size / pb * 10) / 10;
@@ -101,8 +101,7 @@ int DCPCALL ContentGetSupportedField(int FieldIndex, char* FieldName, char* Unit
 int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void* FieldValue, int maxlen, int flags)
 {
 	struct stat buf;
-	uint64_t rsize;
-	double val;
+	int64_t rsize;
 
 	if (strncmp(FileName + strlen(FileName) - 3, "/..", 4) == 0)
 		return ft_fileerror;
@@ -110,97 +109,52 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 	if (lstat(FileName, &buf) != 0)
 		return ft_fileerror;
 
-	if ((S_ISDIR(buf.st_mode)) && (UnitIndex != 1))
+	if (S_ISDIR(buf.st_mode) && UnitIndex != 1)
 		rsize = calcdirszie(FileName);
-	else if ((!S_ISDIR(buf.st_mode)) && (UnitIndex != 2))
+	else if (!S_ISDIR(buf.st_mode) && UnitIndex != 2)
 		rsize = buf.st_size;
 	else
+		return ft_fieldempty;
+
+	if (S_ISDIR(buf.st_mode) && access(FileName, R_OK) != 0)
 		return ft_fieldempty;
 
 	switch (FieldIndex)
 	{
 	case 0:
-		*(uint64_t*)FieldValue = rsize;
+		*(int64_t*)FieldValue = rsize;
 		return ft_numeric_64;
 
 	case 1:
-		val = sizecnv(rsize, 1024, 1);
-
-		if (val == 0)
-			return ft_fieldempty;
-		else
-			*(double*)FieldValue = val;
-
+		*(double*)FieldValue = sizecnv(rsize, 1024, 1);
 		break;
 
 	case 2:
-		val = sizecnv(rsize, 1024, 2);
-
-		if (val == 0)
-			return ft_fieldempty;
-		else
-			*(double*)FieldValue = val;
-
+		*(double*)FieldValue = sizecnv(rsize, 1024, 2);
 		break;
 
 	case 3:
-		val = sizecnv(rsize, 1024, 3);
-
-		if (val == 0)
-			return ft_fieldempty;
-		else
-			*(double*)FieldValue = val;
-
+		*(double*)FieldValue = sizecnv(rsize, 1024, 3);
 		break;
 
 	case 4:
-		val = sizecnv(rsize, 1024, 4);
-
-		if (val == 0)
-			return ft_fieldempty;
-		else
-			*(double*)FieldValue = val;
-
+		*(double*)FieldValue = sizecnv(rsize, 1024, 4);
 		break;
 
 	case 5:
-		val = sizecnv(rsize, 1000, 1);
-
-		if (val == 0)
-			return ft_fieldempty;
-		else
-			*(double*)FieldValue = val;
-
+		*(double*)FieldValue = sizecnv(rsize, 1000, 1);
 		break;
 
 	case 6:
-		val = sizecnv(rsize, 1000, 2);
-
-		if (val == 0)
-			return ft_fieldempty;
-		else
-			*(double*)FieldValue = val;
-
+		*(double*)FieldValue = sizecnv(rsize, 1000, 2);
 		break;
 
 	case 7:
-		val = sizecnv(rsize, 1000, 3);
-
-		if (val == 0)
-			return ft_fieldempty;
-		else
-			*(double*)FieldValue = val;
-
+		*(double*)FieldValue = sizecnv(rsize, 1000, 3);
 		break;
 
 	case 8:
-		val = sizecnv(rsize, 1000, 4);
-
-		if (val == 0)
-			return ft_fieldempty;
-		else
-			*(double*)FieldValue = val;
-
+		*(double*)FieldValue = sizecnv(rsize, 1000, 4);
 		break;
 
 	default:
