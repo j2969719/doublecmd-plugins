@@ -334,6 +334,9 @@ This plugin allows you to view HTML/XHTML files. It is based on Qt5WebKit engine
 ---
 <a name="dsx"><h3>DSX plugins</h3></a>
 
+- [dsx_script](plugins/dsx/dsx_script)<br>
+Search/feed to listbox via random command line utilities. Add some magic to `script.sh`.
+
 - [duplicates_crap](plugins/dsx/duplicates_crap)<br>
 Find duplicates using `find` and `b2sum`. Slow, doublecmd's window may hang during search.
 
