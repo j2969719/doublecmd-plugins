@@ -126,7 +126,6 @@ bool SetFindData(tVFSDirData *dirdata, WIN32_FIND_DATAA *FindData)
 	struct dirent *ent;
 	bool found = false;
 	FILE *info;
-	struct stat st;
 
 	memset(FindData, 0, sizeof(WIN32_FIND_DATAA));
 

@@ -14,7 +14,7 @@
 tSAddFileProc gAddFileProc;
 tSUpdateStatusProc gUpdateStatus;
 
-gboolean stop_search;
+gboolean gStop;
 
 int DCPCALL Init(tDsxDefaultParamStruct* dsp, tSAddFileProc pAddFileProc, tSUpdateStatusProc pUpdateStatus)
 {
@@ -35,7 +35,7 @@ int DCPCALL Init(tDsxDefaultParamStruct* dsp, tSAddFileProc pAddFileProc, tSUpda
 		if (pos)
 			strcpy(pos + 1, loc_dir);
 
-		setlocale (LC_ALL, "");
+		setlocale(LC_ALL, "");
 		bindtextdomain(GETTEXT_PACKAGE, plg_path);
 		textdomain(GETTEXT_PACKAGE);
 	}
@@ -53,7 +53,7 @@ void DCPCALL StartSearch(int PluginNr, tDsxSearchRecord* pSearchRec)
 	GSpawnFlags flags = G_SPAWN_SEARCH_PATH;
 	GError *err = NULL;
 
-	stop_search = FALSE;
+	gStop = FALSE;
 
 	if (system("locate -V") == 0)
 	{
@@ -80,12 +80,16 @@ void DCPCALL StartSearch(int PluginNr, tDsxSearchRecord* pSearchRec)
 			{
 				GIOChannel *stdout = g_io_channel_unix_new(fp);
 
-				while (!stop_search && (G_IO_STATUS_NORMAL == g_io_channel_read_line(stdout, &line, &len, &term, NULL)))
+				while (!gStop && (G_IO_STATUS_NORMAL == g_io_channel_read_line(stdout, &line, &len, &term, NULL)))
 				{
-					line[term] = '\0';
-					gAddFileProc(PluginNr, line);
-					gUpdateStatus(PluginNr, line, i++);
-					g_free(line);
+					if (line)
+					{
+
+						line[term] = '\0';
+						gAddFileProc(PluginNr, line);
+						gUpdateStatus(PluginNr, line, i++);
+						g_free(line);
+					}
 				}
 
 				kill(pid, SIGTERM);
@@ -112,7 +116,7 @@ void DCPCALL StartSearch(int PluginNr, tDsxSearchRecord* pSearchRec)
 
 void DCPCALL StopSearch(int PluginNr)
 {
-	stop_search = TRUE;
+	gStop = TRUE;
 }
 
 void DCPCALL Finalize(int PluginNr)
