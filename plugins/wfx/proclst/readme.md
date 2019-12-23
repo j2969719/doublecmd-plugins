@@ -17,7 +17,7 @@ View a list of running processes.
 
 ### button examples
 <details>
-  <summary>someshit</summary>
+  <summary>tl;dr pid = `%e`</summary>
 
 ```xml
 DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>

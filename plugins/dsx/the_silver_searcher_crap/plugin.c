@@ -45,12 +45,12 @@ int DCPCALL Init(tDsxDefaultParamStruct* dsp, tSAddFileProc pAddFileProc, tSUpda
 
 void DCPCALL StartSearch(int PluginNr, tDsxSearchRecord* pSearchRec)
 {
-	gchar **argv;
-	gchar *line, *command;
+	gchar **argv = NULL;
+	gchar *line = NULL, *command = NULL;
 	gsize len, term, i = 1;
 	GPid pid;
 	gint fp;
-	GSpawnFlags flags;
+	GSpawnFlags flags = G_SPAWN_SEARCH_PATH;
 	GError *err = NULL;
 
 	stop_search = FALSE;
@@ -61,9 +61,9 @@ void DCPCALL StartSearch(int PluginNr, tDsxSearchRecord* pSearchRec)
 		{
 			if (pSearchRec->FileMask[0] != '\0' && g_strcmp0(pSearchRec->FileMask, "*") != 0 && g_strcmp0(pSearchRec->FileMask, "***") != 0)
 
-				command = g_strdup_printf("ag '%s' -l --nocolor --silent -G '%s'", pSearchRec->FindText, pSearchRec->FileMask);
+				command = g_strdup_printf("ag '%s' -l --nocolor --silent -G '%s' '%s'", pSearchRec->FindText, pSearchRec->FileMask, pSearchRec->StartPath);
 			else
-				command = g_strdup_printf("ag '%s' -l --nocolor --silent", pSearchRec->FindText);
+				command = g_strdup_printf("ag '%s' -l --nocolor --silent '%s'", pSearchRec->FindText, pSearchRec->StartPath);
 
 			if (pSearchRec->CaseSensitive)
 				command = g_strdup_printf("%s -s", command);
@@ -75,7 +75,6 @@ void DCPCALL StartSearch(int PluginNr, tDsxSearchRecord* pSearchRec)
 			else
 			{
 				g_clear_error(&err);
-				flags |= G_SPAWN_SEARCH_PATH;
 
 				if (g_spawn_async_with_pipes(NULL, argv, NULL, flags, NULL, NULL, &pid, NULL, &fp, NULL, &err))
 				{
@@ -87,6 +86,7 @@ void DCPCALL StartSearch(int PluginNr, tDsxSearchRecord* pSearchRec)
 						line[term] = '\0';
 						gAddFileProc(PluginNr, line);
 						gUpdateStatus(PluginNr, line, i++);
+						g_free(line);
 					}
 
 					kill(pid, SIGTERM);
@@ -103,6 +103,12 @@ void DCPCALL StartSearch(int PluginNr, tDsxSearchRecord* pSearchRec)
 	}
 	else
 		gUpdateStatus(PluginNr, _("failed to launch ag..."), 0);
+
+	if (command)
+		g_free(command);
+
+	if (argv)
+		g_strfreev(argv);
 
 	if (err)
 		g_error_free(err);

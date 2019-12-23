@@ -126,6 +126,7 @@ bool SetFindData(tVFSDirData *dirdata, WIN32_FIND_DATAA *FindData)
 	struct dirent *ent;
 	bool found = false;
 	FILE *info;
+	struct stat st;
 
 	memset(FindData, 0, sizeof(WIN32_FIND_DATAA));
 
@@ -150,6 +151,14 @@ bool SetFindData(tVFSDirData *dirdata, WIN32_FIND_DATAA *FindData)
 				UnixTimeToFileTime(time(0), &FindData->ftCreationTime);
 				UnixTimeToFileTime(time(0), &FindData->ftLastAccessTime);
 				UnixTimeToFileTime(time(0), &FindData->ftLastWriteTime);
+
+				snprintf(lpath, PATH_MAX, "/proc/%s/exe", ent->d_name);
+				FindData->dwFileAttributes = FILE_ATTRIBUTE_UNIX_MODE;
+
+				if (access(lpath, F_OK) != 0)
+					FindData->dwReserved0 = S_IRUSR;
+				else
+					FindData->dwReserved0 = S_IRUSR | S_IWUSR;
 
 				snprintf(lpath, PATH_MAX, "/proc/%s/statm", ent->d_name);
 				info = fopen(lpath, "r");

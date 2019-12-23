@@ -5,4 +5,4 @@ FileMask=$2
 FindText=$3
 ReplaceText=$4
 
-#find "$StartPath" "$FileMask"
+#find "$StartPath" -iname "$FileMask"

@@ -32,26 +32,24 @@ int DCPCALL Init(tDsxDefaultParamStruct* dsp, tSAddFileProc pAddFileProc, tSUpda
 
 void DCPCALL StartSearch(int PluginNr, tDsxSearchRecord* pSearchRec)
 {
-	gchar **argv;
 	gchar *line;
 	gsize len, term, i = 1;
 	GPid pid;
 	gint fp;
-	GSpawnFlags flags;
+	GSpawnFlags flags = G_SPAWN_SEARCH_PATH;
 	GError *err = NULL;
 
-	gchar *command = g_strdup_printf("%s %s %s %s %s", g_shell_quote(gScript),
-	                                 pSearchRec->StartPath,
-	                                 pSearchRec->FileMask,
-	                                 pSearchRec->FindText,
-	                                 pSearchRec->ReplaceText);
-
-	g_shell_parse_argv(command, NULL, &argv, NULL);
+	gchar *argv[] = {
+		gScript,
+		pSearchRec->StartPath,
+		pSearchRec->FileMask,
+		pSearchRec->FindText,
+		pSearchRec->ReplaceText,
+		NULL
+	};
 
 	gStop = FALSE;
 	gUpdateStatus(PluginNr, "not found", 0);
-
-	flags |= G_SPAWN_SEARCH_PATH ;
 
 	if (!g_spawn_async_with_pipes(NULL, argv, NULL, flags, NULL, NULL, &pid, NULL, &fp, NULL, &err))
 	{
@@ -65,9 +63,13 @@ void DCPCALL StartSearch(int PluginNr, tDsxSearchRecord* pSearchRec)
 
 		while (!gStop && (G_IO_STATUS_NORMAL == g_io_channel_read_line(stdout, &line, &len, &term, NULL)))
 		{
-			line[term] = '\0';
-			gAddFileProc(PluginNr, line);
-			gUpdateStatus(PluginNr, line, i++);
+			if (line)
+			{
+				line[term] = '\0';
+				gAddFileProc(PluginNr, line);
+				gUpdateStatus(PluginNr, line, i++);
+				g_free(line);
+			}
 		}
 
 		kill(pid, SIGTERM);
