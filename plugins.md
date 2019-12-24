@@ -193,6 +193,9 @@ Plugin-example: getting text from SQLite3 base. Requires `lsqlite3` module.
 - [stringmatchwdx.lua](plugins/wdx/scripts/stringmatchwdx.lua)<br>
 Plugin-example: search text in files, fields will create with patterns.
 
+- [svginfowdx.lua](plugins/wdx/scripts/svginfowdx.lua) *(cross platform)*<br>
+Getting some information from SVG files.
+
 - [svninfowdx.lua](plugins/wdx/scripts/svninfowdx.lua)<br>
 Getting some information from local copy of SVN repository. Requires `svn`.
 
