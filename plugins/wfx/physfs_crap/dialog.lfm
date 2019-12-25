@@ -1,0 +1,178 @@
+object DialogBox: TDialogBox
+  Left = 303
+  Height = 315
+  Top = 158
+  Width = 559
+  AutoSize = True
+  BorderStyle = bsDialog
+  Caption = 'Options'
+  ChildSizing.LeftRightSpacing = 10
+  ChildSizing.TopBottomSpacing = 10
+  ClientHeight = 315
+  ClientWidth = 559
+  OnCreate = DialogBoxShow
+  Position = poScreenCenter
+  LCLVersion = '2.0.7.0'
+  object mArcSupported: TMemo
+    AnchorSideTop.Control = dbSupported
+    AnchorSideTop.Side = asrBottom
+    Left = 16
+    Height = 90
+    Top = 164
+    Width = 528
+    BorderSpacing.Top = 5
+    ReadOnly = True
+    ScrollBars = ssAutoBoth
+    TabOrder = 0
+    WantTabs = True
+    WordWrap = False
+  end
+  object dbMounts: TDividerBevel
+    AnchorSideLeft.Control = Owner
+    AnchorSideTop.Control = Owner
+    AnchorSideRight.Control = Owner
+    AnchorSideRight.Side = asrBottom
+    Left = 10
+    Height = 17
+    Top = 10
+    Width = 539
+    Caption = 'Mounts'
+    Anchors = [akTop, akLeft, akRight]
+    BorderSpacing.Left = 5
+    BorderSpacing.Top = 10
+    BorderSpacing.Right = 5
+    Font.Style = [fsBold]
+    ParentFont = False
+  end
+  object fneAddFile: TFileNameEdit
+    AnchorSideLeft.Control = mArcSupported
+    AnchorSideTop.Control = btmDelete
+    AnchorSideTop.Side = asrBottom
+    AnchorSideRight.Control = cbMounts
+    AnchorSideRight.Side = asrBottom
+    Left = 16
+    Height = 24
+    Top = 70
+    Width = 432
+    FilterIndex = 0
+    HideDirectories = False
+    ButtonWidth = 23
+    NumGlyphs = 1
+    Anchors = [akTop, akLeft, akRight]
+    BorderSpacing.Top = 10
+    MaxLength = 0
+    TabOrder = 1
+  end
+  object cbMounts: TComboBox
+    AnchorSideLeft.Control = mArcSupported
+    AnchorSideTop.Control = dbMounts
+    AnchorSideTop.Side = asrBottom
+    Left = 16
+    Height = 28
+    Top = 32
+    Width = 432
+    BorderSpacing.Top = 5
+    ItemHeight = 0
+    OnChange = ComboBoxChange
+    Style = csDropDownList
+    TabOrder = 2
+  end
+  object dbSupported: TDividerBevel
+    AnchorSideLeft.Control = dbMounts
+    AnchorSideTop.Control = chkSymlinks
+    AnchorSideTop.Side = asrBottom
+    AnchorSideRight.Control = dbMounts
+    AnchorSideRight.Side = asrBottom
+    Left = 10
+    Height = 17
+    Top = 142
+    Width = 539
+    Caption = 'Supported archives'
+    Anchors = [akTop, akLeft, akRight]
+    BorderSpacing.Top = 10
+    Font.Style = [fsBold]
+    ParentFont = False
+  end
+  object btnCancel: TBitBtn
+    AnchorSideTop.Control = btnOK
+    AnchorSideRight.Control = btnOK
+    AnchorSideBottom.Control = btnOK
+    AnchorSideBottom.Side = asrBottom
+    Left = 342
+    Height = 30
+    Top = 269
+    Width = 96
+    Anchors = [akTop, akRight, akBottom]
+    BorderSpacing.Right = 10
+    Cancel = True
+    DefaultCaption = True
+    Kind = bkCancel
+    ModalResult = 2
+    OnClick = ButtonClick
+    TabOrder = 3
+  end
+  object btnOK: TBitBtn
+    AnchorSideTop.Control = mArcSupported
+    AnchorSideTop.Side = asrBottom
+    AnchorSideRight.Control = mArcSupported
+    AnchorSideRight.Side = asrBottom
+    Left = 448
+    Height = 30
+    Top = 269
+    Width = 96
+    Anchors = [akTop, akRight]
+    BorderSpacing.Top = 15
+    Default = True
+    DefaultCaption = True
+    Kind = bkOK
+    ModalResult = 1
+    OnClick = ButtonClick
+    TabOrder = 4
+  end
+  object btmDelete: TButton
+    AnchorSideLeft.Control = cbMounts
+    AnchorSideLeft.Side = asrBottom
+    AnchorSideTop.Control = cbMounts
+    AnchorSideRight.Control = mArcSupported
+    AnchorSideRight.Side = asrBottom
+    AnchorSideBottom.Control = cbMounts
+    AnchorSideBottom.Side = asrBottom
+    Left = 453
+    Height = 28
+    Top = 32
+    Width = 91
+    Anchors = [akTop, akLeft, akRight, akBottom]
+    BorderSpacing.Left = 5
+    Caption = 'Delete'
+    OnClick = ButtonClick
+    TabOrder = 5
+  end
+  object btnAdd: TButton
+    AnchorSideLeft.Control = btmDelete
+    AnchorSideTop.Control = fneAddFile
+    AnchorSideRight.Control = mArcSupported
+    AnchorSideRight.Side = asrBottom
+    AnchorSideBottom.Control = fneAddFile
+    AnchorSideBottom.Side = asrBottom
+    Left = 453
+    Height = 24
+    Top = 70
+    Width = 91
+    Anchors = [akTop, akLeft, akRight, akBottom]
+    Caption = 'Add'
+    OnClick = ButtonClick
+    TabOrder = 6
+  end
+  object chkSymlinks: TCheckBox
+    AnchorSideLeft.Control = mArcSupported
+    AnchorSideTop.Control = fneAddFile
+    AnchorSideTop.Side = asrBottom
+    Left = 16
+    Height = 23
+    Top = 109
+    Width = 249
+    BorderSpacing.Top = 15
+    Caption = 'Enable following of symbolic links'
+    TabOrder = 7
+  end
+end
