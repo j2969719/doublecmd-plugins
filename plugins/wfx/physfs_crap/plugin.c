@@ -27,7 +27,6 @@ tRequestProc gRequestProc = NULL;
 tExtensionStartupInfo* gDialogApi = NULL;
 
 static char gLFMPath[PATH_MAX];
-static char gLastPath[PATH_MAX] = "/usr/share/games/eduke32/duke3d.grp";
 
 char* strlcpy(char* p, const char* p2, int maxlen)
 {
@@ -261,17 +260,18 @@ static void ShowCFGDlg(void)
 	{
 		if (access(gLFMPath, F_OK) != 0)
 		{
+			if (gRequestProc && gRequestProc(gPluginNr, RT_MsgYesNo, NULL, "Unmount all archives?", NULL, 0))
+			{
+				char **path;
+				char **search_path = PHYSFS_getSearchPath();
 
-			char **path;
-			char **search_path = PHYSFS_getSearchPath();
+				for (path = search_path; *path != NULL; path++)
+					PHYSFS_unmount(*path);
 
-			for (path = search_path; *path != NULL; path++)
-				PHYSFS_unmount(*path);
+				PHYSFS_freeList(search_path);
+			}
 
-			PHYSFS_freeList(search_path);
 
-			if (gRequestProc && gRequestProc(gPluginNr, RT_Other, "PhysFS mount", "File:", gLastPath, MAX_PATH))
-				PHYSFS_mount(gLastPath, NULL, 1);
 		}
 		else
 			gDialogApi->DialogBoxLFMFile(gLFMPath, DlgProc);
@@ -284,8 +284,6 @@ int DCPCALL FsInit(int PluginNr, tProgressProc pProgressProc, tLogProc pLogProc,
 	gProgressProc = pProgressProc;
 	gLogProc = pLogProc;
 	gRequestProc = pRequestProc;
-
-	ShowCFGDlg();
 
 	return 0;
 }
@@ -425,6 +423,24 @@ int DCPCALL FsGetFile(char* RemoteName, char* LocalName, int CopyFlags, RemoteIn
 	PHYSFS_close(inFile);
 
 	return result;
+}
+
+int DCPCALL FsPutFile(char* LocalName, char* RemoteName, int CopyFlags)
+{
+	int i = 0;
+	char **path;
+
+	char **search_path = PHYSFS_getSearchPath();
+
+	for (path = search_path; *path != NULL; path++)
+		i++;
+
+	PHYSFS_freeList(search_path);
+
+	if (PHYSFS_mount(LocalName, NULL, i + 1) == 0)
+		return FS_FILE_NOTSUPPORTED;
+	else
+		return FS_FILE_OK;
 }
 
 void DCPCALL FsGetDefRootName(char* DefRootName, int maxlen)
