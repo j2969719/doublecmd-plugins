@@ -1,6 +1,6 @@
 object DialogBox: TDialogBox
   Left = 303
-  Height = 315
+  Height = 363
   Top = 158
   Width = 559
   AutoSize = True
@@ -8,7 +8,7 @@ object DialogBox: TDialogBox
   Caption = 'Options'
   ChildSizing.LeftRightSpacing = 10
   ChildSizing.TopBottomSpacing = 10
-  ClientHeight = 315
+  ClientHeight = 363
   ClientWidth = 559
   OnCreate = DialogBoxShow
   Position = poScreenCenter
@@ -18,13 +18,14 @@ object DialogBox: TDialogBox
     AnchorSideTop.Side = asrBottom
     Left = 16
     Height = 90
-    Top = 164
+    Top = 210
     Width = 528
     BorderSpacing.Top = 5
     ReadOnly = True
     ScrollBars = ssAutoBoth
-    TabOrder = 0
-    WantTabs = True
+    TabOrder = 7
+    TabStop = False
+    WantReturns = False
     WordWrap = False
   end
   object dbMounts: TDividerBevel
@@ -46,36 +47,22 @@ object DialogBox: TDialogBox
   end
   object fneAddFile: TFileNameEdit
     AnchorSideLeft.Control = mArcSupported
-    AnchorSideTop.Control = btmDelete
+    AnchorSideTop.Control = dbMounts
     AnchorSideTop.Side = asrBottom
-    AnchorSideRight.Control = cbMounts
     AnchorSideRight.Side = asrBottom
     Left = 16
     Height = 24
-    Top = 70
+    Top = 32
     Width = 432
     FilterIndex = 0
     HideDirectories = False
     ButtonWidth = 23
     NumGlyphs = 1
     Anchors = [akTop, akLeft, akRight]
-    BorderSpacing.Top = 10
-    MaxLength = 0
-    TabOrder = 1
-  end
-  object cbMounts: TComboBox
-    AnchorSideLeft.Control = mArcSupported
-    AnchorSideTop.Control = dbMounts
-    AnchorSideTop.Side = asrBottom
-    Left = 16
-    Height = 28
-    Top = 32
-    Width = 432
     BorderSpacing.Top = 5
-    ItemHeight = 0
-    OnChange = ComboBoxChange
-    Style = csDropDownList
-    TabOrder = 2
+    MaxLength = 0
+    TabOrder = 0
+    TabStop = False
   end
   object dbSupported: TDividerBevel
     AnchorSideLeft.Control = dbMounts
@@ -85,7 +72,7 @@ object DialogBox: TDialogBox
     AnchorSideRight.Side = asrBottom
     Left = 10
     Height = 17
-    Top = 142
+    Top = 188
     Width = 539
     Caption = 'Supported archives'
     Anchors = [akTop, akLeft, akRight]
@@ -100,7 +87,7 @@ object DialogBox: TDialogBox
     AnchorSideBottom.Side = asrBottom
     Left = 342
     Height = 30
-    Top = 269
+    Top = 315
     Width = 96
     Anchors = [akTop, akRight, akBottom]
     BorderSpacing.Right = 10
@@ -109,7 +96,7 @@ object DialogBox: TDialogBox
     Kind = bkCancel
     ModalResult = 2
     OnClick = ButtonClick
-    TabOrder = 3
+    TabOrder = 8
   end
   object btnOK: TBitBtn
     AnchorSideTop.Control = mArcSupported
@@ -118,7 +105,7 @@ object DialogBox: TDialogBox
     AnchorSideRight.Side = asrBottom
     Left = 448
     Height = 30
-    Top = 269
+    Top = 315
     Width = 96
     Anchors = [akTop, akRight]
     BorderSpacing.Top = 15
@@ -127,28 +114,29 @@ object DialogBox: TDialogBox
     Kind = bkOK
     ModalResult = 1
     OnClick = ButtonClick
-    TabOrder = 4
+    TabOrder = 9
   end
-  object btmDelete: TButton
-    AnchorSideLeft.Control = cbMounts
+  object btnDelete: TButton
+    AnchorSideLeft.Control = lbMounts
     AnchorSideLeft.Side = asrBottom
-    AnchorSideTop.Control = cbMounts
+    AnchorSideTop.Control = btnDown
+    AnchorSideTop.Side = asrBottom
     AnchorSideRight.Control = mArcSupported
     AnchorSideRight.Side = asrBottom
-    AnchorSideBottom.Control = cbMounts
     AnchorSideBottom.Side = asrBottom
     Left = 453
-    Height = 28
-    Top = 32
+    Height = 24
+    Top = 119
     Width = 91
-    Anchors = [akTop, akLeft, akRight, akBottom]
+    Anchors = [akTop, akLeft, akRight]
     BorderSpacing.Left = 5
+    BorderSpacing.Top = 5
     Caption = 'Delete'
     OnClick = ButtonClick
-    TabOrder = 5
+    TabOrder = 4
   end
   object btnAdd: TButton
-    AnchorSideLeft.Control = btmDelete
+    AnchorSideLeft.Control = btnDelete
     AnchorSideTop.Control = fneAddFile
     AnchorSideRight.Control = mArcSupported
     AnchorSideRight.Side = asrBottom
@@ -156,23 +144,76 @@ object DialogBox: TDialogBox
     AnchorSideBottom.Side = asrBottom
     Left = 453
     Height = 24
-    Top = 70
+    Top = 32
     Width = 91
     Anchors = [akTop, akLeft, akRight, akBottom]
     Caption = 'Add'
     OnClick = ButtonClick
-    TabOrder = 6
+    TabOrder = 1
   end
   object chkSymlinks: TCheckBox
     AnchorSideLeft.Control = mArcSupported
-    AnchorSideTop.Control = fneAddFile
+    AnchorSideTop.Control = lbMounts
     AnchorSideTop.Side = asrBottom
     Left = 16
     Height = 23
-    Top = 109
+    Top = 155
     Width = 249
-    BorderSpacing.Top = 15
+    BorderSpacing.Top = 10
     Caption = 'Enable following of symbolic links'
-    TabOrder = 7
+    TabOrder = 6
+  end
+  object lbMounts: TListBox
+    AnchorSideLeft.Control = mArcSupported
+    AnchorSideTop.Control = fneAddFile
+    AnchorSideTop.Side = asrBottom
+    AnchorSideRight.Control = fneAddFile
+    AnchorSideRight.Side = asrBottom
+    Left = 16
+    Height = 84
+    Top = 61
+    Width = 432
+    Anchors = [akTop, akLeft, akRight]
+    BorderSpacing.Top = 5
+    ItemHeight = 0
+    ScrollWidth = 430
+    TabOrder = 5
+    TopIndex = -1
+  end
+  object btnDown: TButton
+    AnchorSideLeft.Control = lbMounts
+    AnchorSideLeft.Side = asrBottom
+    AnchorSideTop.Control = btnUp
+    AnchorSideTop.Side = asrBottom
+    AnchorSideRight.Control = mArcSupported
+    AnchorSideRight.Side = asrBottom
+    AnchorSideBottom.Side = asrBottom
+    Left = 453
+    Height = 24
+    Top = 90
+    Width = 91
+    Anchors = [akTop, akLeft, akRight]
+    BorderSpacing.Left = 5
+    BorderSpacing.Top = 5
+    Caption = 'Down'
+    OnClick = ButtonClick
+    TabOrder = 3
+  end
+  object btnUp: TButton
+    AnchorSideLeft.Control = lbMounts
+    AnchorSideLeft.Side = asrBottom
+    AnchorSideTop.Control = lbMounts
+    AnchorSideRight.Control = mArcSupported
+    AnchorSideRight.Side = asrBottom
+    AnchorSideBottom.Side = asrBottom
+    Left = 453
+    Height = 24
+    Top = 61
+    Width = 91
+    Anchors = [akTop, akLeft, akRight]
+    BorderSpacing.Left = 5
+    Caption = 'Up'
+    OnClick = ButtonClick
+    TabOrder = 2
   end
 end

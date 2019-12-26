@@ -116,8 +116,10 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 	{
 	case DN_INITDIALOG:
 		//printf("DlgProc(%s): DN_INITDIALOG stub\n", DlgItemName);
-		gDialogApi->SendDlgMsg(pDlg, "cbMounts", DM_ENABLE, 0, 0);
-		gDialogApi->SendDlgMsg(pDlg, "btmDelete", DM_ENABLE, 0, 0);
+		gDialogApi->SendDlgMsg(pDlg, "lbMounts", DM_ENABLE, 0, 0);
+		gDialogApi->SendDlgMsg(pDlg, "btnDelete", DM_ENABLE, 0, 0);
+		gDialogApi->SendDlgMsg(pDlg, "btnUp", DM_ENABLE, 0, 0);
+		gDialogApi->SendDlgMsg(pDlg, "btnDown", DM_ENABLE, 0, 0);
 
 		const PHYSFS_ArchiveInfo **i;
 
@@ -134,14 +136,19 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 		char **search_path = PHYSFS_getSearchPath();
 
 		for (path = search_path; *path != NULL; path++)
-			gDialogApi->SendDlgMsg(pDlg, "cbMounts", DM_LISTADD, (intptr_t)*path, 0);
+			gDialogApi->SendDlgMsg(pDlg, "lbMounts", DM_LISTADD, (intptr_t)*path, 0);
 
 		PHYSFS_freeList(search_path);
 
-		int count = (int)gDialogApi->SendDlgMsg(pDlg, "cbMounts", DM_LISTGETCOUNT, 0, 0);
+		int count = (int)gDialogApi->SendDlgMsg(pDlg, "lbMounts", DM_LISTGETCOUNT, 0, 0);
 
 		if (count > 0)
-			gDialogApi->SendDlgMsg(pDlg, "cbMounts", DM_ENABLE, 1, 0);
+		{
+			gDialogApi->SendDlgMsg(pDlg, "lbMounts", DM_ENABLE, 1, 0);
+			gDialogApi->SendDlgMsg(pDlg, "btnDelete", DM_ENABLE, 1, 0);
+			gDialogApi->SendDlgMsg(pDlg, "btnUp", DM_ENABLE, 1, 0);
+			gDialogApi->SendDlgMsg(pDlg, "btnDown", DM_ENABLE, 1, 0);
+		}
 
 		gDialogApi->SendDlgMsg(pDlg, "chkSymlinks", DM_SETCHECK, (intptr_t)PHYSFS_symbolicLinksPermitted(), 0);
 
@@ -162,22 +169,65 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 
 			if (newpath != NULL && access(newpath, F_OK) == 0)
 			{
-				gDialogApi->SendDlgMsg(pDlg, "cbMounts", DM_ENABLE, 1, 0);
-				gDialogApi->SendDlgMsg(pDlg, "cbMounts", DM_LISTADD, (intptr_t)newpath, 0);
+				gDialogApi->SendDlgMsg(pDlg, "lbMounts", DM_ENABLE, 1, 0);
+				gDialogApi->SendDlgMsg(pDlg, "btnDelete", DM_ENABLE, 1, 0);
+				gDialogApi->SendDlgMsg(pDlg, "btnUp", DM_ENABLE, 1, 0);
+				gDialogApi->SendDlgMsg(pDlg, "btnDown", DM_ENABLE, 1, 0);
+				gDialogApi->SendDlgMsg(pDlg, "lbMounts", DM_LISTADD, (intptr_t)newpath, 0);
 				gDialogApi->SendDlgMsg(pDlg, "fneAddFile", DM_SETTEXT, 0, 0);
 			}
 		}
-		else if (strcmp(DlgItemName, "btmDelete") == 0)
+		else if (strcmp(DlgItemName, "btnDelete") == 0)
 		{
-			int i = (int)gDialogApi->SendDlgMsg(pDlg, "cbMounts", DM_LISTGETITEMINDEX, 0, 0);
+			int i = (int)gDialogApi->SendDlgMsg(pDlg, "lbMounts", DM_LISTGETITEMINDEX, 0, 0);
 
 			if (i > -1)
-				gDialogApi->SendDlgMsg(pDlg, "cbMounts", DM_LISTDELETE, i, 0);
+				gDialogApi->SendDlgMsg(pDlg, "lbMounts", DM_LISTDELETE, i, 0);
 
-			int count = (int)gDialogApi->SendDlgMsg(pDlg, "cbMounts", DM_LISTGETCOUNT, 0, 0);
+			int count = (int)gDialogApi->SendDlgMsg(pDlg, "lbMounts", DM_LISTGETCOUNT, 0, 0);
 
 			if (count < 1)
-				gDialogApi->SendDlgMsg(pDlg, "btmDelete", DM_ENABLE, 0, 0);
+			{
+				gDialogApi->SendDlgMsg(pDlg, "lbMounts", DM_ENABLE, 0, 0);
+				gDialogApi->SendDlgMsg(pDlg, "btnDelete", DM_ENABLE, 0, 0);
+				gDialogApi->SendDlgMsg(pDlg, "btnUp", DM_ENABLE, 0, 0);
+				gDialogApi->SendDlgMsg(pDlg, "btnDown", DM_ENABLE, 0, 0);
+			}
+		}
+		else if (strcmp(DlgItemName, "btnUp") == 0)
+		{
+			int i = (int)gDialogApi->SendDlgMsg(pDlg, "lbMounts", DM_LISTGETITEMINDEX, 0, 0);
+
+			if (i > -1)
+			{
+				i--;
+
+				if (i > -1)
+				{
+					char *path = (char*)gDialogApi->SendDlgMsg(pDlg, "lbMounts", DM_LISTGETITEM, i + 1, 0);
+					gDialogApi->SendDlgMsg(pDlg, "lbMounts", DM_LISTDELETE, i + 1, 0);
+					gDialogApi->SendDlgMsg(pDlg, "lbMounts", DM_LISTINSERT, i, (intptr_t)path);
+					gDialogApi->SendDlgMsg(pDlg, "lbMounts", DM_LISTSETITEMINDEX, i, 0);
+				}
+			}
+		}
+		else if (strcmp(DlgItemName, "btnDown") == 0)
+		{
+			int i = (int)gDialogApi->SendDlgMsg(pDlg, "lbMounts", DM_LISTGETITEMINDEX, 0, 0);
+
+			if (i > -1)
+			{
+				i++;
+				int count = (int)gDialogApi->SendDlgMsg(pDlg, "lbMounts", DM_LISTGETCOUNT, 0, 0);
+
+				if (i < count)
+				{
+					char *path = (char*)gDialogApi->SendDlgMsg(pDlg, "lbMounts", DM_LISTGETITEM, i - 1, 0);
+					gDialogApi->SendDlgMsg(pDlg, "lbMounts", DM_LISTDELETE, i - 1, 0);
+					gDialogApi->SendDlgMsg(pDlg, "lbMounts", DM_LISTINSERT, i, (intptr_t)path);
+					gDialogApi->SendDlgMsg(pDlg, "lbMounts", DM_LISTSETITEMINDEX, i, 0);
+				}
+			}
 		}
 		else if (strcmp(DlgItemName, "btnOK") == 0)
 		{
@@ -190,11 +240,11 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 			PHYSFS_freeList(search_path);
 
 			char *newpath;
-			int count = (int)gDialogApi->SendDlgMsg(pDlg, "cbMounts", DM_LISTGETCOUNT, 0, 0);
+			int count = (int)gDialogApi->SendDlgMsg(pDlg, "lbMounts", DM_LISTGETCOUNT, 0, 0);
 
 			for (int i = 0; i < count; i++)
 			{
-				newpath = (char*)gDialogApi->SendDlgMsg(pDlg, "cbMounts", DM_LISTGETITEM, i, 0);
+				newpath = (char*)gDialogApi->SendDlgMsg(pDlg, "lbMounts", DM_LISTGETITEM, i, 0);
 				PHYSFS_mount(newpath, NULL, i + 1);
 			}
 
@@ -216,16 +266,6 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 
 	case DN_CHANGE:
 		printf("DlgProc(%s): DN_CHANGE stub\n", DlgItemName);
-
-		if (strcmp(DlgItemName, "cbMounts") == 0)
-		{
-			int i = (int)gDialogApi->SendDlgMsg(pDlg, "cbMounts", DM_LISTGETITEMINDEX, 0, 0);
-
-			if (i > -1)
-				gDialogApi->SendDlgMsg(pDlg, "btmDelete", DM_ENABLE, 1, 0);
-			else
-				gDialogApi->SendDlgMsg(pDlg, "btmDelete", DM_ENABLE, 0, 0);
-		}
 
 		break;
 
