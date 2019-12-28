@@ -35,3 +35,6 @@
 |`liz`|<ul><li>- [x] create new archives</li><li>- [ ] contain multiple files</li><li>- [x] modify existing archives</li></ul>||
 |`rar`|<ul><li>- [ ] create new archives</li><li>- [ ] contain multiple files</li><li>- [ ] modify existing archives</li></ul>||
 |`lha`|<ul><li>- [ ] create new archives</li><li>- [ ] contain multiple files</li><li>- [ ] modify existing archives</li></ul>||
+|`cpio`|<ul><li>- [x] create new archives</li><li>- [x] contain multiple files</li><li>- [x] modify existing archives</li></ul>||
+|`ar`|<ul><li>- [x] create new archives</li><li>- [x] contain multiple files</li><li>- [x] modify existing archives</li></ul>||
+|`shar`|<ul><li>- [x] create new archives</li><li>- [x] contain multiple files</li><li>- [ ] modify existing archives</li></ul>|write only|

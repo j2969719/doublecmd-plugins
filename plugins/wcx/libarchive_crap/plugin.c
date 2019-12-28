@@ -124,7 +124,7 @@ void DCPCALL ExtensionFinalize(void* Reserved)
 		g_key_file_set_integer(gCfg, "Global", "TarFormat", gTarFormat);
 		g_key_file_set_integer(gCfg, "Global", "CpioFormat", gCpioFormat);
 		g_key_file_set_boolean(gCfg, "Global", "ArFormatBsd", gArFormatBsd);
-		g_key_file_set_boolean(gCfg, "Global", "gSharFormatDump", gSharFormatDump);
+		g_key_file_set_boolean(gCfg, "Global", "SharFormatDump", gSharFormatDump);
 
 		g_key_file_save_to_file(gCfg, gCfgPath, NULL);
 		g_key_file_free(gCfg);
@@ -162,7 +162,7 @@ void DCPCALL PackSetDefaultParams(PackDefaultParamStruct* dps)
 
 		gCpioFormat = g_key_file_get_integer(gCfg, "Global", "CpioFormat", NULL);
 		gArFormatBsd = g_key_file_get_boolean(gCfg, "Global", "ArFormatBsd", NULL);
-		gSharFormatDump = g_key_file_get_boolean(gCfg, "Global", "gSharFormatDump", NULL);
+		gSharFormatDump = g_key_file_get_boolean(gCfg, "Global", "SharFormatDump", NULL);
 	}
 	else
 	{

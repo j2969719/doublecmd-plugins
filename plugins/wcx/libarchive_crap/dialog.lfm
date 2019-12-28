@@ -482,7 +482,6 @@ object DialogBox: TDialogBox
           Items.Strings = (
             'svr4'
             'bsd'
-            ''
           )
           OnChange = ComboBoxChange
           Style = csDropDownList
