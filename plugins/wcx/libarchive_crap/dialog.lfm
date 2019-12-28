@@ -85,41 +85,6 @@ object DialogBox: TDialogBox
           Caption = 'Compression level:'
           ParentColor = False
         end
-        object cbTarFormat: TComboBox
-          AnchorSideTop.Control = cbFiltersCompLvl
-          AnchorSideRight.Control = gbFilters
-          AnchorSideRight.Side = asrBottom
-          Left = 406
-          Height = 25
-          Top = 7
-          Width = 100
-          Anchors = [akTop, akLeft, akRight]
-          BorderSpacing.Right = 10
-          ItemHeight = 0
-          Items.Strings = (
-            'default'
-            'ustar'
-            'pax interchange'
-            'pax restricted'
-            'gnu tar'
-          )
-          OnChange = ComboBoxChange
-          Style = csDropDownList
-          TabOrder = 1
-        end
-        object lblTarFormat: TLabel
-          AnchorSideTop.Control = cbTarFormat
-          AnchorSideTop.Side = asrCenter
-          AnchorSideRight.Control = cbTarFormat
-          Left = 330
-          Height = 15
-          Top = 12
-          Width = 71
-          Anchors = [akTop, akRight]
-          BorderSpacing.Right = 5
-          Caption = 'Tar format:'
-          ParentColor = False
-        end
       end
       object gbFiltersOther: TGroupBox
         AnchorSideLeft.Control = gbFilters
@@ -398,6 +363,182 @@ object DialogBox: TDialogBox
           ParentShowHint = False
           State = cbChecked
           TabOrder = 0
+        end
+      end
+    end
+    object tsFormats: TTabSheet
+      Caption = 'Formats'
+      ClientHeight = 327
+      ClientWidth = 530
+      object gbFormats: TGroupBox
+        AnchorSideLeft.Control = tsFormats
+        AnchorSideTop.Control = tsFormats
+        AnchorSideRight.Control = tsFormats
+        AnchorSideRight.Side = asrBottom
+        AnchorSideBottom.Control = tsFormats
+        AnchorSideBottom.Side = asrBottom
+        Left = 0
+        Height = 327
+        Top = 0
+        Width = 530
+        Anchors = [akTop, akLeft, akRight, akBottom]
+        Caption = 'General'
+        ClientHeight = 308
+        ClientWidth = 526
+        TabOrder = 0
+        object cbTarFormat: TComboBox
+          AnchorSideLeft.Control = cbSharFormat
+          AnchorSideTop.Control = gbFormats
+          AnchorSideRight.Control = gbFormats
+          AnchorSideRight.Side = asrBottom
+          Left = 96
+          Height = 25
+          Top = 10
+          Width = 420
+          Anchors = [akTop, akLeft, akRight]
+          BorderSpacing.Top = 10
+          BorderSpacing.Right = 10
+          ItemHeight = 0
+          Items.Strings = (
+            'default'
+            'ustar'
+            'pax interchange'
+            'pax restricted'
+            'gnu tar'
+          )
+          OnChange = ComboBoxChange
+          Style = csDropDownList
+          TabOrder = 0
+        end
+        object lblTarFormat: TLabel
+          AnchorSideLeft.Control = gbFormats
+          AnchorSideTop.Control = cbTarFormat
+          AnchorSideTop.Side = asrCenter
+          AnchorSideRight.Control = cbTarFormat
+          Left = 10
+          Height = 15
+          Top = 15
+          Width = 70
+          BorderSpacing.Left = 10
+          BorderSpacing.Right = 5
+          Caption = 'TAR mode:'
+          ParentColor = False
+        end
+        object lblCpioFormat: TLabel
+          AnchorSideLeft.Control = gbFormats
+          AnchorSideTop.Control = cbCpioFormat
+          AnchorSideTop.Side = asrCenter
+          AnchorSideRight.Control = cbCpioFormat
+          Left = 10
+          Height = 15
+          Top = 50
+          Width = 76
+          BorderSpacing.Left = 10
+          BorderSpacing.Right = 5
+          Caption = 'CPIO mode:'
+          ParentColor = False
+        end
+        object cbCpioFormat: TComboBox
+          AnchorSideLeft.Control = cbSharFormat
+          AnchorSideTop.Control = cbTarFormat
+          AnchorSideTop.Side = asrBottom
+          AnchorSideRight.Control = gbFormats
+          AnchorSideRight.Side = asrBottom
+          Left = 96
+          Height = 25
+          Top = 45
+          Width = 420
+          Anchors = [akTop, akLeft, akRight]
+          BorderSpacing.Top = 10
+          BorderSpacing.Right = 10
+          ItemHeight = 0
+          Items.Strings = (
+            'default'
+            'posix'
+            'bin LE'
+            'bin BE'
+            'svr4 nocrc'
+            'svr4 crc'
+            'afio large'
+          )
+          OnChange = ComboBoxChange
+          Style = csDropDownList
+          TabOrder = 1
+        end
+        object cbArFormat: TComboBox
+          AnchorSideLeft.Control = cbSharFormat
+          AnchorSideTop.Control = cbCpioFormat
+          AnchorSideTop.Side = asrBottom
+          AnchorSideRight.Control = gbFormats
+          AnchorSideRight.Side = asrBottom
+          Left = 96
+          Height = 25
+          Top = 80
+          Width = 420
+          Anchors = [akTop, akLeft, akRight]
+          BorderSpacing.Top = 10
+          BorderSpacing.Right = 10
+          ItemHeight = 0
+          Items.Strings = (
+            'svr4'
+            'bsd'
+            ''
+          )
+          OnChange = ComboBoxChange
+          Style = csDropDownList
+          TabOrder = 2
+        end
+        object lblArFormat: TLabel
+          AnchorSideLeft.Control = gbFormats
+          AnchorSideTop.Control = cbArFormat
+          AnchorSideTop.Side = asrCenter
+          AnchorSideRight.Control = cbArFormat
+          Left = 10
+          Height = 15
+          Top = 85
+          Width = 63
+          BorderSpacing.Left = 10
+          BorderSpacing.Right = 5
+          Caption = 'AR mode:'
+          ParentColor = False
+        end
+        object cbSharFormat: TComboBox
+          AnchorSideLeft.Control = lblSharFormat
+          AnchorSideLeft.Side = asrBottom
+          AnchorSideTop.Control = cbArFormat
+          AnchorSideTop.Side = asrBottom
+          AnchorSideRight.Control = gbFormats
+          AnchorSideRight.Side = asrBottom
+          Left = 96
+          Height = 25
+          Top = 115
+          Width = 420
+          Anchors = [akTop, akLeft, akRight]
+          BorderSpacing.Left = 5
+          BorderSpacing.Top = 10
+          BorderSpacing.Right = 10
+          ItemHeight = 0
+          Items.Strings = (
+            'default'
+            'dump'
+          )
+          OnChange = ComboBoxChange
+          Style = csDropDownList
+          TabOrder = 3
+        end
+        object lblSharFormat: TLabel
+          AnchorSideLeft.Control = gbFormats
+          AnchorSideTop.Control = cbSharFormat
+          AnchorSideTop.Side = asrCenter
+          AnchorSideRight.Control = cbArFormat
+          Left = 10
+          Height = 15
+          Top = 120
+          Width = 81
+          BorderSpacing.Left = 10
+          BorderSpacing.Right = 5
+          Caption = 'SHAR mode:'
+          ParentColor = False
         end
       end
     end

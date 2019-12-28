@@ -58,6 +58,9 @@ static bool gReadSkipDot = true;
 static bool gNotabene = true;
 static char gReadCharset[256];
 static int  gTarFormat = ARCHIVE_FORMAT_TAR;
+static int  gCpioFormat = ARCHIVE_FORMAT_CPIO;
+static bool gArFormatBsd = false;
+static bool gSharFormatDump = false;
 
 GKeyFile *gCfg;
 gchar *gCfgPath = NULL;
@@ -111,13 +114,17 @@ void DCPCALL ExtensionFinalize(void* Reserved)
 	{
 		g_key_file_load_from_file(gCfg, gCfgPath, G_KEY_FILE_KEEP_COMMENTS, NULL);
 		g_key_file_set_string(gCfg, "Global", "LastOptions", gOptions);
-		g_key_file_set_integer(gCfg, "Global", "TarFormat", gTarFormat);
 		g_key_file_set_boolean(gCfg, "Global", "ReadSkipDot", gReadSkipDot);
 		g_key_file_set_boolean(gCfg, "Global", "MtreeClasic", gMtreeClasic);
 		g_key_file_set_boolean(gCfg, "Global", "MtreeCheckFS", gMtreeCheckFS);
 		g_key_file_set_boolean(gCfg, "Global", "CanHandleRAW", gCanHandleRAW);
 		g_key_file_set_boolean(gCfg, "Global", "ShowDisclaimer", gNotabene);
 		g_key_file_set_boolean(gCfg, "Global", "OpenOnlyTar", gOnlyTarFormat);
+
+		g_key_file_set_integer(gCfg, "Global", "TarFormat", gTarFormat);
+		g_key_file_set_integer(gCfg, "Global", "CpioFormat", gCpioFormat);
+		g_key_file_set_boolean(gCfg, "Global", "ArFormatBsd", gArFormatBsd);
+		g_key_file_set_boolean(gCfg, "Global", "gSharFormatDump", gSharFormatDump);
 
 		g_key_file_save_to_file(gCfg, gCfgPath, NULL);
 		g_key_file_free(gCfg);
@@ -152,6 +159,10 @@ void DCPCALL PackSetDefaultParams(PackDefaultParamStruct* dps)
 		gReadSkipDot = g_key_file_get_boolean(gCfg, "Global", "ReadSkipDot", NULL);
 		gTarFormat = g_key_file_get_integer(gCfg, "Global", "TarFormat", NULL);
 		gOnlyTarFormat = g_key_file_get_boolean(gCfg, "Global", "OpenOnlyTar", NULL);
+
+		gCpioFormat = g_key_file_get_integer(gCfg, "Global", "CpioFormat", NULL);
+		gArFormatBsd = g_key_file_get_boolean(gCfg, "Global", "ArFormatBsd", NULL);
+		gSharFormatDump = g_key_file_get_boolean(gCfg, "Global", "gSharFormatDump", NULL);
 	}
 	else
 	{
@@ -389,6 +400,24 @@ static int archive_set_format_filter(struct archive *a, const char*ext)
 	else if (strcasecmp(ext, ".xar") == 0)
 	{
 		ret = archive_write_set_format_xar(a);
+	}
+	else if (strcasecmp(ext, ".cpio") == 0)
+	{
+		ret = archive_write_set_format(a, gCpioFormat);
+	}
+	else if (strcasecmp(ext, ".ar") == 0)
+	{
+		if (gArFormatBsd)
+			ret = archive_write_set_format_ar_bsd(a);
+		else
+			ret = archive_write_set_format_ar_svr4(a);
+	}
+	else if (strcasecmp(ext, ".shar") == 0)
+	{
+		if (gSharFormatDump)
+			ret = archive_write_set_format_shar_dump(a);
+		else
+			ret = archive_write_set_format_shar(a);
 	}
 	else if (strcasecmp(ext, ".tar") == 0)
 	{
@@ -660,6 +689,52 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 
 		gStartupInfo->SendDlgMsg(pDlg, "cbTarFormat", DM_LISTSETITEMINDEX, numval, 0);
 
+		switch (gCpioFormat)
+		{
+		case ARCHIVE_FORMAT_CPIO_POSIX:
+			numval = 1;
+			break;
+
+		case ARCHIVE_FORMAT_CPIO_BIN_LE:
+			numval = 2;
+			break;
+
+		case ARCHIVE_FORMAT_CPIO_BIN_BE:
+			numval = 3;
+			break;
+
+		case ARCHIVE_FORMAT_CPIO_SVR4_NOCRC:
+			numval = 4;
+			break;
+
+		case ARCHIVE_FORMAT_CPIO_SVR4_CRC:
+			numval = 5;
+			break;
+
+		case ARCHIVE_FORMAT_CPIO_AFIO_LARGE:
+			numval = 6;
+			break;
+
+		default:
+			numval = 0;
+		}
+
+		gStartupInfo->SendDlgMsg(pDlg, "cbCpioFormat", DM_LISTSETITEMINDEX, numval, 0);
+
+		if (gArFormatBsd)
+			numval = 1;
+		else
+			numval = 0;
+
+		gStartupInfo->SendDlgMsg(pDlg, "cbArFormat", DM_LISTSETITEMINDEX, numval, 0);
+
+		if (gSharFormatDump)
+			numval = 1;
+		else
+			numval = 0;
+
+		gStartupInfo->SendDlgMsg(pDlg, "cbSharFormat", DM_LISTSETITEMINDEX, numval, 0);
+
 		gStartupInfo->SendDlgMsg(pDlg, "cbReadCharset", DM_SETTEXT, (intptr_t)gReadCharset, 0);
 		gStartupInfo->SendDlgMsg(pDlg, "chkReadCompat2x", DM_SETCHECK, (intptr_t)gReadCompat2x, 0);
 		gStartupInfo->SendDlgMsg(pDlg, "chkReadMtreeckfs", DM_SETCHECK, (intptr_t)gMtreeCheckFS, 0);
@@ -802,6 +877,51 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 
 				default:
 					gTarFormat = ARCHIVE_FORMAT_TAR;
+				}
+			}
+		}
+		else if (strcmp(DlgItemName, "cbArFormat") == 0)
+		{
+			gArFormatBsd = (bool)gStartupInfo->SendDlgMsg(pDlg, "cbArFormat", DM_LISTGETITEMINDEX, 0, 0);
+		}
+		else if (strcmp(DlgItemName, "cbSharFormat") == 0)
+		{
+			gSharFormatDump = (bool)gStartupInfo->SendDlgMsg(pDlg, "cbSharFormat", DM_LISTGETITEMINDEX, 0, 0);
+		}
+		else if (strcmp(DlgItemName, "cbCpioFormat") == 0)
+		{
+			numval = (int)gStartupInfo->SendDlgMsg(pDlg, "cbCpioFormat", DM_LISTGETITEMINDEX, 0, 0);
+
+			if (numval > -1)
+			{
+				switch (numval)
+				{
+				case 1:
+					gCpioFormat = ARCHIVE_FORMAT_CPIO_POSIX;
+					break;
+
+				case 2:
+					gCpioFormat = ARCHIVE_FORMAT_CPIO_BIN_LE;
+					break;
+
+				case 3:
+					gCpioFormat = ARCHIVE_FORMAT_CPIO_BIN_BE;
+					break;
+
+				case 4:
+					gCpioFormat = ARCHIVE_FORMAT_CPIO_SVR4_NOCRC;
+					break;
+
+				case 5:
+					gCpioFormat = ARCHIVE_FORMAT_CPIO_SVR4_CRC;
+					break;
+
+				case 6:
+					gCpioFormat = ARCHIVE_FORMAT_CPIO_AFIO_LARGE;
+					break;
+
+				default:
+					gCpioFormat = ARCHIVE_FORMAT_CPIO;
 				}
 			}
 		}
