@@ -1,5 +1,5 @@
 -- CreateNewFile.lua (cross-platform)
--- 2019.12.18
+-- 2019.12.28
 --
 -- Create new file using the template(s)
 -- Params:
@@ -66,4 +66,7 @@ if #items >= 1 then
   fl = io.open(tf, 'wb')
   fl:write(ct)
   fl:close()
+  DC.ExecuteCommand('cm_Refresh')
+  DC.ExecuteCommand('cm_QuickSearch', 'search=on', 'direction=first', 'matchbeginning=on', 'matchending=off', 'casesensitive=on', 'files=on', 'directories=off', 'text=' .. string.gsub(st, '(.+)(%.[^%.]+)$', sn .. '%2'))
+  DC.ExecuteCommand('cm_QuickSearch', 'search=off')
 end
