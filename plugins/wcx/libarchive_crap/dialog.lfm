@@ -1697,16 +1697,19 @@ object DialogBox: TDialogBox
         AnchorSideBottom.Control = tsReadOpt
         AnchorSideBottom.Side = asrBottom
         Left = 5
-        Height = 147
+        Height = 144
         Top = 5
         Width = 520
         Anchors = [akTop, akLeft, akRight]
+        AutoSize = True
         BorderSpacing.Left = 5
         BorderSpacing.Top = 5
         BorderSpacing.Right = 5
         BorderSpacing.Bottom = 5
         Caption = 'General'
-        ClientHeight = 128
+        ChildSizing.LeftRightSpacing = 10
+        ChildSizing.TopBottomSpacing = 5
+        ClientHeight = 125
         ClientWidth = 516
         TabOrder = 0
         object chkReadCompat2x: TCheckBox
@@ -1715,7 +1718,7 @@ object DialogBox: TDialogBox
           AnchorSideTop.Side = asrBottom
           Left = 10
           Height = 23
-          Top = 46
+          Top = 41
           Width = 251
           BorderSpacing.Top = 10
           Caption = 'Handle filenames as libarchive 2.x'
@@ -1727,10 +1730,9 @@ object DialogBox: TDialogBox
           AnchorSideTop.Control = gbReadGeneral
           Left = 213
           Height = 26
-          Top = 10
+          Top = 5
           Width = 156
           BorderSpacing.Left = 10
-          BorderSpacing.Top = 10
           ItemHeight = 0
           Items.Strings = (
             'UTF-8'
@@ -1747,9 +1749,8 @@ object DialogBox: TDialogBox
           AnchorSideTop.Side = asrCenter
           Left = 10
           Height = 15
-          Top = 16
+          Top = 11
           Width = 193
-          BorderSpacing.Left = 10
           Caption = 'Charset for filenames (iconv):'
           ParentColor = False
         end
@@ -1761,9 +1762,8 @@ object DialogBox: TDialogBox
           AnchorSideRight.Side = asrBottom
           Left = 10
           Height = 23
-          Top = 74
+          Top = 69
           Width = 432
-          BorderSpacing.Left = 10
           BorderSpacing.Top = 5
           Caption = 'Try to detect raw data even with cm__OpenArchive (Ctrl+PgDn)'
           TabOrder = 2
@@ -1776,12 +1776,11 @@ object DialogBox: TDialogBox
           AnchorSideRight.Side = asrBottom
           Left = 359
           Height = 23
-          Top = 46
+          Top = 41
           Width = 147
           Alignment = taLeftJustify
           Anchors = [akTop, akRight]
           BorderSpacing.Left = 20
-          BorderSpacing.Right = 10
           Caption = 'Ignore [.] directory'
           TabOrder = 3
         end
@@ -1791,7 +1790,7 @@ object DialogBox: TDialogBox
           AnchorSideTop.Side = asrBottom
           Left = 10
           Height = 23
-          Top = 102
+          Top = 97
           Width = 434
           BorderSpacing.Top = 5
           Caption = 'Prevent reading formats other than Tar and compression filters'
@@ -1807,24 +1806,25 @@ object DialogBox: TDialogBox
         AnchorSideBottom.Control = tsReadOpt
         AnchorSideBottom.Side = asrBottom
         Left = 5
-        Height = 45
-        Top = 277
+        Height = 52
+        Top = 258
         Width = 520
-        Anchors = [akTop, akLeft, akRight, akBottom]
+        Anchors = [akTop, akLeft, akRight]
+        AutoSize = True
         BorderSpacing.Bottom = 5
         Caption = 'ISO9660'
-        ClientHeight = 26
+        ChildSizing.LeftRightSpacing = 10
+        ChildSizing.TopBottomSpacing = 5
+        ClientHeight = 33
         ClientWidth = 516
         TabOrder = 1
         object chkReadJoliet: TCheckBox
           AnchorSideLeft.Control = gbReadISO
           AnchorSideTop.Control = gbReadISO
-          AnchorSideTop.Side = asrCenter
           Left = 10
           Height = 23
-          Top = 2
+          Top = 5
           Width = 104
-          BorderSpacing.Left = 10
           Caption = 'Ignore Joliet'
           TabOrder = 0
         end
@@ -1832,7 +1832,7 @@ object DialogBox: TDialogBox
           AnchorSideTop.Control = chkReadJoliet
           Left = 213
           Height = 23
-          Top = 2
+          Top = 5
           Width = 136
           Anchors = [akTop]
           Caption = 'Ignore Rockridge'
@@ -1846,23 +1846,24 @@ object DialogBox: TDialogBox
         AnchorSideRight.Control = gbReadGeneral
         AnchorSideRight.Side = asrBottom
         Left = 5
-        Height = 60
-        Top = 217
+        Height = 52
+        Top = 206
         Width = 520
         Anchors = [akTop, akLeft, akRight]
+        AutoSize = True
         Caption = 'Zip'
-        ClientHeight = 41
+        ChildSizing.LeftRightSpacing = 10
+        ChildSizing.TopBottomSpacing = 5
+        ClientHeight = 33
         ClientWidth = 516
         TabOrder = 2
         object chkReadIgnoreCRC: TCheckBox
           AnchorSideLeft.Control = gbReadZip
           AnchorSideTop.Control = gbReadZip
-          AnchorSideTop.Side = asrCenter
           Left = 10
           Height = 23
-          Top = 9
+          Top = 5
           Width = 114
-          BorderSpacing.Left = 10
           Caption = 'Ignore CRC32'
           TabOrder = 0
         end
@@ -1870,7 +1871,7 @@ object DialogBox: TDialogBox
           AnchorSideTop.Control = chkReadIgnoreCRC
           Left = 213
           Height = 23
-          Top = 9
+          Top = 5
           Width = 168
           Anchors = [akTop]
           Caption = 'Force mac extensions'
@@ -1884,23 +1885,24 @@ object DialogBox: TDialogBox
         AnchorSideRight.Control = gbReadGeneral
         AnchorSideRight.Side = asrBottom
         Left = 5
-        Height = 60
-        Top = 157
+        Height = 52
+        Top = 154
         Width = 520
         Anchors = [akTop, akLeft, akRight]
+        AutoSize = True
         Caption = 'MTREE'
-        ClientHeight = 41
+        ChildSizing.LeftRightSpacing = 10
+        ChildSizing.TopBottomSpacing = 5
+        ClientHeight = 33
         ClientWidth = 516
         TabOrder = 3
         object chkReadMtreeckfs: TCheckBox
           AnchorSideLeft.Control = gbReadMtree
           AnchorSideTop.Control = gbReadMtree
-          AnchorSideTop.Side = asrCenter
           Left = 10
           Height = 23
-          Top = 9
+          Top = 5
           Width = 374
-          BorderSpacing.Left = 10
           Caption = 'Read missing file data from the filesystem if possible'
           TabOrder = 0
         end

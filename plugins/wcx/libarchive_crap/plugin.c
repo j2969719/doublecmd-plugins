@@ -43,7 +43,7 @@ tChangeVolProc gChangeVolProc  = NULL;
 tProcessDataProc gProcessDataProc = NULL;
 tExtensionStartupInfo* gStartupInfo = NULL;
 static char gOptions[PATH_MAX];
-static char gEncryption[PATH_MAX] = "encryption=traditional";
+static char gEncryption[PATH_MAX] = "traditional";
 static char gLFMPath[PATH_MAX];
 static bool gMtreeClasic = false;
 static bool gMtreeCheckFS = false;
@@ -86,6 +86,11 @@ static void config_get_options(void)
 	if (last_opts)
 		strlcpy(gOptions, last_opts, PATH_MAX);
 
+	gchar *encrypt = g_key_file_get_string(gCfg, "Global", "Encryption", NULL);
+
+	if (encrypt)
+		strlcpy(gEncryption, encrypt, PATH_MAX);
+
 	gMtreeClasic = g_key_file_get_boolean(gCfg, "Global", "MtreeClasic", NULL);
 	gMtreeCheckFS = g_key_file_get_boolean(gCfg, "Global", "MtreeCheckFS", NULL);
 	gCanHandleRAW = g_key_file_get_boolean(gCfg, "Global", "CanHandleRAW", NULL);
@@ -113,6 +118,8 @@ static void config_set_options(void)
 	g_key_file_set_integer(gCfg, "Global", "CpioFormat", gCpioFormat);
 	g_key_file_set_boolean(gCfg, "Global", "ArFormatBsd", gArFormatBsd);
 	g_key_file_set_boolean(gCfg, "Global", "SharFormatDump", gSharFormatDump);
+
+	g_key_file_set_string(gCfg, "Global", "Encryption", gEncryption);
 }
 
 void DCPCALL ExtensionInitialize(tExtensionStartupInfo* StartupInfo)
@@ -759,6 +766,8 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 
 		gStartupInfo->SendDlgMsg(pDlg, "chkReadTarOnly", DM_SETCHECK, (intptr_t)gOnlyTarFormat, 0);
 
+		gStartupInfo->SendDlgMsg(pDlg, "cbEncrypt", DM_SETTEXT, (intptr_t)gEncryption, 0);
+
 		break;
 
 	case DN_CLICK:
@@ -766,7 +775,7 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 		{
 			strlcpy(gOptions, (char*)gStartupInfo->SendDlgMsg(pDlg, "edOptions", DM_GETTEXT, 0, 0), PATH_MAX);
 			gMtreeClasic = (bool)gStartupInfo->SendDlgMsg(pDlg, "chkClassic", DM_GETCHECK, 0, 0);
-			snprintf(gEncryption, PATH_MAX, "encryption=%s", (char*)gStartupInfo->SendDlgMsg(pDlg, "cbEncrypt", DM_GETTEXT, 0, 0));
+			strlcpy(gEncryption, (char*)gStartupInfo->SendDlgMsg(pDlg, "cbEncrypt", DM_GETTEXT, 0, 0), PATH_MAX);
 
 			strlcpy(gReadCharset, (char*)gStartupInfo->SendDlgMsg(pDlg, "cbReadCharset", DM_GETTEXT, 0, 0), 255);
 			gMtreeCheckFS = (bool)gStartupInfo->SendDlgMsg(pDlg, "chkReadMtreeckfs", DM_GETCHECK, 0, 0);
@@ -1472,7 +1481,7 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 
 		if (Flags & PK_PACK_ENCRYPT)
 		{
-			if (archive_write_set_options(a, gEncryption) < ARCHIVE_OK)
+			if (archive_write_set_option(a, NULL, "encryption", gEncryption) < ARCHIVE_OK)
 				errmsg(archive_error_string(a), MB_OK | MB_ICONERROR);
 		}
 
