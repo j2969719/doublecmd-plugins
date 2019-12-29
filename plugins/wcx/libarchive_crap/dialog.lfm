@@ -406,7 +406,6 @@ object DialogBox: TDialogBox
             'pax restricted'
             'gnu tar'
           )
-          OnChange = ComboBoxChange
           Style = csDropDownList
           TabOrder = 0
         end
@@ -461,7 +460,6 @@ object DialogBox: TDialogBox
             'svr4 crc'
             'afio large'
           )
-          OnChange = ComboBoxChange
           Style = csDropDownList
           TabOrder = 1
         end
@@ -483,7 +481,6 @@ object DialogBox: TDialogBox
             'svr4'
             'bsd'
           )
-          OnChange = ComboBoxChange
           Style = csDropDownList
           TabOrder = 2
         end
@@ -521,7 +518,6 @@ object DialogBox: TDialogBox
             'default'
             'dump'
           )
-          OnChange = ComboBoxChange
           Style = csDropDownList
           TabOrder = 3
         end
@@ -1723,7 +1719,6 @@ object DialogBox: TDialogBox
           Width = 251
           BorderSpacing.Top = 10
           Caption = 'Handle filenames as libarchive 2.x'
-          OnChange = CheckBoxChange
           TabOrder = 0
         end
         object cbReadCharset: TComboBox
@@ -1744,7 +1739,6 @@ object DialogBox: TDialogBox
             'LATIN1'
           )
           MaxLength = 255
-          OnChange = ComboBoxChange
           TabOrder = 1
         end
         object lblReadCharset: TLabel
@@ -1772,7 +1766,6 @@ object DialogBox: TDialogBox
           BorderSpacing.Left = 10
           BorderSpacing.Top = 5
           Caption = 'Try to detect raw data even with cm__OpenArchive (Ctrl+PgDn)'
-          OnChange = CheckBoxChange
           TabOrder = 2
         end
         object chkReadSkipDot: TCheckBox
@@ -1790,7 +1783,6 @@ object DialogBox: TDialogBox
           BorderSpacing.Left = 20
           BorderSpacing.Right = 10
           Caption = 'Ignore [.] directory'
-          OnChange = CheckBoxChange
           TabOrder = 3
         end
         object chkReadTarOnly: TCheckBox
@@ -1803,7 +1795,6 @@ object DialogBox: TDialogBox
           Width = 434
           BorderSpacing.Top = 5
           Caption = 'Prevent reading formats other than Tar and compression filters'
-          OnChange = CheckBoxChange
           TabOrder = 4
         end
       end
@@ -1835,7 +1826,6 @@ object DialogBox: TDialogBox
           Width = 104
           BorderSpacing.Left = 10
           Caption = 'Ignore Joliet'
-          OnChange = CheckBoxChange
           TabOrder = 0
         end
         object chkReadRockridge: TCheckBox
@@ -1846,7 +1836,6 @@ object DialogBox: TDialogBox
           Width = 136
           Anchors = [akTop]
           Caption = 'Ignore Rockridge'
-          OnChange = CheckBoxChange
           TabOrder = 1
         end
       end
@@ -1875,7 +1864,6 @@ object DialogBox: TDialogBox
           Width = 114
           BorderSpacing.Left = 10
           Caption = 'Ignore CRC32'
-          OnChange = CheckBoxChange
           TabOrder = 0
         end
         object chkReadMacExt: TCheckBox
@@ -1886,7 +1874,6 @@ object DialogBox: TDialogBox
           Width = 168
           Anchors = [akTop]
           Caption = 'Force mac extensions'
-          OnChange = CheckBoxChange
           TabOrder = 1
         end
       end
@@ -1915,7 +1902,6 @@ object DialogBox: TDialogBox
           Width = 374
           BorderSpacing.Left = 10
           Caption = 'Read missing file data from the filesystem if possible'
-          OnChange = CheckBoxChange
           TabOrder = 0
         end
       end
@@ -2036,7 +2022,6 @@ object DialogBox: TDialogBox
     Width = 96
     Caption = 'Disclaimer'
     Checked = True
-    OnChange = CheckBoxChange
     State = cbChecked
     TabOrder = 5
   end

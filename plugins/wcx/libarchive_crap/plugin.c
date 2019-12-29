@@ -79,6 +79,42 @@ char* strlcpy(char* p, const char* p2, int maxlen)
 	return p;
 }
 
+static void config_get_options(void)
+{
+	gchar *last_opts = g_key_file_get_string(gCfg, "Global", "LastOptions", NULL);
+
+	if (last_opts)
+		strlcpy(gOptions, last_opts, PATH_MAX);
+
+	gMtreeClasic = g_key_file_get_boolean(gCfg, "Global", "MtreeClasic", NULL);
+	gMtreeCheckFS = g_key_file_get_boolean(gCfg, "Global", "MtreeCheckFS", NULL);
+	gCanHandleRAW = g_key_file_get_boolean(gCfg, "Global", "CanHandleRAW", NULL);
+	gNotabene = g_key_file_get_boolean(gCfg, "Global", "ShowDisclaimer", NULL);
+	gReadSkipDot = g_key_file_get_boolean(gCfg, "Global", "ReadSkipDot", NULL);
+	gTarFormat = g_key_file_get_integer(gCfg, "Global", "TarFormat", NULL);
+	gOnlyTarFormat = g_key_file_get_boolean(gCfg, "Global", "OpenOnlyTar", NULL);
+
+	gCpioFormat = g_key_file_get_integer(gCfg, "Global", "CpioFormat", NULL);
+	gArFormatBsd = g_key_file_get_boolean(gCfg, "Global", "ArFormatBsd", NULL);
+	gSharFormatDump = g_key_file_get_boolean(gCfg, "Global", "SharFormatDump", NULL);
+}
+
+static void config_set_options(void)
+{
+	g_key_file_set_string(gCfg, "Global", "LastOptions", gOptions);
+	g_key_file_set_boolean(gCfg, "Global", "ReadSkipDot", gReadSkipDot);
+	g_key_file_set_boolean(gCfg, "Global", "MtreeClasic", gMtreeClasic);
+	g_key_file_set_boolean(gCfg, "Global", "MtreeCheckFS", gMtreeCheckFS);
+	g_key_file_set_boolean(gCfg, "Global", "CanHandleRAW", gCanHandleRAW);
+	g_key_file_set_boolean(gCfg, "Global", "ShowDisclaimer", gNotabene);
+	g_key_file_set_boolean(gCfg, "Global", "OpenOnlyTar", gOnlyTarFormat);
+
+	g_key_file_set_integer(gCfg, "Global", "TarFormat", gTarFormat);
+	g_key_file_set_integer(gCfg, "Global", "CpioFormat", gCpioFormat);
+	g_key_file_set_boolean(gCfg, "Global", "ArFormatBsd", gArFormatBsd);
+	g_key_file_set_boolean(gCfg, "Global", "SharFormatDump", gSharFormatDump);
+}
+
 void DCPCALL ExtensionInitialize(tExtensionStartupInfo* StartupInfo)
 {
 	Dl_info dlinfo;
@@ -112,21 +148,9 @@ void DCPCALL ExtensionFinalize(void* Reserved)
 
 	if (gCfg != NULL)
 	{
-		g_key_file_load_from_file(gCfg, gCfgPath, G_KEY_FILE_KEEP_COMMENTS, NULL);
-		g_key_file_set_string(gCfg, "Global", "LastOptions", gOptions);
-		g_key_file_set_boolean(gCfg, "Global", "ReadSkipDot", gReadSkipDot);
-		g_key_file_set_boolean(gCfg, "Global", "MtreeClasic", gMtreeClasic);
-		g_key_file_set_boolean(gCfg, "Global", "MtreeCheckFS", gMtreeCheckFS);
-		g_key_file_set_boolean(gCfg, "Global", "CanHandleRAW", gCanHandleRAW);
-		g_key_file_set_boolean(gCfg, "Global", "ShowDisclaimer", gNotabene);
-		g_key_file_set_boolean(gCfg, "Global", "OpenOnlyTar", gOnlyTarFormat);
-
-		g_key_file_set_integer(gCfg, "Global", "TarFormat", gTarFormat);
-		g_key_file_set_integer(gCfg, "Global", "CpioFormat", gCpioFormat);
-		g_key_file_set_boolean(gCfg, "Global", "ArFormatBsd", gArFormatBsd);
-		g_key_file_set_boolean(gCfg, "Global", "SharFormatDump", gSharFormatDump);
-
-		g_key_file_save_to_file(gCfg, gCfgPath, NULL);
+		//g_key_file_load_from_file(gCfg, gCfgPath, G_KEY_FILE_KEEP_COMMENTS, NULL);
+		//config_set_options();
+		//g_key_file_save_to_file(gCfg, gCfgPath, NULL);
 		g_key_file_free(gCfg);
 	}
 
@@ -146,29 +170,13 @@ void DCPCALL PackSetDefaultParams(PackDefaultParamStruct* dps)
 	g_free(cfg_dir);
 
 	if (g_key_file_load_from_file(gCfg, gCfgPath, G_KEY_FILE_KEEP_COMMENTS, NULL))
-	{
-		gchar *value = g_key_file_get_string(gCfg, "Global", "LastOptions", NULL);
-
-		if (value)
-			strlcpy(gOptions, value, PATH_MAX);
-
-		gMtreeClasic = g_key_file_get_boolean(gCfg, "Global", "MtreeClasic", NULL);
-		gMtreeCheckFS = g_key_file_get_boolean(gCfg, "Global", "MtreeCheckFS", NULL);
-		gCanHandleRAW = g_key_file_get_boolean(gCfg, "Global", "CanHandleRAW", NULL);
-		gNotabene = g_key_file_get_boolean(gCfg, "Global", "ShowDisclaimer", NULL);
-		gReadSkipDot = g_key_file_get_boolean(gCfg, "Global", "ReadSkipDot", NULL);
-		gTarFormat = g_key_file_get_integer(gCfg, "Global", "TarFormat", NULL);
-		gOnlyTarFormat = g_key_file_get_boolean(gCfg, "Global", "OpenOnlyTar", NULL);
-
-		gCpioFormat = g_key_file_get_integer(gCfg, "Global", "CpioFormat", NULL);
-		gArFormatBsd = g_key_file_get_boolean(gCfg, "Global", "ArFormatBsd", NULL);
-		gSharFormatDump = g_key_file_get_boolean(gCfg, "Global", "SharFormatDump", NULL);
-	}
+		config_get_options();
 	else
 	{
 		g_key_file_set_string(gCfg, ".liz", "read_cmd", "lizard -d");
 		g_key_file_set_string(gCfg, ".liz", "write_cmd", "lizard");
 		g_key_file_set_string(gCfg, ".liz", "signature", "06 22 4D 18");
+		config_set_options();
 		g_key_file_save_to_file(gCfg, gCfgPath, NULL);
 	}
 }
@@ -757,7 +765,87 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 			gMtreeClasic = (bool)gStartupInfo->SendDlgMsg(pDlg, "chkClassic", DM_GETCHECK, 0, 0);
 			snprintf(gEncryption, PATH_MAX, "encryption=%s", (char*)gStartupInfo->SendDlgMsg(pDlg, "cbEncrypt", DM_GETTEXT, 0, 0));
 
-			gStartupInfo->SendDlgMsg(pDlg, DlgItemName, DM_CLOSE, 1, 0);
+			strlcpy(gReadCharset, (char*)gStartupInfo->SendDlgMsg(pDlg, "cbReadCharset", DM_GETTEXT, 0, 0), 255);
+			gMtreeCheckFS = (bool)gStartupInfo->SendDlgMsg(pDlg, "chkReadMtreeckfs", DM_GETCHECK, 0, 0);
+			gReadCompat2x = (bool)gStartupInfo->SendDlgMsg(pDlg, "chkReadCompat2x", DM_GETCHECK, 0, 0);
+			gReadIgnoreCRC = (bool)gStartupInfo->SendDlgMsg(pDlg, "chkReadIgnoreCRC", DM_GETCHECK, 0, 0);
+			gReadMacExt = (bool)gStartupInfo->SendDlgMsg(pDlg, "chkReadMacExt", DM_GETCHECK, 0, 0);
+			gReadDisableJoliet = (bool)gStartupInfo->SendDlgMsg(pDlg, "chkReadJoliet", DM_GETCHECK, 0, 0);
+			gReadDisableRockridge = (bool)gStartupInfo->SendDlgMsg(pDlg, "chkReadRockridge", DM_GETCHECK, 0, 0);
+			gCanHandleRAW = (bool)gStartupInfo->SendDlgMsg(pDlg, "chkReadDetectRAW", DM_GETCHECK, 0, 0);
+			gOnlyTarFormat = (bool)gStartupInfo->SendDlgMsg(pDlg, "chkReadTarOnly", DM_GETCHECK, 0, 0);
+			gReadSkipDot = (bool)gStartupInfo->SendDlgMsg(pDlg, "chkReadSkipDot", DM_GETCHECK, 0, 0);
+			gNotabene = (bool)gStartupInfo->SendDlgMsg(pDlg, "chkDisclaimer", DM_GETCHECK, 0, 0);
+			gArFormatBsd = (bool)gStartupInfo->SendDlgMsg(pDlg, "cbArFormat", DM_LISTGETITEMINDEX, 0, 0);
+			gSharFormatDump = (bool)gStartupInfo->SendDlgMsg(pDlg, "cbSharFormat", DM_LISTGETITEMINDEX, 0, 0);
+
+			numval = (int)gStartupInfo->SendDlgMsg(pDlg, "cbTarFormat", DM_LISTGETITEMINDEX, 0, 0);
+
+			if (numval > -1)
+			{
+				switch (numval)
+				{
+				case 1:
+					gTarFormat = ARCHIVE_FORMAT_TAR_USTAR;
+					break;
+
+				case 2:
+					gTarFormat = ARCHIVE_FORMAT_TAR_PAX_INTERCHANGE;
+					break;
+
+				case 3:
+					gTarFormat = ARCHIVE_FORMAT_TAR_PAX_RESTRICTED;
+					break;
+
+				case 4:
+					gTarFormat = ARCHIVE_FORMAT_TAR_GNUTAR;
+					break;
+
+				default:
+					gTarFormat = ARCHIVE_FORMAT_TAR;
+				}
+			}
+
+			numval = (int)gStartupInfo->SendDlgMsg(pDlg, "cbCpioFormat", DM_LISTGETITEMINDEX, 0, 0);
+
+			if (numval > -1)
+			{
+				switch (numval)
+				{
+				case 1:
+					gCpioFormat = ARCHIVE_FORMAT_CPIO_POSIX;
+					break;
+
+				case 2:
+					gCpioFormat = ARCHIVE_FORMAT_CPIO_BIN_LE;
+					break;
+
+				case 3:
+					gCpioFormat = ARCHIVE_FORMAT_CPIO_BIN_BE;
+					break;
+
+				case 4:
+					gCpioFormat = ARCHIVE_FORMAT_CPIO_SVR4_NOCRC;
+					break;
+
+				case 5:
+					gCpioFormat = ARCHIVE_FORMAT_CPIO_SVR4_CRC;
+					break;
+
+				case 6:
+					gCpioFormat = ARCHIVE_FORMAT_CPIO_AFIO_LARGE;
+					break;
+
+				default:
+					gCpioFormat = ARCHIVE_FORMAT_CPIO;
+				}
+			}
+
+			g_key_file_load_from_file(gCfg, gCfgPath, G_KEY_FILE_KEEP_COMMENTS, NULL);
+			config_set_options();
+			g_key_file_save_to_file(gCfg, gCfgPath, NULL);
+
+			gStartupInfo->SendDlgMsg(pDlg, DlgItemName, DM_CLOSE, ID_OK, 0);
 		}
 		else if (strncmp(DlgItemName, "btnClear", 8) == 0)
 			gStartupInfo->SendDlgMsg(pDlg, "edOptions", DM_SETTEXT, 0, 0);
@@ -806,124 +894,6 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 				gStartupInfo->SendDlgMsg(pDlg, "edOptions", DM_SETTEXT, (intptr_t)strval, 0);
 			else
 				gStartupInfo->SendDlgMsg(pDlg, "edOptions", DM_SETTEXT, 0, 0);
-		}
-		else if (strcmp(DlgItemName, "cbReadCharset") == 0)
-		{
-			strlcpy(gReadCharset, (char*)gStartupInfo->SendDlgMsg(pDlg, "cbReadCharset", DM_GETTEXT, 0, 0), 255);
-		}
-		else if (strcmp(DlgItemName, "chkReadMtreeckfs") == 0)
-		{
-			gMtreeCheckFS = (bool)gStartupInfo->SendDlgMsg(pDlg, "chkReadMtreeckfs", DM_GETCHECK, 0, 0);
-		}
-		else if (strcmp(DlgItemName, "chkReadCompat2x") == 0)
-		{
-			gReadCompat2x = (bool)gStartupInfo->SendDlgMsg(pDlg, "chkReadCompat2x", DM_GETCHECK, 0, 0);
-		}
-		else if (strcmp(DlgItemName, "chkReadIgnoreCRC") == 0)
-		{
-			gReadIgnoreCRC = (bool)gStartupInfo->SendDlgMsg(pDlg, "chkReadIgnoreCRC", DM_GETCHECK, 0, 0);
-		}
-		else if (strcmp(DlgItemName, "chkReadMacExt") == 0)
-		{
-			gReadMacExt = (bool)gStartupInfo->SendDlgMsg(pDlg, "chkReadMacExt", DM_GETCHECK, 0, 0);
-		}
-		else if (strcmp(DlgItemName, "chkReadJoliet") == 0)
-		{
-			gReadDisableJoliet = (bool)gStartupInfo->SendDlgMsg(pDlg, "chkReadJoliet", DM_GETCHECK, 0, 0);
-		}
-		else if (strcmp(DlgItemName, "chkReadRockridge") == 0)
-		{
-			gReadDisableRockridge = (bool)gStartupInfo->SendDlgMsg(pDlg, "chkReadRockridge", DM_GETCHECK, 0, 0);
-		}
-		else if (strcmp(DlgItemName, "chkReadDetectRAW") == 0)
-		{
-			gCanHandleRAW = (bool)gStartupInfo->SendDlgMsg(pDlg, "chkReadDetectRAW", DM_GETCHECK, 0, 0);
-		}
-		else if (strcmp(DlgItemName, "chkReadTarOnly") == 0)
-		{
-			gOnlyTarFormat = (bool)gStartupInfo->SendDlgMsg(pDlg, "chkReadTarOnly", DM_GETCHECK, 0, 0);
-		}
-		else if (strcmp(DlgItemName, "chkReadSkipDot") == 0)
-		{
-			gReadSkipDot = (bool)gStartupInfo->SendDlgMsg(pDlg, "chkReadSkipDot", DM_GETCHECK, 0, 0);
-		}
-		else if (strcmp(DlgItemName, "chkDisclaimer") == 0)
-		{
-			gNotabene = (bool)gStartupInfo->SendDlgMsg(pDlg, "chkDisclaimer", DM_GETCHECK, 0, 0);
-		}
-		else if (strncmp(DlgItemName, "cbTar", 5) == 0)
-		{
-			numval = (int)gStartupInfo->SendDlgMsg(pDlg, "cbTarFormat", DM_LISTGETITEMINDEX, 0, 0);
-
-			if (numval > -1)
-			{
-				switch (numval)
-				{
-				case 1:
-					gTarFormat = ARCHIVE_FORMAT_TAR_USTAR;
-					break;
-
-				case 2:
-					gTarFormat = ARCHIVE_FORMAT_TAR_PAX_INTERCHANGE;
-					break;
-
-				case 3:
-					gTarFormat = ARCHIVE_FORMAT_TAR_PAX_RESTRICTED;
-					break;
-
-				case 4:
-					gTarFormat = ARCHIVE_FORMAT_TAR_GNUTAR;
-					break;
-
-				default:
-					gTarFormat = ARCHIVE_FORMAT_TAR;
-				}
-			}
-		}
-		else if (strcmp(DlgItemName, "cbArFormat") == 0)
-		{
-			gArFormatBsd = (bool)gStartupInfo->SendDlgMsg(pDlg, "cbArFormat", DM_LISTGETITEMINDEX, 0, 0);
-		}
-		else if (strcmp(DlgItemName, "cbSharFormat") == 0)
-		{
-			gSharFormatDump = (bool)gStartupInfo->SendDlgMsg(pDlg, "cbSharFormat", DM_LISTGETITEMINDEX, 0, 0);
-		}
-		else if (strcmp(DlgItemName, "cbCpioFormat") == 0)
-		{
-			numval = (int)gStartupInfo->SendDlgMsg(pDlg, "cbCpioFormat", DM_LISTGETITEMINDEX, 0, 0);
-
-			if (numval > -1)
-			{
-				switch (numval)
-				{
-				case 1:
-					gCpioFormat = ARCHIVE_FORMAT_CPIO_POSIX;
-					break;
-
-				case 2:
-					gCpioFormat = ARCHIVE_FORMAT_CPIO_BIN_LE;
-					break;
-
-				case 3:
-					gCpioFormat = ARCHIVE_FORMAT_CPIO_BIN_BE;
-					break;
-
-				case 4:
-					gCpioFormat = ARCHIVE_FORMAT_CPIO_SVR4_NOCRC;
-					break;
-
-				case 5:
-					gCpioFormat = ARCHIVE_FORMAT_CPIO_SVR4_CRC;
-					break;
-
-				case 6:
-					gCpioFormat = ARCHIVE_FORMAT_CPIO_AFIO_LARGE;
-					break;
-
-				default:
-					gCpioFormat = ARCHIVE_FORMAT_CPIO;
-				}
-			}
 		}
 		else if (strncmp(DlgItemName, "cb7Z", 4) == 0)
 		{
@@ -1412,6 +1382,10 @@ void DCPCALL ConfigurePacker(HWND Parent, HINSTANCE DllInstance)
 		asprintf(&msg, "%s\nCurrent Options ($ man archive_write_set_options):", archive_version_details());
 		gStartupInfo->InputBox("Double Commander", msg, false, gOptions, PATH_MAX - 1);
 		free(msg);
+
+		g_key_file_load_from_file(gCfg, gCfgPath, G_KEY_FILE_KEEP_COMMENTS, NULL);
+		g_key_file_set_string(gCfg, "Global", "LastOptions", gOptions);
+		g_key_file_save_to_file(gCfg, gCfgPath, NULL);
 	}
 	else
 		gStartupInfo->DialogBoxLFMFile(gLFMPath, DlgProc);
