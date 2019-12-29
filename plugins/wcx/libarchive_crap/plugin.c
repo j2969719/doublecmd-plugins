@@ -667,6 +667,9 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 	switch (Msg)
 	{
 	case DN_INITDIALOG:
+		if (g_key_file_load_from_file(gCfg, gCfgPath, G_KEY_FILE_KEEP_COMMENTS, NULL))
+			config_get_options();
+
 		gStartupInfo->SendDlgMsg(pDlg, "edOptions", DM_SETTEXT, (intptr_t)gOptions, 0);
 		gStartupInfo->SendDlgMsg(pDlg, "chkClassic", DM_SETCHECK, (intptr_t)gMtreeClasic, 0);
 		snprintf(strval, PATH_MAX, "%s", archive_version_details());
@@ -1378,6 +1381,9 @@ void DCPCALL ConfigurePacker(HWND Parent, HINSTANCE DllInstance)
 		printf("ConfigurePacker: gStartupInfo == NULL\n");
 	else if (access(gLFMPath, F_OK) != 0)
 	{
+		if (g_key_file_load_from_file(gCfg, gCfgPath, G_KEY_FILE_KEEP_COMMENTS, NULL))
+			config_get_options();
+
 		char *msg;
 		asprintf(&msg, "%s\nCurrent Options ($ man archive_write_set_options):", archive_version_details());
 		gStartupInfo->InputBox("Double Commander", msg, false, gOptions, PATH_MAX - 1);
