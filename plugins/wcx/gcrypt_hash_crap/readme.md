@@ -25,11 +25,11 @@
 |`sha3_256`|`GCRY_MD_SHA3_256`||
 |`sha3_384`|`GCRY_MD_SHA3_384`||
 |`sha3_512`|`GCRY_MD_SHA3_512`||
-|`blake2b_512`|`GCRY_MD_BLAKE2B_512`||
+|`blake2b`|`GCRY_MD_BLAKE2B_512`||
 |`blake2b_384`|`GCRY_MD_BLAKE2B_384`||
 |`blake2b_256`|`GCRY_MD_BLAKE2B_256`||
 |`blake2b_160`|`GCRY_MD_BLAKE2B_160`||
-|`blake2s_256`|`GCRY_MD_BLAKE2S_256`||
+|`blake2s`|`GCRY_MD_BLAKE2S_256`||
 |`blake2s_224`|`GCRY_MD_BLAKE2S_224`||
 |`blake2s_160`|`GCRY_MD_BLAKE2S_160`||
 |`blake2s_128`|`GCRY_MD_BLAKE2S_128`||
