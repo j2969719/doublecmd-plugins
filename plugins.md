@@ -17,8 +17,14 @@ Plugins
 - [cmdoutput](plugins/wcx/cmdoutput)<br>
 View output of command line utilities on Ctrl+Page Down (see `settings_default.ini`).
 
+- [gcrypt_hash_crap](plugins/wcx/gcrypt_hash_crap)<br>
+Calculates a hash (Files -> Pack Files...), test file integrity (Files -> Test Archive(s)).
+
 - [libarchive_crap](plugins/wcx/libarchive_crap)<br>
 A horrible attempt to make a simple WCX plugin based on `libarchive` ([supported formats](https://github.com/libarchive/libarchive#supported-formats) + [lizard](https://github.com/inikep/lizard)).
+
+- [linkfiles_crap](plugins/wcx/linkfiles_crap)<br>
+Creates hard or symbolic links for multiple files (Files -> Pack Files...).
 
 
 ---
@@ -235,6 +241,9 @@ View list of recently used files (also support: open, view or delete any entry).
 
 - [gvfs_quickmount](plugins/wfx/gvfs_quickmount)<br>
 Mounting gvfs resources with automatic password entry (stored in ini file). F7 - new connection, Alt+Enter - edit existing.
+
+- [physfs_crap](plugins/wfx/physfs_crap)<br>
+Virtual panel for [PhysicsFS](https://icculus.org/physfs/). To open the archive, copy the file to the panel.
 
 - [proclst](plugins/wfx/proclst)<br>
 View a list of running processes.
