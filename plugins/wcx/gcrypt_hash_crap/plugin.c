@@ -80,6 +80,12 @@ static int get_algo_from_ext(const char*ext)
 
 	if (ext == NULL)
 		ret = -1;
+
+	else if (strcasecmp(ext, ".blake2b") == 0)
+		ret = 318 /* GCRY_MD_BLAKE2B_512 */;
+	else if (strcasecmp(ext, ".blake2s") == 0)
+		ret = 322 /* GCRY_MD_BLAKE2S_256 */;
+
 	else if (strcasecmp(ext, ".md5") == 0)
 		ret = 1 /* GCRY_MD_MD5 */;
 	else if (strcasecmp(ext, ".sha1") == 0)
@@ -130,8 +136,7 @@ static int get_algo_from_ext(const char*ext)
 		ret = 314 /* GCRY_MD_SHA3_384 */;
 	else if (strcasecmp(ext, ".sha3_512") == 0)
 		ret = 315 /* GCRY_MD_SHA3_512 */;
-	else if (strcasecmp(ext, ".blake2b") == 0)
-	//else if (strcasecmp(ext, ".blake2b_512") == 0)
+	else if (strcasecmp(ext, ".blake2b_512") == 0)
 		ret = 318 /* GCRY_MD_BLAKE2B_512 */;
 	else if (strcasecmp(ext, ".blake2b_384") == 0)
 		ret = 319 /* GCRY_MD_BLAKE2B_384 */;
@@ -139,8 +144,7 @@ static int get_algo_from_ext(const char*ext)
 		ret = 320 /* GCRY_MD_BLAKE2B_256 */;
 	else if (strcasecmp(ext, ".blake2b_160") == 0)
 		ret = 321 /* GCRY_MD_BLAKE2B_160 */;
-	else if (strcasecmp(ext, ".blake2s") == 0)
-	//else if (strcasecmp(ext, ".blake2s_256") == 0)
+	else if (strcasecmp(ext, ".blake2s_256") == 0)
 		ret = 322 /* GCRY_MD_BLAKE2S_256 */;
 	else if (strcasecmp(ext, ".blake2s_224") == 0)
 		ret = 323 /* GCRY_MD_BLAKE2S_224 */;
@@ -148,6 +152,7 @@ static int get_algo_from_ext(const char*ext)
 		ret = 324 /* GCRY_MD_BLAKE2S_160 */;
 	else if (strcasecmp(ext, ".blake2s_128") == 0)
 		ret = 325 /* GCRY_MD_BLAKE2S_128 */;
+
 	else
 		ret = -1;
 
@@ -269,7 +274,7 @@ HANDLE DCPCALL OpenArchive(tOpenArchiveData *ArchiveData)
 		return E_SUCCESS;
 	}
 
-	handle->re = pcre_compile("^([a-f0-9]+)\\s+\\*?([^\\n]+)$", 0, &err, &erroffset, NULL);
+	handle->re = pcre_compile("^([a-f0-9]+)\\s+\\*?([^\\n]+)$", PCRE_CASELESS, &err, &erroffset, NULL);
 
 	if (handle->re == NULL)
 	{
@@ -348,7 +353,7 @@ int DCPCALL ReadHeaderEx(HANDLE hArcData, tHeaderDataEx *HeaderDataEx)
 		}
 		else
 		{
-			strlcpy(HeaderDataEx->FileName, str_file+1, sizeof(HeaderDataEx->FileName) - 1);
+			strlcpy(HeaderDataEx->FileName, str_file + 1, sizeof(HeaderDataEx->FileName) - 1);
 			strlcpy(handle->last_path, str_file, PATH_MAX);
 		}
 
@@ -381,7 +386,7 @@ int DCPCALL ProcessFile(HANDLE hArcData, int Operation, char *DestPath, char *De
 
 		if (hash)
 		{
-			if (strcmp(hash, handle->last_hash) != 0)
+			if (strcasecmp(hash, handle->last_hash) != 0)
 				return E_BAD_DATA;
 
 			free(hash);
