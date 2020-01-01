@@ -217,6 +217,9 @@ Returns information from TORRENT files. Requires `transmission-show`.
 - [trashwdx.lua](plugins/wdx/scripts/trashwdx.lua)<br>
 Script for using in trash folder: getting original file name and deletion date.
 
+- [vcardinfowdx.lua](plugins/wdx/scripts/vcardinfowdx.lua) *(cross platform)*<br>
+Getting some information from vCard files. See details/notes in the beginning of script.
+
 
 ---
 <a name="wfx"><h3>WFX plugins</h3></a>
