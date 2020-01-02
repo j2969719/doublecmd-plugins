@@ -1,5 +1,5 @@
 -- vcardinfowdx.lua (cross-platform)
--- 2020.01.01
+-- 2020.01.02
 --
 -- vCard Format Specification 2.1, 3.0, 4.0
 -- Some details: https://en.wikipedia.org/wiki/VCard
@@ -307,7 +307,7 @@ function GetData()
   for i = 1, #all do
     t = string.match(all[i], '^([A-Z][A-Z%-]*)[:;]')
     if t == 'ADR' then
-      GetADR(all[i])
+      GetADR(all[i], i)
     elseif t == 'LABEL' then
       GetLABEL(all[i])
     elseif t == 'TEL' then
@@ -320,8 +320,8 @@ function GetData()
   end
 end
 
-function GetADR(s)
-  local tp, tv, n
+function GetADR(s, i)
+  local tp, tv, n, l
   n = string.find(s, ':', 1, true)
   tp = string.lower(string.sub(s, 4, n - 1))
   tv = DecodeValue(s)
@@ -329,21 +329,46 @@ function GetADR(s)
   if tp == ':' then
     adr[1] = GetADRUnit(tv)
   else
-    if string.find(tp, 'pref', 1, true) then adr[8] = GetADRUnit(tv) end
+    if (v ~= '2.1') and (v ~= '3.0') then
+      local n1, n2 = string.find(tp, 'label="', 1, true)
+      if n1 ~= nil then
+        n1 = string.find(tp, '"', n2 + 1, true)
+        l = string.sub(all[i], n2 + 5, n1 + 3)
+        if string.find(tp, 'encoding=quoted-printable', 1, true) ~= nil then
+          l = DecodeQuotedPrintable(l)
+        end
+        local t = string.match(tp, 'charset=[^:;]+')
+        if t ~= nil then
+          if t ~= 'utf-8' then l = EncodeToUTF8(l, t) end
+        end
+        l = EscapedChar(l)
+      end
+    end
+    if string.find(tp, 'pref', 1, true) then
+      adr[8] = GetADRUnit(tv)
+      if l ~= nil then adrl[8] = l end
+    end
     if string.find(tp, 'dom', 1, true) then
       adr[2] = GetADRUnit(tv)
+      if l ~= nil then adrl[2] = l end
     elseif string.find(tp, 'intl', 1, true) then
       adr[3] = GetADRUnit(tv)
+      if l ~= nil then adrl[3] = l end
     elseif string.find(tp, 'postal', 1, true) then
       adr[4] = GetADRUnit(tv)
+      if l ~= nil then adrl[4] = l end
     elseif string.find(tp, 'parcel', 1, true) then
       adr[5] = GetADRUnit(tv)
+      if l ~= nil then adrl[5] = l end
     elseif string.find(tp, 'home', 1, true) then
       adr[6] = GetADRUnit(tv)
+      if l ~= nil then adrl[6] = l end
     elseif string.find(tp, 'work', 1, true) then
       adr[7] = GetADRUnit(tv)
+      if l ~= nil then adrl[7] = l end
     else
       adr[1] = GetADRUnit(tv)
+      if l ~= nil then adrl[1] = l end
     end
   end
 end
