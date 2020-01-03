@@ -1,5 +1,5 @@
 -- vcardinfowdx.lua (cross-platform)
--- 2020.01.02
+-- 2020.01.03
 --
 -- vCard Format Specification 2.1, 3.0, 4.0
 -- Some details: https://en.wikipedia.org/wiki/VCard
@@ -48,7 +48,7 @@ local fields = {
  {"Unique identifier",               "UID",        "", 8},
  {"URL",                             "URL",        "", 8},
  {"Access classification",           "CLASS",      "", 8},
- {"Instant messaging",               "IM",         "AIM|Facebook|Gadu-Gadu|Google Hangouts|GroupWise|ICQ|Jabber|QQ|Skype|Twitter|WhatsApp|Windows Live|Yahoo", 8},
+ {"Instant messaging",               "IM",         "AIM|Facebook|Flickr|Gadu-Gadu|Google Hangouts|GroupWise|ICQ|Jabber|Linkedln|MySpace|QQ|Sina Weibo|Skype|Twitter|WhatsApp|Windows Live|Yahoo", 8},
  {"Assistant",  "X-ASSISTANT", "", 8}
 }
 local all = {}
@@ -56,7 +56,7 @@ local adr = {"", "", "", "", "", "", "", ""}
 local adrl = {"", "", "", "", "", "", "", ""}
 local tel = {"", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""}
 local em = {"", "", "", ""}
-local im = {"", "", "", "", "", "", "", "", "", "", "", "", ""}
+local im = {"", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""}
 local filename = ''
 
 function ContentGetSupportedField(FieldIndex)
@@ -493,27 +493,46 @@ function GetIM(s, t)
   elseif t == 'X-FACEBOOK' then
     im[2] = AddValue(im[2], tv)
   elseif t == 'X-GADUGADU' then
-    im[3] = AddValue(im[3], tv)
-  elseif (t == 'X-GOOGLE-TALK') or t == ('X-GTALK') then
     im[4] = AddValue(im[4], tv)
-  elseif t == 'X-GROUPWISE' then
+  elseif (t == 'X-GOOGLE-TALK') or t == ('X-GTALK') then
     im[5] = AddValue(im[5], tv)
-  elseif t == 'X-ICQ' then
+  elseif t == 'X-GROUPWISE' then
     im[6] = AddValue(im[6], tv)
-  elseif t == 'X-JABBER' then
+  elseif t == 'X-ICQ' then
     im[7] = AddValue(im[7], tv)
-  elseif t == 'X-QQ' then
+  elseif t == 'X-JABBER' then
     im[8] = AddValue(im[8], tv)
-  elseif (t == 'X-SKYPE') or t == ('X-SKYPE-USERNAME') then
-    im[9] = AddValue(im[9], tv)
-  elseif t == 'X-TWITTER' then
-    im[10] = AddValue(im[10], tv)
-  elseif t == 'X-WHATSAPP' then
+  elseif t == 'X-QQ' then
     im[11] = AddValue(im[11], tv)
-  elseif t == 'X-MSN' then
-    im[12] = AddValue(im[12], tv)
-  elseif t == 'X-YAHOO' then
+  elseif (t == 'X-SKYPE') or t == ('X-SKYPE-USERNAME') then
     im[13] = AddValue(im[13], tv)
+  elseif t == 'X-TWITTER' then
+    im[14] = AddValue(im[14], tv)
+  elseif t == 'X-WHATSAPP' then
+    im[15] = AddValue(im[15], tv)
+  elseif t == 'X-MSN' then
+    im[16] = AddValue(im[16], tv)
+  elseif t == 'X-YAHOO' then
+    im[17] = AddValue(im[17], tv)
+  else
+    -- Apple Inc.
+    if t == 'X-SOCIALPROFILE' then
+      n = string.find(s, ':', 1, true)
+      tp = string.sub(s, 15, n)
+      if string.find(tp, 'facebook', 1, true) then
+        im[2] = AddValue(im[2], tv)
+      elseif string.find(tp, 'flickr', 1, true) then
+        im[3] = AddValue(im[3], tv)
+      elseif string.find(tp, 'linkedin', 1, true) then
+        im[9] = AddValue(im[9], tv)
+      elseif string.find(tp, 'myspace', 1, true) then
+        im[10] = AddValue(im[10], tv)
+      elseif string.find(tp, 'sinaweibo', 1, true) then
+        im[12] = AddValue(im[12], tv)
+      elseif string.find(tp, 'twitter', 1, true) then
+        im[14] = AddValue(im[14], tv)
+      end
+    end
   end
 end
 
