@@ -664,8 +664,95 @@ static void textfield_get_option(uintptr_t pDlg, char* DlgItemName, const char* 
 	free(tmpval);
 }
 
+static void listbox_get_extentions(uintptr_t pDlg)
+{
+	gint i;
+	gsize length;
+
+	length = gStartupInfo->SendDlgMsg(pDlg, "lbExternalExt", DM_LISTGETCOUNT, 0, 0);
+
+	if (length > 0)
+	{
+		for (i = length - 1; i != -1; i--)
+			gStartupInfo->SendDlgMsg(pDlg, "lbExternalExt", DM_LISTDELETE, i, 0);
+	}
+
+	gchar **groups = g_key_file_get_groups(gCfg, &length);
+
+	for (i = 0; i < length; i++)
+	{
+		if (groups[i][0] == '.')
+			gStartupInfo->SendDlgMsg(pDlg, "lbExternalExt", DM_LISTADDSTR, (intptr_t)groups[i], 0);
+	}
+
+	if (groups)
+		g_strfreev(groups);
+}
+
+static void ed_external_get_options(uintptr_t pDlg)
+{
+	gchar* cfg_value = NULL, *ext = NULL;
+
+	int i = gStartupInfo->SendDlgMsg(pDlg, "lbExternalExt", DM_LISTGETITEMINDEX, 0, 0);
+
+	if (i < 0)
+	{
+		ext = (char*)gStartupInfo->SendDlgMsg(pDlg, "edExternalExt", DM_GETTEXT, 0, 0);
+
+		if (!ext)
+			return;
+	}
+	else
+		ext = (char*)gStartupInfo->SendDlgMsg(pDlg, "lbExternalExt", DM_LISTGETITEM, i, 0);
+
+	if (ext && ext[0] == '.')
+	{
+		gStartupInfo->SendDlgMsg(pDlg, "pnlExtenalEdit", DM_ENABLE, 1, 0);
+		gStartupInfo->SendDlgMsg(pDlg, "btnExternalDelete", DM_ENABLE, 1, 0);
+		gStartupInfo->SendDlgMsg(pDlg, "edExternalExt", DM_SETTEXT, (intptr_t)ext, 0);
+		cfg_value = g_key_file_get_string(gCfg, ext, "write_cmd", NULL);
+		gStartupInfo->SendDlgMsg(pDlg, "edExternalWrite", DM_SETTEXT, (intptr_t)cfg_value, 0);
+		cfg_value = g_key_file_get_string(gCfg, ext, "read_cmd", NULL);
+		gStartupInfo->SendDlgMsg(pDlg, "edExternalRead", DM_SETTEXT, (intptr_t)cfg_value, 0);
+		cfg_value = g_key_file_get_string(gCfg, ext, "signature", NULL);
+		gStartupInfo->SendDlgMsg(pDlg, "edExternalHEX", DM_SETTEXT, (intptr_t)cfg_value, 0);
+	}
+}
+
+static bool check_hex_signature(char* str)
+{
+	char val[3];
+	unsigned int chr;
+	size_t len = strlen(str);
+
+	if (len < 2)
+		return false;
+
+	for (size_t i = 0; i + 3 < len; i += 3)
+	{
+		strlcpy(val, str + i, 3);
+
+		if (sscanf(val, "%02X", &chr) != 1)
+			return false;
+
+		if (val[2] != '\0' && val[2] != ' ')
+			return false;
+	}
+
+	return true;
+}
+
+static void ed_external_clear(uintptr_t pDlg)
+{
+	gStartupInfo->SendDlgMsg(pDlg, "edExternalExt", DM_SETTEXT, 0, 0);
+	gStartupInfo->SendDlgMsg(pDlg, "edExternalWrite", DM_SETTEXT, 0, 0);
+	gStartupInfo->SendDlgMsg(pDlg, "edExternalRead", DM_SETTEXT, 0, 0);
+	gStartupInfo->SendDlgMsg(pDlg, "edExternalHEX", DM_SETTEXT, 0, 0);
+}
+
 intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr_t wParam, intptr_t lParam)
 {
+	GError *err = NULL;
 	int numval;
 	bool bval;
 	char *strval = malloc(PATH_MAX);
@@ -768,6 +855,8 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 
 		gStartupInfo->SendDlgMsg(pDlg, "cbEncrypt", DM_SETTEXT, (intptr_t)gEncryption, 0);
 
+		listbox_get_extentions(pDlg);
+
 		break;
 
 	case DN_CLICK:
@@ -853,14 +942,90 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 				}
 			}
 
-			g_key_file_load_from_file(gCfg, gCfgPath, G_KEY_FILE_KEEP_COMMENTS, NULL);
 			config_set_options();
 			g_key_file_save_to_file(gCfg, gCfgPath, NULL);
 
 			gStartupInfo->SendDlgMsg(pDlg, DlgItemName, DM_CLOSE, ID_OK, 0);
 		}
+		else if (strncmp(DlgItemName, "btnCancel", 8) == 0)
+		{
+			if (g_key_file_load_from_file(gCfg, gCfgPath, G_KEY_FILE_KEEP_COMMENTS, NULL))
+				config_get_options();
+		}
+		else if (strncmp(DlgItemName, "btnEditINI", 8) == 0)
+		{
+			g_key_file_save_to_file(gCfg, gCfgPath, NULL);
+			snprintf(strval, PATH_MAX, "xdg-open \"%s\"", gCfgPath);
+			system(strval);
+		}
 		else if (strncmp(DlgItemName, "btnClear", 8) == 0)
 			gStartupInfo->SendDlgMsg(pDlg, "edOptions", DM_SETTEXT, 0, 0);
+		else if (strcmp(DlgItemName, "lbExternalExt") == 0 || strcmp(DlgItemName, "btnExternalReload") == 0)
+		{
+			ed_external_get_options(pDlg);
+			gStartupInfo->SendDlgMsg(pDlg, "btnExternalReload", DM_ENABLE, 0, 0);
+		}
+		else if (strcmp(DlgItemName, "btnExternalAddNew") == 0)
+		{
+			gStartupInfo->SendDlgMsg(pDlg, "pnlExtenalEdit", DM_ENABLE, 1, 0);
+			gStartupInfo->SendDlgMsg(pDlg, "btnExternalDelete", DM_ENABLE, 0, 0);
+			gStartupInfo->SendDlgMsg(pDlg, "btnExternalSave", DM_ENABLE, 0, 0);
+			gStartupInfo->SendDlgMsg(pDlg, "btnExternalReload", DM_ENABLE, 0, 0);
+			ed_external_clear(pDlg);
+			strlcpy(strval, ".", PATH_MAX);
+			gStartupInfo->SendDlgMsg(pDlg, "edExternalExt", DM_SETTEXT, (intptr_t)strval, 0);
+		}
+		else if (strcmp(DlgItemName, "btnExternalDelete") == 0)
+		{
+			gchar *ext = (char*)gStartupInfo->SendDlgMsg(pDlg, "edExternalExt", DM_GETTEXT, 0, 0);
+
+			if (!g_key_file_remove_group(gCfg, ext, &err))
+			{
+				errmsg((err)->message, MB_OK | MB_ICONERROR);
+			}
+			else
+			{
+				ed_external_clear(pDlg);
+				gStartupInfo->SendDlgMsg(pDlg, "pnlExtenalEdit", DM_ENABLE, 0, 0);
+				gStartupInfo->SendDlgMsg(pDlg, "btnExternalDelete", DM_ENABLE, 0, 0);
+				gStartupInfo->SendDlgMsg(pDlg, "btnExternalReload", DM_ENABLE, 0, 0);
+				gStartupInfo->SendDlgMsg(pDlg, "btnExternalSave", DM_ENABLE, 0, 0);
+			}
+
+			listbox_get_extentions(pDlg);
+		}
+		else if (strcmp(DlgItemName, "btnExternalSave") == 0)
+		{
+			size_t signature_size;
+			gchar *ext = (char*)gStartupInfo->SendDlgMsg(pDlg, "edExternalExt", DM_GETTEXT, 0, 0);
+
+			if (ext && ext[0] == '.' && ext[1] != '\0')
+			{
+				strlcpy(strval, (char*)gStartupInfo->SendDlgMsg(pDlg, "edExternalWrite", DM_GETTEXT, 0, 0), PATH_MAX);
+
+				if (strval && strval[0] != '\0')
+					g_key_file_set_string(gCfg, ext, "write_cmd", strval);
+
+				strlcpy(strval, (char*)gStartupInfo->SendDlgMsg(pDlg, "edExternalRead", DM_GETTEXT, 0, 0), PATH_MAX);
+
+				if (strval && strval[0] != '\0')
+					g_key_file_set_string(gCfg, ext, "read_cmd", strval);
+
+				strlcpy(strval, (char*)gStartupInfo->SendDlgMsg(pDlg, "edExternalHEX", DM_GETTEXT, 0, 0), PATH_MAX);
+
+				if (strval && strval[0] != '\0')
+				{
+					if (check_hex_signature(strval) == false)
+						errmsg("Invalid hex value.", MB_OK | MB_ICONERROR);
+					else
+						g_key_file_set_string(gCfg, ext, "signature", strval);
+				}
+			}
+			else
+				errmsg("Missing or incorrect file extension.", MB_OK | MB_ICONERROR);
+
+			listbox_get_extentions(pDlg);
+		}
 
 		break;
 
@@ -1101,9 +1266,28 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 		}
 
 		break;
+
+	case DM_KEYUP:
+		if (strncmp(DlgItemName, "edExternal", 10) == 0)
+		{
+			gStartupInfo->SendDlgMsg(pDlg, "btnExternalSave", DM_ENABLE, 1, 0);
+			gchar *ext = (char*)gStartupInfo->SendDlgMsg(pDlg, "edExternalExt", DM_GETTEXT, 0, 0);
+
+			if (ext && g_key_file_has_group(gCfg, ext))
+				gStartupInfo->SendDlgMsg(pDlg, "btnExternalReload", DM_ENABLE, 1, 0);
+			else
+				gStartupInfo->SendDlgMsg(pDlg, "btnExternalReload", DM_ENABLE, 0, 0);
+		}
+
+		break;
 	}
 
-	free(strval);
+	if (err)
+		g_error_free(err);
+
+	if (strval)
+		free(strval);
+
 	return 0;
 }
 
