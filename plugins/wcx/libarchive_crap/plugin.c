@@ -972,6 +972,7 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 		{
 			ed_external_get_options(pDlg);
 			gStartupInfo->SendDlgMsg(pDlg, "btnExternalReload", DM_ENABLE, 0, 0);
+			gStartupInfo->SendDlgMsg(pDlg, "btnExternalSave", DM_ENABLE, 0, 0);
 		}
 		else if (strcmp(DlgItemName, "btnExternalAddNew") == 0)
 		{
@@ -1034,6 +1035,8 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 
 			listbox_get_extentions(pDlg);
 		}
+		else if (strncmp(DlgItemName, "edExternal", 10) == 0)
+			gStartupInfo->SendDlgMsg(pDlg, "btnExternalSave", DM_ENABLE, 1, 0);
 
 		break;
 

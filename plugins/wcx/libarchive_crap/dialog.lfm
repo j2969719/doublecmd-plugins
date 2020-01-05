@@ -455,6 +455,7 @@ object DialogBox: TDialogBox
             Width = 482
             Anchors = [akTop, akLeft, akRight]
             MaxLength = 15
+            OnClick = EditClick
             OnKeyUp = EditKeyUp
             TabOrder = 0
           end
@@ -469,6 +470,7 @@ object DialogBox: TDialogBox
             Top = 74
             Width = 482
             Anchors = [akTop, akLeft, akRight]
+            OnClick = EditClick
             OnKeyUp = EditKeyUp
             TabOrder = 1
           end
@@ -507,6 +509,7 @@ object DialogBox: TDialogBox
             Top = 118
             Width = 482
             Anchors = [akTop, akLeft, akRight]
+            OnClick = EditClick
             OnKeyUp = EditKeyUp
             TabOrder = 2
           end
@@ -533,6 +536,7 @@ object DialogBox: TDialogBox
             Top = 172
             Width = 482
             Anchors = [akTop, akLeft, akRight]
+            OnClick = EditClick
             OnKeyUp = EditKeyUp
             TabOrder = 3
           end
