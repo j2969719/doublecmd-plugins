@@ -957,6 +957,11 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 			g_key_file_save_to_file(gCfg, gCfgPath, NULL);
 			snprintf(strval, PATH_MAX, "xdg-open \"%s\"", gCfgPath);
 			system(strval);
+
+			errmsg("Click OK when done editing.", MB_OK | MB_ICONINFORMATION);
+
+			if (g_key_file_load_from_file(gCfg, gCfgPath, G_KEY_FILE_KEEP_COMMENTS, NULL))
+				config_get_options();
 		}
 		else if (strncmp(DlgItemName, "btnClear", 8) == 0)
 			gStartupInfo->SendDlgMsg(pDlg, "edOptions", DM_SETTEXT, 0, 0);
@@ -1256,6 +1261,21 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 						strcat(strval, ",");
 
 					snprintf(strval, PATH_MAX, "%scompression-level=%d", strdup(strval), numval);
+				}
+			}
+
+			char *tmpval = (char *)gStartupInfo->SendDlgMsg(pDlg, "cbFiltersFormatCharset", DM_GETTEXT, 0, 0);
+
+			if (tmpval[0] != '\0')
+			{
+				if (strval[strlen(strval) - 1] == ':')
+					snprintf(strval, PATH_MAX, "hdrcharset=%s", tmpval);
+				else
+				{
+					if (strval[strlen(strval) - 1] != '\0')
+						strcat(strval, ",");
+
+					snprintf(strval, PATH_MAX, "%shdrcharset=%s", strdup(strval), tmpval);
 				}
 			}
 

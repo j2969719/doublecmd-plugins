@@ -14,7 +14,7 @@ object DialogBox: TDialogBox
   object pcOptions: TPageControl
     AnchorSideBottom.Control = lblInfo
     Left = 0
-    Height = 371
+    Height = 376
     Top = 0
     Width = 621
     ActivePage = tsFilters
@@ -25,7 +25,7 @@ object DialogBox: TDialogBox
     TabOrder = 0
     object tsFilters: TTabSheet
       Caption = 'Compressors'
-      ClientHeight = 340
+      ClientHeight = 345
       ClientWidth = 617
       object gbFilters: TGroupBox
         AnchorSideLeft.Control = tsFilters
@@ -96,15 +96,15 @@ object DialogBox: TDialogBox
         AnchorSideBottom.Control = tsFilters
         AnchorSideBottom.Side = asrBottom
         Left = 5
-        Height = 58
-        Top = 282
+        Height = 54
+        Top = 291
         Width = 607
         Anchors = [akLeft, akRight, akBottom]
         AutoSize = True
         Caption = 'Other'
         ChildSizing.LeftRightSpacing = 10
         ChildSizing.TopBottomSpacing = 5
-        ClientHeight = 39
+        ClientHeight = 35
         ClientWidth = 603
         TabOrder = 4
         object edFiltersLZMAThreads: TEdit
@@ -112,7 +112,7 @@ object DialogBox: TDialogBox
           AnchorSideLeft.Side = asrBottom
           AnchorSideTop.Control = gbFiltersOther
           Left = 109
-          Height = 29
+          Height = 24
           Top = 5
           Width = 80
           BorderSpacing.Left = 5
@@ -126,7 +126,7 @@ object DialogBox: TDialogBox
           AnchorSideTop.Side = asrCenter
           Left = 10
           Height = 15
-          Top = 12
+          Top = 10
           Width = 94
           Caption = 'LZMA threads:'
           ParentColor = False
@@ -137,7 +137,7 @@ object DialogBox: TDialogBox
           AnchorSideRight.Control = cbFiltersLrzipCompr
           Left = 314
           Height = 15
-          Top = 12
+          Top = 10
           Width = 174
           Anchors = [akTop, akRight]
           Caption = 'LRZip compression metod:'
@@ -152,7 +152,7 @@ object DialogBox: TDialogBox
           AnchorSideRight.Side = asrBottom
           Left = 493
           Height = 25
-          Top = 7
+          Top = 5
           Width = 100
           Anchors = [akTop, akRight]
           BorderSpacing.Left = 5
@@ -178,7 +178,7 @@ object DialogBox: TDialogBox
         AnchorSideBottom.Control = gbLZ4
         Left = 5
         Height = 56
-        Top = 135
+        Top = 144
         Width = 607
         Anchors = [akLeft, akRight, akBottom]
         Caption = 'Zstandard'
@@ -246,7 +246,7 @@ object DialogBox: TDialogBox
         AnchorSideBottom.Control = gbFiltersOther
         Left = 5
         Height = 91
-        Top = 191
+        Top = 200
         Width = 607
         Anchors = [akLeft, akRight, akBottom]
         Caption = 'LZ4'
@@ -341,7 +341,7 @@ object DialogBox: TDialogBox
         AnchorSideBottom.Control = gbZstd
         Left = 5
         Height = 49
-        Top = 86
+        Top = 95
         Width = 607
         Anchors = [akLeft, akRight, akBottom]
         Caption = 'GZip'
@@ -369,7 +369,7 @@ object DialogBox: TDialogBox
     end
     object tsExternal: TTabSheet
       Caption = 'External'
-      ClientHeight = 340
+      ClientHeight = 345
       ClientWidth = 617
       object gbExternal: TGroupBox
         AnchorSideLeft.Control = tsExternal
@@ -405,7 +405,7 @@ object DialogBox: TDialogBox
           Anchors = [akTop, akLeft, akBottom]
           ItemHeight = 0
           OnClick = ListBoxClick
-          ScrollWidth = 82
+          ScrollWidth = 84
           TabOrder = 0
           TopIndex = -1
         end
@@ -429,8 +429,8 @@ object DialogBox: TDialogBox
           BevelOuter = bvNone
           ChildSizing.LeftRightSpacing = 5
           ChildSizing.TopBottomSpacing = 5
-          ClientHeight = 197
-          ClientWidth = 488
+          ClientHeight = 201
+          ClientWidth = 492
           Enabled = False
           TabOrder = 5
           object lblExternalExt: TLabel
@@ -454,6 +454,7 @@ object DialogBox: TDialogBox
             Top = 20
             Width = 482
             Anchors = [akTop, akLeft, akRight]
+            MaxLength = 15
             OnKeyUp = EditKeyUp
             TabOrder = 0
           end
@@ -594,7 +595,7 @@ object DialogBox: TDialogBox
     end
     object tsFormats: TTabSheet
       Caption = 'Formats'
-      ClientHeight = 340
+      ClientHeight = 345
       ClientWidth = 617
       object gbFormats: TGroupBox
         AnchorSideLeft.Control = tsFormats
@@ -604,7 +605,7 @@ object DialogBox: TDialogBox
         AnchorSideBottom.Control = tsFormats
         AnchorSideBottom.Side = asrBottom
         Left = 5
-        Height = 169
+        Height = 215
         Top = 5
         Width = 607
         Anchors = [akTop, akLeft, akRight]
@@ -615,7 +616,7 @@ object DialogBox: TDialogBox
         Caption = 'General'
         ChildSizing.LeftRightSpacing = 10
         ChildSizing.TopBottomSpacing = 10
-        ClientHeight = 150
+        ClientHeight = 196
         ClientWidth = 603
         TabOrder = 0
         object cbTarFormat: TComboBox
@@ -692,16 +693,16 @@ object DialogBox: TDialogBox
         end
         object cbArFormat: TComboBox
           AnchorSideLeft.Control = cbSharFormat
-          AnchorSideTop.Control = cbCpioFormat
+          AnchorSideTop.Control = cbFiltersFormatCharset
           AnchorSideTop.Side = asrBottom
           AnchorSideRight.Control = gbFormats
           AnchorSideRight.Side = asrBottom
           Left = 96
           Height = 25
-          Top = 80
+          Top = 126
           Width = 497
           Anchors = [akTop, akLeft, akRight]
-          BorderSpacing.Top = 10
+          BorderSpacing.Top = 20
           ItemHeight = 0
           Items.Strings = (
             'svr4'
@@ -717,7 +718,7 @@ object DialogBox: TDialogBox
           AnchorSideRight.Control = cbArFormat
           Left = 10
           Height = 15
-          Top = 85
+          Top = 131
           Width = 63
           BorderSpacing.Right = 5
           Caption = 'AR mode:'
@@ -732,7 +733,7 @@ object DialogBox: TDialogBox
           AnchorSideRight.Side = asrBottom
           Left = 96
           Height = 25
-          Top = 115
+          Top = 161
           Width = 497
           Anchors = [akTop, akLeft, akRight]
           BorderSpacing.Left = 5
@@ -752,10 +753,43 @@ object DialogBox: TDialogBox
           AnchorSideRight.Control = cbArFormat
           Left = 10
           Height = 15
-          Top = 120
+          Top = 166
           Width = 81
           BorderSpacing.Right = 5
           Caption = 'SHAR mode:'
+          ParentColor = False
+        end
+        object cbFiltersFormatCharset: TComboBox
+          AnchorSideLeft.Control = lblFormatsCharset
+          AnchorSideLeft.Side = asrBottom
+          AnchorSideTop.Control = cbCpioFormat
+          AnchorSideTop.Side = asrBottom
+          Left = 213
+          Height = 26
+          Top = 80
+          Width = 156
+          BorderSpacing.Left = 10
+          BorderSpacing.Top = 10
+          ItemHeight = 0
+          Items.Strings = (
+            'UTF-8'
+            'CP1251'
+            '866'
+            'LATIN1'
+            'BINARY'
+          )
+          MaxLength = 255
+          OnChange = ComboBoxChange
+          TabOrder = 4
+        end
+        object lblFormatsCharset: TLabel
+          AnchorSideTop.Control = cbFiltersFormatCharset
+          AnchorSideTop.Side = asrCenter
+          Left = 10
+          Height = 15
+          Top = 86
+          Width = 193
+          Caption = 'Charset for filenames (iconv):'
           ParentColor = False
         end
       end
@@ -763,7 +797,7 @@ object DialogBox: TDialogBox
     object tsGeneral: TTabSheet
       AnchorSideRight.Side = asrBottom
       Caption = 'Zip/7zip'
-      ClientHeight = 340
+      ClientHeight = 345
       ClientWidth = 617
       object gbZip: TGroupBox
         AnchorSideLeft.Control = tsGeneral
@@ -1071,7 +1105,7 @@ object DialogBox: TDialogBox
     end
     object tsMTREE: TTabSheet
       Caption = 'MTREE'
-      ClientHeight = 340
+      ClientHeight = 345
       ClientWidth = 617
       object gbMtreeGeneral: TGroupBox
         AnchorSideLeft.Control = tsMTREE
@@ -1433,7 +1467,7 @@ object DialogBox: TDialogBox
     end
     object tsISO: TTabSheet
       Caption = 'ISO9660'
-      ClientHeight = 340
+      ClientHeight = 345
       ClientWidth = 617
       object gbISOMetadata: TGroupBox
         AnchorSideLeft.Control = tsISO
@@ -1805,7 +1839,7 @@ object DialogBox: TDialogBox
     end
     object tsISOBoot: TTabSheet
       Caption = 'ISO9660 (boot)'
-      ClientHeight = 340
+      ClientHeight = 345
       ClientWidth = 617
       object gbISOBootGeneral: TGroupBox
         AnchorSideLeft.Control = tsISOBoot
@@ -1987,7 +2021,7 @@ object DialogBox: TDialogBox
     end
     object tsReadOpt: TTabSheet
       Caption = 'Read'
-      ClientHeight = 340
+      ClientHeight = 345
       ClientWidth = 617
       object gbReadGeneral: TGroupBox
         AnchorSideLeft.Control = tsReadOpt
@@ -2257,8 +2291,8 @@ object DialogBox: TDialogBox
     AnchorSideRight.Control = btnClear
     AnchorSideBottom.Control = btnOK
     Left = 5
-    Height = 29
-    Top = 426
+    Height = 24
+    Top = 431
     Width = 517
     Anchors = [akLeft, akRight, akBottom]
     BorderSpacing.Left = 5
@@ -2272,7 +2306,7 @@ object DialogBox: TDialogBox
     AnchorSideBottom.Control = edOptions
     Left = 10
     Height = 15
-    Top = 406
+    Top = 411
     Width = 335
     Anchors = [akLeft, akBottom]
     BorderSpacing.Left = 5
@@ -2289,7 +2323,7 @@ object DialogBox: TDialogBox
     AnchorSideBottom.Control = lblOptions
     Left = 10
     Height = 15
-    Top = 381
+    Top = 386
     Width = 99
     Anchors = [akLeft, akBottom]
     BorderSpacing.Bottom = 10
@@ -2304,8 +2338,8 @@ object DialogBox: TDialogBox
     AnchorSideBottom.Control = edOptions
     AnchorSideBottom.Side = asrBottom
     Left = 527
-    Height = 29
-    Top = 426
+    Height = 24
+    Top = 431
     Width = 89
     Anchors = [akTop, akRight, akBottom]
     BorderSpacing.Right = 5
