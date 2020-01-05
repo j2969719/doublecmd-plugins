@@ -728,7 +728,10 @@ static bool check_hex_signature(char* str)
 	if (len < 2)
 		return false;
 
-	for (size_t i = 0; i + 3 < len; i += 3)
+	if (len % 3 == 1)
+		return false;
+
+	for (size_t i = 0; i + 3 <= len + 1; i += 3)
 	{
 		strlcpy(val, str + i, 3);
 
