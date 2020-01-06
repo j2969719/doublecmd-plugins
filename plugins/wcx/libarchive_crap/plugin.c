@@ -1033,6 +1033,8 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 			else
 				errmsg("Missing or incorrect file extension.", MB_OK | MB_ICONERROR);
 
+			gStartupInfo->SendDlgMsg(pDlg, "btnExternalSave", DM_ENABLE, 0, 0);
+			gStartupInfo->SendDlgMsg(pDlg, "btnExternalReload", DM_ENABLE, 0, 0);
 			listbox_get_extentions(pDlg);
 		}
 		else if (strncmp(DlgItemName, "edExternal", 10) == 0)
