@@ -35,11 +35,11 @@ function ContentGetSupportedField(FieldIndex)
 end
 
 function ContentGetDetectString()
-    return '(EXT="XZ")|(EXT="GZ")';
+    return '(EXT="XZ")|(EXT="GZ")|(EXT="ZST")';
 end
 
 function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
-    if (FileName:find("%.pkg%.tar%.xz$") == nil) and (FileName:find("%.pkg%.tar%.gz$") == nil) then
+    if (FileName:find("%.pkg%.tar%.xz$") == nil) and (FileName:find("%.pkg%.tar%.gz$") == nil) and (FileName:find("%.pkg%.tar%.zst$") == nil) then
         return nil;
     end
     if (filename ~= FileName) then

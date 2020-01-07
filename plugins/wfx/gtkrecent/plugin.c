@@ -355,6 +355,20 @@ int DCPCALL FsExecuteFile(HWND MainWin, char* RemoteName, char* Verb)
 		if (g_chmod(RemoteName + 1, mode) == -1)
 			result = FS_EXEC_ERROR;
 	}
+	else if (RemoteName[1] != '\0' && strcmp(Verb, "properties") == 0)
+	{
+		gchar *uri = g_filename_to_uri(RemoteName + 1, NULL, NULL);
+		gchar *command = g_strdup_printf("dbus-send  --dest=org.freedesktop.FileManager1 --type=method_call /org/freedesktop/FileManager1 org.freedesktop.FileManager1.ShowItemProperties array:string:\"%s\", string:\"0\"", uri);
+		g_spawn_command_line_async(command, NULL);
+
+		if (uri)
+			g_free(uri);
+
+		if (command)
+			g_free(command);
+
+		result = FS_FILE_OK;
+	}
 	else if (gRequestProc)
 		gRequestProc(gPluginNr, RT_MsgOK, NULL, strerror(EOPNOTSUPP), NULL, 0);
 
