@@ -1,11 +1,13 @@
 -- vcardinfowdx.lua (cross-platform)
--- 2020.01.09
+-- 2020.01.10
 --
 -- vCard Format Specification 2.1, 3.0, 4.0
 -- Some details: https://en.wikipedia.org/wiki/VCard
 --
--- NOTE: Script reads file content between BEGIN:VCARD and END:VCARD and will continue to work only if VERSION property is exists (all vCards must contain the VERSION property).
--- NOTE: Usually first line is "BEGIN:VCARD", but if not found "BEGIN:VCARD" then script will read five more lines (just in case), not the whole file.
+-- NOTE: Script reads file content between BEGIN:VCARD and END:VCARD and will continue to work
+--       only if VERSION property is exists (all vCards must contain the VERSION property).
+-- NOTE: Usually first line is "BEGIN:VCARD", but if not found "BEGIN:VCARD" then script will
+--       read five more lines (just in case), not the whole file.
 -- NOTE: One vCard file - one person! Otherwise only the first one will be read.
 --
 -- Supported fields: see table "fields".
@@ -49,7 +51,7 @@ local fields = {
  {"URL",                             "URL",        "", 8},
  {"Access classification",           "CLASS",      "", 8},
  {"Instant messaging",               "IM",         "AIM|Facebook|Flickr|Gadu-Gadu|Google Hangouts|GroupWise|ICQ|Jabber|Linkedln|MySpace|QQ|Sina Weibo|Skype|Twitter|WhatsApp|Windows Live|Yahoo", 8},
- {"Assistant",  "X-ASSISTANT", "", 8}
+ {"Assistant",                       "X-ASSISTANT", "", 8}
 }
 local all = {}
 local adr = {"", "", "", "", "", "", "", ""}
@@ -174,7 +176,7 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
       s = DecodeValue(s)
     end
     local ln, fn, mn, np, ns = string.match(s, '([^;]*);([^;]*);([^;]*);([^;]*);([^;]*)')
-    if fn == nil then return nil end
+    if ln == nil then return nil end
     if UnitIndex == 0 then
       return ln
     elseif UnitIndex == 1 then
@@ -277,11 +279,11 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
 end
 
 function CleanTables()
-  for i = 1, #adr do adr[i] = "" end
-  for i = 1, #adrl do adrl[i] = "" end
-  for i = 1, #tel do tel[i] = "" end
-  for i = 1, #em do em[i] = "" end
-  for i = 1, #im do im[i] = "" end
+  for i = 1, #adr do adr[i] = nil end
+  for i = 1, #adrl do adrl[i] = nil end
+  for i = 1, #tel do tel[i] = nil end
+  for i = 1, #em do em[i] = nil end
+  for i = 1, #im do im[i] = nil end
 end
 
 function GetString(p, n)
@@ -374,15 +376,16 @@ function GetADR(s, i)
 end
 
 function GetADRUnit(s)
-  local uni = {}
+  local uni = {nil, nil, nil, nil, nil, nil, nil}
   local po, ed, sa, lo, re, pc, co = string.match(s, '([^;]*);([^;]*);([^;]*);([^;]*);([^;]*);([^;]*);([^;]*)')
-  table.insert(uni, po)
-  table.insert(uni, ed)
-  table.insert(uni, sa)
-  table.insert(uni, lo)
-  table.insert(uni, re)
-  table.insert(uni, pc)
-  table.insert(uni, co)
+  if po == nil then return uni end
+  if po ~= '' then uni[1] = po end
+  if ed ~= '' then uni[2] = ed end
+  if sa ~= '' then uni[3] = sa end
+  if lo ~= '' then uni[4] = lo end
+  if re ~= '' then uni[5] = re end
+  if pc ~= '' then uni[6] = pc end
+  if co ~= '' then uni[7] = co end
   return uni
 end
 
@@ -537,7 +540,7 @@ function GetIM(s, t)
 end
 
 function AddValue(v, s)
-  if string.len(v) == 0 then return s else return v .. ', ' .. s end
+  if v == nil then return s else return v .. ', ' .. s end
 end
 
 function DecodeValue(s)
