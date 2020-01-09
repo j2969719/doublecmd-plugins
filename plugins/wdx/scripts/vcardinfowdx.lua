@@ -1,5 +1,5 @@
 -- vcardinfowdx.lua (cross-platform)
--- 2020.01.03
+-- 2020.01.09
 --
 -- vCard Format Specification 2.1, 3.0, 4.0
 -- Some details: https://en.wikipedia.org/wiki/VCard
@@ -124,7 +124,7 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
   local s, v
   s = GetString('VERSION', 7)
   -- if s == nil then return nil else v = string.sub(s, 9, -1) end
-  if s == nil then return 'Invalid!' else v = string.sub(s, 9, -1) end
+  if s == nil then return 'Invalid vCard!' else v = string.sub(s, 9, -1) end
   GetData()
   if FieldIndex == 0 then
     return v
