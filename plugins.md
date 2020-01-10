@@ -165,6 +165,9 @@ List local system locks.
 - [modiftimeistodaywdx.lua](plugins/wdx/scripts/modiftimeistodaywdx.lua) *(cross platform)*<br>
 The last modified time is today (not last twenty-four hours), boolean.
 
+- [msginfowdx.lua](plugins/wdx/scripts/msginfowdx.lua) *(cross platform)*<br>
+Getting info from headers of saved email messages. Supported formats: *.eml, *.msg and MH mailfile format (Sylpheed and other).
+
 - [pkginfowdx.lua](plugins/wdx/scripts/pkginfowdx.lua)<br>
 Returns some information from Arch Linux packages.
 
