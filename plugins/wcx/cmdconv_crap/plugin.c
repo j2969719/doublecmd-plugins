@@ -550,6 +550,14 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 			}
 			else
 			{
+
+				gchar *out_dir = g_path_get_dirname(out_file);
+
+				if (!g_file_test(out_dir, G_FILE_TEST_EXISTS))
+					g_mkdir_with_parents(out_dir, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+
+				g_free(out_dir);
+
 				int status;
 				gchar *command = str_replace_templ(in_file, out_file);
 
@@ -566,15 +574,6 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 				g_free(command);
 			}
 		}
-		else
-		{
-			in_file = NULL;
-			out_file = g_strdup_printf("%s/%s", target_path, AddList);
-			g_mkdir_with_parents(out_file, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
-		}
-
-		if (gProcessDataProc(out_file, -100) == 0)
-			result = E_EABORTED;
 
 		if (in_file)
 			g_free(in_file);
