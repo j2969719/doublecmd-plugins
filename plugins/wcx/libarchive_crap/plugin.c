@@ -1487,21 +1487,19 @@ int DCPCALL ProcessFile(HANDLE hArcData, int Operation, char *DestPath, char *De
 	la_int64_t offset;
 	const void *buff;
 	struct archive *a;
-	char *filename = NULL;
+	const char *pathname;
+	char filename[PATH_MAX];
 	ArcData handle = (ArcData)hArcData;
-
-	if (Operation == PK_TEST)
-	{
-		filename = (char*)archive_entry_pathname(handle->entry);
-
-		if (!filename)
-			filename = DestName;
-	}
-	else if (Operation != PK_SKIP)
-		filename = DestName;
 
 	if (Operation != PK_SKIP && !DestPath)
 	{
+		pathname = archive_entry_pathname(handle->entry);
+
+		if (!pathname)
+			strlcpy(filename, handle->arcname, PATH_MAX);
+		else
+			strlcpy(filename, pathname, PATH_MAX);
+
 		if (Operation == PK_EXTRACT)
 		{
 			int fd = open(DestName, O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
