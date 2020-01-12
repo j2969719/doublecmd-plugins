@@ -1486,39 +1486,58 @@ int DCPCALL ProcessFile(HANDLE hArcData, int Operation, char *DestPath, char *De
 	size_t size;
 	la_int64_t offset;
 	const void *buff;
+	struct archive *a;
+	char *filename = NULL;
 	ArcData handle = (ArcData)hArcData;
 
 	if (Operation == PK_TEST)
-		return E_NOT_SUPPORTED;
-
-	if (Operation == PK_EXTRACT && !DestPath)
 	{
-		int fd = open(DestName, O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+		filename = (char*)archive_entry_pathname(handle->entry);
 
-		if (fd == -1)
-			return E_ECREATE;
-		else
-			close(fd);
+		if (!filename)
+			filename = DestName;
+	}
+	else if (Operation != PK_SKIP)
+		filename = DestName;
 
-		int flags = ARCHIVE_EXTRACT_TIME | ARCHIVE_EXTRACT_PERM | ARCHIVE_EXTRACT_FFLAGS;
+	if (Operation != PK_SKIP && !DestPath)
+	{
+		if (Operation == PK_EXTRACT)
+		{
+			int fd = open(DestName, O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
 
-		struct archive *a = archive_write_disk_new();
-		archive_entry_set_pathname(handle->entry, DestName);
-		archive_write_disk_set_options(a, flags);
-		archive_write_disk_set_standard_lookup(a);
-		archive_write_header(a, handle->entry);
+			if (fd == -1)
+				return E_ECREATE;
+			else
+				close(fd);
+
+			int flags = ARCHIVE_EXTRACT_TIME | ARCHIVE_EXTRACT_PERM | ARCHIVE_EXTRACT_FFLAGS;
+
+			a = archive_write_disk_new();
+			archive_entry_set_pathname(handle->entry, DestName);
+			archive_write_disk_set_options(a, flags);
+			archive_write_disk_set_standard_lookup(a);
+			archive_write_header(a, handle->entry);
+		}
 
 		while ((ret = archive_read_data_block(handle->archive, &buff, &size, &offset)) != ARCHIVE_EOF)
 		{
 			if (ret < ARCHIVE_OK)
 			{
-				//printf("libarchive: %s\n", archive_error_string(handle->archive));
-				//result = E_EREAD;
-				errmsg(archive_error_string(handle->archive), MB_OK | MB_ICONERROR);
-				result = E_EABORTED;
+				if (Operation == PK_TEST)
+				{
+					printf("libarchive: %s\n", archive_error_string(handle->archive));
+					result = E_EREAD;
+				}
+				else
+				{
+					errmsg(archive_error_string(handle->archive), MB_OK | MB_ICONERROR);
+					result = E_EABORTED;
+				}
+
 				break;
 			}
-			else if (archive_write_data_block(a, buff, size, offset) < ARCHIVE_OK)
+			else if (Operation == PK_EXTRACT && archive_write_data_block(a, buff, size, offset) < ARCHIVE_OK)
 			{
 				//printf("libarchive: %s\n", archive_error_string(a));
 				//result = E_EWRITE;
@@ -1526,16 +1545,19 @@ int DCPCALL ProcessFile(HANDLE hArcData, int Operation, char *DestPath, char *De
 				result = E_EABORTED;
 				break;
 			}
-			else if (handle->gProcessDataProc && handle->gProcessDataProc(DestName, size) == 0)
+			else if (handle->gProcessDataProc && handle->gProcessDataProc(filename, size) == 0)
 			{
 				result = E_EABORTED;
 				break;
 			}
 		}
 
-		archive_write_finish_entry(a);
-		archive_write_close(a);
-		archive_write_free(a);
+		if (Operation == PK_EXTRACT)
+		{
+			archive_write_finish_entry(a);
+			archive_write_close(a);
+			archive_write_free(a);
+		}
 	}
 
 	return result;
