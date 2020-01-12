@@ -23,8 +23,9 @@ typedef struct sArcData
 	pcre *re;
 	FILE *fp;
 	char *last_hash;
-	tChangeVolProc gChangeVolProc;
-	tProcessDataProc gProcessDataProc;
+	int last_file_len;
+	tChangeVolProc ChangeVolProc;
+	tProcessDataProc ProcessDataProc;
 } tArcData;
 
 typedef tArcData* ArcData;
@@ -357,6 +358,8 @@ int DCPCALL ReadHeaderEx(HANDLE hArcData, tHeaderDataEx *HeaderDataEx)
 			strlcpy(handle->last_path, str_file, PATH_MAX);
 		}
 
+		handle->last_file_len = strlen(HeaderDataEx->FileName);
+
 		if (lstat(handle->last_path, &buf) == 0)
 		{
 			HeaderDataEx->PackSizeHigh = (buf.st_size & 0xFFFFFFFF00000000) >> 32;
@@ -380,9 +383,20 @@ int DCPCALL ProcessFile(HANDLE hArcData, int Operation, char *DestPath, char *De
 {
 	ArcData handle = (ArcData)hArcData;
 
+	if (Operation != PK_SKIP && access(handle->last_path, F_OK) == -1)
+	{
+		if (handle->ChangeVolProc(handle->last_path, PK_VOL_ASK) == 0)
+			return E_EABORTED;
+
+		int len = strlen(handle->last_path);
+
+		if (len > handle->last_file_len + 1)
+			strlcpy(handle->dir_path, handle->last_path, len - (handle->last_file_len + 1));
+	}
+
 	if (Operation == PK_TEST)
 	{
-		char *hash = calc_hash(handle->algo, handle->last_path, handle->gProcessDataProc);
+		char *hash = calc_hash(handle->algo, handle->last_path, handle->ProcessDataProc);
 
 		if (hash)
 		{
@@ -423,12 +437,17 @@ void DCPCALL SetProcessDataProc(HANDLE hArcData, tProcessDataProc pProcessDataPr
 	if ((int)(long)hArcData == -1 || !handle)
 		gProcessDataProc = pProcessDataProc;
 	else
-		handle->gProcessDataProc = pProcessDataProc;
+		handle->ProcessDataProc = pProcessDataProc;
 }
 
 void DCPCALL SetChangeVolProc(HANDLE hArcData, tChangeVolProc pChangeVolProc1)
 {
+	ArcData handle = (ArcData)hArcData;
 
+	if ((int)(long)hArcData == -1 || !handle)
+		gChangeVolProc = pChangeVolProc1;
+	else
+		handle->ChangeVolProc = pChangeVolProc1;
 }
 
 BOOL DCPCALL CanYouHandleThisFile(char *FileName)

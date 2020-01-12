@@ -210,8 +210,11 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 
 			g_key_file_save_to_file(gCfg, gCfgPath, NULL);
 
-			if (!gCfgMode && gLastCMD[0] == '\0')
+			if (!gCfgMode && (gLastCMD[0] == '\0' || strstr(gLastCMD, "$FILE") == NULL || strstr(gLastCMD, "$OUTPUT") == NULL))
+			{
+				memset(gLastCMD, 0, PATH_MAX);
 				gDialogApi->MessageBox("Missing or incorrect command, aborting.", NULL, MB_OK | MB_ICONERROR);
+			}
 		}
 		else if (strcmp(DlgItemName, "btnCancel") == 0)
 		{
@@ -576,10 +579,16 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 		}
 
 		if (in_file)
+		{
 			g_free(in_file);
+			in_file = NULL;
+		}
 
 		if (out_file)
+		{
 			g_free(out_file);
+			out_file = NULL;
+		}
 
 		if (result != E_SUCCESS)
 			break;

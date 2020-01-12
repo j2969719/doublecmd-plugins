@@ -1488,6 +1488,9 @@ int DCPCALL ProcessFile(HANDLE hArcData, int Operation, char *DestPath, char *De
 	const void *buff;
 	ArcData handle = (ArcData)hArcData;
 
+	if (Operation == PK_TEST)
+		return E_NOT_SUPPORTED;
+
 	if (Operation == PK_EXTRACT && !DestPath)
 	{
 		int fd = open(DestName, O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);

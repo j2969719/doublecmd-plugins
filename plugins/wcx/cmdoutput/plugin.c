@@ -215,6 +215,9 @@ int DCPCALL ProcessFile(HANDLE hArcData, int Operation, char *DestPath, char *De
 	GError *err = NULL;
 	int result = E_SUCCESS;
 
+	if (Operation == PK_TEST)
+		return E_NOT_SUPPORTED;
+
 	if (Operation == PK_EXTRACT)
 	{
 		gchar *command = g_key_file_get_string(handle->cfg, handle->group, handle->files[handle->current - 1], &err);
