@@ -24,6 +24,10 @@ typedef struct sArcData
 	FILE *fp;
 	char *last_hash;
 	int last_file_len;
+	bool op_test;
+	size_t same;
+	size_t differ;
+	size_t na;
 	tChangeVolProc ChangeVolProc;
 	tProcessDataProc ProcessDataProc;
 } tArcData;
@@ -33,6 +37,97 @@ typedef void *HINSTANCE;
 tChangeVolProc gChangeVolProc = NULL;
 tProcessDataProc gProcessDataProc = NULL;
 tExtensionStartupInfo* gStartupInfo = NULL;
+
+static char gLastPath[PATH_MAX];
+static int gFileNamePos;
+static const char *gDialogData = R"(
+object DialogBox: TDialogBox
+  Left = 245
+  Height = 105
+  Top = 158
+  Width = 518
+  AutoSize = True
+  BorderStyle = bsDialog
+  Caption = 'Double Commander'
+  ChildSizing.LeftRightSpacing = 10
+  ChildSizing.TopBottomSpacing = 10
+  ClientHeight = 105
+  ClientWidth = 518
+  OnCreate = DialogBoxShow
+  Position = poScreenCenter
+  LCLVersion = '2.0.7.0'
+  object lblMsg: TLabel
+    AnchorSideLeft.Control = Owner
+    AnchorSideTop.Control = Owner
+    AnchorSideRight.Control = fneNewFile
+    AnchorSideRight.Side = asrBottom
+    Left = 10
+    Height = 1
+    Top = 10
+    Width = 500
+    Anchors = [akTop, akLeft, akRight]
+    ParentColor = False
+    WordWrap = True
+  end
+  object fneNewFile: TFileNameEdit
+    AnchorSideLeft.Control = Owner
+    AnchorSideTop.Control = lblMsg
+    AnchorSideTop.Side = asrBottom
+    Left = 10
+    Height = 24
+    Top = 21
+    Width = 500
+    FilterIndex = 0
+    HideDirectories = False
+    ButtonWidth = 23
+    NumGlyphs = 1
+    BorderSpacing.Top = 10
+    MaxLength = 0
+    TabOrder = 2
+  end
+  object btnOK: TBitBtn
+    AnchorSideTop.Control = fneNewFile
+    AnchorSideTop.Side = asrBottom
+    AnchorSideRight.Control = fneNewFile
+    AnchorSideRight.Side = asrBottom
+    AnchorSideBottom.Control = Owner
+    AnchorSideBottom.Side = asrBottom
+    Left = 410
+    Height = 30
+    Top = 65
+    Width = 100
+    Anchors = [akTop, akRight]
+    AutoSize = True
+    BorderSpacing.Top = 20
+    Constraints.MinWidth = 100
+    Default = True
+    DefaultCaption = True
+    Kind = bkOK
+    ModalResult = 1
+    OnClick = ButtonClick
+    TabOrder = 0
+  end
+  object btnCancel: TBitBtn
+    AnchorSideTop.Control = btnOK
+    AnchorSideRight.Control = btnOK
+    Left = 300
+    Height = 30
+    Top = 65
+    Width = 100
+    Anchors = [akTop, akRight]
+    AutoSize = True
+    BorderSpacing.Right = 10
+    Cancel = True
+    Constraints.MinWidth = 100
+    DefaultCaption = True
+    Kind = bkCancel
+    ModalResult = 2
+    OnClick = ButtonClick
+    TabOrder = 1
+  end
+end
+)";
+
 
 char* strlcpy(char* p, const char* p2, int maxlen)
 {
@@ -62,6 +157,28 @@ void DCPCALL ExtensionFinalize(void* Reserved)
 		free(gStartupInfo);
 
 	gStartupInfo = NULL;
+}
+
+intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr_t wParam, intptr_t lParam)
+{
+	switch (Msg)
+	{
+	case DN_INITDIALOG:
+		gStartupInfo->SendDlgMsg(pDlg, "fneNewFile", DM_SETTEXT, (intptr_t)gLastPath, 0);
+		char *msg;
+		asprintf(&msg, "Failed to access file \"%s\", please specify a new path to the file.", gLastPath + gFileNamePos);
+		gStartupInfo->SendDlgMsg(pDlg, "lblMsg", DM_SETTEXT, (intptr_t)msg, 0);
+		free(msg);
+
+		break;
+	case DN_CLICK:
+		if (strcmp(DlgItemName, "btnOK") == 0)
+			strlcpy(gLastPath, (char*)gStartupInfo->SendDlgMsg(pDlg, "fneNewFile", DM_GETTEXT, 0, 0), PATH_MAX);
+
+		break;
+	}
+
+	return 0;
 }
 
 static int errmsg(const char *msg, long flags)
@@ -295,6 +412,7 @@ HANDLE DCPCALL OpenArchive(tOpenArchiveData *ArchiveData)
 	}
 
 	strlcpy(handle->dir_path, dirname(arc), PATH_MAX);
+	handle->op_test = false;
 
 	return (HANDLE)handle;
 }
@@ -385,31 +503,75 @@ int DCPCALL ProcessFile(HANDLE hArcData, int Operation, char *DestPath, char *De
 
 	if (Operation != PK_SKIP && access(handle->last_path, F_OK) == -1)
 	{
-		if (handle->ChangeVolProc(handle->last_path, PK_VOL_ASK) == 0)
+		strlcpy(gLastPath, handle->last_path, PATH_MAX);
+		gFileNamePos = strlen(gLastPath) - handle->last_file_len;
+
+		if (gStartupInfo == NULL && handle->ChangeVolProc(gLastPath, PK_VOL_ASK) == 0)
+			return E_EABORTED;
+		else if (gStartupInfo->DialogBoxLFM((intptr_t)gDialogData, strlen(gDialogData), DlgProc) == 0)
 			return E_EABORTED;
 
-		int len = strlen(handle->last_path);
+		strlcpy(handle->last_path, gLastPath, PATH_MAX);
+
+		int len = strlen(gLastPath);
 
 		if (len > handle->last_file_len + 1)
-			strlcpy(handle->dir_path, handle->last_path, len - (handle->last_file_len + 1));
+			strlcpy(handle->dir_path, gLastPath, len - (handle->last_file_len + 1));
+
 	}
 
 	if (Operation == PK_TEST)
 	{
+		if (handle->op_test == false)
+			handle->op_test = true;
+
 		char *hash = calc_hash(handle->algo, handle->last_path, handle->ProcessDataProc);
 
 		if (hash)
 		{
 			if (strcasecmp(hash, handle->last_hash) != 0)
-				return E_BAD_DATA;
+			{
+				char *msg;
+				asprintf(&msg, "%s: different hash value (%s).", handle->last_path, gcry_md_algo_name(handle->algo));
+				int ret = errmsg(msg, MB_OKCANCEL | MB_ICONERROR);
+				free(msg);
+				handle->differ++;
+
+				if (ret != ID_OK)
+					return E_EABORTED;
+			}
+			else
+				handle->same++;
 
 			free(hash);
 		}
-		else
+		else if (handle->ProcessDataProc && handle->ProcessDataProc(handle->last_path, -1100) == 0)
+			return E_EABORTED;
+		else if (gcry_md_test_algo(handle->algo) != 0)
 			return E_NOT_SUPPORTED;
+		else
+		{
+			char *msg;
+			asprintf(&msg, "Unable to compute hash (%s) of \"%s\".", gcry_md_algo_name(handle->algo), handle->last_path);
+			int ret = errmsg(msg, MB_OKCANCEL | MB_ICONERROR);
+			free(msg);
+			handle->na++;
+
+			if (ret != ID_OK)
+				return E_EABORTED;
+		}
+
 	}
 	else if (Operation == PK_EXTRACT && !DestPath)
 	{
+		char *msg;
+		asprintf(&msg, "%s: %s\n\nCreate a symlink to %s?", gcry_md_algo_name(handle->algo), handle->last_hash, handle->last_path);
+		int ret = errmsg(msg, MB_YESNO | MB_ICONQUESTION);
+		free(msg);
+
+		if (ret != ID_YES)
+			return E_EABORTED;
+
 		if (symlink(handle->last_path, DestName) != 0)
 			return E_EWRITE;
 	}
@@ -426,6 +588,16 @@ int DCPCALL CloseArchive(HANDLE hArcData)
 
 	fclose(handle->fp);
 	pcre_free(handle->re);
+
+	if (handle->op_test == true)
+	{
+		char *msg;
+		asprintf(&msg, "Result:\n\n\ttotal files: %ld\n\tsame: %ld\n\tdifferent %ld\n\tunable to compute hash: %ld",
+				handle->same+handle->differ+handle->na, handle->same, handle->differ, handle->na);
+		errmsg(msg, MB_OK | MB_ICONINFORMATION);
+		free(msg);
+	}
+
 	free(handle);
 	return E_SUCCESS;
 }
@@ -472,8 +644,11 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 	const char *ext = strrchr(PackedFile, '.');
 	int algo = get_algo_from_ext(ext);
 
-	if (gcry_md_get_algo_dlen(algo) == 0)
+	if (gcry_md_test_algo(algo) != 0)
 		return E_NOT_SUPPORTED;
+
+	if (access(PackedFile, F_OK) != -1)
+		errmsg("Only append to file is supported.", MB_OK | MB_ICONWARNING);
 
 	if ((fp = fopen(PackedFile, "a")) == NULL)
 		return E_EWRITE;
@@ -498,7 +673,7 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 				char *msg;
 				asprintf(&msg, "Unable to compute hash (%s) of \"%s\".", gcry_md_algo_name(algo), path);
 
-				if (errmsg(msg, MB_OKCANCEL | MB_ICONERROR) == ID_CANCEL)
+				if (errmsg(msg, MB_OKCANCEL | MB_ICONERROR) != ID_OK)
 					break;
 
 				free(msg);

@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -shared -fPIC -Wl,--no-as-needed
+CFLAGS = -shared -fPIC -Wl,--no-as-needed -std=gnu99
 INCLUDES = -lpcre -lgcrypt -lgpg-error -I../../sdk
 PLUGNAME = gcrypt_hash_crap.wcx
 
