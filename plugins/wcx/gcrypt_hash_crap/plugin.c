@@ -1,8 +1,6 @@
 #define _GNU_SOURCE
-#include <stdio.h>
 #include <stdlib.h>
-#include <stdbool.h>
-#include <pcre.h>
+#include <glib.h>
 #include <gcrypt.h>
 #include <libgen.h>
 #include <unistd.h>
@@ -13,21 +11,20 @@
 #include "extension.h"
 
 #define BUFF_SIZE 4096
-#define OVECCOUNT 30
 
 typedef struct sArcData
 {
 	char dir_path[PATH_MAX];
 	char last_path[PATH_MAX];
 	int algo;
-	pcre *re;
-	FILE *fp;
-	char *last_hash;
 	int last_file_len;
-	bool op_test;
+	gboolean op_test;
 	size_t same;
 	size_t differ;
 	size_t na;
+	GRegex *re;
+	FILE *fp;
+	gchar *last_hash;
 	tChangeVolProc ChangeVolProc;
 	tProcessDataProc ProcessDataProc;
 } tArcData;
@@ -128,20 +125,6 @@ object DialogBox: TDialogBox
 end
 )";
 
-
-char* strlcpy(char* p, const char* p2, int maxlen)
-{
-	if ((int)strlen(p2) >= maxlen)
-	{
-		strncpy(p, p2, maxlen);
-		p[maxlen] = 0;
-	}
-	else
-		strcpy(p, p2);
-
-	return p;
-}
-
 void DCPCALL ExtensionInitialize(tExtensionStartupInfo* StartupInfo)
 {
 	if (gStartupInfo == NULL)
@@ -173,7 +156,7 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 		break;
 	case DN_CLICK:
 		if (strcmp(DlgItemName, "btnOK") == 0)
-			strlcpy(gLastPath, (char*)gStartupInfo->SendDlgMsg(pDlg, "fneNewFile", DM_GETTEXT, 0, 0), PATH_MAX);
+			g_strlcpy(gLastPath, (char*)gStartupInfo->SendDlgMsg(pDlg, "fneNewFile", DM_GETTEXT, 0, 0), PATH_MAX);
 
 		break;
 	}
@@ -365,9 +348,8 @@ static char* calc_hash(int algo, char *path, tProcessDataProc proc)
 
 HANDLE DCPCALL OpenArchive(tOpenArchiveData *ArchiveData)
 {
-	const char *err;
 	char arc[PATH_MAX];
-	int erroffset;
+	GError *err = NULL;
 	tArcData * handle;
 
 	handle = malloc(sizeof(tArcData));
@@ -380,7 +362,7 @@ HANDLE DCPCALL OpenArchive(tOpenArchiveData *ArchiveData)
 
 	memset(handle, 0, sizeof(tArcData));
 
-	strlcpy(arc, ArchiveData->ArcName, PATH_MAX);
+	g_strlcpy(arc, ArchiveData->ArcName, PATH_MAX);
 
 	const char *ext = strrchr(arc, '.');
 	handle->algo = get_algo_from_ext(ext);
@@ -392,12 +374,18 @@ HANDLE DCPCALL OpenArchive(tOpenArchiveData *ArchiveData)
 		return E_SUCCESS;
 	}
 
-	handle->re = pcre_compile("^([a-f0-9]+)\\s+\\*?([^\\n]+)$", PCRE_CASELESS, &err, &erroffset, NULL);
+	handle->re = g_regex_new("^([a-f0-9]{6,})\\s+\\*?([^\\n]+)$", G_REGEX_CASELESS, 0, &err);
 
 	if (handle->re == NULL)
 	{
 		free(handle);
-		errmsg(err, MB_OK | MB_ICONERROR);
+
+		if (err)
+		{
+			errmsg((err)->message, MB_OK | MB_ICONERROR);
+			g_error_free(err);
+		}
+
 		ArchiveData->OpenResult = E_UNKNOWN_FORMAT;
 		return E_SUCCESS;
 	}
@@ -411,8 +399,8 @@ HANDLE DCPCALL OpenArchive(tOpenArchiveData *ArchiveData)
 		return E_SUCCESS;
 	}
 
-	strlcpy(handle->dir_path, dirname(arc), PATH_MAX);
-	handle->op_test = false;
+	g_strlcpy(handle->dir_path, dirname(arc), PATH_MAX);
+	handle->op_test = FALSE;
 
 	return (HANDLE)handle;
 }
@@ -428,52 +416,38 @@ int DCPCALL ReadHeaderEx(HANDLE hArcData, tHeaderDataEx *HeaderDataEx)
 	size_t len = 0;
 	ssize_t lread;
 	struct stat buf;
-	int rc;
-	int ovector[OVECCOUNT];
-	char str_file[PATH_MAX];
+	GMatchInfo *match_info;
 
 	memset(HeaderDataEx, 0, sizeof(&HeaderDataEx));
 	ArcData handle = (ArcData)hArcData;
 
 	if (handle->last_hash != NULL)
 	{
-		free(handle->last_hash);
+		g_free(handle->last_hash);
 		handle->last_hash = NULL;
 	}
 
 
 	if ((lread = getline(&line, &len, handle->fp)) != -1)
 	{
-		rc = pcre_exec(handle->re, NULL, line, lread, 0, 0, ovector, OVECCOUNT);
-
-		if (rc < 1)
+		if (!g_regex_match(handle->re, line, 0, &match_info))
 		{
 			errmsg("Failed to parse file.", MB_OK | MB_ICONERROR);
 			return E_BAD_ARCHIVE;
 		}
 
-		char *start = line + ovector[2];
-		int length = ovector[3] - ovector[2];
-		asprintf(&handle->last_hash, "%.*s", length, start);
+		handle->last_hash = g_strdup(g_match_info_fetch(match_info, 1));
+		gchar *str_file = g_match_info_fetch(match_info, 2);
 
-		start = line + ovector[4];
-		length = ovector[5] - ovector[4];
-
-
-		if (length < PATH_MAX)
-			strlcpy(str_file, start, length);
-		else
-			strlcpy(str_file, start, PATH_MAX);
-
-		if (start[0] != '/')
+		if (str_file[0] != '/')
 		{
-			strlcpy(HeaderDataEx->FileName, str_file, sizeof(HeaderDataEx->FileName) - 1);
+			g_strlcpy(HeaderDataEx->FileName, str_file, sizeof(HeaderDataEx->FileName) - 1);
 			snprintf(handle->last_path, PATH_MAX, "%s/%s", handle->dir_path, str_file);
 		}
 		else
 		{
-			strlcpy(HeaderDataEx->FileName, str_file + 1, sizeof(HeaderDataEx->FileName) - 1);
-			strlcpy(handle->last_path, str_file, PATH_MAX);
+			g_strlcpy(HeaderDataEx->FileName, str_file + 1, sizeof(HeaderDataEx->FileName) - 1);
+			g_strlcpy(handle->last_path, str_file, PATH_MAX);
 		}
 
 		handle->last_file_len = strlen(HeaderDataEx->FileName);
@@ -491,6 +465,9 @@ int DCPCALL ReadHeaderEx(HANDLE hArcData, tHeaderDataEx *HeaderDataEx)
 	else
 		return E_END_ARCHIVE;
 
+	if (match_info)
+		g_match_info_free(match_info);
+
 	if (line)
 		free(line);
 
@@ -503,7 +480,7 @@ int DCPCALL ProcessFile(HANDLE hArcData, int Operation, char *DestPath, char *De
 
 	if (Operation != PK_SKIP && access(handle->last_path, F_OK) == -1)
 	{
-		strlcpy(gLastPath, handle->last_path, PATH_MAX);
+		g_strlcpy(gLastPath, handle->last_path, PATH_MAX);
 		gFileNamePos = strlen(gLastPath) - handle->last_file_len;
 
 		if (gStartupInfo == NULL && handle->ChangeVolProc(gLastPath, PK_VOL_ASK) == 0)
@@ -511,19 +488,18 @@ int DCPCALL ProcessFile(HANDLE hArcData, int Operation, char *DestPath, char *De
 		else if (gStartupInfo->DialogBoxLFM((intptr_t)gDialogData, strlen(gDialogData), DlgProc) == 0)
 			return E_EABORTED;
 
-		strlcpy(handle->last_path, gLastPath, PATH_MAX);
+		g_strlcpy(handle->last_path, gLastPath, PATH_MAX);
 
 		int len = strlen(gLastPath);
 
-		if (len > handle->last_file_len + 1)
-			strlcpy(handle->dir_path, gLastPath, len - (handle->last_file_len + 1));
-
+		if (len > handle->last_file_len)
+			g_strlcpy(handle->dir_path, gLastPath, len - handle->last_file_len);
 	}
 
 	if (Operation == PK_TEST)
 	{
-		if (handle->op_test == false)
-			handle->op_test = true;
+		if (handle->op_test == FALSE)
+			handle->op_test = TRUE;
 
 		char *hash = calc_hash(handle->algo, handle->last_path, handle->ProcessDataProc);
 
@@ -584,12 +560,12 @@ int DCPCALL CloseArchive(HANDLE hArcData)
 	ArcData handle = (ArcData)hArcData;
 
 	if (handle->last_hash != NULL)
-		free(handle->last_hash);
+		g_free(handle->last_hash);
 
 	fclose(handle->fp);
-	pcre_free(handle->re);
+	g_regex_unref(handle->re);
 
-	if (handle->op_test == true)
+	if (handle->op_test == TRUE)
 	{
 		char *msg;
 		asprintf(&msg, "Result:\n\n\ttotal files: %ld\n\tsame: %ld\n\tdifferent %ld\n\tunable to compute hash: %ld",
@@ -627,9 +603,9 @@ BOOL DCPCALL CanYouHandleThisFile(char *FileName)
 	const char *ext = strrchr(FileName, '.');
 
 	if (get_algo_from_ext(ext) == -1)
-		return false;
+		return FALSE;
 	else
-		return true;
+		return TRUE;
 }
 
 int DCPCALL GetPackerCaps(void)
