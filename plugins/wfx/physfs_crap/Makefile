@@ -1,6 +1,6 @@
 CC = gcc
 CFLAGS = -shared -fPIC -Wl,--no-as-needed
-INCLUDES = `pkg-config --cflags --libs physfs` -I../../sdk
+INCLUDES = -lphysfs -I../../sdk
 PLUGNAME = physfs_crap.wfx
 
 all:
