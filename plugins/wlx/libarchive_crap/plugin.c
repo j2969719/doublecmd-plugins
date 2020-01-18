@@ -16,17 +16,8 @@ gchar *get_owner_str(struct archive_entry *entry)
 
 gchar *get_datetime_str(struct archive_entry *entry)
 {
-	time_t	e_mtime = archive_entry_mtime(entry);
+	time_t e_mtime = archive_entry_mtime(entry);
 	return g_date_time_format(g_date_time_new_from_unix_local(e_mtime), "%d.%m.%Y %k:%M");
-}
-
-GdkPixbuf *get_emblem_pixbuf(char *name, int size)
-{
-	GtkIconTheme *theme = gtk_icon_theme_get_default();
-	GtkIconInfo *icon_info = gtk_icon_theme_lookup_icon(theme, name, size, 0);
-	GdkPixbuf *pixbuf = gtk_icon_info_load_icon(icon_info, NULL);
-	gtk_icon_info_free(icon_info);
-	return pixbuf;
 }
 
 HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
@@ -74,7 +65,7 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	};
 
 	store = gtk_list_store_new(N_COLUMNS,
-	                           GDK_TYPE_PIXBUF,
+	                           G_TYPE_STRING,
 	                           G_TYPE_STRING,
 	                           G_TYPE_INT64,
 	                           G_TYPE_STRING,
@@ -90,7 +81,6 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 		gtk_list_store_append(store, &iter);
 
 		const gchar *pathname = archive_entry_pathname(entry);
-		GdkPixbuf *emblem = NULL;
 		const gchar *symlink = archive_entry_symlink_utf8(entry);
 
 		if (symlink && !symlinks)
@@ -101,15 +91,18 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 		if (hardlink && !hardlinks)
 			hardlinks = TRUE;
 
-		totalsize = totalsize + archive_entry_size(entry);
+		size_t entrysize = (size_t)archive_entry_size(entry);
 
-		//if (pathname[strlen(pathname) - 1] == '/')
+		totalsize = totalsize + entrysize;
+
+		gchar *icon_name = NULL;
+
 		if (archive_entry_filetype(entry) == AE_IFDIR)
-			emblem = get_emblem_pixbuf("folder", 16);
+			icon_name = g_strdup("folder");
 		else if (symlink || hardlink)
-			emblem = get_emblem_pixbuf("emblem-symbolic-link", 16);
+			icon_name = g_strdup("emblem-symbolic-link");
 		else if (archive_entry_is_data_encrypted(entry) == 1)
-			emblem = get_emblem_pixbuf("emblem-readonly", 16);
+			icon_name = g_strdup("emblem-readonly");
 
 		gchar *owner = get_owner_str(entry);
 
@@ -117,9 +110,9 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 			ownercolumn = TRUE;
 
 		gtk_list_store_set(store, &iter,
-		                   LIST_ICON, emblem,
+		                   LIST_ICON, icon_name,
 		                   LIST_FILE, pathname,
-		                   LIST_SIZE, archive_entry_size(entry),
+		                   LIST_SIZE, entrysize,
 		                   LIST_DATE, get_datetime_str(entry),
 		                   LIST_ATTR, archive_entry_strmode(entry),
 		                   LIST_OWNR, owner,
@@ -127,6 +120,8 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 		                   LIST_HLNK, hardlink,
 		                   -1);
 
+		if (icon_name)
+			g_free(icon_name);
 	}
 
 
@@ -139,8 +134,8 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 
 	if (r != ARCHIVE_EOF)
 	{
-		info = g_strdup(archive_error_string(a));
-		info = g_strdup_printf("ERROR: %s", info ? info : "unknown error");
+		const char *errstr = archive_error_string(a);
+		info = g_strdup_printf("ERROR: %s", errstr ? errstr : "unknown error");
 	}
 
 	if (!info)
@@ -153,16 +148,22 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 			const char *fn = archive_filter_name(a, i);
 
 			if (strcmp(fn, "none") != 0)
+			{
 				if (filters)
-					filters = g_strdup_printf("%s, %s", filters, fn);
+				{
+					gchar *newval = g_strdup_printf("%s, %s", filters, fn);
+					g_free(filters);
+					filters = newval;
+				}
 				else
 					filters = g_strdup(fn);
+			}
 		}
 
 		if (filters)
-			info = g_strdup_printf("%s (filter(s): %s), %d file(s)", archive_format_name(a), filters, archive_file_count(a));
+			info = g_strdup_printf("%s (filter(s): %s), %d file(s)", (gchar*)archive_format_name(a), filters, archive_file_count(a));
 		else
-			info = g_strdup_printf("%s, %d file(s)",  archive_format_name(a), archive_file_count(a));
+			info = g_strdup_printf("%s, %d file(s)", (gchar*)archive_format_name(a), archive_file_count(a));
 
 
 		if (filters)
@@ -178,6 +179,9 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 
 	infolabel = gtk_label_new(info);
 	gtk_box_pack_start(GTK_BOX(gFix), infolabel, FALSE, FALSE, 1);
+
+	if (info)
+		g_free(info);
 
 	struct stat buf;
 
@@ -205,7 +209,7 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	gtk_tree_view_column_set_title(column, "file");
 	renderer = gtk_cell_renderer_pixbuf_new();
 	gtk_tree_view_column_pack_start(column, renderer, FALSE);
-	gtk_tree_view_column_set_attributes(column, renderer, "pixbuf", LIST_ICON, NULL);
+	gtk_tree_view_column_set_attributes(column, renderer, "icon-name", LIST_ICON, NULL);
 
 	renderer = gtk_cell_renderer_text_new();
 	gtk_tree_view_column_pack_start(column, renderer, TRUE);
