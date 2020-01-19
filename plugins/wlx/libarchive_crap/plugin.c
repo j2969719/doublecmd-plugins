@@ -4,7 +4,7 @@
 #include <string.h>
 #include "wlxplugin.h"
 
-gchar *get_owner_str(struct archive_entry *entry)
+static gchar *get_owner_str(struct archive_entry *entry)
 {
 	const gchar *group = archive_entry_gname_utf8(entry);
 	const gchar *user = archive_entry_uname_utf8(entry);
@@ -15,7 +15,7 @@ gchar *get_owner_str(struct archive_entry *entry)
 		return g_strdup_printf("%s/%s", user, group);
 }
 
-gchar *get_datetime_str(struct archive_entry *entry)
+static gchar *get_datetime_str(struct archive_entry *entry)
 {
 	time_t e_mtime = archive_entry_mtime(entry);
 	return g_date_time_format(g_date_time_new_from_unix_local(e_mtime), "%d.%m.%Y %k:%M");
@@ -110,11 +110,13 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 		if (owner && !ownercolumn)
 			ownercolumn = TRUE;
 
+		gchar *edatetime = get_datetime_str(entry);
+
 		gtk_list_store_set(store, &iter,
 		                   LIST_ICON, icon_name,
 		                   LIST_FILE, pathname,
 		                   LIST_SIZE, entrysize,
-		                   LIST_DATE, get_datetime_str(entry),
+		                   LIST_DATE, edatetime,
 		                   LIST_ATTR, archive_entry_strmode(entry),
 		                   LIST_OWNR, owner,
 		                   LIST_SLNK, symlink,
@@ -123,6 +125,12 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 
 		if (icon_name)
 			g_free(icon_name);
+
+		if (owner)
+			g_free(owner);
+
+		if (edatetime)
+			g_free(edatetime);
 	}
 
 
