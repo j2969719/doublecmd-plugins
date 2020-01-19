@@ -1,6 +1,7 @@
 #include <gtk/gtk.h>
 #include <archive.h>
 #include <archive_entry.h>
+#include <string.h>
 #include "wlxplugin.h"
 
 gchar *get_owner_str(struct archive_entry *entry)
