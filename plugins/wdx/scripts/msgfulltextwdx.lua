@@ -46,6 +46,7 @@ end
 
 function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
   if FieldIndex ~= 0 then return nil end
+  if UnitIndex ~= 0 then return nil end
   local at = SysUtils.FileGetAttr(FileName)
   if (at < 0) or (math.floor(at / 0x00000010) % 2 ~= 0) then return nil end
   local e
@@ -114,10 +115,7 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
     end
     filename = FileName
   end
-  if FieldIndex == 0 then
-    if sbody == '' then return nil else return sbody end
-  end
-  return nil
+  if sbody == '' then return nil else return sbody end
 end
 
 function GetSingle(bd, v, e)
