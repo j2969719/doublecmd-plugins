@@ -13,17 +13,25 @@ function ContentGetSupportedField(FieldIndex)
     elseif (FieldIndex == 1) then
         return 'Label (' .. locale .. ')', '', 8;
     elseif (FieldIndex == 2) then
-        return 'Version', '', 8;
+        return 'Package name', '', 8;
     elseif (FieldIndex == 3) then
-        return 'Install Location', '', 8;
+        return 'Version', '', 8;
     elseif (FieldIndex == 4) then
-        return 'Uses Permissions', '', 8;
+        return 'Install Location', '', 8;
     elseif (FieldIndex == 5) then
-        return 'Locales', '', 8;
+        return 'Uses Permissions', '', 8;
     elseif (FieldIndex == 6) then
-        return 'Supports Screens', '', 8;
+        return 'Locales', '', 8;
     elseif (FieldIndex == 7) then
+        return 'Supports Screens', '', 8;
+    elseif (FieldIndex == 8) then
+        return 'Supports Resolutions', '', 8;
+    elseif (FieldIndex == 9) then
         return 'Native Code', '', 8;
+    elseif (FieldIndex == 10) then
+        return 'Minimal SDK', '', 8;
+    elseif (FieldIndex == 11) then
+        return 'Target SDK', '', 8;
     end
     return '', '', 0; -- ft_nomorefields
 end
@@ -50,21 +58,25 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
         end
         filename = FileName;
     end
-    
     if (FieldIndex == 0) then
-        return getvalue("application%-label:'");
+        local tmp = getvalue("application%-label:'");
+        if (tmp == nil) then
+            return output:match("\napplication: label='([^']+)");
+        end
     elseif (FieldIndex == 1) then
         return getvalue("application%-label%-" .. locale .. ":'");
     elseif (FieldIndex == 2) then
+        return output:match("package: name='([^']+)");
+    elseif (FieldIndex == 3) then
         local version = output:match("%sversionName='[^']+");
         if (version ~= nil) then
             return version:gsub("%sversionName='", "");
         else
             return nil;
         end
-    elseif (FieldIndex == 3) then
-        return getvalue("install%-location:'");
     elseif (FieldIndex == 4) then
+        return getvalue("install%-location:'");
+    elseif (FieldIndex == 5) then
         local resultstr = '';
         for permission in string.gmatch(output, "\nuses%-permission: name='([^']+)") do
             if (resultstr ~= '') then
@@ -74,14 +86,20 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
             end
         end
         return resultstr;
-    elseif (FieldIndex == 5) then
-        return getvalue("locales: '", "' '", ', ');
     elseif (FieldIndex == 6) then
-        return getvalue("supports%-screens: '", "' '", ', ');
+        return getvalue("locales: '", "' '", ', ');
     elseif (FieldIndex == 7) then
+        return getvalue("supports%-screens: '", "' '", ', ');
+    elseif (FieldIndex == 8) then
+        return getvalue("densities: '", "' '", ', ');
+    elseif (FieldIndex == 9) then
         return getvalue("native%-code: '", "' '", ', ');
-    end 
-    return nil; 
+    elseif (FieldIndex == 10) then
+        return getvalue("sdkVersion:'");
+    elseif (FieldIndex == 11) then
+        return getvalue("targetSdkVersion:'");
+    end
+    return nil;
 end
 
 function getvalue(str, rpl, by)
