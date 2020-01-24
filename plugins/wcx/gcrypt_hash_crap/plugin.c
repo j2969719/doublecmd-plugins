@@ -610,7 +610,7 @@ BOOL DCPCALL CanYouHandleThisFile(char *FileName)
 
 int DCPCALL GetPackerCaps(void)
 {
-	return PK_CAPS_NEW | PK_CAPS_MULTIPLE;
+	return PK_CAPS_NEW | PK_CAPS_MULTIPLE | PK_CAPS_HIDE;
 }
 
 int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddList, int Flags)
