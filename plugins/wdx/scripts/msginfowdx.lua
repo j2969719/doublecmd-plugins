@@ -2,7 +2,7 @@
 -- 2020.01.11
 --
 -- Getting info from headers of saved email messages.
--- Supported formats: *.eml, *.msg and MH mailfile format (Sylpheed and other).
+-- Supported formats: *.eml, *.msg and MH format (Sylpheed, Claws Mail and other).
 -- See RFC 822, RFC 2822, RFC 5322
 --
 -- NOTES:

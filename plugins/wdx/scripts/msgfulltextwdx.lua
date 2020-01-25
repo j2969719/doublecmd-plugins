@@ -4,10 +4,10 @@
 -- For Find files with plugins only!
 --
 -- Returns full text of saved email messages.
--- Message body only (from "Content-Type: text/plain" or "Content-Type: text/html"), for header use msginfowdx.lua).
+-- Message body only ("Content-Type: text/plain" or "Content-Type: text/html"), for header use msginfowdx.lua).
 --
 --
--- Supported formats: *.eml, *.msg and MH mailfile format (Sylpheed and other, tests needed).
+-- Supported formats: *.eml, *.msg and MH format (Sylpheed, Claws Mail and other).
 -- See RFC 822, 2822, 5322 and 2045, 2046, 2047
 --
 -- NOTES:
