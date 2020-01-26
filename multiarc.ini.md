@@ -182,6 +182,22 @@ List=%P --list-sizes -s %AQU
 Extract=%P -e -q  %AQU
 ExtractWithoutPath=%P -e -q  %AQU -I %FQU
 ```
+```ini
+[InnoSetup (unpack_one)]
+Archiver=$COMMANDER_PATH/scripts/unpack_one
+Description=innoextract 1.8 (script unpack_one)
+ID=49 6E 6E 6F 20 53 65 74 75 70 20 53 65 74 75 70 20 44 61 74 61 20 28 35 2E, 49 6E 6E 6F 20 53 65 74 75 70 20 53 65 74 75 70 20 44 61 74 61 20 28 34 2E, 49 6E 6E 6F 20 53 65 74 75 70 20 53 65 74 75 70 20 44 61 74 61 20 28 33 2E, 49 6E 6E 6F 20 53 65 74 75 70 20 53 65 74 75 70 20 44 61 74 61 20 28 32 2E, 49 6E 6E 6F
+IDPos=<SeekID>
+Format0=z+$n+
+List=innoextract --list-sizes -qsg %AQU
+Extract=%PQU %FQU 'innoextract -esqg %AQU -I%FQU'
+ExtractWithoutPath=innoextract -esqg  %AQU -I%FQU
+Test=innoextract -tqg  %AQU
+FormMode=2
+```
+Script [unpack_one](scripts/unpack_one)
+
+
 With Wine:
 
 ```ini
@@ -304,6 +320,19 @@ List=cabextract -l %AQU
 Extract=%PQU %LQU 'cabextract %AQU'
 ```
 Script [unpack_all](scripts/unpack_all)
+```ini
+[CAB_3]
+Archiver=$COMMANDER_PATH/scripts/unpack_one
+Description=MSCAB (script unpack_one)
+ID=4D 53 43 46
+IDPos=<SeekID>
+Start=^-----------
+End=All done
+Format0=$z+$? dd.tt.yyyy hh:mm:ss ? n+
+List=cabextract -l %AQU
+Extract=%PQU %FQU 'cabextract -F %FQU %AQU' 
+```
+Script [unpack_one](scripts/unpack_one)
 
 ---
 <a name="msi"><h3>Microsoft Windows Installer</h3></a>
