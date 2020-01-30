@@ -14,6 +14,9 @@ Plugins
 ---
 <a name="wcx"><h3>WCX plugins</h3></a>
 
+- [cmdconv_crap](plugins/wcx/cmdconv_crap)<br>
+Converts multiple files via commandline utilities (Files -> Pack Files...).
+
 - [cmdoutput](plugins/wcx/cmdoutput)<br>
 View output of command line utilities on Ctrl+Page Down (see `settings_default.ini`).
 
