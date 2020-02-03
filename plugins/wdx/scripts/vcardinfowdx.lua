@@ -1,5 +1,5 @@
 -- vcardinfowdx.lua (cross-platform)
--- 2020.01.10
+-- 2020.02.03
 --
 -- vCard Format Specification 2.1, 3.0, 4.0
 -- Some details: https://en.wikipedia.org/wiki/VCard
@@ -127,7 +127,7 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
   s = GetString('VERSION', 7)
   -- if s == nil then return nil else v = string.sub(s, 9, -1) end
   if s == nil then return 'Invalid vCard!' else v = string.sub(s, 9, -1) end
-  GetData()
+  GetData(v)
   if FieldIndex == 0 then
     return v
   -- ADR
@@ -304,12 +304,12 @@ function GetValue(s, p, n)
   return EscapedChar(s)
 end
 
-function GetData()
+function GetData(v)
   local t
   for i = 1, #all do
     t = string.match(all[i], '^([A-Z][A-Z%-]*)[:;]')
     if t == 'ADR' then
-      GetADR(all[i], i)
+      GetADR(all[i], i, v)
     elseif t == 'LABEL' then
       GetLABEL(all[i])
     elseif t == 'TEL' then
@@ -322,7 +322,7 @@ function GetData()
   end
 end
 
-function GetADR(s, i)
+function GetADR(s, i, v)
   local tp, tv, n, l
   n = string.find(s, ':', 1, true)
   tp = string.lower(string.sub(s, 4, n - 1))
@@ -539,8 +539,8 @@ function GetIM(s, t)
   end
 end
 
-function AddValue(v, s)
-  if v == nil then return s else return v .. ', ' .. s end
+function AddValue(r, s)
+  if r == nil then return s else return r .. ', ' .. s end
 end
 
 function DecodeValue(s)
