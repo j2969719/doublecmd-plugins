@@ -1,7 +1,9 @@
 -- markerwdx.lua (cross-platform)
--- 2019.11.07
+-- 2020.02.07
 
 local dbn
+local ft, c = 0, 0
+local fl = {}
 
 function ContentGetSupportedField(FieldIndex)
   if FieldIndex == 0 then
@@ -35,19 +37,40 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
       return nil
     end
   end
-  local h = io.open(dbn, 'r')
-  if h == nil then return nil end
-  local l, n, k, r
-  for l in h:lines() do
-    n = string.find(l, '=', 1, true)
-    if n ~= nil then
-      k = string.sub(l, 1, n - 1)
-      if k == FileName then
-        r = string.sub(l, n + 1)
-        break
-      end
+  if #fl == 0 then
+    ReadFileList()
+  else
+    local h, fd = SysUtils.FindFirst(dbn)
+    if h == nil then return nil end
+    SysUtils.FindClose(h)
+    if fd.Time > ft then
+      ReadFileList()
+      ft = fd.Time
     end
   end
-  h:close()
-  return r
+  if c >= 1 then
+    local n, s
+    for i = 1, c do
+      n = string.find(fl[i], '=', 1, true)
+      if n == nil then break end
+      s = string.sub(fl[i], 1, n - 1)
+      if s == FileName then return string.sub(fl[i], n + 1, -1) end
+    end
+  end
+  return nil
+end
+
+function ReadFileList()
+  local h = io.open(dbn, 'r')
+  if h == nil then
+    c = 0
+  else
+    c = 1
+    for l in h:lines() do
+      fl[c] = l
+      c = c + 1
+    end
+    h:close()
+    c = c - 1
+  end
 end

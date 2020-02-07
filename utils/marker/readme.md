@@ -1,9 +1,10 @@
 Marker (cross-platform)
 -----------------------
 
-2019.11.07
+2020.02.07
 
-Marker for file highlighting "on the fly". You can use any number of colors.
+Marker for file highlighting like in *Colors* > *File types*, but "on the fly": add selected color, delete or change. So you can use this scripts for file tagging.
+You can use any number of colors.
 
 Written on Lua, see [DC Help > 2.10. Lua scripting > 2. DLL required](http://doublecmd.github.io/doc/en/lua.html#dllrequired).
 
