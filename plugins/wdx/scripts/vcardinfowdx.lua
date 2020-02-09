@@ -1,5 +1,5 @@
 -- vcardinfowdx.lua (cross-platform)
--- 2020.02.03
+-- 2020.02.09
 --
 -- vCard Format Specification 2.1, 3.0, 4.0
 -- Some details: https://en.wikipedia.org/wiki/VCard
@@ -54,11 +54,12 @@ local fields = {
  {"Assistant",                       "X-ASSISTANT", "", 8}
 }
 local all = {}
-local adr = {"", "", "", "", "", "", "", ""}
-local adrl = {"", "", "", "", "", "", "", ""}
-local tel = {"", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""}
-local em = {"", "", "", ""}
-local im = {"", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""}
+local adr = {}
+local adrl = {}
+local tel = {}
+local em = {}
+local im = {}
+local v
 local filename = ''
 
 function ContentGetSupportedField(FieldIndex)
@@ -80,7 +81,7 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
   if FieldIndex > 33 then return nil end
   local at = SysUtils.FileGetAttr(FileName)
   if (at < 0) or (math.floor(at / 0x00000010) % 2 ~= 0) then return nil end
-  local e, n1
+  local e, n1, s
   if filename ~= FileName then
     e = string.lower(SysUtils.ExtractFileExt(FileName))
     -- e = string.lower(string.match(FileName, '^.+(%..+)$'))
@@ -111,7 +112,8 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
             all[c - 1] = all[c - 1] .. l
           end
         else
-          table.insert(all, l)
+          -- table.insert(all, l)
+          all[c] = l
           c = c + 1
         end
       end
@@ -119,15 +121,15 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
     end
     h:close()
     if vc == false then return nil end
+    -- VERSION
+    v = nil
+    s = GetString('VERSION', 7)
+    -- if s == nil then return nil else v = string.sub(s, 9, -1) end
+    if s == nil then return 'Invalid vCard!' else v = string.sub(s, 9, -1) end
     CleanTables()
+    GetData()
     filename = FileName
   end
-  -- VERSION
-  local s, v
-  s = GetString('VERSION', 7)
-  -- if s == nil then return nil else v = string.sub(s, 9, -1) end
-  if s == nil then return 'Invalid vCard!' else v = string.sub(s, 9, -1) end
-  GetData(v)
   if FieldIndex == 0 then
     return v
   -- ADR
@@ -175,7 +177,7 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
     else
       s = DecodeValue(s)
     end
-    local ln, fn, mn, np, ns = string.match(s, '([^;]*);([^;]*);([^;]*);([^;]*);([^;]*)')
+    local ln, fn, mn, np, ns = string.match(s, '([^;]*);?([^;]*);?([^;]*);?([^;]*);?([^;]*)')
     if ln == nil then return nil end
     if UnitIndex == 0 then
       return ln
@@ -279,11 +281,11 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
 end
 
 function CleanTables()
-  for i = 1, #adr do adr[i] = nil end
-  for i = 1, #adrl do adrl[i] = nil end
-  for i = 1, #tel do tel[i] = nil end
-  for i = 1, #em do em[i] = nil end
-  for i = 1, #im do im[i] = nil end
+  for i = 1, 8 do adr[i] = nil end
+  for i = 1, 8 do adrl[i] = nil end
+  for i = 1, 18 do tel[i] = nil end
+  for i = 1, 4 do em[i] = nil end
+  for i = 1, 17 do im[i] = nil end
 end
 
 function GetString(p, n)
@@ -304,12 +306,12 @@ function GetValue(s, p, n)
   return EscapedChar(s)
 end
 
-function GetData(v)
+function GetData()
   local t
   for i = 1, #all do
     t = string.match(all[i], '^([A-Z][A-Z%-]*)[:;]')
     if t == 'ADR' then
-      GetADR(all[i], i, v)
+      GetADR(all[i], i)
     elseif t == 'LABEL' then
       GetLABEL(all[i])
     elseif t == 'TEL' then
@@ -322,16 +324,16 @@ function GetData(v)
   end
 end
 
-function GetADR(s, i, v)
+function GetADR(s, i)
   local tp, tv, n, l
   n = string.find(s, ':', 1, true)
   tp = string.lower(string.sub(s, 4, n - 1))
   tv = DecodeValue(s)
   tv = EscapedChar(tv)
-  if tp == ':' then
+  if tp == '' then
     adr[1] = GetADRUnit(tv)
   else
-    if (v ~= '2.1') and (v ~= '3.0') then
+    if (v ~= nil) and (v ~= '2.1') and (v ~= '3.0') then
       local n1, n2 = string.find(tp, 'label="', 1, true)
       if n1 ~= nil then
         n1 = string.find(tp, '"', n2 + 1, true)
@@ -395,7 +397,7 @@ function GetLABEL(s)
   tp = string.lower(string.sub(s, 6, n - 1))
   tv = DecodeValue(s)
   tv = EscapedChar(tv)
-  if tp == ':' then
+  if tp == '' then
     adrl[1] = tv
   else
     if string.find(tp, 'pref', 1, true) then adrl[8] = tv end
@@ -422,7 +424,7 @@ function GetTEL(s)
   n = string.find(s, ':', 1, true)
   tp = string.lower(string.sub(s, 4, n - 1))
   tv = string.sub(s, n + 1, -1)
-  if tp == ':' then
+  if tp == '' then
     tel[17] = AddValue(tel[17], tv)
   else
     if string.find(tp, 'pref', 1, true) then tel[6] = AddValue(tel[6], tv) end
@@ -475,7 +477,7 @@ function GetEMAIL(s)
   n = string.find(s, ':', 1, true)
   tp = string.lower(string.sub(s, 6, n - 1))
   tv = string.sub(s, n + 1, -1)
-  if tp == ':' then
+  if tp == '' then
     em[3] = AddValue(em[3], tv)
   else
     if string.find(tp, 'pref', 1, true) then em[4] = AddValue(em[4], tv) end
