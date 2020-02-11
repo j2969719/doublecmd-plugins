@@ -18,6 +18,7 @@ tProgressProc gProgressProc = NULL;
 tLogProc gLogProc = NULL;
 tRequestProc gRequestProc = NULL;
 GKeyFile *gCfg;
+static gchar *gCfgPath = NULL;
 
 void SetCurrentFileTime(LPFILETIME ft)
 {
@@ -63,34 +64,6 @@ int DCPCALL FsInit(int PluginNr, tProgressProc pProgressProc, tLogProc pLogProc,
 	gProgressProc = pProgressProc;
 	gLogProc = pLogProc;
 	gRequestProc = pRequestProc;
-
-	Dl_info dlinfo;
-	GError *err = NULL;
-	gchar *cfgpath = "";
-	const gchar *inifile = "settings.ini";
-
-	memset(&dlinfo, 0, sizeof(dlinfo));
-
-	if (dladdr(cfgpath, &dlinfo) != 0)
-	{
-		cfgpath = g_path_get_dirname(dlinfo.dli_fname);
-		cfgpath = g_strdup_printf("%s/%s", cfgpath, inifile);
-	}
-
-	gCfg = g_key_file_new();
-
-	if (!g_key_file_load_from_file(gCfg, cfgpath, G_KEY_FILE_KEEP_COMMENTS, &err))
-	{
-		gchar *msg = g_strdup_printf("%s: %s", cfgpath, (err)->message);
-		gRequestProc(gPluginNr, RT_MsgOK, NULL, msg, NULL, 0);
-		g_free(msg);
-	}
-
-	if (cfgpath)
-		g_free(cfgpath);
-
-	if (err)
-		g_error_free(err);
 
 	return 0;
 }
@@ -192,8 +165,24 @@ int DCPCALL FsGetFile(char* RemoteName, char* LocalName, int CopyFlags, RemoteIn
 
 int DCPCALL FsExecuteFile(HWND MainWin, char* RemoteName, char* Verb)
 {
-	if (strncmp(Verb, "open", 5) == 0)
+	if (strcmp(Verb, "open") == 0)
 	{
+		return FS_EXEC_YOURSELF;
+	}
+	else if (strcmp(Verb, "properties") == 0)
+	{
+		gchar *quoted = g_shell_quote(gCfgPath);
+		gchar *command = g_strdup_printf("xdg-open %s", quoted);
+		system(command);
+		g_free(quoted);
+		g_free(command);
+
+		if (gRequestProc)
+		{
+			gRequestProc(gPluginNr, RT_MsgOK, NULL, "Click OK when done editing.", NULL, 0);
+			g_key_file_load_from_file(gCfg, gCfgPath, G_KEY_FILE_KEEP_COMMENTS, NULL);
+		}
+
 		return FS_EXEC_YOURSELF;
 	}
 	else if (gRequestProc)
@@ -207,13 +196,75 @@ void DCPCALL FsGetDefRootName(char* DefRootName, int maxlen)
 	g_strlcpy(DefRootName, "CMDOutput", maxlen - 1);
 }
 
+void DCPCALL FsSetDefaultParams(FsDefaultParamStruct* dps)
+{
+	Dl_info dlinfo;
+	GError *err = NULL;
+
+	gCfg = g_key_file_new();
+
+	gchar *cfgdir = g_path_get_dirname(dps->DefaultIniName);
+
+	if (cfgdir)
+	{
+		gCfgPath = g_strdup_printf("%s/wfx_cmdoutput.ini", cfgdir);
+		g_free(cfgdir);
+	}
+
+	if (!g_key_file_load_from_file(gCfg, gCfgPath, G_KEY_FILE_KEEP_COMMENTS, &err))
+	{
+		g_print("%s: %s\n", gCfgPath, (err)->message);
+		g_clear_error(&err);
+
+		memset(&dlinfo, 0, sizeof(dlinfo));
+
+		static char inifile[] = "settings.ini";
+
+		if (dladdr(inifile, &dlinfo) != 0)
+		{
+			cfgdir = g_path_get_dirname(dlinfo.dli_fname);
+
+			if (cfgdir)
+			{
+				gchar *cfgdef = g_strdup_printf("%s/%s", cfgdir, inifile);
+				g_free(cfgdir);
+
+				if (!g_key_file_load_from_file(gCfg, cfgdef, G_KEY_FILE_KEEP_COMMENTS, &err))
+				{
+					gchar *msg = g_strdup_printf("%s: %s", cfgdef, (err)->message);
+					gRequestProc(gPluginNr, RT_MsgOK, NULL, msg, NULL, 0);
+					g_free(msg);
+				}
+				else
+				{
+					g_key_file_save_to_file(gCfg, gCfgPath, NULL);
+				}
+
+				if (cfgdef)
+					g_free(cfgdef);
+
+			}
+		}
+	}
+
+	if (err)
+		g_error_free(err);
+
+}
+
 void DCPCALL ExtensionInitialize(tExtensionStartupInfo* StartupInfo)
 {
-
+	return;
 }
 
 void DCPCALL ExtensionFinalize(void* Reserved)
 {
 	if (gCfg)
 		g_key_file_free(gCfg);
+
+	if (gCfgPath)
+	{
+		g_free(gCfgPath);
+		gCfgPath = NULL;
+	}
 }

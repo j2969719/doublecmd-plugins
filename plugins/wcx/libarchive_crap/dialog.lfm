@@ -2168,7 +2168,7 @@ object DialogBox: TDialogBox
         end
         object chkReadRockridge: TCheckBox
           AnchorSideTop.Control = chkReadJoliet
-          Left = 260
+          Left = 263
           Height = 23
           Top = 5
           Width = 136
