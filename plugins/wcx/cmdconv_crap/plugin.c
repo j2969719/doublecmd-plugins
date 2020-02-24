@@ -515,8 +515,25 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 
 	gchar *target_path = g_path_get_dirname(PackedFile);
 
-	gCfgMode = FALSE;
-	ShowCFGDlg();
+	if (g_key_file_get_integer(gCfg, gLastExt, "Presets", NULL) != 1)
+	{
+		gCfgMode = FALSE;
+		ShowCFGDlg();
+	}
+	else
+	{
+		gQuoteFN = g_key_file_get_boolean(gCfg, gLastExt, "Preset_0_Quote", NULL);
+
+		gchar *value = g_key_file_get_string(gCfg, gLastExt, "Preset_0_Cmd", NULL);
+
+		if (value)
+			g_strlcpy(gLastCMD, (char*)value, PATH_MAX);
+
+		value = g_key_file_get_string(gCfg, gLastExt, "Preset_0_Glob", NULL);
+
+		if (value)
+			g_strlcpy(gLastMask, (char*)value, PATH_MAX);
+	}
 
 	if (gLastCMD[0] == '\0')
 		return E_EABORTED;
@@ -638,4 +655,6 @@ void DCPCALL PackSetDefaultParams(PackDefaultParamStruct* dps)
 
 		g_key_file_save_to_file(gCfg, gCfgPath, NULL);
 	}
+	else
+		g_key_file_load_from_file(gCfg, gCfgPath, G_KEY_FILE_KEEP_COMMENTS, NULL);
 }
