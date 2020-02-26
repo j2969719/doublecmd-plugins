@@ -39,6 +39,7 @@ tExtensionStartupInfo* gDialogApi = NULL;
 
 static char gLFMPath[PATH_MAX];
 static char gLastPath[PATH_MAX];
+static char gLinkPath[PATH_MAX] = "status";
 
 tStatusLines gStatusLines[] =
 {
@@ -238,6 +239,8 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 			close(fd);
 		}
 
+		gDialogApi->SendDlgMsg(pDlg, "cbLink", DM_SETTEXT, (intptr_t)gLinkPath, 0);
+
 		break;
 
 	case DN_CLOSE:
@@ -295,6 +298,10 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 					gDialogApi->SendDlgMsg(pDlg, DlgItemName, DM_SETTEXT, (intptr_t)lpath, 0);
 				}
 			}
+		}
+		else if (strcmp(DlgItemName, "cbLink") == 0)
+		{
+			strlcpy(gLinkPath, (char*)gDialogApi->SendDlgMsg(pDlg, DlgItemName, DM_GETTEXT, 0, 0), PATH_MAX - 1);
 		}
 		else
 
@@ -440,7 +447,7 @@ BOOL DCPCALL FsGetLocalName(char* RemoteName, int maxlen)
 
 	if (dot != NULL)
 	{
-		snprintf(RemoteName, maxlen - 1, "/proc/%s/status", dot + 1);
+		snprintf(RemoteName, maxlen - 1, "/proc/%s/%s", dot + 1, gLinkPath);
 		return true;
 	}
 

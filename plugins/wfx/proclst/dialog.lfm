@@ -431,4 +431,41 @@ object DialogBox: TDialogBox
     ParentShowHint = False
     ShowHint = True
   end
+  object lblLink: TLabel
+    AnchorSideLeft.Control = lblName
+    AnchorSideTop.Control = cbLink
+    AnchorSideTop.Side = asrCenter
+    Left = 10
+    Height = 15
+    Top = 285
+    Width = 103
+    Caption = 'Open in Viewer:'
+    ParentColor = False
+  end
+  object cbLink: TComboBox
+    AnchorSideLeft.Control = lblLink
+    AnchorSideLeft.Side = asrBottom
+    AnchorSideTop.Control = btnClose
+    AnchorSideTop.Side = asrCenter
+    Left = 118
+    Height = 26
+    Top = 279
+    Width = 100
+    BorderSpacing.Left = 5
+    ItemHeight = 0
+    Items.Strings = (
+      'status'
+      'environ'
+      'exe'
+      'mounts'
+      'mountinfo'
+      'mountstats'
+      'maps'
+      'smaps'
+      'limits'
+      'fd/1'
+    )
+    OnChange = ComboBoxChange
+    TabOrder = 12
+  end
 end
