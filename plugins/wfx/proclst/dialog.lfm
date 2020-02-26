@@ -441,6 +441,7 @@ object DialogBox: TDialogBox
     Width = 103
     Caption = 'Open in Viewer:'
     ParentColor = False
+    Visible = False
   end
   object cbLink: TComboBox
     AnchorSideLeft.Control = lblLink
@@ -467,5 +468,6 @@ object DialogBox: TDialogBox
     )
     OnChange = ComboBoxChange
     TabOrder = 12
+    Visible = False
   end
 end
