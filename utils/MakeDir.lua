@@ -1,5 +1,5 @@
 -- MakeDir.lua (cross-platform)
--- 2020.02.27
+-- 2020.03.01
 --
 -- Creating directories with additional features.
 --[[
@@ -9,19 +9,30 @@
   newdir1|newdir2|newdir3
 3. All space characters at the beginning or end of the name(s) will be deleted.
 4. Also you can use some variables:
-    <dt> - current date and time: YYYYMMDD-hhmmss;
+    <dt> - current date and time: YYYYMMDDhhmmss;
     <d> or <t> - current date (YYYYMMDD) or time (hhmmss);
     <y> - current year, 4 digits;
+    <fdt>, <fd>, <ft> and <fy> - like previouses, but from file under cursor (last modified date/time);
     <p> - parent folder from current directory;
     <x-y> - multiple folder creation with counter. Wight depends on y.
     For example: "name<1-15>" means 15 folders: "name01", "name02", ... "name15".
   Note: You can use more then one variable in each name.
 ]]
--- Params:
---   %"0%D
---   %permission_mode%
---
--- %permission_mode% is optional parameter for Linux only, use octal mode (for example, 755 or 777)
+--[[
+Params:
+  %"0%D
+  %"0%p0
+  %permission_mode%
+
+where:
+  %"0%D is current directory;
+  and optional:
+    %"0%p0
+      for getting name and last modified date/time from file under cursor
+      (if not exists or empty then will use name "New" and current date/time);
+    %permission_mode%
+      for Linux only, use octal mode (for example, 755 or 777).
+]]
 
 local params = {...}
 
@@ -41,30 +52,64 @@ local function GetOutput(cmd)
   return string.sub(out, 1, -2)
 end
 
-local function MakeDir(a)
-  local m
+local function MakeDir(a, m)
+  local r
   if SysUtils.PathDelim == '\\' then
-    m = ''
+    r = ''
     local c = 0
     for i = 1, #a do
       if SysUtils.CreateDirectory(a[i]) == false then
-        m = m .. '\n' .. a[i]
+        r = r .. '\n' .. a[i]
         c = c + 1
       end
     end
-    if c > 0 then m = 'Error:\n' .. m end
+    if c > 0 then r = 'Error:\n' .. r end
   else
     local cmd = 'mkdir -p'
-    if #params == 2 then cmd = 'mkdir -m ' .. params[2] .. ' -p' end
-    m = GetOutput(cmd .. ' "' .. table.concat(a, '" "') .. '" 2>&1')
+    if m ~= nil then cmd = 'mkdir -m ' .. m .. ' -p' end
+    r = GetOutput(cmd .. ' "' .. table.concat(a, '" "') .. '" 2>&1')
   end
-  return m
+  return r
 end
 
-if (#params == 0) or (#params > 2) then
-  Dialogs.MessageBox('Check the number of parameters!', 'Make dir(s)', 0x0030)
-  return
+local nm = 'New'
+local fdt, pf, fn, pm
+local cdt = os.date('%Y%m%d%H%M%S', os.time())
+
+if #params == 3 then
+  fn = params[2]
+  pm = params[3]
+elseif #params == 2 then
+  if PathIsAbsolute(params[2], SysUtils.PathDelim) then
+    fn = params[2]
+  else
+    pm = params[2]
+  end
+else
+  if #params ~= 1 then
+    Dialogs.MessageBox('Check parameters!', 'Make dir(s)', 0x0030)
+    return
+  end
 end
+
+if fn == nil then
+  fdt = cdt
+else
+  local h, d = SysUtils.FindFirst(fn)
+  if h == nil then
+    fdt = cdt
+  else
+    SysUtils.FindClose(h)
+    if (math.floor(d.Attr / 0x00000010) % 2 ~= 0) then
+      nm = d.Name
+    else
+      nm = string.sub(d.Name, 1, string.len(d.Name) - string.len(SysUtils.ExtractFileExt(d.Name)))
+      if nm == '' then nm = d.Name end
+    end
+    fdt = os.date('%Y%m%d%H%M%S', d.Time)
+  end
+end
+pf = SysUtils.ExtractFileName(params[1])
 
 local msg = ''
 local msgl = [[
@@ -72,18 +117,18 @@ Variables:
 <dt>: current date and time: YYYYMMDDhhmmss;
 <d> or <t>: current date (YYYYMMDD) or time (hhmmss);
 <y>: current year, 4 digits;
+<fdt>, <fd>, <ft>, <fy>: last modified date/time from file under cursor;
 <p>: parent folder from current directory;
 <x-y>: multiple folder creation with counter.
 ]]
-local ba, dn = Dialogs.InputQuery('Make dir(s)', msgl .. '\nEnter name:', false, 'new')
+local ba, dn = Dialogs.InputQuery('Make dir(s)', msgl .. '\nEnter name:', false, nm)
 if ba == false then return end
-local cdt = os.date('%Y%m%d%H%M%S', os.time())
-local pf = SysUtils.ExtractFileName(params[1])
 -- delete trailing space(s)
 dn = string.gsub(dn, '^%s+', '')
 dn = string.gsub(dn, '%s+$', '')
 dn = string.gsub(dn, '(%s+)([\\/|])', '%2')
 dn = string.gsub(dn, '([\\/|])(%s+)', '%1')
+
 local lst = {}
 local lst2 = {}
 local r = {}
@@ -102,6 +147,10 @@ for i = 1, #lst do
   lst[i] = string.gsub(lst[i], '<t>', string.sub(cdt, 9, 14))
   lst[i] = string.gsub(lst[i], '<y>', string.sub(cdt, 1, 4))
   lst[i] = string.gsub(lst[i], '<p>', pf)
+  lst[i] = string.gsub(lst[i], '<fdt>', fdt)
+  lst[i] = string.gsub(lst[i], '<fd>', string.sub(fdt, 1, 8))
+  lst[i] = string.gsub(lst[i], '<ft>', string.sub(fdt, 9, 14))
+  lst[i] = string.gsub(lst[i], '<fy>', string.sub(fdt, 1, 4))
   while true do
     n1, n2 = string.find(lst[i], '<%d+%-%d+>', n3, false)
     if n1 == nil then break else table.insert(r, i) end
@@ -127,9 +176,9 @@ end
 -- <x-y>
 for i = #r, 1, -1 do table.remove(lst, r[i]) end
 
-if #lst > 0 then msg = MakeDir(lst) end
+if #lst > 0 then msg = MakeDir(lst, pm) end
 if #lst2 > 0 then
-  tmp = MakeDir(lst2)
+  tmp = MakeDir(lst2, pm)
   if (tmp ~= '') and (tmp ~= nil) then
     if (msg ~= '') and (msg ~= nil) then
       msg = msg .. string.sub(tmp, 7, -1)
