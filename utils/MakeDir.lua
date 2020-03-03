@@ -80,7 +80,7 @@ if #params == 3 then
   fn = params[2]
   pm = params[3]
 elseif #params == 2 then
-  if PathIsAbsolute(params[2], SysUtils.PathDelim) then
+  if PathIsAbsolute(params[2]) then
     fn = params[2]
   else
     pm = params[2]
@@ -135,7 +135,7 @@ local r = {}
 local n1, n2, c1, c2, t, tmp
 local n3, c3 = 1, 1
 for l in string.gmatch(dn, '[^|]+') do
-  if PathIsAbsolute(l, SysUtils.PathDelim) then
+  if PathIsAbsolute(l) then
     table.insert(lst, l)
   else
     table.insert(lst, params[1] .. SysUtils.PathDelim .. l)
@@ -146,11 +146,11 @@ for i = 1, #lst do
   lst[i] = string.gsub(lst[i], '<d>', string.sub(cdt, 1, 8))
   lst[i] = string.gsub(lst[i], '<t>', string.sub(cdt, 9, 14))
   lst[i] = string.gsub(lst[i], '<y>', string.sub(cdt, 1, 4))
-  lst[i] = string.gsub(lst[i], '<p>', pf)
   lst[i] = string.gsub(lst[i], '<fdt>', fdt)
   lst[i] = string.gsub(lst[i], '<fd>', string.sub(fdt, 1, 8))
   lst[i] = string.gsub(lst[i], '<ft>', string.sub(fdt, 9, 14))
   lst[i] = string.gsub(lst[i], '<fy>', string.sub(fdt, 1, 4))
+  lst[i] = string.gsub(lst[i], '<p>', pf)
   while true do
     n1, n2 = string.find(lst[i], '<%d+%-%d+>', n3, false)
     if n1 == nil then break else table.insert(r, i) end
