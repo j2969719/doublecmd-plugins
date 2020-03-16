@@ -1,6 +1,7 @@
 #include <glib.h>
 #include <gio/gio.h>
 #include <poppler.h>
+#include <string.h>
 #include "wdxplugin.h"
 
 #define _detectstring "EXT=\"PDF\""
@@ -48,11 +49,13 @@ char* GetDocumentText(PopplerDocument *document)
 	gsize index, pages;
 	PopplerPage *ppage;
 	pages = poppler_document_get_n_pages(document);
+
 	for (index = 0; index < pages; index++)
 	{
 		ppage = poppler_document_get_page(document, index);
 		text = g_strconcat(text, "\n", poppler_page_get_text(ppage), NULL);
 	}
+
 	return g_strconcat(text, "\0", NULL);
 }
 
@@ -79,41 +82,48 @@ int DCPCALL ContentGetSupportedField(int FieldIndex, char* FieldName, char* Unit
 
 int DCPCALL ContentGetDetectString(char* DetectString, int maxlen)
 {
-	g_strlcpy(DetectString, _detectstring, maxlen-1);
+	g_strlcpy(DetectString, _detectstring, maxlen - 1);
 	return 0;
 }
 
 int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void* FieldValue, int maxlen, int flags)
 {
-	char *strvalue;
+	gchar *strvalue = NULL;
 	uint64_t timevalue;
 	gboolean vempty = FALSE;
 	gboolean tmpbool = FALSE;
 	GError *err = NULL;
+
 	gchar* content_type = g_content_type_guess(FileName, NULL, 0, &tmpbool);
-	gchar* fileUri = g_filename_to_uri(FileName, NULL, NULL);
 
 	if (!g_content_type_equals(content_type, _validcontent))
+	{
+		g_free(content_type);
 		return ft_fileerror;
+	}
 
+	gchar* fileUri = g_filename_to_uri(FileName, NULL, NULL);
 	PopplerDocument *document = poppler_document_new_from_file(fileUri, NULL, &err);
+
+	g_free(content_type);
+	g_free(fileUri);
 
 	if (err)
 	{
-		if ((FieldIndex == 12) && (err->code == POPPLER_ERROR_ENCRYPTED))
+		gint errcode = err->code;
+		g_error_free(err);
+
+		if ((FieldIndex == 12) && (errcode == POPPLER_ERROR_ENCRYPTED))
 		{
-			g_error_free(err);
 			*(int*)FieldValue = 1;
 			return fields[FieldIndex].type;
 		}
-		else if ((FieldIndex == 13) && (err->code == POPPLER_ERROR_DAMAGED))
+		else if ((FieldIndex == 13) && (errcode == POPPLER_ERROR_DAMAGED))
 		{
-			g_error_free(err);
 			*(int*)FieldValue = 1;
 			return fields[FieldIndex].type;
 		}
 
-		g_error_free(err);
 	}
 
 	if (document == NULL)
@@ -266,12 +276,13 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 			*(int*)FieldValue = 0;
 
 		break;
+
 	case 19:
 		if (UnitIndex == 0)
 		{
 			doc_text = GetDocumentText(document);
-			g_strlcpy(FieldValue, doc_text, maxlen-1);
-			pos = maxlen-2;
+			g_strlcpy(FieldValue, doc_text, maxlen - 1);
+			pos = maxlen - 2;
 		}
 		else if (UnitIndex == -1)
 		{
@@ -281,14 +292,15 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 		}
 		else
 		{
-			if (strlen(doc_text+pos) > 0)
+			if (strlen(doc_text + pos) > 0)
 			{
-				g_strlcpy((char*)FieldValue, doc_text+pos, maxlen-1);
-				pos += maxlen-2;
+				g_strlcpy((char*)FieldValue, doc_text + pos, maxlen - 1);
+				pos += maxlen - 2;
 			}
 			else
 				return ft_fieldempty;
 		}
+
 		return ft_fulltext;
 
 		break;
