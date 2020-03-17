@@ -36,9 +36,6 @@ Creates hard or symbolic links for multiple files (Files -> Pack Files...).
 - [calcsize](plugins/wdx/calcsize)<br>
 Folder search by size.
 
-- [crappcre](plugins/wdx/crappcre)<br>
-Search file contents using regular expressions and extract search results. It can also work with file names.
-
 - [datetimestr](plugins/wdx/datetimestr)<br>
 Getting the time the file was last modified, last accessed or last changed. The time format is fully customizable (see `settings.ini`).
 
@@ -63,8 +60,8 @@ Getting some information from local copy of Git repository.
 - [gunixmounts](plugins/wdx/gunixmounts)<br>
 Mount points: name, FS type and other.
 
-- [poppler_info](plugins/wdx/poppler_info)<br>
-Basic information about PDF.
+- ~[poppler_info](plugins/wdx/poppler_info)<br>
+Basic information about PDF.~
 
 - [simplechecksum](plugins/wdx/simplechecksum)<br>
 Plugin is able to calculate and display hash values for any file. Can be used to search files by hash value.
