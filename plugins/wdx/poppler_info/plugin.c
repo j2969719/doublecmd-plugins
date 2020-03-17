@@ -42,6 +42,7 @@ FIELD fields[] =
 
 static gchar *doc_text;
 static gsize pos;
+static gsize len;
 
 char* GetDocumentText(PopplerDocument *document)
 {
@@ -93,41 +94,46 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 	gboolean vempty = FALSE;
 	gboolean tmpbool = FALSE;
 	GError *err = NULL;
+	PopplerDocument *document = NULL;
 
-	gchar* content_type = g_content_type_guess(FileName, NULL, 0, &tmpbool);
-
-	if (!g_content_type_equals(content_type, _validcontent))
+	if (FieldIndex != 19 || (FieldIndex == 19 && UnitIndex == 0))
 	{
+		gchar* content_type = g_content_type_guess(FileName, NULL, 0, &tmpbool);
+
+		if (!g_content_type_equals(content_type, _validcontent))
+		{
+			g_free(content_type);
+			return ft_fileerror;
+		}
+
+		gchar* fileUri = g_filename_to_uri(FileName, NULL, NULL);
+		document = poppler_document_new_from_file(fileUri, NULL, &err);
+
 		g_free(content_type);
-		return ft_fileerror;
-	}
+		g_free(fileUri);
 
-	gchar* fileUri = g_filename_to_uri(FileName, NULL, NULL);
-	PopplerDocument *document = poppler_document_new_from_file(fileUri, NULL, &err);
-
-	g_free(content_type);
-	g_free(fileUri);
-
-	if (err)
-	{
-		gint errcode = err->code;
-		g_error_free(err);
-
-		if ((FieldIndex == 12) && (errcode == POPPLER_ERROR_ENCRYPTED))
+		if (err)
 		{
-			*(int*)FieldValue = 1;
-			return fields[FieldIndex].type;
-		}
-		else if ((FieldIndex == 13) && (errcode == POPPLER_ERROR_DAMAGED))
-		{
-			*(int*)FieldValue = 1;
-			return fields[FieldIndex].type;
+			gint errcode = err->code;
+			g_error_free(err);
+
+			if ((FieldIndex == 12) && (errcode == POPPLER_ERROR_ENCRYPTED))
+			{
+				*(int*)FieldValue = 1;
+				return fields[FieldIndex].type;
+			}
+			else if ((FieldIndex == 13) && (errcode == POPPLER_ERROR_DAMAGED))
+			{
+				*(int*)FieldValue = 1;
+				return fields[FieldIndex].type;
+			}
+
 		}
 
-	}
+		if (document == NULL)
+			return ft_fileerror;
 
-	if (document == NULL)
-		return ft_fileerror;
+	}
 
 	switch (FieldIndex)
 	{
@@ -282,26 +288,26 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 		{
 			doc_text = GetDocumentText(document);
 			g_strlcpy(FieldValue, doc_text, maxlen - 1);
+			len = strlen(doc_text);
 			pos = maxlen - 2;
 		}
 		else if (UnitIndex == -1)
 		{
 			g_free(doc_text);
 			pos = 0;
-			return ft_fieldempty;
+			len = 0;
+			vempty = TRUE;
 		}
 		else
 		{
-			if (strlen(doc_text + pos) > 0)
+			if (len > pos && strlen(doc_text + pos) > 0)
 			{
 				g_strlcpy((char*)FieldValue, doc_text + pos, maxlen - 1);
 				pos += maxlen - 2;
 			}
 			else
-				return ft_fieldempty;
+				vempty = TRUE;
 		}
-
-		return ft_fulltext;
 
 		break;
 
@@ -310,6 +316,9 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 
 		break;
 	}
+
+	if (document != NULL)
+		g_object_unref(G_OBJECT(document));
 
 	if (vempty)
 		return ft_fieldempty;
