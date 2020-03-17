@@ -37,7 +37,7 @@ FIELD fields[] =
 	{"Can be copied",		ft_boolean,	""},
 	{"OK to add notes",		ft_boolean,	""},
 	{"OK to fill form",		ft_boolean,	""},
-	{"Text",			ft_fulltext,	""},
+//	{"Text",			ft_fulltext,	""},
 };
 
 static gchar *doc_text = NULL;
@@ -111,6 +111,10 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 		document = poppler_document_new_from_gfile(gfile, NULL, NULL, &err);
 
 		g_free(content_type);
+
+
+		if (gfile != NULL)
+			g_object_unref(G_OBJECT(gfile));
 
 		if (err)
 		{
@@ -326,9 +330,6 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 
 	if (document != NULL)
 		g_object_unref(G_OBJECT(document));
-
-	if (gfile != NULL)
-		g_object_unref(G_OBJECT(gfile));
 
 	if (vempty)
 		return ft_fieldempty;
