@@ -95,6 +95,7 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 	gboolean tmpbool = FALSE;
 	GError *err = NULL;
 	PopplerDocument *document = NULL;
+	GFile *gfile = NULL;
 
 	if (FieldIndex != 19 || (FieldIndex == 19 && UnitIndex == 0))
 	{
@@ -106,11 +107,10 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 			return ft_fileerror;
 		}
 
-		gchar* fileUri = g_filename_to_uri(FileName, NULL, NULL);
-		document = poppler_document_new_from_file(fileUri, NULL, &err);
+		gfile = g_file_new_for_path(FileName);
+		document = poppler_document_new_from_gfile(gfile, NULL, NULL, &err);
 
 		g_free(content_type);
-		g_free(fileUri);
 
 		if (err)
 		{
@@ -326,6 +326,9 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 
 	if (document != NULL)
 		g_object_unref(G_OBJECT(document));
+
+	if (gfile != NULL)
+		g_object_unref(G_OBJECT(gfile));
 
 	if (vempty)
 		return ft_fieldempty;
