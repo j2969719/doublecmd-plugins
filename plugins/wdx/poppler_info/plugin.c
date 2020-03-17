@@ -56,7 +56,7 @@ char* GetDocumentText(PopplerDocument *document)
 		text = g_strconcat(text, "\n", poppler_page_get_text(ppage), NULL);
 	}
 
-	return g_strconcat(text, "\0", NULL);
+	return text;
 }
 
 gboolean UnixTimeToFileTime(uint64_t unix_time, LPFILETIME FileTime)
@@ -286,7 +286,7 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 		}
 		else if (UnitIndex == -1)
 		{
-			doc_text = NULL;
+			g_free(doc_text);
 			pos = 0;
 			return ft_fieldempty;
 		}
