@@ -40,9 +40,9 @@ FIELD fields[] =
 	{"Text",			ft_fulltext,	""},
 };
 
-static gchar *doc_text;
-static gsize pos;
-static gsize len;
+static gchar *doc_text = NULL;
+static gsize pos = 0;
+static gsize len = 0;
 
 char* GetDocumentText(PopplerDocument *document)
 {
@@ -293,7 +293,9 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 		}
 		else if (UnitIndex == -1)
 		{
-			g_free(doc_text);
+			if (doc_text != NULL)
+				g_free(doc_text);
+
 			pos = 0;
 			len = 0;
 			vempty = TRUE;
@@ -306,7 +308,12 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 				pos += maxlen - 2;
 			}
 			else
+			{
+				if (doc_text != NULL)
+					g_free(doc_text);
+
 				vempty = TRUE;
+			}
 		}
 
 		break;
