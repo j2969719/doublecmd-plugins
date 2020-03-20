@@ -1,5 +1,5 @@
 -- vcardinfowdx.lua (cross-platform)
--- 2020.03.10
+-- 2020.03.20
 --
 -- vCard Format Specification 2.1, 3.0, 4.0
 -- Some details: https://en.wikipedia.org/wiki/VCard
@@ -90,7 +90,6 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
     if h == nil then return nil end
     local c, i = 1, 1
     local vc = false
-    -- for i = 1, #all do all[i] = "" end
     all = {}
     for l in h:lines() do
       if vc == false then
@@ -113,7 +112,6 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
             all[c - 1] = all[c - 1] .. l
           end
         else
-          -- table.insert(all, l)
           all[c] = l
           c = c + 1
         end

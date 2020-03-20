@@ -1,5 +1,5 @@
 -- msgfulltextwdx.lua (cross-platform)
--- 2020.01.21
+-- 2020.03.20
 --
 -- For Find files with plugins only!
 --
@@ -56,7 +56,7 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
     if (e ~= '.eml') and (e ~= '.msg') and (e ~= '') then return nil end
     local h = io.open(FileName, 'r')
     if h == nil then return nil end
-    local c, hd, bc = 0, 0, 1
+    local c, hd, hc, bc = 0, 0, 1, 1
     local ctv, cte, s
     local head = {}
     local body = {}
@@ -65,14 +65,16 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
         if str_match(l, '^([A-Za-z0-9%-]+)[\t ]*:') == nil then
           break
         else
-          table.insert(head, l)
+          head[hc] = l
+          hc = hc + 1
         end
       else
         if hd == 0 then
           if str_len(l) == 0 then
             hd = 1
           else
-            table.insert(head, l)
+            head[hc] = l
+            hc = hc + 1
           end
         else
           body[bc] =  l
@@ -279,6 +281,7 @@ end
 function GetText(b)
   local c, d = 1, 1
   local bh = {}
+  local bhc = 1
   for i = 1, #b do
     if b[i] ~= '' then
       d = i
@@ -290,7 +293,8 @@ function GetText(b)
       c = i + 1
       break
     end
-    table.insert(bh, b[i])
+    bh[bhc] = b[i]
+    bhc = bhc + 1
   end
   if #bh == 0 then return nil end
   local tv, te, s

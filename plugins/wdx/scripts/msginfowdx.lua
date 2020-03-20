@@ -1,5 +1,5 @@
 -- msginfowdx.lua (cross-platform)
--- 2020.01.11
+-- 2020.03.20
 --
 -- Getting info from headers of saved email messages.
 -- Supported formats: *.eml, *.msg and MH format (Sylpheed, Claws Mail and other).
@@ -80,6 +80,7 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
     if h == nil then return nil end
     local c = 1
     all = {}
+    local ac = 1
     for l in h:lines() do
       if string.len(l) == 0 then break end
       if string.match(l, '^[A-Za-z%-]+[\t ]*:') == nil then
@@ -96,7 +97,8 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
           end
         end
       else
-        table.insert(all, l)
+        all[ac] = l
+        ac = ac + 1
         c = c + 1
       end
     end
