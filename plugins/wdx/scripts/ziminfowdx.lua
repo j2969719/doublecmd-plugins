@@ -1,5 +1,5 @@
 -- ziminfowdx.lua (cross-platform)
--- 2020.03.21
+-- 2020.03.22
 --[[
 Save as UTF-8 without BOM!
 
@@ -108,10 +108,13 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
     end
     return s
   elseif FieldIndex == 2 then
+    if body[1] == nil then return nil end
+    if string.sub(body[1], 1, 1) ~= '=' then return nil end
     local s = string.gsub(body[1], '^=+ +', '')
     s = string.gsub(s, ' +=+$', '')
     return s
   elseif FieldIndex == 3 then
+    if body[2] == nil then return nil end
     local dt = {}
     dt.day, dt.month, dt.year= string.match(body[2], '[^ ]+ [^ ]+ (%d+) ([^ ]+) (%d+)')
     if dt.day == nil then return nil end
