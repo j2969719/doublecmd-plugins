@@ -8,17 +8,19 @@ Supported fields: see table "fields".
 
 Field "Creation date" is optional, from second line of the body:
   "Created [day_of_the_week] [day_of_the_month] [full_month_name] [year]"
-List of month (http://www.webteka.com/months-in-many-languages/):
+  List of month (http://www.webteka.com/months-in-many-languages/):
   Afrikaans, Armenian, Belarusian, Bulgarian, Czech, Danish, Dutch, English, Estonian, Finnish, French,
   German, Greek (and modern), Hungarian, Icelandic, Indonesian, Italian, Latvian, Lithuanian, Norwegian,
   Polish, Portuguese, Romanian, Russian, Serbian, Slovak, Slovenian, Spanish, Swedish, Turkish, Ukrainian
 ]]
 
 local fields = {
- "Header: Wiki-Format",
- "Header: Creation-Date",
- "Title",
- "Creation date"
+"Header: Wiki-Format",
+"Header: Creation-Date",
+"Title",
+"Creation date",
+"Note file",
+"Note name"
 }
 local head = {}
 local body = {}
@@ -129,6 +131,39 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
       dt.hour, dt.min, dt.sec = 0, 0, 1
       for k, v in pairs(dt) do dt[k] = tonumber(v) end
       return os.date('%Y-%m-%d', os.time(dt))
+    end
+  elseif (FieldIndex == 4) or (FieldIndex == 5) then
+    local s = SysUtils.ExtractFileDir(FileName)
+    local f = s .. SysUtils.PathDelim .. 'notebook.zim'
+    local c = 0
+    while true do
+      if SysUtils.FileExists(f) then break end
+      if c == 1 then
+        f = nil
+        break
+      end
+      s = SysUtils.ExtractFileDir(s)
+      if string.sub(s, -1, -1) == SysUtils.PathDelim then
+        f = s .. 'notebook.zim'
+        c = 1
+      else
+        f = s .. SysUtils.PathDelim .. 'notebook.zim'
+      end
+    end
+    if f ~= nil then 
+      if FieldIndex == 4 then return f end
+      local h = io.open(f, 'r')
+      if h == nil then return nil end
+      local s
+      for l in h:lines() do
+        l = string.gsub(l, '\r+$', '')
+        if string.sub(l, 1, 5) == 'home=' then
+          s = string.sub(l, 6, -1)
+          break
+        end
+      end
+      h:close()
+      return s
     end
   end
   return nil
