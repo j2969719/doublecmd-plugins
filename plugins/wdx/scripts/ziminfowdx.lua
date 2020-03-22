@@ -1,5 +1,5 @@
 -- ziminfowdx.lua (cross-platform)
--- 2020.03.22
+-- 2020.03.23
 --[[
 Save as UTF-8 without BOM!
 
@@ -20,6 +20,7 @@ local fields = {
 "Title",
 "Creation date",
 "Note file",
+"Note folder",
 "Note name"
 }
 local head = {}
@@ -104,7 +105,11 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
     for i = 2, #head do
       if string.sub(head[i], 1, 14) == 'Creation-Date:' then
         s = string.gsub(string.sub(head[i], 15, -1), '^[\t ]+', '')
-        if s == 'Unknown' then s = nil else s = string.gsub(s, 'T', ' ', 1) end
+        if s == 'Unknown' then
+          s = nil
+        else
+          s = string.sub(s, 1, 10)
+        end
         break
       end
     end
@@ -127,12 +132,12 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
         break
       end
     end
-    if dt.month <= #month then
+    if (type(dt.month) == 'number') and (dt.month <= #month) then
       dt.hour, dt.min, dt.sec = 0, 0, 1
       for k, v in pairs(dt) do dt[k] = tonumber(v) end
       return os.date('%Y-%m-%d', os.time(dt))
     end
-  elseif (FieldIndex == 4) or (FieldIndex == 5) then
+  elseif (FieldIndex == 4) or (FieldIndex == 5) or (FieldIndex == 6) then
     local s = SysUtils.ExtractFileDir(FileName)
     local f = s .. SysUtils.PathDelim .. 'notebook.zim'
     local c = 0
@@ -151,10 +156,14 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
       end
     end
     if f ~= nil then 
-      if FieldIndex == 4 then return f end
+      if FieldIndex == 4 then
+        return f
+      elseif FieldIndex == 5 then
+        s = SysUtils.ExtractFileName(s)
+        if s == '' then return nil else return s end
+      end
       local h = io.open(f, 'r')
       if h == nil then return nil end
-      local s
       for l in h:lines() do
         l = string.gsub(l, '\r+$', '')
         if string.sub(l, 1, 5) == 'home=' then
