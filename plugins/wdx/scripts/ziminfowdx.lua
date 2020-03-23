@@ -1,43 +1,59 @@
 -- ziminfowdx.lua (cross-platform)
--- 2020.03.23
+-- 2020.03.24
 --[[
 Save as UTF-8 without BOM!
 
 Get some info from Zim file (https://zim-wiki.org/)
 Supported fields: see table "fields".
 
-Field "Creation date" is optional, from second line of the body:
+Field "Creation date" is optional, from second line of the body (if exists):
   "Created [day_of_the_week] [day_of_the_month] [full_month_name] [year]"
   List of month (http://www.webteka.com/months-in-many-languages/):
-  Afrikaans, Armenian, Belarusian, Bulgarian, Czech, Danish, Dutch, English, Estonian, Finnish, French,
-  German, Greek (and modern), Hungarian, Icelandic, Indonesian, Italian, Latvian, Lithuanian, Norwegian,
-  Polish, Portuguese, Romanian, Russian, Serbian, Slovak, Slovenian, Spanish, Swedish, Turkish, Ukrainian
+  Afrikaans, Belarusian, Bulgarian, Czech and Czech (modern), Danish, Dutch, English,
+  Estonian, Finnish, French, German, Greek, Hungarian, Icelandic, Indonesian, Italian,
+  Latvian, Lithuanian, Norwegian, Polish, Portuguese, Romanian, Russian, Serbian,
+  Slovak, Slovenian, Spanish, Swedish, Turkish, Ukrainian, 
 ]]
 
 local fields = {
 "Header: Wiki-Format",
 "Header: Creation-Date",
-"Title",
+"Note title",
 "Creation date",
-"Note file",
-"Note folder",
-"Note name"
+"Note address",
+"Notebook file",
+"Notebook folder",
+"Notebook name"
 }
 local head = {}
 local body = {}
-local month = {
-"|enero|gennaio|hounvar|ianouários|ianuari|ianuarie|jaanuar|janeiro|januar|januari|januarie|january|január|janvier|janvāris|janúar|leden|ocak|sausis|sichen’|studzien’|styczeń|tammikuu|yanvar’|ιανουάριοσ|студзень|січень|январь |януари|јануар|",
-"|febbraio|febrero|febrouários|februar|februari|februarie|february|február|februāris|febrúar|fevereiro|fevral’|fevruari|février|helmikuu|luty|lyuty|lyutyi|pedrvar|vasaris|veebruar|únor|şubat|φεβρουάριοσ|лютий|люты|фебруар|февраль|февруари|",
-"|berezen’|březen|kovas|maaliskuu|maart|march|mard|marec|maret|mars|mart|martie|marts|marzec|marzo|março|március|mártios|märts|märz|sakavik|μάρτιοσ|березень|мар|март|сакавік|",
-"|abril|aprel’|april|aprile|aprilie|aprill|apríl|aprílios|aprīlis|avril|balandis|duben|huhtikuu|krasavik|kviten|kwiecień|nisan|április|απρίλιοσ|апрель|април|квітень|красавік|",
-"|gegužė|květen|maggio|mai|maijs|maio|maj|may|mayis|mayo|mayıs|maí|mei|máios|máj|május|toukokuu|traven’|travien’|μάιοσ|май|мај|травень|",
-"|birželis|cherven’|chervien’|czerwiec|giugno|haziran|hoonis|ioúnios|iunie|iyun’|juin|june|junho|juni|junie|junij|junio|juuni|jún|június|júní|jūnijs|kesäkuu|červen|ιούνιοσ|июнь|червень|чэрвень|юни|јуни|",
-"|heinäkuu|hoolis|ioúlios|iulie|iyul’|juillet|julho|juli|julie|julij|julio|july|juuli|júl|július|júlí|jūlijs|liepa|lipiec|lipien’|luglio|lypen’|temmuz|červenec|ιούλιοσ|июль|липень|ліпень|юли|јули|",
-"|agosto|agustus|août|august|augusti|augusts|augustus|augusztus|avgust|aúgoustos|ağustos|elokuu|ocosdos|rugpjūtis|serpen’|sierpień|srpen|zhnivien’|ágúst|αύγουστοσ|авг|август|жнівень|серпень|",
-"|eylül|rusėjis|sebdemper|sentyabr’|september|septembre|septembrie|septembris|septemvri|septiembre|septémbrios|setembro|settembre|syyskuu|szeptember|veresen’|vierasien’|wrzesień|září|σεπτέμβριοσ|верасень|вересень|сентябрь|септембар|септември|",
-"|ekim|hokdemper|kastrychnik|lokakuu|october|octobre|octombrie|octubre|octyabr’|oktober|oktobris|oktomvri|oktoober|október|oktṓbrios|ottobre|outubro|październik|spalis|zhovten’|říjen|οκτώβριοσ|жовтень|кастрычнік|октобар|октомври|октябрь|",
-"|kasım|lapkritis|listapad|listopad|lystopad|marraskuu|noemvri|noiembrie|november|novembre|novembris|novembro|noviembre|noyabr’|noyemper|noémbrios|nóvember|νοέμβριοσ|листопад|лістапад|новембар|ноември|ноябрь|",
-"|aralık|december|decembrie|decembris|dekabr’|dekemvri|dekémbrios|desember|detsember|dezember|dezembro|dicembre|diciembre|décembre|grudzień|gruodis|hruden’|joulukuu|prosinec|s’niezhan’|tegdemper|δεκέμβριοσ|грудень|декабрь|декември|децембар|сьнежань|"
+local month1 = {
+{"tamm"},
+{"helm"},
+{"maal"},
+{"huht"},
+{"touk"},
+{"ioún","juin","juun","kesä","ιούν"},
+{"hein","ioúl","juil","juul","ιούλ"},
+{"elok"},
+{"syys"},
+{"loka"},
+{"kası","marr"},
+{"joul"}
+}
+local month2 = {
+{"ene","gen","ian","jaa","jan","led","oca","sau","sic","stu","sty","ιαν","сту","січ","янв","яну","јан"},
+{"feb","fev","fév","lut","lyu","vas","vee","úno","şub","φεβ","лют","феб","фев"},
+{"ber","bře","kov","maa","mar","már","mär","sak","μάρ","бер","мар","сак"},
+{"abr","apr","avr","bal","dub","kra","kvi","kwi","nis","ápr","απρ","апр","кві","кра"},
+{"geg","kvě","mag","mai","maj","may","maí","mei","mái","máj","tra","μάι","май","мая","мај","тра"},
+{"bir","che","cze","giu","haz","iun","jun","jún","jūn","июн","чер","чэр","юни","јун"},
+{"iul","jul","júl","jūl","lie","lip","lug","lyp","tem","июл","лип","ліп","юли","јул"},
+{"ago","agu","aoû","aug","avg","aúg","ağu","rug","ser","sie","srp","zhn","ágú","αύγ","авг","жні","сер"},
+{"eyl","rus","sep","set","sze","ver","vie","wrz","zář","σεπ","вер","сен","сеп"},
+{"eki","kas","oct","okt","ott","out","paź","spa","zho","říj","οκτ","жов","кас","окт"},
+{"lap","lis","lys","noe","noi","nov","noé","nóv","νοέ","лис","ліс","нов","ное","ноя"},
+{"ara","dec","dek","des","det","dez","dic","déc","gru","hru","pro","s’n","δεκ","гру","дек","дец","сьн"}
 }
 local filename = ''
 
@@ -123,21 +139,15 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
   elseif FieldIndex == 3 then
     if body[2] == nil then return nil end
     local dt = {}
-    dt.day, dt.month, dt.year= string.match(body[2], '[^ ]+ [^ ]+ (%d+) ([^ ]+) (%d+)')
+    local s
+    dt.day, s, dt.year= string.match(body[2], '[^ ]+ [^ ]+ (%d+) ([^ ]+) (%d+)')
     if dt.day == nil then return nil end
-    dt.month = LazUtf8.LowerCase(dt.month)
-    for i = 1, #month do
-      if string.find(month[i], '|' .. dt.month, 1, true) ~= nil then
-        dt.month = i
-        break
-      end
-    end
-    if (type(dt.month) == 'number') and (dt.month <= #month) then
-      dt.hour, dt.min, dt.sec = 0, 0, 1
-      for k, v in pairs(dt) do dt[k] = tonumber(v) end
-      return os.date('%Y-%m-%d', os.time(dt))
-    end
-  elseif (FieldIndex == 4) or (FieldIndex == 5) or (FieldIndex == 6) then
+    for k, v in pairs(dt) do dt[k] = tonumber(v) end
+    dt.month = GetMonthNumber(s)
+    if dt.month == nil then return nil end
+    dt.hour, dt.min, dt.sec = 0, 0, 1
+    return os.date('%Y-%m-%d', os.time(dt))
+  elseif (FieldIndex >= 4) or (FieldIndex <= 7) then
     local s = SysUtils.ExtractFileDir(FileName)
     local f = s .. SysUtils.PathDelim .. 'notebook.zim'
     local c = 0
@@ -156,9 +166,9 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
       end
     end
     if f ~= nil then 
-      if FieldIndex == 4 then
+      if FieldIndex == 5 then
         return f
-      elseif FieldIndex == 5 then
+      elseif FieldIndex == 6 then
         s = SysUtils.ExtractFileName(s)
         if s == '' then return nil else return s end
       end
@@ -166,13 +176,44 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
       if h == nil then return nil end
       for l in h:lines() do
         l = string.gsub(l, '\r+$', '')
-        if string.sub(l, 1, 5) == 'home=' then
+        s = string.sub(l, 1, 5)
+        if s == 'name=' then
           s = string.sub(l, 6, -1)
           break
         end
       end
       h:close()
-      return s
+      if FieldIndex == 7 then
+        return s
+      elseif FieldIndex == 4 then
+        s = SysUtils.ExtractFilePath(f)
+        c = string.len(s)
+        f = string.sub(FileName, 1, c)
+        if s == f then
+          s = string.sub(FileName, c + 1, -5)
+          return string.gsub(s, SysUtils.PathDelim, ':')
+        end
+      end
+    end
+  end
+  return nil
+end
+
+function GetMonthNumber(s)
+  s = LazUtf8.LowerCase(LazUtf8.Copy(s, 1, 8))
+  if (s == "červenec") or (s == "července") then return 7 end
+  s = LazUtf8.Copy(s, 1, 6)
+  if (s == "červen") or (s == "června") then return 6 end
+  s = LazUtf8.Copy(s, 1, 4)
+  for i = 1, 12 do
+    for j = 1, #month1[i] do
+      if s == month1[i][j] then return i end
+    end
+  end
+  s = LazUtf8.Copy(s, 1, 3)
+  for i = 1, 12 do
+    for j = 1, #month2[i] do
+      if s == month2[i][j] then return i end
     end
   end
   return nil
