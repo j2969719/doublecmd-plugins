@@ -1,5 +1,5 @@
 -- djvuwdx.lua
--- 2019.08.12
+-- 2020.03.24
 --
 -- Getting some information from DjVu files and searching text
 -- Fields:
@@ -68,13 +68,25 @@ function ContentGetDetectString()
 end
 
 function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
+  if FieldIndex >= #fields then return nil end
+  local at = SysUtils.FileGetAttr(FileName)
+  if (at < 0) or (math.floor(at / 0x00000010) % 2 ~= 0) then return nil end
+  local e = string.lower(SysUtils.ExtractFileExt(FileName))
+  if (e ~= '.djvu') and (e ~= '.djv') then return nil end
+  local h = io.open(FileName, 'rb')
+  if h == nil then return nil end
+  local bs = h:read(15)
+  h:close()
+  -- 41 54 26 54 46 4F 52 4D ?? ?? ?? ?? 44 4A 56
+  e = string.sub(bs, 1, 8) .. string.sub(bs, 13, 15)
+  if e ~= 'AT&TFORMDJV' then return nil end
   if FieldIndex == 0 then
     local h = io.popen('djvused -e n "' .. FileName .. '"')
     if not h then return nil end
-    local num = h:read("*a")
+    local n = h:read("*a")
     h:close()
-    num = string.match(num, "(%d+)")
-    if string.len(num) >= 1 then return num end
+    n = string.match(n, "(%d+)")
+    if (n ~= nil) and (string.len(n) >= 1) then return tonumber(n) end
   elseif FieldIndex == 1 then
     local r = false
     if UnitIndex == 0 then
