@@ -1,5 +1,5 @@
 -- ziminfowdx.lua (cross-platform)
--- 2020.03.24
+-- 2020.03.25
 --[[
 Save as UTF-8 without BOM!
 
@@ -172,39 +172,27 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
         s = SysUtils.ExtractFileName(s)
         if s == '' then return nil else return s end
       end
-      local sn, sh
-      c = 0
       local h = io.open(f, 'r')
       if h == nil then return nil end
       for l in h:lines() do
         l = string.gsub(l, '\r+$', '')
-        s = string.sub(l, 1, 5)
-        if s == 'name=' then
-          sn = string.sub(l, 6, -1)
-          c = c + 1
-        elseif s == 'home=' then
-          sh = string.sub(l, 6, -1)
-          c = c + 1
+        if string.sub(l, 1, 5) == 'name=' then
+          s = string.sub(l, 6, -1)
+          break
         end
-        if c == 2 then break end
       end
       h:close()
       if FieldIndex == 7 then
-        return sn
+        return s
       elseif FieldIndex == 4 then
         s = SysUtils.ExtractFilePath(f)
         c = string.len(s)
         f = string.sub(FileName, 1, c)
         if s == f then
-          if sh == nil then sh = 'Home' end
           s = string.sub(FileName, c + 1, -5)
-          c = string.find(s, SysUtils.PathDelim, 1, true)
-          if c == nil then
-            return sh
+          if string.find(s, SysUtils.PathDelim, 1, true) == nil then
+            return s
           else
-            if string.sub(s, 1, c - 1) ~= sh then
-              s = sh .. ':' .. string.sub(s, c + 1, -1)
-            end
             return string.gsub(s, SysUtils.PathDelim, ':')
           end
         end
