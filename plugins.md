@@ -89,6 +89,9 @@ Checking: binary or Unicode text file (encoding UTF-8, UTF-16 or UTF-32 and byte
 - [caseduplwdx.lua](plugins/wdx/scripts/caseduplwdx.lua)<br>
 Search for duplicates with the same name but with a different case.
 
+- [checkfilenamewdx.lua](plugins/wdx/scripts/checkfilenamewdx.lua) *(cross platform)*<br>
+Check filename limitations and recommendations, path lenght and other, see description in the beginning of script.
+
 - [crapxmlwdx.lua](plugins/wdx/scripts/crapxmlwdx.lua)<br>
 Getting some information from FB2 files ([more complete alternative](https://github.com/doublecmd/plugins/tree/master/wdx/fb2wdx)).
 
