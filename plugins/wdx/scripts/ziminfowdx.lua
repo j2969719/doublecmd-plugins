@@ -91,7 +91,7 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
       if rn == false then
         if l == 'Content-Type: text/x-zim-wiki' then rn = true else break end
       else
-        if l == '' then
+        if (l == '') and (re == false) then
           re = true
         else
           if re == true then
@@ -140,7 +140,7 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
     if body[2] == nil then return nil end
     local dt = {}
     local s
-    dt.day, s, dt.year= string.match(body[2], '[^ ]+ [^ ]+ (%d+) ([^ ]+) (%d+)')
+    dt.day, s, dt.year= string.match(body[2], '^[^ ]+ [^ ]+ (%d+) ([^ ]+) (%d+)$')
     if dt.day == nil then return nil end
     for k, v in pairs(dt) do dt[k] = tonumber(v) end
     dt.month = GetMonthNumber(s)
@@ -172,26 +172,41 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
         s = SysUtils.ExtractFileName(s)
         if s == '' then return nil else return s end
       end
+      local sn, sh
+      c = 0
       local h = io.open(f, 'r')
       if h == nil then return nil end
       for l in h:lines() do
         l = string.gsub(l, '\r+$', '')
         s = string.sub(l, 1, 5)
         if s == 'name=' then
-          s = string.sub(l, 6, -1)
-          break
+          sn = string.sub(l, 6, -1)
+          c = c + 1
+        elseif s == 'home=' then
+          sh = string.sub(l, 6, -1)
+          c = c + 1
         end
+        if c == 2 then break end
       end
       h:close()
       if FieldIndex == 7 then
-        return s
+        return sn
       elseif FieldIndex == 4 then
         s = SysUtils.ExtractFilePath(f)
         c = string.len(s)
         f = string.sub(FileName, 1, c)
         if s == f then
+          if sh == nil then sh = 'Home' end
           s = string.sub(FileName, c + 1, -5)
-          return string.gsub(s, SysUtils.PathDelim, ':')
+          c = string.find(s, SysUtils.PathDelim, 1, true)
+          if c == nil then
+            return sh
+          else
+            if string.sub(s, 1, c - 1) ~= sh then
+              s = sh .. ':' .. string.sub(s, c + 1, -1)
+            end
+            return string.gsub(s, SysUtils.PathDelim, ':')
+          end
         end
       end
     end
