@@ -80,8 +80,10 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
   -- 41 54 26 54 46 4F 52 4D ?? ?? ?? ?? 44 4A 56
   e = string.sub(bs, 1, 8) .. string.sub(bs, 13, 15)
   if e ~= 'AT&TFORMDJV' then return nil end
+  -- Escape `
+  local fn = string.gsub(FileName, '`', '\\`')
   if FieldIndex == 0 then
-    local h = io.popen('djvused -e n "' .. FileName .. '"')
+    local h = io.popen('djvused -e n "' .. fn .. '"')
     if not h then return nil end
     local n = h:read("*a")
     h:close()
@@ -91,7 +93,7 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
     local r = false
     if UnitIndex == 0 then
       local c = 1
-      local h = io.popen('djvused -e dump "' .. FileName .. '"')
+      local h = io.popen('djvused -e dump "' .. fn .. '"')
       if not h then return nil end
       for l in h:lines() do
         if (string.find(l, "^%s*NAVM %[", 1) ~= nil) then
@@ -110,7 +112,7 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
       else
         return nil
       end
-      local h = io.popen('djvused -e dump "' .. FileName .. '"')
+      local h = io.popen('djvused -e dump "' .. fn .. '"')
       if not h then return nil end
       for l in h:lines() do
         if (string.find(l, pat, 1) ~= nil) then
@@ -123,7 +125,7 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
     return r
   elseif FieldIndex == 2 then
     if filename ~= FileName then
-      local h = io.popen('djvused -e print-meta -u "' .. FileName .. '"')
+      local h = io.popen('djvused -e print-meta -u "' .. fn .. '"')
       if not h then return nil end
       md = h:read("*a")
       h:close()
@@ -143,7 +145,7 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
     else
       return nil
     end
-    local h = io.popen('djvused -e ' .. e .. ' -u "' .. FileName .. '"')
+    local h = io.popen('djvused -e ' .. e .. ' -u "' .. fn .. '"')
     if not h then return nil end
     local out = h:read("*a")
     h:close()
