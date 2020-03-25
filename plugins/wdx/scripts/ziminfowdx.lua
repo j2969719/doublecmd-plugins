@@ -147,7 +147,7 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
     if dt.month == nil then return nil end
     dt.hour, dt.min, dt.sec = 0, 0, 1
     return os.date('%Y-%m-%d', os.time(dt))
-  elseif (FieldIndex >= 4) or (FieldIndex <= 7) then
+  elseif (FieldIndex > 3) and (FieldIndex < 8) then
     local s = SysUtils.ExtractFileDir(FileName)
     local f = s .. SysUtils.PathDelim .. 'notebook.zim'
     local c = 0
@@ -166,36 +166,32 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
       end
     end
     if f ~= nil then 
-      if FieldIndex == 5 then
-        return f
-      elseif FieldIndex == 6 then
+      if FieldIndex == 6 then
         s = SysUtils.ExtractFileName(s)
         if s == '' then return nil else return s end
-      end
-      local h = io.open(f, 'r')
-      if h == nil then return nil end
-      for l in h:lines() do
-        l = string.gsub(l, '\r+$', '')
-        if string.sub(l, 1, 5) == 'name=' then
-          s = string.sub(l, 6, -1)
-          break
-        end
-      end
-      h:close()
-      if FieldIndex == 7 then
-        return s
       elseif FieldIndex == 4 then
         s = SysUtils.ExtractFilePath(f)
         c = string.len(s)
         f = string.sub(FileName, 1, c)
         if s == f then
           s = string.sub(FileName, c + 1, -5)
-          if string.find(s, SysUtils.PathDelim, 1, true) == nil then
-            return s
-          else
-            return string.gsub(s, SysUtils.PathDelim, ':')
+          return string.gsub(s, SysUtils.PathDelim, ':')
+        end
+      elseif FieldIndex == 5 then
+        return f
+      elseif FieldIndex == 7 then
+        s = ''
+        local h = io.open(f, 'r')
+        if h == nil then return nil end
+        for l in h:lines() do
+          l = string.gsub(l, '\r+$', '')
+          if string.sub(l, 1, 5) == 'name=' then
+            s = string.sub(l, 6, -1)
+            break
           end
         end
+        h:close()
+        if s == '' then return nil else return s end
       end
     end
   end
