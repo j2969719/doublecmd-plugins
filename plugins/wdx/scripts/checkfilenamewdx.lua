@@ -106,35 +106,47 @@ end
 function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
   if FieldIndex > 6 then return nil end
   --if flags == 1 then return nil end; -- Исключаем вывод для диалога свойств (CONTENT_DELAYIFSLOW)
+  local t = string.sub(FileName, -3, -1)
+  if (t == '/..') or (t == '\\..') then return nil end
+  t = string.sub(t, 2, 3)
+  if (t == '/.') or (t == '\\.') then return nil end
   if (FieldIndex >= 0) and (FieldIndex <= 3) then
     local fn = SysUtils.ExtractFileName(FileName)
     local afn = GetTableUTF8Char(fn)
-    local n
+    local afc = {}
+    local n = 1
+    table.sort(afn)
     for i = 1, #afn do
-      if string.len(afn[i]) == 1 then
-        n = string.byte(afn[i])
+      if afn[i] ~= afn[i + 1] then
+        afc[n] = afn[i]
+        n = n + 1
+      end
+    end
+    for i = 1, #afc do
+      if string.len(afc[i]) == 1 then
+        n = string.byte(afc[i])
         -- 0-9, A-Z, a-z
         if (n > 47) and (n < 58) then
-          afn[i] = ""
+          afc[i] = ""
         elseif (n > 64) and (n < 91) then
-          afn[i] = ""
+          afc[i] = ""
         elseif (n > 96) and (n < 123) then
-          afn[i] = ""
+          afc[i] = ""
         else
           -- Additional characters
-          if (afn[i] == " ") or (afn[i] == "-") or (afn[i] == ",") or (afn[i] == ".") or (afn[i] == "!") or (afn[i] == "(") or (afn[i] == ")") or (afn[i] == "[") or (afn[i] == "]") or (afn[i] == "'") or (afn[i] == "_") then
-            afn[i] = ""
+          if (afc[i] == " ") or (afc[i] == "-") or (afc[i] == ",") or (afc[i] == ".") or (afc[i] == "!") or (afc[i] == "(") or (afc[i] == ")") or (afc[i] == "[") or (afc[i] == "]") or (afc[i] == "'") or (afc[i] == "_") then
+            afc[i] = ""
           end
         end
       end
     end
     if (FieldIndex == 2) or (FieldIndex == 3) then
       -- Cyrillic
-      for i = 1, #afn do
-        if string.len(afn[i]) > 1 then
+      for i = 1, #afc do
+        if string.len(afc[i]) > 1 then
           for j = 1, #cyr do
-            if afn[i] == cyr[j] then
-              afn[i] = ""
+            if afc[i] == cyr[j] then
+              afc[i] = ""
               break
             end
           end
@@ -142,9 +154,9 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
       end
     end
     if math.fmod(FieldIndex, 2) == 0 then
-      return table.concat(afn)
+      return table.concat(afc)
     else
-      return LazUtf8.Length(table.concat(afn))
+      return LazUtf8.Length(table.concat(afc))
     end
   elseif FieldIndex == 4 then
     local fn = SysUtils.ExtractFileName(FileName)
@@ -251,17 +263,7 @@ function GetTableUTF8Char(s)
     end
     j = j + 1
   end
-  table.sort(t)
-  local r = {}
-  j = 1
-  for i = 1, #t do
-    if t[i] ~= t[i + 1] then
-      r[j] = t[i]
-      j = j + 1
-    end
-    if t[i + 1] == nil then break end
-  end
-  return r
+  return t
 end
 
 function GetRelativeToDev(s)
