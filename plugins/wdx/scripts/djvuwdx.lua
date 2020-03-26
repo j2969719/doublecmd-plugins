@@ -1,5 +1,5 @@
 -- djvuwdx.lua
--- 2020.03.24
+-- 2020.03.26
 --
 -- Getting some information from DjVu files and searching text
 -- Fields:
@@ -87,7 +87,7 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
     if not h then return nil end
     local n = h:read("*a")
     h:close()
-    n = string.match(n, "(%d+)")
+    n = string.match(n, "^(%d+)")
     if (n ~= nil) and (string.len(n) >= 1) then return tonumber(n) end
   elseif FieldIndex == 1 then
     local r = false
