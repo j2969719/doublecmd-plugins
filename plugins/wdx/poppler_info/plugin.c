@@ -4,19 +4,17 @@
 #include <string.h>
 #include "wdxplugin.h"
 
-#define _detectstring "EXT=\"PDF\""
-#define _validcontent "application/pdf"
 
-typedef struct _field
+typedef struct sfield
 {
 	char *name;
 	int type;
 	char *unit;
-} FIELD;
+} tfield;
 
-#define fieldcount (sizeof(fields)/sizeof(FIELD))
+#define fieldcount (sizeof(fields)/sizeof(tfield))
 
-FIELD fields[] =
+tfield fields[] =
 {
 	{"Title",			ft_string,	""},
 	{"Author",			ft_string,	""},
@@ -37,16 +35,16 @@ FIELD fields[] =
 	{"Can be copied",		ft_boolean,	""},
 	{"OK to add notes",		ft_boolean,	""},
 	{"OK to fill form",		ft_boolean,	""},
-//	{"Text",			ft_fulltext,	""},
+	{"Text",			ft_fulltext,	""},
 };
 
 static gchar *doc_text = NULL;
 static gsize pos = 0;
 static gsize len = 0;
 
-char* GetDocumentText(PopplerDocument *document)
+static char* GetDocumentText(PopplerDocument *document)
 {
-	gchar *text = "";
+	gchar *text = NULL;
 	gsize index, pages;
 	PopplerPage *ppage;
 	pages = poppler_document_get_n_pages(document);
@@ -54,7 +52,23 @@ char* GetDocumentText(PopplerDocument *document)
 	for (index = 0; index < pages; index++)
 	{
 		ppage = poppler_document_get_page(document, index);
-		text = g_strconcat(text, "\n", poppler_page_get_text(ppage), NULL);
+
+		if (ppage != NULL)
+		{
+			char *pagetext = poppler_page_get_text(ppage);
+
+			if (text != NULL)
+			{
+				char *prevtext = text;
+				text = g_strconcat(prevtext, "\n", pagetext ? pagetext : "", NULL);
+				g_free(prevtext);
+				g_free(pagetext);
+			}
+			else
+				text = pagetext;
+
+			g_object_unref(ppage);
+		}
 	}
 
 	return text;
@@ -83,7 +97,7 @@ int DCPCALL ContentGetSupportedField(int FieldIndex, char* FieldName, char* Unit
 
 int DCPCALL ContentGetDetectString(char* DetectString, int maxlen)
 {
-	g_strlcpy(DetectString, _detectstring, maxlen - 1);
+	g_strlcpy(DetectString, "EXT=\"PDF\"", maxlen - 1);
 	return 0;
 }
 
@@ -92,26 +106,30 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 	gchar *strvalue = NULL;
 	uint64_t timevalue;
 	gboolean vempty = FALSE;
-	gboolean tmpbool = FALSE;
 	GError *err = NULL;
 	PopplerDocument *document = NULL;
 	GFile *gfile = NULL;
 
 	if (FieldIndex != 19 || (FieldIndex == 19 && UnitIndex == 0))
 	{
-		gchar* content_type = g_content_type_guess(FileName, NULL, 0, &tmpbool);
+		gfile = g_file_new_for_path(FileName);
 
-		if (!g_content_type_equals(content_type, _validcontent))
+		GFileInfo *fileinfo = g_file_query_info(gfile, G_FILE_ATTRIBUTE_STANDARD_CONTENT_TYPE, G_FILE_QUERY_INFO_NOFOLLOW_SYMLINKS, NULL, NULL);
+
+		if (!fileinfo)
 		{
-			g_free(content_type);
+			g_object_unref(gfile);
 			return ft_fileerror;
 		}
 
-		gfile = g_file_new_for_path(FileName);
-		document = poppler_document_new_from_gfile(gfile, NULL, NULL, &err);
+		const gchar* content_type = g_file_info_get_attribute_string(fileinfo, G_FILE_ATTRIBUTE_STANDARD_CONTENT_TYPE);
 
-		g_free(content_type);
+		if (g_content_type_equals(content_type, "application/pdf"))
+		{
+			document = poppler_document_new_from_gfile(gfile, NULL, NULL, &err);
+		}
 
+		g_object_unref(fileinfo);
 
 		if (gfile != NULL)
 			g_object_unref(G_OBJECT(gfile));
@@ -291,9 +309,15 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 		if (UnitIndex == 0)
 		{
 			doc_text = GetDocumentText(document);
-			g_strlcpy(FieldValue, doc_text, maxlen - 1);
-			len = strlen(doc_text);
-			pos = maxlen - 2;
+
+			if (doc_text != NULL)
+			{
+				g_strlcpy(FieldValue, doc_text, maxlen - 1);
+				len = strlen(doc_text);
+				pos = maxlen - 2;
+			}
+			else
+				vempty = TRUE;
 		}
 		else if (UnitIndex == -1)
 		{
