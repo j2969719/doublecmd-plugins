@@ -15,7 +15,7 @@ local fields = {
     {"Piece Size",          8,  "%s%sPiece%sSize:%s([^\n]+)"}, 
     {"Total Size",          8,  "%s%sTotal%sSize:%s([^\n]+)"}, 
     {"Privacy",             8,      "%s%sPrivacy:%s([^\n]+)"}, 
-    {"Piece Size (bytes)",  8,  "%s%sPiece%sSize:%s([^\n]+)"}, 
+    {"Piece Size (bytes)",  2,  "%s%sPiece%sSize:%s([^\n]+)"}, 
     {"Total Size (bytes)",  2,  "%s%sTotal%sSize:%s([^\n]+)"}, 
 }
 
