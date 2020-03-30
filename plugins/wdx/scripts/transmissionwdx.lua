@@ -10,13 +10,14 @@ local fields = {
     {"Hash",                8,         "%s%sHash:%s([^\n]+)"}, 
     {"Created by",          8,  "%s%sCreated%sby:%s([^\n]+)"}, 
     {"Created on",          8,  "%s%sCreated%son:%s([^\n]+)"}, 
+    {"Created on (date)",  10,  "%s%sCreated%son:%s([^\n]+)"}, 
     {"Comment",             8,      "%s%sComment:%s([^\n]+)"}, 
     {"Piece Count",         2, "%s%sPiece%sCount:%s([^\n]+)"}, 
     {"Piece Size",          8,  "%s%sPiece%sSize:%s([^\n]+)"}, 
-    {"Total Size",          8,  "%s%sTotal%sSize:%s([^\n]+)"}, 
-    {"Privacy",             8,      "%s%sPrivacy:%s([^\n]+)"}, 
     {"Piece Size (bytes)",  2,  "%s%sPiece%sSize:%s([^\n]+)"}, 
+    {"Total Size",          8,  "%s%sTotal%sSize:%s([^\n]+)"}, 
     {"Total Size (bytes)",  2,  "%s%sTotal%sSize:%s([^\n]+)"}, 
+    {"Privacy",             8,      "%s%sPrivacy:%s([^\n]+)"}, 
 }
 
 local mults = {
@@ -72,7 +73,7 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
     if (output ~= nil) and (fields[FieldIndex + 1][3] ~= nil) then
         result = output:match(fields[FieldIndex + 1][3]);
         if (result ~= nil) then
-            if (FieldIndex > 8) then
+            if (fields[FieldIndex + 1][1]:find("(bytes)") ~= nil) then
                 local mult = result:match("%w+$");
                 local size = result:gsub("[^%d%.]", '');
                 size = tonumber(size);
@@ -84,13 +85,22 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
                 else
                     result = nil;
                 end
-            elseif (FieldIndex == 3) then
+            elseif (fields[FieldIndex + 1][1]:find("Created on")) then
                 local month, day, dtime, year = result:match("%w+%s+(%w+)%s+(%d+)%s+([%d:]+)%s+(%d+)");
                 if (months[month] ~= nil) and (year ~= nil)  and (day ~= nil) and (dtime ~= nil) then
-                    if (tonumber(day) < 10) then
-                        day = '0' .. day;
+                    if (fields[FieldIndex + 1][2] ~= 10) then
+                        if (tonumber(day) < 10) then
+                            day = '0' .. day;
+                        end
+                        result = year .. '.' .. months[month] .. '.' .. day .. ' ' .. dtime;
+                    else
+                        local dhour, dmin, dsec = dtime:match("(%d+):(%d+):(%d+)");
+                        local unixtime = os.time{year = tonumber(year), month = tonumber(months[month]), 
+                                         day = tonumber(day), hour = tonumber(dhour), min = tonumber(dmin), sec = tonumber(dsec)};
+                        result = unixtime * 10000000 + 116444736000000000;
                     end
-                    result = year .. '.' .. months[month] .. '.' .. day .. ' ' .. dtime;
+                elseif (fields[FieldIndex + 1][2] == 10) then
+                    return nil;
                 end
             end
         end
