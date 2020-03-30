@@ -73,8 +73,8 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
         result = output:match(fields[FieldIndex + 1][3]);
         if (result ~= nil) then
             if (FieldIndex > 8) then
-                mult = result:match("%w+$");
-                size = result:gsub("[^%d%.]", '');
+                local mult = result:match("%w+$");
+                local size = result:gsub("[^%d%.]", '');
                 size = tonumber(size);
                 if (mult == nil) then
                     result = size;
@@ -85,11 +85,11 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
                     result = nil;
                 end
             elseif (FieldIndex == 3) then
-                month, day, dtime, year = result:match("%w+%s+(%w+)%s+(%d+)%s+([%d:]+)%s+(%d+)");
-                if (tonumber(day) < 10) then
-                    day = '0' .. day;
-                end
+                local month, day, dtime, year = result:match("%w+%s+(%w+)%s+(%d+)%s+([%d:]+)%s+(%d+)");
                 if (months[month] ~= nil) and (year ~= nil)  and (day ~= nil) and (dtime ~= nil) then
+                    if (tonumber(day) < 10) then
+                        day = '0' .. day;
+                    end
                     result = year .. '.' .. months[month] .. '.' .. day .. ' ' .. dtime;
                 end
             end
