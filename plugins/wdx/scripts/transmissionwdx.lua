@@ -6,7 +6,7 @@ local output = ''
 local filename = ''
 
 local fields = {
-    {"Name",                8,         "%s%sName:%s([^\n]+)"},      -- name, field type, pattern
+    {"Name",                8,         "%s%sName:%s([^\n]+)"},  -- name, field type, pattern
     {"Hash",                8,         "%s%sHash:%s([^\n]+)"}, 
     {"Created by",          8,  "%s%sCreated%sby:%s([^\n]+)"}, 
     {"Created on",          8,  "%s%sCreated%son:%s([^\n]+)"}, 
@@ -20,15 +20,15 @@ local fields = {
 }
 
 local mults = {
-    ["kB"]  =  math.pow(10, 3),  
-    ["KB"]  =  math.pow(10, 3),  
-    ["MB"]  =  math.pow(10, 6),  
-    ["GB"]  =  math.pow(10, 9),  
-    ["TB"]  = math.pow(10, 12),  
-    ["KiB"] =  math.pow(2, 10),  
-    ["MiB"] =  math.pow(2, 20),  
-    ["GiB"] =  math.pow(2, 30),  
-    ["TiB"] =  math.pow(2, 40),  
+    ["kB"]  =  math.pow(10, 3), 
+    ["KB"]  =  math.pow(10, 3), 
+    ["MB"]  =  math.pow(10, 6), 
+    ["GB"]  =  math.pow(10, 9), 
+    ["TB"]  = math.pow(10, 12), 
+    ["KiB"] =  math.pow(2, 10), 
+    ["MiB"] =  math.pow(2, 20), 
+    ["GiB"] =  math.pow(2, 30), 
+    ["TiB"] =  math.pow(2, 40), 
 }
 
 local months = {
@@ -75,18 +75,22 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
             if (FieldIndex > 8) then
                 mult = result:match("%w+$");
                 size = result:gsub("[^%d%.]", '');
-                size = tonumber(size)
-                if (mults[mult] ~= nil) then
-                    size = size * mults[mult];  
+                size = tonumber(size);
+                if (mult == nil) then
+                    result = size;
+                elseif (mults[mult] ~= nil) then
+                    size = size * mults[mult];
+                    result = size;
+                else
+                    result = nil;
                 end
-                result = size;
             elseif (FieldIndex == 3) then
                 month, day, dtime, year = result:match("%w+%s+(%w+)%s+(%d+)%s+([%d:]+)%s+(%d+)");
                 if (tonumber(day) < 10) then
-                    day = '0' .. day
+                    day = '0' .. day;
                 end
                 if (months[month] ~= nil) and (year ~= nil)  and (day ~= nil) and (dtime ~= nil) then
-                    result = year .. '-' .. months[month] .. '-' .. day .. ' ' .. dtime;
+                    result = year .. '.' .. months[month] .. '.' .. day .. ' ' .. dtime;
                 end
             end
         end
