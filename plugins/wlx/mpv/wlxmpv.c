@@ -4,8 +4,6 @@
 #include <dlfcn.h>
 #include <limits.h>
 #include <signal.h>
-#include <sys/types.h>
-#include <sys/wait.h>
 #include <string.h>
 #include "wlxplugin.h"
 
@@ -170,10 +168,8 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 
 void DCPCALL ListCloseWindow(HWND ListWin)
 {
-	int status;
 	pid_t mpv_pid = (pid_t)GPOINTER_TO_INT(g_object_get_data(G_OBJECT(ListWin), "pid"));
 	kill(mpv_pid, SIGTERM);
-	g_print("ListCloseWindow: waitpid=%d\n", waitpid(mpv_pid, &status, 0));
 	gtk_widget_destroy(GTK_WIDGET(ListWin));
 }
 
