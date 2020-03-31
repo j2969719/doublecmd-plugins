@@ -127,17 +127,12 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 	GtkWidget *scroll;
 	GtkWidget *tView;
 	GtkSourceBuffer *tBuf;
-	gchar *tmp, *command, *buf1;
+	gchar *tmp, *buf1;
 
-	command = g_strdup_printf("\"%s\" \"%s\"", script_path, FileToLoad);
+	gchar *argv[] = { script_path, FileToLoad, NULL };
 
-	if (!g_spawn_command_line_sync(command, &buf1, NULL, NULL, NULL))
-	{
-		g_free(command);
+	if (!g_spawn_sync(NULL, argv, NULL, G_SPAWN_SEARCH_PATH, NULL, NULL, &buf1, NULL, NULL, NULL))
 		return NULL;
-	}
-
-	g_free(command);
 
 	if (!buf1)
 		return NULL;
