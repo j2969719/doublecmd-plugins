@@ -211,6 +211,9 @@ function getval(str, fieldtype)
         if (fieldtype == ft_float) then
             result = result:gsub(",", "%.");
             result = result:gsub("[^%d%.]", '');
+            if (tonumber(result) == nil) then
+                result = result:gsub("%.", ',');
+            end
             return tonumber(result);
         elseif (fieldtype == ft_number) then
             result = result:match("%d+");

@@ -78,8 +78,18 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
         if (result ~= nil) then
             if (fields[FieldIndex + 1][1]:find("(bytes)") ~= nil) then
                 local mult = result:match("%w+$");
-                local size = result:gsub("[^%d%.]", '');
-                size = tonumber(size);
+                local sizestr = result:gsub("[^%d%.]", '');
+                if (sizestr == nil) then
+                    return nil;
+                end
+                size = tonumber(sizestr);
+                if (size == nil) then
+                    sizestr = sizestr:gsub("%.", ',');
+                    size = tonumber(sizestr);
+                    if (size == nil) then
+                        return nil;
+                    end
+                end
                 if (mult == nil) then
                     result = size;
                 elseif (mults[mult] ~= nil) then
