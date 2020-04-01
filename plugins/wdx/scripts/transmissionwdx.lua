@@ -52,7 +52,11 @@ local months = {
 
 function ContentGetSupportedField(FieldIndex)
     if (fields[FieldIndex + 1] ~= nil) then
-        return fields[FieldIndex + 1][1], "", fields[FieldIndex + 1][2];
+        if (fields[FieldIndex + 1][1]:find("(bytes)") ~= nil) then
+            return fields[FieldIndex + 1][1], "bytes|K|M|G|T", fields[FieldIndex + 1][2];
+        else
+            return fields[FieldIndex + 1][1], '', fields[FieldIndex + 1][2];
+        end
     end
     return '', '', 0; -- ft_nomorefields
 end
@@ -82,7 +86,7 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
                 if (sizestr == nil) then
                     return nil;
                 end
-                size = tonumber(sizestr);
+                local size = tonumber(sizestr);
                 if (size == nil) then
                     sizestr = sizestr:gsub("%.", ',');
                     size = tonumber(sizestr);
@@ -97,6 +101,17 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
                     result = size;
                 else
                     result = nil;
+                end
+                if (UnitIndex > 0) and (result ~= nil) then
+                    if (UnitIndex == 1) then
+                        result = size / mults["KiB"];
+                    elseif (UnitIndex == 2) then
+                        result = size / mults["MiB"];
+                    elseif (UnitIndex == 3) then
+                        result = size / mults["GiB"];
+                    elseif (UnitIndex == 4) then
+                        result = size / mults["TiB"];
+                    end
                 end
             elseif (fields[FieldIndex + 1][1]:find("Created on") ~= nil) then
                 local month, day, dtime, year = result:match("%w+%s+(%w+)%s+(%d+)%s+([%d:]+)%s+(%d+)");
