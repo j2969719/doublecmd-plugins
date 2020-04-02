@@ -14,9 +14,9 @@ local fields = {
     {"Comment",             8,                  "%s%sComment:%s([^\n]+)"}, 
     {"Piece Count",         2,             "%s%sPiece%sCount:%s([^\n]+)"}, 
     {"Piece Size",          8,              "%s%sPiece%sSize:%s([^\n]+)"}, 
-    {"Piece Size (bytes)",  2,              "%s%sPiece%sSize:%s([^\n]+)"}, 
+    {"Piece Size (bytes)",  3,              "%s%sPiece%sSize:%s([^\n]+)"}, 
     {"Total Size",          8,              "%s%sTotal%sSize:%s([^\n]+)"}, 
-    {"Total Size (bytes)",  2,              "%s%sTotal%sSize:%s([^\n]+)"}, 
+    {"Total Size (bytes)",  3,              "%s%sTotal%sSize:%s([^\n]+)"}, 
     {"Privacy",             8,                  "%s%sPrivacy:%s([^\n]+)"}, 
     {"Trackes",             9, "\nTRACKERS\n\n%s%s(.-)\n[WBDFILES]+\n\n"}, 
     {"Webseeds",            9,       "\nWEBSEEDS\n\n%s%s(.+)\nFILES\n\n"}, 
@@ -112,6 +112,7 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
                     elseif (UnitIndex == 4) then
                         result = size / mults["TiB"];
                     end
+                    result = math.floor(result * 10 + 0.5) / 10;
                 end
             elseif (fields[FieldIndex + 1][1]:find("Created on") ~= nil) then
                 local month, day, dtime, year = result:match("%w+%s+(%w+)%s+(%d+)%s+([%d:]+)%s+(%d+)");
