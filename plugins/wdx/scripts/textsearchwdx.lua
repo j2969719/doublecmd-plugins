@@ -4,6 +4,7 @@ local commands = {
     ['djv' ] = 'djvused -e print-pure-txt -u "$FILE"', 
     ['djvu'] = 'djvused -e print-pure-txt -u "$FILE"', 
     ['epub'] = 'epub2txt "$FILE"', 
+    ['fb2' ] = 'ebook2text "$FILE"', 
     
     ['doc' ] = 'catdoc -w "$FILE"', 
     ['rtf' ] = 'catdoc -w "$FILE"', 

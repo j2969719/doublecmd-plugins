@@ -65,6 +65,7 @@ case "${filetype}" in
 		einfo -v "$file"
 		;;
 	[Ff][Bb][2])
+		ebook2text "$file" || \
 		xsltproc $COMMANDER_PATH/utils/fb2/FB2_2_txt_ru.xsl "$file" | iconv -f "windows-1251" -t "UTF-8"
 		;;
 	[Gg][Zz]|[Xx][Zz]|[Bb][Zz]2|[Ll][Zz][Mm][Aa]|[Tt][Xx][Zz]|[Tt][Gg][Zz]|[Tt][Bb][Zz]|[Tt][Ll][Zz])

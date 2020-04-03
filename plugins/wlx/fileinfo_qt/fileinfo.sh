@@ -121,6 +121,7 @@ case "${filetype}" in
 			/g' | sed 's/<[^<]*>//g' | grep -v '^[[:space:]]*$' | sed G
 		;;
 	[Ff][Bb][2])
+		ebook2text "$file" || \
 		xsltproc $COMMANDER_PATH/scripts/FB2_2_txt_ru.xsl "$file" |  iconv -f "windows-1251" -t "UTF-8"
 		;;
 	[Ii][Ss][Oo])
