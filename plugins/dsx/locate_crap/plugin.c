@@ -52,11 +52,18 @@ void DCPCALL StartSearch(int PluginNr, tDsxSearchRecord* pSearchRec)
 	gint fp;
 	GSpawnFlags flags = G_SPAWN_SEARCH_PATH;
 	GError *err = NULL;
+	gboolean dirsonly = FALSE, exludedirs = FALSE;
 
 	gStop = FALSE;
 
 	if (system("locate -V") == 0)
 	{
+		if (g_strrstr(pSearchRec->AttribStr, "d+") != NULL)
+			dirsonly = TRUE;
+
+		if (g_strrstr(pSearchRec->AttribStr, "d-") != NULL)
+			exludedirs = TRUE;
+
 		command = g_strdup_printf("locate -e -i -b '%s'", pSearchRec->FileMask);
 		gUpdateStatus(PluginNr, command, 0);
 
@@ -86,7 +93,17 @@ void DCPCALL StartSearch(int PluginNr, tDsxSearchRecord* pSearchRec)
 					{
 
 						line[term] = '\0';
-						gAddFileProc(PluginNr, line);
+
+						if (dirsonly || exludedirs)
+						{
+							gboolean isdir = g_file_test(line, G_FILE_TEST_IS_DIR);
+
+							if ((dirsonly && isdir) || (exludedirs && !isdir))
+								gAddFileProc(PluginNr, line);
+						}
+						else
+							gUpdateStatus(PluginNr, line, i++);
+
 						gUpdateStatus(PluginNr, line, i++);
 						g_free(line);
 					}
