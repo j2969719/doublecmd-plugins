@@ -141,6 +141,10 @@ Returns part of file name for sorting (getting title, volume, chapter, etc).
 - [filenamereplacewdx.lua](plugins/wdx/scripts/filenamereplacewdx.lua) *(cross platform)*<br>
 Returns new file name after replacing total or part of file name by the list (see and edit `RplFiles` in the beginning of script).
 
+- [filetimeindirwdx.lua](plugins/wdx/scripts/filetimeindirwdx.lua) *(cross platform)*<br>
+Returns date and time of oldest and newest files in directory. See details in the beginning of script.<br>
+For columns set only!
+
 - [fixfilenamewdx.lua](plugins/wdx/scripts/fixfilenamewdx.lua)<br>
 Fixing file name encoding with `iconv`.
 
