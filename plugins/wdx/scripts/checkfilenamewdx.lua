@@ -1,5 +1,5 @@
 -- checkfilenamewdx.lua (cross-platform)
--- 2020.03.25
+-- 2020.04.09
 --[[
 Save as UTF-8 without BOM!
 
@@ -22,7 +22,7 @@ Check limitations and recommendations, list:
 - reserved characters;
 - forbidden characters: numerical codes are in the range 0 - 31 (0x00 - 0x1f);
 - reserved names (name or base name);
-- name with a space in the beginning or in the end;
+- name with a space in the end;
 - name with a dot in the end.
 Returns "Good" if all is good or string with error message(s).
 
@@ -196,7 +196,6 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
         end
       end
     end
-    if afn[1] == ' ' then r = r .. ' Space in the beginning!' end
     if afn[#afn] == ' ' then
       r = r .. ' Space in the end!'
     elseif afn[#afn] == '.' then

@@ -1,5 +1,5 @@
 -- MakeDir.lua (cross-platform)
--- 2020.03.01
+-- 2020.04.09
 --
 -- Creating directories with additional features.
 --[[
@@ -124,10 +124,10 @@ Variables:
 local ba, dn = Dialogs.InputQuery('Make dir(s)', msgl .. '\nEnter name:', false, nm)
 if ba == false then return end
 -- delete trailing space(s)
-dn = string.gsub(dn, '^%s+', '')
 dn = string.gsub(dn, '%s+$', '')
+dn = string.gsub(dn, '^[\r\n\t]+', '')
 dn = string.gsub(dn, '(%s+)([\\/|])', '%2')
-dn = string.gsub(dn, '([\\/|])(%s+)', '%1')
+dn = string.gsub(dn, '([\\/|])([\r\n\t]+)', '%1')
 
 local lst = {}
 local lst2 = {}
