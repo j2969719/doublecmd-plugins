@@ -163,6 +163,9 @@ Examples: search by hex value. Now Double Commander can do it itself.
 - [infilelistwdx.lua](plugins/wdx/scripts/infilelistwdx.lua)<br>
 Search file name in custom list of file names.
 
+- [jpeginfowdx.lua](plugins/wdx/scripts/jpeginfowdx.lua) *(cross platform)*<br>
+Getting some information from JPEG files. See details in the beginning of script.
+
 - [libextractorwdx.lua](plugins/wdx/scripts/libextractorwdx.lua)<br>
 Returns metadata from files. You can see list of fields in `fields` (first column). Requires `extract`.
 
