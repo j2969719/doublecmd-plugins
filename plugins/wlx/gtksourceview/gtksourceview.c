@@ -18,6 +18,8 @@
 #include <string.h>
 #include "wlxplugin.h"
 
+#include <enca.h>
+
 #include <glib/gi18n.h>
 #include <locale.h>
 #define GETTEXT_PACKAGE "plugins"
@@ -27,9 +29,10 @@ EXT=\"CSS\"|EXT=\"SH\"|EXT=\"XML\"|EXT=\"INI\"|EXT=\"DIFF\"|EXT=\"PATCH\"|EXT=\"
 EXT=\"XSL\"|EXT=\"LPR\"|EXT=\"PP\"|EXT=\"LPI\"|EXT=\"LFM\"|EXT=\"LPK\"|EXT=\"DOF\"|EXT=\"DPR\""
 
 GtkWrapMode wrap_mode;
-gchar *font, *style, *ext_pascal, *ext_xml, *ext_ini;
+gchar *font, *style, *ext_pascal, *ext_xml, *ext_ini, *enca_lang;
 gboolean line_num, hcur_line, draw_spaces, no_cursor;
 gint s_tab, p_above, p_below;
+
 
 
 static GtkWidget *getFirstChild(GtkWidget *w)
@@ -106,7 +109,7 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	return gFix;
 }
 
-int DCPCALL ListLoadNext(HWND ParentWin,HWND PluginWin,char* FileToLoad,int ShowFlags)
+int DCPCALL ListLoadNext(HWND ParentWin, HWND PluginWin, char* FileToLoad, int ShowFlags)
 {
 	GtkSourceBuffer *sBuf = g_object_get_data(G_OBJECT(PluginWin), "srcbuf");
 	gtk_text_buffer_set_text(GTK_TEXT_BUFFER(sBuf), "", 0);
@@ -177,7 +180,7 @@ static gboolean open_file(GtkSourceBuffer *sBuf, const gchar *filename)
 
 
 	/* Now load the file from Disk */
-	io = g_io_channel_new_file(filename, "r", &err);
+/*	io = g_io_channel_new_file(filename, "r", &err);
 
 	if (!io)
 	{
@@ -224,7 +227,7 @@ static gboolean open_file(GtkSourceBuffer *sBuf, const gchar *filename)
 		default:
 			g_print("gtksourceview.wlx (%s): %s\n", filename, (err)->message);
 			/* because of error in input we clear already loaded text */
-			gtk_text_buffer_set_text(GTK_TEXT_BUFFER(sBuf), "", 0);
+/*			gtk_text_buffer_set_text(GTK_TEXT_BUFFER(sBuf), "", 0);
 			reading = FALSE;
 			break;
 		}
@@ -233,7 +236,57 @@ static gboolean open_file(GtkSourceBuffer *sBuf, const gchar *filename)
 	g_free(buffer);
 
 	gtk_source_buffer_end_not_undoable_action(sBuf);
-	g_io_channel_unref(io);
+	g_io_channel_unref(io);*/
+
+
+	gsize bytes_read;
+	EncaAnalyser analyser;
+	EncaEncoding encoding;
+
+	if (!g_file_get_contents(filename, &buffer, &bytes_read, &err))
+	{
+		g_print("gtksourcevi1ew.wlx (%s): %s\n", filename, (err)->message);
+		g_error_free(err);
+		return FALSE;
+	}
+	else
+	{
+		if (bytes_read == 0)
+		{
+			g_free(buffer);
+			g_print("gtksourcevi1ew.wlx (%s): %s\n", filename, _("file seems empty"));
+			return FALSE;
+		}
+
+		analyser = enca_analyser_alloc(enca_lang);
+
+		if (analyser)
+		{
+			enca_set_threshold(analyser, 1.38);
+			enca_set_multibyte(analyser, 1);
+			enca_set_ambiguity(analyser, 1);
+			enca_set_garbage_test(analyser, 1);
+			encoding = enca_analyse(analyser, buffer, bytes_read);
+			g_print("%s [%s]\n", _("Encoding:"), enca_charset_name(encoding.charset, ENCA_NAME_STYLE_ICONV));
+
+			if (encoding.charset != 27)
+			{
+				gchar *converted = g_convert_with_fallback(buffer, bytes_read, "UTF-8", enca_charset_name(encoding.charset, ENCA_NAME_STYLE_ICONV), NULL, NULL, &bytes_read, NULL);
+				g_free(buffer);
+				buffer = converted;
+			}
+
+			enca_analyser_free(analyser);
+		}
+
+		if (buffer)
+		{
+			gtk_text_buffer_set_text(GTK_TEXT_BUFFER(sBuf), buffer, bytes_read);
+			g_free(buffer);
+		}
+		else
+			return FALSE;
+	}
 
 	if (err)
 	{
@@ -259,7 +312,7 @@ void DCPCALL ListCloseWindow(HWND ListWin)
 
 void DCPCALL ListGetDetectString(char* DetectString, int maxlen)
 {
-	g_strlcpy(DetectString, _detectstring, maxlen-1);
+	g_strlcpy(DetectString, _detectstring, maxlen - 1);
 }
 
 int DCPCALL ListSearchText(HWND ListWin, char* SearchString, int SearchParameter)
@@ -354,7 +407,7 @@ void DCPCALL ListSetDefaultParams(ListDefaultParamStruct* dps)
 		if (pos)
 			strcpy(pos + 1, cfg_file);
 
-		setlocale (LC_ALL, "");
+		setlocale(LC_ALL, "");
 		bindtextdomain(GETTEXT_PACKAGE, g_strdup_printf("%s/langs", g_path_get_dirname(dlinfo.dli_fname)));
 		textdomain(GETTEXT_PACKAGE);
 	}
@@ -461,6 +514,11 @@ void DCPCALL ListSetDefaultParams(ListDefaultParamStruct* dps)
 		ext_pascal = g_key_file_get_string(cfg, "Override", "Pascal", NULL);
 		ext_xml = g_key_file_get_string(cfg, "Override", "XML", NULL);
 		ext_ini = g_key_file_get_string(cfg, "Override", "INI", NULL);
+
+		enca_lang = g_key_file_get_string(cfg, "Enca", "Lang", NULL);
+
+		if (!enca_lang)
+			enca_lang = "__";
 	}
 
 	g_key_file_free(cfg);
