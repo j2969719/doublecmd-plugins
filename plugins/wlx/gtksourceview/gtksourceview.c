@@ -32,7 +32,7 @@ GtkWrapMode wrap_mode;
 gchar *font, *style, *ext_pascal, *ext_xml, *ext_ini, *enca_lang, *force_charset;
 gboolean line_num, hcur_line, draw_spaces, no_cursor, no_filter;
 gint s_tab, p_above, p_below;
-
+static gchar **encodings = NULL;
 
 
 static GtkWidget *getFirstChild(GtkWidget *w)
@@ -43,8 +43,18 @@ static GtkWidget *getFirstChild(GtkWidget *w)
 	return result;
 }
 
-static gboolean open_file(GtkSourceBuffer *sBuf, const gchar *filename);
+static gboolean open_file(GtkSourceBuffer *sBuf, const gchar *filename, const gchar *enc);
 
+
+static void reload_with_enc_cb(GtkComboBoxText *combo_box, GtkSourceBuffer *sBuf)
+{
+	gtk_text_buffer_set_text(GTK_TEXT_BUFFER(sBuf), "", 0);
+	gchar *encname = gtk_combo_box_text_get_active_text(combo_box);
+	open_file(sBuf, g_object_get_data(G_OBJECT(sBuf), "filename"), encname);
+
+	if (encname)
+		g_free(encname);
+}
 
 HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 {
@@ -56,7 +66,11 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	GtkSourceStyleScheme *scheme;
 	GtkSourceBuffer *sBuf;
 
-	gFix = gtk_vbox_new(FALSE, 5);
+	GtkWidget *hBox;
+	GtkWidget *lInfo;
+	GtkWidget *cEnc;
+
+	gFix = gtk_vbox_new(FALSE, 0);
 	gtk_container_add(GTK_CONTAINER(GTK_WIDGET(ParentWin)), gFix);
 
 	/* Create a Scrolled Window that will contain the GtkSourceView */
@@ -82,15 +96,45 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	if (draw_spaces)
 		gtk_source_view_set_draw_spaces(GTK_SOURCE_VIEW(sView), GTK_SOURCE_DRAW_SPACES_ALL);
 
+
+
+	hBox = gtk_hbox_new(FALSE, 5);
+	lInfo = gtk_label_new(NULL);
+	cEnc = gtk_combo_box_text_new_with_entry();
+
+	gchar **p = encodings;
+	gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(cEnc), _("Default"));
+
+	while (*p)
+	{
+		gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(cEnc), *p);
+		*p++;
+	}
+
+	gtk_editable_set_editable(GTK_EDITABLE(gtk_bin_get_child(GTK_BIN(cEnc))), FALSE);
+	g_signal_connect(G_OBJECT(cEnc), "changed", G_CALLBACK(reload_with_enc_cb), sBuf);
+
+	g_object_set_data(G_OBJECT(sBuf), "info-label", lInfo);
+	g_object_set_data(G_OBJECT(gFix), "combobox", cEnc);
+	gtk_box_pack_start(GTK_BOX(gFix), hBox, FALSE, FALSE, 5);
+	gtk_box_pack_start(GTK_BOX(hBox), lInfo, TRUE, FALSE, 5);
+	gtk_box_pack_end(GTK_BOX(hBox), cEnc, FALSE, FALSE, 5);
+
+
 	/* Attach the GtkSourceView to the scrolled Window */
 	gtk_container_add(GTK_CONTAINER(pScrollWin), GTK_WIDGET(sView));
 	gtk_container_add(GTK_CONTAINER(gFix), pScrollWin);
 
-	if (!open_file(sBuf, FileToLoad))
+	gtk_widget_grab_focus(pScrollWin);
+
+	if (!open_file(sBuf, FileToLoad, NULL))
 	{
 		gtk_widget_destroy(GTK_WIDGET(gFix));
 		return NULL;
 	}
+
+	g_object_set_data(G_OBJECT(sBuf), "filename", g_strdup(FileToLoad));
+
 
 	scheme_manager = gtk_source_style_scheme_manager_get_default();
 	scheme = gtk_source_style_scheme_manager_get_scheme(scheme_manager, style);
@@ -114,13 +158,23 @@ int DCPCALL ListLoadNext(HWND ParentWin, HWND PluginWin, char* FileToLoad, int S
 	GtkSourceBuffer *sBuf = g_object_get_data(G_OBJECT(PluginWin), "srcbuf");
 	gtk_text_buffer_set_text(GTK_TEXT_BUFFER(sBuf), "", 0);
 
-	if (!open_file(sBuf, FileToLoad))
+	gtk_entry_set_text(GTK_ENTRY(gtk_bin_get_child(g_object_get_data(G_OBJECT(PluginWin), "combobox"))), "");
+
+	gchar *filename = g_object_get_data(G_OBJECT(sBuf), "filename");
+
+	if (filename)
+		g_free(filename);
+
+	g_object_set_data(G_OBJECT(sBuf), "filename", g_strdup(FileToLoad));
+
+
+	if (!open_file(sBuf, FileToLoad, NULL))
 		return LISTPLUGIN_ERROR;
 
 	return LISTPLUGIN_OK;
 }
 
-static gboolean open_file(GtkSourceBuffer *sBuf, const gchar *filename)
+static gboolean open_file(GtkSourceBuffer *sBuf, const gchar *filename, const gchar *enc)
 {
 	GtkSourceLanguageManager *lm;
 	GtkSourceLanguage *language = NULL;
@@ -176,7 +230,11 @@ static gboolean open_file(GtkSourceBuffer *sBuf, const gchar *filename)
 		return FALSE;
 
 	gtk_source_buffer_set_language(sBuf, language);
-	g_print("%s [%s]\n", _("Language:"), gtk_source_language_get_name(language));
+	//g_print("%s [%s]\n", _("Language:"), gtk_source_language_get_name(language));
+	GtkLabel *label = g_object_get_data(G_OBJECT(sBuf), "info-label");
+	gchar *info_txt = g_strdup_printf("%s [%s]", _("Language:"), gtk_source_language_get_name(language));
+	gtk_label_set_text(label, info_txt);
+	g_free(info_txt);
 
 
 	/* Now load the file from Disk */
@@ -245,7 +303,7 @@ static gboolean open_file(GtkSourceBuffer *sBuf, const gchar *filename)
 
 	if (!g_file_get_contents(filename, &buffer, &bytes_read, &err))
 	{
-		g_print("gtksourcevi1ew.wlx (%s): %s\n", filename, (err)->message);
+		g_print("gtksourceview.wlx (%s): %s\n", filename, (err)->message);
 		g_error_free(err);
 		return FALSE;
 	}
@@ -254,41 +312,35 @@ static gboolean open_file(GtkSourceBuffer *sBuf, const gchar *filename)
 		if (bytes_read == 0)
 		{
 			g_free(buffer);
-			g_print("gtksourcevi1ew.wlx (%s): %s\n", filename, _("file seems empty"));
+			g_print("gtksourceview.wlx (%s): %s\n", filename, _("file seems empty"));
 			return FALSE;
 		}
 
-		analyser = enca_analyser_alloc(enca_lang);
-
-		if (analyser)
+		if (!enc || g_strcmp0(enc, _("Default")) == 0)
 		{
-			enca_set_threshold(analyser, 1.38);
-			enca_set_multibyte(analyser, 1);
-			enca_set_ambiguity(analyser, 1);
-			enca_set_garbage_test(analyser, 1);
 
-			if (no_filter)
-				enca_set_filtering(analyser, 0);
+			analyser = enca_analyser_alloc(enca_lang);
 
-			encoding = enca_analyse(analyser, (unsigned char*)buffer, (size_t)bytes_read);
-
-			g_print("%s [%s]\n", _("Encoding:"), enca_charset_name(encoding.charset, ENCA_NAME_STYLE_ICONV));
-
-			if (encoding.charset != -1 && encoding.charset != 27)
+			if (analyser)
 			{
-				gchar *converted = g_convert_with_fallback(buffer, bytes_read, "UTF-8", enca_charset_name(encoding.charset, ENCA_NAME_STYLE_ICONV), NULL, NULL, &bytes_read, &err);
+				enca_set_threshold(analyser, 1.38);
+				enca_set_multibyte(analyser, 1);
+				enca_set_ambiguity(analyser, 1);
+				enca_set_garbage_test(analyser, 1);
 
-				if (err)
-					g_print("gtksourcevi1ew.wlx (%s): %s\n", filename, (err)->message);
+				if (no_filter)
+					enca_set_filtering(analyser, 0);
 
-				g_free(buffer);
-				buffer = converted;
-			}
-			else if (encoding.charset == -1)
-			{
-				if (force_charset && force_charset[0] != '\0')
+				encoding = enca_analyse(analyser, (unsigned char*)buffer, (size_t)bytes_read);
+
+				//g_print("%s [%s]\n", _("Encoding:"), enca_charset_name(encoding.charset, ENCA_NAME_STYLE_ICONV));
+				info_txt = g_strdup_printf("%s\t\t%s [%s]", gtk_label_get_text(label), _("Encoding:"), enca_charset_name(encoding.charset, ENCA_NAME_STYLE_ICONV));
+				gtk_label_set_text(label, info_txt);
+				g_free(info_txt);
+
+				if (encoding.charset != -1 && encoding.charset != 27)
 				{
-					gchar *converted = g_convert_with_fallback(buffer, bytes_read, "UTF-8", force_charset, NULL, NULL, &bytes_read, &err);
+					gchar *converted = g_convert_with_fallback(buffer, bytes_read, "UTF-8", enca_charset_name(encoding.charset, ENCA_NAME_STYLE_ICONV), NULL, NULL, &bytes_read, &err);
 
 					if (err)
 						g_print("gtksourcevi1ew.wlx (%s): %s\n", filename, (err)->message);
@@ -296,15 +348,38 @@ static gboolean open_file(GtkSourceBuffer *sBuf, const gchar *filename)
 					g_free(buffer);
 					buffer = converted;
 				}
-				else
+				else if (encoding.charset == -1)
 				{
-					enca_analyser_free(analyser);
-					g_free(buffer);
-					return FALSE;
-				}
-			}
+					if (force_charset && force_charset[0] != '\0')
+					{
+						gchar *converted = g_convert_with_fallback(buffer, bytes_read, "UTF-8", force_charset, NULL, NULL, &bytes_read, &err);
 
-			enca_analyser_free(analyser);
+						if (err)
+							g_print("gtksourcevi1ew.wlx (%s): %s\n", filename, (err)->message);
+
+						g_free(buffer);
+						buffer = converted;
+					}
+					else
+					{
+						enca_analyser_free(analyser);
+						g_free(buffer);
+						return FALSE;
+					}
+				}
+
+				enca_analyser_free(analyser);
+			}
+		}
+		else
+		{
+			gchar *converted = g_convert_with_fallback(buffer, bytes_read, "UTF-8", enc, NULL, NULL, &bytes_read, &err);
+
+			if (err)
+				g_print("gtksourcevi1ew.wlx (%s): %s\n", filename, (err)->message);
+
+			g_free(buffer);
+			buffer = converted;
 		}
 
 		if (buffer)
@@ -328,13 +403,17 @@ static gboolean open_file(GtkSourceBuffer *sBuf, const gchar *filename)
 	gtk_text_buffer_get_start_iter(GTK_TEXT_BUFFER(sBuf), &iter);
 	gtk_text_buffer_place_cursor(GTK_TEXT_BUFFER(sBuf), &iter);
 
-	g_object_set_data_full(G_OBJECT(sBuf), "filename", g_strdup(filename), (GDestroyNotify)g_free);
-
 	return TRUE;
 }
 
 void DCPCALL ListCloseWindow(HWND ListWin)
 {
+	GtkSourceBuffer *sBuf = g_object_get_data(G_OBJECT(ListWin), "srcbuf");
+	gchar *filename = g_object_get_data(G_OBJECT(sBuf), "filename");
+
+	if (filename)
+		g_free(filename);
+
 	gtk_widget_destroy(GTK_WIDGET(ListWin));
 }
 
@@ -550,6 +629,12 @@ void DCPCALL ListSetDefaultParams(ListDefaultParamStruct* dps)
 
 		no_filter = g_key_file_get_boolean(cfg, "Enca", "NoFilters", NULL);
 		force_charset = g_key_file_get_string(cfg, "Enca", "ForceCharSet", NULL);
+
+		encodings = g_key_file_get_string_list(cfg, "Enca", "Encodings", NULL, NULL);
+
+		if (!encodings)
+			encodings = g_strsplit("CP1251;866;ISO_8859-1", ";", -1);
+
 	}
 
 	g_key_file_free(cfg);
