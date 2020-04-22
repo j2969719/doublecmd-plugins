@@ -29,8 +29,8 @@ EXT=\"CSS\"|EXT=\"SH\"|EXT=\"XML\"|EXT=\"INI\"|EXT=\"DIFF\"|EXT=\"PATCH\"|EXT=\"
 EXT=\"XSL\"|EXT=\"LPR\"|EXT=\"PP\"|EXT=\"LPI\"|EXT=\"LFM\"|EXT=\"LPK\"|EXT=\"DOF\"|EXT=\"DPR\""
 
 GtkWrapMode wrap_mode;
-gchar *font, *style, *ext_pascal, *ext_xml, *ext_ini, *enca_lang;
-gboolean line_num, hcur_line, draw_spaces, no_cursor;
+gchar *font, *style, *ext_pascal, *ext_xml, *ext_ini, *enca_lang, *force_charset;
+gboolean line_num, hcur_line, draw_spaces, no_cursor, no_filter;
 gint s_tab, p_above, p_below;
 
 
@@ -266,14 +266,42 @@ static gboolean open_file(GtkSourceBuffer *sBuf, const gchar *filename)
 			enca_set_multibyte(analyser, 1);
 			enca_set_ambiguity(analyser, 1);
 			enca_set_garbage_test(analyser, 1);
-			encoding = enca_analyse(analyser, buffer, bytes_read);
+
+			if (no_filter)
+				enca_set_filtering(analyser, 0);
+
+			encoding = enca_analyse(analyser, (unsigned char*)buffer, (size_t)bytes_read);
+
 			g_print("%s [%s]\n", _("Encoding:"), enca_charset_name(encoding.charset, ENCA_NAME_STYLE_ICONV));
 
-			if (encoding.charset != 27)
+			if (encoding.charset != -1 && encoding.charset != 27)
 			{
-				gchar *converted = g_convert_with_fallback(buffer, bytes_read, "UTF-8", enca_charset_name(encoding.charset, ENCA_NAME_STYLE_ICONV), NULL, NULL, &bytes_read, NULL);
+				gchar *converted = g_convert_with_fallback(buffer, bytes_read, "UTF-8", enca_charset_name(encoding.charset, ENCA_NAME_STYLE_ICONV), NULL, NULL, &bytes_read, &err);
+
+				if (err)
+					g_print("gtksourcevi1ew.wlx (%s): %s\n", filename, (err)->message);
+
 				g_free(buffer);
 				buffer = converted;
+			}
+			else if (encoding.charset == -1)
+			{
+				if (force_charset && force_charset[0] != '\0')
+				{
+					gchar *converted = g_convert_with_fallback(buffer, bytes_read, "UTF-8", force_charset, NULL, NULL, &bytes_read, &err);
+
+					if (err)
+						g_print("gtksourcevi1ew.wlx (%s): %s\n", filename, (err)->message);
+
+					g_free(buffer);
+					buffer = converted;
+				}
+				else
+				{
+					enca_analyser_free(analyser);
+					g_free(buffer);
+					return FALSE;
+				}
 			}
 
 			enca_analyser_free(analyser);
@@ -519,6 +547,9 @@ void DCPCALL ListSetDefaultParams(ListDefaultParamStruct* dps)
 
 		if (!enca_lang)
 			enca_lang = "__";
+
+		no_filter = g_key_file_get_boolean(cfg, "Enca", "NoFilters", NULL);
+		force_charset = g_key_file_get_string(cfg, "Enca", "ForceCharSet", NULL);
 	}
 
 	g_key_file_free(cfg);
