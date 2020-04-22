@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-10-13 12:21+0300\n"
+"POT-Creation-Date: 2020-04-23 00:13+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -54,7 +54,7 @@ msgstr ""
 
 #: ../wlx/imagemagick/wlximagemagick.c:187
 #: ../wlx/gtkimgview_crap/gtkimgview.c:351 ../wlx/gtkimgview/gtkimgview.c:214
-#: ../wlx/dcpoppler/wlxPView.c:417 ../wlx/dcpoppler/wlxPView.c:418
+#: ../wlx/dcpoppler/wlxPView.c:421 ../wlx/dcpoppler/wlxPView.c:422
 msgid "Fit"
 msgstr ""
 
@@ -95,19 +95,50 @@ msgstr ""
 msgid "Flip Vertically"
 msgstr ""
 
-#: ../wlx/wlxwebkit/wlxwebkit.c:117 ../wlx/yet_another_vte_plugin/plugin.c:286
-#: ../wlx/gtksourceview/gtksourceview.c:303 ../wlx/fileinfo/fileinfo.c:382
-#: ../wlx/mimescript/mimescriptwlx.c:290
+#: ../wlx/wlxwebkit/wlxwebkit.c:117 ../wlx/yet_another_vte_plugin/plugin.c:288
+#: ../wlx/gtksourceview/gtksourceview.c:511 ../wlx/fileinfo/fileinfo.c:373
+#: ../wlx/mimescript/mimescriptwlx.c:289
 #, c-format
 msgid "\"%s\" not found!"
 msgstr ""
 
-#: ../wlx/gtksourceview/gtksourceview.c:176
+#: ../wlx/gtksourceview/gtksourceview.c:56
+msgid "Failed to load file"
+msgstr ""
+
+#: ../wlx/gtksourceview/gtksourceview.c:57
+#: ../wlx/gtksourceview/gtksourceview.c:138
+#: ../wlx/gtksourceview/gtksourceview.c:367
+msgid "Default"
+msgstr ""
+
+#: ../wlx/gtksourceview/gtksourceview.c:58
+#: ../wlx/gtksourceview/gtksourceview.c:385
+msgid "Encoding:"
+msgstr ""
+
+#: ../wlx/gtksourceview/gtksourceview.c:132
+msgid "Draw Spaces"
+msgstr ""
+
+#: ../wlx/gtksourceview/gtksourceview.c:133
+msgid "Text Cursor"
+msgstr ""
+
+#: ../wlx/gtksourceview/gtksourceview.c:134
+msgid "Line Numbers"
+msgstr ""
+
+#: ../wlx/gtksourceview/gtksourceview.c:135
+msgid "Highlight Line"
+msgstr ""
+
+#: ../wlx/gtksourceview/gtksourceview.c:283
 msgid "Language:"
 msgstr ""
 
-#: ../wlx/gtksourceview/gtksourceview.c:190
-msgid "Failed to set encoding"
+#: ../wlx/gtksourceview/gtksourceview.c:363
+msgid "file seems empty"
 msgstr ""
 
 #: ../wlx/gtkimgview/gtkimgview.c:253
@@ -118,21 +149,21 @@ msgstr ""
 msgid "Stop Animation"
 msgstr ""
 
-#: ../wlx/dcpoppler/wlxPView.c:136
+#: ../wlx/dcpoppler/wlxPView.c:139
 msgid "Scale ~x"
 msgstr ""
 
-#: ../wlx/dcpoppler/wlxPView.c:255 ../wlx/dcpoppler/wlxPView.c:425
-#: ../wlx/dcpoppler/wlxPView.c:426
+#: ../wlx/dcpoppler/wlxPView.c:260 ../wlx/dcpoppler/wlxPView.c:429
+#: ../wlx/dcpoppler/wlxPView.c:430
 msgid "Text"
 msgstr ""
 
-#: ../wlx/dcpoppler/wlxPView.c:283 ../wlx/dcpoppler/wlxPView.c:431
-#: ../wlx/dcpoppler/wlxPView.c:432
+#: ../wlx/dcpoppler/wlxPView.c:288 ../wlx/dcpoppler/wlxPView.c:435
+#: ../wlx/dcpoppler/wlxPView.c:436
 msgid "Info"
 msgstr ""
 
-#: ../wlx/dcpoppler/wlxPView.c:287
+#: ../wlx/dcpoppler/wlxPView.c:292
 #, c-format
 msgid ""
 "Title: %s\n"
@@ -144,23 +175,23 @@ msgid ""
 "Version: %s"
 msgstr ""
 
-#: ../wlx/dcpoppler/wlxPView.c:305
+#: ../wlx/dcpoppler/wlxPView.c:310
 msgid "metadata not found"
 msgstr ""
 
-#: ../wlx/dcpoppler/wlxPView.c:368 ../wlx/dcpoppler/wlxPView.c:369
+#: ../wlx/dcpoppler/wlxPView.c:372 ../wlx/dcpoppler/wlxPView.c:373
 msgid "First page"
 msgstr ""
 
-#: ../wlx/dcpoppler/wlxPView.c:374 ../wlx/dcpoppler/wlxPView.c:375
+#: ../wlx/dcpoppler/wlxPView.c:378 ../wlx/dcpoppler/wlxPView.c:379
 msgid "Previous page"
 msgstr ""
 
-#: ../wlx/dcpoppler/wlxPView.c:380 ../wlx/dcpoppler/wlxPView.c:381
+#: ../wlx/dcpoppler/wlxPView.c:384 ../wlx/dcpoppler/wlxPView.c:385
 msgid "Next page"
 msgstr ""
 
-#: ../wlx/dcpoppler/wlxPView.c:386 ../wlx/dcpoppler/wlxPView.c:387
+#: ../wlx/dcpoppler/wlxPView.c:390 ../wlx/dcpoppler/wlxPView.c:391
 msgid "Last page"
 msgstr ""
 
@@ -172,22 +203,22 @@ msgstr ""
 
 #: ../dsx/git_untracked/plugin.c:60 ../dsx/tracker_textsearch/plugin.c:81
 #: ../dsx/in_filelist/plugin.c:74 ../dsx/duplicates_crap/plugin.c:77
-#: ../dsx/the_silver_searcher_crap/plugin.c:82 ../dsx/locate_crap/plugin.c:63
+#: ../dsx/the_silver_searcher_crap/plugin.c:81 ../dsx/locate_crap/plugin.c:70
 #: ../dsx/pacman_pkg_list/plugin.c:74 ../dsx/gtkrecent/plugin.c:56
 #: ../dsx/hardlinks_crap/plugin.c:77 ../dsx/lslocks/plugin.c:61
 #: ../dsx/git_ignored/plugin.c:60 ../dsx/git_modified/plugin.c:61
 msgid "not found"
 msgstr ""
 
-#: ../dsx/the_silver_searcher_crap/plugin.c:102
+#: ../dsx/the_silver_searcher_crap/plugin.c:105
 msgid "no text pattern provided"
 msgstr ""
 
-#: ../dsx/the_silver_searcher_crap/plugin.c:105
+#: ../dsx/the_silver_searcher_crap/plugin.c:108
 msgid "failed to launch ag..."
 msgstr ""
 
-#: ../dsx/locate_crap/plugin.c:101
+#: ../dsx/locate_crap/plugin.c:120
 msgid "failed to launch locate..."
 msgstr ""
 

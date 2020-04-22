@@ -45,7 +45,6 @@ static GtkWidget *getFirstChild(GtkWidget *w)
 
 static gboolean open_file(GtkSourceBuffer *sBuf, const gchar *filename, const gchar *enc);
 
-
 static void reload_with_enc_cb(GtkComboBoxText *combo_box, GtkSourceBuffer *sBuf)
 {
 	gchar *info_txt = NULL;
@@ -68,6 +67,26 @@ static void reload_with_enc_cb(GtkComboBoxText *combo_box, GtkSourceBuffer *sBuf
 		g_free(encname);
 }
 
+static void hcur_line_cb(GtkToggleButton *tbutton, GtkSourceView *view)
+{
+	gtk_source_view_set_highlight_current_line(view, gtk_toggle_button_get_active(tbutton));
+}
+static void line_num_cb(GtkToggleButton *tbutton, GtkSourceView *view)
+{
+	gtk_source_view_set_show_line_numbers(view, gtk_toggle_button_get_active(tbutton));
+}
+static void draw_spaces_cb(GtkToggleButton *tbutton, GtkSourceView *view)
+{
+	if (gtk_toggle_button_get_active(tbutton))
+		gtk_source_view_set_draw_spaces(view, GTK_SOURCE_DRAW_SPACES_ALL);
+	else
+		gtk_source_view_set_draw_spaces(view, 0);
+}
+static void cursor_cb(GtkToggleButton *tbutton, GtkSourceView *view)
+{
+	gtk_text_view_set_cursor_visible(GTK_TEXT_VIEW(view), gtk_toggle_button_get_active(tbutton));
+}
+
 HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 {
 	GtkWidget *gFix;
@@ -77,10 +96,6 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	GtkSourceStyleSchemeManager *scheme_manager;
 	GtkSourceStyleScheme *scheme;
 	GtkSourceBuffer *sBuf;
-
-	GtkWidget *hBox;
-	GtkWidget *lInfo;
-	GtkWidget *cEnc;
 
 	gFix = gtk_vbox_new(FALSE, 0);
 	gtk_container_add(GTK_CONTAINER(GTK_WIDGET(ParentWin)), gFix);
@@ -110,9 +125,14 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 
 
 
-	hBox = gtk_hbox_new(FALSE, 5);
-	lInfo = gtk_label_new(NULL);
-	cEnc = gtk_combo_box_text_new_with_entry();
+	GtkWidget *hBox = gtk_hbox_new(FALSE, 5);
+	GtkWidget *lInfo = gtk_label_new(NULL);
+	GtkWidget *cEnc = gtk_combo_box_text_new_with_entry();
+
+	GtkWidget *btnSpaces = gtk_toggle_button_new_with_label(_("Draw Spaces"));
+	GtkWidget *btnCursor = gtk_toggle_button_new_with_label(_("Text Cursor"));
+	GtkWidget *btnLineNum = gtk_toggle_button_new_with_label(_("Line Numbers"));
+	GtkWidget *btnHglLine = gtk_toggle_button_new_with_label(_("Highlight Line"));
 
 	gchar **p = encodings;
 	gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(cEnc), _("Default"));
@@ -128,16 +148,29 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 
 	g_object_set_data(G_OBJECT(sBuf), "info-label", lInfo);
 	g_object_set_data(G_OBJECT(gFix), "combobox", cEnc);
-	gtk_box_pack_start(GTK_BOX(gFix), hBox, FALSE, FALSE, 5);
-	gtk_box_pack_start(GTK_BOX(hBox), lInfo, TRUE, FALSE, 5);
+	//gtk_box_pack_start(GTK_BOX(gFix), hBox, FALSE, FALSE, 5);
+	gtk_box_pack_start(GTK_BOX(hBox), lInfo, FALSE, FALSE, 5);
 	gtk_box_pack_end(GTK_BOX(hBox), cEnc, FALSE, FALSE, 5);
 
+	if (g_strcmp0(gtk_window_get_title(GTK_WINDOW(gtk_widget_get_toplevel(GTK_WIDGET(ParentWin)))), FileToLoad) == 0)
+	{
+		gtk_box_pack_end(GTK_BOX(hBox), btnHglLine, FALSE, FALSE, 2);
+		gtk_box_pack_end(GTK_BOX(hBox), btnLineNum, FALSE, FALSE, 2);
+		gtk_box_pack_end(GTK_BOX(hBox), btnSpaces, FALSE, FALSE, 2);
+		gtk_box_pack_end(GTK_BOX(hBox), btnCursor, FALSE, FALSE, 2);
+		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(btnHglLine), hcur_line);
+		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(btnLineNum), line_num);
+		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(btnSpaces), draw_spaces);
+		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(btnCursor), !no_cursor);
+		g_signal_connect(G_OBJECT(btnHglLine), "toggled", G_CALLBACK(hcur_line_cb), sView);
+		g_signal_connect(G_OBJECT(btnLineNum), "toggled", G_CALLBACK(line_num_cb), sView);
+		g_signal_connect(G_OBJECT(btnSpaces), "toggled", G_CALLBACK(draw_spaces_cb), sView);
+		g_signal_connect(G_OBJECT(btnCursor), "toggled", G_CALLBACK(cursor_cb), sView);
+	}
 
 	/* Attach the GtkSourceView to the scrolled Window */
 	gtk_container_add(GTK_CONTAINER(pScrollWin), GTK_WIDGET(sView));
 	gtk_container_add(GTK_CONTAINER(gFix), pScrollWin);
-
-	gtk_widget_grab_focus(pScrollWin);
 
 	if (!open_file(sBuf, FileToLoad, NULL))
 	{
@@ -159,6 +192,9 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	gtk_text_view_set_pixels_above_lines(GTK_TEXT_VIEW(sView), p_above);
 	gtk_text_view_set_pixels_below_lines(GTK_TEXT_VIEW(sView), p_below);
 	gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(sView), wrap_mode);
+
+	gtk_box_pack_end(GTK_BOX(gFix), hBox, FALSE, FALSE, 5);
+	gtk_widget_grab_focus(sView);
 
 	gtk_widget_show_all(gFix);
 

@@ -7,15 +7,15 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-10-13 12:21+0300\n"
-"PO-Revision-Date: 2019-10-13 12:23+0300\n"
+"POT-Creation-Date: 2020-04-23 00:13+0300\n"
+"PO-Revision-Date: 2020-04-23 00:14+0300\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "Language: ru\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 2.2.1\n"
+"X-Generator: Poedit 2.3\n"
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
 "%10<=4 && (n%100<12 || n%100>14) ? 1 : 2);\n"
 
@@ -56,7 +56,7 @@ msgstr "Исходный размер"
 
 #: ../wlx/imagemagick/wlximagemagick.c:187
 #: ../wlx/gtkimgview_crap/gtkimgview.c:351 ../wlx/gtkimgview/gtkimgview.c:214
-#: ../wlx/dcpoppler/wlxPView.c:417 ../wlx/dcpoppler/wlxPView.c:418
+#: ../wlx/dcpoppler/wlxPView.c:421 ../wlx/dcpoppler/wlxPView.c:422
 msgid "Fit"
 msgstr "Вместить"
 
@@ -97,20 +97,51 @@ msgstr "Отразить по горизонтали"
 msgid "Flip Vertically"
 msgstr "Отразить по вертикали"
 
-#: ../wlx/wlxwebkit/wlxwebkit.c:117 ../wlx/yet_another_vte_plugin/plugin.c:286
-#: ../wlx/gtksourceview/gtksourceview.c:303 ../wlx/fileinfo/fileinfo.c:382
-#: ../wlx/mimescript/mimescriptwlx.c:290
+#: ../wlx/wlxwebkit/wlxwebkit.c:117 ../wlx/yet_another_vte_plugin/plugin.c:288
+#: ../wlx/gtksourceview/gtksourceview.c:511 ../wlx/fileinfo/fileinfo.c:373
+#: ../wlx/mimescript/mimescriptwlx.c:289
 #, c-format
 msgid "\"%s\" not found!"
 msgstr "\"%s\" не найден!"
 
-#: ../wlx/gtksourceview/gtksourceview.c:176
-msgid "Language:"
-msgstr ""
+#: ../wlx/gtksourceview/gtksourceview.c:56
+msgid "Failed to load file"
+msgstr "Не удалось открыть файл"
 
-#: ../wlx/gtksourceview/gtksourceview.c:190
-msgid "Failed to set encoding"
-msgstr ""
+#: ../wlx/gtksourceview/gtksourceview.c:57
+#: ../wlx/gtksourceview/gtksourceview.c:138
+#: ../wlx/gtksourceview/gtksourceview.c:367
+msgid "Default"
+msgstr "По умолчанию"
+
+#: ../wlx/gtksourceview/gtksourceview.c:58
+#: ../wlx/gtksourceview/gtksourceview.c:385
+msgid "Encoding:"
+msgstr "Кодировка:"
+
+#: ../wlx/gtksourceview/gtksourceview.c:132
+msgid "Draw Spaces"
+msgstr "Пробелы"
+
+#: ../wlx/gtksourceview/gtksourceview.c:133
+msgid "Text Cursor"
+msgstr "Курсор"
+
+#: ../wlx/gtksourceview/gtksourceview.c:134
+msgid "Line Numbers"
+msgstr "Номера строк"
+
+#: ../wlx/gtksourceview/gtksourceview.c:135
+msgid "Highlight Line"
+msgstr "Подсветка строки"
+
+#: ../wlx/gtksourceview/gtksourceview.c:283
+msgid "Language:"
+msgstr "Язык:"
+
+#: ../wlx/gtksourceview/gtksourceview.c:363
+msgid "file seems empty"
+msgstr "походу файл пустой"
 
 #: ../wlx/gtkimgview/gtkimgview.c:253
 msgid "Play Animation"
@@ -120,21 +151,21 @@ msgstr "Воспроизвести анимацию"
 msgid "Stop Animation"
 msgstr "Остановить анимацию"
 
-#: ../wlx/dcpoppler/wlxPView.c:136
+#: ../wlx/dcpoppler/wlxPView.c:139
 msgid "Scale ~x"
 msgstr "Масштаб ~x"
 
-#: ../wlx/dcpoppler/wlxPView.c:255 ../wlx/dcpoppler/wlxPView.c:425
-#: ../wlx/dcpoppler/wlxPView.c:426
+#: ../wlx/dcpoppler/wlxPView.c:260 ../wlx/dcpoppler/wlxPView.c:429
+#: ../wlx/dcpoppler/wlxPView.c:430
 msgid "Text"
 msgstr "Текст"
 
-#: ../wlx/dcpoppler/wlxPView.c:283 ../wlx/dcpoppler/wlxPView.c:431
-#: ../wlx/dcpoppler/wlxPView.c:432
+#: ../wlx/dcpoppler/wlxPView.c:288 ../wlx/dcpoppler/wlxPView.c:435
+#: ../wlx/dcpoppler/wlxPView.c:436
 msgid "Info"
 msgstr "Информация"
 
-#: ../wlx/dcpoppler/wlxPView.c:287
+#: ../wlx/dcpoppler/wlxPView.c:292
 #, c-format
 msgid ""
 "Title: %s\n"
@@ -153,23 +184,23 @@ msgstr ""
 "Ключевые слова: %s\n"
 "Версия: %s"
 
-#: ../wlx/dcpoppler/wlxPView.c:305
+#: ../wlx/dcpoppler/wlxPView.c:310
 msgid "metadata not found"
 msgstr "Метаданные не найдены"
 
-#: ../wlx/dcpoppler/wlxPView.c:368 ../wlx/dcpoppler/wlxPView.c:369
+#: ../wlx/dcpoppler/wlxPView.c:372 ../wlx/dcpoppler/wlxPView.c:373
 msgid "First page"
 msgstr "Первая страница"
 
-#: ../wlx/dcpoppler/wlxPView.c:374 ../wlx/dcpoppler/wlxPView.c:375
+#: ../wlx/dcpoppler/wlxPView.c:378 ../wlx/dcpoppler/wlxPView.c:379
 msgid "Previous page"
 msgstr "Предыдущая страница"
 
-#: ../wlx/dcpoppler/wlxPView.c:380 ../wlx/dcpoppler/wlxPView.c:381
+#: ../wlx/dcpoppler/wlxPView.c:384 ../wlx/dcpoppler/wlxPView.c:385
 msgid "Next page"
 msgstr "Следующая страница"
 
-#: ../wlx/dcpoppler/wlxPView.c:386 ../wlx/dcpoppler/wlxPView.c:387
+#: ../wlx/dcpoppler/wlxPView.c:390 ../wlx/dcpoppler/wlxPView.c:391
 msgid "Last page"
 msgstr "Последняя страница"
 
@@ -181,22 +212,22 @@ msgstr "не удалось выполнить команду"
 
 #: ../dsx/git_untracked/plugin.c:60 ../dsx/tracker_textsearch/plugin.c:81
 #: ../dsx/in_filelist/plugin.c:74 ../dsx/duplicates_crap/plugin.c:77
-#: ../dsx/the_silver_searcher_crap/plugin.c:82 ../dsx/locate_crap/plugin.c:63
+#: ../dsx/the_silver_searcher_crap/plugin.c:81 ../dsx/locate_crap/plugin.c:70
 #: ../dsx/pacman_pkg_list/plugin.c:74 ../dsx/gtkrecent/plugin.c:56
 #: ../dsx/hardlinks_crap/plugin.c:77 ../dsx/lslocks/plugin.c:61
 #: ../dsx/git_ignored/plugin.c:60 ../dsx/git_modified/plugin.c:61
 msgid "not found"
 msgstr "не найдено"
 
-#: ../dsx/the_silver_searcher_crap/plugin.c:102
+#: ../dsx/the_silver_searcher_crap/plugin.c:105
 msgid "no text pattern provided"
 msgstr ""
 
-#: ../dsx/the_silver_searcher_crap/plugin.c:105
+#: ../dsx/the_silver_searcher_crap/plugin.c:108
 msgid "failed to launch ag..."
 msgstr "не удалось запустить ag..."
 
-#: ../dsx/locate_crap/plugin.c:101
+#: ../dsx/locate_crap/plugin.c:120
 msgid "failed to launch locate..."
 msgstr "не удалось запустить locate..."
 
