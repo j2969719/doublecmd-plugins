@@ -48,9 +48,21 @@ static gboolean open_file(GtkSourceBuffer *sBuf, const gchar *filename, const gc
 
 static void reload_with_enc_cb(GtkComboBoxText *combo_box, GtkSourceBuffer *sBuf)
 {
+	gchar *info_txt = NULL;
 	gtk_text_buffer_set_text(GTK_TEXT_BUFFER(sBuf), "", 0);
 	gchar *encname = gtk_combo_box_text_get_active_text(combo_box);
-	open_file(sBuf, g_object_get_data(G_OBJECT(sBuf), "filename"), encname);
+	GtkLabel *label = g_object_get_data(G_OBJECT(sBuf), "info-label");
+
+	if (!open_file(sBuf, g_object_get_data(G_OBJECT(sBuf), "filename"), encname))
+		info_txt = g_strdup_printf(_("Failed to load file"));
+	else if (g_strcmp0(encname, _("Default")) != 0)
+		info_txt = g_strdup_printf("%s\t\t%s [%s]", gtk_label_get_text(label), _("Encoding:"), encname);
+
+	if (info_txt)
+	{
+		gtk_label_set_text(label, info_txt);
+		g_free(info_txt);
+	}
 
 	if (encname)
 		g_free(encname);
