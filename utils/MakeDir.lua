@@ -7,7 +7,7 @@
   Script will also create all directories leading up to the entered name(s) that do not exist already.
 2. If you want more one dir at once then use vertical bar:
   newdir1|newdir2|newdir3
-3. All space characters at the beginning or end of the name(s) will be deleted.
+3. All space characters at the beginning (\r, \n and \t) or end (all usual space characters) of the name(s) will be deleted.
 4. Also you can use some variables:
     <dt> - current date and time: YYYYMMDDhhmmss;
     <d> or <t> - current date (YYYYMMDD) or time (hhmmss);
