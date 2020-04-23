@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-04-23 00:13+0300\n"
-"PO-Revision-Date: 2020-04-23 00:14+0300\n"
+"POT-Creation-Date: 2020-04-23 16:59+0300\n"
+"PO-Revision-Date: 2020-04-23 17:01+0300\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "Language: ru\n"
@@ -98,7 +98,7 @@ msgid "Flip Vertically"
 msgstr "Отразить по вертикали"
 
 #: ../wlx/wlxwebkit/wlxwebkit.c:117 ../wlx/yet_another_vte_plugin/plugin.c:288
-#: ../wlx/gtksourceview/gtksourceview.c:511 ../wlx/fileinfo/fileinfo.c:373
+#: ../wlx/gtksourceview/gtksourceview.c:474 ../wlx/fileinfo/fileinfo.c:373
 #: ../wlx/mimescript/mimescriptwlx.c:289
 #, c-format
 msgid "\"%s\" not found!"
@@ -109,37 +109,47 @@ msgid "Failed to load file"
 msgstr "Не удалось открыть файл"
 
 #: ../wlx/gtksourceview/gtksourceview.c:57
-#: ../wlx/gtksourceview/gtksourceview.c:138
-#: ../wlx/gtksourceview/gtksourceview.c:367
+#: ../wlx/gtksourceview/gtksourceview.c:143
+#: ../wlx/gtksourceview/gtksourceview.c:331
 msgid "Default"
 msgstr "По умолчанию"
 
 #: ../wlx/gtksourceview/gtksourceview.c:58
-#: ../wlx/gtksourceview/gtksourceview.c:385
+#: ../wlx/gtksourceview/gtksourceview.c:348
 msgid "Encoding:"
 msgstr "Кодировка:"
 
-#: ../wlx/gtksourceview/gtksourceview.c:132
+#: ../wlx/gtksourceview/gtksourceview.c:151
+#: ../wlx/gtksourceview/gtksourceview.c:152
+msgid "Custom encoding"
+msgstr "Другая кодировка"
+
+#: ../wlx/gtksourceview/gtksourceview.c:166
 msgid "Draw Spaces"
 msgstr "Пробелы"
 
-#: ../wlx/gtksourceview/gtksourceview.c:133
+#: ../wlx/gtksourceview/gtksourceview.c:167
 msgid "Text Cursor"
 msgstr "Курсор"
 
-#: ../wlx/gtksourceview/gtksourceview.c:134
+#: ../wlx/gtksourceview/gtksourceview.c:168
 msgid "Line Numbers"
 msgstr "Номера строк"
 
-#: ../wlx/gtksourceview/gtksourceview.c:135
+#: ../wlx/gtksourceview/gtksourceview.c:169
 msgid "Highlight Line"
 msgstr "Подсветка строки"
 
-#: ../wlx/gtksourceview/gtksourceview.c:283
+#: ../wlx/gtksourceview/gtksourceview.c:182
+#: ../wlx/gtksourceview/gtksourceview.c:183
+msgid "Tab width"
+msgstr "Ширина табуляции"
+
+#: ../wlx/gtksourceview/gtksourceview.c:307
 msgid "Language:"
 msgstr "Язык:"
 
-#: ../wlx/gtksourceview/gtksourceview.c:363
+#: ../wlx/gtksourceview/gtksourceview.c:327
 msgid "file seems empty"
 msgstr "походу файл пустой"
 

@@ -55,7 +55,7 @@ static void reload_with_enc_cb(GtkComboBoxText *combo_box, GtkSourceBuffer *sBuf
 	if (!open_file(sBuf, g_object_get_data(G_OBJECT(sBuf), "filename"), encname))
 		info_txt = g_strdup_printf(_("Failed to load file"));
 	else if (g_strcmp0(encname, _("Default")) != 0)
-		info_txt = g_strdup_printf("%s\t\t%s [%s]", gtk_label_get_text(label), _("Encoding:"), encname);
+		info_txt = g_strdup_printf("%s\t%s [%s]", gtk_label_get_text(label), _("Encoding:"), encname);
 
 	if (info_txt)
 	{
@@ -71,10 +71,12 @@ static void hcur_line_cb(GtkToggleButton *tbutton, GtkSourceView *view)
 {
 	gtk_source_view_set_highlight_current_line(view, gtk_toggle_button_get_active(tbutton));
 }
+
 static void line_num_cb(GtkToggleButton *tbutton, GtkSourceView *view)
 {
 	gtk_source_view_set_show_line_numbers(view, gtk_toggle_button_get_active(tbutton));
 }
+
 static void draw_spaces_cb(GtkToggleButton *tbutton, GtkSourceView *view)
 {
 	if (gtk_toggle_button_get_active(tbutton))
@@ -82,9 +84,15 @@ static void draw_spaces_cb(GtkToggleButton *tbutton, GtkSourceView *view)
 	else
 		gtk_source_view_set_draw_spaces(view, 0);
 }
+
 static void cursor_cb(GtkToggleButton *tbutton, GtkSourceView *view)
 {
 	gtk_text_view_set_cursor_visible(GTK_TEXT_VIEW(view), gtk_toggle_button_get_active(tbutton));
+}
+
+static void s_tab_cb(GtkSpinButton *spin_button, GtkSourceView *view)
+{
+	gtk_source_view_set_tab_width(view, gtk_spin_button_get_value_as_int(spin_button));
 }
 
 HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
@@ -125,39 +133,56 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 
 
 
-	GtkWidget *hBox = gtk_hbox_new(FALSE, 5);
+	GtkWidget *hControlBox = gtk_hbox_new(FALSE, 5);
+	GtkWidget *hEncodingBox = gtk_hbox_new(FALSE, 0);
 	GtkWidget *lInfo = gtk_label_new(NULL);
-	GtkWidget *cEnc = gtk_combo_box_text_new_with_entry();
-
-	GtkWidget *btnSpaces = gtk_toggle_button_new_with_label(_("Draw Spaces"));
-	GtkWidget *btnCursor = gtk_toggle_button_new_with_label(_("Text Cursor"));
-	GtkWidget *btnLineNum = gtk_toggle_button_new_with_label(_("Line Numbers"));
-	GtkWidget *btnHglLine = gtk_toggle_button_new_with_label(_("Highlight Line"));
+	GtkWidget *cEncoding = gtk_combo_box_text_new();
+	GtkWidget *iEncoding = gtk_image_new_from_icon_name("accessories-character-map", 16);
 
 	gchar **p = encodings;
-	gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(cEnc), _("Default"));
+	gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(cEncoding), _("Default"));
 
 	while (*p)
 	{
-		gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(cEnc), *p);
+		gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(cEncoding), *p);
 		*p++;
 	}
 
-	gtk_editable_set_editable(GTK_EDITABLE(gtk_bin_get_child(GTK_BIN(cEnc))), FALSE);
-	g_signal_connect(G_OBJECT(cEnc), "changed", G_CALLBACK(reload_with_enc_cb), sBuf);
+	gtk_widget_set_tooltip_text(cEncoding, _("Custom encoding"));
+	gtk_widget_set_tooltip_text(iEncoding, _("Custom encoding"));
+
+	g_signal_connect(G_OBJECT(cEncoding), "changed", G_CALLBACK(reload_with_enc_cb), sBuf);
 
 	g_object_set_data(G_OBJECT(sBuf), "info-label", lInfo);
-	g_object_set_data(G_OBJECT(gFix), "combobox", cEnc);
-	//gtk_box_pack_start(GTK_BOX(gFix), hBox, FALSE, FALSE, 5);
-	gtk_box_pack_start(GTK_BOX(hBox), lInfo, FALSE, FALSE, 5);
-	gtk_box_pack_end(GTK_BOX(hBox), cEnc, FALSE, FALSE, 5);
+	g_object_set_data(G_OBJECT(gFix), "combobox", cEncoding);
+	gtk_box_pack_start(GTK_BOX(hControlBox), lInfo, FALSE, FALSE, 5);
+	gtk_box_pack_start(GTK_BOX(hEncodingBox), iEncoding, FALSE, FALSE, 0);
+	gtk_box_pack_end(GTK_BOX(hEncodingBox), cEncoding, FALSE, FALSE, 0);
+	gtk_box_pack_end(GTK_BOX(hControlBox), hEncodingBox, FALSE, FALSE, 5);
 
 	if (g_strcmp0(gtk_window_get_title(GTK_WINDOW(gtk_widget_get_toplevel(GTK_WIDGET(ParentWin)))), FileToLoad) == 0)
 	{
-		gtk_box_pack_end(GTK_BOX(hBox), btnHglLine, FALSE, FALSE, 2);
-		gtk_box_pack_end(GTK_BOX(hBox), btnLineNum, FALSE, FALSE, 2);
-		gtk_box_pack_end(GTK_BOX(hBox), btnSpaces, FALSE, FALSE, 2);
-		gtk_box_pack_end(GTK_BOX(hBox), btnCursor, FALSE, FALSE, 2);
+
+		GtkWidget *btnSpaces = gtk_toggle_button_new_with_label(_("Draw Spaces"));
+		GtkWidget *btnCursor = gtk_toggle_button_new_with_label(_("Text Cursor"));
+		GtkWidget *btnLineNum = gtk_toggle_button_new_with_label(_("Line Numbers"));
+		GtkWidget *btnHglLine = gtk_toggle_button_new_with_label(_("Highlight Line"));
+		GtkWidget *spnTab = gtk_spin_button_new_with_range(1, 32, 1);
+
+		gtk_box_pack_end(GTK_BOX(hControlBox), btnHglLine, FALSE, FALSE, 2);
+		gtk_box_pack_end(GTK_BOX(hControlBox), btnLineNum, FALSE, FALSE, 2);
+		gtk_box_pack_end(GTK_BOX(hControlBox), btnSpaces, FALSE, FALSE, 2);
+		gtk_box_pack_end(GTK_BOX(hControlBox), btnCursor, FALSE, FALSE, 2);
+		gtk_box_pack_end(GTK_BOX(hControlBox), spnTab, FALSE, FALSE, 2);
+
+		gtk_spin_button_set_value(GTK_SPIN_BUTTON(spnTab), s_tab);
+		gtk_editable_set_editable(GTK_EDITABLE(spnTab), FALSE);
+		gtk_entry_set_has_frame(GTK_ENTRY(spnTab), FALSE);
+		gtk_entry_set_icon_from_icon_name(GTK_ENTRY(spnTab), GTK_ENTRY_ICON_PRIMARY, "format-indent-more");
+		gtk_widget_set_tooltip_text(spnTab, _("Tab width"));
+		gtk_entry_set_icon_tooltip_text(GTK_ENTRY(spnTab), GTK_ENTRY_ICON_PRIMARY, _("Tab width"));
+		gtk_entry_set_width_chars(GTK_ENTRY(spnTab), 5);
+
 		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(btnHglLine), hcur_line);
 		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(btnLineNum), line_num);
 		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(btnSpaces), draw_spaces);
@@ -166,6 +191,7 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 		g_signal_connect(G_OBJECT(btnLineNum), "toggled", G_CALLBACK(line_num_cb), sView);
 		g_signal_connect(G_OBJECT(btnSpaces), "toggled", G_CALLBACK(draw_spaces_cb), sView);
 		g_signal_connect(G_OBJECT(btnCursor), "toggled", G_CALLBACK(cursor_cb), sView);
+		g_signal_connect(G_OBJECT(spnTab), "value-changed", G_CALLBACK(s_tab_cb), sView);
 	}
 
 	/* Attach the GtkSourceView to the scrolled Window */
@@ -193,7 +219,7 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	gtk_text_view_set_pixels_below_lines(GTK_TEXT_VIEW(sView), p_below);
 	gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(sView), wrap_mode);
 
-	gtk_box_pack_end(GTK_BOX(gFix), hBox, FALSE, FALSE, 5);
+	gtk_box_pack_end(GTK_BOX(gFix), hControlBox, FALSE, FALSE, 5);
 	gtk_widget_grab_focus(sView);
 
 	gtk_widget_show_all(gFix);
@@ -206,7 +232,7 @@ int DCPCALL ListLoadNext(HWND ParentWin, HWND PluginWin, char* FileToLoad, int S
 	GtkSourceBuffer *sBuf = g_object_get_data(G_OBJECT(PluginWin), "srcbuf");
 	gtk_text_buffer_set_text(GTK_TEXT_BUFFER(sBuf), "", 0);
 
-	gtk_entry_set_text(GTK_ENTRY(gtk_bin_get_child(g_object_get_data(G_OBJECT(PluginWin), "combobox"))), "");
+	gtk_combo_box_set_active(GTK_COMBO_BOX(g_object_get_data(G_OBJECT(PluginWin), "combobox")), -1);
 
 	gchar *filename = g_object_get_data(G_OBJECT(sBuf), "filename");
 
@@ -273,76 +299,14 @@ static gboolean open_file(GtkSourceBuffer *sBuf, const gchar *filename, const gc
 		}
 	}
 
-	//g_return_val_if_fail(language != NULL, FALSE);
 	if (!language)
 		return FALSE;
 
 	gtk_source_buffer_set_language(sBuf, language);
-	//g_print("%s [%s]\n", _("Language:"), gtk_source_language_get_name(language));
 	GtkLabel *label = g_object_get_data(G_OBJECT(sBuf), "info-label");
 	gchar *info_txt = g_strdup_printf("%s [%s]", _("Language:"), gtk_source_language_get_name(language));
 	gtk_label_set_text(label, info_txt);
 	g_free(info_txt);
-
-
-	/* Now load the file from Disk */
-/*	io = g_io_channel_new_file(filename, "r", &err);
-
-	if (!io)
-	{
-		g_print("gtksourceview.wlx (%s): %s\n", filename, (err)->message);
-		return FALSE;
-	}
-
-	if (g_io_channel_set_encoding(io, "utf-8", &err) != G_IO_STATUS_NORMAL)
-	{
-		g_print("gtksourceview.wlx (%s): %s: %s\n", filename, _("Failed to set encoding"), (err)->message);
-		return FALSE;
-	}
-
-	gtk_source_buffer_begin_not_undoable_action(sBuf);
-
-	//gtk_text_buffer_set_text (GTK_TEXT_BUFFER(sBuf), "", 0);
-	buffer = g_malloc(4096);
-	reading = TRUE;
-
-	while (reading)
-	{
-		gsize bytes_read;
-		GIOStatus status;
-
-		status = g_io_channel_read_chars(io, buffer, 4096, &bytes_read, &err);
-
-		switch (status)
-		{
-		case G_IO_STATUS_EOF:
-			reading = FALSE;
-
-		case G_IO_STATUS_NORMAL:
-			if (bytes_read == 0) continue;
-
-			gtk_text_buffer_get_end_iter(GTK_TEXT_BUFFER(sBuf), &iter);
-			gtk_text_buffer_insert(GTK_TEXT_BUFFER(sBuf), &iter, buffer, bytes_read);
-			break;
-
-		case G_IO_STATUS_AGAIN:
-			continue;
-
-		case G_IO_STATUS_ERROR:
-
-		default:
-			g_print("gtksourceview.wlx (%s): %s\n", filename, (err)->message);
-			/* because of error in input we clear already loaded text */
-/*			gtk_text_buffer_set_text(GTK_TEXT_BUFFER(sBuf), "", 0);
-			reading = FALSE;
-			break;
-		}
-	}
-
-	g_free(buffer);
-
-	gtk_source_buffer_end_not_undoable_action(sBuf);
-	g_io_channel_unref(io);*/
 
 
 	gsize bytes_read;
@@ -381,8 +345,7 @@ static gboolean open_file(GtkSourceBuffer *sBuf, const gchar *filename, const gc
 
 				encoding = enca_analyse(analyser, (unsigned char*)buffer, (size_t)bytes_read);
 
-				//g_print("%s [%s]\n", _("Encoding:"), enca_charset_name(encoding.charset, ENCA_NAME_STYLE_ICONV));
-				info_txt = g_strdup_printf("%s\t\t%s [%s]", gtk_label_get_text(label), _("Encoding:"), enca_charset_name(encoding.charset, ENCA_NAME_STYLE_ICONV));
+				info_txt = g_strdup_printf("%s\t%s [%s]", gtk_label_get_text(label), _("Encoding:"), enca_charset_name(encoding.charset, ENCA_NAME_STYLE_ICONV));
 				gtk_label_set_text(label, info_txt);
 				g_free(info_txt);
 
