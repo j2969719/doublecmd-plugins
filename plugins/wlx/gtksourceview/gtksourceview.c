@@ -59,6 +59,17 @@ static void reload_with_enc_cb(GtkComboBoxText *combo_box, CustomData *data)
 		g_free(encname);
 }
 
+static void wrap_line_cb(GtkToggleButton *tbutton, CustomData *data)
+{
+	gboolean value = gtk_toggle_button_get_active(tbutton);
+	g_key_file_set_boolean(data->cfg, "Flags", "Wrap", value);
+
+	if (value)
+		gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(data->sView), GTK_WRAP_WORD);
+	else
+		gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(data->sView), GTK_WRAP_NONE);
+}
+
 static void hcur_line_cb(GtkToggleButton *tbutton, CustomData *data)
 {
 	gboolean value = gtk_toggle_button_get_active(tbutton);
@@ -217,20 +228,31 @@ static void options_dlg_cb(GtkButton *button, CustomData *data)
 
 	GtkWidget *fPixels = gtk_frame_new(_("Blank space"));
 	gtk_frame_set_shadow_type(GTK_FRAME(fPixels), GTK_SHADOW_NONE);
-	GtkWidget *tPixels = gtk_table_new(2, 2, FALSE);
+	GtkWidget *tPixels = gtk_table_new(2, 3, FALSE);
 	GtkWidget *sAbove = gtk_spin_button_new_with_range(0, 99, 1);
 	GtkWidget *sBelow = gtk_spin_button_new_with_range(0, 99, 1);
+	GtkWidget *sTabSize = gtk_spin_button_new_with_range(1, 32, 1);
+	GtkWidget *lAbove = gtk_label_new(_("Above paragraphs"));
+	GtkWidget *lBelow = gtk_label_new(_("Below paragraphs"));
+	GtkWidget *lTabSize = gtk_label_new(_("Tab width"));
 	gtk_spin_button_set_value(GTK_SPIN_BUTTON(sAbove), (gdouble)config_get_integer(data->cfg, "Appearance", "PAbove", 0));
 	gtk_spin_button_set_value(GTK_SPIN_BUTTON(sBelow), (gdouble)config_get_integer(data->cfg, "Appearance", "PBelow", 0));
-	gtk_table_attach_defaults(GTK_TABLE(tPixels), gtk_label_new(_("Above paragraphs")), 0, 1, 0, 1);
-	gtk_table_attach_defaults(GTK_TABLE(tPixels), gtk_label_new(_("Below paragraphs")), 0, 1, 1, 2);
+	gtk_spin_button_set_value(GTK_SPIN_BUTTON(sTabSize), (gdouble)config_get_integer(data->cfg, "Appearance", "TabSize", 0));
+	gtk_misc_set_alignment(GTK_MISC(lAbove), 0, 0.5);
+	gtk_misc_set_alignment(GTK_MISC(lBelow), 0, 0.5);
+	gtk_misc_set_alignment(GTK_MISC(lTabSize), 0, 0.5);
+	gtk_table_attach_defaults(GTK_TABLE(tPixels), lAbove, 0, 1, 0, 1);
+	gtk_table_attach_defaults(GTK_TABLE(tPixels), lBelow, 0, 1, 1, 2);
+	gtk_table_attach_defaults(GTK_TABLE(tPixels), lTabSize, 0, 1, 2, 3);
 	gtk_table_attach_defaults(GTK_TABLE(tPixels), sAbove, 1, 2, 0, 1);
 	gtk_table_attach_defaults(GTK_TABLE(tPixels), sBelow, 1, 2, 1, 2);
+	gtk_table_attach_defaults(GTK_TABLE(tPixels), sTabSize, 1, 2, 2, 3);
 	gtk_table_set_row_spacings(GTK_TABLE(tPixels), 2);
 	gtk_table_set_col_spacings(GTK_TABLE(tPixels), 5);
 	gtk_container_add(GTK_CONTAINER(fPixels), tPixels);
 	g_signal_connect(G_OBJECT(sAbove), "changed", G_CALLBACK(pabove_changed_cb), (gpointer)data);
 	g_signal_connect(G_OBJECT(sBelow), "changed", G_CALLBACK(pbelow_changed_cb), (gpointer)data);
+	g_signal_connect(G_OBJECT(sTabSize), "value-changed", G_CALLBACK(s_tab_cb), (gpointer)data);
 
 	GtkWidget *fEnca = gtk_frame_new(_("Enca Lang"));
 	gtk_frame_set_shadow_type(GTK_FRAME(fEnca), GTK_SHADOW_NONE);
@@ -365,13 +387,15 @@ static gboolean open_file(CustomData *data, const gchar *filename, const gchar *
 
 				encoding = enca_analyse(analyser, (unsigned char*)buffer, (size_t)bytes_read);
 
-				info_txt = g_strdup_printf("%s\t%s [%s]", gtk_label_get_text(data->lInfo), _("Encoding:"), enca_charset_name(encoding.charset, ENCA_NAME_STYLE_ICONV));
+				info_txt = g_strdup_printf("%s\t%s [%s]", gtk_label_get_text(data->lInfo),
+				                           _("Encoding:"), enca_charset_name(encoding.charset, ENCA_NAME_STYLE_ICONV));
 				gtk_label_set_text(data->lInfo, info_txt);
 				g_free(info_txt);
 
 				if (encoding.charset != -1 && encoding.charset != 27)
 				{
-					gchar *converted = g_convert_with_fallback(buffer, bytes_read, "UTF-8", enca_charset_name(encoding.charset, ENCA_NAME_STYLE_ICONV), NULL, NULL, &bytes_read, &err);
+					gchar *converted = g_convert_with_fallback(buffer, bytes_read, "UTF-8",
+					                   enca_charset_name(encoding.charset, ENCA_NAME_STYLE_ICONV), NULL, NULL, &bytes_read, &err);
 
 					if (err)
 						g_print("gtksourceview.wlx (%s): %s\n", filename, (err)->message);
@@ -385,7 +409,8 @@ static gboolean open_file(CustomData *data, const gchar *filename, const gchar *
 
 					if (force_charset && force_charset[0] != '\0')
 					{
-						gchar *converted = g_convert_with_fallback(buffer, bytes_read, "UTF-8", force_charset, NULL, NULL, &bytes_read, &err);
+						gchar *converted = g_convert_with_fallback(buffer, bytes_read, "UTF-8",
+						                   force_charset, NULL, NULL, &bytes_read, &err);
 
 						if (err)
 							g_print("gtksourceview.wlx (%s): %s\n", filename, (err)->message);
@@ -526,6 +551,18 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	if (draw_spaces)
 		gtk_source_view_set_draw_spaces(GTK_SOURCE_VIEW(data->sView), GTK_SOURCE_DRAW_SPACES_ALL);
 
+	gboolean wrap_line = config_get_boolean(data->cfg, "Flags", "Wrap", FALSE);
+
+	if (wrap_line)
+		gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(data->sView), GTK_WRAP_WORD);
+	else
+		gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(data->sView), GTK_WRAP_NONE);
+
+	gint p_above = config_get_integer(data->cfg, "Appearance", "PAbove", 0);
+	gtk_text_view_set_pixels_above_lines(GTK_TEXT_VIEW(data->sView), p_above);
+	gint p_below = config_get_integer(data->cfg, "Appearance", "PBelow", 0);
+	gtk_text_view_set_pixels_below_lines(GTK_TEXT_VIEW(data->sView), p_below);
+
 	GtkWidget *hControlBox = gtk_hbox_new(FALSE, 5);
 	GtkWidget *hEncodingBox = gtk_hbox_new(FALSE, 0);
 	data->cEncoding = gtk_combo_box_text_new();
@@ -565,47 +602,29 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 
 	if (!quickview)
 	{
-
 		GtkWidget *btnSpaces = gtk_toggle_button_new_with_label(_("Draw Spaces"));
 		GtkWidget *btnCursor = gtk_toggle_button_new_with_label(_("Text Cursor"));
 		GtkWidget *btnLineNum = gtk_toggle_button_new_with_label(_("Line Numbers"));
 		GtkWidget *btnHglLine = gtk_toggle_button_new_with_label(_("Highlight Line"));
-		GtkWidget *spnTab = gtk_spin_button_new_with_range(1, 32, 1);
+		GtkWidget *btnWrap = gtk_toggle_button_new_with_label(_("Wrap Line"));
 
+		gtk_box_pack_end(GTK_BOX(hControlBox), btnWrap, FALSE, FALSE, 2);
 		gtk_box_pack_end(GTK_BOX(hControlBox), btnHglLine, FALSE, FALSE, 2);
 		gtk_box_pack_end(GTK_BOX(hControlBox), btnLineNum, FALSE, FALSE, 2);
 		gtk_box_pack_end(GTK_BOX(hControlBox), btnSpaces, FALSE, FALSE, 2);
 		gtk_box_pack_end(GTK_BOX(hControlBox), btnCursor, FALSE, FALSE, 2);
-		gtk_box_pack_end(GTK_BOX(hControlBox), spnTab, FALSE, FALSE, 2);
 
-		gtk_spin_button_set_value(GTK_SPIN_BUTTON(spnTab), s_tab);
-		gtk_editable_set_editable(GTK_EDITABLE(spnTab), FALSE);
-		gtk_entry_set_has_frame(GTK_ENTRY(spnTab), FALSE);
-		gtk_entry_set_icon_from_icon_name(GTK_ENTRY(spnTab), GTK_ENTRY_ICON_PRIMARY, "format-indent-more");
-		gtk_widget_set_tooltip_text(spnTab, _("Tab width"));
-		gtk_entry_set_icon_tooltip_text(GTK_ENTRY(spnTab), GTK_ENTRY_ICON_PRIMARY, _("Tab width"));
-		gtk_entry_set_width_chars(GTK_ENTRY(spnTab), 5);
-
+		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(btnWrap), wrap_line);
 		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(btnHglLine), hcur_line);
 		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(btnLineNum), line_num);
 		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(btnSpaces), draw_spaces);
 		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(btnCursor), !no_cursor);
+		g_signal_connect(G_OBJECT(btnWrap), "toggled", G_CALLBACK(wrap_line_cb), (gpointer)data);
 		g_signal_connect(G_OBJECT(btnHglLine), "toggled", G_CALLBACK(hcur_line_cb), (gpointer)data);
 		g_signal_connect(G_OBJECT(btnLineNum), "toggled", G_CALLBACK(line_num_cb), (gpointer)data);
 		g_signal_connect(G_OBJECT(btnSpaces), "toggled", G_CALLBACK(draw_spaces_cb), (gpointer)data);
 		g_signal_connect(G_OBJECT(btnCursor), "toggled", G_CALLBACK(cursor_cb), (gpointer)data);
-		g_signal_connect(G_OBJECT(spnTab), "value-changed", G_CALLBACK(s_tab_cb), (gpointer)data);
 	}
-
-	gint p_above = config_get_integer(data->cfg, "Appearance", "PAbove", 0);
-	gtk_text_view_set_pixels_above_lines(GTK_TEXT_VIEW(data->sView), p_above);
-	gint p_below = config_get_integer(data->cfg, "Appearance", "PBelow", 0);
-	gtk_text_view_set_pixels_below_lines(GTK_TEXT_VIEW(data->sView), p_below);
-
-	if (config_get_boolean(data->cfg, "Flags", "Wrap", FALSE))
-		gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(data->sView), GTK_WRAP_WORD);
-	else
-		gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(data->sView), GTK_WRAP_NONE);
 
 	gtk_box_pack_end(GTK_BOX(gFix), hControlBox, FALSE, FALSE, 5);
 	gtk_widget_grab_focus(GTK_WIDGET(data->sView));
