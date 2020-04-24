@@ -8,7 +8,7 @@ Displays source code files with syntax highlighting.
 - `doublecmd-gtk2`
 
 ## Notes
-Requires `gtksourceview-2.0`.
+Requires `gtksourceview-2.0` and `enca`.
 
 ## Dependencies
-![arch](https://wiki.archlinux.org/favicon.ico) `pacman -S gtksourceview2`
+![arch](https://wiki.archlinux.org/favicon.ico) `pacman -S gtksourceview2 enca`

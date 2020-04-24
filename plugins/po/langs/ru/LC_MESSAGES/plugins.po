@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-04-23 16:59+0300\n"
-"PO-Revision-Date: 2020-04-23 17:01+0300\n"
+"POT-Creation-Date: 2020-04-24 08:31+0300\n"
+"PO-Revision-Date: 2020-04-24 08:32+0300\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "Language: ru\n"
@@ -98,60 +98,88 @@ msgid "Flip Vertically"
 msgstr "Отразить по вертикали"
 
 #: ../wlx/wlxwebkit/wlxwebkit.c:117 ../wlx/yet_another_vte_plugin/plugin.c:288
-#: ../wlx/gtksourceview/gtksourceview.c:474 ../wlx/fileinfo/fileinfo.c:373
+#: ../wlx/gtksourceview/gtksourceview.c:688 ../wlx/fileinfo/fileinfo.c:373
 #: ../wlx/mimescript/mimescriptwlx.c:289
 #, c-format
 msgid "\"%s\" not found!"
 msgstr "\"%s\" не найден!"
 
-#: ../wlx/gtksourceview/gtksourceview.c:56
+#: ../wlx/gtksourceview/gtksourceview.c:48
 msgid "Failed to load file"
 msgstr "Не удалось открыть файл"
 
-#: ../wlx/gtksourceview/gtksourceview.c:57
-#: ../wlx/gtksourceview/gtksourceview.c:143
-#: ../wlx/gtksourceview/gtksourceview.c:331
+#: ../wlx/gtksourceview/gtksourceview.c:49
+#: ../wlx/gtksourceview/gtksourceview.c:349
+#: ../wlx/gtksourceview/gtksourceview.c:539
 msgid "Default"
 msgstr "По умолчанию"
 
-#: ../wlx/gtksourceview/gtksourceview.c:58
-#: ../wlx/gtksourceview/gtksourceview.c:348
+#: ../wlx/gtksourceview/gtksourceview.c:50
+#: ../wlx/gtksourceview/gtksourceview.c:368
 msgid "Encoding:"
 msgstr "Кодировка:"
 
-#: ../wlx/gtksourceview/gtksourceview.c:151
-#: ../wlx/gtksourceview/gtksourceview.c:152
-msgid "Custom encoding"
-msgstr "Другая кодировка"
+#: ../wlx/gtksourceview/gtksourceview.c:186
+#: ../wlx/gtksourceview/gtksourceview.c:561
+msgid "Options"
+msgstr "Настройки"
 
-#: ../wlx/gtksourceview/gtksourceview.c:166
-msgid "Draw Spaces"
-msgstr "Пробелы"
+#: ../wlx/gtksourceview/gtksourceview.c:193
+msgid "Font"
+msgstr "Шрифт"
 
-#: ../wlx/gtksourceview/gtksourceview.c:167
-msgid "Text Cursor"
-msgstr "Курсор"
+#: ../wlx/gtksourceview/gtksourceview.c:201
+msgid "Style"
+msgstr "Тема"
 
-#: ../wlx/gtksourceview/gtksourceview.c:168
-msgid "Line Numbers"
-msgstr "Номера строк"
+#: ../wlx/gtksourceview/gtksourceview.c:218
+msgid "Blank space"
+msgstr "Отсупы"
 
-#: ../wlx/gtksourceview/gtksourceview.c:169
-msgid "Highlight Line"
-msgstr "Подсветка строки"
+#: ../wlx/gtksourceview/gtksourceview.c:225
+msgid "Above paragraphs"
+msgstr "Над текстом"
 
-#: ../wlx/gtksourceview/gtksourceview.c:182
-#: ../wlx/gtksourceview/gtksourceview.c:183
-msgid "Tab width"
-msgstr "Ширина табуляции"
+#: ../wlx/gtksourceview/gtksourceview.c:226
+msgid "Below paragraphs"
+msgstr "Под текстом"
 
-#: ../wlx/gtksourceview/gtksourceview.c:307
+#: ../wlx/gtksourceview/gtksourceview.c:235
+msgid "Enca Lang"
+msgstr "Локаль Enca"
+
+#: ../wlx/gtksourceview/gtksourceview.c:325
 msgid "Language:"
 msgstr "Язык:"
 
-#: ../wlx/gtksourceview/gtksourceview.c:327
+#: ../wlx/gtksourceview/gtksourceview.c:345
 msgid "file seems empty"
 msgstr "походу файл пустой"
+
+#: ../wlx/gtksourceview/gtksourceview.c:549
+msgid "Custom encoding"
+msgstr "Другая кодировка"
+
+#: ../wlx/gtksourceview/gtksourceview.c:569
+msgid "Draw Spaces"
+msgstr "Пробелы"
+
+#: ../wlx/gtksourceview/gtksourceview.c:570
+msgid "Text Cursor"
+msgstr "Курсор"
+
+#: ../wlx/gtksourceview/gtksourceview.c:571
+msgid "Line Numbers"
+msgstr "Номера строк"
+
+#: ../wlx/gtksourceview/gtksourceview.c:572
+msgid "Highlight Line"
+msgstr "Подсветка строки"
+
+#: ../wlx/gtksourceview/gtksourceview.c:585
+#: ../wlx/gtksourceview/gtksourceview.c:586
+msgid "Tab width"
+msgstr "Ширина табуляции"
 
 #: ../wlx/gtkimgview/gtkimgview.c:253
 msgid "Play Animation"
