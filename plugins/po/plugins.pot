@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-04-24 08:31+0300\n"
+"POT-Creation-Date: 2020-04-24 09:28+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -96,7 +96,7 @@ msgid "Flip Vertically"
 msgstr ""
 
 #: ../wlx/wlxwebkit/wlxwebkit.c:117 ../wlx/yet_another_vte_plugin/plugin.c:288
-#: ../wlx/gtksourceview/gtksourceview.c:688 ../wlx/fileinfo/fileinfo.c:373
+#: ../wlx/gtksourceview/gtksourceview.c:707 ../wlx/fileinfo/fileinfo.c:373
 #: ../wlx/mimescript/mimescriptwlx.c:289
 #, c-format
 msgid "\"%s\" not found!"
@@ -107,76 +107,79 @@ msgid "Failed to load file"
 msgstr ""
 
 #: ../wlx/gtksourceview/gtksourceview.c:49
-#: ../wlx/gtksourceview/gtksourceview.c:349
-#: ../wlx/gtksourceview/gtksourceview.c:539
+#: ../wlx/gtksourceview/gtksourceview.c:371
+#: ../wlx/gtksourceview/gtksourceview.c:576
 msgid "Default"
 msgstr ""
 
 #: ../wlx/gtksourceview/gtksourceview.c:50
-#: ../wlx/gtksourceview/gtksourceview.c:368
+#: ../wlx/gtksourceview/gtksourceview.c:391
 msgid "Encoding:"
 msgstr ""
 
-#: ../wlx/gtksourceview/gtksourceview.c:186
-#: ../wlx/gtksourceview/gtksourceview.c:561
+#: ../wlx/gtksourceview/gtksourceview.c:197
+#: ../wlx/gtksourceview/gtksourceview.c:598
 msgid "Options"
 msgstr ""
 
-#: ../wlx/gtksourceview/gtksourceview.c:193
+#: ../wlx/gtksourceview/gtksourceview.c:204
 msgid "Font"
 msgstr ""
 
-#: ../wlx/gtksourceview/gtksourceview.c:201
+#: ../wlx/gtksourceview/gtksourceview.c:212
 msgid "Style"
 msgstr ""
 
-#: ../wlx/gtksourceview/gtksourceview.c:218
+#: ../wlx/gtksourceview/gtksourceview.c:229
 msgid "Blank space"
 msgstr ""
 
-#: ../wlx/gtksourceview/gtksourceview.c:225
+#: ../wlx/gtksourceview/gtksourceview.c:235
 msgid "Above paragraphs"
 msgstr ""
 
-#: ../wlx/gtksourceview/gtksourceview.c:226
+#: ../wlx/gtksourceview/gtksourceview.c:236
 msgid "Below paragraphs"
 msgstr ""
 
-#: ../wlx/gtksourceview/gtksourceview.c:235
+#: ../wlx/gtksourceview/gtksourceview.c:237
+msgid "Tab width"
+msgstr ""
+
+#: ../wlx/gtksourceview/gtksourceview.c:257
 msgid "Enca Lang"
 msgstr ""
 
-#: ../wlx/gtksourceview/gtksourceview.c:325
+#: ../wlx/gtksourceview/gtksourceview.c:347
 msgid "Language:"
 msgstr ""
 
-#: ../wlx/gtksourceview/gtksourceview.c:345
+#: ../wlx/gtksourceview/gtksourceview.c:367
 msgid "file seems empty"
 msgstr ""
 
-#: ../wlx/gtksourceview/gtksourceview.c:549
+#: ../wlx/gtksourceview/gtksourceview.c:586
 msgid "Custom encoding"
 msgstr ""
 
-#: ../wlx/gtksourceview/gtksourceview.c:569
+#: ../wlx/gtksourceview/gtksourceview.c:605
 msgid "Draw Spaces"
 msgstr ""
 
-#: ../wlx/gtksourceview/gtksourceview.c:570
+#: ../wlx/gtksourceview/gtksourceview.c:606
 msgid "Text Cursor"
 msgstr ""
 
-#: ../wlx/gtksourceview/gtksourceview.c:571
+#: ../wlx/gtksourceview/gtksourceview.c:607
 msgid "Line Numbers"
 msgstr ""
 
-#: ../wlx/gtksourceview/gtksourceview.c:572
+#: ../wlx/gtksourceview/gtksourceview.c:608
 msgid "Highlight Line"
 msgstr ""
 
-#: ../wlx/gtksourceview/gtksourceview.c:585
-#: ../wlx/gtksourceview/gtksourceview.c:586
-msgid "Tab width"
+#: ../wlx/gtksourceview/gtksourceview.c:609
+msgid "Wrap Line"
 msgstr ""
 
 #: ../wlx/gtkimgview/gtkimgview.c:253
