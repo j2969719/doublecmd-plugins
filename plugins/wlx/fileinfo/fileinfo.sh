@@ -49,7 +49,7 @@ case "${filetype}" in
 		djvused -e print-pure-txt -u "$file"
 		;;
 	[Dd][Oo][Cc][Xx])
-		docx2txt.pl "$file" - || \
+		docx2txt "$file" - || \
 		unzip -p "$file" | grep --text '<w:r' | sed 's/<w:p[^<\/]*>/ \
 			/g' | sed 's/<[^<]*>//g' | grep -v '^[[:space:]]*$' | sed G
 		;;

@@ -116,7 +116,7 @@ case "${filetype}" in
 		file -b "$file" && zpaq l "$file"
 		;;
 	[Dd][Oo][Cc][Xx])
-		docx2txt.pl "$file" - || \
+		docx2txt "$file" - || \
 		unzip -p "$file" | grep --text '<w:r' | sed 's/<w:p[^<\/]*>/ \
 			/g' | sed 's/<[^<]*>//g' | grep -v '^[[:space:]]*$' | sed G
 		;;
