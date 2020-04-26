@@ -51,7 +51,7 @@ static gchar *get_mime_type(const gchar *Filename)
 
 	if (!fileinfo)
 	{
-		g_object_unref(fileinfo);
+		g_object_unref(gfile);
 		return NULL;
 	}
 
