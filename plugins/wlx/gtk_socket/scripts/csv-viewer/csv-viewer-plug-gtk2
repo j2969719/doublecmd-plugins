@@ -81,6 +81,9 @@ def load_chunk(reader, view):
     for i, row in enumerate(reader):
         row.insert(0, str(i+1))
         row.append("")
+        if len(row) < store.get_n_columns():
+            for n in range(store.get_n_columns() - len(row)):
+                row.append("")
         for j, item in enumerate(row):
             if (renderers[j].props.xalign > 0.5
                 and not RE_RIGHT_ALIGN.search(item)):
@@ -107,7 +110,8 @@ def main():
     # of a header line, but seems to fail if all
     # columns hold strings.
     sniffer = csv.Sniffer()
-    sample = f.read(32768)
+    # sample = f.read(32768)
+    sample = f.readline()
     f.seek(0)
     try:
         dialect = sniffer.sniff(sample)
