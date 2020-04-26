@@ -13,7 +13,7 @@ static char cfg_path[PATH_MAX];
 static char plug_path[PATH_MAX];
 const char* cfg_file = "settings.ini";
 
-gchar *get_file_ext(const gchar *Filename)
+static gchar *get_file_ext(const gchar *Filename)
 {
 	if (g_file_test(Filename, G_FILE_TEST_IS_DIR))
 		return NULL;
@@ -40,7 +40,7 @@ gchar *get_file_ext(const gchar *Filename)
 	return result;
 }
 
-const gchar *get_mime_type(const gchar *Filename)
+static gchar *get_mime_type(const gchar *Filename)
 {
 	GFile *gfile = g_file_new_for_path(Filename);
 
@@ -50,19 +50,20 @@ const gchar *get_mime_type(const gchar *Filename)
 	GFileInfo *fileinfo = g_file_query_info(gfile, G_FILE_ATTRIBUTE_STANDARD_CONTENT_TYPE, 0, NULL, NULL);
 
 	if (!fileinfo)
+	{
+		g_object_unref(fileinfo);
 		return NULL;
+	}
 
-	const gchar *content_type = g_strdup(g_file_info_get_content_type(fileinfo));
+	gchar *content_type = g_strdup(g_file_info_get_content_type(fileinfo));
 	g_object_unref(fileinfo);
 	g_object_unref(gfile);
 
 	return content_type;
 }
 
-const gchar *get_mime_type_magic(const gchar *Filename)
+static gchar *get_mime_type_magic(const gchar *Filename)
 {
-	const gchar *content_type;
-
 	magic_t magic_cookie = magic_open(MAGIC_MIME_TYPE);
 
 	if (!magic_cookie)
@@ -74,7 +75,7 @@ const gchar *get_mime_type_magic(const gchar *Filename)
 		return NULL;
 	}
 
-	content_type = g_strdup(magic_file(magic_cookie, Filename));
+	gchar *content_type = g_strdup(magic_file(magic_cookie, Filename));
 	magic_close(magic_cookie);
 
 	return content_type;
@@ -82,7 +83,7 @@ const gchar *get_mime_type_magic(const gchar *Filename)
 
 static gchar *cfg_get_command(GKeyFile *Cfg, const gchar *Group)
 {
-	gchar *result, *cfg_value, *tmp = NULL;
+	gchar *result, *cfg_value, *scr_path = NULL;
 	cfg_value = g_key_file_get_string(Cfg, Group, "script", NULL);
 
 	if (!cfg_value)
@@ -94,31 +95,36 @@ static gchar *cfg_get_command(GKeyFile *Cfg, const gchar *Group)
 	}
 	else
 	{
-		tmp = g_strdup_printf("%s/scripts/%s", plug_path, cfg_value);
+		scr_path = g_strdup_printf("%s/scripts/%s", plug_path, cfg_value);
 
-		if (g_file_test(tmp, G_FILE_TEST_EXISTS))
-			result = g_strdup_printf("%s $XID $FILE", g_shell_quote(tmp));
+		if (g_file_test(scr_path, G_FILE_TEST_EXISTS))
+		{
+			gchar *quotedpath = g_shell_quote(scr_path);
+			result = g_strdup_printf("%s $XID $FILE", quotedpath);
+			g_free(quotedpath);
+		}
 		else if (g_file_test(cfg_value, G_FILE_TEST_EXISTS))
 			result = g_strdup_printf("%s $XID $FILE", cfg_value);
 		else
 			result = NULL;
-	}
 
-	if (tmp)
-		g_free(tmp);
+		g_free(cfg_value);
+	}
 
 	return result;
 }
 
-gchar *str_replace(gchar *text, gchar *str, gchar *repl)
+static gchar *str_replace(gchar *text, gchar *str, gchar *repl)
 {
 	gchar **split = g_strsplit(text, str, -1);
 	gchar *result = g_strjoinv(repl, split);
 	g_strfreev(split);
+	g_free(text);
+	g_free(repl);
 	return result;
 }
 
-gchar *cfg_chk_redirect(GKeyFile *Cfg, const gchar *Group)
+static gchar *cfg_chk_redirect(GKeyFile *Cfg, const gchar *Group)
 {
 	gchar *result, *redirect;
 	redirect = g_key_file_get_string(Cfg, Group, "redirect", NULL);
@@ -143,7 +149,7 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	GtkWidget *gFix;
 	GtkWidget *socket;
 	GtkWidget *wspin;
-	const gchar *file_ext, *mime_type;
+	gchar *file_ext, *mime_type;
 	gchar *command;
 	gchar *group = NULL;
 	gboolean noquote;
@@ -173,7 +179,10 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 		{
 			group = cfg_chk_redirect(cfg, mime_type);
 			command = cfg_get_command(cfg, group);
+			g_free(mime_type);
 		}
+		else if (file_ext)
+			g_free(file_ext);
 
 		noquote = g_key_file_get_boolean(cfg, group, "noquote", NULL);
 		insensitive = g_key_file_get_boolean(cfg, group, "insensitive", NULL);
@@ -215,7 +224,7 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 
 	GdkNativeWindow id = gtk_socket_get_id(GTK_SOCKET(socket));
 
-	command = str_replace(command, "$FILE", noquote ? FileToLoad : g_shell_quote(FileToLoad));
+	command = str_replace(command, "$FILE", noquote ? g_strdup(FileToLoad) : g_shell_quote(FileToLoad));
 	command = str_replace(command, "$XID", g_strdup_printf("%d", id));
 	g_print("%s\n", command);
 
