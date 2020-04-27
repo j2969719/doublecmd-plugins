@@ -21,7 +21,7 @@ grid_lines = gtk.TREE_VIEW_GRID_LINES_BOTH
 cell_width = -1
 cell_height = -1
 # fixed height from font
-number_of_rows = -1
+number_of_rows = 1
 # cell single paragraph mode
 single_paragraph = False
 # query in main window
@@ -29,6 +29,19 @@ query_is_entry = False
 query_editable = True
 # set hover selection
 hover_selection = False
+
+
+def crap_sort_func(model, row1, row2, user_data):
+    sort_column, _ = model.get_sort_column_id()
+    val1 = model.get_value(row1, sort_column)
+    val2 = model.get_value(row2, sort_column)
+    if val1.isdigit() and val2.isdigit():
+        x = long(val1)
+        y = long(val2)
+    else:
+        x = val1.lower()
+        y = val2.lower()
+    return (x > y) - (x < y)
 
 class SqliteViewer:
     def __init__(self, xid, path):
@@ -110,6 +123,8 @@ class SqliteViewer:
                self.cursor.execute(query)
                names = list(map(lambda x: x[0], self.cursor.description))
                self.store = gtk.ListStore(*([str] * len(names)))
+               for i in range(len(names)):
+                   self.store.set_sort_func(i, crap_sort_func, None)
                for row in self.cursor.fetchall():
                    self.store.append(row)
                self.table.set_model(self.store)

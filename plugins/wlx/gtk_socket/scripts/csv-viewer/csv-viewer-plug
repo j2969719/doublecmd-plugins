@@ -53,6 +53,18 @@ ENCODING = locale.getpreferredencoding() or "utf_8"
 RE_RIGHT_ALIGN = re.compile(r"^([\d\W]+( .*)?||NA|NAN|TRUE|FALSE)$", re.IGNORECASE)
 
 
+def crap_sort_func(model, row1, row2, user_data):
+    sort_column, _ = model.get_sort_column_id()
+    val1 = model.get_value(row1, sort_column)
+    val2 = model.get_value(row2, sort_column)
+    if val1.isnumeric() and val2.isnumeric():
+        x = int(val1)
+        y = int(val2)
+    else:
+        x = val1.lower()
+        y = val2.lower()
+    return (x > y) - (x < y)
+
 def init_column(index, view):
     """Initialize and return a column."""
     renderer = Gtk.CellRendererText()
@@ -92,6 +104,7 @@ def init_view(ncolumns):
     for i in range(ncolumns):
         column = init_column(i, view)
         column.set_sort_column_id(i)
+        store.set_sort_func(i, crap_sort_func, None)
         view.append_column(column)
     return view
 
@@ -121,11 +134,18 @@ def load_chunk(reader, view):
         if len(row) < store.get_n_columns():
             for n in range(store.get_n_columns() - len(row)):
                 row.append("")
-        for j, item in enumerate(row):
+        for j in range(store.get_n_columns()):
             if (renderers[j].props.xalign > 0.5
-                and not RE_RIGHT_ALIGN.search(item)):
+                and not RE_RIGHT_ALIGN.search(row[j])):
                 renderers[j].props.xalign = 0
-        store.append(row)
+        try:
+            store.append(row)
+        except Exception as error:
+            print("{0}: {1}".format(row,error))
+            errrow = [str(i+1)]
+            for n in range(store.get_n_columns()-1):
+                errrow.append("<ERROR>")
+            store.append(errrow)
         if i < 10 or i % 10 == 0:
             while Gtk.events_pending():
                 Gtk.main_iteration()
