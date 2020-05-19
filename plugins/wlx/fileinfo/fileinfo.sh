@@ -54,7 +54,15 @@ case "${filetype}" in
 			/g' | sed 's/<[^<]*>//g' | grep -v '^[[:space:]]*$' | sed G
 		;;
 	[Dd][Oo][Cc]|[Rr][Tt][Ff])
-		catdoc -w "$file"
+		which wvHtml >/dev/null 2>&1 && {
+			tmp=`mktemp -d ${TMPDIR:-/tmp}/%p.XXXXXX`
+			wvHtml "$file" --targetdir="$tmp" page.html
+			elinks -dump "$tmp/page.html"
+			rm -rf "$tmp"
+		} || \
+		antiword -t "$file" || \
+		catdoc -w "$file" || \
+		word2x -f text "$file"
 		;;
 	[Dd][Vv][Ii])
 		which dvi2tty >/dev/null 2>&1 && \
