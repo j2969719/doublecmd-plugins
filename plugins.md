@@ -89,6 +89,9 @@ Checking: binary or Unicode text file (encoding UTF-8, UTF-16 or UTF-32 and byte
 - [caseduplwdx.lua](plugins/wdx/scripts/caseduplwdx.lua)<br>
 Search for duplicates with the same name but with a different case.
 
+- [checkfileextwdx.lua](plugins/wdx/scripts/checkfileextwdx.lua) *(cross platform)*<br>
+Checking that the file extension matches the file type (by the file signatures) and returns some additional info. See details in the beginning of script.
+
 - [checkfilenamewdx.lua](plugins/wdx/scripts/checkfilenamewdx.lua) *(cross platform)*<br>
 Check filename limitations and recommendations, path lenght and other, see description in the beginning of script.
 
@@ -176,7 +179,7 @@ List local system locks.
 The last modified time is today (not last twenty-four hours), boolean.
 
 - [msgfulltextwdx.lua](plugins/wdx/scripts/msgfulltextwdx.lua) *(cross platform)*<br>
-Returns full text of saved email messages. For Find files with plugins only! See details in the beginning of `msgfulltextwdx.lua`.
+Returns full text of saved email messages. For Find files with plugins only! See details in the beginning of script.
 
 - [msginfowdx.lua](plugins/wdx/scripts/msginfowdx.lua) *(cross platform)*<br>
 Getting info from headers of saved email messages. Supported formats: *.eml, *.msg and MH mailfile format (Sylpheed and other).
@@ -234,7 +237,7 @@ Returns information from TORRENT files. Requires `transmission-show`.
 Script for using in trash folder: getting original file name and deletion date.
 
 - [vcardinfowdx.lua](plugins/wdx/scripts/vcardinfowdx.lua) *(cross platform)*<br>
-Getting some information from vCard files. See details/notes in the beginning of script.
+Getting some information from vCard files. See details in the beginning of script.
 
 - [ziminfowdx.lua](plugins/wdx/scripts/ziminfowdx.lua) *(cross platform)*<br>
 Getting some information from Zim file (https://zim-wiki.org/).
