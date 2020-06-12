@@ -2283,6 +2283,7 @@ object DialogBox: TDialogBox
     BorderSpacing.Top = 10
     BorderSpacing.Right = 5
     DefaultCaption = True
+    Cancel = True
     Kind = bkCancel
     ModalResult = 2
     OnClick = ButtonClick
