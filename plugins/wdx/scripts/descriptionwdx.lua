@@ -10,7 +10,7 @@ function ContentGetSupportedField(FieldIndex)
     elseif (FieldIndex == 3) then
         return 'Description (uppercase and lowercase filenames)', 'default|ansi|oem', 8; -- FieldName,Units,ft_string
     end
-    
+
     return '', '', 0; -- ft_nomorefields
 end
 

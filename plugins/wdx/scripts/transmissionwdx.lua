@@ -7,47 +7,47 @@ local filename = ''
 
 local fields = {
     {"Name",                8,                     "%s%sName:%s([^\n]+)"},  -- name, field type, pattern
-    {"Hash",                8,                     "%s%sHash:%s([^\n]+)"}, 
-    {"Created by",          8,              "%s%sCreated%sby:%s([^\n]+)"}, 
-    {"Created on",          8,              "%s%sCreated%son:%s([^\n]+)"}, 
-    {"Created on (date)",  10,              "%s%sCreated%son:%s([^\n]+)"}, 
-    {"Comment",             8,                  "%s%sComment:%s([^\n]+)"}, 
-    {"Piece Count",         2,             "%s%sPiece%sCount:%s([^\n]+)"}, 
-    {"Piece Size",          8,              "%s%sPiece%sSize:%s([^\n]+)"}, 
-    {"Piece Size (bytes)",  3,              "%s%sPiece%sSize:%s([^\n]+)"}, 
-    {"Total Size",          8,              "%s%sTotal%sSize:%s([^\n]+)"}, 
-    {"Total Size (bytes)",  3,              "%s%sTotal%sSize:%s([^\n]+)"}, 
-    {"Privacy",             8,                  "%s%sPrivacy:%s([^\n]+)"}, 
-    {"Trackes",             9, "\nTRACKERS\n\n%s%s(.-)\n[WBDFILES]+\n\n"}, 
-    {"Webseeds",            9,       "\nWEBSEEDS\n\n%s%s(.+)\nFILES\n\n"}, 
-    {"Files",               9,                  "\nFILES\n\n%s%s(.+)\n$"}, 
+    {"Hash",                8,                     "%s%sHash:%s([^\n]+)"},
+    {"Created by",          8,              "%s%sCreated%sby:%s([^\n]+)"},
+    {"Created on",          8,              "%s%sCreated%son:%s([^\n]+)"},
+    {"Created on (date)",  10,              "%s%sCreated%son:%s([^\n]+)"},
+    {"Comment",             8,                  "%s%sComment:%s([^\n]+)"},
+    {"Piece Count",         2,             "%s%sPiece%sCount:%s([^\n]+)"},
+    {"Piece Size",          8,              "%s%sPiece%sSize:%s([^\n]+)"},
+    {"Piece Size (bytes)",  3,              "%s%sPiece%sSize:%s([^\n]+)"},
+    {"Total Size",          8,              "%s%sTotal%sSize:%s([^\n]+)"},
+    {"Total Size (bytes)",  3,              "%s%sTotal%sSize:%s([^\n]+)"},
+    {"Privacy",             8,                  "%s%sPrivacy:%s([^\n]+)"},
+    {"Trackes",             9, "\nTRACKERS\n\n%s%s(.-)\n[WBDFILES]+\n\n"},
+    {"Webseeds",            9,       "\nWEBSEEDS\n\n%s%s(.+)\nFILES\n\n"},
+    {"Files",               9,                  "\nFILES\n\n%s%s(.+)\n$"},
 }
 
 local mults = {
-    ["kB"]  =  math.pow(10, 3), 
-    ["KB"]  =  math.pow(10, 3), 
-    ["MB"]  =  math.pow(10, 6), 
-    ["GB"]  =  math.pow(10, 9), 
-    ["TB"]  = math.pow(10, 12), 
-    ["KiB"] =  math.pow(2, 10), 
-    ["MiB"] =  math.pow(2, 20), 
-    ["GiB"] =  math.pow(2, 30), 
-    ["TiB"] =  math.pow(2, 40), 
+    ["kB"]  =  math.pow(10, 3),
+    ["KB"]  =  math.pow(10, 3),
+    ["MB"]  =  math.pow(10, 6),
+    ["GB"]  =  math.pow(10, 9),
+    ["TB"]  = math.pow(10, 12),
+    ["KiB"] =  math.pow(2, 10),
+    ["MiB"] =  math.pow(2, 20),
+    ["GiB"] =  math.pow(2, 30),
+    ["TiB"] =  math.pow(2, 40),
 }
 
 local months = {
-    ["Jan"] = "01", 
-    ["Feb"] = "02", 
-    ["Mar"] = "03", 
-    ["Apr"] = "04", 
-    ["May"] = "05", 
-    ["Jun"] = "06", 
-    ["Jul"] = "07", 
-    ["Aug"] = "08", 
-    ["Sep"] = "09", 
-    ["Oct"] = "10", 
-    ["Nov"] = "11", 
-    ["Dec"] = "12", 
+    ["Jan"] = "01",
+    ["Feb"] = "02",
+    ["Mar"] = "03",
+    ["Apr"] = "04",
+    ["May"] = "05",
+    ["Jun"] = "06",
+    ["Jul"] = "07",
+    ["Aug"] = "08",
+    ["Sep"] = "09",
+    ["Oct"] = "10",
+    ["Nov"] = "11",
+    ["Dec"] = "12",
 }
 
 function ContentGetSupportedField(FieldIndex)
@@ -124,7 +124,7 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
                         result = year .. '.' .. months[month] .. '.' .. day .. ' ' .. dtime;
                     else
                         local dhour, dmin, dsec = dtime:match("(%d+):(%d+):(%d+)");
-                        local unixtime = os.time{year = tonumber(year), month = tonumber(months[month]), 
+                        local unixtime = os.time{year = tonumber(year), month = tonumber(months[month]),
                                          day = tonumber(day), hour = tonumber(dhour), min = tonumber(dmin), sec = tonumber(dsec)};
                         result = unixtime * 10000000 + 116444736000000000;
                     end

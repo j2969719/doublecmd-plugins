@@ -28,23 +28,23 @@ class SqliteViewer(Gtk.Plug):
     def __init__(self):
         Gtk.Plug.__init__(self)
         Gtk.Plug.construct(self, int(sys.argv[1]))
-        
+
         self.conn = None
         self.cursor = None
         self.store = None
         self.isopen = False
-        
+
         self.tables = Gtk.ComboBoxText()
         self.table = Gtk.TreeView()
         self.table.set_grid_lines(Gtk.TreeViewGridLines.BOTH)
-        
+
         self.dialog = Gtk.Dialog()
-        
+
         self.query = Gtk.Label()
         self.query.set_selectable(True)
         button = Gtk.Button.new_with_label("Query")
         button.connect("pressed", self.query_dialog)
-        
+
         hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
         labeltbl = Gtk.Label()
         labeltbl.set_text("Table:")
@@ -53,11 +53,11 @@ class SqliteViewer(Gtk.Plug):
         hbox.pack_start(self.query, True, True, 2)
         hbox.pack_end(button, False, True, 1)
         hbox.set_border_width(5)
-        
+
         self.sw = Gtk.ScrolledWindow()
         self.sw.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC)
         self.sw.add(self.table)
-        
+
         self.win = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
         self.win.pack_start(hbox, False, True, 1)
         self.win.pack_end(self.sw, True, True, 1)
@@ -68,7 +68,7 @@ class SqliteViewer(Gtk.Plug):
         self.query.set_text(query)
         if self.isopen:
            GLib.idle_add(self.execute, query)
-        
+
         Gtk.Plug.add(self, self.win)
         Gtk.Plug.connect(self, "destroy", self.exit)
 

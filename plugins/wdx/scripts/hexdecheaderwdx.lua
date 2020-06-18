@@ -4,18 +4,18 @@ local skipsysfiles = true  -- skip system files (character, block or fifo files 
 local showoffset = true    -- show offset near field name
 
 local values = {
-    "66 74 79 70 69 73 6F 6D", 
-    "ftypisom", 
+    "66 74 79 70 69 73 6F 6D",
+    "ftypisom",
 }
 
 local fields = {
   -- field name,    offset,  number of bytes,  type,   result(boolean field)
-    {"header",      "0x0",       8,           "hex",         nil}, 
-    {"header",      "0x0",       15,          "dec",         nil}, 
-    {"header",      "0x0",       4,           "raw",         nil}, 
-    {"some offset", "0x20B0",    16,          "hex",         nil}, 
-    {"test check",  "0x4",       8,           "hex",   values[1]}, 
-    {"test check",  "0x4",       8,           "raw",   values[2]}, 
+    {"header",      "0x0",       8,           "hex",         nil},
+    {"header",      "0x0",       15,          "dec",         nil},
+    {"header",      "0x0",       4,           "raw",         nil},
+    {"some offset", "0x20B0",    16,          "hex",         nil},
+    {"test check",  "0x4",       8,           "hex",   values[1]},
+    {"test check",  "0x4",       8,           "raw",   values[2]},
 }
 
 function ContentGetSupportedField(FieldIndex)
@@ -57,7 +57,7 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
             end
         else
             bytes = f:read(UnitIndex + 1);
-            result = getBytes(fields[FieldIndex + 1][4], bytes);    
+            result = getBytes(fields[FieldIndex + 1][4], bytes);
         end
         f:close();
     end

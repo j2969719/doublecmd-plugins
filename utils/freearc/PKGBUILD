@@ -41,18 +41,18 @@ package() {
  #install -m 755 ${srcdir}/freearcusercfg.sh ${pkgdir}/usr/lib/${_pkgname}/scripts/freearcusercfg.sh
 
  #Librairies
- install -m 755 ${srcdir}/FreeArc-${pkgver}-linux-i386/lib/{*.so,*.sfx,*.txt} ${pkgdir}/usr/lib/${_pkgname} 
+ install -m 755 ${srcdir}/FreeArc-${pkgver}-linux-i386/lib/{*.so,*.sfx,*.txt} ${pkgdir}/usr/lib/${_pkgname}
  install -m 644 ${srcdir}/FreeArc-${pkgver}-linux-i386/lib/arc.languages/* ${pkgdir}/usr/lib/${_pkgname}/arc.languages
  #Codecs
  install -m 644 ${srcdir}/FreeArc-${pkgver}-linux-i386/lib/Codecs/* ${pkgdir}/usr/lib/${_pkgname}/Codecs
- #Addons 
- install -m 644 ${srcdir}/FreeArc-${pkgver}-linux-i386/Addons/{supertest,*.arc} ${pkgdir}/usr/lib/${_pkgname}/Addons 
+ #Addons
+ install -m 644 ${srcdir}/FreeArc-${pkgver}-linux-i386/Addons/{supertest,*.arc} ${pkgdir}/usr/lib/${_pkgname}/Addons
  install -m 644 ${srcdir}/FreeArc-${pkgver}-linux-i386/Addons/Benchmarking/{*.rb,*.txt} ${pkgdir}/usr/lib/${_pkgname}/Addons/Benchmarking || true
 
  #Documentations
  install -m 644 ${srcdir}/FreeArc-${pkgver}-linux-i386/Documentation/* ${pkgdir}/usr/lib/${_pkgname}/Documentation
- 
+
  # Users - Desktop
  #install -D -m 644 ${srcdir}/freearc.desktop ${pkgdir}/usr/share/applications/freearc.desktop
 
-}  
+}

@@ -34,14 +34,14 @@ end
 
 if (path ~= nil) and (path ~= "") then
     ret, newpath = Dialogs.InputQuery("Edit Symlink", "Enter new path:", false, path);
-    
+
     if (ret == true) then
         if (SysUtils.DirectoryExists(newpath)) then
             msg = getOutput('ln -sfn "' .. newpath .. '" "' .. args[1] .. '" 2>&1', true);
         else
             msg = getOutput('ln -sf "' .. newpath .. '" "' .. args[1] .. '" 2>&1', true);
         end
-        
+
         if (msg ~= nil) and (msg ~= '') then
             Dialogs.MessageBox(msg, "Edit Symlink", 0x0030)
         end

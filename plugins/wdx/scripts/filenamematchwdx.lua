@@ -7,7 +7,7 @@ end
 
 local group_unknown = "No group"
 
--- file groups 
+-- file groups
 local groups = {
     {"Music", -- group name
                     "%.mp3$", -- pattern
@@ -16,14 +16,14 @@ local groups = {
                     "%.wav$",
                    "%.flac$",
     },
-         
+
     {"Archive",
                     "%.zip$",
                     "%.rar$",
                      "%.7z$",
                 "%.tar%..+$",
     },
-    
+
     {"Docs",
                     "%.doc$",
                    "%.docx$",
@@ -35,31 +35,31 @@ local ft_string = 8
 local ft_number = 2
 local ft_float  = 3
 
-local pattern = {  
+local pattern = {
 --[[ description,  field type,  pattern,
-                                alt pattern, 
+                                alt pattern,
                                 ...                     ]]
 
     {"(number).",   ft_number,  "(%d+)%.",               },
-    
+
     {nil,           ft_number,  "%-%s+(%d+)%."           },
-    
-    {"(part) -",    ft_string,  "^(.-)%s+%-", 
+
+    {"(part) -",    ft_string,  "^(.-)%s+%-",
                                 ".+",                    },
-    
-    {"- (part)",    ft_string,  "%-%s+%d+%.(.+)$", 
-                                ".+%-%s(.+)$", 
+
+    {"- (part)",    ft_string,  "%-%s+%d+%.(.+)$",
+                                ".+%-%s(.+)$",
                                 "%-%s+(.+)",             },
-    
+
     {nil,           ft_string,  "%-%s(.-)%s+%-",         },
-    
+
     {"tar.(xyz)",   ft_string,  "%.tar%.(.-)$",          },
-    
+
     {"folder name", ft_string,  "/([^/]+)/[^/]*$",       },
-    
-    {"cut article", ft_string,  "^[Tt][Hh][Ee]%s+(.+)", 
-                                "^[Aa][Nn]%s+(.+)", 
-                                "^[Aa]%s+(.+)", 
+
+    {"cut article", ft_string,  "^[Tt][Hh][Ee]%s+(.+)",
+                                "^[Aa][Nn]%s+(.+)",
+                                "^[Aa]%s+(.+)",
                                 ".+",                    },
 }
 

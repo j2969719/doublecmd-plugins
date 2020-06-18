@@ -1,4 +1,4 @@
--- ... 
+-- ...
 
 local fields = {
     {"first name",  8,  "first%-name"},
@@ -284,7 +284,7 @@ for w, u in win2utf_list:gmatch'0x(%x%x)%s+0x(%x+)' do
         h = h > 32 and 32 or h / 2
     end
     t[#t + 1] = 256 - 2 * h + c
-    win2utf[w.char(tonumber(w, 16))] = 
+    win2utf[w.char(tonumber(w, 16))] =
     w.char((table.unpack or unpack)(t)):reverse()
 end
 
@@ -325,7 +325,7 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
                             file:close();
                             return cutval(part, fields[FieldIndex + 1][3], is1251);
                         end
-                        
+
                     end
                 end
             end

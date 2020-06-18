@@ -29,7 +29,7 @@ function moredelims(current, target)
     local _target = target:gsub('\\ ', ' ');
     local _, c_count = _current:gsub(SysUtils.PathDelim, '');
     local _, t_count = _target:gsub(SysUtils.PathDelim, '');
-    
+
     if (c_count > t_count) then
         return true;
     else
@@ -41,17 +41,17 @@ if (current ~= target) then
     if (args[3] ~= nil) then
         options = args[3];
     end
-    
+
     if moredelims(current, target) and not options:find("noswap") then
         current = args[2];
         target = args[1];
         panel = 'inactivepath';
     end
-    
+
     for dir in target:gmatch("([^" .. SysUtils.PathDelim .. "]+)") do
         table.insert(dirs, 1, dir);
     end
-    
+
     for i = 1, #dirs do
         add = SysUtils.PathDelim .. dirs[i] .. add;
         local path = current .. add;

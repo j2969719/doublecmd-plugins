@@ -50,7 +50,7 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
         handle:close();
         filename = FileName;
     end
-    
+
     if (output ~= nil) then
         local target = output;
         local result = '';

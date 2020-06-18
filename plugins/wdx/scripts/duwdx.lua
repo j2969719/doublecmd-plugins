@@ -63,7 +63,7 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
         if (FieldIndex == 0) then
             return result;
         else
-            return szcalc(result, bval, FieldIndex); 
+            return szcalc(result, bval, FieldIndex);
         end
     elseif (FieldIndex == 5) then
         local handle = io.popen(cmd2 .. ' "'..FileName..'"', 'r');

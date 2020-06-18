@@ -38,7 +38,7 @@ if (#args == 1) then
             list:close();
         end
         file:close();
-    end 
+    end
 end
 
 function ContentGetSupportedField(FieldIndex)
@@ -58,7 +58,7 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
                     found = true;
                     break;
                 end
-                
+
             end
             file:close();
             return found;

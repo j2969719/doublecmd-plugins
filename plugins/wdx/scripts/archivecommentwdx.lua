@@ -3,12 +3,12 @@ local settings = {
     ['zip' ] = {
         'unzip -z "$FILE"',       -- command
         "^Archive[^\n]+\n(.+)\n$" -- pattern
-        }, 
-    
+        },
+
     ['rar' ] = {
-        'rar l "$FILE" -p-', 
+        'rar l "$FILE" -p-',
         "Type 'rar %-%?' for help\n\n(.+)\n\n\nArchive: "
-        }, 
+        },
 }
 
 local notfoundstr = "not found"

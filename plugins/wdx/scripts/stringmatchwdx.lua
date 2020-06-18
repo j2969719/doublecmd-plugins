@@ -5,13 +5,13 @@ local ft_float  = 3
 local ft_bool   = 6
 
 local fields = {
-    {"test", "text (%d+)", ft_number}, 
+    {"test", "text (%d+)", ft_number},
 }
 
 local commands = {
-    ['doc'] = 'catdoc -w "$FILE"', 
-    ['pdf'] = 'pdftotext -layout -nopgbrk "$FILE" -', 
-    ['odt'] = 'odt2txt "$FILE"', 
+    ['doc'] = 'catdoc -w "$FILE"',
+    ['pdf'] = 'pdftotext -layout -nopgbrk "$FILE" -',
+    ['odt'] = 'odt2txt "$FILE"',
 }
 
 function ContentGetSupportedField(FieldIndex)
@@ -25,7 +25,7 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
     if (fields[FieldIndex + 1] ~= nil) and (isAttrValid(FileName) == true) then
         local ext = FileName:match(".+%.(.+)$");
         if (ext ~= nil) then
-            ext = ext:lower(); 
+            ext = ext:lower();
             if (commands[ext] ~= nil) then
                 local output = getOutput(commands[ext]:gsub("$FILE", FileName));
                 return getValue(output, fields[FieldIndex + 1][2], fields[FieldIndex + 1][3]);

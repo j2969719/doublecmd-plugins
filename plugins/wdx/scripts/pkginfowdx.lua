@@ -5,20 +5,20 @@ local filename = ''
 local possible_licenses = "GPL|GPL2|GPL3|LGPL|LGPL2.1|LGPL3|AGPL|AGPL3|BSD|MIT|Apache|Python|PHP|RUBY|ZLIB|PSF|ISC|CCPL|CDDL|CPL|FDL|FDL1.2|FDL1.3|LPPL|MPL|MPL2|EPL|ZPL|W3C|Boost|PerlArtistic|Artistic2.0|custom"
 
 local fields = {
-    {"pkgname",   8,   "\npkgname = ([^\n]+)"}, 
-    {"pkgver",    8,    "\npkgver = ([^\n]+)"}, 
-    {"pkgdesc",   8,   "\npkgdesc = ([^\n]+)"}, 
-    {"url",       8,       "\nurl = ([^\n]+)"}, 
-    {"packager",  8,  "\npackager = ([^\n]+)"}, 
-    {"license",   7,   "\nlicense = ([^\n]+)"}, 
-    {"license(s)",8,   "\nlicense = ([^\n]+)"}, 
-    {"builddate", 8, "\nbuilddate = ([^\n]+)"}, 
-    {"size",      2,      "\nsize = ([^\n]+)"}, 
-    {"conflict",  8,  "\nconflict = ([^\n]+)"}, 
-    {"provides",  8,  "\nprovides = ([^\n]+)"}, 
-    {"replaces",  8,  "\nreplaces = ([^\n]+)"}, 
-    {"arch",      7,      "\narch = ([^\n]+)"}, 
-    {"raw",       8,                "(.+)\n$"}, 
+    {"pkgname",   8,   "\npkgname = ([^\n]+)"},
+    {"pkgver",    8,    "\npkgver = ([^\n]+)"},
+    {"pkgdesc",   8,   "\npkgdesc = ([^\n]+)"},
+    {"url",       8,       "\nurl = ([^\n]+)"},
+    {"packager",  8,  "\npackager = ([^\n]+)"},
+    {"license",   7,   "\nlicense = ([^\n]+)"},
+    {"license(s)",8,   "\nlicense = ([^\n]+)"},
+    {"builddate", 8, "\nbuilddate = ([^\n]+)"},
+    {"size",      2,      "\nsize = ([^\n]+)"},
+    {"conflict",  8,  "\nconflict = ([^\n]+)"},
+    {"provides",  8,  "\nprovides = ([^\n]+)"},
+    {"replaces",  8,  "\nreplaces = ([^\n]+)"},
+    {"arch",      7,      "\narch = ([^\n]+)"},
+    {"raw",       8,                "(.+)\n$"},
 }
 
 function ContentGetSupportedField(FieldIndex)

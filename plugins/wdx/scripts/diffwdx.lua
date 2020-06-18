@@ -1,8 +1,8 @@
 
 local files = {
-    "/home/user/somefile", 
-    "/home/user/somefile1", 
-    "/home/user/somefile2", 
+    "/home/user/somefile",
+    "/home/user/somefile1",
+    "/home/user/somefile2",
 }
 
 function ContentGetSupportedField(FieldIndex)
@@ -27,7 +27,7 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
                 return true;
             else
                 return false;
-            end          
+            end
         end
     end
     return nil; -- invalid

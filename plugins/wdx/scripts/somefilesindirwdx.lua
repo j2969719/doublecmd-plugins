@@ -3,9 +3,9 @@
 -- dc >= r8553
 
 local masks = {
-    "*.aa3", "*.aac", "*.ac3", "*.adts", "*.aiff", "*.ape", "*.at3", "*.au", "*.dts", "*.dtshd", "*.flac", "*.l16", "*.m4a", 
-    "*.m4b", "*.m4p", "*.m4r", "*.mp", "*.mp+", "*.mp1", "*.mp2", "*.mp3", "*.mp4", "*.mpc", "*.mpp", "*.ofr", "*.oga", "*.ogg", 
-    "*.oma", "*.opus", "*.pcm", "*.sb0", "*.spx", "*.tak", "*.tta", "*.vqf", "*.wav", "*.wave", "*.wma", "*.wv", 
+    "*.aa3", "*.aac", "*.ac3", "*.adts", "*.aiff", "*.ape", "*.at3", "*.au", "*.dts", "*.dtshd", "*.flac", "*.l16", "*.m4a",
+    "*.m4b", "*.m4p", "*.m4r", "*.mp", "*.mp+", "*.mp1", "*.mp2", "*.mp3", "*.mp4", "*.mpc", "*.mpp", "*.ofr", "*.oga", "*.ogg",
+    "*.oma", "*.opus", "*.pcm", "*.sb0", "*.spx", "*.tak", "*.tta", "*.vqf", "*.wav", "*.wave", "*.wma", "*.wv",
 }
 
 local delim = SysUtils.PathDelim;

@@ -3,8 +3,8 @@
 local skipsysfiles = true  -- skip character, block or fifo files
 
 local cmd = {
-    {"echo", "| iconv -t latin1 | iconv -f cp1251 -t utf-8", "fix encoding"}, 
-    
+    {"echo", "| iconv -t latin1 | iconv -f cp1251 -t utf-8", "fix encoding"},
+
 }
 
 function ContentGetSupportedField(FieldIndex)
@@ -44,12 +44,12 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
         output = output:sub(1, - 2);
         if (output ~= '') then
             return output;
-        else 
+        else
             return tname;
         end
     end
     return nil;
-end 
+end
 
 function getFilename(str)
     local target = string.match(str, "^.*[/\\](.+[^/\\])$");

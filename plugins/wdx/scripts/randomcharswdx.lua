@@ -7,7 +7,7 @@ local count = 10
 function ContentGetSupportedField(FieldIndex)
     if (FieldIndex == 0) then
         return "1 character", "", 8;
-        
+
     elseif (FieldIndex < count) then
         return FieldIndex + 1 .. " characters", "", 8;
     end
@@ -21,9 +21,9 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
             table.insert(charset, string.char(i));
         end
         for i = 65, 90 do
-            table.insert(charset, string.char(i)); 
+            table.insert(charset, string.char(i));
         end
-        for i = 97, 122 do 
+        for i = 97, 122 do
             table.insert(charset, string.char(i));
         end
         filename = FileName;

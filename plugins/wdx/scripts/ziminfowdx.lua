@@ -12,7 +12,7 @@ Field "Creation date" is optional, from second line of the body (if exists):
   Afrikaans, Belarusian, Bulgarian, Czech and Czech (modern), Danish, Dutch, English,
   Estonian, Finnish, French, German, Greek, Hungarian, Icelandic, Indonesian, Italian,
   Latvian, Lithuanian, Norwegian, Polish, Portuguese, Romanian, Russian, Serbian,
-  Slovak, Slovenian, Spanish, Swedish, Turkish, Ukrainian, 
+  Slovak, Slovenian, Spanish, Swedish, Turkish, Ukrainian,
 ]]
 
 local fields = {
@@ -165,7 +165,7 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
         f = s .. SysUtils.PathDelim .. 'notebook.zim'
       end
     end
-    if f ~= nil then 
+    if f ~= nil then
       if FieldIndex == 6 then
         s = SysUtils.ExtractFileName(s)
         if s == '' then return nil else return s end

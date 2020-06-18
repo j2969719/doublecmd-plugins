@@ -63,7 +63,7 @@ end
 local MBReturn = Dialogs.MessageBox(MessageText, MessageCaption, Flags);
 
 if (StartPath ~= nil) and (MBReturn == 0x0006) then
-    
+
     if (FileList ~= nil) and (CopyToAllSubdirs == false) then
         for Target in io.lines(FileList) do
             local TargetName = string.match(Target, "[" .. SysUtils.PathDelim .. "]([^" .. SysUtils.PathDelim .. "]+)$");
@@ -72,7 +72,7 @@ if (StartPath ~= nil) and (MBReturn == 0x0006) then
             end
         end
     end
-    
+
     if (#SelectedDirs <= 1) or (CopyToAllSubdirs == true) then
         local Handle, FindData = SysUtils.FindFirst(StartPath .. SysUtils.PathDelim .. "*");
         if (Handle ~= nil) then
@@ -89,7 +89,7 @@ if (StartPath ~= nil) and (MBReturn == 0x0006) then
             CDAndCopy(SelectedDirs[i]);
         end
     end
-    
+
     DC.ExecuteCommand("cm_FocusSwap");
     DC.ExecuteCommand("cm_ChangeDir", StartPath);
     DC.ExecuteCommand("cm_FocusSwap");

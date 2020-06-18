@@ -6,9 +6,9 @@ local PathDelim = SysUtils.PathDelim;
 
 local RplFiles = {
   -- file path,             delim, contains extensions
-    {"/home/user/test.csv",   ",",  false}, 
-    {"home/user/test.txt",    "\t",  true}, 
-    {"C:\\SomeDir\\winf.txt", "\t", false}, 
+    {"/home/user/test.csv",   ",",  false},
+    {"home/user/test.txt",    "\t",  true},
+    {"C:\\SomeDir\\winf.txt", "\t", false},
 }
 
 local LuaUtf8, strfunc = pcall(require, "lua-utf8");
@@ -31,9 +31,9 @@ List of supported encoding values:
  Other: "macintosh", "koi8",
 http://doublecmd.github.io/doc/en/lua.html#libraryutf8
 ]]
-    "ansi", 
-    "oem", 
-    "koi8", 
+    "ansi",
+    "oem",
+    "koi8",
 }
 if LazUtf8 then
     convert = LazUtf8.ConvertEncoding;

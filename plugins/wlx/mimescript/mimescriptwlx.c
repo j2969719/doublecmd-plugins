@@ -220,7 +220,7 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 		scheme = gtk_source_style_scheme_manager_get_scheme(scheme_manager, style);
 		gtk_source_buffer_set_style_scheme(tBuf, scheme);
 	}
-	
+
 	if (syntax)
 	{
 		lm = gtk_source_language_manager_new();

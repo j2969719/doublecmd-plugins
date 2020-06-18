@@ -81,15 +81,15 @@ end
 local MBReturn = Dialogs.MessageBox(MessageText, MessageCaption, Flags);
 
 if (StartPath ~= nil) and (MBReturn == 0x0006) then
-    
+
     FindSubdirs(StartPath);
-    
+
     for i = 1, #FileList do
         if SysUtils.DirectoryExists(FileList[i]) then
             CDAndCopy(FileList[i]);
         end
     end
-    
+
     DC.ExecuteCommand("cm_FocusSwap");
     DC.ExecuteCommand("cm_ChangeDir", StartPath);
     DC.ExecuteCommand("cm_FocusSwap");

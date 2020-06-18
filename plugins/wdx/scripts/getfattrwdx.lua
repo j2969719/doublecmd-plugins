@@ -6,7 +6,7 @@ local filename = ''
 
 function ContentGetSupportedField(FieldIndex)
     if (FieldIndex == 0) then
-        return 'archive', '', 6; 
+        return 'archive', '', 6;
     elseif (FieldIndex == 1) then
         return 'compressed', '', 6;
     elseif (FieldIndex == 2) then
@@ -32,7 +32,7 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
         return nil;
     end
     if (filename ~= FileName) or (FieldIndex == 6) then
-        local attr = SysUtils.FileGetAttr(FileName);      
+        local attr = SysUtils.FileGetAttr(FileName);
         if (attr < 0) or (checkattr(attr, 0x00000004)) then
             return nil;
         end
@@ -57,7 +57,7 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
     elseif (FieldIndex == 5) then
         return checkattr(dosattr, 0x4);
     elseif (FieldIndex == 6) then
-        local str = '';       
+        local str = '';
         if (checkattr(dosattr, 0x1)) then
             str = str .. 'r';
         else
@@ -86,8 +86,8 @@ end
 function checkattr(vattr, val)
     if (vattr ~= nil) then
         if (math.floor(vattr / val) % 2 ~= 0) then
-            return true;        
+            return true;
         end
     end
-    return false; 
+    return false;
 end

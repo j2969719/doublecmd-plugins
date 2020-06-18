@@ -64,7 +64,7 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
         if (skipsysfiles == true) then
             local attr = SysUtils.FileGetAttr(FileName);
             if (attr < 0) or (math.floor(attr / 0x00000004) % 2 ~= 0) then
-                return nil; 
+                return nil;
             end
         end
         local handle = io.popen(scriptpath .. ' "' .. FileName .. '"', 'r');

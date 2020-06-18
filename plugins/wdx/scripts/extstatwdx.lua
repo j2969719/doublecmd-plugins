@@ -1,8 +1,8 @@
 
 local ext_allowed = { -- add extensions here
-    "mp3", "flac", "ogg", "wav", 
-    "pdf", "doc", "docx", "odt", 
-    
+    "mp3", "flac", "ogg", "wav",
+    "pdf", "doc", "docx", "odt",
+
 }
 
 local notfound = "no suitable filetypes found"
@@ -23,20 +23,20 @@ for i = 1, #ext_allowed do
 end
 
 local fields = {
-    {"count",                 2, units, false, 0}, 
-    {"count (recursively)",   2, units,  true, 0}, 
-    {"size",                  2, units, false, 0}, 
-    {"size (recursively)",    2, units,  true, 0}, 
-    {"size K",                3, units, false, 1}, 
-    {"size K (recursively)",  3, units,  true, 1}, 
-    {"size M",                3, units, false, 2}, 
-    {"size M (recursively)",  3, units,  true, 2}, 
-    {"size G",                3, units, false, 3}, 
-    {"size G (recursively)",  3, units,  true, 3}, 
-    {"size T",                3, units, false, 4}, 
-    {"size T (recursively)",  3, units,  true, 4}, 
-    {"tooltip",               8, '',    false, 0}, 
-    {"tooltip (recursively)", 8, '',     true, 0}, 
+    {"count",                 2, units, false, 0},
+    {"count (recursively)",   2, units,  true, 0},
+    {"size",                  2, units, false, 0},
+    {"size (recursively)",    2, units,  true, 0},
+    {"size K",                3, units, false, 1},
+    {"size K (recursively)",  3, units,  true, 1},
+    {"size M",                3, units, false, 2},
+    {"size M (recursively)",  3, units,  true, 2},
+    {"size G",                3, units, false, 3},
+    {"size G (recursively)",  3, units,  true, 3},
+    {"size T",                3, units, false, 4},
+    {"size T (recursively)",  3, units,  true, 4},
+    {"tooltip",               8, '',    false, 0},
+    {"tooltip (recursively)", 8, '',     true, 0},
 }
 
 function ContentGetSupportedField(FieldIndex)

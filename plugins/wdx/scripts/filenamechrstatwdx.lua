@@ -6,16 +6,16 @@ local DelimPattern = SysUtils.PathDelim;
 local UnitsStr = "Filename|Filename.Ext|Ext|Path|Path with Filename.Ext";
 
 local pattern = { -- pattern, description
-    {".",           "all chars"}, 
-    {"%w", "alphanumeric chars"}, 
-    {"%s",             "spaces"}, 
-    {"%a",            "letters"}, 
-    {"%l", "lower case letters"}, 
-    {"%u", "upper case letters"}, 
-    {"%d",             "digits"}, 
-    {"%p",  "punctuation chars"}, 
-    {"%.",                  nil}, 
-    {"%s%-%s",              nil}, 
+    {".",           "all chars"},
+    {"%w", "alphanumeric chars"},
+    {"%s",             "spaces"},
+    {"%a",            "letters"},
+    {"%l", "lower case letters"},
+    {"%u", "upper case letters"},
+    {"%d",             "digits"},
+    {"%p",  "punctuation chars"},
+    {"%.",                  nil},
+    {"%s%-%s",              nil},
 }
 
 function ContentGetSupportedField(FieldIndex)
@@ -118,7 +118,7 @@ function calcChr(Target, Pattern)
             Count = Count + 1;
         end
         return Count;
-    end 
+    end
 end
 
 function checkCase(Target, UpperCase)

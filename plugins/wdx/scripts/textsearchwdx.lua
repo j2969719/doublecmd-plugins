@@ -1,27 +1,27 @@
 
 local commands = {
-    ['pdf' ] = 'pdftotext -layout -nopgbrk "$FILE" -', 
-    ['djv' ] = 'djvused -e print-pure-txt -u "$FILE"', 
-    ['djvu'] = 'djvused -e print-pure-txt -u "$FILE"', 
-    ['epub'] = 'epub2txt "$FILE"', 
-    ['fb2' ] = 'ebook2text "$FILE"', 
-    
-    ['doc' ] = 'catdoc -w "$FILE"', 
-    ['rtf' ] = 'catdoc -w "$FILE"', 
-    ['docx'] = 'docx2txt "$FILE" -', 
-    ['odt' ] = 'odt2txt "$FILE"', 
-    
-    ['xls' ] = 'xls2csv "$FILE"', 
-    ['xlsx'] = 'xlsx2csv "$FILE"', 
+    ['pdf' ] = 'pdftotext -layout -nopgbrk "$FILE" -',
+    ['djv' ] = 'djvused -e print-pure-txt -u "$FILE"',
+    ['djvu'] = 'djvused -e print-pure-txt -u "$FILE"',
+    ['epub'] = 'epub2txt "$FILE"',
+    ['fb2' ] = 'ebook2text "$FILE"',
+
+    ['doc' ] = 'catdoc -w "$FILE"',
+    ['rtf' ] = 'catdoc -w "$FILE"',
+    ['docx'] = 'docx2txt "$FILE" -',
+    ['odt' ] = 'odt2txt "$FILE"',
+
+    ['xls' ] = 'xls2csv "$FILE"',
+    ['xlsx'] = 'xlsx2csv "$FILE"',
 }
 
 local encoding = {
-    "ansi", "oem", 
-    "cp1250", "cp1251", "cp1252", "cp1253", "cp1254", "cp1255", "cp1256", "cp1257", "cp1258", 
-    "cp437", "cp850", "cp852", "cp866", "cp874", "cp932", "cp936", "cp949", "cp950", 
-    "iso88591", "iso88592", "iso885915", 
-    "macintosh", "koi8", 
-    "ucs2le", "ucs2be", 
+    "ansi", "oem",
+    "cp1250", "cp1251", "cp1252", "cp1253", "cp1254", "cp1255", "cp1256", "cp1257", "cp1258",
+    "cp437", "cp850", "cp852", "cp866", "cp874", "cp932", "cp936", "cp949", "cp950",
+    "iso88591", "iso88592", "iso885915",
+    "macintosh", "koi8",
+    "ucs2le", "ucs2be",
 }
 
 local convert = nil;

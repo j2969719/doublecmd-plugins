@@ -2,12 +2,12 @@ local skipsysfiles = true  -- skip character, block or fifo files
 local blacklist = '\a\b\t\n\f\r\\e'
 local bufsize = 1024
 local units = {
-    "binary (contain control chars)", 
-    "UTF-32, big-endian (byte order mark)", 
-    "UTF-32, little-endian (byte order mark)", 
-    "UTF-16, big-endian (byte order mark)", 
-    "UTF-16, little-endian (byte order mark)", 
-    "UTF-8 (byte order mark)", 
+    "binary (contain control chars)",
+    "UTF-32, big-endian (byte order mark)",
+    "UTF-32, little-endian (byte order mark)",
+    "UTF-16, big-endian (byte order mark)",
+    "UTF-16, little-endian (byte order mark)",
+    "UTF-8 (byte order mark)",
 }
 
 function ContentGetSupportedField(FieldIndex)
@@ -29,9 +29,9 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
         if (skipsysfiles == true) then
             local attr = SysUtils.FileGetAttr(FileName);
             if (attr < 0) or (math.floor(attr / 0x00000004) % 2 ~= 0) then
-                return nil; 
+                return nil;
             end
-        end    
+        end
         local isbin = false;
         local f = io.open(FileName, "rb");
         if (f ~= nil) then
@@ -49,12 +49,12 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
             f:seek("set", 0);
             while (isbin ~= true) do
                 local buf = f:read(bufsize);
-                if (buf == nil) then 
+                if (buf == nil) then
                     break;
                 end
                 for b in buf:gfind("%c") do
                     if (blacklist:find(b) == nil) then
-                        --local val = b:byte(); 
+                        --local val = b:byte();
                         --print(string.format("found control char %02X (%d)", val, val));
                         isbin = true;
                         break;
@@ -65,7 +65,7 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
             if (isbin == true) then
                 return units[1];
             end
-        end  
+        end
     end
     return nil; -- invalid
 end
@@ -77,7 +77,7 @@ function checkbom(file, num, hexstr)
         local t = {};
         for b in string.gfind(bytes, ".") do
             table.insert(t, string.format("%02X", string.byte(b)));
-        end       
+        end
         local str = table.concat(t);
         if (hexstr == str) then
             return true;

@@ -5,7 +5,7 @@ local filename = ''
 
 function ContentGetSupportedField(FieldIndex)
     if (FieldIndex == 0) then
-        return 'archive', '', 6; 
+        return 'archive', '', 6;
     elseif (FieldIndex == 1) then
         return 'hidden', '', 6;
     elseif (FieldIndex == 2) then
@@ -30,11 +30,11 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
     if (FileName:find("[" .. delimpat .. "]%.%.$")) then
         return nil;
     end
-    if (filename ~= FileName) or (FieldIndex == 4) then        
+    if (filename ~= FileName) or (FieldIndex == 4) then
         local attr = SysUtils.FileGetAttr(FileName);
         if (attr < 0) or (math.floor(attr / 0x00000004) % 2 ~= 0) then
             return nil;
-        end        
+        end
         local handle = io.popen(cmd .. ' "' .. FileName .. '"', 'r');
         output = handle:read("*a");
         handle:close();
@@ -52,7 +52,7 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
     elseif (FieldIndex == 3) then
         return checkattr(dosattr, 's');
     elseif (FieldIndex == 4) then
-        local str = '';       
+        local str = '';
         if (checkattr(dosattr, 'r')) then
             str = str .. 'r';
         else
@@ -84,5 +84,5 @@ function checkattr(vattr, val)
             return true;
         end
     end
-    return false;   
+    return false;
 end
