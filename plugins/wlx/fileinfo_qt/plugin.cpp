@@ -4,10 +4,13 @@
 #include <QPlainTextEdit>
 #include <QFontDatabase>
 
+#include <QSettings>
+
 #include <dlfcn.h>
 #include "wlxplugin.h"
 
 QString path;
+QFont font;
 
 QString getOutput(char* FileToLoad)
 {
@@ -30,8 +33,6 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 	if (output.isEmpty())
 		return NULL;
 
-	QFont font = QFontDatabase::systemFont(QFontDatabase::FixedFont);
-	font.setPointSize(13);
 	QPlainTextEdit *view = new QPlainTextEdit((QWidget*)ParentWin);
 	view->document()->setDefaultFont(font);
 	view->setPlainText(output);
@@ -113,6 +114,23 @@ int DCPCALL ListSendCommand(HWND ListWin, int Command, int Parameter)
 
 void DCPCALL ListSetDefaultParams(ListDefaultParamStruct* dps)
 {
+	QSettings settings(QSettings::IniFormat, QSettings::UserScope, "doublecmd", "j2969719");
+	int size = settings.value("fileinfo/fontsize").toInt();
+
+	if (size == 0)
+	{
+		font = QFontDatabase::systemFont(QFontDatabase::FixedFont);
+		size = 12;
+		settings.setValue("fileinfo/fontsize", 12);
+		settings.setValue("fileinfo/font", font.family());
+		settings.setValue("fileinfo/fontbold", font.bold());
+	}
+
+	font.setFixedPitch(true);
+	font.setPointSize(size);
+	font.setFamily(settings.value("fileinfo/font").toString());
+	font.setBold(settings.value("fileinfo/fontbold").toBool());
+
 	static char inipath[PATH_MAX + 1];
 	strncpy(inipath, dps->DefaultIniName, PATH_MAX);
 	QString scrpath(inipath);

@@ -7,7 +7,12 @@
 #include <Definition>
 #include <Theme>
 
+#include <QSettings>
+
 #include "wlxplugin.h"
+
+bool darktheme = false;
+QFont font;
 
 HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 {
@@ -26,9 +31,6 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 	view->setPlainText(file.readAll());
 	file.close();
 	view->setReadOnly(true);
-
-	QFont font = QFontDatabase::systemFont(QFontDatabase::FixedFont);
-	font.setPointSize(13);
 	view->document()->setDefaultFont(font);
 
 	if (ShowFlags & lcp_wraptext)
@@ -38,8 +40,12 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 
 	KSyntaxHighlighting::SyntaxHighlighter *highlighter = new KSyntaxHighlighting::SyntaxHighlighter();
 	highlighter->setDefinition(definition);
-	//highlighter->setTheme(repo->defaultTheme(KSyntaxHighlighting::Repository::DarkTheme));
-	highlighter->setTheme(repo->defaultTheme(KSyntaxHighlighting::Repository::LightTheme));
+
+	if (darktheme)
+		highlighter->setTheme(repo->defaultTheme(KSyntaxHighlighting::Repository::DarkTheme));
+	else
+		highlighter->setTheme(repo->defaultTheme(KSyntaxHighlighting::Repository::LightTheme));
+
 	highlighter->setDocument(view->document());
 	view->show();
 
@@ -96,4 +102,27 @@ int DCPCALL ListSendCommand(HWND ListWin, int Command, int Parameter)
 	}
 
 	return LISTPLUGIN_OK;
+}
+
+void DCPCALL ListSetDefaultParams(ListDefaultParamStruct* dps)
+{
+	font = QFontDatabase::systemFont(QFontDatabase::FixedFont);
+	QSettings settings(QSettings::IniFormat, QSettings::UserScope, "doublecmd", "j2969719");
+	int size = settings.value("synthighl/fontsize").toInt();
+
+	if (size == 0)
+	{
+		font = QFontDatabase::systemFont(QFontDatabase::FixedFont);
+		size = 12;
+		settings.setValue("synthighl/fontsize", 12);
+		settings.setValue("synthighl/font", font.family());
+		settings.setValue("synthighl/fontbold", font.bold());
+		settings.setValue("synthighl/darktheme", darktheme);
+	}
+
+	font.setFamily(settings.value("synthighl/font").toString());
+	font.setFixedPitch(true);
+	font.setPointSize(size);
+	font.setBold(settings.value("synthighl/fontbold").toBool());
+	darktheme = settings.value("synthighl/darktheme").toBool();
 }
