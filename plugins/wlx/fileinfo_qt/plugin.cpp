@@ -114,7 +114,9 @@ int DCPCALL ListSendCommand(HWND ListWin, int Command, int Parameter)
 
 void DCPCALL ListSetDefaultParams(ListDefaultParamStruct* dps)
 {
-	QSettings settings(QSettings::IniFormat, QSettings::UserScope, "doublecmd", "j2969719");
+	QFileInfo defini(QString::fromStdString(dps->DefaultIniName));
+	QString cfgpath = defini.absolutePath() + "/j2969719.ini";
+	QSettings settings(cfgpath, QSettings::IniFormat);
 	int size = settings.value("fileinfo/fontsize").toInt();
 
 	if (size == 0)
