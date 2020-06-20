@@ -101,6 +101,15 @@ case "${filetype}" in
 	[Mm][Ss][Ii])
 		file -b "$file" && msiinfo suminfo "$file" && msiextract -l "$file"
 		;;
+	[Oo][Dd][Gg])
+		odt2txt "$file"
+		;;
+	[Oo][Dd][Pp])
+		odt2txt "$file"
+		;;
+	[Oo][Dd][Ss])
+		odt2txt "$file"
+		;;
 	[Oo][Dd][Tt])
 		odt2txt "$file"
 		;;
