@@ -286,7 +286,9 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 
 void DCPCALL ListCloseWindow(HWND ListWin)
 {
+	GdkPixbuf *pixbuf = gtk_image_view_get_pixbuf(GTK_IMAGE_VIEW(find_child(ListWin, "imageview")));
 	gtk_widget_destroy(GTK_WIDGET(ListWin));
+	g_object_unref(pixbuf);
 }
 
 int DCPCALL ListSendCommand(HWND ListWin, int Command, int Parameter)
