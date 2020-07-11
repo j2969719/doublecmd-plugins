@@ -1,5 +1,5 @@
 -- checkfileextwdx.lua (cross-platform)
--- 2020.05.20
+-- 2020.07.11
 --[[
 Checking that the file extension matches the file type (by the file signatures ("magic numbers"))
 and returns some additional info.
@@ -185,7 +185,7 @@ function BinToNum(d, n1, n2)
 end
 
 function IsBMP(d)
-  if (string.sub(s, 1, 2) == 'BM') and (BinToNum(d, 13, 14) == 0x0000) and (BinToNum(d, 16, 18) == 0x00) then
+  if (string.sub(d, 1, 2) == 'BM') and (BinToNum(d, 13, 14) == 0x0000) and (BinToNum(d, 16, 18) == 0x00) then
     if (string.byte(d, 15) == 0x0c) and (BinToNum(d, 23, 24) == 0x0100) and (string.byte(d, 26) == 0x00) then
       return true
     end
