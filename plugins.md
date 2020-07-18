@@ -172,6 +172,9 @@ Getting some information from JPEG files. See details in the beginning of script
 - [libextractorwdx.lua](plugins/wdx/scripts/libextractorwdx.lua)<br>
 Returns metadata from files. You can see list of fields in `fields` (first column). Requires `extract`.
 
+- [lnkinfowdx.lua](plugins/wdx/scripts/lnkinfowdx.lua)<br>
+Getting some information from Windows shell link (shortcut) file. Requires `lnkinfo`.
+
 - [lslockswdx.lua](plugins/wdx/scripts/lslockswdx.lua)<br>
 List local system locks.
 
