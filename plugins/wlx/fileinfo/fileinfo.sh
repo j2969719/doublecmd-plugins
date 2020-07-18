@@ -14,7 +14,7 @@ case "${filetype}" in
 		file -b "$file" && unalz -l "$file"
 		;;
 	[Aa][Nn][Ss])
-		strings | cat "$file" | iconv -f "866" -t "UTF-8"
+		cat "$file" | iconv -f "866" -t "UTF-8"
 		;;
 	[Aa][Pp][Kk])
 		aapt dump badging "$file"
