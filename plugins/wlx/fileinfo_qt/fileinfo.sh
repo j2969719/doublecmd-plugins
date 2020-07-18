@@ -14,7 +14,7 @@ case "${filetype}" in
 		file -b "$file" && unalz -l "$file"
 		;;
 	[Aa][Nn][Ss])
-		strings | cat "$file" |  iconv -f "866" -t "UTF-8"
+		strings | cat "$file" | iconv -f "866" -t "UTF-8"
 		;;
 	[Aa][Pp][Kk])
 		aapt dump badging "$file"
@@ -95,6 +95,9 @@ case "${filetype}" in
 	[Ll][Zz]4)
 		file -b "$file" && lz4 -dc "$file" 2>/dev/null | tar -tvvf - || lz4 -dc "$file" 2>/dev/null | cat
 		;;
+	[Ll][Nn][Kk])
+		lnkinfo "$file" || exiftool "$file"
+		;;
 	[Mm][Oo])
 		file -b "$file" && msgunfmt "$file" || cat "$file"
 		;;
@@ -158,7 +161,7 @@ case "${filetype}" in
 		case `file -b --mime-type -L "$file"` in
 			"application/x-executable"|"application/x-sharedlib"|"application/x-pie-executable")
 				file -b "$file"
-				ldd  "$file" | grep "not found"
+				ldd "$file" | grep "not found"
 				readelf -a "$file"
 				nm -CD "$file"
 				;;
@@ -172,8 +175,8 @@ case "${filetype}" in
 				stat "$file"
 				;;
 			"application/x-dosexec")
-				exiftool  "$file" || \
-				wrestool --extract --raw --type=version "$file" |  strings -el
+				exiftool "$file" || \
+				wrestool --extract --raw --type=version "$file" | strings -el
 				readpe -A "$file"
 				;;
 		esac
