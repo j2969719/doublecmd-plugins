@@ -1,13 +1,11 @@
 -- vcardinfowdx.lua (cross-platform)
--- 2020.03.20
+-- 2020.07.23
 --
 -- vCard Format Specification 2.1, 3.0, 4.0
 -- Some details: https://en.wikipedia.org/wiki/VCard
 --
 -- NOTE: Script reads file content between BEGIN:VCARD and END:VCARD and will continue to work
 --       only if VERSION property is exists (all vCards must contain the VERSION property).
--- NOTE: Usually first line is "BEGIN:VCARD", but if not found "BEGIN:VCARD" then script will
---       read five more lines (just in case), not the whole file.
 -- NOTE: One vCard file - one person! Otherwise only the first one will be read.
 --
 -- Supported fields: see table "fields".
@@ -96,7 +94,7 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
         if string.sub(l, 1, 11) == 'BEGIN:VCARD' then
           vc = true
         else
-          if i > 5 then break end
+          if i > 1 then break end
         end
       else
         if string.sub(l, 1, 9) == 'END:VCARD' then break end
