@@ -1,5 +1,5 @@
 -- vcardinfowdx.lua (cross-platform)
--- 2020.07.23
+-- 2020.07.24
 --
 -- vCard Format Specification 2.1, 3.0, 4.0
 -- Some details: https://en.wikipedia.org/wiki/VCard
@@ -131,7 +131,11 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
     return v
   -- ADR
   elseif (FieldIndex >= 7) and (FieldIndex <= 14) then
-    return adr[FieldIndex - 6][UnitIndex + 1]
+    if adr[FieldIndex - 6] == nil then
+      return nil
+    else
+      return adr[FieldIndex - 6][UnitIndex + 1]
+    end
   -- LABEL
   elseif FieldIndex == 15 then
     return adrl[UnitIndex + 1]
