@@ -157,6 +157,9 @@ Returns file permissions (ACL). Requires `getfacl`.
 - [getfattrwdx.lua](plugins/wdx/scripts/getfattrwdx.lua)<br>
 Getting MS-DOS attributes in a FAT file system. Requires `getfattr`.
 
+- [getfattrcustomwdx.lua](plugins/wdx/scripts/getfattrcustomwdx.lua)<br>
+Getting custom extended attributes. Requires `getfattr`.
+
 - [gitinfowdx.lua](plugins/wdx/scripts/gitinfowdx.lua)<br>
 Getting some information from local copy of Git repository. Requires `git`.
 
