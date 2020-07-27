@@ -166,6 +166,9 @@ Getting some information from local copy of Git repository. Requires `git`.
 - [hexdecheaderwdx.lua](plugins/wdx/scripts/hexdecheaderwdx.lua) and [hexheaderwdx.lua](plugins/wdx/scripts/hexheaderwdx.lua) *(cross platform)*<br>
 Examples: search by hex value. Now Double Commander can do it itself.
 
+- [icalendarwdx.lua](plugins/wdx/scripts/icalendarwdx.lua) *(cross platform)*<br>
+Getting some information from iCalendar files.
+
 - [infilelistwdx.lua](plugins/wdx/scripts/infilelistwdx.lua)<br>
 Search file name in custom list of file names.
 
