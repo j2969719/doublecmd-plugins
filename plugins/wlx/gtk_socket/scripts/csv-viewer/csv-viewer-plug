@@ -37,6 +37,8 @@ from gi.repository import Gdk
 from gi.repository import GLib
 from gi.repository import Gtk
 
+import chardet
+
 CSS = """
 .csv-view {
   color: #404444;
@@ -123,6 +125,11 @@ def init_window(title, xid, view):
     window.construct(int(xid))
     return window
 
+def iter_lines(f):
+    for line in f:
+        if line.strip():
+            yield line
+
 def load_chunk(reader, view):
     """Load rows from `reader` into `view`."""
     store = view.get_model()
@@ -157,7 +164,12 @@ def main():
     #opts, path = parse_arguments()
     xid = int(sys.argv[1])
     path = sys.argv[2]
-    f = open(path, "r", encoding=ENCODING, errors="replace")
+    f = open(path, 'rb')
+    sample = f.read(32768)
+    detres = chardet.detect(sample)
+    f.close()
+    f = open(path, "r", encoding=detres['encoding'], errors="replace")
+    # f = open(path, "r", encoding=ENCODING, errors="replace")
     atexit.register(f.close)
     # Sniffer could be used to detect the presence
     # of a header line, but seems to fail if all
@@ -168,11 +180,11 @@ def main():
     f.seek(0)
     try:
         dialect = sniffer.sniff(sample)
-        reader = csv.reader(f, dialect)
+        reader = csv.reader(iter_lines(f), dialect)
     except Exception:
         print("Detecting dialect failed")
         print("Trying to open as a regular CSV file")
-        reader = csv.reader(f, delimiter=",")
+        reader = csv.reader(iter_lines(f), delimiter=",")
     first_row = next(reader)
     view = init_view(len(first_row) + 2)
     title = os.path.basename(path)
