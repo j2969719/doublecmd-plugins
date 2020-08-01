@@ -86,7 +86,7 @@ Reading comment from ZIP and RAR files.
 - [bintstwdx.lua](plugins/wdx/scripts/bintstwdx.lua)<br>
 Checking: binary or Unicode text file (encoding UTF-8, UTF-16 or UTF-32 and byte order, detection by BOM).
 
-- [caseduplwdx.lua](plugins/wdx/scripts/caseduplwdx.lua)<br>
+- [caseduplwdx.lua](plugins/wdx/scripts/caseduplwdx.lua) *(cross platform)*<br>
 Search for duplicates with the same name but with a different case.
 
 - [checkfileextwdx.lua](plugins/wdx/scripts/checkfileextwdx.lua) *(cross platform)*<br>
