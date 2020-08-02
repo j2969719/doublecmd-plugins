@@ -1,5 +1,5 @@
 -- checkfilenamewdx.lua (cross-platform)
--- 2020.04.09
+-- 2020.08.02
 --[[
 Save as UTF-8 without BOM!
 
@@ -48,7 +48,6 @@ Note: On Unix-like script uses /etc/mtab.
 Returns true if "path length in characters" = "path length in bytes".
 
 Notes about a path length limitation in Windows:
-
 1. MAX_PATH
 In some cases the maximum length for a path is MAX_PATH, which is defined as 260 characters:
   [drive]:\[some 256-character path string]<NUL>
@@ -60,6 +59,9 @@ than MAX_PATH, you should use:
 A maximum total path length is 32767 characters, but with the "\\?\" prefix:
 the "\\?\" prefix may be expanded to a longer string by the system at run time, so you
 can not use "32767" or "32767 - 1" in conditions.
+---------------------
+
+Also see caseduplwdx.lua, it can be useful too.
 ]]
 
 local cyr = {
