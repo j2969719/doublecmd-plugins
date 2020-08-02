@@ -2,7 +2,10 @@
 # -*- coding: utf-8 -*-
 #
 # Base64 & UUEncode: encode/decode
-# 2018.10.08
+# 2020.08.02
+#
+# If you want to use Python 3:
+#   just replace shebang on "#!/usr/bin/env python3" or "#!/usr/bin/python3"
 #
 # File extension:
 #   b64: Base64
@@ -11,7 +14,7 @@
 #   base64uue.py -l %AQ
 #     get name of encoded file, date/time (for MultiArc)
 #     Output format: yyyy tt dd hh mm ss aaaaa zzzzzzzzzzzz n+
-#                    2012-11-23 01:54:17 ....A          664 filename.ext
+#       For example: 2012-11-23 01:54:17 ....A          664 filename.ext
 #   base64uue.py -eb %AQ %FQ
 #     encode file in Base64 format (like Total Commander)
 #   base64uue.py -eu %AQ %FQ
@@ -51,7 +54,7 @@ def get_name_and_size_b64(fl):
     l = []
     f = open(fl, 'r')
     for line in f:
-        if line.find('MIME-') <> -1 or line.find('Content-') <> -1:
+        if line.find('MIME-') > -1 or line.find('Content-') > -1:
             continue
         else:
             l.append(line.strip())
@@ -78,7 +81,7 @@ def unpack_b64(fl, n):
     l = []
     f = open(fl, 'r')
     for line in f:
-        if line.find('MIME-') <> -1 or line.find('Content-') <> -1:
+        if line.find('MIME-') > -1 or line.find('Content-') > -1:
             continue
         else:
             l.append(line.strip())
