@@ -1,5 +1,5 @@
 -- markerwdx.lua (cross-platform)
--- 2020.02.07
+-- 2020.08.04
 
 local dbn
 local ft, c = 0, 0

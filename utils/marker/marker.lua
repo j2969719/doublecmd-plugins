@@ -1,10 +1,10 @@
 -- marker.lua (cross-platform)
--- 2020.02.07
+-- 2020.08.04
 
 local params = {...}
 
 local dbn, dbne, h, err, l
-sn = debug.getinfo(1).source
+local sn = debug.getinfo(1).source
 if string.sub(sn, 1, 1) == '@' then sn = string.sub(sn, 2, -1) end
 local pt = ".*\\"
 if SysUtils.PathDelim == "/" then pt = "/.*/" end
