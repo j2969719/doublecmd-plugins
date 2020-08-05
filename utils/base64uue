@@ -2,25 +2,32 @@
 # -*- coding: utf-8 -*-
 #
 # Base64 & UUEncode: encode/decode
-# 2020.08.02
+# 2020.08.05
 #
 # If you want to use Python 3:
 #   just replace shebang on "#!/usr/bin/env python3" or "#!/usr/bin/python3"
 #
-# File extension:
-#   b64: Base64
-#   uue: UUEncode
-# Params:
-#   base64uue.py -l %AQ
-#     get name of encoded file, date/time (for MultiArc)
-#     Output format: yyyy tt dd hh mm ss aaaaa zzzzzzzzzzzz n+
-#       For example: 2012-11-23 01:54:17 ....A          664 filename.ext
-#   base64uue.py -eb %AQ %FQ
-#     encode file in Base64 format (like Total Commander)
-#   base64uue.py -eu %AQ %FQ
-#     encode file in UUEncode format
-#   base64uue.py -d %AQ %FQ
-#     decode file (detect by extension)
+# File extension: b64 (Base64) or uue (UUEncode)
+#
+# Using:
+#
+#  base64uue -l <encoded-file>
+#    Get the name of encoded file and date/time (for MultiArc).
+#    Output format: yyyy tt dd hh mm ss aaaaa zzzzzzzzzzzz n+
+#    For example: 2012-11-23 01:54:17 ....A          664 filename.ext
+# 
+#  base64uue -eb <encoded-file> <file-for-encoding>
+#    Encode file <file-for-encoding> to Base64 format (like in Total Commander).
+# 
+#  base64uue -eu <encoded-file> <file-for-encoding>
+#    Encode file <file-for-encoding> to UUEncode format.
+# 
+#  base64uue -d <encoded-file> <filename-for-'extraction'>
+#    Decode file <encoded-file> (detect by extension).
+#
+# MultiArc config:
+# Base64 https://github.com/j2969719/doublecmd-plugins/blob/master/multiarc.ini.md#b64
+# UUEncode https://github.com/j2969719/doublecmd-plugins/blob/master/multiarc.ini.md#uue
 
 import base64
 import binascii
