@@ -1,5 +1,5 @@
 -- getfattrcustomwdx.lua
--- 2020.07.26
+-- 2020.08.05
 --[[
 Get custom extended attributes. Requires getfattr.
 For Unix-like only!
@@ -36,26 +36,19 @@ end
 
 function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
   if FieldIndex > 1 then return nil end
-  local h, out
-  if FieldIndex == 0 then
-    if un[UnitIndex + 1] ~= nil then
-      h = io.popen('getfattr --only-values -n user.' .. un[UnitIndex + 1] .. ' --absolute-names "' .. FileName .. '"')
-      if h == nil then return nil end
-      out = h:read('*a')
-      h:close()
-      if (out ~= nil) and (out ~= '') then
-        out = string.gsub(out, '[\r\n]+$', '')
-        if string.len(out) > 0 then return out end
+  local h = io.popen('getfattr --dump --encoding=text --no-dereference --absolute-names "' .. FileName .. '"')
+  if h == nil then return nil end
+  local out = h:read('*a')
+  h:close()
+  if (out ~= nil) and (out ~= '') then
+    local s = ''
+    if FieldIndex == 0 then
+      if un[UnitIndex + 1] ~= nil then
+        s = string.match(out, 'user%.' .. un[UnitIndex + 1] .. '="([^"]+)"')
+        if (s ~= nil) and (s ~= '') then return s end
       end
-    end
-  elseif FieldIndex == 1 then
-    h = io.popen('getfattr -d --absolute-names "' .. FileName .. '"')
-    if h == nil then return nil end
-    out = h:read('*a')
-    h:close()
-    if (out ~= nil) and (out ~= '') then
-      local s = ''
-      for l in string.gmatch(out, 'user%.([^\r\n=]+)=') do
+    elseif FieldIndex == 1 then
+      for l in string.gmatch(out, 'user%.([^=]+)=') do
         s = s .. '; ' .. l
       end
       s = string.sub(s, 3, -1)
