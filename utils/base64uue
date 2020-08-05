@@ -12,18 +12,15 @@
 # Using:
 #
 #  base64uue -l <encoded-file>
-#    Get the name of encoded file and date/time (for MultiArc).
-#    Output format: yyyy tt dd hh mm ss aaaaa zzzzzzzzzzzz n+
-#    For example: 2012-11-23 01:54:17 ....A          664 filename.ext
-# 
+#      Get the name of encoded file and date/time (for MultiArc).
+#      Output format: yyyy tt dd hh mm ss aaaaa zzzzzzzzzzzz n+
+#      For example: 2012-11-23 01:54:17 ....A          664 filename.ext
 #  base64uue -eb <encoded-file> <file-for-encoding>
-#    Encode file <file-for-encoding> to Base64 format (like in Total Commander).
-# 
+#      Encode file <file-for-encoding> to Base64 format (like in Total Commander).
 #  base64uue -eu <encoded-file> <file-for-encoding>
-#    Encode file <file-for-encoding> to UUEncode format.
-# 
+#      Encode file <file-for-encoding> to UUEncode format.
 #  base64uue -d <encoded-file> <filename-for-'extraction'>
-#    Decode file <encoded-file> (detect by extension).
+#      Decode file <encoded-file> (detect by extension).
 #
 # MultiArc config:
 # Base64 https://github.com/j2969719/doublecmd-plugins/blob/master/multiarc.ini.md#b64
