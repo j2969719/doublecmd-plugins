@@ -196,6 +196,9 @@ Getting info from headers of saved email messages. Supported formats: *.eml, *.m
 - [pkginfowdx.lua](plugins/wdx/scripts/pkginfowdx.lua)<br>
 Returns some information from Arch Linux packages.
 
+- [poheaderwdx.lua](plugins/wdx/scripts/poheaderwdx.lua) *(cross platform)*<br>
+Getting some information from PO-files (gettext).
+
 - [quasiexpanderwdx.lua](plugins/wdx/scripts/quasiexpanderwdx.lua) *(cross platform)*<br>
 Returns part of file name (by delimiter).
 
