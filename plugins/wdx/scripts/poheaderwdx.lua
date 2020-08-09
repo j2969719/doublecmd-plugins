@@ -1,5 +1,5 @@
 -- poheaderwdx.lua (cross-platform)
--- 2020.08.06
+-- 2020.08.09
 --[[
 Getting some information from PO-files (gettext):
   PO Translation Files and POT Translation Templates.
@@ -10,21 +10,22 @@ Supported fields: see table "fields".
 ]]
 
 local fields = {
-{"Project id/version", "Project%-Id%-Version"},
-{"Report bugs to",     "Report%-Msgid%-Bugs%-To"},
-{"POT creation date",  "POT%-Creation%-Date"},
-{"PO revision date",   "PO%-Revision%-Date"},
-{"Last translator",    "Last%-Translator"},
-{"Language team",      "Language%-Team"},
-{"Language",           "Language"},
-{"X-Generator",        "X%-Generator"},
-{"X-Language",         "X%-Language"},
-{"X-Native-Language",  "X%-Native%-Language"},
-{"X-Source-Language",  "X%-Source%-Language"},
-{"X-Poedit-Language",  "X%-Poedit%-Language"},
-{"X-Poedit-Country",   "X%-Poedit%-Country"},
-{"X-Crowdin-Project",  "X%-Crowdin%-Project"},
-{"X-Crowdin-Language", "X%-Crowdin%-Language"}
+{"Project id/version",      "Project%-Id%-Version"},
+{"Report bugs to",          "Report%-Msgid%-Bugs%-To"},
+{"POT creation date",       "POT%-Creation%-Date"},
+{"PO revision date",        "PO%-Revision%-Date"},
+{"Last translator",         "Last%-Translator"},
+{"Language team",           "Language%-Team"},
+{"Language",                "Language"},
+{"X-Generator",             "X%-Generator"},
+{"X-Language",              "X%-Language"},
+{"X-Native-Language",       "X%-Native%-Language"},
+{"X-Source-Language",       "X%-Source%-Language"},
+{"X-Poedit-Language",       "X%-Poedit%-Language"},
+{"X-Poedit-Country",        "X%-Poedit%-Country"},
+{"X-Launchpad-Export-Date", "X%-Launchpad%-Export%-Date"},
+{"X-Crowdin-Project",       "X%-Crowdin%-Project"},
+{"X-Crowdin-Language",      "X%-Crowdin%-Language"}
 }
 local all = {}
 local filename = ''
