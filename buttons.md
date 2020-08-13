@@ -871,5 +871,23 @@ DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="utf-8"?>
 </doublecmd>
 ```
 
+
+### Set custom extended attribute(s)
+[SetFAttrCustom.lua](utils/SetFAttrCustom.lua). Also can be useful wdx-plugin: [getfattrcustomwdx.lua](plugins/wdx/scripts/getfattrcustomwdx.lua).
+```
+DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
+<doublecmd>
+  <Command>
+    <ID>{78AE07D0-42A0-4238-92BB-BE802AFB6F48}</ID>
+    <Icon>cm_executescript</Icon>
+    <Hint>Set custom extended attributes</Hint>
+    <Command>cm_ExecuteScript</Command>
+    <Param>%COMMANDER_PATH%/utils/SetFAttrCustom.lua</Param>
+    <Param>%LU</Param>
+  </Command>
+</doublecmd>
+```
+
+
 ### Marker *(cross platform)*
 For file highlighting like in *Colors* > *File types*, but "on the fly": add selected color, delete or change. So you can use this scripts for file tagging. See details [here](utils/marker).
