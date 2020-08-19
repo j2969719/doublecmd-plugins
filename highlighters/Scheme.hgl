@@ -1,0 +1,424 @@
+<UniHighlighter version="1.8.1">
+  <Info>
+    <General Name="Scheme*" Extensions="SCM SS"/>
+    <Author Name="Skif_off" Email="" Web="" Copyright="" Company="" Remark="Scheme R5RS + Scheme R7RS, ased on 'scheme.coder' for AkelPad"/>
+    <Version Version="1" Revision="3" Date="43035,4066241667"/>
+    <History>
+    </History>
+    <Sample>
+      <S>;;; The FACT procedure computes the factorial</S>
+      <S>;;; of a non-negative integer.</S>
+      <S>(define fact</S>
+      <S>  (lambda (n)</S>
+      <S>    (if (= n 0)</S>
+      <S>        1        ;Base case: return 1</S>
+      <S>        (* n (fact (- n 1))))))</S>
+    </Sample>
+  </Info>
+  <Scheme File="" Name=""/>
+  <Range Name="Root" Attributes="0,16777215;False:False." Style="" CaseSensitive="True"
+         Delimiters="&quot;%&amp;'()*+,./:;&lt;=@[\]^{|}~">
+    <Rule/>
+    <Keywords Name="Boolean" Attributes="0,16777215;False:False.B" Style="">
+      <word value="#f"/>
+      <word value="#t"/>
+    </Keywords>
+    <Keywords Name="Symbols" Attributes="175,16777215;False:False." Style="">
+      <word value="("/>
+      <word value=")"/>
+      <word value="{"/>
+      <word value="}"/>
+      <word value="["/>
+      <word value="]"/>
+      <word value="&amp;"/>
+      <word value=","/>
+      <word value="."/>
+      <word value=":"/>
+      <word value="_"/>
+      <word value="^"/>
+    </Keywords>
+    <Keywords Name="NumConstant" Attributes="128,16777215;False:False." Style="">
+      <word value="#b"/>
+      <word value="#d"/>
+      <word value="#e"/>
+      <word value="#i"/>
+      <word value="#o"/>
+      <word value="#x"/>
+    </Keywords>
+    <Range Name="Comments" Attributes="32768,16777215;False:False." Style="" CaseSensitive="True"
+           Delimiters="!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^`{|}~">
+      <Rule OpenSymbol=";" CloseOnEol="True"/>
+    </Range>
+    <Range Name="Keywords" Attributes="536870911,16777215;False:False." Style="" CaseSensitive="True"
+           Delimiters="&quot;#$%&amp;'(),.:;@[\]^`{|}~">
+      <Rule OpenSymbol="(" OpenSymbolPartOfTerm="False" CloseSymbolPartOfTerm="False" CloseOnTerm="True"/>
+      <Keywords Name="Keywords1" Attributes="9437184,16777215;False:False.B" Style="">
+        <word value="define"/>
+        <word value="define-record-type"/>
+        <word value="define-syntax"/>
+        <word value="define-values"/>
+        <word value="delay"/>
+        <word value="delay-force"/>
+        <word value="force"/>
+        <word value="lambda"/>
+        <word value="let"/>
+        <word value="let*"/>
+        <word value="let*-values"/>
+        <word value="let-syntax"/>
+        <word value="let-values"/>
+        <word value="letrec"/>
+        <word value="letrec*"/>
+        <word value="letrec-syntax"/>
+        <word value="make-promise"/>
+        <word value="promise?"/>
+        <word value="quasiquote"/>
+        <word value="quasiquote"/>
+        <word value="quote"/>
+        <word value="set!"/>
+        <word value="syntax-rules"/>
+        <word value="unquote"/>
+        <word value="unquote-splicing"/>
+      </Keywords>
+      <Keywords Name="Keywords2" Attributes="9437184,16777215;False:False." Style="">
+        <word value="&lt;="/>
+        <word value="&gt;="/>
+        <word value="&gt;"/>
+        <word value="&lt;"/>
+        <word value="="/>
+        <word value="+"/>
+        <word value="*"/>
+        <word value="-"/>
+        <word value="/"/>
+        <word value="abs"/>
+        <word value="acos"/>
+        <word value="angle"/>
+        <word value="append"/>
+        <word value="apply"/>
+        <word value="asin"/>
+        <word value="assoc"/>
+        <word value="assq"/>
+        <word value="assv"/>
+        <word value="atan"/>
+        <word value="binary-port?"/>
+        <word value="boolean=?"/>
+        <word value="boolean?"/>
+        <word value="bytevector"/>
+        <word value="bytevector-append"/>
+        <word value="bytevector-copy!"/>
+        <word value="bytevector-copy"/>
+        <word value="bytevector-length"/>
+        <word value="bytevector-u8-ref"/>
+        <word value="bytevector-u8-set!"/>
+        <word value="bytevector?"/>
+        <word value="caaaar"/>
+        <word value="caaadr"/>
+        <word value="caaar"/>
+        <word value="caadar"/>
+        <word value="caaddr"/>
+        <word value="caadr"/>
+        <word value="caar"/>
+        <word value="cadaar"/>
+        <word value="cadadr"/>
+        <word value="cadar"/>
+        <word value="caddar"/>
+        <word value="cadddr"/>
+        <word value="caddr"/>
+        <word value="cadr"/>
+        <word value="call-with-current-continuation"/>
+        <word value="call-with-input-file"/>
+        <word value="call-with-output-file"/>
+        <word value="call-with-port"/>
+        <word value="call-with-values"/>
+        <word value="call/cc"/>
+        <word value="car"/>
+        <word value="cdaaar"/>
+        <word value="cdaadr"/>
+        <word value="cdaar"/>
+        <word value="cdadar"/>
+        <word value="cdaddr"/>
+        <word value="cdadr"/>
+        <word value="cdar"/>
+        <word value="cddaar"/>
+        <word value="cddadr"/>
+        <word value="cddar"/>
+        <word value="cdddar"/>
+        <word value="cddddr"/>
+        <word value="cdddr"/>
+        <word value="cddr"/>
+        <word value="cdr"/>
+        <word value="ceiling"/>
+        <word value="char&gt;=?"/>
+        <word value="char&gt;?"/>
+        <word value="char&lt;=?"/>
+        <word value="char&lt;?"/>
+        <word value="char-&gt;integer"/>
+        <word value="char-alphabetic?"/>
+        <word value="char-ci&gt;=?"/>
+        <word value="char-ci&gt;?"/>
+        <word value="char-ci&lt;=?"/>
+        <word value="char-ci&lt;?"/>
+        <word value="char-ci=?"/>
+        <word value="char-downcase"/>
+        <word value="char-foldcase"/>
+        <word value="char-lower-case?"/>
+        <word value="char-numeric?"/>
+        <word value="char-ready?"/>
+        <word value="char-upcase"/>
+        <word value="char-upper-case?"/>
+        <word value="char-whitespace?"/>
+        <word value="char=?"/>
+        <word value="char?"/>
+        <word value="close-input-port"/>
+        <word value="close-output-port"/>
+        <word value="close-port"/>
+        <word value="command-line"/>
+        <word value="complex?"/>
+        <word value="cons"/>
+        <word value="cos"/>
+        <word value="current-error-port"/>
+        <word value="current-input-port"/>
+        <word value="current-jiffy"/>
+        <word value="current-output-port"/>
+        <word value="current-second"/>
+        <word value="delete-file"/>
+        <word value="denominator"/>
+        <word value="digit-value"/>
+        <word value="display"/>
+        <word value="dynamic-wind"/>
+        <word value="emergency-exit"/>
+        <word value="environment"/>
+        <word value="eof-object"/>
+        <word value="eof-object?"/>
+        <word value="eq?"/>
+        <word value="equal?"/>
+        <word value="eqv?"/>
+        <word value="eval"/>
+        <word value="even?"/>
+        <word value="exact"/>
+        <word value="exact-&gt;inexact"/>
+        <word value="exact-integer-sqrt"/>
+        <word value="exact-integer?"/>
+        <word value="exact?"/>
+        <word value="exit"/>
+        <word value="exp"/>
+        <word value="expt"/>
+        <word value="features"/>
+        <word value="file-exists?"/>
+        <word value="finite?"/>
+        <word value="floor"/>
+        <word value="floor-quotient"/>
+        <word value="floor-remainder"/>
+        <word value="floor/"/>
+        <word value="flush-output-port"/>
+        <word value="for-each"/>
+        <word value="force"/>
+        <word value="gcd"/>
+        <word value="get-environment-variable"/>
+        <word value="get-environment-variables"/>
+        <word value="get-output-bytevector"/>
+        <word value="get-output-string"/>
+        <word value="imag-part"/>
+        <word value="inexact"/>
+        <word value="inexact-&gt;exact"/>
+        <word value="inexact?"/>
+        <word value="infinite?"/>
+        <word value="input-port-open?"/>
+        <word value="input-port?"/>
+        <word value="integer-&gt;char"/>
+        <word value="integer?"/>
+        <word value="interaction-environment"/>
+        <word value="jiffies-per-second"/>
+        <word value="lcm"/>
+        <word value="length"/>
+        <word value="list"/>
+        <word value="list-&gt;string"/>
+        <word value="list-&gt;vector"/>
+        <word value="list-copy"/>
+        <word value="list-ref"/>
+        <word value="list-set!"/>
+        <word value="list-tail"/>
+        <word value="list?"/>
+        <word value="load"/>
+        <word value="log"/>
+        <word value="magnitude"/>
+        <word value="make-bytevector"/>
+        <word value="make-list"/>
+        <word value="make-parameter"/>
+        <word value="make-polar"/>
+        <word value="make-rectangular"/>
+        <word value="make-string"/>
+        <word value="make-vector"/>
+        <word value="map"/>
+        <word value="max"/>
+        <word value="member"/>
+        <word value="memq"/>
+        <word value="memv"/>
+        <word value="min"/>
+        <word value="modulo"/>
+        <word value="nan?"/>
+        <word value="negative?"/>
+        <word value="newline"/>
+        <word value="not"/>
+        <word value="null-environment"/>
+        <word value="null?"/>
+        <word value="number-&gt;string"/>
+        <word value="number?"/>
+        <word value="numerator"/>
+        <word value="odd?"/>
+        <word value="open-binary-input-file"/>
+        <word value="open-binary-output-file"/>
+        <word value="open-input-bytevector"/>
+        <word value="open-input-file string"/>
+        <word value="open-input-file"/>
+        <word value="open-input-string"/>
+        <word value="open-output-bytevector"/>
+        <word value="open-output-file"/>
+        <word value="open-output-string"/>
+        <word value="output-port-open?"/>
+        <word value="output-port?"/>
+        <word value="pair?"/>
+        <word value="parameterize"/>
+        <word value="peek-char"/>
+        <word value="peek-u8"/>
+        <word value="port?"/>
+        <word value="positive?"/>
+        <word value="procedure?"/>
+        <word value="quotient"/>
+        <word value="rational?"/>
+        <word value="rationalize"/>
+        <word value="read"/>
+        <word value="read-bytevector!"/>
+        <word value="read-bytevector"/>
+        <word value="read-char"/>
+        <word value="read-line"/>
+        <word value="read-string"/>
+        <word value="read-u8"/>
+        <word value="real-part"/>
+        <word value="real?"/>
+        <word value="remainder"/>
+        <word value="reverse"/>
+        <word value="round"/>
+        <word value="scheme-report-environment"/>
+        <word value="set-car!"/>
+        <word value="set-cdr!"/>
+        <word value="sin"/>
+        <word value="sqrt"/>
+        <word value="square"/>
+        <word value="string"/>
+        <word value="string&gt;=?"/>
+        <word value="string&gt;?"/>
+        <word value="string&lt;=?"/>
+        <word value="string&lt;?"/>
+        <word value="string-&gt;list"/>
+        <word value="string-&gt;number"/>
+        <word value="string-&gt;symbol"/>
+        <word value="string-&gt;utf8"/>
+        <word value="string-&gt;vector"/>
+        <word value="string-append"/>
+        <word value="string-ci&gt;=?"/>
+        <word value="string-ci&gt;?"/>
+        <word value="string-ci&lt;=?"/>
+        <word value="string-ci&lt;?"/>
+        <word value="string-ci=?"/>
+        <word value="string-ci=?"/>
+        <word value="string-copy!"/>
+        <word value="string-copy"/>
+        <word value="string-downcase"/>
+        <word value="string-fill!"/>
+        <word value="string-foldcase"/>
+        <word value="string-for-each"/>
+        <word value="string-length"/>
+        <word value="string-map"/>
+        <word value="string-ref"/>
+        <word value="string-set!"/>
+        <word value="string-upcase"/>
+        <word value="string=?"/>
+        <word value="string?"/>
+        <word value="substring"/>
+        <word value="symbol-&gt;string"/>
+        <word value="symbol=?"/>
+        <word value="symbol?"/>
+        <word value="tan"/>
+        <word value="textual-port?"/>
+        <word value="transcript-off"/>
+        <word value="transcript-on"/>
+        <word value="truncate"/>
+        <word value="truncate-quotient"/>
+        <word value="truncate-remainder"/>
+        <word value="truncate/"/>
+        <word value="u8-ready?"/>
+        <word value="utf8-&gt;string"/>
+        <word value="values"/>
+        <word value="vector"/>
+        <word value="vector-&gt;list"/>
+        <word value="vector-&gt;string"/>
+        <word value="vector-append"/>
+        <word value="vector-copy!"/>
+        <word value="vector-copy"/>
+        <word value="vector-fill!"/>
+        <word value="vector-for-each"/>
+        <word value="vector-length"/>
+        <word value="vector-map"/>
+        <word value="vector-ref"/>
+        <word value="vector-set!"/>
+        <word value="vector?"/>
+        <word value="with-input-from-file"/>
+        <word value="with-output-to-file"/>
+        <word value="write"/>
+        <word value="write-bytevector"/>
+        <word value="write-char"/>
+        <word value="write-shared"/>
+        <word value="write-simple"/>
+        <word value="write-string"/>
+        <word value="write-u8"/>
+        <word value="zero?"/>
+      </Keywords>
+      <Keywords Name="CaseConditIterSeq" Attributes="16711680,16777215;False:False." Style="">
+        <word value="and"/>
+        <word value="begin"/>
+        <word value="case"/>
+        <word value="case-lambda"/>
+        <word value="cond"/>
+        <word value="cond-expand"/>
+        <word value="do"/>
+        <word value="else"/>
+        <word value="if"/>
+        <word value="or"/>
+        <word value="unless"/>
+        <word value="when"/>
+      </Keywords>
+      <Keywords Name="ExceptErrors" Attributes="255,16777215;False:False." Style="">
+        <word value="error"/>
+        <word value="error-object-irritants"/>
+        <word value="error-object-message"/>
+        <word value="error-object?"/>
+        <word value="file-error?"/>
+        <word value="guard"/>
+        <word value="raise"/>
+        <word value="raise-continuable"/>
+        <word value="read-error?"/>
+        <word value="syntax-error"/>
+        <word value="with-exception-handler"/>
+      </Keywords>
+      <Keywords Name="ImpLibSyn" Attributes="8421376,16777215;False:False." Style="">
+        <word value="cond-expand"/>
+        <word value="define-library"/>
+        <word value="except"/>
+        <word value="export"/>
+        <word value="import"/>
+        <word value="include"/>
+        <word value="include-ci"/>
+        <word value="include-library-declarations"/>
+        <word value="library"/>
+        <word value="only"/>
+        <word value="prefix"/>
+        <word value="rename"/>
+      </Keywords>
+    </Range>
+    <Range Name="String" Attributes="6908265,16777215;False:False." Style="" CaseSensitive="True"
+           Delimiters="!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^`{|}~">
+      <Rule OpenSymbol="&quot;" CloseSymbol="&quot;"/>
+    </Range>
+  </Range>
+  <CopyRight>Rule file for UniHighlighter Delphi component (Copyright(C) Fantasist(walking_in_the_sky@yahoo.com), Vit(nevzorov@yahoo.com), Vitalik(vetal-x@mail.ru), 2002-2004)</CopyRight>
+</UniHighlighter>

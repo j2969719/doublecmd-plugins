@@ -1,0 +1,417 @@
+<UniHighlighter version="1.8.1">
+  <Info>
+    <General Name="Lua*" Extensions="LUA"/>
+    <Author Name="Skif_off" Email="" Web="" Copyright="" Company="" Remark="Alternative variant"/>
+    <Version Version="1" Revision="3" Date="43667,798738912"/>
+    <History>
+    </History>
+    <Sample>
+      <S>function add(a, b)</S>
+      <S>  return a + b;</S>
+      <S>end</S>
+      <S></S>
+      <S>print(add(5, 3));</S>
+    </Sample>
+  </Info>
+  <Scheme File="" Name=""/>
+  <Range Name="Root" Attributes="0,16777215;False:False." Style="" CaseSensitive="True"
+         Delimiters="!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^`{|}~">
+    <Rule/>
+    <Keywords Name="Symbols" Attributes="255,16777215;False:False." Style="">
+      <word value="=="/>
+      <word value="~="/>
+      <word value="&lt;="/>
+      <word value="&gt;="/>
+      <word value="&lt;"/>
+      <word value="&gt;"/>
+      <word value="="/>
+      <word value="+"/>
+      <word value="*"/>
+      <word value="/"/>
+      <word value="%"/>
+      <word value="^"/>
+      <word value="&lt;"/>
+      <word value="#"/>
+      <word value="("/>
+      <word value=")"/>
+      <word value="{"/>
+      <word value="}"/>
+      <word value="["/>
+      <word value="]"/>
+      <word value=";"/>
+      <word value=":"/>
+      <word value=","/>
+      <word value="."/>
+      <word value=".."/>
+      <word value="..."/>
+    </Keywords>
+    <Keywords Name="Keywords" Attributes="16711680,16777215;False:False." Style="">
+      <word value="and"/>
+      <word value="break"/>
+      <word value="do"/>
+      <word value="else"/>
+      <word value="elseif"/>
+      <word value="end"/>
+      <word value="for"/>
+      <word value="function"/>
+      <word value="if"/>
+      <word value="in"/>
+      <word value="not"/>
+      <word value="or"/>
+      <word value="repeat"/>
+      <word value="return"/>
+      <word value="then"/>
+      <word value="until"/>
+      <word value="while"/>
+    </Keywords>
+    <Keywords Name="Keywords2" Attributes="8388736,16777215;False:False." Style="">
+      <word value="false"/>
+      <word value="local"/>
+      <word value="nil"/>
+      <word value="true"/>
+    </Keywords>
+    <Keywords Name="BasicAndLibs" Attributes="8388608,16777215;False:False." Style="">
+      <word value="_G"/>
+      <word value="_VERSION"/>
+      <word value="assert"/>
+      <word value="collectgarbage"/>
+      <word value="coroutine.create"/>
+      <word value="coroutine.resume"/>
+      <word value="coroutine.running"/>
+      <word value="coroutine.status"/>
+      <word value="coroutine.wrap"/>
+      <word value="coroutine.yield"/>
+      <word value="debug.debug"/>
+      <word value="debug.getfenv"/>
+      <word value="debug.gethook"/>
+      <word value="debug.getinfo"/>
+      <word value="debug.getlocal"/>
+      <word value="debug.getmetatable"/>
+      <word value="debug.getregistry"/>
+      <word value="debug.getupvalue"/>
+      <word value="debug.setfenv"/>
+      <word value="debug.sethook"/>
+      <word value="debug.setlocal"/>
+      <word value="debug.setmetatable"/>
+      <word value="debug.setupvalue"/>
+      <word value="debug.traceback"/>
+      <word value="dofile"/>
+      <word value="error"/>
+      <word value="file:close"/>
+      <word value="file:flush"/>
+      <word value="file:lines"/>
+      <word value="file:read"/>
+      <word value="file:seek"/>
+      <word value="file:setvbuf"/>
+      <word value="file:write"/>
+      <word value="getfenv"/>
+      <word value="getmetatable"/>
+      <word value="io.close"/>
+      <word value="io.flush"/>
+      <word value="io.input"/>
+      <word value="io.lines"/>
+      <word value="io.open"/>
+      <word value="io.output"/>
+      <word value="io.popen"/>
+      <word value="io.read"/>
+      <word value="io.tmpfile"/>
+      <word value="io.type"/>
+      <word value="io.write"/>
+      <word value="ipairs"/>
+      <word value="load"/>
+      <word value="loadfile"/>
+      <word value="loadstring"/>
+      <word value="math.abs"/>
+      <word value="math.acos"/>
+      <word value="math.asin"/>
+      <word value="math.atan"/>
+      <word value="math.atan2"/>
+      <word value="math.ceil"/>
+      <word value="math.cos"/>
+      <word value="math.cosh"/>
+      <word value="math.deg"/>
+      <word value="math.exp"/>
+      <word value="math.floor"/>
+      <word value="math.fmod"/>
+      <word value="math.frexp"/>
+      <word value="math.huge"/>
+      <word value="math.ldexp"/>
+      <word value="math.log"/>
+      <word value="math.log10"/>
+      <word value="math.max"/>
+      <word value="math.min"/>
+      <word value="math.mod"/>
+      <word value="math.modf"/>
+      <word value="math.pi"/>
+      <word value="math.pow"/>
+      <word value="math.rad"/>
+      <word value="math.random"/>
+      <word value="math.randomseed"/>
+      <word value="math.sin"/>
+      <word value="math.sinh"/>
+      <word value="math.sqrt"/>
+      <word value="math.tan"/>
+      <word value="math.tanh"/>
+      <word value="module"/>
+      <word value="next"/>
+      <word value="os.clock"/>
+      <word value="os.date"/>
+      <word value="os.difftime"/>
+      <word value="os.execute"/>
+      <word value="os.exit"/>
+      <word value="os.getenv"/>
+      <word value="os.remove"/>
+      <word value="os.rename"/>
+      <word value="os.setlocale"/>
+      <word value="os.time"/>
+      <word value="os.tmpname"/>
+      <word value="package.cpath"/>
+      <word value="package.loaded"/>
+      <word value="package.loaders"/>
+      <word value="package.loadlib"/>
+      <word value="package.path"/>
+      <word value="package.preload"/>
+      <word value="package.seeall"/>
+      <word value="pairs"/>
+      <word value="pcall"/>
+      <word value="print"/>
+      <word value="rawequal"/>
+      <word value="rawget"/>
+      <word value="rawset"/>
+      <word value="require"/>
+      <word value="select"/>
+      <word value="setfenv"/>
+      <word value="setmetatable"/>
+      <word value="string.byte"/>
+      <word value="string.char"/>
+      <word value="string.dump"/>
+      <word value="string.find"/>
+      <word value="string.format"/>
+      <word value="string.gmatch"/>
+      <word value="string.gsub"/>
+      <word value="string.len"/>
+      <word value="string.lower"/>
+      <word value="string.match"/>
+      <word value="string.rep"/>
+      <word value="string.reverse"/>
+      <word value="string.sub"/>
+      <word value="string.upper"/>
+      <word value="table.concat"/>
+      <word value="table.insert"/>
+      <word value="table.maxn"/>
+      <word value="table.remove"/>
+      <word value="table.sort"/>
+      <word value="tonumber"/>
+      <word value="tostring"/>
+      <word value="type"/>
+      <word value="unpack"/>
+      <word value="xpcall"/>
+    </Keywords>
+    <Keywords Name="DC" Attributes="8388608,16777215;False:False.U" Style="">
+      <word value="Clipbrd.Clear"/>
+      <word value="Clipbrd.GetAsText"/>
+      <word value="Clipbrd.SetAsHtml"/>
+      <word value="Clipbrd.SetAsText"/>
+      <word value="DC.CurrentPanel"/>
+      <word value="DC.ExecuteCommand"/>
+      <word value="DC.LogWrite"/>
+      <word value="Dialogs.InputListBox"/>
+      <word value="Dialogs.InputQuery"/>
+      <word value="Dialogs.MessageBox"/>
+      <word value="LazUtf8.ConvertEncoding"/>
+      <word value="LazUtf8.Copy"/>
+      <word value="LazUtf8.Length"/>
+      <word value="LazUtf8.LowerCase"/>
+      <word value="LazUtf8.Pos"/>
+      <word value="LazUtf8.UpperCase"/>
+      <word value="SysUtils.CreateDirectory"/>
+      <word value="SysUtils.DirectoryExists"/>
+      <word value="SysUtils.ExtractFileDir"/>
+      <word value="SysUtils.ExtractFileDrive"/>
+      <word value="SysUtils.ExtractFileExt"/>
+      <word value="SysUtils.ExtractFileName"/>
+      <word value="SysUtils.ExtractFilePath"/>
+      <word value="SysUtils.FileExists"/>
+      <word value="SysUtils.FileGetAttr"/>
+      <word value="SysUtils.FindClose"/>
+      <word value="SysUtils.FindFirst"/>
+      <word value="SysUtils.FindNext"/>
+      <word value="SysUtils.GetTickCount"/>
+      <word value="SysUtils.PathDelim"/>
+      <word value="SysUtils.Sleep"/>
+    </Keywords>
+    <Keywords Name="BasicAndLibs2" Attributes="8388608,16777215;False:False." Style="">
+      <word value=":abs"/>
+      <word value=":acos"/>
+      <word value=":asin"/>
+      <word value=":atan"/>
+      <word value=":atan2"/>
+      <word value=":byte"/>
+      <word value=":ceil"/>
+      <word value=":char"/>
+      <word value=":close"/>
+      <word value=":concat"/>
+      <word value=":cos"/>
+      <word value=":cosh"/>
+      <word value=":deg"/>
+      <word value=":dump"/>
+      <word value=":exp"/>
+      <word value=":find"/>
+      <word value=":floor"/>
+      <word value=":flush"/>
+      <word value=":fmod"/>
+      <word value=":format"/>
+      <word value=":frexp"/>
+      <word value=":gmatch"/>
+      <word value=":gsub"/>
+      <word value=":huge"/>
+      <word value=":input"/>
+      <word value=":insert"/>
+      <word value=":ldexp"/>
+      <word value=":len"/>
+      <word value=":lines"/>
+      <word value=":log"/>
+      <word value=":log10"/>
+      <word value=":lower"/>
+      <word value=":match"/>
+      <word value=":max"/>
+      <word value=":maxn"/>
+      <word value=":min"/>
+      <word value=":mod"/>
+      <word value=":modf"/>
+      <word value=":open"/>
+      <word value=":output"/>
+      <word value=":pi"/>
+      <word value=":popen"/>
+      <word value=":pow"/>
+      <word value=":rad"/>
+      <word value=":random"/>
+      <word value=":randomseed"/>
+      <word value=":read"/>
+      <word value=":remove"/>
+      <word value=":rep"/>
+      <word value=":reverse"/>
+      <word value=":sin"/>
+      <word value=":sinh"/>
+      <word value=":sort"/>
+      <word value=":sqrt"/>
+      <word value=":sub"/>
+      <word value=":tan"/>
+      <word value=":tanh"/>
+      <word value=":tmpfile"/>
+      <word value=":type"/>
+      <word value=":upper"/>
+      <word value=":write"/>
+      <word value=".abs"/>
+      <word value=".acos"/>
+      <word value=".asin"/>
+      <word value=".atan"/>
+      <word value=".atan2"/>
+      <word value=".byte"/>
+      <word value=".ceil"/>
+      <word value=".char"/>
+      <word value=".close"/>
+      <word value=".concat"/>
+      <word value=".cos"/>
+      <word value=".cosh"/>
+      <word value=".deg"/>
+      <word value=".dump"/>
+      <word value=".exp"/>
+      <word value=".find"/>
+      <word value=".floor"/>
+      <word value=".flush"/>
+      <word value=".fmod"/>
+      <word value=".format"/>
+      <word value=".frexp"/>
+      <word value=".gmatch"/>
+      <word value=".gsub"/>
+      <word value=".huge"/>
+      <word value=".input"/>
+      <word value=".insert"/>
+      <word value=".ldexp"/>
+      <word value=".len"/>
+      <word value=".lines"/>
+      <word value=".log"/>
+      <word value=".log10"/>
+      <word value=".lower"/>
+      <word value=".match"/>
+      <word value=".max"/>
+      <word value=".maxn"/>
+      <word value=".min"/>
+      <word value=".mod"/>
+      <word value=".modf"/>
+      <word value=".open"/>
+      <word value=".output"/>
+      <word value=".pi"/>
+      <word value=".popen"/>
+      <word value=".pow"/>
+      <word value=".rad"/>
+      <word value=".random"/>
+      <word value=".randomseed"/>
+      <word value=".read"/>
+      <word value=".remove"/>
+      <word value=".rep"/>
+      <word value=".reverse"/>
+      <word value=".sin"/>
+      <word value=".sinh"/>
+      <word value=".sort"/>
+      <word value=".sqrt"/>
+      <word value=".sub"/>
+      <word value=".tan"/>
+      <word value=".tanh"/>
+      <word value=".tmpfile"/>
+      <word value=".type"/>
+      <word value=".upper"/>
+      <word value=".write"/>
+    </Keywords>
+    <Range Name="Shebang" Attributes="32768,16777215;False:False." Style="" CaseSensitive="True"
+           Delimiters="!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^`{|}~">
+      <Rule OpenSymbol="#!" OpenSymbolStartLine="True" CloseOnEol="True"/>
+    </Range>
+    <Range Name="Comments --" Attributes="32768,16777215;False:False." Style="" CaseSensitive="True"
+           Delimiters="!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^`{|}~">
+      <Rule OpenSymbol="--" CloseOnEol="True"/>
+    </Range>
+    <Range Name="Comments --[" Attributes="32768,16777215;False:False." Style="" CaseSensitive="True"
+           Delimiters="!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^`{|}~">
+      <Rule OpenSymbol="--[[" CloseSymbol="]]"/>
+    </Range>
+    <Range Name="Comments --[=" Attributes="32768,16777215;False:False." Style="" CaseSensitive="True"
+           Delimiters="!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^`{|}~">
+      <Rule OpenSymbol="--[=[" CloseSymbol="]=]"/>
+    </Range>
+    <Range Name="Comments --[==" Attributes="32768,16777215;False:False." Style="" CaseSensitive="True"
+           Delimiters="!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^`{|}~">
+      <Rule OpenSymbol="--[==[" CloseSymbol="]==]"/>
+    </Range>
+    <Range Name="Comments --[===" Attributes="32768,16777215;False:False." Style="" CaseSensitive="True"
+           Delimiters="!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^`{|}~">
+      <Rule OpenSymbol="--[===[" CloseSymbol="]===]"/>
+    </Range>
+    <Range Name="Strings &quot;..&quot;" Attributes="6908265,16777215;False:False." Style="" CaseSensitive="True"
+           Delimiters="!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^`{|}~">
+      <Rule OpenSymbol="&quot;" CloseSymbol="&quot;"/>
+    </Range>
+    <Range Name="Strings '..'" Attributes="6908265,16777215;False:False." Style="" CaseSensitive="True"
+           Delimiters="!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^`{|}~">
+      <Rule OpenSymbol="'" CloseSymbol="'"/>
+    </Range>
+    <Range Name="Strings [" Attributes="6908265,16777215;False:False." Style="" CaseSensitive="True"
+           Delimiters="!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^`{|}~">
+      <Rule OpenSymbol="[[" CloseSymbol="]]"/>
+    </Range>
+    <Range Name="Strings [=" Attributes="6908265,16777215;False:False." Style="" CaseSensitive="True"
+           Delimiters="!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^`{|}~">
+      <Rule OpenSymbol="[=[" CloseSymbol="]=]"/>
+    </Range>
+    <Range Name="Strings [==" Attributes="6908265,16777215;False:False." Style="" CaseSensitive="True"
+           Delimiters="!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^`{|}~">
+      <Rule OpenSymbol="[==[" CloseSymbol="]==]"/>
+    </Range>
+    <Range Name="Strings [===" Attributes="6908265,16777215;False:False." Style="" CaseSensitive="True"
+           Delimiters="!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^`{|}~">
+      <Rule OpenSymbol="[===[" CloseSymbol="]===]"/>
+    </Range>
+  </Range>
+  <CopyRight>Rule file for UniHighlighter Delphi component (Copyright(C) Fantasist(walking_in_the_sky@yahoo.com), Vit(nevzorov@yahoo.com), Vitalik(vetal-x@mail.ru), 2002-2004)</CopyRight>
+</UniHighlighter>

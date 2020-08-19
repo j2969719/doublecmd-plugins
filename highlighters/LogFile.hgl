@@ -1,0 +1,98 @@
+<UniHighlighter version="1.8.1">
+  <Info>
+    <General Name="Log File" Extensions="LOG"/>
+    <Author Name="Skif_off" Email="" Web="" Copyright="" Company="" Remark="Some keywords from Infocatcher's 'log.coder' for AkelPad"/>
+    <Version Version="0" Revision="1" Date="43209,8967598495"/>
+    <History>
+    </History>
+    <Sample>
+    </Sample>
+  </Info>
+  <Scheme File="" Name=""/>
+  <Range Name="Root" Attributes="0,16777215;False:False." Style=""
+         Delimiters="!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^`{|}~">
+    <Rule/>
+    <Keywords Name="Ok" Attributes="8388608,16777215;False:False." Style="">
+      <word value="ok"/>
+      <word value="succeeded"/>
+      <word value="success"/>
+      <word value="successfully"/>
+      <word value="valid"/>
+    </Keywords>
+    <Keywords Name="Errors" Attributes="255,16777215;False:False." Style="">
+      <word value="crash"/>
+      <word value="error"/>
+      <word value="fatal"/>
+      <word value="freeze"/>
+      <word value="panic"/>
+    </Keywords>
+    <Keywords Name="Warnings" Attributes="128,16777215;False:False." Style="">
+      <word value="abort"/>
+      <word value="aborted"/>
+      <word value="aborting"/>
+      <word value="breakage"/>
+      <word value="breakdown"/>
+      <word value="breaking"/>
+      <word value="cannot"/>
+      <word value="collision"/>
+      <word value="collisions"/>
+      <word value="conflict"/>
+      <word value="conflicts"/>
+      <word value="debug"/>
+      <word value="denied"/>
+      <word value="detected"/>
+      <word value="detection"/>
+      <word value="erroneous"/>
+      <word value="exception"/>
+      <word value="failed"/>
+      <word value="failure"/>
+      <word value="fritz"/>
+      <word value="incompatible"/>
+      <word value="infected"/>
+      <word value="invalid"/>
+      <word value="issue"/>
+      <word value="issues"/>
+      <word value="overflow"/>
+      <word value="problem"/>
+      <word value="trojan"/>
+      <word value="violate"/>
+      <word value="violated"/>
+      <word value="virus"/>
+      <word value="warn"/>
+      <word value="warning"/>
+    </Keywords>
+    <Keywords Name="Info" Attributes="16711680,16777215;False:False." Style="">
+      <word value="build"/>
+      <word value="check"/>
+      <word value="creating"/>
+      <word value="deleted"/>
+      <word value="done"/>
+      <word value="executing"/>
+      <word value="exist"/>
+      <word value="extract"/>
+      <word value="extracting"/>
+      <word value="finish"/>
+      <word value="finished"/>
+      <word value="found"/>
+      <word value="ignored"/>
+      <word value="info"/>
+      <word value="install"/>
+      <word value="load"/>
+      <word value="loaded"/>
+      <word value="loading"/>
+      <word value="missing"/>
+      <word value="note"/>
+      <word value="released"/>
+      <word value="skipped"/>
+      <word value="skipping"/>
+      <word value="start"/>
+      <word value="started"/>
+      <word value="starting"/>
+      <word value="trying"/>
+      <word value="updated"/>
+      <word value="updating"/>
+      <word value="waiting"/>
+    </Keywords>
+  </Range>
+  <CopyRight>Rule file for UniHighlighter Delphi component (Copyright(C) Fantasist(walking_in_the_sky@yahoo.com), Vit(nevzorov@yahoo.com), Vitalik(vetal-x@mail.ru), 2002-2004)</CopyRight>
+</UniHighlighter>

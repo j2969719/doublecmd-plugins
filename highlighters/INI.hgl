@@ -1,0 +1,65 @@
+<UniHighlighter version="1.8.1">
+  <Info>
+    <General Name="INI file*" Extensions="CFG CONF CONFIG DESKTOP INF INI LA PROPERTIES RC"/>
+    <Author Name="Skif_off" Email="" Web="" Copyright="" Company="" Remark="Based on Vitaly Nevzorov's INI highlighter"/>
+    <Version Version="1" Revision="4" Date="43016,9169650116"/>
+    <History>
+    </History>
+    <Sample>
+      <S>[Window]</S>
+      <S>ASCII SOMChar=0x10 ;ASCII Char</S>
+      <S>ANSI SOMChar=0xBB</S>
+      <S>ASCII LozengeChar=0x16</S>
+      <S>HostResponseColor=0 0 0</S>
+      <S>ApplPromptColor=255 0 0</S>
+      <S>ApplEntryColor=0,128,128</S>
+      <S>String=&quot;This is string&quot;</S>
+      <S>;Debug Addons=0 FALSE / 1 TRUE</S>
+    </Sample>
+  </Info>
+  <Scheme File="" Name=""/>
+  <Range Name="Root" Attributes="16711680,-2147483643;False:False." Style=""
+         Delimiters="!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^`{|}~">
+    <Rule OpenSymbolPartOfTerm="Right" CloseSymbolPartOfTerm="False"/>
+    <Keywords Name="Symbols" Attributes="255,-2147483643;False:True." Style="">
+      <word value="="/>
+    </Keywords>
+    <Range Name="Sections" Attributes="0,-2147483643;False:True.B" Style=""
+           Delimiters="!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^`{|}~">
+      <Rule OpenSymbol="[" OpenSymbolStartLine="True" CloseSymbol="]" CloseOnEol="True"/>
+    </Range>
+    <Range Name="Value" Attributes="0,-2147483643;False:True." Style=""
+           Delimiters="!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^`{|}~">
+      <Rule OpenSymbol="=" OpenSymbolPartOfTerm="Right" CloseSymbolPartOfTerm="False" CloseOnEol="True"/>
+      <Keywords Name="Symbols" Attributes="192,-2147483643;False:True." Style="">
+        <word value=","/>
+        <word value="&quot;"/>
+      </Keywords>
+      <Range Name="Remark ;" Enabled="False" Attributes="32768,-2147483643;False:True." Style=""
+             Delimiters="!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^`{|}~">
+        <Rule OpenSymbol=";" OpenSymbolStartLine="NonSpace" OpenSymbolPartOfTerm="Right" CloseSymbolPartOfTerm="False" CloseOnEol="True" AllowPredClose="True"/>
+      </Range>
+      <Range Name="Remark #" Enabled="False" Attributes="32768,-2147483643;False:True." Style=""
+             Delimiters="!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^`{|}~">
+        <Rule OpenSymbol="#" OpenSymbolStartLine="NonSpace" OpenSymbolPartOfTerm="Right" CloseSymbolPartOfTerm="False" CloseOnEol="True" AllowPredClose="True"/>
+      </Range>
+      <Range Name="Strings &quot;..&quot;" Enabled="False" Attributes="8388608,-2147483643;False:True." Style=""
+             Delimiters="!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^`{|}~">
+        <Rule OpenSymbol="&quot;" OpenSymbolPartOfTerm="Right" CloseSymbol="&quot;" CloseSymbolPartOfTerm="Right" CloseOnEol="True" AllowPredClose="True"/>
+      </Range>
+    </Range>
+    <Range Name="Remark ;" Attributes="32768,-2147483643;False:True." Style="" CaseSensitive="True"
+           Delimiters="!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^`{|}~">
+      <Rule OpenSymbol=";" OpenSymbolStartLine="NonSpace" OpenSymbolPartOfTerm="Right" CloseSymbolPartOfTerm="False" CloseOnEol="True"/>
+    </Range>
+    <Range Name="Remark #" Attributes="32768,-2147483643;False:True." Style="" CaseSensitive="True"
+           Delimiters="!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^`{|}~">
+      <Rule OpenSymbol="#" OpenSymbolStartLine="NonSpace" OpenSymbolPartOfTerm="Right" CloseSymbolPartOfTerm="False" CloseOnEol="True"/>
+    </Range>
+    <Range Name="Strings &quot;..&quot;" Enabled="False" Attributes="8388608,-2147483643;False:True." Style=""
+           Delimiters="!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^`{|}~">
+      <Rule OpenSymbol="&quot;" OpenSymbolPartOfTerm="Right" CloseSymbol="&quot;" CloseSymbolPartOfTerm="Right" CloseOnEol="True"/>
+    </Range>
+  </Range>
+  <CopyRight>Rule file for UniHighlighter Delphi component (Copyright(C) Fantasist(walking_in_the_sky@yahoo.com), Vit(nevzorov@yahoo.com), Vitalik(vetal-x@mail.ru), 2002-2004)</CopyRight>
+</UniHighlighter>

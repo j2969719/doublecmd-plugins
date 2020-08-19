@@ -1,0 +1,58 @@
+<UniHighlighter version="1.8.1">
+  <Info>
+    <General Name="Windows Registry File*" Extensions="REG"/>
+    <Author Name="Vitaly Nevzorov" Email="nevzorov@yahoo.com" Web="www.delphist.com" Copyright="Copyright (c) Vitaly Nevzorov, 2002" Company="N/A" Remark=""/>
+    <Version Version="0" Revision="9" Date="42822,3736362384"/>
+    <History>
+    </History>
+    <Sample>
+      <S>REGEDIT4</S>
+      <S>;Test</S>
+      <S>[HKEY_CLASSES_ROOT]</S>
+      <S></S>
+      <S>[HKEY_CLASSES_ROOT\CLSID]</S>
+      <S>@=&quot;&quot;</S>
+      <S></S>
+      <S>[HKEY_CLASSES_ROOT\CLSID\{B323F8E0-2E68-11D0-90EA-00AA0060F86C}]</S>
+      <S>@=&quot;StillImage&quot;</S>
+    </Sample>
+  </Info>
+  <Scheme File="" Name=""/>
+  <Range Name="Root" Attributes="0,16777215;False:False." Style=""
+         Delimiters="!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^`{|}~">
+    <Rule/>
+    <Keywords Name="Header" Attributes="8454143,10485760;False:False." Style="">
+      <word value="REGEDIT4"/>
+      <word value="Windows Registry Editor Version 5.00"/>
+    </Keywords>
+    <Keywords Name="Value types" Attributes="150,16777215;False:False." Style="">
+      <word value="dword:"/>
+      <word value="hex:"/>
+      <word value="hex(2):"/>
+      <word value="hex(7):"/>
+    </Keywords>
+    <Range Name="Key path" Attributes="16711680,16777215;False:False." Style="" CaseSensitive="True"
+           Delimiters="!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^`{|}~">
+      <Rule OpenSymbol="[" CloseSymbol="]"/>
+      <Keywords Name="Roots" Attributes="11010216,16777215;False:False." Style="">
+        <word value="HKEY_CLASSES_ROOT"/>
+        <word value="HKEY_CURRENT_USER"/>
+        <word value="HKEY_LOCAL_MACHINE"/>
+        <word value="HKEY_USERS"/>
+      </Keywords>
+      <Range Name="CLSID" Attributes="10485760,16777215;False:False." Style="" CaseSensitive="True"
+             Delimiters="!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^`{|}~">
+        <Rule OpenSymbol="{" CloseSymbol="}"/>
+      </Range>
+    </Range>
+    <Range Name="Comment" Attributes="32768,536870911;False:False." Style="" CaseSensitive="True"
+           Delimiters="!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^`{|}~">
+      <Rule OpenSymbol=";" OpenSymbolStartLine="NonSpace" CloseOnEol="True"/>
+    </Range>
+    <Range Name="String" Attributes="6908265,16777215;False:False." Style="" CaseSensitive="True"
+           Delimiters="!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^`{|}~">
+      <Rule OpenSymbol="&quot;" CloseSymbol="&quot;"/>
+    </Range>
+  </Range>
+  <CopyRight>Rule file for UniHighlighter Delphi component (Copyright(C) Fantasist(walking_in_the_sky@yahoo.com), Vit(nevzorov@yahoo.com), Vitalik(vetal-x@mail.ru), 2002-2004)</CopyRight>
+</UniHighlighter>

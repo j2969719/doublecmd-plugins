@@ -1,0 +1,254 @@
+<UniHighlighter version="1.8.1">
+  <Info>
+    <General Name="List*" Extensions="LIST SAVE"/>
+    <Author Name="Skif_off" Email="" Web="" Copyright="" Company="" Remark="List of repositories in Debian APT system"/>
+    <Version Version="1" Revision="4" Date="43939,0278285648"/>
+    <History>
+    </History>
+    <Sample>
+    </Sample>
+  </Info>
+  <Scheme File="" Name=""/>
+  <Range Name="Root" Attributes="0,16777215;False:False." Style="" CaseSensitive="True"
+         Delimiters="!&quot;#$%&amp;'()*+,-.:;&lt;=&gt;?@[\]^`{|}~">
+    <Rule/>
+    <Keywords Name="Keywords" Attributes="0,16777215;False:False.B" Style="">
+      <word value="deb"/>
+      <word value="deb-src"/>
+    </Keywords>
+    <Keywords Name="Keywords2" Attributes="16711680,16777215;False:False." Style="">
+      <word value="sid"/>
+      <word value="artful"/>
+      <word value="artful-backports"/>
+      <word value="artful-security"/>
+      <word value="artful-updates"/>
+      <word value="bionic"/>
+      <word value="bionic-backports"/>
+      <word value="bionic-security"/>
+      <word value="bionic-updates"/>
+      <word value="bo"/>
+      <word value="bo-backports"/>
+      <word value="bo-backports-sloppy"/>
+      <word value="bo-updates"/>
+      <word value="breezy"/>
+      <word value="breezy-backports"/>
+      <word value="breezy-security"/>
+      <word value="breezy-updates"/>
+      <word value="bullseye"/>
+      <word value="bullseye-backports"/>
+      <word value="bullseye-backports-sloppy"/>
+      <word value="bullseye-updates"/>
+      <word value="buster"/>
+      <word value="buster-backports"/>
+      <word value="buster-backports-sloppy"/>
+      <word value="buster-updates"/>
+      <word value="buzz"/>
+      <word value="buzz-backports"/>
+      <word value="buzz-backports-sloppy"/>
+      <word value="buzz-updates"/>
+      <word value="cosmic"/>
+      <word value="cosmic-backports"/>
+      <word value="cosmic-security"/>
+      <word value="cosmic-updates"/>
+      <word value="dapper"/>
+      <word value="dapper-backports"/>
+      <word value="dapper-security"/>
+      <word value="dapper-updates"/>
+      <word value="disco"/>
+      <word value="disco-backports"/>
+      <word value="disco-security"/>
+      <word value="disco-updates"/>
+      <word value="edgy"/>
+      <word value="edgy-backports"/>
+      <word value="edgy-security"/>
+      <word value="edgy-updates"/>
+      <word value="eoan"/>
+      <word value="eoan-backports"/>
+      <word value="eoan-security"/>
+      <word value="eoan-updates"/>
+      <word value="etch"/>
+      <word value="etch-backports"/>
+      <word value="etch-backports-sloppy"/>
+      <word value="etch-updates"/>
+      <word value="experimental"/>
+      <word value="feisty"/>
+      <word value="feisty-backports"/>
+      <word value="feisty-security"/>
+      <word value="feisty-updates"/>
+      <word value="focal"/>
+      <word value="focal-backports"/>
+      <word value="focal-security"/>
+      <word value="focal-updates"/>
+      <word value="groovy"/>
+      <word value="groovy-backports"/>
+      <word value="groovy-security"/>
+      <word value="groovy-updates"/>
+      <word value="gutsy"/>
+      <word value="gutsy-backports"/>
+      <word value="gutsy-security"/>
+      <word value="gutsy-updates"/>
+      <word value="hamm"/>
+      <word value="hamm-backports"/>
+      <word value="hamm-backports-sloppy"/>
+      <word value="hamm-updates"/>
+      <word value="hardy"/>
+      <word value="hardy-backports"/>
+      <word value="hardy-security"/>
+      <word value="hardy-updates"/>
+      <word value="hoary"/>
+      <word value="hoary-backports"/>
+      <word value="hoary-security"/>
+      <word value="hoary-updates"/>
+      <word value="intrepid"/>
+      <word value="intrepid-backports"/>
+      <word value="intrepid-security"/>
+      <word value="intrepid-updates"/>
+      <word value="jaunty"/>
+      <word value="jaunty-backports"/>
+      <word value="jaunty-security"/>
+      <word value="jaunty-updates"/>
+      <word value="jessie"/>
+      <word value="jessie-backports"/>
+      <word value="jessie-backports-sloppy"/>
+      <word value="jessie-updates"/>
+      <word value="karmic"/>
+      <word value="karmic-backports"/>
+      <word value="karmic-security"/>
+      <word value="karmic-updates"/>
+      <word value="lenny"/>
+      <word value="lenny-backports"/>
+      <word value="lenny-backports-sloppy"/>
+      <word value="lenny-updates"/>
+      <word value="lucid"/>
+      <word value="lucid-backports"/>
+      <word value="lucid-security"/>
+      <word value="lucid-updates"/>
+      <word value="maverick"/>
+      <word value="maverick-backports"/>
+      <word value="maverick-security"/>
+      <word value="maverick-updates"/>
+      <word value="natty"/>
+      <word value="natty-backports"/>
+      <word value="natty-security"/>
+      <word value="natty-updates"/>
+      <word value="oneiric"/>
+      <word value="oneiric-backports"/>
+      <word value="oneiric-security"/>
+      <word value="oneiric-updates"/>
+      <word value="potato"/>
+      <word value="potato-backports"/>
+      <word value="potato-backports-sloppy"/>
+      <word value="potato-updates"/>
+      <word value="precise"/>
+      <word value="precise-backports"/>
+      <word value="precise-security"/>
+      <word value="precise-updates"/>
+      <word value="quantal"/>
+      <word value="quantal-backports"/>
+      <word value="quantal-security"/>
+      <word value="quantal-updates"/>
+      <word value="raring"/>
+      <word value="raring-backports"/>
+      <word value="raring-security"/>
+      <word value="raring-updates"/>
+      <word value="rex"/>
+      <word value="rex-backports"/>
+      <word value="rex-backports-sloppy"/>
+      <word value="rex-updates"/>
+      <word value="sarge"/>
+      <word value="sarge-backports"/>
+      <word value="sarge-backports-sloppy"/>
+      <word value="sarge-updates"/>
+      <word value="saucy"/>
+      <word value="saucy-backports"/>
+      <word value="saucy-security"/>
+      <word value="saucy-updates"/>
+      <word value="slink"/>
+      <word value="slink-backports"/>
+      <word value="slink-backports-sloppy"/>
+      <word value="slink-updates"/>
+      <word value="squeeze"/>
+      <word value="squeeze-backports"/>
+      <word value="squeeze-backports-sloppy"/>
+      <word value="squeeze-updates"/>
+      <word value="stretch"/>
+      <word value="stretch-backports"/>
+      <word value="stretch-backports-sloppy"/>
+      <word value="stretch-updates"/>
+      <word value="trusty"/>
+      <word value="trusty-backports"/>
+      <word value="trusty-security"/>
+      <word value="trusty-updates"/>
+      <word value="utopic"/>
+      <word value="utopic-backports"/>
+      <word value="utopic-security"/>
+      <word value="utopic-updates"/>
+      <word value="vivid"/>
+      <word value="vivid-backports"/>
+      <word value="vivid-security"/>
+      <word value="vivid-updates"/>
+      <word value="warty"/>
+      <word value="warty-backports"/>
+      <word value="warty-security"/>
+      <word value="warty-updates"/>
+      <word value="wheezy"/>
+      <word value="wheezy-backports"/>
+      <word value="wheezy-backports-sloppy"/>
+      <word value="wheezy-updates"/>
+      <word value="wily"/>
+      <word value="wily-backports"/>
+      <word value="wily-security"/>
+      <word value="wily-updates"/>
+      <word value="woody"/>
+      <word value="woody-backports"/>
+      <word value="woody-backports-sloppy"/>
+      <word value="woody-updates"/>
+      <word value="xenial"/>
+      <word value="xenial-backports"/>
+      <word value="xenial-security"/>
+      <word value="xenial-updates"/>
+      <word value="yakkety"/>
+      <word value="yakkety-backports"/>
+      <word value="yakkety-security"/>
+      <word value="yakkety-updates"/>
+      <word value="zesty"/>
+      <word value="zesty-backports"/>
+      <word value="zesty-security"/>
+      <word value="zesty-updates"/>
+    </Keywords>
+    <Keywords Name="Keywords3" Attributes="8388608,16777215;False:False." Style="">
+      <word value="contrib"/>
+      <word value="main"/>
+      <word value="multiverse"/>
+      <word value="non-free"/>
+      <word value="partner"/>
+      <word value="restricted"/>
+      <word value="universe"/>
+    </Keywords>
+    <Range Name="Disable" Attributes="128,16777215;False:False." Style="" CaseSensitive="True"
+           Delimiters="!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^`{|}~">
+      <Rule OpenSymbol="# deb" OpenSymbolStartLine="True" CloseOnEol="True"/>
+    </Range>
+    <Range Name="Comments" Attributes="32768,16777215;False:False." Style="" CaseSensitive="True"
+           Delimiters="!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^`{|}~">
+      <Rule OpenSymbol="#" OpenSymbolStartLine="True" CloseOnEol="True"/>
+    </Range>
+    <Range Name="Arch" Attributes="536870911,16777215;False:False.B" Style="" CaseSensitive="True"
+           Delimiters="!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^`{|}~">
+      <Rule OpenSymbol="[arch=" CloseSymbol="]"/>
+    </Range>
+    <Range Name="Addres1" Attributes="0,16777215;False:False.U" Style="" CaseSensitive="True"
+           Delimiters="">
+      <Rule OpenSymbol="https://" CloseSymbolPartOfTerm="False" CloseOnTerm="True"/>
+    </Range>
+    <Range Name="Addres2" Attributes="0,16777215;False:False.U" Style="" CaseSensitive="True"
+           Delimiters="">
+      <Rule OpenSymbol="http://" CloseSymbolPartOfTerm="False" CloseOnTerm="True"/>
+    </Range>
+    <Range Name="Addres3" Attributes="0,16777215;False:False.U" Style="" CaseSensitive="True"
+           Delimiters="">
+      <Rule OpenSymbol="ftp://" CloseSymbolPartOfTerm="False" CloseOnTerm="True"/>
+    </Range>
+  </Range>
+  <CopyRight>Rule file for UniHighlighter Delphi component (Copyright(C) Fantasist(walking_in_the_sky@yahoo.com), Vit(nevzorov@yahoo.com), Vitalik(vetal-x@mail.ru), 2002-2004)</CopyRight>
+</UniHighlighter>

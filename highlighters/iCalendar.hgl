@@ -1,0 +1,186 @@
+<UniHighlighter version="1.8.1">
+  <Info>
+    <General Name="iCalendar*" Extensions="ICS IFB VCS"/>
+    <Author Name="Skif_off" Email="" Web="" Copyright="" Company="" Remark="Based on 'ics.coder' for AkelPad (iCalendar 2.0, vCalendar 1.0)"/>
+    <Version Version="1" Revision="1" Date="44039,5628525347"/>
+    <History>
+    </History>
+    <Sample>
+    </Sample>
+  </Info>
+  <Scheme File="" Name=""/>
+  <Range Name="Root" Attributes="0,-2147483643;False:False." Style="" CaseSensitive="True"
+         Delimiters="!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^`{|}~">
+    <Rule OpenSymbolPartOfTerm="Right" CloseSymbolPartOfTerm="False"/>
+    <Keywords Name="Symbols" Attributes="255,-2147483643;False:False." Style="">
+      <word value=";"/>
+      <word value=":"/>
+      <word value="="/>
+    </Keywords>
+    <Keywords Name="Components" Attributes="128,16777215;False:False.B" Style="">
+      <word value="BEGIN:DAYLIGHT"/>
+      <word value="BEGIN:STANDARD"/>
+      <word value="BEGIN:VALARM"/>
+      <word value="BEGIN:VCALENDAR"/>
+      <word value="BEGIN:VEVENT"/>
+      <word value="BEGIN:VFREEBUSY"/>
+      <word value="BEGIN:VJOURNAL"/>
+      <word value="BEGIN:VTIMEZONE"/>
+      <word value="BEGIN:VTODO"/>
+      <word value="END:DAYLIGHT"/>
+      <word value="END:STANDARD"/>
+      <word value="END:VALARM"/>
+      <word value="END:VCALENDAR"/>
+      <word value="END:VEVENT"/>
+      <word value="END:VFREEBUSY"/>
+      <word value="END:VJOURNAL"/>
+      <word value="END:VTIMEZONE"/>
+      <word value="END:VTODO"/>
+    </Keywords>
+    <Keywords Name="Properties" Attributes="16711680,16777215;False:False." Style="">
+      <word value="ACTION:"/>
+      <word value="ATTACH:"/>
+      <word value="ATTENDEE:"/>
+      <word value="CALSCALE:"/>
+      <word value="CATEGORIES:"/>
+      <word value="CLASS:"/>
+      <word value="COMMENT:"/>
+      <word value="COMPLETED:"/>
+      <word value="CONTACT:"/>
+      <word value="CREATED:"/>
+      <word value="DESCRIPTION:"/>
+      <word value="DTEND:"/>
+      <word value="DTSTAMP:"/>
+      <word value="DTSTART:"/>
+      <word value="DUE:"/>
+      <word value="DURATION:"/>
+      <word value="DURATION:"/>
+      <word value="EXDATE:"/>
+      <word value="EXRULE:"/>
+      <word value="FREEBUSY:"/>
+      <word value="GEO:"/>
+      <word value="LAST-MODIFIED:"/>
+      <word value="LOCATION:"/>
+      <word value="METHOD:"/>
+      <word value="ORGANIZER:"/>
+      <word value="PERCENT-COMPLETE:"/>
+      <word value="PRIORITY:"/>
+      <word value="PRODID:"/>
+      <word value="RDATE:"/>
+      <word value="RECURRENCE-ID:"/>
+      <word value="RELATED-TO:"/>
+      <word value="REPEAT:"/>
+      <word value="REQUEST-STATUS:"/>
+      <word value="RESOURCES:"/>
+      <word value="RRULE:"/>
+      <word value="SEQUENCE:"/>
+      <word value="STATUS:"/>
+      <word value="SUMMARY:"/>
+      <word value="TRANSP:"/>
+      <word value="TRIGGER:"/>
+      <word value="TZID:"/>
+      <word value="TZID:"/>
+      <word value="TZNAME:"/>
+      <word value="TZOFFSETFROM:"/>
+      <word value="TZOFFSETTO:"/>
+      <word value="TZURL:"/>
+      <word value="UID:"/>
+      <word value="URL:"/>
+      <word value="VERSION:"/>
+      <word value="ACTION;"/>
+      <word value="ATTACH;"/>
+      <word value="ATTENDEE;"/>
+      <word value="CALSCALE;"/>
+      <word value="CATEGORIES;"/>
+      <word value="CLASS;"/>
+      <word value="COMMENT;"/>
+      <word value="COMPLETED;"/>
+      <word value="CONTACT;"/>
+      <word value="CREATED;"/>
+      <word value="DESCRIPTION;"/>
+      <word value="DTEND;"/>
+      <word value="DTSTAMP;"/>
+      <word value="DTSTART;"/>
+      <word value="DUE;"/>
+      <word value="DURATION;"/>
+      <word value="DURATION;"/>
+      <word value="EXDATE;"/>
+      <word value="EXRULE;"/>
+      <word value="FREEBUSY;"/>
+      <word value="GEO;"/>
+      <word value="LAST-MODIFIED;"/>
+      <word value="LOCATION;"/>
+      <word value="METHOD;"/>
+      <word value="ORGANIZER;"/>
+      <word value="PERCENT-COMPLETE;"/>
+      <word value="PRIORITY;"/>
+      <word value="PRODID;"/>
+      <word value="RDATE;"/>
+      <word value="RECURRENCE-ID;"/>
+      <word value="RELATED-TO;"/>
+      <word value="REPEAT;"/>
+      <word value="REQUEST-STATUS;"/>
+      <word value="RESOURCES;"/>
+      <word value="RRULE;"/>
+      <word value="SEQUENCE;"/>
+      <word value="STATUS;"/>
+      <word value="SUMMARY;"/>
+      <word value="TRANSP;"/>
+      <word value="TRIGGER;"/>
+      <word value="TZID;"/>
+      <word value="TZID;"/>
+      <word value="TZNAME;"/>
+      <word value="TZOFFSETFROM;"/>
+      <word value="TZOFFSETTO;"/>
+      <word value="TZURL;"/>
+      <word value="UID;"/>
+      <word value="URL;"/>
+    </Keywords>
+    <Keywords Name="Parameters" Attributes="8388736,16777215;False:False." Style="">
+      <word value="ALTREP"/>
+      <word value="CHARSET"/>
+      <word value="CN"/>
+      <word value="CUTYPE"/>
+      <word value="DELEGATED-FROM"/>
+      <word value="DELEGATED-TO"/>
+      <word value="DIR"/>
+      <word value="ENCODING"/>
+      <word value="FBTYPE"/>
+      <word value="FMTTYPE"/>
+      <word value="LANGUAGE"/>
+      <word value="MEMBER"/>
+      <word value="PARTSTAT"/>
+      <word value="RANGE"/>
+      <word value="RELATED"/>
+      <word value="RELTYPE"/>
+      <word value="ROLE"/>
+      <word value="RSVP"/>
+      <word value="SENT-BY"/>
+      <word value="TZID"/>
+      <word value="VALUE"/>
+    </Keywords>
+    <Keywords Name="Data Types" Attributes="32768,16777215;False:False." Style="">
+      <word value="BASE64"/>
+      <word value="BINARY"/>
+      <word value="BOOLEAN"/>
+      <word value="CAL-ADDRESS"/>
+      <word value="DATE"/>
+      <word value="DATE-TIME"/>
+      <word value="DURATION"/>
+      <word value="FLOAT"/>
+      <word value="INTEGER"/>
+      <word value="PERIOD"/>
+      <word value="QUOTED-PRINTABLE"/>
+      <word value="RECUR"/>
+      <word value="TEXT"/>
+      <word value="TIME"/>
+      <word value="URI"/>
+      <word value="UTC-OFFSET"/>
+    </Keywords>
+    <Range Name="Soft. ext." Attributes="16711680,16777215;False:False." Style="" CaseSensitive="True"
+           Delimiters="!&quot;#$%&amp;'()*+,./:;&lt;=&gt;?@[\]^`{|}~">
+      <Rule OpenSymbol="X-" OpenSymbolStartLine="True" CloseOnTerm="True"/>
+    </Range>
+  </Range>
+  <CopyRight>Rule file for UniHighlighter Delphi component (Copyright(C) Fantasist(walking_in_the_sky@yahoo.com), Vit(nevzorov@yahoo.com), Vitalik(vetal-x@mail.ru), 2002-2004)</CopyRight>
+</UniHighlighter>

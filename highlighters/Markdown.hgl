@@ -1,0 +1,428 @@
+<UniHighlighter version="1.8.1">
+  <Info>
+    <General Name="Markdown*" Extensions="MD"/>
+    <Author Name="Skif_off" Email="" Web="" Copyright="" Company="" Remark="Range 'HTML Tag' from 'HTML(JScript+VBScript+ASP).hgl' (except keywords)"/>
+    <Version Version="1" Revision="3" Date="43910,9399101852"/>
+    <History>
+    </History>
+    <Sample>
+    </Sample>
+  </Info>
+  <Scheme File="" Name=""/>
+  <Range Name="Root" Attributes="0,16777215;False:False." Style="" CaseSensitive="True"
+         Delimiters="!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^`{|}~">
+    <Rule/>
+    <Keywords Name="Backslash-escape" Attributes="16711935,16777215;False:False." Style="">
+      <word value="\\"/>
+      <word value="\`"/>
+      <word value="\*"/>
+      <word value="\_"/>
+      <word value="\{"/>
+      <word value="\}"/>
+      <word value="\["/>
+      <word value="\]"/>
+      <word value="\("/>
+      <word value="\)"/>
+      <word value="\#"/>
+      <word value="\+"/>
+      <word value="\-"/>
+      <word value="\."/>
+      <word value="\!"/>
+    </Keywords>
+    <Range Name="HTML Tag" Attributes="0,16777215;False:True." Style=""
+           Delimiters="!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^`{|}~">
+      <Rule OpenSymbol="&lt;" OpenSymbolPartOfTerm="Right" CloseSymbol="&gt;" CloseSymbolPartOfTerm="False"/>
+      <Keywords Name="Standard Tags" Attributes="16711680,16777215;False:True." Style="">
+        <word value="a"/>
+        <word value="abbr"/>
+        <word value="acronym"/>
+        <word value="address"/>
+        <word value="applet"/>
+        <word value="area"/>
+        <word value="article"/>
+        <word value="aside"/>
+        <word value="audio"/>
+        <word value="b"/>
+        <word value="base"/>
+        <word value="basefont"/>
+        <word value="bdi"/>
+        <word value="bdo"/>
+        <word value="bgsound"/>
+        <word value="big"/>
+        <word value="blink"/>
+        <word value="blockquote"/>
+        <word value="body"/>
+        <word value="br"/>
+        <word value="button"/>
+        <word value="canvas"/>
+        <word value="caption"/>
+        <word value="center"/>
+        <word value="cite"/>
+        <word value="code"/>
+        <word value="col"/>
+        <word value="colgroup"/>
+        <word value="command"/>
+        <word value="comment"/>
+        <word value="datalist"/>
+        <word value="dd"/>
+        <word value="del"/>
+        <word value="details"/>
+        <word value="dfn"/>
+        <word value="dir"/>
+        <word value="div"/>
+        <word value="dl"/>
+        <word value="dt"/>
+        <word value="em"/>
+        <word value="embed"/>
+        <word value="fieldset"/>
+        <word value="figcaption"/>
+        <word value="figure"/>
+        <word value="font"/>
+        <word value="footer"/>
+        <word value="form"/>
+        <word value="frame"/>
+        <word value="frameset"/>
+        <word value="h1"/>
+        <word value="h2"/>
+        <word value="h3"/>
+        <word value="h4"/>
+        <word value="h5"/>
+        <word value="h6"/>
+        <word value="head"/>
+        <word value="header"/>
+        <word value="hgroup"/>
+        <word value="hr"/>
+        <word value="html"/>
+        <word value="i"/>
+        <word value="iframe"/>
+        <word value="img"/>
+        <word value="input"/>
+        <word value="ins"/>
+        <word value="isindex"/>
+        <word value="kbd"/>
+        <word value="keygen"/>
+        <word value="label"/>
+        <word value="legend"/>
+        <word value="li"/>
+        <word value="link"/>
+        <word value="main"/>
+        <word value="map"/>
+        <word value="mark"/>
+        <word value="marquee"/>
+        <word value="menu"/>
+        <word value="meta"/>
+        <word value="meter"/>
+        <word value="nav"/>
+        <word value="nobr"/>
+        <word value="noembed"/>
+        <word value="noframes"/>
+        <word value="noscript"/>
+        <word value="object"/>
+        <word value="ol"/>
+        <word value="optgroup"/>
+        <word value="option"/>
+        <word value="output"/>
+        <word value="p"/>
+        <word value="param"/>
+        <word value="plaintext"/>
+        <word value="pre"/>
+        <word value="progress"/>
+        <word value="q"/>
+        <word value="rp"/>
+        <word value="rt"/>
+        <word value="ruby"/>
+        <word value="s"/>
+        <word value="samp"/>
+        <word value="script"/>
+        <word value="section"/>
+        <word value="select"/>
+        <word value="small"/>
+        <word value="source"/>
+        <word value="span"/>
+        <word value="strike"/>
+        <word value="strong"/>
+        <word value="style"/>
+        <word value="sub"/>
+        <word value="summary"/>
+        <word value="sup"/>
+        <word value="table"/>
+        <word value="tbody"/>
+        <word value="td"/>
+        <word value="textarea"/>
+        <word value="tfoot"/>
+        <word value="th"/>
+        <word value="thead"/>
+        <word value="time"/>
+        <word value="title"/>
+        <word value="tr"/>
+        <word value="tt"/>
+        <word value="u"/>
+        <word value="ul"/>
+        <word value="var"/>
+        <word value="video"/>
+        <word value="wbr"/>
+        <word value="xmp"/>
+      </Keywords>
+      <Keywords Name="Attributes" Attributes="32768,16777215;False:True." Style="">
+        <word value="abbr"/>
+        <word value="accept"/>
+        <word value="accept-charset"/>
+        <word value="accesskey"/>
+        <word value="action"/>
+        <word value="align"/>
+        <word value="alink"/>
+        <word value="allowtransparency"/>
+        <word value="alt"/>
+        <word value="archive"/>
+        <word value="async"/>
+        <word value="autocomplete"/>
+        <word value="autofocus"/>
+        <word value="autoplay"/>
+        <word value="axis"/>
+        <word value="background"/>
+        <word value="balance"/>
+        <word value="behavior"/>
+        <word value="bgcolor"/>
+        <word value="bgproperties"/>
+        <word value="border"/>
+        <word value="bordercolor"/>
+        <word value="bottommargin"/>
+        <word value="cellpadding"/>
+        <word value="cellspacing"/>
+        <word value="challenge"/>
+        <word value="char"/>
+        <word value="charoff"/>
+        <word value="charset"/>
+        <word value="checked"/>
+        <word value="cite"/>
+        <word value="class"/>
+        <word value="classid"/>
+        <word value="clear"/>
+        <word value="code"/>
+        <word value="codebase"/>
+        <word value="codetype"/>
+        <word value="color"/>
+        <word value="cols"/>
+        <word value="colspan"/>
+        <word value="content"/>
+        <word value="contenteditable"/>
+        <word value="contextmenu"/>
+        <word value="controls"/>
+        <word value="coords"/>
+        <word value="data"/>
+        <word value="datetime"/>
+        <word value="defer"/>
+        <word value="dir"/>
+        <word value="direction"/>
+        <word value="disabled"/>
+        <word value="download"/>
+        <word value="enctype"/>
+        <word value="face"/>
+        <word value="for"/>
+        <word value="form"/>
+        <word value="formaction"/>
+        <word value="formenctype"/>
+        <word value="formmethod"/>
+        <word value="formnovalidate"/>
+        <word value="formtarget"/>
+        <word value="frame"/>
+        <word value="frameborder"/>
+        <word value="framespacing"/>
+        <word value="headers"/>
+        <word value="height"/>
+        <word value="hidden"/>
+        <word value="high"/>
+        <word value="href"/>
+        <word value="hreflang"/>
+        <word value="hspace"/>
+        <word value="http-equiv"/>
+        <word value="icon"/>
+        <word value="id"/>
+        <word value="ismap"/>
+        <word value="keytype"/>
+        <word value="label"/>
+        <word value="lang"/>
+        <word value="language"/>
+        <word value="leftmargin"/>
+        <word value="link"/>
+        <word value="list"/>
+        <word value="longdesc"/>
+        <word value="loop"/>
+        <word value="low"/>
+        <word value="lowsrc"/>
+        <word value="manifest"/>
+        <word value="marginheight"/>
+        <word value="marginwidth"/>
+        <word value="max"/>
+        <word value="maxlength"/>
+        <word value="media"/>
+        <word value="method"/>
+        <word value="min"/>
+        <word value="multiple"/>
+        <word value="name"/>
+        <word value="nohref"/>
+        <word value="noresize"/>
+        <word value="noshade"/>
+        <word value="novalidate"/>
+        <word value="nowrap"/>
+        <word value="open"/>
+        <word value="optimum"/>
+        <word value="pattern"/>
+        <word value="placeholder"/>
+        <word value="pluginspage"/>
+        <word value="poster"/>
+        <word value="preload"/>
+        <word value="profile"/>
+        <word value="prompt"/>
+        <word value="pubdate"/>
+        <word value="radiogroup"/>
+        <word value="readonly"/>
+        <word value="rel"/>
+        <word value="required"/>
+        <word value="rev"/>
+        <word value="reversed"/>
+        <word value="rightmargin"/>
+        <word value="rows"/>
+        <word value="rowspan"/>
+        <word value="rules"/>
+        <word value="sandbox"/>
+        <word value="scope"/>
+        <word value="scroll"/>
+        <word value="scrollamount"/>
+        <word value="scrolldelay"/>
+        <word value="scrolling"/>
+        <word value="seamless"/>
+        <word value="selected"/>
+        <word value="shape"/>
+        <word value="size"/>
+        <word value="sizes"/>
+        <word value="span"/>
+        <word value="spellcheck"/>
+        <word value="src"/>
+        <word value="srcdoc"/>
+        <word value="start"/>
+        <word value="step"/>
+        <word value="style"/>
+        <word value="summary"/>
+        <word value="tabindex"/>
+        <word value="target"/>
+        <word value="text"/>
+        <word value="title"/>
+        <word value="topmargin"/>
+        <word value="truespeed"/>
+        <word value="type"/>
+        <word value="usemap"/>
+        <word value="valign"/>
+        <word value="value"/>
+        <word value="valuetype"/>
+        <word value="vlink"/>
+        <word value="volume"/>
+        <word value="vspace"/>
+        <word value="width"/>
+        <word value="wrap"/>
+        <word value="xml:lang"/>
+        <word value="xmlns"/>
+      </Keywords>
+      <Keywords Name="Standard Events" Attributes="16711808,16777215;False:True." Style="">
+        <word value="onblur"/>
+        <word value="onchange"/>
+        <word value="onclick"/>
+        <word value="ondblclick"/>
+        <word value="onfocus"/>
+        <word value="onkeydown"/>
+        <word value="onkeypress"/>
+        <word value="onkeyup"/>
+        <word value="onload"/>
+        <word value="onmousedown"/>
+        <word value="onmousemove"/>
+        <word value="onmouseout"/>
+        <word value="onmouseover"/>
+        <word value="onmouseup"/>
+        <word value="onreset"/>
+        <word value="onselect"/>
+        <word value="onsubmit"/>
+        <word value="onunload"/>
+      </Keywords>
+      <Range Name="Values &quot;..&quot;" Attributes="8421504,16777215;False:True." Style=""
+             Delimiters="!&quot;#$%&amp;'()*+,./:;&lt;=&gt;?@[\]^`{|}~">
+        <Rule OpenSymbol="&quot;" OpenSymbolPartOfTerm="Right" CloseSymbol="&quot;" CloseSymbolPartOfTerm="False"/>
+        <Set Name="Numbers" Attributes="8421504,16777215;True:True." Style="" Symbols="0123456789"/>
+        <Range Name="Color" Attributes="198,16777215;False:True." Style=""
+               Delimiters="!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^`{|}~">
+          <Rule OpenSymbol="#" OpenSymbolPartOfTerm="Right" CloseSymbolPartOfTerm="False" CloseOnTerm="True"/>
+        </Range>
+        <Range Name="Special Symbols" Attributes="8388672,16777215;False:True." Style=""
+               Delimiters="!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^`{|}~">
+          <Rule OpenSymbol="&amp;" OpenSymbolPartOfTerm="Right" CloseSymbol=";" CloseSymbolPartOfTerm="False" CloseOnTerm="True" CloseOnEol="True"/>
+        </Range>
+      </Range>
+      <Range Name="Values '..'" Attributes="0,16777215;False:True." Style=""
+             Delimiters="!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^`{|}~">
+        <Rule OpenSymbol="'" OpenSymbolPartOfTerm="Right" CloseSymbol="'" CloseSymbolPartOfTerm="False"/>
+      </Range>
+    </Range>
+    <Range Name="Special Symbols 1" Attributes="128,16777215;False:False." Style=""
+           Delimiters="!&quot;#$%&amp;'()*+,-./:&lt;=&gt;?@[\]^`{|}~">
+      <Rule OpenSymbol="&amp;#" OpenSymbolPartOfTerm="Right" CloseSymbol=";" CloseSymbolPartOfTerm="False" CloseOnTerm="True" CloseOnEol="True"/>
+      <Set Name="Set" Attributes="128,16777215;False:False." Style="" Symbols="0123456789"/>
+    </Range>
+    <Range Name="Special Symbols 2" Attributes="128,16777215;False:False." Style=""
+           Delimiters="!&quot;#$%&amp;'()*+,-./:&lt;=&gt;?@[\]^`{|}~">
+      <Rule OpenSymbol="&amp;" OpenSymbolPartOfTerm="Right" CloseSymbol=";" CloseSymbolPartOfTerm="False" CloseOnTerm="True" CloseOnEol="True"/>
+      <Set Name="Set" Attributes="128,16777215;False:False." Style="" Symbols="0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"/>
+    </Range>
+    <Range Name="Headers =" Attributes="536870911,16777215;False:False.B" Style="" CaseSensitive="True"
+           Delimiters="">
+      <Rule OpenSymbol="==" OpenSymbolStartLine="NonSpace" CloseOnEol="True"/>
+    </Range>
+    <Range Name="Headers -" Attributes="536870911,16777215;False:False.B" Style="" CaseSensitive="True"
+           Delimiters="">
+      <Rule OpenSymbol="--" OpenSymbolStartLine="NonSpace" CloseOnEol="True"/>
+    </Range>
+    <Range Name="Headers #" Attributes="536870911,16777215;False:False.B" Style="" CaseSensitive="True"
+           Delimiters="">
+      <Rule OpenSymbol="#" OpenSymbolStartLine="NonSpace" CloseOnEol="True"/>
+    </Range>
+    <Range Name="Blockquotes" Attributes="8421504,16777215;False:False.I" Style="" CaseSensitive="True"
+           Delimiters="">
+      <Rule OpenSymbol="&gt;" OpenSymbolStartLine="NonSpace" CloseSymbolPartOfTerm="False" CloseOnEol="True"/>
+    </Range>
+    <Range Name="Image" Attributes="0,16777215;False:False.U" Style="" CaseSensitive="True"
+           Delimiters="!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^`{|}~">
+      <Rule OpenSymbol="![" CloseSymbol="]"/>
+    </Range>
+    <Range Name="Link" Attributes="0,16777215;False:False.U" Style="" CaseSensitive="True"
+           Delimiters="!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^`{|}~">
+      <Rule OpenSymbol="[" CloseSymbol="]"/>
+    </Range>
+    <Range Name="Strong 1" Attributes="536870911,16777215;False:False.B" Style="" CaseSensitive="True"
+           Delimiters="!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^`{|}~">
+      <Rule OpenSymbol="**" CloseSymbol="**" CloseOnEol="True" AllowPredClose="True"/>
+    </Range>
+    <Range Name="Strong 2" Attributes="536870911,16777215;False:False.B" Style="" CaseSensitive="True"
+           Delimiters="!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^`{|}~">
+      <Rule OpenSymbol="__" CloseSymbol="__" CloseOnEol="True" AllowPredClose="True"/>
+    </Range>
+    <Range Name="Emphasis 1" Attributes="536870911,16777215;False:False.I" Style="" CaseSensitive="True"
+           Delimiters="!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^`{|}~">
+      <Rule OpenSymbol="*" CloseSymbol="*" CloseOnEol="True" AllowPredClose="True"/>
+    </Range>
+    <Range Name="Emphasis 2" Attributes="536870911,16777215;False:False.I" Style="" CaseSensitive="True"
+           Delimiters="!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^`{|}~">
+      <Rule OpenSymbol="_" CloseSymbol="_" CloseOnEol="True" AllowPredClose="True"/>
+    </Range>
+    <Range Name="Code '''" Attributes="255,16777215;False:False." Style="" CaseSensitive="True"
+           Delimiters="!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^`{|}~">
+      <Rule OpenSymbol="```" OpenSymbolStartLine="NonSpace" CloseSymbol="```" CloseSymbolStartLine="NonSpace" AllowPredClose="True"/>
+    </Range>
+    <Range Name="Code ''" Attributes="255,16777215;False:False." Style="" CaseSensitive="True"
+           Delimiters="!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^`{|}~">
+      <Rule OpenSymbol="``" CloseSymbol="``" AllowPredClose="True"/>
+    </Range>
+    <Range Name="Code '" Attributes="255,16777215;False:False." Style="" CaseSensitive="True"
+           Delimiters="!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^`{|}~">
+      <Rule OpenSymbol="`" CloseSymbol="`" AllowPredClose="True"/>
+    </Range>
+  </Range>
+  <CopyRight>Rule file for UniHighlighter Delphi component (Copyright(C) Fantasist(walking_in_the_sky@yahoo.com), Vit(nevzorov@yahoo.com), Vitalik(vetal-x@mail.ru), 2002-2004)</CopyRight>
+</UniHighlighter>

@@ -11,6 +11,8 @@ Not all but most of additions for Linux only.
 
 ### 4. File associations and actions [>>](extassoc.xml.md)
 
+### 5. Syntax highlighting (DC internal editor) [>>](highlighters)
+
 ---
 ### Also see:
 [Double Commander Wiki (plugins page)](https://github.com/doublecmd/doublecmd/wiki/Plugins)<br>

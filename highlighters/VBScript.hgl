@@ -1,0 +1,512 @@
+<UniHighlighter version="1.8.1">
+  <Info>
+    <General Name="VBScript*" Extensions="VBS"/>
+    <Author Name="Vitaly Nevzorov" Email="nevzorov@yahoo.com" Web="www.delphist.com" Copyright="Copyright (c) Vitaly Nevzorov, 2002" Company="N/A" Remark=""/>
+    <Version Version="1" Revision="0" Date="42822,3778146528"/>
+    <History>
+    </History>
+    <Sample>
+      <S>' Dim, Private, Public, ReDim, or Static statements.</S>
+      <S>Option Explicit</S>
+      <S>Public objCurrentLayer As AcadLayer</S>
+      <S>Select Case CommandName</S>
+      <S>Case &quot;TEXT&quot;, &quot;MTEXT&quot;, &quot;DTEXT&quot; ' then do the following..</S>
+      <S>If Not ThisDrawing.ActiveLayer.Name = &quot;TEXT&quot; Then</S>
+      <S>Set objCurrentLayer = ThisDrawing.Layers.Add(&quot;TEXT&quot;)</S>
+      <S>objCurrentLayer.LayerOn = True</S>
+      <S>End If</S>
+      <S>If Not ThisDrawing.ActiveLayer.Name = &quot;DIM&quot; Then</S>
+      <S>End Sub</S>
+      <S>WScript.Echo vbCrLf &amp; lngDec &amp; &quot; = 0x&quot; &amp; strHex</S>
+      <S>Sub Link4_onMouseMove()</S>
+      <S>  Label1.Caption = DescribeLink(3)</S>
+      <S>  Status = DescribeLink(3)</S>
+      <S>  tID = setTimeout(&quot;ClearDesc()&quot;,4000)</S>
+      <S>End Sub</S>
+      <S></S>
+      <S>Sub window_onLoad()</S>
+      <S> strFabric(1,1) = &quot;Green&quot;</S>
+      <S>end sub</S>
+      <S></S>
+      <S>Dim lastX, lastY</S>
+      <S>browserver = navigator.Appversion</S>
+      <S>if Left(browserver, 3) = 4.0 then</S>
+      <S>   ie4 = True</S>
+      <S>else</S>
+      <S>   ie4 = False</S>
+      <S>end if</S>
+      <S></S>
+      <S>Function OverIcon(x, y, rx1, ry1, rx2, ry2)</S>
+      <S>	OverIcon =  x&gt;=rx1 AND x&lt;=rx2 AND y&gt;=ry1 AND y&lt;=ry2</S>
+      <S>End Function</S>
+      <S></S>
+      <S>Sub Window_OnLoad</S>
+      <S>Set dicTestDict = CreateObject(&quot;Scripting.Dictionary&quot;)	</S>
+      <S>Set frm = Document.frmForm1</S>
+      <S>End Sub</S>
+      <S></S>
+      <S>Sub cmdAddNew_OnClick</S>
+      <S>If dicTestDict.Exists(frm.txtNewKey.Value) Then</S>
+      <S>    Alert &quot;This key already exists&quot;</S>
+      <S>Else</S>
+      <S>    dicTestDict.Add frm.txtNewKey.Value, frm.txtNewItem.Value</S>
+      <S>    Alert &quot;Key and item added successfully&quot;</S>
+      <S>End If</S>
+      <S>Alert VarType(frm)</S>
+      <S>End Sub</S>
+      <S>' Check command line parameters</S>
+      <S>Select Case WScript.Arguments.Count</S>
+      <S>	Case 1</S>
+      <S>		' Check if parameter is a valid number</S>
+      <S>		On Error Resume Next</S>
+      <S>		lngDec = CLng( WScript.Arguments(0) )</S>
+      <S>		If Err Then Syntax</S>
+      <S>		On Error GoTo 0</S>
+      <S>		' Check if number is within range</S>
+      <S>		If lngDec &gt; 2147483647 Then Syntax</S>
+      <S>	Case Else</S>
+      <S>		Syntax</S>
+      <S>End Select</S>
+      <S></S>
+      <S>' Convert number to string representing hexadecimal value</S>
+      <S>strHex = CStr( Hex( lngDec ) )</S>
+      <S>' Add leading zeros if necessary</S>
+      <S>intLen = Len( strHex )</S>
+      <S>if intLen &lt; 8 Then</S>
+      <S>	Do Until intLen = 8</S>
+      <S>		strHex = &quot;0&quot; &amp; strHex</S>
+      <S>		intLen = Len( strHex )</S>
+      <S>	Loop</S>
+      <S>End If</S>
+    </Sample>
+  </Info>
+  <Scheme File="" Name=""/>
+  <Range Name="Root" Attributes="0,16777215;False:False." Style=""
+         Delimiters="!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^`{|}~">
+    <Rule/>
+    <Keywords Name="Key words" Attributes="16711680,16777215;False:False." Style="">
+      <word value="And"/>
+      <word value="As"/>
+      <word value="Call"/>
+      <word value="Case"/>
+      <word value="Class"/>
+      <word value="Const"/>
+      <word value="Dim"/>
+      <word value="Do"/>
+      <word value="Each"/>
+      <word value="Else"/>
+      <word value="ElseIf"/>
+      <word value="Empty"/>
+      <word value="End"/>
+      <word value="Eqv"/>
+      <word value="Erase"/>
+      <word value="Error"/>
+      <word value="Execute"/>
+      <word value="Exit"/>
+      <word value="Explicit"/>
+      <word value="For"/>
+      <word value="Function"/>
+      <word value="Get"/>
+      <word value="Goto"/>
+      <word value="If"/>
+      <word value="Imp"/>
+      <word value="Is"/>
+      <word value="Let"/>
+      <word value="Loop"/>
+      <word value="Mod"/>
+      <word value="Next"/>
+      <word value="New"/>
+      <word value="Not"/>
+      <word value="Nothing"/>
+      <word value="Null"/>
+      <word value="On"/>
+      <word value="Option"/>
+      <word value="Or"/>
+      <word value="Private"/>
+      <word value="Property"/>
+      <word value="Public"/>
+      <word value="Randomize"/>
+      <word value="ReDim"/>
+      <word value="Rem"/>
+      <word value="Resume"/>
+      <word value="Select"/>
+      <word value="Set"/>
+      <word value="Stop"/>
+      <word value="Sub"/>
+      <word value="Then"/>
+      <word value="To"/>
+      <word value="Until"/>
+      <word value="Wend"/>
+      <word value="While"/>
+      <word value="With"/>
+    </Keywords>
+    <Keywords Name="Functions" Attributes="9437184,16777215;False:False." Style="">
+      <word value="Abs"/>
+      <word value="Array"/>
+      <word value="Asc"/>
+      <word value="Atn"/>
+      <word value="CBool"/>
+      <word value="CByte"/>
+      <word value="CCur"/>
+      <word value="CDate"/>
+      <word value="CDbl"/>
+      <word value="Chr"/>
+      <word value="CInt"/>
+      <word value="CLng"/>
+      <word value="Cos"/>
+      <word value="CSng"/>
+      <word value="CStr"/>
+      <word value="Date"/>
+      <word value="DateAddFunction"/>
+      <word value="DateDiff"/>
+      <word value="DatePart"/>
+      <word value="DateSerial"/>
+      <word value="DateValue"/>
+      <word value="Day"/>
+      <word value="Eval"/>
+      <word value="Exp"/>
+      <word value="Filter"/>
+      <word value="Fix"/>
+      <word value="FormatCurrency"/>
+      <word value="FormatDateTime"/>
+      <word value="FormatNumber"/>
+      <word value="FormatPercent"/>
+      <word value="GetObject"/>
+      <word value="GetRef"/>
+      <word value="Hex"/>
+      <word value="Hour"/>
+      <word value="InputBox"/>
+      <word value="InStr"/>
+      <word value="InStrRev"/>
+      <word value="Int"/>
+      <word value="IsArray"/>
+      <word value="IsDate"/>
+      <word value="IsEmpty"/>
+      <word value="IsNull"/>
+      <word value="IsNumeric"/>
+      <word value="IsObject"/>
+      <word value="Join"/>
+      <word value="LBound"/>
+      <word value="LCase"/>
+      <word value="Left"/>
+      <word value="Len"/>
+      <word value="LoadPicture"/>
+      <word value="Log"/>
+      <word value="LTrim"/>
+      <word value="Mid"/>
+      <word value="Minute"/>
+      <word value="Month"/>
+      <word value="MonthName"/>
+      <word value="MsgBox"/>
+      <word value="Now"/>
+      <word value="Oct"/>
+      <word value="Replace"/>
+      <word value="RGB"/>
+      <word value="Right"/>
+      <word value="Rnd"/>
+      <word value="Round"/>
+      <word value="RTrim"/>
+      <word value="ScriptEngine"/>
+      <word value="ScriptEngineBuildVersion"/>
+      <word value="ScriptEngineMajorVersion"/>
+      <word value="ScriptEngineMinorVersion"/>
+      <word value="Second"/>
+      <word value="Sgn"/>
+      <word value="Sin"/>
+      <word value="Space"/>
+      <word value="Split"/>
+      <word value="Sqr"/>
+      <word value="StrComp"/>
+      <word value="String"/>
+      <word value="StrReverse"/>
+      <word value="Tan"/>
+      <word value="Time"/>
+      <word value="Timer"/>
+      <word value="TimeSerial"/>
+      <word value="TimeValue"/>
+      <word value="Trim"/>
+      <word value="TypeName"/>
+      <word value="UBound"/>
+      <word value="UCase"/>
+      <word value="VarType"/>
+      <word value="Weekday"/>
+      <word value="WeekdayName"/>
+      <word value="Year"/>
+    </Keywords>
+    <Keywords Name="Properties" Attributes="16711808,16777215;False:False." Style="">
+      <word value="AccountDisabled"/>
+      <word value="AccountExpirationDate"/>
+      <word value="Application"/>
+      <word value="Arguments"/>
+      <word value="AtEndOfLine"/>
+      <word value="AtEndOfStream"/>
+      <word value="Attributes"/>
+      <word value="AutoUnlockInterval"/>
+      <word value="AvailableSpace"/>
+      <word value="BadPasswordAttempts"/>
+      <word value="Column"/>
+      <word value="CompareMode"/>
+      <word value="ComputerName"/>
+      <word value="Count"/>
+      <word value="DateCreated"/>
+      <word value="DateLastAccessed"/>
+      <word value="DateLastModified"/>
+      <word value="Description"/>
+      <word value="Drive"/>
+      <word value="DriveLetter"/>
+      <word value="DriveType"/>
+      <word value="Drives"/>
+      <word value="Environment"/>
+      <word value="FileSystem"/>
+      <word value="Files"/>
+      <word value="FirstIndex"/>
+      <word value="FreeSpace"/>
+      <word value="FullName"/>
+      <word value="Global"/>
+      <word value="HelpContext"/>
+      <word value="HelpFile"/>
+      <word value="HomeDirDrive"/>
+      <word value="HomeDirectory"/>
+      <word value="HotKey"/>
+      <word value="IconLocation"/>
+      <word value="IgnoreCase"/>
+      <word value="Interactive"/>
+      <word value="IsAccountLocked"/>
+      <word value="IsReady"/>
+      <word value="IsRootFolder"/>
+      <word value="Item"/>
+      <word value="Key"/>
+      <word value="LastLogin"/>
+      <word value="LastLogoff"/>
+      <word value="Length"/>
+      <word value="Line"/>
+      <word value="LockoutObservationInterval"/>
+      <word value="LoginHours"/>
+      <word value="LoginScript"/>
+      <word value="LoginWorkstations"/>
+      <word value="MaxBadPasswordsAllowed"/>
+      <word value="MaxLogins"/>
+      <word value="MaxPasswordAge"/>
+      <word value="MaxStorage"/>
+      <word value="MinPasswordAge"/>
+      <word value="MinPasswordLength"/>
+      <word value="Name"/>
+      <word value="Number"/>
+      <word value="ObjectSid"/>
+      <word value="Parameters"/>
+      <word value="ParentFolder"/>
+      <word value="PasswordAge"/>
+      <word value="PasswordExpirationDate"/>
+      <word value="PasswordExpired"/>
+      <word value="PasswordHistoryLength"/>
+      <word value="Path"/>
+      <word value="Pattern"/>
+      <word value="PrimaryGroupID"/>
+      <word value="Profile"/>
+      <word value="Remove"/>
+      <word value="RootFolder"/>
+      <word value="ScriptFullName"/>
+      <word value="ScriptName"/>
+      <word value="SerialNumber"/>
+      <word value="ShareName"/>
+      <word value="ShortName"/>
+      <word value="ShortPath"/>
+      <word value="Size"/>
+      <word value="Source"/>
+      <word value="SpecialFolders"/>
+      <word value="Subfolders"/>
+      <word value="TargetPath"/>
+      <word value="TotalSize"/>
+      <word value="Type"/>
+      <word value="UserDomain"/>
+      <word value="UserFlags"/>
+      <word value="UserName"/>
+      <word value="Value"/>
+      <word value="Version"/>
+      <word value="VolumeName"/>
+      <word value="WindowStyle"/>
+      <word value="WorkingDirectory"/>
+    </Keywords>
+    <Keywords Name="Methods" Attributes="8388736,16777215;False:False." Style="">
+      <word value="Add"/>
+      <word value="AddPrinterConnection"/>
+      <word value="AddWindowsPrinterConnection"/>
+      <word value="AppActivate"/>
+      <word value="BuildPath"/>
+      <word value="Clear"/>
+      <word value="Close"/>
+      <word value="ConnectObject"/>
+      <word value="Copy"/>
+      <word value="CopyFile"/>
+      <word value="CopyFolder"/>
+      <word value="CreateFolder"/>
+      <word value="CreateObject"/>
+      <word value="CreateShortcut"/>
+      <word value="CreateTextFile"/>
+      <word value="Delete"/>
+      <word value="DeleteFile"/>
+      <word value="DeleteFolder"/>
+      <word value="DisconnectObject"/>
+      <word value="DriveExists"/>
+      <word value="Echo"/>
+      <word value="EnumNetworkDrives"/>
+      <word value="EnumPrinterConnections"/>
+      <word value="Exists"/>
+      <word value="ExpandEnvironmentStrings"/>
+      <word value="FileExists"/>
+      <word value="FolderExists"/>
+      <word value="GetAbsolutePathName"/>
+      <word value="GetBaseName"/>
+      <word value="GetDrive"/>
+      <word value="GetDriveName"/>
+      <word value="GetExtensionName"/>
+      <word value="GetFile"/>
+      <word value="GetFileName"/>
+      <word value="GetFolder"/>
+      <word value="GetParentFolderName"/>
+      <word value="GetResource"/>
+      <word value="GetSpecialFolder"/>
+      <word value="GetTempName"/>
+      <word value="Items"/>
+      <word value="Keys"/>
+      <word value="LogEvent"/>
+      <word value="MapNetworkDrive"/>
+      <word value="Move"/>
+      <word value="MoveFile"/>
+      <word value="MoveFolder"/>
+      <word value="OpenAsTextStream"/>
+      <word value="OpenTextFile"/>
+      <word value="Popup"/>
+      <word value="Put"/>
+      <word value="Quit"/>
+      <word value="Raise"/>
+      <word value="Read"/>
+      <word value="ReadAll"/>
+      <word value="ReadLine"/>
+      <word value="RegDelete"/>
+      <word value="RegRead"/>
+      <word value="RegWrite"/>
+      <word value="RemoveAll"/>
+      <word value="RemoveNetworkDrive"/>
+      <word value="RemovePrinterConnection"/>
+      <word value="Replace"/>
+      <word value="Run"/>
+      <word value="Save"/>
+      <word value="SendKeys"/>
+      <word value="SetDefaultPrinter"/>
+      <word value="Skip"/>
+      <word value="SkipLine"/>
+      <word value="Sleep"/>
+      <word value="SetInfo"/>
+      <word value="Test"/>
+      <word value="Write"/>
+      <word value="WriteBlankLines"/>
+      <word value="WriteLine"/>
+    </Keywords>
+    <Keywords Name="Objects" Attributes="33023,16777215;False:False." Style="">
+      <word value="Dictionary"/>
+      <word value="Err"/>
+      <word value="File"/>
+      <word value="FileSystemObject"/>
+      <word value="Folder"/>
+      <word value="Match"/>
+      <word value="RegExp"/>
+      <word value="TextStream"/>
+      <word value="Wscript"/>
+      <word value="WshNetwork"/>
+      <word value="WshShell"/>
+    </Keywords>
+    <Keywords Name="Constants" Attributes="32896,16777215;False:False." Style="">
+      <word value="False"/>
+      <word value="FALSE"/>
+      <word value="True"/>
+      <word value="TRUE"/>
+      <word value="vbAbort"/>
+      <word value="vbAbortRetryIgnore"/>
+      <word value="vbApplicationModal"/>
+      <word value="vbArray"/>
+      <word value="vbBinaryCompare"/>
+      <word value="vbBlack"/>
+      <word value="vbBlue"/>
+      <word value="vbBoolean"/>
+      <word value="vbByte"/>
+      <word value="vbCancel"/>
+      <word value="vbCr"/>
+      <word value="vbCritical"/>
+      <word value="vbCrLf"/>
+      <word value="vbCurrency"/>
+      <word value="vbCyan"/>
+      <word value="vbDataObject"/>
+      <word value="vbDate"/>
+      <word value="vbDecimal"/>
+      <word value="vbDefaultButton1"/>
+      <word value="vbDefaultButton2"/>
+      <word value="vbDefaultButton3"/>
+      <word value="vbDefaultButton4"/>
+      <word value="vbDouble"/>
+      <word value="vbEmpty"/>
+      <word value="vbError"/>
+      <word value="vbExclamation"/>
+      <word value="vbFirstFourDays"/>
+      <word value="vbFirstFullWeek"/>
+      <word value="vbFirstJan1"/>
+      <word value="vbFormFeed"/>
+      <word value="vbFriday"/>
+      <word value="vbGeneralDate"/>
+      <word value="vbGreen"/>
+      <word value="vbIgnore"/>
+      <word value="vbInformation"/>
+      <word value="vbInteger"/>
+      <word value="vbLf"/>
+      <word value="vbLong"/>
+      <word value="vbLongDate"/>
+      <word value="vbLongTime"/>
+      <word value="vbMagenta"/>
+      <word value="vbMonday"/>
+      <word value="vbNewLine"/>
+      <word value="vbNo"/>
+      <word value="vbNull"/>
+      <word value="vbNullChar"/>
+      <word value="vbNullString"/>
+      <word value="vbObject"/>
+      <word value="vbObjectError"/>
+      <word value="vbOK"/>
+      <word value="vbOKCancel"/>
+      <word value="vbOKOnly"/>
+      <word value="vbQuestion"/>
+      <word value="vbRed"/>
+      <word value="vbRetry"/>
+      <word value="vbRetryCancel"/>
+      <word value="vbSaturday"/>
+      <word value="vbShortDate"/>
+      <word value="vbShortTime"/>
+      <word value="vbSingle"/>
+      <word value="vbString"/>
+      <word value="vbSunday"/>
+      <word value="vbSystemModal"/>
+      <word value="vbTab"/>
+      <word value="vbTextCompare"/>
+      <word value="vbThursday"/>
+      <word value="vbTuesday"/>
+      <word value="vbUseSystem"/>
+      <word value="vbUseSystemDayOfWeek"/>
+      <word value="vbVariant"/>
+      <word value="vbVerticalTab"/>
+      <word value="vbWednesday"/>
+      <word value="vbWhite"/>
+      <word value="vbYellow"/>
+      <word value="vbYes"/>
+      <word value="vbYesNo"/>
+      <word value="vbYesNoCancel"/>
+    </Keywords>
+    <Range Name="Remarks" Attributes="32768,16777215;False:False." Style="" CaseSensitive="True"
+           Delimiters="!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^`{|}~">
+      <Rule OpenSymbol="'" CloseOnEol="True"/>
+    </Range>
+    <Range Name="Strings" Attributes="255,16777215;False:False." Style="" CaseSensitive="True"
+           Delimiters="!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^`{|}~">
+      <Rule OpenSymbol="&quot;" CloseSymbol="&quot;"/>
+    </Range>
+  </Range>
+  <CopyRight>Rule file for UniHighlighter Delphi component (Copyright(C) Fantasist(walking_in_the_sky@yahoo.com), Vit(nevzorov@yahoo.com), Vitalik(vetal-x@mail.ru), 2002-2004)</CopyRight>
+</UniHighlighter>

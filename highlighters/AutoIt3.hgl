@@ -1,0 +1,591 @@
+<UniHighlighter version="1.8.1">
+  <Info>
+    <General Name="AutoIt v3*" Extensions="AU3"/>
+    <Author Name="Skif_off" Email="" Web="" Copyright="" Company="" Remark="v.3.3.8.1 - 3.3.14.0"/>
+    <Version Version="1" Revision="2" Date="44013,1945997917"/>
+    <History>
+    </History>
+    <Sample>
+      <S>#include &lt;Date.au3&gt;</S>
+      <S>#include &lt;Math.au3&gt;</S>
+      <S>#include &lt;MsgBoxConstants.au3&gt;</S>
+      <S></S>
+      <S>Example()</S>
+      <S></S>
+      <S>Func Example()</S>
+      <S>    ; Sample script with two user-defined functions.</S>
+      <S>    ; Notice the use of variables, ByRef and Return.</S>
+      <S></S>
+      <S>    Local $iFoo = 2</S>
+      <S>    Local $iBar = 5</S>
+      <S>    MsgBox($MB_SYSTEMMODAL, &quot;&quot;, &quot;Today is &quot; &amp; Today() &amp; @CRLF &amp; &quot;$iFoo equals &quot; &amp; $iFoo)</S>
+      <S>    Swap($iFoo, $iBar)</S>
+      <S>    MsgBox($MB_SYSTEMMODAL, &quot;&quot;, &quot;After swapping $iFoo and $iBar:&quot; &amp; @CRLF &amp; &quot;$iFoo now contains &quot; &amp; $iFoo)</S>
+      <S>    MsgBox($MB_SYSTEMMODAL, &quot;&quot;, &quot;Finally:&quot; &amp; @CRLF &amp; &quot;The larger of 3 and 4 is &quot; &amp; _Max(3, 4))</S>
+      <S>EndFunc   ;==&gt;Example</S>
+      <S></S>
+      <S>Func Swap(ByRef $vVar1, ByRef $vVar2) ; Swap the contents of two variables.</S>
+      <S>    Local $vTemp = $vVar1</S>
+      <S>    $vVar1 = $vVar2</S>
+      <S>    $vVar2 = $vTemp</S>
+      <S>EndFunc   ;==&gt;Swap</S>
+      <S></S>
+      <S>Func Today() ; Return the current date in mm/dd/yyyy form.</S>
+      <S>    Return @MON &amp; &quot;/&quot; &amp; @MDAY &amp; &quot;/&quot; &amp; @YEAR</S>
+      <S>EndFunc   ;==&gt;Today</S>
+    </Sample>
+  </Info>
+  <Scheme File="" Name=""/>
+  <Range Name="Root" Attributes="0,16777215;False:False." Style=""
+         Delimiters="!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^`{|}~">
+    <Rule/>
+    <Keywords Name="Keywords" Attributes="16711680,16777215;False:False." Style="">
+      <word value="And"/>
+      <word value="ByRef"/>
+      <word value="Case"/>
+      <word value="Const"/>
+      <word value="ContinueCase"/>
+      <word value="ContinueLoop"/>
+      <word value="Default"/>
+      <word value="Dim"/>
+      <word value="Do"/>
+      <word value="Else"/>
+      <word value="ElseIf"/>
+      <word value="EndFunc"/>
+      <word value="EndIf"/>
+      <word value="EndSelect"/>
+      <word value="EndSwitch"/>
+      <word value="EndWith"/>
+      <word value="Enum"/>
+      <word value="Exit"/>
+      <word value="ExitLoop"/>
+      <word value="False"/>
+      <word value="For"/>
+      <word value="Func"/>
+      <word value="Global"/>
+      <word value="If"/>
+      <word value="In"/>
+      <word value="Local"/>
+      <word value="Next"/>
+      <word value="Not"/>
+      <word value="Null"/>
+      <word value="Or"/>
+      <word value="ReDim"/>
+      <word value="Return"/>
+      <word value="Select"/>
+      <word value="Static"/>
+      <word value="Step"/>
+      <word value="Switch"/>
+      <word value="Then"/>
+      <word value="To"/>
+      <word value="True"/>
+      <word value="Until"/>
+      <word value="Volatile"/>
+      <word value="WEnd"/>
+      <word value="While"/>
+      <word value="With"/>
+    </Keywords>
+    <Keywords Name="Keywords 2" Attributes="30168,16777215;False:False." Style="">
+      <word value="#EndRegion"/>
+      <word value="#forcedef"/>
+      <word value="#forceref"/>
+      <word value="#ignorefunc"/>
+      <word value="#include"/>
+      <word value="#include-once"/>
+      <word value="#NoAutoIt3Execute"/>
+      <word value="#NoTrayIcon"/>
+      <word value="#OnAutoItStartRegister"/>
+      <word value="#Region"/>
+      <word value="#RequireAdmin"/>
+    </Keywords>
+    <Keywords Name="Symbols" Attributes="13382297,16777215;False:False." Style="">
+      <word value="&amp;"/>
+      <word value="="/>
+      <word value="&lt;"/>
+      <word value="&gt;"/>
+      <word value="+"/>
+      <word value="-"/>
+      <word value="/"/>
+      <word value="*"/>
+      <word value=":"/>
+      <word value="^"/>
+      <word value="_"/>
+      <word value="["/>
+      <word value="]"/>
+      <word value="("/>
+      <word value=")"/>
+      <word value=","/>
+      <word value="."/>
+    </Keywords>
+    <Keywords Name="Functons" Attributes="9437184,16777215;False:False." Style="">
+      <word value="Abs"/>
+      <word value="ACos"/>
+      <word value="AdlibRegister"/>
+      <word value="AdlibUnRegister"/>
+      <word value="Asc"/>
+      <word value="AscW"/>
+      <word value="ASin"/>
+      <word value="Assign"/>
+      <word value="ATan"/>
+      <word value="AutoItSetOption"/>
+      <word value="AutoItWinGetTitle"/>
+      <word value="AutoItWinSetTitle"/>
+      <word value="Beep"/>
+      <word value="Binary"/>
+      <word value="BinaryLen"/>
+      <word value="BinaryMid"/>
+      <word value="BinaryToString"/>
+      <word value="BitAND"/>
+      <word value="BitNOT"/>
+      <word value="BitOR"/>
+      <word value="BitRotate"/>
+      <word value="BitShift"/>
+      <word value="BitXOR"/>
+      <word value="BlockInput"/>
+      <word value="Break"/>
+      <word value="Call"/>
+      <word value="CDTray"/>
+      <word value="Ceiling"/>
+      <word value="Chr"/>
+      <word value="ChrW"/>
+      <word value="ClipGet"/>
+      <word value="ClipPut"/>
+      <word value="ConsoleRead"/>
+      <word value="ConsoleWrite"/>
+      <word value="ConsoleWriteError"/>
+      <word value="ControlClick"/>
+      <word value="ControlCommand"/>
+      <word value="ControlDisable"/>
+      <word value="ControlEnable"/>
+      <word value="ControlFocus"/>
+      <word value="ControlGetFocus"/>
+      <word value="ControlGetHandle"/>
+      <word value="ControlGetPos"/>
+      <word value="ControlGetText"/>
+      <word value="ControlHide"/>
+      <word value="ControlListView"/>
+      <word value="ControlMove"/>
+      <word value="ControlSend"/>
+      <word value="ControlSetText"/>
+      <word value="ControlShow"/>
+      <word value="ControlTreeView"/>
+      <word value="Cos"/>
+      <word value="Dec"/>
+      <word value="DirCopy"/>
+      <word value="DirCreate"/>
+      <word value="DirGetSize"/>
+      <word value="DirMove"/>
+      <word value="DirRemove"/>
+      <word value="DllCall"/>
+      <word value="DllCallAddress"/>
+      <word value="DllCallbackFree"/>
+      <word value="DllCallbackGetPtr"/>
+      <word value="DllCallbackRegister"/>
+      <word value="DllClose"/>
+      <word value="DllOpen"/>
+      <word value="DllStructCreate"/>
+      <word value="DllStructGetData"/>
+      <word value="DllStructGetPtr"/>
+      <word value="DllStructGetSize"/>
+      <word value="DllStructSetData"/>
+      <word value="DriveGetDrive"/>
+      <word value="DriveGetFileSystem"/>
+      <word value="DriveGetLabel"/>
+      <word value="DriveGetSerial"/>
+      <word value="DriveGetType"/>
+      <word value="DriveMapAdd"/>
+      <word value="DriveMapDel"/>
+      <word value="DriveMapGet"/>
+      <word value="DriveSetLabel"/>
+      <word value="DriveSpaceFree"/>
+      <word value="DriveSpaceTotal"/>
+      <word value="DriveStatus"/>
+      <word value="EnvGet"/>
+      <word value="EnvSet"/>
+      <word value="EnvUpdate"/>
+      <word value="Eval"/>
+      <word value="Execute"/>
+      <word value="Exp"/>
+      <word value="FileChangeDir"/>
+      <word value="FileClose"/>
+      <word value="FileCopy"/>
+      <word value="FileCreateNTFSLink"/>
+      <word value="FileCreateShortcut"/>
+      <word value="FileDelete"/>
+      <word value="FileExists"/>
+      <word value="FileFindFirstFile"/>
+      <word value="FileFindNextFile"/>
+      <word value="FileFlush"/>
+      <word value="FileGetAttrib"/>
+      <word value="FileGetEncoding"/>
+      <word value="FileGetLongName"/>
+      <word value="FileGetPos"/>
+      <word value="FileGetShortcut"/>
+      <word value="FileGetShortName"/>
+      <word value="FileGetSize"/>
+      <word value="FileGetTime"/>
+      <word value="FileGetVersion"/>
+      <word value="FileInstall"/>
+      <word value="FileMove"/>
+      <word value="FileOpen"/>
+      <word value="FileOpenDialog"/>
+      <word value="FileRead"/>
+      <word value="FileReadLine"/>
+      <word value="FileReadToArray"/>
+      <word value="FileRecycle"/>
+      <word value="FileRecycleEmpty"/>
+      <word value="FileSaveDialog"/>
+      <word value="FileSelectFolder"/>
+      <word value="FileSetAttrib"/>
+      <word value="FileSetPos"/>
+      <word value="FileSetTime"/>
+      <word value="FileWrite"/>
+      <word value="FileWriteLine"/>
+      <word value="Floor"/>
+      <word value="FtpSetProxy"/>
+      <word value="FuncName"/>
+      <word value="GUICreate"/>
+      <word value="GUICtrlCreateAvi"/>
+      <word value="GUICtrlCreateButton"/>
+      <word value="GUICtrlCreateCheckbox"/>
+      <word value="GUICtrlCreateCombo"/>
+      <word value="GUICtrlCreateContextMenu"/>
+      <word value="GUICtrlCreateDate"/>
+      <word value="GUICtrlCreateDummy"/>
+      <word value="GUICtrlCreateEdit"/>
+      <word value="GUICtrlCreateGraphic"/>
+      <word value="GUICtrlCreateGroup"/>
+      <word value="GUICtrlCreateIcon"/>
+      <word value="GUICtrlCreateInput"/>
+      <word value="GUICtrlCreateLabel"/>
+      <word value="GUICtrlCreateList"/>
+      <word value="GUICtrlCreateListView"/>
+      <word value="GUICtrlCreateListViewItem"/>
+      <word value="GUICtrlCreateMenu"/>
+      <word value="GUICtrlCreateMenuItem"/>
+      <word value="GUICtrlCreateMonthCal"/>
+      <word value="GUICtrlCreateObj"/>
+      <word value="GUICtrlCreatePic"/>
+      <word value="GUICtrlCreateProgress"/>
+      <word value="GUICtrlCreateRadio"/>
+      <word value="GUICtrlCreateSlider"/>
+      <word value="GUICtrlCreateTab"/>
+      <word value="GUICtrlCreateTabItem"/>
+      <word value="GUICtrlCreateTreeView"/>
+      <word value="GUICtrlCreateTreeViewItem"/>
+      <word value="GUICtrlCreateUpdown"/>
+      <word value="GUICtrlDelete"/>
+      <word value="GUICtrlGetHandle"/>
+      <word value="GUICtrlGetState"/>
+      <word value="GUICtrlRead"/>
+      <word value="GUICtrlRecvMsg"/>
+      <word value="GUICtrlRegisterListViewSort"/>
+      <word value="GUICtrlSendMsg"/>
+      <word value="GUICtrlSendToDummy"/>
+      <word value="GUICtrlSetBkColor"/>
+      <word value="GUICtrlSetColor"/>
+      <word value="GUICtrlSetCursor"/>
+      <word value="GUICtrlSetData"/>
+      <word value="GUICtrlSetDefBkColor"/>
+      <word value="GUICtrlSetDefColor"/>
+      <word value="GUICtrlSetFont"/>
+      <word value="GUICtrlSetGraphic"/>
+      <word value="GUICtrlSetImage"/>
+      <word value="GUICtrlSetLimit"/>
+      <word value="GUICtrlSetOnEvent"/>
+      <word value="GUICtrlSetPos"/>
+      <word value="GUICtrlSetResizing"/>
+      <word value="GUICtrlSetState"/>
+      <word value="GUICtrlSetStyle"/>
+      <word value="GUICtrlSetTip"/>
+      <word value="GUIDelete"/>
+      <word value="GUIGetCursorInfo"/>
+      <word value="GUIGetMsg"/>
+      <word value="GUIGetStyle"/>
+      <word value="GUIRegisterMsg"/>
+      <word value="GUISetAccelerators"/>
+      <word value="GUISetBkColor"/>
+      <word value="GUISetCoord"/>
+      <word value="GUISetCursor"/>
+      <word value="GUISetFont"/>
+      <word value="GUISetHelp"/>
+      <word value="GUISetIcon"/>
+      <word value="GUISetOnEvent"/>
+      <word value="GUISetState"/>
+      <word value="GUISetStyle"/>
+      <word value="GUIStartGroup"/>
+      <word value="GUISwitch"/>
+      <word value="Hex"/>
+      <word value="HotKeySet"/>
+      <word value="HttpSetProxy"/>
+      <word value="HttpSetUserAgent"/>
+      <word value="HWnd"/>
+      <word value="InetClose"/>
+      <word value="InetGet"/>
+      <word value="InetGetInfo"/>
+      <word value="InetGetSize"/>
+      <word value="InetRead"/>
+      <word value="IniDelete"/>
+      <word value="IniRead"/>
+      <word value="IniReadSection"/>
+      <word value="IniReadSectionNames"/>
+      <word value="IniRenameSection"/>
+      <word value="IniWrite"/>
+      <word value="IniWriteSection"/>
+      <word value="InputBox"/>
+      <word value="Int"/>
+      <word value="IsAdmin"/>
+      <word value="IsArray"/>
+      <word value="IsBinary"/>
+      <word value="IsBool"/>
+      <word value="IsDeclared"/>
+      <word value="IsDllStruct"/>
+      <word value="IsFloat"/>
+      <word value="IsFunc"/>
+      <word value="IsHWnd"/>
+      <word value="IsInt"/>
+      <word value="IsKeyword"/>
+      <word value="IsNumber"/>
+      <word value="IsObj"/>
+      <word value="IsPtr"/>
+      <word value="IsString"/>
+      <word value="Log"/>
+      <word value="MemGetStats"/>
+      <word value="Mod"/>
+      <word value="MouseClick"/>
+      <word value="MouseClickDrag"/>
+      <word value="MouseDown"/>
+      <word value="MouseGetCursor"/>
+      <word value="MouseGetPos"/>
+      <word value="MouseMove"/>
+      <word value="MouseUp"/>
+      <word value="MouseWheel"/>
+      <word value="MsgBox"/>
+      <word value="Number"/>
+      <word value="ObjCreate"/>
+      <word value="ObjCreateInterface"/>
+      <word value="ObjEvent"/>
+      <word value="ObjGet"/>
+      <word value="ObjName"/>
+      <word value="OnAutoItExitRegister"/>
+      <word value="OnAutoItExitUnRegister"/>
+      <word value="Opt"/>
+      <word value="Ping"/>
+      <word value="PixelChecksum"/>
+      <word value="PixelGetColor"/>
+      <word value="PixelSearch"/>
+      <word value="ProcessClose"/>
+      <word value="ProcessExists"/>
+      <word value="ProcessGetStats"/>
+      <word value="ProcessList"/>
+      <word value="ProcessSetPriority"/>
+      <word value="ProcessWait"/>
+      <word value="ProcessWaitClose"/>
+      <word value="ProgressOff"/>
+      <word value="ProgressOn"/>
+      <word value="ProgressSet"/>
+      <word value="Ptr"/>
+      <word value="Random"/>
+      <word value="RegDelete"/>
+      <word value="RegEnumKey"/>
+      <word value="RegEnumVal"/>
+      <word value="RegRead"/>
+      <word value="RegWrite"/>
+      <word value="Round"/>
+      <word value="Run"/>
+      <word value="RunAs"/>
+      <word value="RunAsWait"/>
+      <word value="RunWait"/>
+      <word value="Send"/>
+      <word value="SendKeepActive"/>
+      <word value="SetError"/>
+      <word value="SetExtended"/>
+      <word value="ShellExecute"/>
+      <word value="ShellExecuteWait"/>
+      <word value="Shutdown"/>
+      <word value="Sin"/>
+      <word value="Sleep"/>
+      <word value="SoundPlay"/>
+      <word value="SoundSetWaveVolume"/>
+      <word value="SplashImageOn"/>
+      <word value="SplashOff"/>
+      <word value="SplashTextOn"/>
+      <word value="Sqrt"/>
+      <word value="SRandom"/>
+      <word value="StatusbarGetText"/>
+      <word value="StderrRead"/>
+      <word value="StdinWrite"/>
+      <word value="StdioClose"/>
+      <word value="StdoutRead"/>
+      <word value="String"/>
+      <word value="StringAddCR"/>
+      <word value="StringCompare"/>
+      <word value="StringFormat"/>
+      <word value="StringFromASCIIArray"/>
+      <word value="StringInStr"/>
+      <word value="StringIsAlNum"/>
+      <word value="StringIsAlpha"/>
+      <word value="StringIsASCII"/>
+      <word value="StringIsDigit"/>
+      <word value="StringIsFloat"/>
+      <word value="StringIsInt"/>
+      <word value="StringIsLower"/>
+      <word value="StringIsSpace"/>
+      <word value="StringIsUpper"/>
+      <word value="StringIsXDigit"/>
+      <word value="StringLeft"/>
+      <word value="StringLen"/>
+      <word value="StringLower"/>
+      <word value="StringMid"/>
+      <word value="StringRegExp"/>
+      <word value="StringRegExpReplace"/>
+      <word value="StringReplace"/>
+      <word value="StringReverse"/>
+      <word value="StringRight"/>
+      <word value="StringSplit"/>
+      <word value="StringStripCR"/>
+      <word value="StringStripWS"/>
+      <word value="StringToASCIIArray"/>
+      <word value="StringToBinary"/>
+      <word value="StringTrimLeft"/>
+      <word value="StringTrimRight"/>
+      <word value="StringUpper"/>
+      <word value="Tan"/>
+      <word value="TCPAccept"/>
+      <word value="TCPCloseSocket"/>
+      <word value="TCPConnect"/>
+      <word value="TCPListen"/>
+      <word value="TCPNameToIP"/>
+      <word value="TCPRecv"/>
+      <word value="TCPSend"/>
+      <word value="TCPShutdown"/>
+      <word value="TCPStartup"/>
+      <word value="TimerDiff"/>
+      <word value="TimerInit"/>
+      <word value="ToolTip"/>
+      <word value="TrayCreateItem"/>
+      <word value="TrayCreateMenu"/>
+      <word value="TrayGetMsg"/>
+      <word value="TrayItemDelete"/>
+      <word value="TrayItemGetHandle"/>
+      <word value="TrayItemGetState"/>
+      <word value="TrayItemGetText"/>
+      <word value="TrayItemSetOnEvent"/>
+      <word value="TrayItemSetState"/>
+      <word value="TrayItemSetText"/>
+      <word value="TraySetClick"/>
+      <word value="TraySetIcon"/>
+      <word value="TraySetOnEvent"/>
+      <word value="TraySetPauseIcon"/>
+      <word value="TraySetState"/>
+      <word value="TraySetToolTip"/>
+      <word value="TrayTip"/>
+      <word value="UBound"/>
+      <word value="UDPBind"/>
+      <word value="UDPCloseSocket"/>
+      <word value="UDPOpen"/>
+      <word value="UDPRecv"/>
+      <word value="UDPSend"/>
+      <word value="UDPShutdown"/>
+      <word value="UDPStartup"/>
+      <word value="VarGetType"/>
+      <word value="WinActivate"/>
+      <word value="WinActive"/>
+      <word value="WinClose"/>
+      <word value="WinExists"/>
+      <word value="WinFlash"/>
+      <word value="WinGetCaretPos"/>
+      <word value="WinGetClassList"/>
+      <word value="WinGetClientSize"/>
+      <word value="WinGetHandle"/>
+      <word value="WinGetPos"/>
+      <word value="WinGetProcess"/>
+      <word value="WinGetState"/>
+      <word value="WinGetText"/>
+      <word value="WinGetTitle"/>
+      <word value="WinKill"/>
+      <word value="WinList"/>
+      <word value="WinMenuSelectItem"/>
+      <word value="WinMinimizeAll"/>
+      <word value="WinMinimizeAllUndo"/>
+      <word value="WinMove"/>
+      <word value="WinSetOnTop"/>
+      <word value="WinSetState"/>
+      <word value="WinSetTitle"/>
+      <word value="WinSetTrans"/>
+      <word value="WinWait"/>
+      <word value="WinWaitActive"/>
+      <word value="WinWaitClose"/>
+      <word value="WinWaitNotActive"/>
+    </Keywords>
+    <Range Name="Comments multi 1" Attributes="32768,16777215;False:False." Style=""
+           Delimiters="!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^`{|}~">
+      <Rule OpenSymbol="#comments-start" OpenSymbolStartLine="True" CloseSymbol="#comments-end" CloseSymbolStartLine="True"/>
+    </Range>
+    <Range Name="Comments multi 2" Attributes="32768,16777215;False:False." Style=""
+           Delimiters="!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^`{|}~">
+      <Rule OpenSymbol="#cs" OpenSymbolStartLine="True" CloseSymbol="#ce" CloseSymbolStartLine="NonSpace"/>
+    </Range>
+    <Range Name="Comments ;" Attributes="32768,16777215;False:False." Style="" CaseSensitive="True"
+           Delimiters="!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^`{|}~">
+      <Rule OpenSymbol=";" CloseOnEol="True"/>
+    </Range>
+    <Range Name="Options #pragma_compile" Attributes="3167932,16777215;False:False." Style=""
+           Delimiters="!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^`{|}~">
+      <Rule OpenSymbol="#pragma compile" CloseOnEol="True"/>
+      <Range Name="Comments" Attributes="32768,16777215;False:False." Style="" CaseSensitive="True"
+             Delimiters="!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^`{|}~">
+        <Rule OpenSymbol=";" CloseOnEol="True"/>
+      </Range>
+    </Range>
+    <Range Name="Options AutoIt3Wrapper" Attributes="3167932,16777215;False:False." Style=""
+           Delimiters="!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^`{|}~">
+      <Rule OpenSymbol="#AutoIt3Wrapper_" CloseOnEol="True"/>
+      <Range Name="Comments" Attributes="32768,16777215;False:False." Style="" CaseSensitive="True"
+             Delimiters="!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^`{|}~">
+        <Rule OpenSymbol=";" CloseOnEol="True"/>
+      </Range>
+    </Range>
+    <Range Name="Options Au3Stripper" Attributes="3167932,16777215;False:False." Style=""
+           Delimiters="!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^`{|}~">
+      <Rule OpenSymbol="#Au3Stripper_" CloseOnEol="True"/>
+      <Range Name="Comments" Attributes="32768,16777215;False:False." Style="" CaseSensitive="True"
+             Delimiters="!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^`{|}~">
+        <Rule OpenSymbol=";" CloseOnEol="True"/>
+      </Range>
+    </Range>
+    <Range Name="Options Obfuscator" Attributes="3167932,16777215;False:False." Style=""
+           Delimiters="!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^`{|}~">
+      <Rule OpenSymbol="#Obfuscator_" CloseOnEol="True"/>
+      <Range Name="Comments" Attributes="32768,16777215;False:False." Style="" CaseSensitive="True"
+             Delimiters="!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^`{|}~">
+        <Rule OpenSymbol=";" CloseOnEol="True"/>
+      </Range>
+    </Range>
+    <Range Name="Options Tidy" Attributes="3167932,16777215;False:False." Style=""
+           Delimiters="!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^`{|}~">
+      <Rule OpenSymbol="#Tidy_" CloseOnEol="True"/>
+      <Range Name="Comments" Attributes="32768,16777215;False:False." Style="" CaseSensitive="True"
+             Delimiters="!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^`{|}~">
+        <Rule OpenSymbol=";" CloseOnEol="True"/>
+      </Range>
+    </Range>
+    <Range Name="String &quot;" Attributes="6908265,16777215;False:False." Style="" CaseSensitive="True"
+           Delimiters="!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^`{|}~">
+      <Rule OpenSymbol="&quot;" CloseSymbol="&quot;" AllowPredClose="True"/>
+    </Range>
+    <Range Name="String '" Attributes="6908265,16777215;False:False." Style="" CaseSensitive="True"
+           Delimiters="!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^`{|}~">
+      <Rule OpenSymbol="'" CloseSymbol="'" AllowPredClose="True"/>
+    </Range>
+    <Range Name="Variable" Attributes="150,16777215;False:False." Style="" CaseSensitive="True"
+           Delimiters="!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^`{|}~">
+      <Rule OpenSymbol="$" CloseSymbolPartOfTerm="False" CloseOnTerm="True"/>
+    </Range>
+    <Range Name="Macros" Attributes="3355596,16777215;False:False." Style="" CaseSensitive="True"
+           Delimiters="!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^`{|}~">
+      <Rule OpenSymbol="@" CloseSymbolPartOfTerm="False" CloseOnTerm="True"/>
+    </Range>
+  </Range>
+  <CopyRight>Rule file for UniHighlighter Delphi component (Copyright(C) Fantasist(walking_in_the_sky@yahoo.com), Vit(nevzorov@yahoo.com), Vitalik(vetal-x@mail.ru), 2002-2004)</CopyRight>
+</UniHighlighter>

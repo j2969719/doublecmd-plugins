@@ -1,0 +1,100 @@
+<UniHighlighter version="1.8.1">
+  <Info>
+    <General Name="Vala API file" Extensions="VAPI"/>
+    <Author Name="Skif_off" Email="" Web="" Copyright="" Company="" Remark=""/>
+    <Version Version="1" Revision="1" Date="43376,0133710301"/>
+    <History>
+    </History>
+    <Sample>
+    </Sample>
+  </Info>
+  <Scheme File="" Name=""/>
+  <Range Name="Root" Attributes="0,16777215;False:False." Style="" CaseSensitive="True"
+         Delimiters="!&quot;%&amp;'()*+,-.:;&lt;=&gt;?@[\]^{|}~">
+    <Rule/>
+    <Keywords Name="Keywords" Attributes="8388608,16777215;False:False." Style="">
+      <word value="auto"/>
+      <word value="class"/>
+      <word value="const"/>
+      <word value="const_cast"/>
+      <word value="dynamic_cast"/>
+      <word value="enum"/>
+      <word value="explicit"/>
+      <word value="export"/>
+      <word value="extern"/>
+      <word value="false"/>
+      <word value="friend"/>
+      <word value="inline"/>
+      <word value="mutable"/>
+      <word value="namespace"/>
+      <word value="operator"/>
+      <word value="private"/>
+      <word value="protected"/>
+      <word value="public"/>
+      <word value="register"/>
+      <word value="reinterpret_cast"/>
+      <word value="restrict"/>
+      <word value="sizeof"/>
+      <word value="static"/>
+      <word value="static_cast"/>
+      <word value="struct"/>
+      <word value="template"/>
+      <word value="this"/>
+      <word value="throw"/>
+      <word value="true"/>
+      <word value="typedef"/>
+      <word value="typeid"/>
+      <word value="typename"/>
+      <word value="union"/>
+      <word value="using"/>
+      <word value="virtual"/>
+      <word value="volatile"/>
+    </Keywords>
+    <Keywords Name="Type" Attributes="16711680,16777215;False:False." Style="">
+      <word value="bool"/>
+      <word value="char"/>
+      <word value="double"/>
+      <word value="float"/>
+      <word value="gchar"/>
+      <word value="int"/>
+      <word value="long"/>
+      <word value="short"/>
+      <word value="signed"/>
+      <word value="string"/>
+      <word value="uint"/>
+      <word value="unsigned"/>
+      <word value="void"/>
+      <word value="wchar_t"/>
+    </Keywords>
+    <Keywords Name="Symbols1" Attributes="255,16777215;False:False.B" Style="">
+      <word value="["/>
+      <word value="]"/>
+    </Keywords>
+    <Keywords Name="Symbols2" Attributes="128,16777215;False:False." Style="">
+      <word value="="/>
+      <word value="("/>
+      <word value=")"/>
+      <word value="{"/>
+      <word value="}"/>
+      <word value=";"/>
+      <word value=","/>
+    </Keywords>
+    <Range Name="Remarks //" Attributes="32768,16777215;False:False." Style="" CaseSensitive="True"
+           Delimiters="!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^`{|}~">
+      <Rule OpenSymbol="//" CloseOnEol="True"/>
+    </Range>
+    <Range Name="Remarks /*..*/" Attributes="32768,16777215;False:False." Style="" CaseSensitive="True"
+           Delimiters="!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^`{|}~">
+      <Rule OpenSymbol="/*" CloseSymbol="*/"/>
+    </Range>
+    <Range Name="Strings &quot;..&quot;" Attributes="255,16777215;False:False." Style="" CaseSensitive="True"
+           Delimiters="!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^`{|}~">
+      <Rule OpenSymbol="&quot;" CloseSymbol="&quot;"/>
+    </Range>
+    <Range Name="Strings '..'" Attributes="255,16777215;False:False." Style="" CaseSensitive="True"
+           Delimiters="!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^`{|}~">
+      <Rule OpenSymbol="'" CloseSymbol="'"/>
+    </Range>
+  </Range>
+  <CopyRight>Rule file for UniHighlighter Delphi component (Copyright(C) Fantasist(walking_in_the_sky@yahoo.com), Vit(nevzorov@yahoo.com), Vitalik(vetal-x@mail.ru), 2002-2004)</CopyRight>
+</UniHighlighter>

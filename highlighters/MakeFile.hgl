@@ -1,0 +1,245 @@
+<UniHighlighter version="1.8.1">
+  <Info>
+    <General Name="Makefiles*" Extensions="MAK MK"/>
+    <Author Name="Skif_off" Email="" Web="" Copyright="" Company="" Remark="Based on '_makefile.coder' for AkelPad"/>
+    <Version Version="0" Revision="3" Date="43978,9144110417"/>
+    <History>
+    </History>
+    <Sample>
+    </Sample>
+  </Info>
+  <Scheme File="" Name=""/>
+  <Range Name="Root" Attributes="0,16777215;False:False." Style="" CaseSensitive="True"
+         Delimiters="!&quot;$%&amp;'()+,-/;&lt;=&gt;[\]^{|}~">
+    <Rule/>
+    <Keywords Name="Keys1" Attributes="128,16777215;False:False." Style="">
+      <word value="::="/>
+      <word value="!="/>
+      <word value="&amp;&amp;"/>
+      <word value="+="/>
+      <word value=":="/>
+      <word value="?="/>
+      <word value="!"/>
+      <word value="$"/>
+      <word value="%"/>
+      <word value="&amp;"/>
+      <word value="("/>
+      <word value=")"/>
+      <word value="*"/>
+      <word value="+"/>
+      <word value=","/>
+      <word value="-"/>
+      <word value=":"/>
+      <word value=";"/>
+      <word value="&lt;"/>
+      <word value="="/>
+      <word value="&gt;"/>
+      <word value="?"/>
+      <word value="@"/>
+      <word value="["/>
+      <word value="]"/>
+      <word value="^"/>
+      <word value="{"/>
+      <word value="|"/>
+      <word value="}"/>
+      <word value="~"/>
+    </Keywords>
+    <Keywords Name="Key2 Directives" Attributes="128,16777215;False:False." Style="">
+      <word value="include"/>
+      <word value="-include"/>
+      <word value="sinclude"/>
+      <word value="vpath"/>
+      <word value="export"/>
+      <word value="unexport"/>
+      <word value="override"/>
+      <word value="undefine"/>
+      <word value="private"/>
+      <word value="load"/>
+    </Keywords>
+    <Keywords Name="Keys3" Attributes="16711680,16777215;False:False." Style="">
+      <word value="define"/>
+      <word value="else"/>
+      <word value="endef"/>
+      <word value="endif"/>
+      <word value="ifdef"/>
+      <word value="ifeq"/>
+      <word value="ifndef"/>
+      <word value="ifneq"/>
+    </Keywords>
+    <Keywords Name="Keys4 Shell" Attributes="16711680,16777215;False:False." Style="">
+      <word value="break"/>
+      <word value="case"/>
+      <word value="continue"/>
+      <word value="do"/>
+      <word value="done"/>
+      <word value="elif"/>
+      <word value="else"/>
+      <word value="esac"/>
+      <word value="exit"/>
+      <word value="fi"/>
+      <word value="for"/>
+      <word value="if"/>
+      <word value="in"/>
+      <word value="return"/>
+      <word value="then"/>
+      <word value="until"/>
+      <word value="while"/>
+    </Keywords>
+    <Keywords Name="Var" Attributes="8388736,16777215;False:False." Style="">
+      <word value=".DEFAULT_GOAL"/>
+      <word value=".FEATURES"/>
+      <word value=".INCLUDE_DIRS"/>
+      <word value=".LIBPATTERNS"/>
+      <word value=".LOADED"/>
+      <word value=".RECIPEPREFIX"/>
+      <word value=".SHELLFLAGS"/>
+      <word value=".VARIABLES"/>
+      <word value="CURDIR"/>
+      <word value="DESTDIR"/>
+      <word value="GNUMAKEFLAGS"/>
+      <word value="INCLUDES"/>
+      <word value="INSTALL"/>
+      <word value="INSTALL_DATA"/>
+      <word value="INSTALL_PROGRAM"/>
+      <word value="MAKE_HOST"/>
+      <word value="MAKE_RESTARTS"/>
+      <word value="MAKE_TERMERR"/>
+      <word value="MAKE_TERMOUT"/>
+      <word value="MAKE_VERSION"/>
+      <word value="MAKECMDGOALS"/>
+      <word value="MAKEFILE_LIST"/>
+      <word value="MAKEFILES"/>
+      <word value="MAKELEVEL"/>
+      <word value="MAKEOVERRIDES"/>
+      <word value="MAKESHELL"/>
+      <word value="SHELL"/>
+      <word value="SUFFIXES"/>
+      <word value="VPATH"/>
+    </Keywords>
+    <Keywords Name="Var Progs and args" Attributes="8388736,16777215;False:False." Style="">
+      <word value="AR"/>
+      <word value="ARFLAGS"/>
+      <word value="AS"/>
+      <word value="ASFLAGS"/>
+      <word value="AUTOCONF"/>
+      <word value="AUTOHEADER"/>
+      <word value="AUTOMAKE"/>
+      <word value="AWK"/>
+      <word value="BISON"/>
+      <word value="BISONFLAGS"/>
+      <word value="CC"/>
+      <word value="CFLAGS"/>
+      <word value="CO"/>
+      <word value="COFLAGS"/>
+      <word value="CPP"/>
+      <word value="CPPFLAGS"/>
+      <word value="CTAGS"/>
+      <word value="CTANGLE"/>
+      <word value="CWEAVE"/>
+      <word value="CXX"/>
+      <word value="CXXFLAGS"/>
+      <word value="DEFFLAGS"/>
+      <word value="F77"/>
+      <word value="FC"/>
+      <word value="FFLAGS"/>
+      <word value="FLEX"/>
+      <word value="GET"/>
+      <word value="GFLAGS"/>
+      <word value="GREP"/>
+      <word value="LD"/>
+      <word value="LDCONFIG"/>
+      <word value="LDFLAGS"/>
+      <word value="LDLIBS"/>
+      <word value="LEX"/>
+      <word value="LFLAGS"/>
+      <word value="LIBTOOL"/>
+      <word value="LINT"/>
+      <word value="LINTFLAGS"/>
+      <word value="LOADLIBES"/>
+      <word value="M2C"/>
+      <word value="M2FLAGS"/>
+      <word value="MAKE"/>
+      <word value="MAKEFLAGS"/>
+      <word value="MAKEINFO"/>
+      <word value="MAKEINFO_FLAGS"/>
+      <word value="MFLAGS"/>
+      <word value="MODFLAGS"/>
+      <word value="PC"/>
+      <word value="PFLAGS"/>
+      <word value="RANLIB"/>
+      <word value="RFLAGS"/>
+      <word value="RM"/>
+      <word value="SED"/>
+      <word value="STRIP"/>
+      <word value="TANGLE"/>
+      <word value="TEX"/>
+      <word value="TEXI2DVI"/>
+      <word value="TEXI2DVI_FLAGS"/>
+      <word value="WEAVE"/>
+      <word value="YACC"/>
+      <word value="YFLAGS"/>
+    </Keywords>
+    <Keywords Name="Var Other" Attributes="8388736,16777215;False:False." Style="">
+      <word value="PRE_INSTALL"/>
+      <word value="POST_INSTALL"/>
+      <word value="NORMAL_INSTALL"/>
+      <word value="PRE_UNINSTALL"/>
+      <word value="POST_UNINSTALL"/>
+      <word value="NORMAL_UNINSTALL"/>
+    </Keywords>
+    <Keywords Name="Target" Attributes="536870911,16777215;False:False.B" Style="">
+      <word value=".DEFAULT:"/>
+      <word value=".DELETE_ON_ERROR:"/>
+      <word value=".EXPORT_ALL_VARIABLES:"/>
+      <word value=".IGNORE:"/>
+      <word value=".INTERMEDIATE:"/>
+      <word value=".LOW_RESOLUTION_TIME:"/>
+      <word value=".NOTPARALLEL:"/>
+      <word value=".ONESHELL:"/>
+      <word value=".PHONY:"/>
+      <word value=".POSIX:"/>
+      <word value=".PRECIOUS:"/>
+      <word value=".SECONDARY:"/>
+      <word value=".SECONDEXPANSION:"/>
+      <word value=".SILENT:"/>
+      <word value=".SUFFIXES:"/>
+      <word value="TAGS:"/>
+      <word value="all:"/>
+      <word value="check:"/>
+      <word value="clean:"/>
+      <word value="dist:"/>
+      <word value="distclean:"/>
+      <word value="dvi:"/>
+      <word value="html:"/>
+      <word value="info:"/>
+      <word value="install:"/>
+      <word value="install-dvi:"/>
+      <word value="install-html:"/>
+      <word value="install-pdf:"/>
+      <word value="install-ps:"/>
+      <word value="install-strip:"/>
+      <word value="maintainer-clean:"/>
+      <word value="mostlyclean:"/>
+      <word value="pdf:"/>
+      <word value="ps:"/>
+      <word value="uninstall:"/>
+    </Keywords>
+    <Range Name="Comment" Attributes="32768,16777215;False:False." Style="" CaseSensitive="True"
+           Delimiters="!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^`{|}~">
+      <Rule OpenSymbol="#" OpenSymbolStartLine="True" CloseOnEol="True"/>
+    </Range>
+    <Range Name="Var1" Attributes="255,16777215;False:False." Style="" CaseSensitive="True"
+           Delimiters="!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^`{|}~">
+      <Rule OpenSymbol="$(" CloseSymbol=")"/>
+    </Range>
+    <Range Name="Var2" Attributes="255,16777215;False:False." Style="" CaseSensitive="True"
+           Delimiters="!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^`{|}~">
+      <Rule OpenSymbol="${" CloseSymbol="}"/>
+    </Range>
+    <Range Name="Var3 Shell" Attributes="255,16777215;False:False." Style="" CaseSensitive="True"
+           Delimiters="!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^`{|}~">
+      <Rule OpenSymbol="$$" CloseOnTerm="True"/>
+    </Range>
+  </Range>
+  <CopyRight>Rule file for UniHighlighter Delphi component (Copyright(C) Fantasist(walking_in_the_sky@yahoo.com), Vit(nevzorov@yahoo.com), Vitalik(vetal-x@mail.ru), 2002-2004)</CopyRight>
+</UniHighlighter>

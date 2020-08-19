@@ -1,0 +1,88 @@
+<UniHighlighter version="1.8.1">
+  <Info>
+    <General Name="Hashsum file*" Extensions="BLAKE2S BLAKE2SP BLAKE2 CRC32 HAVAL MD4 MD5 RIPEMD128 RIPEMD160 SFV SHA SHA1 SHA224 SHA256 SHA384 SHA512 SHA3 TIGER"/>
+    <Author Name="Skif_off" Email="" Web="" Copyright="" Company="" Remark=""/>
+    <Version Version="0" Revision="3" Date="43077,7922183218"/>
+    <History>
+    </History>
+    <Sample>
+    </Sample>
+  </Info>
+  <Scheme File="" Name=""/>
+  <Range Name="Root" Attributes="0,16777215;False:False." Style="" CaseSensitive="True"
+         Delimiters="!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^`{|}~">
+    <Rule/>
+    <Keywords Name="Symbols" Attributes="255,16777215;False:False." Style="">
+      <word value="*"/>
+    </Keywords>
+    <Range Name="Comment" Attributes="32768,16777215;False:False." Style="" CaseSensitive="True"
+           Delimiters="!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^`{|}~">
+      <Rule OpenSymbol=";" OpenSymbolStartLine="True" CloseOnEol="True"/>
+    </Range>
+    <Range Name="Hash0" Attributes="16711680,16777215;False:False." Style="" CaseSensitive="True"
+           Delimiters="!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^`{|}~">
+      <Rule OpenSymbol="0" OpenSymbolStartLine="NonSpace" CloseSymbol="*" CloseSymbolPartOfTerm="False" CloseOnTerm="True"/>
+    </Range>
+    <Range Name="Hash1" Attributes="16711680,16777215;False:False." Style="" CaseSensitive="True"
+           Delimiters="!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^`{|}~">
+      <Rule OpenSymbol="1" OpenSymbolStartLine="NonSpace" CloseSymbol="*" CloseSymbolPartOfTerm="False" CloseOnTerm="True"/>
+    </Range>
+    <Range Name="Hash2" Attributes="16711680,16777215;False:False." Style="" CaseSensitive="True"
+           Delimiters="!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^`{|}~">
+      <Rule OpenSymbol="2" OpenSymbolStartLine="NonSpace" CloseSymbol="*" CloseSymbolPartOfTerm="False" CloseOnTerm="True"/>
+    </Range>
+    <Range Name="Hash3" Attributes="16711680,16777215;False:False." Style="" CaseSensitive="True"
+           Delimiters="!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^`{|}~">
+      <Rule OpenSymbol="3" OpenSymbolStartLine="NonSpace" CloseSymbol="*" CloseSymbolPartOfTerm="False" CloseOnTerm="True"/>
+    </Range>
+    <Range Name="Hash4" Attributes="16711680,16777215;False:False." Style="" CaseSensitive="True"
+           Delimiters="!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^`{|}~">
+      <Rule OpenSymbol="4" OpenSymbolStartLine="NonSpace" CloseSymbol="*" CloseSymbolPartOfTerm="False" CloseOnTerm="True"/>
+    </Range>
+    <Range Name="Hash5" Attributes="16711680,16777215;False:False." Style="" CaseSensitive="True"
+           Delimiters="!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^`{|}~">
+      <Rule OpenSymbol="5" OpenSymbolStartLine="NonSpace" CloseSymbol="*" CloseSymbolPartOfTerm="False" CloseOnTerm="True"/>
+    </Range>
+    <Range Name="Hash6" Attributes="16711680,16777215;False:False." Style="" CaseSensitive="True"
+           Delimiters="!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^`{|}~">
+      <Rule OpenSymbol="6" OpenSymbolStartLine="NonSpace" CloseSymbol="*" CloseSymbolPartOfTerm="False" CloseOnTerm="True"/>
+    </Range>
+    <Range Name="Hash7" Attributes="16711680,16777215;False:False." Style="" CaseSensitive="True"
+           Delimiters="!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^`{|}~">
+      <Rule OpenSymbol="7" OpenSymbolStartLine="NonSpace" CloseSymbol="*" CloseSymbolPartOfTerm="False" CloseOnTerm="True"/>
+    </Range>
+    <Range Name="Hash8" Attributes="16711680,16777215;False:False." Style="" CaseSensitive="True"
+           Delimiters="!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^`{|}~">
+      <Rule OpenSymbol="8" OpenSymbolStartLine="NonSpace" CloseSymbol="*" CloseSymbolPartOfTerm="False" CloseOnTerm="True"/>
+    </Range>
+    <Range Name="Hash9" Attributes="16711680,16777215;False:False." Style="" CaseSensitive="True"
+           Delimiters="!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^`{|}~">
+      <Rule OpenSymbol="9" OpenSymbolStartLine="NonSpace" CloseSymbol="*" CloseSymbolPartOfTerm="False" CloseOnTerm="True"/>
+    </Range>
+    <Range Name="HashA" Attributes="16711680,16777215;False:False." Style=""
+           Delimiters="!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^`{|}~">
+      <Rule OpenSymbol="a" OpenSymbolStartLine="NonSpace" CloseSymbol="*" CloseSymbolPartOfTerm="False" CloseOnTerm="True"/>
+    </Range>
+    <Range Name="HashB" Attributes="16711680,16777215;False:False." Style=""
+           Delimiters="!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^`{|}~">
+      <Rule OpenSymbol="b" OpenSymbolStartLine="NonSpace" CloseSymbol="*" CloseSymbolPartOfTerm="False" CloseOnTerm="True"/>
+    </Range>
+    <Range Name="HashC" Attributes="16711680,16777215;False:False." Style=""
+           Delimiters="!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^`{|}~">
+      <Rule OpenSymbol="c" OpenSymbolStartLine="NonSpace" CloseSymbol="*" CloseSymbolPartOfTerm="False" CloseOnTerm="True"/>
+    </Range>
+    <Range Name="HashD" Attributes="16711680,16777215;False:False." Style=""
+           Delimiters="!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^`{|}~">
+      <Rule OpenSymbol="d" OpenSymbolStartLine="NonSpace" CloseSymbol="*" CloseSymbolPartOfTerm="False" CloseOnTerm="True"/>
+    </Range>
+    <Range Name="HashE" Attributes="16711680,16777215;False:False." Style=""
+           Delimiters="!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^`{|}~">
+      <Rule OpenSymbol="e" OpenSymbolStartLine="NonSpace" CloseSymbol="*" CloseSymbolPartOfTerm="False" CloseOnTerm="True"/>
+    </Range>
+    <Range Name="HashF" Attributes="16711680,16777215;False:False." Style=""
+           Delimiters="!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^`{|}~">
+      <Rule OpenSymbol="f" OpenSymbolStartLine="NonSpace" CloseSymbol="*" CloseSymbolPartOfTerm="False" CloseOnTerm="True"/>
+    </Range>
+  </Range>
+  <CopyRight>Rule file for UniHighlighter Delphi component (Copyright(C) Fantasist(walking_in_the_sky@yahoo.com), Vit(nevzorov@yahoo.com), Vitalik(vetal-x@mail.ru), 2002-2004)</CopyRight>
+</UniHighlighter>

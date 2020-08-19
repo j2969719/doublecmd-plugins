@@ -1,0 +1,102 @@
+<UniHighlighter version="1.8.1">
+  <Info>
+    <General Name="Control file*" Extensions="BUILDINFO CHANGES DSC CONTROL CHANGELOG"/>
+    <Author Name="Skif_off" Email="" Web="" Copyright="" Company="" Remark="Some config files for DEB-files building"/>
+    <Version Version="1" Revision="2" Date="43366,900731956"/>
+    <History>
+    </History>
+    <Sample>
+    </Sample>
+  </Info>
+  <Scheme File="" Name=""/>
+  <Range Name="Root" Attributes="0,-2147483643;False:False." Style="" CaseSensitive="True"
+         Delimiters="!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^`{|}~">
+    <Rule OpenSymbolPartOfTerm="Right" CloseSymbolPartOfTerm="False"/>
+    <Keywords Name="Symbols" Attributes="255,-2147483643;False:True." Style="">
+      <word value="&lt;&lt;"/>
+      <word value="&gt;&gt;"/>
+      <word value="&lt;="/>
+      <word value="&gt;="/>
+      <word value="="/>
+    </Keywords>
+    <Keywords Name="Keywords" Attributes="16711680,-2147483643;False:True." Style="">
+      <word value="Architecture:"/>
+      <word value="Binary:"/>
+      <word value="Breaks:"/>
+      <word value="Build-Architecture:"/>
+      <word value="Build-Conflicts-Arch:"/>
+      <word value="Build-Conflicts-Indep:"/>
+      <word value="Build-Conflicts:"/>
+      <word value="Build-Date:"/>
+      <word value="Build-Depends-Arch:"/>
+      <word value="Build-Depends-Indep:"/>
+      <word value="Build-Depends:"/>
+      <word value="Build-Origin:"/>
+      <word value="Built-Using:"/>
+      <word value="Changed-By:"/>
+      <word value="Changes:"/>
+      <word value="Checksums-Md5:"/>
+      <word value="Checksums-Sha1:"/>
+      <word value="Checksums-Sha256:"/>
+      <word value="Closes:"/>
+      <word value="Conflicts:"/>
+      <word value="Date:"/>
+      <word value="Depends:"/>
+      <word value="Description:"/>
+      <word value="Dgit:"/>
+      <word value="Distribution:"/>
+      <word value="DM-Upload-Allowed:"/>
+      <word value="Enhances:"/>
+      <word value="Environment:"/>
+      <word value="Essential:"/>
+      <word value="Files:"/>
+      <word value="Format:"/>
+      <word value="Homepage:"/>
+      <word value="Installed-Build-Depends:"/>
+      <word value="Installed-Size:"/>
+      <word value="Maintainer:"/>
+      <word value="Multi-Arch:"/>
+      <word value="Original-Maintainer:"/>
+      <word value="Package-List:"/>
+      <word value="Package-Type:"/>
+      <word value="Package:"/>
+      <word value="Pre-Depends:"/>
+      <word value="Priority:"/>
+      <word value="Provides:"/>
+      <word value="Recommends:"/>
+      <word value="Replaces:"/>
+      <word value="Rules-Requires-Root:"/>
+      <word value="Section:"/>
+      <word value="Source:"/>
+      <word value="Standards-Version:"/>
+      <word value="Suggests:"/>
+      <word value="Testsuite-Triggers:"/>
+      <word value="Testsuite:"/>
+      <word value="Uploaders:"/>
+      <word value="Urgency:"/>
+      <word value="Vcs-Arch:"/>
+      <word value="Vcs-Browser:"/>
+      <word value="Vcs-Bzr:"/>
+      <word value="Vcs-Cvs:"/>
+      <word value="Vcs-Darcs:"/>
+      <word value="Vcs-Git:"/>
+      <word value="Vcs-Hg:"/>
+      <word value="Vcs-Mtn:"/>
+      <word value="Vcs-Svn:"/>
+      <word value="Version:"/>
+    </Keywords>
+    <Range Name="Remark #" Attributes="32768,-2147483643;False:True." Style="" CaseSensitive="True"
+           Delimiters="!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^`{|}~">
+      <Rule OpenSymbol="#" OpenSymbolStartLine="NonSpace" OpenSymbolPartOfTerm="Right" CloseSymbolPartOfTerm="False" CloseOnEol="True"/>
+    </Range>
+    <Range Name="HistoryItem" Attributes="8421376,-2147483643;False:True." Style="" CaseSensitive="True"
+           Delimiters="!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^`{|}~">
+      <Rule OpenSymbol="  * " OpenSymbolStartLine="True" OpenSymbolPartOfTerm="Right" CloseSymbolPartOfTerm="False" CloseOnEol="True"/>
+    </Range>
+    <Range Name="Variable" Attributes="150,-2147483643;False:True." Style="" CaseSensitive="True"
+           Delimiters="!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^`{|}~">
+      <Rule OpenSymbol="${" CloseSymbol="}"/>
+    </Range>
+  </Range>
+  <CopyRight>Rule file for UniHighlighter Delphi component (Copyright(C) Fantasist(walking_in_the_sky@yahoo.com), Vit(nevzorov@yahoo.com), Vitalik(vetal-x@mail.ru), 2002-2004)</CopyRight>
+</UniHighlighter>
