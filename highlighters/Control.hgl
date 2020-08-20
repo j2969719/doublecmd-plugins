@@ -2,7 +2,7 @@
   <Info>
     <General Name="Control file*" Extensions="BUILDINFO CHANGES DSC CONTROL CHANGELOG"/>
     <Author Name="Skif_off" Email="" Web="" Copyright="" Company="" Remark="Some config files for DEB-files building"/>
-    <Version Version="1" Revision="2" Date="43366,900731956"/>
+    <Version Version="1" Revision="3" Date="43366,900731956"/>
     <History>
     </History>
     <Sample>
@@ -41,6 +41,8 @@
       <word value="Closes:"/>
       <word value="Conflicts:"/>
       <word value="Date:"/>
+      <word value="Debian-Vcs-Browser:"/>
+      <word value="Debian-Vcs-Git:"/>
       <word value="Depends:"/>
       <word value="Description:"/>
       <word value="Dgit:"/>
