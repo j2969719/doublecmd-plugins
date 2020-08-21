@@ -1,7 +1,7 @@
 
 pkgname=doublecmd-plugin-adb
 _pkgname=adbplugin-x64
-pkgver=8.5
+pkgver=8.8
 pkgrel=1
 pkgdesc="The ultimate ADB (Android Debug Bridge) file system plugin for Double Commander and Total Commander with extra features"
 arch=(x86_64)
@@ -10,10 +10,8 @@ license=('unknown')
 depends=('doublecmd' 'android-tools' 'pcre')
 makedepends=('patchelf')
 options=(!strip)
-source=('https://www.uniqtec.eu/download/adb/adbplugin-linux-x64.zip'
-	'adb.ico')
-md5sums=('159a1cd83be0a8fb97f32175a65dc06b'
-	 'e1387bf693c7e2831c45654ecb534992')
+source=('https://www.uniqtec.eu/download/adb/adbplugin-linux-x64.zip')
+md5sums=('71be0815cb0df952c4e617b745f64860')
 
 package() {
   patchelf --replace-needed libpcre.so.3 libpcre.so adb_rename.wfx
