@@ -251,8 +251,11 @@ Script for using in trash folder: getting original file name and deletion date.
 - [vcardinfowdx.lua](plugins/wdx/scripts/vcardinfowdx.lua) *(cross platform)*<br>
 Getting some information from vCard files. See details in the beginning of script.
 
+- [xcfinfowdx.lua](plugins/wdx/scripts/xcfinfowdx.lua) *(cross platform)*<br>
+Getting some information from XCF files (GIMP native image format).
+
 - [ziminfowdx.lua](plugins/wdx/scripts/ziminfowdx.lua) *(cross platform)*<br>
-Getting some information from Zim file (https://zim-wiki.org/).
+Getting some information from Zim files (https://zim-wiki.org/).
 
 
 ---
