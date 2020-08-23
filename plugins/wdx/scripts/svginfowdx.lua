@@ -1,22 +1,22 @@
 -- svginfowdx.lua (cross-platform)
--- 2019.12.24
+-- 2020.08.23
 --
 -- Getting application name (this is not standardized!): see function GetApp() and table t.
 
 local fields = {
- "SVG version",
- "Application",
- "xmlns-sodipodi",
- "xmlns-inkscape",
- "width",
- "height",
- "id",
- "sodipodi-version",
- "inkscape-version",
- "sodipodi-docbase",
- "sodipodi-docname",
- "viewBox",
- "baseProfile"
+"SVG version",
+"Application",
+"xmlns-sodipodi",
+"xmlns-inkscape",
+"width",
+"height",
+"id",
+"sodipodi-version",
+"inkscape-version",
+"sodipodi-docbase",
+"sodipodi-docname",
+"viewBox",
+"baseProfile"
 }
 local fc
 local filename = ''
@@ -37,12 +37,11 @@ function ContentGetDetectString()
 end
 
 function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
-  if FieldIndex > 12 then return nil end
-  local at = SysUtils.FileGetAttr(FileName)
-  if (at < 0) or (math.floor(at / 0x00000010) % 2 ~= 0) then return nil end
-  local e, r
+  if FieldIndex >= #fields then return nil end
   if filename ~= FileName then
-    e = string.lower(string.sub(FileName, string.len(FileName) - 3, -1))
+    local at = SysUtils.FileGetAttr(FileName)
+    if (at < 0) or (math.floor(at / 0x00000010) % 2 ~= 0) then return nil end
+    local e = string.lower(string.sub(FileName, string.len(FileName) - 3, -1))
     if e ~= '.svg' then return nil end
     local h = io.open(FileName, 'r')
     if h == nil then return nil end
@@ -54,6 +53,7 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
     fc = string.sub(t, 1, ne)
     filename = FileName
   end
+  local r
   if FieldIndex == 0 then
     r = GetAttr('version')
   elseif FieldIndex == 1 then

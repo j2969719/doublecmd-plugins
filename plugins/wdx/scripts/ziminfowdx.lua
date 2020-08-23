@@ -1,5 +1,5 @@
 -- ziminfowdx.lua (cross-platform)
--- 2020.03.25
+-- 2020.08.23
 --[[
 Save as UTF-8 without BOM!
 
@@ -74,11 +74,10 @@ end
 
 function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
   if FieldIndex >= #fields then return nil end
-  local at = SysUtils.FileGetAttr(FileName)
-  if (at < 0) or (math.floor(at / 0x00000010) % 2 ~= 0) then return nil end
-  local e
   if filename ~= FileName then
-    e = string.lower(SysUtils.ExtractFileExt(FileName))
+    local at = SysUtils.FileGetAttr(FileName)
+    if (at < 0) or (math.floor(at / 0x00000010) % 2 ~= 0) then return nil end
+    local e = string.lower(SysUtils.ExtractFileExt(FileName))
     if e ~= '.txt' then return nil end
     local h = io.open(FileName, 'r')
     if h == nil then return nil end
@@ -114,10 +113,10 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
     end
     filename = FileName
   end
+  local s
   if FieldIndex == 0 then
     return string.gsub(string.sub(head[1], 13, -1), '^[\t ]+', '')
   elseif FieldIndex == 1 then
-    local s
     for i = 2, #head do
       if string.sub(head[i], 1, 14) == 'Creation-Date:' then
         s = string.gsub(string.sub(head[i], 15, -1), '^[\t ]+', '')
@@ -133,13 +132,12 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
   elseif FieldIndex == 2 then
     if body[1] == nil then return nil end
     if string.sub(body[1], 1, 1) ~= '=' then return nil end
-    local s = string.gsub(body[1], '^=+ +', '')
+    s = string.gsub(body[1], '^=+ +', '')
     s = string.gsub(s, ' +=+$', '')
     return s
   elseif FieldIndex == 3 then
     if body[2] == nil then return nil end
     local dt = {}
-    local s
     dt.day, s, dt.year= string.match(body[2], '^[^ ]+ [^ ]+ (%d+) ([^ ]+) (%d+)$')
     if dt.day == nil then return nil end
     for k, v in pairs(dt) do dt[k] = tonumber(v) end
@@ -148,7 +146,7 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
     dt.hour, dt.min, dt.sec = 0, 0, 1
     return os.date('%Y-%m-%d', os.time(dt))
   elseif (FieldIndex > 3) and (FieldIndex < 8) then
-    local s = SysUtils.ExtractFileDir(FileName)
+    s = SysUtils.ExtractFileDir(FileName)
     local f = s .. SysUtils.PathDelim .. 'notebook.zim'
     local c = 0
     while true do

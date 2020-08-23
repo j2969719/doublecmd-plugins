@@ -1,55 +1,56 @@
 -- vcardinfowdx.lua (cross-platform)
--- 2020.07.24
---
--- vCard Format Specification 2.1, 3.0, 4.0
--- Some details: https://en.wikipedia.org/wiki/VCard
---
--- NOTE: Script reads file content between BEGIN:VCARD and END:VCARD and will continue to work
---       only if VERSION property is exists (all vCards must contain the VERSION property).
--- NOTE: One vCard file - one person! Otherwise only the first one will be read.
---
--- Supported fields: see table "fields".
--- Lists of units: see "adru" for "Address" fields and third column for other.
--- Data type:
---   6 - boolean (true or false, i.e. exists or not) for "Photograph" and "Logo";
---   8 - string.
+-- 2020.08.23
+--[[
+vCard Format Specification 2.1, 3.0, 4.0
+Some details: https://en.wikipedia.org/wiki/VCard
+
+NOTE: Script reads file content between BEGIN:VCARD and END:VCARD and will continue to work
+      only if VERSION property is exists (all vCards must contain the VERSION property).
+NOTE: One vCard file - one person! Otherwise only the first one will be read.
+
+Supported fields: see table "fields".
+Lists of units: see "adru" for "Address" fields and third column for other.
+Data type:
+  6 - boolean (true or false, i.e. exists or not) for "Photograph" and "Logo";
+  8 - string.
+]]
 
 local adru = "Post office box|Extended address|Street|Locality (city etc)|Region (state, province)|Postal code|Country"
 local fields = {
- {"Version",                         "VERSION",    "", 8},
- {"Formatted name",                  "FN",         "", 8},
- {"Name",                            "N",          "Last name|First name|Middle name|Name prefix(es)|Name suffix(es)", 8},
- {"Gender",                          "GENDER",     "", 8},
- {"Nickname",                        "NICKNAME",   "", 8},
- {"Photograph",                      "PHOTO",      "", 6},
- {"Birthday",                        "BDAY",       "", 8},
- {"Address",                         "ADR",        adru, 8},
- {"Address: domestic delivery",      "ADR",        adru, 8},
- {"Address: international delivery", "ADR",        adru, 8},
- {"Address: postal delivery",        "ADR",        adru, 8},
- {"Address: parcel delivery",        "ADR",        adru, 8},
- {"Address: home",                   "ADR",        adru, 8},
- {"Address: work",                   "ADR",        adru, 8},
- {"Address: preferred",              "ADR",        adru, 8},
- {"Address label",                   "LABEL",      "Default|Domestic delivery|International delivery|Postal delivery|Parcel delivery|Home|Work|Preferred", 8},
- {"Telephone",                       "TEL",        "Main|Mobile|Work mobile|Work|Home|Preferred|Work fax|Home fax|Pager|Car phone|BBS|ISDN|PCS|Callback|Telex|TTY/TDD|Other|Assistant", 8},
- {"Email",                           "EMAIL",      "Home|Work|Other|Preferred", 8},
- {"Email program",                   "MAILER",     "", 8},
- {"Time zone",                       "TZ",         "", 8},
- {"Global positioning",              "GEO",        "", 8},
- {"Title",                           "TITLE",      "", 8},
- {"Role or occupation (X.520)",      "ROLE",       "", 8},
- {"Logo",                            "LOGO",       "", 6},
- {"Organization name",               "ORG",        "", 8},
- {"Category",                        "CATEGORIES", "", 8},
- {"Note",                            "NOTE",       "", 8},
- {"Product ID",                      "PRODID",     "", 8},
- {"Last revision",                   "REV",        "", 8},
- {"Unique identifier",               "UID",        "", 8},
- {"URL",                             "URL",        "", 8},
- {"Access classification",           "CLASS",      "", 8},
- {"Instant messaging",               "IM",         "AIM|Facebook|Flickr|Gadu-Gadu|Google Hangouts|GroupWise|ICQ|Jabber|Linkedln|MySpace|QQ|Sina Weibo|Skype|Twitter|WhatsApp|Windows Live|Yahoo", 8},
- {"Assistant",                       "X-ASSISTANT", "", 8}
+{"Version",                         "VERSION",    "", 8},
+{"Formatted name",                  "FN",         "", 8},
+{"Name",                            "N",          "Last name|First name|Middle name|Name prefix(es)|Name suffix(es)", 8},
+{"Gender",                          "GENDER",     "", 8},
+{"Nickname",                        "NICKNAME",   "", 8},
+{"Photograph",                      "PHOTO",      "", 6},
+{"Birthday",                        "BDAY",       "", 8},
+{"Address",                         "ADR",        adru, 8},
+{"Address: domestic delivery",      "ADR",        adru, 8},
+{"Address: international delivery", "ADR",        adru, 8},
+{"Address: postal delivery",        "ADR",        adru, 8},
+{"Address: parcel delivery",        "ADR",        adru, 8},
+{"Address: home",                   "ADR",        adru, 8},
+{"Address: work",                   "ADR",        adru, 8},
+{"Address: preferred",              "ADR",        adru, 8},
+{"Address label",                   "LABEL",      "Default|Domestic delivery|International delivery|Postal delivery|Parcel delivery|Home|Work|Preferred", 8},
+{"Telephone",                       "TEL",        "Main|Mobile|Work mobile|Work|Home|Preferred|Work fax|Home fax|Pager|Car phone|BBS|ISDN|PCS|Callback|Telex|TTY/TDD|Other|Assistant", 8},
+{"Email",                           "EMAIL",      "Home|Work|Other|Preferred", 8},
+{"Email program",                   "MAILER",     "", 8},
+{"Time zone",                       "TZ",         "", 8},
+{"Global positioning",              "GEO",        "", 8},
+{"Title",                           "TITLE",      "", 8},
+{"Role or occupation (X.520)",      "ROLE",       "", 8},
+{"Logo",                            "LOGO",       "", 6},
+{"Organization name",               "ORG",        "", 8},
+{"Category",                        "CATEGORIES", "", 8},
+{"Note",                            "NOTE",       "", 8},
+{"Product ID",                      "PRODID",     "", 8},
+{"Last revision",                   "REV",        "", 8},
+{"Unique identifier",               "UID",        "", 8},
+{"URL",                             "URL",        "", 8},
+{"Access classification",           "CLASS",      "", 8},
+{"Instant messaging",               "IM",         "AIM|Facebook|Flickr|Gadu-Gadu|Google Hangouts|GroupWise|ICQ|Jabber|Linkedln|MySpace|QQ|Sina Weibo|Skype|Twitter|WhatsApp|Windows Live|Yahoo", 8},
+{"Assistant",                       "X-ASSISTANT", "", 8}
 }
 local all = {}
 local adr = {}
@@ -77,11 +78,11 @@ end
 
 function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
   if FieldIndex > 33 then return nil end
-  local at = SysUtils.FileGetAttr(FileName)
-  if (at < 0) or (math.floor(at / 0x00000010) % 2 ~= 0) then return nil end
-  local e, n1, s
+  local n1, s
   if filename ~= FileName then
-    e = string.lower(SysUtils.ExtractFileExt(FileName))
+    local at = SysUtils.FileGetAttr(FileName)
+    if (at < 0) or (math.floor(at / 0x00000010) % 2 ~= 0) then return nil end
+    local e = string.lower(SysUtils.ExtractFileExt(FileName))
     -- e = string.lower(string.match(FileName, '^.+(%..+)$'))
     if (e ~= '.vcf') and (e ~= '.vcard') then return nil end
     local h = io.open(FileName, 'r')

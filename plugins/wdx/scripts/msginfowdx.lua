@@ -1,54 +1,55 @@
 -- msginfowdx.lua (cross-platform)
--- 2020.03.20
---
--- Getting info from headers of saved email messages.
--- Supported formats: *.eml, *.msg and MH format (Sylpheed, Claws Mail and other).
--- See RFC 822, RFC 2822, RFC 5322
---
--- NOTES:
--- 1) Sylpheed and some others don't use file extension, so we will use EXT="*"
---    and check file extension in the beginning of ContentGetValue().
--- 2) The first line should contain any email message field!
--- 3) Decoding Base64: https://github.com/toastdriven/lua-base64
--- 4) TimeZone offset: http://lua-users.org/wiki/TimeZone
---
--- Supported fields: see table "fields".
--- Data type:
---   1 - numeric for "Date as digits";
---   6 - boolean (true or false, i.e. exists or not) for:
---       "Unsubscribe" returns "true" if message has a link for unsubscribe;
---       "DKIM Signature" returns "true" if message has a DKIM signature(s);
---   8 - string.
+-- 2020.08.23
+--[[
+Getting info from headers of saved email messages.
+Supported formats: *.eml, *.msg and MH format (Sylpheed, Claws Mail and other).
+See RFC 822, RFC 2822, RFC 5322
+
+NOTES:
+1) Sylpheed and some others don't use file extension, so we will use EXT="*"
+   and check file extension in the beginning of ContentGetValue().
+2) The first line should contain any email message field!
+3) Decoding Base64: https://github.com/toastdriven/lua-base64
+4) TimeZone offset: http://lua-users.org/wiki/TimeZone
+
+Supported fields: see table "fields".
+Data type:
+  1 - numeric for "Date as digits";
+  6 - boolean (true or false, i.e. exists or not) for:
+      "Unsubscribe" returns "true" if message has a link for unsubscribe;
+      "DKIM Signature" returns "true" if message has a DKIM signature(s);
+  8 - string.
+]]
 
 local fields = {
- {"Date",            "date:",        "UTC date|Sender date", 8},
- {"Date as digits",  "date:",        "UTC date: Y|UTC date: M|UTC date: D|Sender date: Y|Sender date: M|Sender date: D", 1},
- {"From",            "from:",        "full string|email(s) only|name(s) only", 8},
- {"Sender",          "sender:",      "full string|email(s) only|name(s) only", 8},
- {"To",              "to:",          "full string|email(s) only|name(s) only", 8},
- {"Carbon Copy (Cc)", "cc:",         "full string|email(s) only|name(s) only", 8},
- {"Blind Carbon Copy (Bcc)", "bcc:", "full string|email(s) only|name(s) only", 8},
- {"Reply-To",        "reply-to:",    "full string|email(s) only|name(s) only", 8},
- {"Errors-To",       "errors-to:",   "", 8},
- {"Return-Path",     "return-path:", "", 8},
- {"Priority",        "priority:",    "", 8},
- {"Message ID",      "message-id:",  "", 8},
- {"In-Reply-To",     "in-reply-to:", "", 8},
- {"References",      "references:",  "", 8},
- {"Subject",         "subject:",     "", 8},
- {"Comments",        "comments:",    "", 8},
- {"Keywords",        "keywords:",    "", 8},
- {"X-Mailer",        "x-mailer:",    "", 8},
- {"X-Priority",      "x-priority:",  "", 8},
- {"X-Sender",        "x-sender:",    "", 8},
- {"DKIM Signature",  "dkim-signature:",   "", 6},
- {"Unsubscribe",     "list-unsubscribe:", "", 6}
+{"Date",            "date:",        "UTC date|Sender date", 8},
+{"Date as digits",  "date:",        "UTC date: Y|UTC date: M|UTC date: D|Sender date: Y|Sender date: M|Sender date: D", 1},
+{"From",            "from:",        "full string|email(s) only|name(s) only", 8},
+{"Sender",          "sender:",      "full string|email(s) only|name(s) only", 8},
+{"To",              "to:",          "full string|email(s) only|name(s) only", 8},
+{"Carbon Copy (Cc)", "cc:",         "full string|email(s) only|name(s) only", 8},
+{"Blind Carbon Copy (Bcc)", "bcc:", "full string|email(s) only|name(s) only", 8},
+{"Reply-To",        "reply-to:",    "full string|email(s) only|name(s) only", 8},
+{"Errors-To",       "errors-to:",   "", 8},
+{"Return-Path",     "return-path:", "", 8},
+{"Priority",        "priority:",    "", 8},
+{"Message ID",      "message-id:",  "", 8},
+{"In-Reply-To",     "in-reply-to:", "", 8},
+{"References",      "references:",  "", 8},
+{"Subject",         "subject:",     "", 8},
+{"Comments",        "comments:",    "", 8},
+{"Keywords",        "keywords:",    "", 8},
+{"X-Mailer",        "x-mailer:",    "", 8},
+{"X-Priority",      "x-priority:",  "", 8},
+{"X-Sender",        "x-sender:",    "", 8},
+{"DKIM Signature",  "dkim-signature:",   "", 6},
+{"Unsubscribe",     "list-unsubscribe:", "", 6}
 }
 local all = {}
 local d = {
- {1, 4},
- {6, 7},
- {9, 10}
+{1, 4},
+{6, 7},
+{9, 10}
 }
 local filename = ''
 
@@ -69,12 +70,10 @@ end
 
 function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
   if FieldIndex > 21 then return nil end
-  local at = SysUtils.FileGetAttr(FileName)
-  if (at < 0) or (math.floor(at / 0x00000010) % 2 ~= 0) then return nil end
-  local e
   if filename ~= FileName then
-    e = string.lower(SysUtils.ExtractFileExt(FileName))
-    -- e = string.lower(string.match(FileName, '^.+(%..+)$'))
+    local at = SysUtils.FileGetAttr(FileName)
+    if (at < 0) or (math.floor(at / 0x00000010) % 2 ~= 0) then return nil end
+    local e = string.lower(SysUtils.ExtractFileExt(FileName))
     if (e ~= '.eml') and (e ~= '.msg') and (e ~= '') then return nil end
     local h = io.open(FileName, 'r')
     if h == nil then return nil end

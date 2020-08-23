@@ -1,21 +1,21 @@
 -- msgfulltextwdx.lua (cross-platform)
--- 2020.03.20
---
--- For Find files with plugins only!
---
--- Returns full text of saved email messages.
--- Message body only ("Content-Type: text/plain" or "Content-Type: text/html"), for header use msginfowdx.lua).
---
---
--- Supported formats: *.eml, *.msg and MH format (Sylpheed, Claws Mail and other).
--- See RFC 822, 2822, 5322 and 2045, 2046, 2047
---
--- NOTES:
--- 1) Sylpheed and some others don't use file extension, so we will use EXT="*"
---    and check file extension in the beginning of ContentGetValue().
--- 2) The first line should contain any email message field!
--- 3) Decoding Base64: https://github.com/toastdriven/lua-base64
---    with small modifications.
+-- 2020.08.23
+--[[
+For Find files with plugins only!
+
+Returns full text of saved email messages.
+Message body only ("Content-Type: text/plain" or "Content-Type: text/html"), for header use msginfowdx.lua).
+
+Supported formats: *.eml, *.msg and MH format (Sylpheed, Claws Mail and other).
+See RFC 822, 2822, 5322 and 2045, 2046, 2047
+
+NOTES:
+1) Sylpheed and some others don't use file extension, so we will use EXT="*"
+   and check file extension in the beginning of ContentGetValue().
+2) The first line should contain any email message field!
+3) Decoding Base64: https://github.com/toastdriven/lua-base64
+   with small modifications.
+]]
 
 local sbody
 local filename = ''
@@ -47,12 +47,10 @@ end
 function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
   if FieldIndex ~= 0 then return nil end
   if UnitIndex ~= 0 then return nil end
-  local at = SysUtils.FileGetAttr(FileName)
-  if (at < 0) or (math.floor(at / 0x00000010) % 2 ~= 0) then return nil end
-  local e
   if filename ~= FileName then
-    --e = str_lower(str_match(FileName, '^.+(%..+)$'))
-    e = str_lower(SysUtils.ExtractFileExt(FileName))
+    local at = SysUtils.FileGetAttr(FileName)
+    if (at < 0) or (math.floor(at / 0x00000010) % 2 ~= 0) then return nil end
+    local e = str_lower(SysUtils.ExtractFileExt(FileName))
     if (e ~= '.eml') and (e ~= '.msg') and (e ~= '') then return nil end
     local h = io.open(FileName, 'r')
     if h == nil then return nil end
