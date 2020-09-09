@@ -24,4 +24,4 @@ Don't use `/usr/share/doublecmd/highlighters`, `C:\Program Files\Double Commande
 - Windows Vista/7-10: `C:\Users\<UserName>\AppData\Local\doublecmd\highlighters`
 - Unix-like OS: `/home/<UserName>/.local/share/doublecmd/highlighters`
 
-If you cannot find this path in the file system, just create.
+If the directory doesn't exist, create it. Now restart DC.
