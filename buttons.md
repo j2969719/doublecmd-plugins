@@ -889,5 +889,21 @@ DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
 ```
 
 
+### cm_FlatView/cm_FlatViewSel: copy files with keeping directory structure
+[CopyTree.py](utils/CopyTree.py). Use with cm_FlatView/cm_FlatViewSel: copy selected files to target directory with keeping source directory structure.
+```
+DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
+<doublecmd>
+  <Program>
+    <ID>{28AE07D0-12A0-4238-92BB-BE815AFB6F48}</ID>
+    <Icon>cm_copy</Icon>
+    <Hint>cm_FlatView/cm_FlatViewSel: copy files with keeping directory structure</Hint>
+    <Command>%COMMANDER_PATH%/utils/CopyTree.py</Command>
+    <Param> %t1 %"0 "%LU" "%Ds" "%Dt"</Param>
+  </Program>
+</doublecmd>
+```
+
+
 ### Marker *(cross platform)*
 For file highlighting like in *Colors* > *File types*, but "on the fly": add selected color, delete or change. So you can use this scripts for file tagging. See details [here](utils/marker).
