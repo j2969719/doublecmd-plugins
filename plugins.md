@@ -80,6 +80,9 @@ Getting some information (method, files and folder count, etc) from archives (us
 - [apkinfowdx.lua](plugins/wdx/scripts/apkinfowdx.lua)<br>
 Getting some information from APK files. Fields: Label, Version, Install Location, Uses Permissions, Locales, Supports Screens, Native Code.
 
+- [appcrashwdx.lua](plugins/wdx/scripts/appcrashwdx.lua) *(cross platform)*<br>
+Getting info from CRASH-files on Debian/Ubuntu and Debian/Ubuntu-based distributions (/var/crash/*.crash). Only app crash files, not core dumps!
+
 - [archivecommentwdx.lua](plugins/wdx/scripts/archivecommentwdx.lua)<br>
 Reading comment from ZIP and RAR files.
 
