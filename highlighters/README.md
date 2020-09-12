@@ -13,7 +13,7 @@ This files are usual XML-based files, you can open them in text editor and read/
 
 1. Portable version
 
-Copy (or move) HGL-file(s) to the *highlighters* folder near `doublecmd.exe` and restsrt DC.
+Copy (or move) HGL-file(s) to the *highlighters* folder near `doublecmd.exe` and restart DC.
 
 2. Installed version
 
