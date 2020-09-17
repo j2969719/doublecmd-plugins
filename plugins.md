@@ -116,7 +116,7 @@ Getting some information from DjVu files and searching text. Requires `djvused`.
 - [duwdx.lua](plugins/wdx/scripts/duwdx.lua)<br>
 Returns directory size or files on a file system.
 
-- [elfheaderinfo.lua](plugins/wdx/scripts/elfheaderinfo.lua) *(cross platform)*<br>
+- [elfheaderwdx.lua](plugins/wdx/scripts/elfheaderwdx.lua) *(cross platform)*<br>
 Getting some ELF header information.
 
 - [encawdx.lua](plugins/wdx/scripts/encawdx.lua)<br>
