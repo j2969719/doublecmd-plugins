@@ -1,7 +1,7 @@
 Marker (cross-platform)
 -----------------------
 
-2020.08.04
+2020.09.20
 
 Marker for file highlighting like in *Colors* > *File types*, but "on the fly": add selected color, delete or change. So you can use this scripts for file tagging.
 You can use any number of colors.

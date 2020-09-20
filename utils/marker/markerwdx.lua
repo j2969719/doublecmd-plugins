@@ -1,5 +1,5 @@
 -- markerwdx.lua (cross-platform)
--- 2020.08.04
+-- 2020.09.20
 
 local dbn
 local ft, c = 0, 0
@@ -71,6 +71,6 @@ function ReadFileList()
       c = c + 1
     end
     h:close()
-    c = c - 1
+    if fl[c] == '' then c = c - 1 end
   end
 end
