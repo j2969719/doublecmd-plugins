@@ -1,8 +1,8 @@
 <UniHighlighter version="1.8.1">
   <Info>
-    <General Name="INI file*" Extensions="CFG CONF CONFIG DESKTOP INF INI LA PROPERTIES RC"/>
+    <General Name="INI file*" Extensions="CFG CONF CONFIG DESKTOP INF INI LA PROPERTIES RC SERVICE"/>
     <Author Name="Skif_off" Email="" Web="" Copyright="" Company="" Remark="Based on Vitaly Nevzorov's INI highlighter"/>
-    <Version Version="1" Revision="4" Date="43016,9169650116"/>
+    <Version Version="1" Revision="5" Date="43016,9169650116"/>
     <History>
     </History>
     <Sample>
