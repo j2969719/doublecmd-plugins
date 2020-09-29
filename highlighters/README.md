@@ -25,3 +25,7 @@ Don't use `/usr/share/doublecmd/highlighters`, `C:\Program Files\Double Commande
 - Unix-like OS: `/home/<UserName>/.local/share/doublecmd/highlighters`
 
 If the directory doesn't exist, create it. Now restart DC.
+
+## How to create or edit
+
+[HglEditor](http://totalcmd.net/plugring/HglEditor.html): create and use the *highlighters* folder near `HglEditor.exe`. HglEditor for Windows only, but you can use Wine.
