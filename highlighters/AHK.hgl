@@ -1,16 +1,11 @@
 <UniHighlighter version="1.8.1">
   <Info>
     <General Name="AutoHolkey*" Extensions="AHK"/>
-    <Author Name="Skif_off" Email="" Web="" Copyright="" Company="" Remark=""/>
-    <Version Version="1" Revision="2" Date="43175,8307051389"/>
+    <Author Name="Skif_off" Email="" Web="" Copyright="" Company="" Remark="Lists of keywords based on ahk.coder for AkelPad"/>
+    <Version Version="1" Revision="3" Date="43175,8307051389"/>
     <History>
     </History>
     <Sample>
-      <S>/*</S>
-      <S>Lists of keywords based on ahk.coder from here</S>
-      <S>https://github.com/Lenchik/Akelpad-syntax-highlighting/</S>
-      <S>*/</S>
-      <S></S>
       <S> ; Example</S>
       <S>if (not WinExist(&quot;ahk_class Notepad&quot;))</S>
       <S>{</S>
