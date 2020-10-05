@@ -26,6 +26,24 @@ Don't use `/usr/share/doublecmd/highlighters`, `C:\Program Files\Double Commande
 
 If the directory doesn't exist, create it. Now restart DC.
 
+
 ## How to create or edit
 
 [HglEditor](http://totalcmd.net/plugring/HglEditor.html): create and use the *highlighters* folder near `HglEditor.exe`. HglEditor for Windows only, but you can use Wine.
+
+
+## Additional feature(s)
+
+1. *Other* submenu
+
+Additional *Syntax highlight* menu item: if menu is too long then you can move some items to the *Other* submenu (DC 1.0.0 or alpha (i.e. version from trunk) >= r9554).
+
+Just add new attribute `Other` and value 1 to the `<General>` tag. For example, before
+```xml
+    <General Name="AutoIt v3*" Extensions="AU3"/>
+```
+and after
+```xml
+    <General Name="AutoIt v3*" Extensions="AU3" Other="1"/>
+```
+Now restart DC.
