@@ -27,6 +27,11 @@ Don't use `/usr/share/doublecmd/highlighters`, `C:\Program Files\Double Commande
 If the directory doesn't exist, create it. Now restart DC.
 
 
+## Other HGL-files
+
+DC uses SynUniHighlighter, so you can try to find HGL-files yourself.
+
+
 ## How to create or edit
 
 [HglEditor](http://totalcmd.net/plugring/HglEditor.html): create and use the *highlighters* folder near `HglEditor.exe`. HglEditor for Windows only, but you can use Wine.
