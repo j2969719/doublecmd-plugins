@@ -889,6 +889,23 @@ DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
 ```
 
 
+### >Save clipboard contents to text file *(cross platform)*
+[SaveClipboardToFile.lua](utils/SaveClipboardToFile.lua)
+```
+DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
+<doublecmd>
+  <Command>
+    <ID>{98AEAAD0-42A0-4238-92BB-BE80744B6F48}</ID>
+    <Icon>cm_executescript</Icon>
+    <Hint>Save clipboard contents to text file</Hint>
+    <Command>cm_ExecuteScript</Command>
+    <Param>%COMMANDER_PATH%/utils/SaveClipboardToFile.lua</Param>
+    <Param>%"0%Ds</Param>
+  </Command>
+</doublecmd>
+```
+
+
 ### cm_FlatView/cm_FlatViewSel: copy files with keeping directory structure
 [CopyTree.py](utils/CopyTree.py). Use with cm_FlatView/cm_FlatViewSel: copy selected files to target directory with keeping source directory structure.
 ```
