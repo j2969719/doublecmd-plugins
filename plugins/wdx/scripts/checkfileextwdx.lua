@@ -1,5 +1,5 @@
 -- checkfileextwdx.lua (cross-platform)
--- 2020.07.11
+-- 2020.10.11
 --[[
 Checking that the file extension matches the file type (by the file signatures ("magic numbers"))
 and returns some additional info.
@@ -135,7 +135,7 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
       ar[4] = 'png'
       if e ~= '.png' then ar[5] = true end
     -- RTF
-    elseif string.sub(d, 1, 6) == '{\rtf1' then
+    elseif string.sub(d, 1, 5) == '{\rtf' then
       ar[1] = 'RTF document (Rich Text Format)'
       ar[2] = 'application/rtf'
       ar[3] = 'text/rtf'
@@ -162,7 +162,7 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
         ar[5] = true
       end
     -- TIFF
-    elseif (d14h == 0x49492a00) or (d14h == 0x4d4d002a) or (d14h == 0x4d4d002b) then
+    elseif (d14h == 0x49492a00) or (d14h == 0x4d4d002a) or (d14h == 0x49492b00) or (d14h == 0x4d4d002b) then
       ar[1] = 'TIFF image'
       ar[2] = 'image/tiff'
       ar[4] = 'tif'
