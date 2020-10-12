@@ -151,8 +151,7 @@ def load_chunk(reader, view):
             errrow = []
             if len(row) > store.get_n_columns():
                 errrow = row[:store.get_n_columns()-2]
-                print(row[store.get_n_columns()-3:-1])
-                errrow.append(' | '.join(row[store.get_n_columns()-3:-1]))
+                errrow.append(' | '.join(row[store.get_n_columns()-2:-1]))
                 errrow.append("<ERROR>")
             else:
                 print("{0}: {1}".format(row,error))
