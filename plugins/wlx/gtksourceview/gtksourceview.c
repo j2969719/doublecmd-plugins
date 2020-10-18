@@ -637,6 +637,13 @@ int DCPCALL ListLoadNext(HWND ParentWin, HWND PluginWin, char* FileToLoad, int S
 	if (!open_file(data, FileToLoad, NULL))
 		return LISTPLUGIN_ERROR;
 
+	//~ esh: delete search mark for next/prev doc
+	GtkTextMark *last_pos;
+	last_pos = gtk_text_buffer_get_mark(GTK_TEXT_BUFFER(data->sBuf), "last_pos");
+
+	if (last_pos != NULL)
+		gtk_text_buffer_delete_mark(GTK_TEXT_BUFFER(data->sBuf), last_pos);
+
 	return LISTPLUGIN_OK;
 }
 
