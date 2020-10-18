@@ -317,26 +317,16 @@ static gboolean open_file(CustomData *data, const gchar *filename, const gchar *
 
 		if (ext != NULL)
 		{
-			gchar *needle = g_strdup_printf("%s;", ext);
-			ext = g_ascii_strdown(needle, -1);
-			g_free(needle);
+			gchar *ext_lower = g_ascii_strdown(ext + 1, -1);
+			gchar *lng = g_key_file_get_string(data->cfg, "Override", ext_lower, NULL);
 
-			gchar *ext_pascal = config_get_string(data->cfg, "Override", "Pascal", ".lpr;.pp;.dpr;");
-			gchar *ext_xml = config_get_string(data->cfg, "Override", "XML", ".lpi;.lpk;.hgl;");
-			gchar *ext_ini = config_get_string(data->cfg, "Override", "INI", ".lfm;.dof;.cfg;");
+			if (lng && lng[0] != '\0')
+			{
+				language = gtk_source_language_manager_get_language(lm, lng);
+				g_free(lng);
+			}
 
-
-			if ((ext_pascal != NULL) && (g_strrstr(ext_pascal, ext) != NULL))
-				language = gtk_source_language_manager_get_language(lm, "pascal");
-			else if ((ext_xml != NULL) && (g_strrstr(ext_xml, ext) != NULL))
-				language = gtk_source_language_manager_get_language(lm, "xml");
-			else if ((ext_ini != NULL) && (g_strrstr(ext_ini, ext) != NULL))
-				language = gtk_source_language_manager_get_language(lm, "ini");
-
-			g_free(ext_pascal);
-			g_free(ext_xml);
-			g_free(ext_ini);
-			g_free(ext);
+			g_free(ext_lower);
 		}
 	}
 
@@ -744,7 +734,11 @@ int DCPCALL ListSendCommand(HWND ListWin, int Command, int Parameter)
 void DCPCALL ListSetDefaultParams(ListDefaultParamStruct* dps)
 {
 	Dl_info dlinfo;
+	GKeyFile *cfg;
+	gchar *oldcfg = NULL, *bakcfg = NULL;
+	gboolean import_oldcfg;
 
+	cfg = g_key_file_new();
 	memset(&dlinfo, 0, sizeof(dlinfo));
 
 	if (dladdr(gCfgPath, &dlinfo) != 0)
@@ -754,6 +748,11 @@ void DCPCALL ListSetDefaultParams(ListDefaultParamStruct* dps)
 		setlocale(LC_ALL, "");
 		bindtextdomain(GETTEXT_PACKAGE, langpath);
 		textdomain(GETTEXT_PACKAGE);
+
+		oldcfg = g_strdup_printf("%s/settings.ini", plugpath);
+		bakcfg = g_strdup_printf("%s/settings.ini.bak", plugpath);
+		import_oldcfg = g_key_file_load_from_file(cfg, oldcfg, G_KEY_FILE_KEEP_COMMENTS, NULL);
+
 		g_free(plugpath);
 		g_free(langpath);
 	}
@@ -765,5 +764,73 @@ void DCPCALL ListSetDefaultParams(ListDefaultParamStruct* dps)
 
 		if (pos)
 			strcpy(pos + 1, "wlx_gtksourceview.ini");
+
+		if (import_oldcfg)
+		{
+			gsize length;
+			gchar **keys = g_key_file_get_keys(cfg, "Override", &length, NULL);
+
+			if (keys != NULL)
+			{
+				for (gsize i = 0; i < length; i++)
+				{
+					gchar *exts = g_key_file_get_string(cfg, "Override", keys[i], NULL);
+					gchar **split = g_strsplit(exts, ";", -1);
+
+					for (gchar **ext = split; *ext != NULL; *ext++)
+					{
+						if (*ext[0] != '\0')
+						{
+							gchar *ext_lower = g_ascii_strdown(*ext + 1, -1);
+							gchar *lang_lower = g_ascii_strdown(keys[i], -1);
+							g_key_file_set_string(cfg, "Override", ext_lower,  lang_lower);
+							g_free(ext_lower);
+							g_free(lang_lower);
+						}
+					}
+
+					g_strfreev(split);
+					g_free(exts);
+					g_key_file_remove_key(cfg, "Override", keys[i], NULL);
+				}
+
+				g_strfreev(keys);
+			}
+
+			if (bakcfg && oldcfg)
+				rename(oldcfg, bakcfg);
+		}
+		else
+		{
+			g_key_file_load_from_file(cfg, gCfgPath, G_KEY_FILE_KEEP_COMMENTS, NULL);
+
+			if (!g_key_file_has_group(cfg, "Override") || g_key_file_has_key(cfg, "Override", "Pascal", NULL))
+			{
+				g_key_file_set_string(cfg, "Override", "lpr", "pascal");
+				g_key_file_set_comment(cfg, "Override", "lpr", "ext=language", NULL);
+				g_key_file_set_string(cfg, "Override", "pp", "pascal");
+				g_key_file_set_string(cfg, "Override", "dpr", "pascal");
+				g_key_file_set_string(cfg, "Override", "lpi", "xml");
+				g_key_file_set_string(cfg, "Override", "lpk", "xml");
+				g_key_file_set_string(cfg, "Override", "hgl", "xml");
+				g_key_file_set_string(cfg, "Override", "lfm", "ini");
+				g_key_file_set_string(cfg, "Override", "dof", "ini");
+				g_key_file_set_string(cfg, "Override", "cfg", "ini");
+				g_key_file_remove_key(cfg, "Override", "Pascal", NULL);
+				g_key_file_remove_key(cfg, "Override", "XML", NULL);
+				g_key_file_remove_key(cfg, "Override", "INI", NULL);
+
+			}
+		}
+
+		g_key_file_save_to_file(cfg, gCfgPath, NULL);
 	}
+
+	if (oldcfg)
+		g_free(oldcfg);
+
+	if (bakcfg)
+		g_free(bakcfg);
+
+	g_key_file_free(cfg);
 }
