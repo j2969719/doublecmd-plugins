@@ -77,6 +77,9 @@ Note: Some scripts uses command line utilities.
 - [7zipwdx.lua](plugins/wdx/scripts/7zipwdx.lua)<br>
 Getting some information (method, files and folder count, etc) from archives (using 7-Zip). You can see list of fields in `fields` (first column).
 
+- [agewdx.lua](plugins/wdx/scripts/agewdx.lua) *(cross platform)*<br>
+Returns age (the date of the last modification will be used): number of seconds, minutes, hours, days, weeks, months or years.
+
 - [apkinfowdx.lua](plugins/wdx/scripts/apkinfowdx.lua)<br>
 Getting some information from APK files. Fields: Label, Version, Install Location, Uses Permissions, Locales, Supports Screens, Native Code.
 
