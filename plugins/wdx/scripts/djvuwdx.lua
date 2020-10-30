@@ -1,12 +1,11 @@
 -- djvuwdx.lua
--- 2020.03.27
+-- 2020.10.30
 --[[
 Getting some information from DjVu files and searching text
 
 Fields:
 - Pages
     pages count, number.
-    If error (file is corrupted, forbidden characters in path, etc) then returns -1.
 - Chunk(s): bookmarks, hidden text, page annotation
     boolean, true (if exists) or false.
 - Metadata
@@ -91,10 +90,8 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
     local n = h:read("*a")
     h:close()
     n = string.match(n, "^(%d+)")
-    if (n ~= nil) and (string.len(n) >= 1) then
+    if (n ~= nil) and (string.len(n) > 0) then
       return tonumber(n)
-    else
-      return -1
     end
   elseif FieldIndex == 1 then
     local r = false
