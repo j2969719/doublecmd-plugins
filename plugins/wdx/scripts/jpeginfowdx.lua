@@ -1,5 +1,5 @@
--- jpeginfowdx.lua ((cross-platform)
--- 2020.04.10
+-- jpeginfowdx.lua (cross-platform)
+-- 2020.10.30
 --[[
 Returns some info from JPEG.
 See list of supported fields in table "fields".
@@ -143,11 +143,8 @@ end
 
 function BinToNum(d, n1, n2)
   local r = ''
-  local n
   for i = n1, n2 do
-    n = string.format('%x', string.byte(d, i))
-    if string.len(n) == 1 then n = '0' .. n end
-    r = r .. n
+    r = r .. string.format('%02x', string.byte(d, i))
   end
   return tonumber('0x' .. r)
 end

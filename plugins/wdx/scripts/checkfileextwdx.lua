@@ -1,5 +1,5 @@
 -- checkfileextwdx.lua (cross-platform)
--- 2020.10.11
+-- 2020.10.30
 --[[
 Checking that the file extension matches the file type (by the file signatures ("magic numbers"))
 and returns some additional info.
@@ -62,13 +62,7 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
     if math.floor(at / 0x00000004) % 2 ~= 0 then return nil end
     if math.floor(at / 0x00000010) % 2 ~= 0 then return nil end
     if math.floor(at / 0x00000400) % 2 ~= 0 then return nil end
-    ar = {
-      nil,
-      nil,
-      nil,
-      nil,
-      false
-    }
+    ar = {'', '', '', '', false}
     local h = io.open(FileName, 'rb')
     if h == nil then return nil end
     local d = h:read(32)
@@ -170,16 +164,18 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
     end
     filename = FileName
   end
-  return ar[FieldIndex + 1]
+  if ar[FieldIndex + 1] == '' then
+    return nil
+  else
+    return ar[FieldIndex + 1]
+  end
+  return nil
 end
 
 function BinToNum(d, n1, n2)
   local r = ''
-  local n
   for i = n1, n2 do
-    n = string.format('%x', string.byte(d, i))
-    if string.len(n) == 1 then n = '0' .. n end
-    r = r .. n
+    r = r .. string.format('%02x', string.byte(d, i))
   end
   return tonumber('0x' .. r)
 end

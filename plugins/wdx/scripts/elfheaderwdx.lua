@@ -1,5 +1,5 @@
 -- elfheaderinfo.lua (cross-platform)
--- 2020.01.12
+-- 2020.10.30
 --
 -- Some info from ELF files.
 -- Fields:
@@ -340,16 +340,11 @@ end
 function BinToHex(d, n1, n2, e)
   local r = ''
   if e == 0x01 then
-    for j = n1, n2 do r = ToHex(string.byte(d, j)) .. r end
+    for j = n1, n2 do r = string.format('%02x', string.byte(d, j)) .. r end
   else
-    for j = n1, n2 do r = r .. ToHex(string.byte(d, j)) end
+    for j = n1, n2 do r = r .. string.format('%02x', string.byte(d, j)) end
   end
   return tonumber('0x' .. r)
-end
-
-function ToHex(n)
-  n = string.format('%x', n)
-  if string.len(n) == 1 then return '0' .. n else return n end
 end
 
 function IsPIE(FileName, fh, ei_data)

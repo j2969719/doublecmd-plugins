@@ -1,5 +1,5 @@
 -- lnkinfowdx.lua
--- 2020.07.18
+-- 2020.10.30
 --[[
 Getting some information from Windows shell link (shortcut) file.
 
@@ -63,14 +63,9 @@ end
 function BinToHex(d, n1, n2, e)
   local r = ''
   if e == 'le' then
-    for j = n1, n2 do r = ToHex(string.byte(d, j)) .. r end
+    for j = n1, n2 do r = string.format('%02x', string.byte(d, j)) .. r end
   else
-    for j = n1, n2 do r = r .. ToHex(string.byte(d, j)) end
+    for j = n1, n2 do r = r .. string.format('%02x', string.byte(d, j)) end
   end
   return tonumber('0x' .. r)
-end
-
-function ToHex(n)
-  n = string.format('%x', n)
-  if string.len(n) == 1 then return '0' .. n else return n end
 end
