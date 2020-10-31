@@ -30,6 +30,7 @@ tfield fields[] =
 	{"Linearized",			ft_boolean,	""},
 	{"Password protected",		ft_boolean,	""},
 	{"Damaged",			ft_boolean,	""},
+	{"Bad catalog",			ft_boolean,	""},
 	{"Can be printer",		ft_boolean,	""},
 	{"Can be modified",		ft_boolean,	""},
 	{"Can be copied",		ft_boolean,	""},
@@ -137,7 +138,11 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 		if (err)
 		{
 			gint errcode = err->code;
+			g_print("poppler_info.wdx (%s): %s\n", FileName, err->message);
 			g_error_free(err);
+
+			if (document && !POPPLER_IS_DOCUMENT(document))
+				g_object_unref(G_OBJECT(document));
 
 			if ((FieldIndex == 12) && (errcode == POPPLER_ERROR_ENCRYPTED))
 			{
@@ -149,11 +154,21 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 				*(int*)FieldValue = 1;
 				return fields[FieldIndex].type;
 			}
+			else if ((FieldIndex == 14) && (errcode == POPPLER_ERROR_BAD_CATALOG))
+			{
+				*(int*)FieldValue = 1;
+				return fields[FieldIndex].type;
+			}
 
 		}
 
 		if (document == NULL)
 			return ft_fileerror;
+		else if (!POPPLER_IS_DOCUMENT(document))
+		{
+			g_object_unref(G_OBJECT(document));
+			return ft_fileerror;
+		}
 
 	}
 
@@ -265,7 +280,15 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 		*(int*)FieldValue = 0;
 		break;
 
+	case 13:
+		*(int*)FieldValue = 0;
+		break;
+
 	case 14:
+		*(int*)FieldValue = 0;
+		break;
+
+	case 15:
 		if (poppler_document_get_permissions(document) & POPPLER_PERMISSIONS_OK_TO_PRINT)
 			*(int*)FieldValue = 1;
 		else
@@ -273,7 +296,7 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 
 		break;
 
-	case 15:
+	case 16:
 		if (poppler_document_get_permissions(document) & POPPLER_PERMISSIONS_OK_TO_MODIFY)
 			*(int*)FieldValue = 1;
 		else
@@ -281,7 +304,7 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 
 		break;
 
-	case 16:
+	case 17:
 		if (poppler_document_get_permissions(document) & POPPLER_PERMISSIONS_OK_TO_COPY)
 			*(int*)FieldValue = 1;
 		else
@@ -289,7 +312,7 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 
 		break;
 
-	case 17:
+	case 18:
 		if (poppler_document_get_permissions(document) & POPPLER_PERMISSIONS_OK_TO_ADD_NOTES)
 			*(int*)FieldValue = 1;
 		else
@@ -297,7 +320,7 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 
 		break;
 
-	case 18:
+	case 19:
 		if (poppler_document_get_permissions(document) & POPPLER_PERMISSIONS_OK_TO_FILL_FORM)
 			*(int*)FieldValue = 1;
 		else
@@ -305,7 +328,7 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 
 		break;
 
-	case 19:
+	case 20:
 		if (UnitIndex == 0)
 		{
 			doc_text = GetDocumentText(document);
