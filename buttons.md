@@ -890,7 +890,7 @@ DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
 
 
 ### >Save clipboard contents to text file *(cross platform)*
-[SaveClipboardToFile.lua](utils/SaveClipboardToFile.lua)
+[SaveClipboardToFile.lua](utils/SaveClipboardToFile.lua). Also you can open this new file in viewer or editor immediately, see details in the beginning of script.
 ```
 DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
 <doublecmd>

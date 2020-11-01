@@ -1,7 +1,8 @@
 -- SaveClipboardToFile.lua (cross-platform)
--- 2020.10.05
+-- 2020.11.01
 --[[
 Save clipboard contents to text file
+File extension is "txt" by default.
 
 How to use: add button with
   internal command: cm_ExecuteScript
@@ -9,7 +10,10 @@ How to use: add button with
     path-to-script-SaveClipboardToFile.lua
     %"0%Ds
 
-File extension is "txt" by default.
+Also supports additional parameters (optional)
+  --view
+  --edit
+if you want to open this new file in viewer or editor immediately.
 ]]
 
 local params = {...}
@@ -18,8 +22,8 @@ local sn = debug.getinfo(1).source
 if string.sub(sn, 1, 1) == '@' then sn = string.sub(sn, 2, -1) end
 sn = SysUtils.ExtractFileName(sn)
 
-if #params ~= 1 then
-  Dialogs.MessageBox('Check the number of parameters! Requires only one.', sn, 0x0030)
+if (#params ~= 1) and (#params ~= 2) then
+  Dialogs.MessageBox('Check the number of parameters! Requires only one or two.', sn, 0x0030)
   return
 end
 
@@ -50,3 +54,19 @@ if h == nil then
 end
 h:write(fc)
 h:close()
+
+if #params == 2 then
+  local cm
+  if params[2] == '--view' then
+    cm = 'cm_View'
+  elseif params[2] == '--edit' then
+    cm = 'cm_Edit'
+  else
+    Dialogs.MessageBox('Unknown parameter "' .. params[2] .. '"!', sn, 0x0030)
+    return
+  end
+  DC.ExecuteCommand('cm_Refresh')
+  DC.ExecuteCommand('cm_QuickSearch', 'search=on', 'direction=first', 'matchbeginning=on', 'matchending=off', 'casesensitive=on', 'files=on', 'directories=off', 'text=' .. nn .. '.txt')
+  DC.ExecuteCommand('cm_QuickSearch', 'search=off')
+  DC.ExecuteCommand(cm)
+end
