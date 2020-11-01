@@ -4,6 +4,7 @@
 #include <dlfcn.h>
 #include <magic.h>
 #include <glib.h>
+#include <gdk/gdkkeysyms.h>
 #include <string.h>
 #include "wlxplugin.h"
 
@@ -142,6 +143,15 @@ static void plug_added(GtkWidget *widget, gpointer data)
 	gtk_widget_show(widget);
 }
 
+gboolean key_press_crap(GtkWidget *widget, GdkEventKey *event, gpointer user_data)
+{
+	if (event->keyval == GDK_Escape)
+		gtk_grab_remove(widget);
+
+	return FALSE;
+}
+
+
 HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 {
 	GKeyFile *cfg;
@@ -155,6 +165,7 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	gboolean noquote;
 	gboolean insensitive;
 	gboolean nospinner;
+	gboolean crapgrab;
 
 	cfg = g_key_file_new();
 
@@ -186,6 +197,7 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 
 		noquote = g_key_file_get_boolean(cfg, group, "noquote", NULL);
 		insensitive = g_key_file_get_boolean(cfg, group, "insensitive", NULL);
+		crapgrab = g_key_file_get_boolean(cfg, group, "grab", NULL);
 
 		nospinner = g_key_file_get_boolean(cfg, _plgname, "nospinner", NULL);
 
@@ -221,6 +233,12 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 		gtk_widget_show(socket);
 
 	gtk_container_add(GTK_CONTAINER(gFix), socket);
+
+	if (crapgrab)
+	{
+		gtk_grab_add(socket);
+		g_signal_connect(G_OBJECT(socket), "key_press_event", G_CALLBACK(key_press_crap), NULL);
+	}
 
 	GdkNativeWindow id = gtk_socket_get_id(GTK_SOCKET(socket));
 

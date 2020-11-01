@@ -141,8 +141,11 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 			g_print("poppler_info.wdx (%s): %s\n", FileName, err->message);
 			g_error_free(err);
 
-			if (document && !POPPLER_IS_DOCUMENT(document))
+			if (document)
+			{
 				g_object_unref(G_OBJECT(document));
+				document == NULL;
+			}
 
 			if ((FieldIndex == 12) && (errcode == POPPLER_ERROR_ENCRYPTED))
 			{
