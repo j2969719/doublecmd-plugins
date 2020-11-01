@@ -60,8 +60,8 @@ Getting some information from local copy of Git repository.
 - [gunixmounts](plugins/wdx/gunixmounts)<br>
 Mount points: name, FS type and other.
 
-- ~[poppler_info](plugins/wdx/poppler_info)<br>
-Basic information about PDF.~
+- [poppler_info](plugins/wdx/poppler_info)<br>
+Basic information about PDF.
 
 - [simplechecksum](plugins/wdx/simplechecksum)<br>
 Plugin is able to calculate and display hash values for any file. Can be used to search files by hash value.
