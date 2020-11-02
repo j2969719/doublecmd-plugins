@@ -1,5 +1,5 @@
 -- CreateNewFile.lua (cross-platform)
--- 2019.12.28
+-- 2020.11.02
 --
 -- Create new file using the template(s)
 -- Params:
@@ -24,7 +24,8 @@ DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
 
 local params = {...}
 local items = {}
-local hd, fd, rt, st, i, ba, tf, bp, fl, ct
+local hd, fd, rt, st, i, ba, tf, bp, h, ct
+local mode = 'wb'
 local sn = 'new'
 
 if #params ~= 2 then
@@ -59,13 +60,14 @@ if #items >= 1 then
     end
   end
   -- Read-copy
-  fl = io.open(params[2] .. SysUtils.PathDelim .. st, 'rb')
-  ct = fl:read('*a')
-  fl:close()
+  h = io.open(params[2] .. SysUtils.PathDelim .. st, 'rb')
+  ct = h:read('*a')
+  h:close()
   -- Write-paste
-  fl = io.open(tf, 'wb')
-  fl:write(ct)
-  fl:close()
+  if SysUtils.FileExists(tf) == true then mode = 'w+b' end
+  h = io.open(tf, mode)
+  h:write(ct)
+  h:close()
   DC.ExecuteCommand('cm_Refresh')
   DC.ExecuteCommand('cm_QuickSearch', 'search=on', 'direction=first', 'matchbeginning=on', 'matchending=off', 'casesensitive=on', 'files=on', 'directories=off', 'text=' .. string.gsub(st, '(.+)(%.[^%.]+)$', sn .. '%2'))
   DC.ExecuteCommand('cm_QuickSearch', 'search=off')

@@ -47,7 +47,9 @@ while true do
   end
 end
 
-local h = io.open(fn, 'wb')
+local mode = 'wb'
+if SysUtils.FileExists(fn) == true then mode = 'w+b' end
+local h = io.open(fn, mode)
 if h == nil then
   Dialogs.MessageBox('Failed to create "' ..  nn .. '.txt".', sn, 0x0030)
   return
