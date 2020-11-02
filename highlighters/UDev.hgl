@@ -1,0 +1,72 @@
+<UniHighlighter version="1.8.1">
+  <Info>
+    <General Name="UDev config file*" Extensions="HWDB RULES"/>
+    <Author Name="Skif_off" Email="" Web="" Copyright="" Company="" Remark="UDev (device manager for the Linux kernel) configuration files"/>
+    <Version Version="1" Revision="1" Date="44137,8577183912"/>
+    <History>
+    </History>
+    <Sample>
+    </Sample>
+  </Info>
+  <Scheme File="" Name=""/>
+  <Range Name="Root" Attributes="0,16777215;False:False." Style="" CaseSensitive="True"
+         Delimiters="!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^`{|}~">
+    <Rule/>
+    <Keywords Name="Keys" Attributes="8388608,16777215;False:False." Style="">
+      <word value="ACTION"/>
+      <word value="ATTR"/>
+      <word value="ATTRS"/>
+      <word value="DEVPATH"/>
+      <word value="DRIVER"/>
+      <word value="DRIVERS"/>
+      <word value="ENV"/>
+      <word value="GOTO"/>
+      <word value="GROUP"/>
+      <word value="IMPORT"/>
+      <word value="KERNEL"/>
+      <word value="KERNELS"/>
+      <word value="LABEL"/>
+      <word value="MODE"/>
+      <word value="NAME"/>
+      <word value="OPTIONS"/>
+      <word value="OWNER"/>
+      <word value="PROGRAM"/>
+      <word value="RESULT"/>
+      <word value="RUN"/>
+      <word value="SUBSYSTEM"/>
+      <word value="SUBSYSTEMS"/>
+      <word value="SYMLINK"/>
+      <word value="TAG"/>
+      <word value="TEST"/>
+    </Keywords>
+    <Keywords Name="Symbols" Attributes="255,16777215;False:False." Style="">
+      <word value="*"/>
+      <word value="?"/>
+      <word value="!"/>
+      <word value=":"/>
+      <word value="+"/>
+      <word value="="/>
+      <word value=","/>
+      <word value="\"/>
+      <word value="("/>
+      <word value=")"/>
+      <word value="["/>
+      <word value="]"/>
+      <word value="{"/>
+      <word value="}"/>
+    </Keywords>
+    <Range Name="Comments" Attributes="32768,16777215;False:False." Style="" CaseSensitive="True"
+           Delimiters="!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^`{|}~">
+      <Rule OpenSymbol="#" OpenSymbolStartLine="NonSpace" CloseOnEol="True"/>
+    </Range>
+    <Range Name="String &quot;" Attributes="16711680,16777215;False:False." Style="" CaseSensitive="True"
+           Delimiters="!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^`{|}~">
+      <Rule OpenSymbol="&quot;" CloseSymbol="&quot;" AllowPredClose="True"/>
+    </Range>
+    <Range Name="Value" Attributes="128,16777215;False:False." Style="" CaseSensitive="True"
+           Delimiters="}">
+      <Rule OpenSymbol="{" OpenSymbolPartOfTerm="False" CloseSymbol="}" CloseSymbolPartOfTerm="False" CloseOnTerm="True" AllowPredClose="True"/>
+    </Range>
+  </Range>
+  <CopyRight>Rule file for UniHighlighter Delphi component (Copyright(C) Fantasist(walking_in_the_sky@yahoo.com), Vit(nevzorov@yahoo.com), Vitalik(vetal-x@mail.ru), 2002-2004)</CopyRight>
+</UniHighlighter>

@@ -34,7 +34,7 @@ DC uses SynUniHighlighter, so you can try to find HGL-files yourself.
 
 ## How to create or edit
 
-[HglEditor](http://totalcmd.net/plugring/HglEditor.html): create and use the *highlighters* folder near `HglEditor.exe`. HglEditor for Windows only, but you can use Wine.
+[HglEditor](http://totalcmd.net/plugring/HglEditor.html): create and use the *highlighters* folder near `HglEditor.exe`. HglEditor was written for Windows, but also you can use Wine.
 
 
 ## Additional feature(s)
