@@ -1,5 +1,5 @@
 -- SaveClipboardToFile.lua (cross-platform)
--- 2020.11.01
+-- 2020.11.02
 --[[
 Save clipboard contents to text file
 File extension is "txt" by default.
@@ -47,7 +47,7 @@ while true do
   end
 end
 
-local h = io.open(fn, 'w')
+local h = io.open(fn, 'wb')
 if h == nil then
   Dialogs.MessageBox('Failed to create "' ..  nn .. '.txt".', sn, 0x0030)
   return
