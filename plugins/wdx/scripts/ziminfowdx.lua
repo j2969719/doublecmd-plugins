@@ -1,5 +1,5 @@
 -- ziminfowdx.lua (cross-platform)
--- 2020.08.23
+-- 2020.11.02
 --[[
 Save as UTF-8 without BOM!
 
@@ -86,7 +86,7 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
     head = {}
     body = {}
     for l in h:lines() do
-      l = string.gsub(l, '\r+$', '')
+      l = string.gsub(l, '[\r\n]+$', '')
       if rn == false then
         if l == 'Content-Type: text/x-zim-wiki' then rn = true else break end
       else
@@ -182,7 +182,7 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
         local h = io.open(f, 'r')
         if h == nil then return nil end
         for l in h:lines() do
-          l = string.gsub(l, '\r+$', '')
+          l = string.gsub(l, '[\r\n]+$', '')
           if string.sub(l, 1, 5) == 'name=' then
             s = string.sub(l, 6, -1)
             break

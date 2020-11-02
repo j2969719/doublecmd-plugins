@@ -1,5 +1,5 @@
 -- vcardinfowdx.lua (cross-platform)
--- 2020.08.23
+-- 2020.11.02
 --[[
 vCard Format Specification 2.1, 3.0, 4.0
 Some details: https://en.wikipedia.org/wiki/VCard
@@ -99,7 +99,7 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
         end
       else
         if string.sub(l, 1, 9) == 'END:VCARD' then break end
-        l = string.gsub(l, '\r+$', '')
+        l = string.gsub(l, '[\r\n]+$', '')
         if string.match(l, '^[A-Z][A-Z%-]*[:;]') == nil then
           while true do
             if string.sub(l, 1, 1) == ' ' then l = string.sub(l, 2, -1) else break end
