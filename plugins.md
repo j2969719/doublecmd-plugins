@@ -78,7 +78,7 @@ Note: Some scripts uses command line utilities.
 Getting some information (method, files and folder count, etc) from archives (using 7-Zip). You can see list of fields in `fields` (first column).
 
 - [agewdx.lua](plugins/wdx/scripts/agewdx.lua) *(cross platform)*<br>
-Returns age (the date of the last modification will be used): number of seconds, minutes, hours, days, weeks, months or years.
+Returns age (the date of the last modification will be used), see description in the beginning of script.
 
 - [apkinfowdx.lua](plugins/wdx/scripts/apkinfowdx.lua)<br>
 Getting some information from APK files. Fields: Label, Version, Install Location, Uses Permissions, Locales, Supports Screens, Native Code.
@@ -189,9 +189,6 @@ Getting some information from Windows shell link (shortcut) file. Requires `lnki
 
 - [lslockswdx.lua](plugins/wdx/scripts/lslockswdx.lua)<br>
 List local system locks.
-
-- [modiftimeistodaywdx.lua](plugins/wdx/scripts/modiftimeistodaywdx.lua) *(cross platform)*<br>
-The last modified time is today (not last twenty-four hours), boolean.
 
 - [msgfulltextwdx.lua](plugins/wdx/scripts/msgfulltextwdx.lua) *(cross platform)*<br>
 Returns full text of saved email messages. For Find files with plugins only! See details in the beginning of script.
