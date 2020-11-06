@@ -81,19 +81,19 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
     end
   elseif FieldIndex == 1 then
     if atd[3] < 60 then
-      return tostring(atd[3]) .. ' sec'; -- < 1 min
+      return tostring(atd[3]) .. ' S'; -- < 1 min
     elseif atd[3] < 3600 then
-      return tostring(math.floor(atd[3] / 60)) .. ' min'; -- < 1 hour
+      return tostring(math.floor(atd[3] / 60)) .. ' M'; -- < 1 hour
     elseif atd[3] < 86400 then
-      return tostring(math.floor(atd[3] / 3600)) .. ' hour(s)'; -- < 1 day
+      return tostring(math.floor(atd[3] / 3600)) .. ' H'; -- < 1 day
     elseif atd[3] < 604800 then
-      return tostring(math.floor(atd[3] / 86400)) .. ' day(s)'; -- < 1 week
+      return tostring(math.floor(atd[3] / 86400)) .. ' d'; -- < 1 week
     elseif atd[3] < 2629800 then
-      return tostring(math.floor(atd[3] / 604800)) .. ' week(s)'; -- < 1 month
+      return tostring(math.floor(atd[3] / 604800)) .. ' w'; -- < 1 month
     elseif atd[3] < 31557600 then
-      return tostring(math.floor(atd[3] / 2629800)) .. ' month(s)'; -- < 1 year
+      return tostring(math.floor(atd[3] / 2629800)) .. ' m'; -- < 1 year
     else
-      return tostring(math.floor(atd[3] / 31557600)) .. ' year(s)'
+      return tostring(math.floor(atd[3] / 31557600)) .. ' y'
     end
   elseif FieldIndex == 2 then
     local ct = os.date('*t', atd[1])
