@@ -47,7 +47,7 @@ gboolean grab_hack(GtkWidget *widget, GdkEventButton *event, gpointer user_data)
 
 		micopy = gtk_menu_item_new_with_label(_("Copy"));
 		mipaste = gtk_menu_item_new_with_label(_("Paste"));
-		mictrlc = gtk_menu_item_new_with_label(_("Send CRTL+C"));
+		mictrlc = gtk_menu_item_new_with_label(_("Send CTRL+C"));
 		mictrlz = gtk_menu_item_new_with_label(_("Send CTRL+Z"));
 
 		g_signal_connect(micopy, "activate", G_CALLBACK(vte_popup_menu_copy), (gpointer)widget);
@@ -64,7 +64,7 @@ gboolean grab_hack(GtkWidget *widget, GdkEventButton *event, gpointer user_data)
 		gtk_menu_popup(GTK_MENU(menu), NULL, NULL, NULL, NULL, (event != NULL) ? event->button : 0, gdk_event_get_time((GdkEvent*)event));
 	}
 
-	gtk_label_set_text(GTK_LABEL(user_data), _("hit ctrl+q or type 'exit' to remove grab"));
+	gtk_label_set_text(GTK_LABEL(user_data), _("hit ctrl+q or type \"exit\" to remove grab"));
 	gtk_grab_add(widget);
 	return FALSE;
 }
@@ -166,8 +166,11 @@ void DCPCALL ListSetDefaultParams(ListDefaultParamStruct* dps)
 	if (dladdr(dir_f, &dlinfo) != 0)
 	{
 		setlocale(LC_ALL, "");
-		bindtextdomain(GETTEXT_PACKAGE, g_strdup_printf(dir_f,
-		                g_path_get_dirname(dlinfo.dli_fname)));
+		gchar *plugdir = g_path_get_dirname(dlinfo.dli_fname);
+		gchar *langdir = g_strdup_printf(dir_f, plugdir);
+		g_free(plugdir);
+		bindtextdomain(GETTEXT_PACKAGE, langdir);
+		g_free(langdir);
 		textdomain(GETTEXT_PACKAGE);
 	}
 }

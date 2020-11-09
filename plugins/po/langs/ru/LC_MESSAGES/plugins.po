@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-11-09 19:48+0300\n"
-"PO-Revision-Date: 2020-11-09 19:55+0300\n"
+"POT-Creation-Date: 2020-11-09 23:01+0300\n"
+"PO-Revision-Date: 2020-11-09 23:03+0300\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "Language: ru\n"
@@ -28,7 +28,7 @@ msgid "Paste"
 msgstr "Вставить"
 
 #: ../wlx/vte_in_quickview/plugin.c:50
-msgid "Send CRTL+C"
+msgid "Send CTRL+C"
 msgstr "Послать CTRL+C"
 
 #: ../wlx/vte_in_quickview/plugin.c:51
@@ -36,8 +36,8 @@ msgid "Send CTRL+Z"
 msgstr "Послать CTRL+Z"
 
 #: ../wlx/vte_in_quickview/plugin.c:67
-msgid "hit ctrl+q or type 'exit' to remove grab"
-msgstr "жми ctrl+q или введи 'exit', чтобы отпустило"
+msgid "hit ctrl+q or type \"exit\" to remove grab"
+msgstr "жми ctrl+q или введи \"exit\", чтобы отпустило"
 
 #: ../wlx/imagemagick/wlximagemagick.c:172
 #: ../wlx/gtkimgview_crap/gtkimgview.c:336 ../wlx/gtkimgview/gtkimgview.c:199
@@ -281,6 +281,9 @@ msgstr "не удалось запустить ag..."
 #: ../dsx/pacman_pkg_list/plugin.c:96
 msgid "enter pkgname"
 msgstr "введи pkgname"
+
+#~ msgid "Send CRTL+C"
+#~ msgstr "Послать CTRL+C"
 
 #~ msgid "failed to launch locate..."
 #~ msgstr "не удалось запустить locate..."

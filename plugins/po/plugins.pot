@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-11-09 19:48+0300\n"
+"POT-Creation-Date: 2020-11-09 23:01+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -26,7 +26,7 @@ msgid "Paste"
 msgstr ""
 
 #: ../wlx/vte_in_quickview/plugin.c:50
-msgid "Send CRTL+C"
+msgid "Send CTRL+C"
 msgstr ""
 
 #: ../wlx/vte_in_quickview/plugin.c:51
@@ -34,7 +34,7 @@ msgid "Send CTRL+Z"
 msgstr ""
 
 #: ../wlx/vte_in_quickview/plugin.c:67
-msgid "hit ctrl+q or type 'exit' to remove grab"
+msgid "hit ctrl+q or type \"exit\" to remove grab"
 msgstr ""
 
 #: ../wlx/imagemagick/wlximagemagick.c:172
