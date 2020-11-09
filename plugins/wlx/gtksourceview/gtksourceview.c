@@ -621,6 +621,11 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 
 	gtk_widget_show_all(gFix);
 
+	gboolean hide_controls = config_get_boolean(data->cfg, "Flags", "HideControls", FALSE);
+
+	if (hide_controls)
+		gtk_widget_hide(GTK_WIDGET(hControlBox));
+
 	return gFix;
 }
 
@@ -673,7 +678,7 @@ int DCPCALL ListSearchText(HWND ListWin, char* SearchString, int SearchParameter
 	sBuf = data->sBuf;
 	last_pos = gtk_text_buffer_get_mark(GTK_TEXT_BUFFER(sBuf), "last_pos");
 
-	if (last_pos == NULL)
+	if (last_pos == NULL || SearchParameter & lcs_findfirst)
 		gtk_text_buffer_get_start_iter(GTK_TEXT_BUFFER(sBuf), &iter);
 	else
 		gtk_text_buffer_get_iter_at_mark(GTK_TEXT_BUFFER(sBuf), &iter, last_pos);
@@ -743,6 +748,7 @@ void DCPCALL ListSetDefaultParams(ListDefaultParamStruct* dps)
 	Dl_info dlinfo;
 	GKeyFile *cfg;
 	gchar *oldcfg = NULL, *bakcfg = NULL;
+	gchar lcode[3], *loc = NULL;
 	gboolean import_oldcfg;
 
 	cfg = g_key_file_new();
@@ -752,7 +758,7 @@ void DCPCALL ListSetDefaultParams(ListDefaultParamStruct* dps)
 	{
 		gchar *plugpath = g_path_get_dirname(dlinfo.dli_fname);
 		gchar *langpath = g_strdup_printf("%s/langs", plugpath);
-		setlocale(LC_ALL, "");
+		loc = setlocale(LC_ALL, "");
 		bindtextdomain(GETTEXT_PACKAGE, langpath);
 		textdomain(GETTEXT_PACKAGE);
 
@@ -810,6 +816,20 @@ void DCPCALL ListSetDefaultParams(ListDefaultParamStruct* dps)
 		else
 		{
 			g_key_file_load_from_file(cfg, gCfgPath, G_KEY_FILE_KEEP_COMMENTS, NULL);
+
+			if (!g_key_file_has_key(cfg, "Enca", "Lang", NULL))
+			{
+				if (loc)
+					g_strlcpy(lcode, loc, 3);
+
+				size_t langscount;
+				gboolean lang_ok = FALSE;
+				const char **langs = enca_get_languages(&langscount);
+
+				for (size_t i = 0; i < langscount; i++)
+					if (g_strcmp0(langs[i], lcode) == 0)
+						g_key_file_set_string(cfg, "Enca", "Lang", langs[i]);
+			}
 
 			if (!g_key_file_has_group(cfg, "Override") || g_key_file_has_key(cfg, "Override", "Pascal", NULL))
 			{
