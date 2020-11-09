@@ -1,3 +1,5 @@
+#define _GNU_SOURCE
+
 #include <stdio.h>
 #include <stdint.h>
 #include <dirent.h>
@@ -5,7 +7,13 @@
 #include <string.h>
 #include "wdxplugin.h"
 
+#include <dlfcn.h>
 
+#include <libintl.h>
+#include <locale.h>
+
+#define _(STRING) gettext(STRING)
+#define GETTEXT_PACKAGE "plugins"
 #define MAX_FIELDS 10
 
 int DCPCALL ContentGetSupportedField(int FieldIndex, char* FieldName, char* Units, int maxlen)
@@ -33,7 +41,7 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 
 		if (errsv == EACCES)
 		{
-			snprintf(FieldValue, maxlen - 1, "Permission denied");
+			snprintf(FieldValue, maxlen - 1, _("Permission denied"));
 			return ft_string;
 		}
 		else
@@ -65,8 +73,30 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 	}
 
 	if (count == 0)
-		snprintf(FieldValue, maxlen - 1, "Empty directory");
+		snprintf(FieldValue, maxlen - 1, _("Empty directory"));
 
 	closedir(dir);
 	return ft_string;
+}
+
+void DCPCALL ContentSetDefaultParams(ContentDefaultParamStruct* dps)
+{
+	Dl_info dlinfo;
+	static char plg_path[PATH_MAX];
+	const char* loc_dir = "langs";
+
+	memset(&dlinfo, 0, sizeof(dlinfo));
+
+	if (dladdr(plg_path, &dlinfo) != 0)
+	{
+		strncpy(plg_path, dlinfo.dli_fname, PATH_MAX);
+		char *pos = strrchr(plg_path, '/');
+
+		if (pos)
+			strcpy(pos + 1, loc_dir);
+
+		setlocale (LC_ALL, "");
+		bindtextdomain(GETTEXT_PACKAGE, plg_path);
+		textdomain(GETTEXT_PACKAGE);
+	}
 }

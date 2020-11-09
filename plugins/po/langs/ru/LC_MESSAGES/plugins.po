@@ -7,15 +7,15 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-04-24 09:28+0300\n"
-"PO-Revision-Date: 2020-04-24 09:28+0300\n"
+"POT-Creation-Date: 2020-11-09 19:48+0300\n"
+"PO-Revision-Date: 2020-11-09 19:55+0300\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "Language: ru\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 2.3\n"
+"X-Generator: Poedit 2.4.1\n"
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
 "%10<=4 && (n%100<12 || n%100>14) ? 1 : 2);\n"
 
@@ -29,15 +29,15 @@ msgstr "Вставить"
 
 #: ../wlx/vte_in_quickview/plugin.c:50
 msgid "Send CRTL+C"
-msgstr ""
+msgstr "Послать CTRL+C"
 
 #: ../wlx/vte_in_quickview/plugin.c:51
 msgid "Send CTRL+Z"
-msgstr ""
+msgstr "Послать CTRL+Z"
 
 #: ../wlx/vte_in_quickview/plugin.c:67
 msgid "hit ctrl+q or type 'exit' to remove grab"
-msgstr ""
+msgstr "жми ctrl+q или введи 'exit', чтобы отпустило"
 
 #: ../wlx/imagemagick/wlximagemagick.c:172
 #: ../wlx/gtkimgview_crap/gtkimgview.c:336 ../wlx/gtkimgview/gtkimgview.c:199
@@ -98,7 +98,7 @@ msgid "Flip Vertically"
 msgstr "Отразить по вертикали"
 
 #: ../wlx/wlxwebkit/wlxwebkit.c:117 ../wlx/yet_another_vte_plugin/plugin.c:288
-#: ../wlx/gtksourceview/gtksourceview.c:707 ../wlx/fileinfo/fileinfo.c:373
+#: ../wlx/gtksourceview/gtksourceview.c:709 ../wlx/fileinfo/fileinfo.c:373
 #: ../wlx/mimescript/mimescriptwlx.c:289
 #, c-format
 msgid "\"%s\" not found!"
@@ -109,18 +109,18 @@ msgid "Failed to load file"
 msgstr "Не удалось открыть файл"
 
 #: ../wlx/gtksourceview/gtksourceview.c:49
-#: ../wlx/gtksourceview/gtksourceview.c:371
-#: ../wlx/gtksourceview/gtksourceview.c:576
+#: ../wlx/gtksourceview/gtksourceview.c:361
+#: ../wlx/gtksourceview/gtksourceview.c:566
 msgid "Default"
 msgstr "По умолчанию"
 
 #: ../wlx/gtksourceview/gtksourceview.c:50
-#: ../wlx/gtksourceview/gtksourceview.c:391
+#: ../wlx/gtksourceview/gtksourceview.c:381
 msgid "Encoding:"
 msgstr "Кодировка:"
 
 #: ../wlx/gtksourceview/gtksourceview.c:197
-#: ../wlx/gtksourceview/gtksourceview.c:598
+#: ../wlx/gtksourceview/gtksourceview.c:588
 msgid "Options"
 msgstr "Настройки"
 
@@ -152,35 +152,35 @@ msgstr "Ширина табуляции"
 msgid "Enca Lang"
 msgstr "Локаль Enca"
 
-#: ../wlx/gtksourceview/gtksourceview.c:347
+#: ../wlx/gtksourceview/gtksourceview.c:337
 msgid "Language:"
 msgstr "Язык:"
 
-#: ../wlx/gtksourceview/gtksourceview.c:367
+#: ../wlx/gtksourceview/gtksourceview.c:357
 msgid "file seems empty"
 msgstr "походу файл пустой"
 
-#: ../wlx/gtksourceview/gtksourceview.c:586
+#: ../wlx/gtksourceview/gtksourceview.c:576
 msgid "Custom encoding"
 msgstr "Другая кодировка"
 
-#: ../wlx/gtksourceview/gtksourceview.c:605
+#: ../wlx/gtksourceview/gtksourceview.c:595
 msgid "Draw Spaces"
 msgstr "Пробелы"
 
-#: ../wlx/gtksourceview/gtksourceview.c:606
+#: ../wlx/gtksourceview/gtksourceview.c:596
 msgid "Text Cursor"
 msgstr "Курсор"
 
-#: ../wlx/gtksourceview/gtksourceview.c:607
+#: ../wlx/gtksourceview/gtksourceview.c:597
 msgid "Line Numbers"
 msgstr "Номера строк"
 
-#: ../wlx/gtksourceview/gtksourceview.c:608
+#: ../wlx/gtksourceview/gtksourceview.c:598
 msgid "Highlight Line"
 msgstr "Подсветка строки"
 
-#: ../wlx/gtksourceview/gtksourceview.c:609
+#: ../wlx/gtksourceview/gtksourceview.c:599
 msgid "Wrap Line"
 msgstr "Разрывы"
 
@@ -245,6 +245,16 @@ msgstr "Следующая страница"
 msgid "Last page"
 msgstr "Последняя страница"
 
+#: ../wdx/fewfiles/plugin.c:44
+#, c-format
+msgid "Permission denied"
+msgstr "Доступ запрещен"
+
+#: ../wdx/fewfiles/plugin.c:76
+#, c-format
+msgid "Empty directory"
+msgstr "Пустой каталог"
+
 #: ../dsx/git_untracked/plugin.c:57 ../dsx/pacman_pkg_list/plugin.c:71
 #: ../dsx/lslocks/plugin.c:58 ../dsx/git_ignored/plugin.c:57
 #: ../dsx/git_modified/plugin.c:58
@@ -253,7 +263,7 @@ msgstr "не удалось выполнить команду"
 
 #: ../dsx/git_untracked/plugin.c:60 ../dsx/tracker_textsearch/plugin.c:81
 #: ../dsx/in_filelist/plugin.c:74 ../dsx/duplicates_crap/plugin.c:77
-#: ../dsx/the_silver_searcher_crap/plugin.c:81 ../dsx/locate_crap/plugin.c:70
+#: ../dsx/the_silver_searcher_crap/plugin.c:81 ../dsx/locate_crap/plugin.c:112
 #: ../dsx/pacman_pkg_list/plugin.c:74 ../dsx/gtkrecent/plugin.c:56
 #: ../dsx/hardlinks_crap/plugin.c:77 ../dsx/lslocks/plugin.c:61
 #: ../dsx/git_ignored/plugin.c:60 ../dsx/git_modified/plugin.c:61
@@ -262,16 +272,15 @@ msgstr "не найдено"
 
 #: ../dsx/the_silver_searcher_crap/plugin.c:105
 msgid "no text pattern provided"
-msgstr ""
+msgstr "текстовый шаблон отсутствует"
 
 #: ../dsx/the_silver_searcher_crap/plugin.c:108
 msgid "failed to launch ag..."
 msgstr "не удалось запустить ag..."
 
-#: ../dsx/locate_crap/plugin.c:120
-msgid "failed to launch locate..."
-msgstr "не удалось запустить locate..."
-
 #: ../dsx/pacman_pkg_list/plugin.c:96
 msgid "enter pkgname"
-msgstr ""
+msgstr "введи pkgname"
+
+#~ msgid "failed to launch locate..."
+#~ msgstr "не удалось запустить locate..."
