@@ -20,5 +20,9 @@ utils/atril-gtk2/*.zst
 utils/atril-gtk2/*.xz
 utils/atril-gtk2/src/
 utils/atril-gtk2/pkg/
+utils/freearc/*.zst
+utils/freearc/*.xz
+utils/freearc/src/
+utils/freearc/pkg/
 *kostyl
 !*kostyl/
