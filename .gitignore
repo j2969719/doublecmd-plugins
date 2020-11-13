@@ -10,3 +10,15 @@
 backup/
 plugins/wlx/hx_webkit_crap/redist/
 plugins/wlx/hx_webkit_qt_crap/redist/
+plugins/wfx/adbplugin-x64/*.zip
+plugins/wfx/adbplugin-x64/*.zst
+plugins/wfx/adbplugin-x64/*.xz
+plugins/wfx/adbplugin-x64/src/
+plugins/wfx/adbplugin-x64/pkg/
+utils/atril-gtk2/*.zip
+utils/atril-gtk2/*.zst
+utils/atril-gtk2/*.xz
+utils/atril-gtk2/src/
+utils/atril-gtk2/pkg/
+*kostyl
+!*kostyl/
