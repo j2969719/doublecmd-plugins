@@ -67,6 +67,7 @@ case "${filetype}" in
 		catdvi "$file"
 		;;
 	[Ee][Pp][Uu][Bb])
+		epub2txt -m "$file" | sed "s,\x1B\[[0-9;]*[a-zA-Z],,g" || \
 		einfo -v "$file"
 		;;
 	[Ff][Bb][2])
