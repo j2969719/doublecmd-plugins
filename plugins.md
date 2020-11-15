@@ -48,8 +48,14 @@ Getting files/folders emblems.
 - [emptydir](plugins/wdx/emptydir)<br>
 Plugin for checking whether directory is empty. Can be used for highlighting or searching.
 
+- [fewfiles](plugins/wdx/fewfiles)<br>
+Shows a couple of files/folders located in some selected folder. Can be used to customize folder tooltips.
+
 - [gdescription](plugins/wdx/gdescription)<br>
 Getting file's content type and human readable description of the content type, detection audio, video and image files (by content type).
+
+- ~[gfileinfo](plugins/wdx/gfileinfo)<br>
+Getting GFile attributes (kinda useless and unfinished).~
 
 - [gimgsize](plugins/wdx/gimgsize)<br>
 Getting image format, format description, size, width and height.
@@ -60,6 +66,9 @@ Getting some information from local copy of Git repository.
 - [gunixmounts](plugins/wdx/gunixmounts)<br>
 Mount points: name, FS type and other.
 
+- [libarchive_crap](plugins/wdx/libarchive_crap)<br>
+Getting some information from archives. Requires `libarchive`.
+
 - [poppler_info](plugins/wdx/poppler_info)<br>
 Basic information about PDF.
 
@@ -68,6 +77,9 @@ Plugin is able to calculate and display hash values for any file. Can be used to
 
 - [simplefileinfo](plugins/wdx/simplefileinfo)<br>
 A small wdx-plugin for Double Commander which provides additional information about the file via libmagic and stat.
+
+- [skipdotfiles](plugins/wdx/skipdotfiles)<br>
+Excludes files/folders with a leading dot (hidden on unix-like) from search results.
 
 
 ---
