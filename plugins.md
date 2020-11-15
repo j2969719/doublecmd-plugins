@@ -49,13 +49,13 @@ Getting files/folders emblems.
 Plugin for checking whether directory is empty. Can be used for highlighting or searching.
 
 - [fewfiles](plugins/wdx/fewfiles)<br>
-Shows a couple of files/folders located in some selected folder. Can be used to customize folder tooltips.
+Shows a few files/folders located in some selected folder. Can be used to customize folder tooltips.
 
 - [gdescription](plugins/wdx/gdescription)<br>
 Getting file's content type and human readable description of the content type, detection audio, video and image files (by content type).
 
 - ~[gfileinfo](plugins/wdx/gfileinfo)<br>
-Getting GFile attributes (kinda useless and unfinished).~
+Getting GFile attributes~ (kinda useless and unfinished).
 
 - [gimgsize](plugins/wdx/gimgsize)<br>
 Getting image format, format description, size, width and height.
