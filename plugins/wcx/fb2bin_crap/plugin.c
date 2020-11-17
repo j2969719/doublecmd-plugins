@@ -21,6 +21,8 @@ typedef struct sArcData
 typedef tArcData* ArcData;
 typedef void *HINSTANCE;
 
+#define BUFF_SIZE 8192
+
 tProcessDataProc gProcessDataProc = NULL;
 
 HANDLE DCPCALL OpenArchive(tOpenArchiveData *ArchiveData)
@@ -120,12 +122,12 @@ int DCPCALL ProcessFile(HANDLE hArcData, int Operation, char *DestPath, char *De
 
 		if (fp)
 		{
-			for (gsize i = 0; i < handle->out_len; i++)
+			for (gsize i = 0; i < handle->out_len; i = i + BUFF_SIZE)
 			{
-				fputc(handle->data[i], fp);
+				gsize len = fwrite(handle->data + i, sizeof(gchar), BUFF_SIZE, fp);
 
 				if (handle->ProcessDataProc)
-					handle->ProcessDataProc(handle->filename, 1);
+					handle->ProcessDataProc(handle->filename, len);
 			}
 
 			fclose(fp);
