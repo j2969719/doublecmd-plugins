@@ -124,7 +124,7 @@ int DCPCALL ProcessFile(HANDLE hArcData, int Operation, char *DestPath, char *De
 		{
 			for (gsize i = 0; i < handle->out_len; i = i + BUFF_SIZE)
 			{
-				gsize len = fwrite(handle->data + i, sizeof(gchar), BUFF_SIZE, fp);
+				gsize len = fwrite(handle->data + i, sizeof(guchar), BUFF_SIZE, fp);
 
 				if (handle->ProcessDataProc)
 					handle->ProcessDataProc(handle->filename, len);
