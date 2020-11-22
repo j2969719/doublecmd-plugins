@@ -5,6 +5,7 @@
 #include <dirent.h>
 #include <signal.h>
 #include <time.h>
+#include <utime.h>
 #include <fcntl.h>
 #include <dlfcn.h>
 #include <errno.h>
@@ -427,7 +428,7 @@ int DCPCALL FsExecuteFile(HWND MainWin, char* RemoteName, char* Verb)
 	}
 	else if (strncmp(Verb, "quote", 5) == 0)
 	{
-		snprintf(RemoteName, MAX_PATH, "/proc/%s/", Verb+6);
+		snprintf(RemoteName, MAX_PATH, "/proc/%s/", Verb + 6);
 
 		if (access(RemoteName, F_OK) == 0)
 			return FS_EXEC_SYMLINK;
@@ -467,6 +468,82 @@ BOOL DCPCALL FsDeleteFile(char* RemoteName)
 	}
 
 	return false;
+}
+
+int DCPCALL FsGetFile(char* RemoteName, char* LocalName, int CopyFlags, RemoteInfoStruct* ri)
+{
+	struct stat buf;
+	int ifd, ofd, done;
+	ssize_t len, total = 0;
+	char link_path[MAX_PATH];
+	int result = FS_FILE_OK;
+	struct utimbuf ubuf;
+	char buff[8192];
+
+	if (gProgressProc(gPluginNr, RemoteName, LocalName, 0))
+		return FS_FILE_USERABORT;
+
+	if (CopyFlags == 0 && access(LocalName, F_OK) == 0)
+		return FS_FILE_EXISTS;
+
+	char *dot = strrchr(RemoteName, '.');
+
+	if (dot != NULL)
+	{
+		snprintf(link_path, MAX_PATH, "/proc/%s/exe", dot + 1);
+		ifd = open(link_path, O_RDONLY);
+
+		if (ifd == -1)
+			return FS_FILE_READERROR;
+
+		ofd = open(LocalName, O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR);
+
+		if (ofd > -1 && stat(link_path, &buf) == 0)
+		{
+			size_t rsize = ((int64_t)ri->SizeHigh << 32) | ri->SizeLow;
+
+			while ((len = read(ifd, buff, sizeof(buff))) > 0)
+			{
+				if (write(ofd, buff, len) == -1)
+				{
+					result = FS_FILE_WRITEERROR;
+					break;
+				}
+
+				total += len;
+
+				if (rsize > 0)
+					done = total * 100 / rsize;
+				else
+					done = 0;
+
+				if (done > 100)
+					done = 100;
+
+				if (gProgressProc(gPluginNr, link_path, LocalName, done) == 1)
+				{
+					result = FS_FILE_USERABORT;
+					break;
+				}
+			}
+
+			close(ofd);
+
+			chmod(LocalName, buf.st_mode);
+
+			ubuf.actime = buf.st_atime;
+			ubuf.modtime = buf.st_mtime;
+			utime(LocalName, &ubuf);
+
+		}
+		else
+			result = FS_FILE_WRITEERROR;
+
+		close(ifd);
+
+	}
+	else
+		return FS_FILE_USERABORT;
 }
 
 void DCPCALL FsSetDefaultParams(FsDefaultParamStruct* dps)

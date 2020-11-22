@@ -134,10 +134,11 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	}
 
 
-	if (archive_format(a) == ARCHIVE_FORMAT_EMPTY)
+	if (archive_format(a) == ARCHIVE_FORMAT_EMPTY || archive_format(a) == ARCHIVE_FORMAT_MTREE || archive_format(a) == 0)
 	{
 		archive_read_close(a);
 		archive_read_free(a);
+		gtk_list_store_clear(store);
 		return NULL;
 	}
 
