@@ -291,7 +291,7 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 				}
 			}
 
-			if (fields[F_ARCTYPE].val == ARCHIVE_FORMAT_EMPTY)
+			if (fields[F_ARCTYPE].val == ARCHIVE_FORMAT_EMPTY || fields[F_ARCTYPE].val == 0)
 				lastfile_ok = false;
 
 			if (r != ARCHIVE_EOF)
