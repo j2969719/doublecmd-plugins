@@ -1,29 +1,48 @@
 -- svginfowdx.lua (cross-platform)
--- 2020.08.23
---
--- Getting application name (this is not standardized!): see function GetApp() and table t.
+-- 2020.11.26
+--[[
+Getting some information from SVG files.
+Similar to SVGInfo by Progman13 (https://totalcmd.net/plugring/svginfo.html).
+
+SVGZ support: needs lua-zlib module (https://github.com/brimworks/lua-zlib).
+
+About "Calculated *, X DPI" fields:
+returns size in pixels and value depends on DPI, but
+- if "width" and "height" in pixels:
+  DPI will be ignored and all this fields returns values as is, without calculation;
+- if "width" and "height" are empty or size in em, ex or percents:
+  DPI will be ignored and all this fields returns values from "viewBox" (if exists) as is, without calculation.
+
+Note: Will read first 100 KB (for speed  up).
+]]
+
+local rz, zlib = pcall(require, 'zlib')
 
 local fields = {
-"SVG version",
-"Application",
-"xmlns-sodipodi",
-"xmlns-inkscape",
-"width",
-"height",
-"id",
-"sodipodi-version",
-"inkscape-version",
-"sodipodi-docbase",
-"sodipodi-docname",
-"viewBox",
-"baseProfile"
+{"Application",      "",                 8},
+{"SVG version",      "version",          8},
+{"Width",            "width",            8},
+{"Height",           "height",           8},
+{"ViewBox",          "viewBox",          8},
+{"ID",               "id",               8},
+{"Inkscape version", "inkscape:version", 8},
+{"Sodipodi version", "sodipodi:version", 8},
+{"Sodipodi docbase", "sodipodi:docbase", 8},
+{"Sodipodi docname", "sodipodi:docname", 8},
+{"Calculated width, 96 DPI",  "", 1},
+{"Calculated width, 90 DPI",  "", 1},
+{"Calculated width, 72 DPI",  "", 1},
+{"Calculated height, 96 DPI", "", 1},
+{"Calculated height, 90 DPI", "", 1},
+{"Calculated height, 72 DPI", "", 1}
 }
-local fc
+local ag = {"Created with", "Creator:", "Generator:"}
+local ar = {}
 local filename = ''
 
 function ContentGetSupportedField(FieldIndex)
   if fields[FieldIndex + 1] ~= nil then
-    return fields[FieldIndex + 1], "", 8
+    return fields[FieldIndex + 1][1], "", fields[FieldIndex + 1][3]
   end
   return "", "", 0
 end
@@ -33,7 +52,7 @@ function ContentGetDefaultSortOrder(FieldIndex)
 end
 
 function ContentGetDetectString()
-  return 'EXT="SVG"'
+  return '(EXT="SVG")|(EXT="SVGZ")'
 end
 
 function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
@@ -41,50 +60,124 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
   if filename ~= FileName then
     local at = SysUtils.FileGetAttr(FileName)
     if (at < 0) or (math.floor(at / 0x00000010) % 2 ~= 0) then return nil end
-    local e = string.lower(string.sub(FileName, string.len(FileName) - 3, -1))
-    if e ~= '.svg' then return nil end
-    local h = io.open(FileName, 'r')
+    local e = string.lower(SysUtils.ExtractFileExt(FileName))
+    local buf
+    if e == '.svg' then
+      buf = 102400
+    elseif e == '.svgz' then
+      if rz == true then buf = '*a' else return nil end
+    else
+      return nil
+    end
+    local h = io.open(FileName, 'rb')
     if h == nil then return nil end
-    local t = h:read('*a')
+    local t = h:read(buf)
     h:close()
     if t == nil then return nil end
+    if e == '.svgz' then
+      local stream = zlib.inflate()
+      local unt = stream(t, 'finish')
+      if unt == nil then return nil else t = unt end
+    end
     local nb = string.find(t, '<svg', 1, true)
+    if nb == nil then return nil end
     local ne = string.find(t, '>', nb + 1, true)
-    fc = string.sub(t, 1, ne)
+    local fc = string.sub(t, 1, ne)
+    for i = 1, 16 do ar[i] = '' end
+    local r
+    local n1 = string.find(fc, '<!--', 1, true)
+    if n1 ~= nil then
+      local n2 = string.find(fc, '-->', n1, true)
+      local s = string.sub(fc, n1, n2 - 1)
+      for i = 1, #ag do
+        r = string.match(s, '<!%-%-%s*' .. ag[i] .. '%s+(.+)')
+        if r ~= nil then
+          ar[1] = string.gsub(r, '%s*$', '')
+          break
+        end
+      end
+    end
+    for i = 2, 10 do
+      r = string.match(fc, '%s+' .. fields[i][2] .. '="([^"]+)"', nb)
+      if r ~= nil then ar[i] = r end
+    end
+    WHCalculation()
     filename = FileName
   end
-  local r
-  if FieldIndex == 0 then
-    r = GetAttr('version')
-  elseif FieldIndex == 1 then
-    r = GetApp()
+  if ar[FieldIndex + 1] == '' then
+    return nil
   else
-    r = GetAttr(fields[FieldIndex + 1])
+    return ar[FieldIndex + 1]
   end
-  return r
 end
 
-function GetAttr(an)
-  local n = string.find(fc, '<svg', 1, true)
-  local s = string.sub(fc, n, -1)
-  an = string.gsub(an, '%-', ':')
-  local r = string.match(s, '%s+' .. an .. '="([^"]+)"')
-  return r
+function WHCalculation()
+  if ar[3] == '' then
+    GetFromViewBox()
+    return 1
+  end
+  local cw = tonumber(string.match(ar[3], '^([0-9%.]+)'))
+  local ch = tonumber(string.match(ar[4], '^([0-9%.]+)'))
+  local w = string.match(ar[3], '([a-z]+)$')
+  if (w == nil) or (w == 'px') then
+    ar[11] = RoundU(cw)
+    ar[12] = ar[11]
+    ar[13] = ar[11]
+    ar[14] = RoundU(ch)
+    ar[15] = ar[14]
+    ar[16] = ar[14]
+  elseif w == 'pt' then
+    ar[11] = RoundU(cw / 72 * 96)
+    ar[12] = RoundU(cw / 72 * 90)
+    ar[13] = RoundU(cw / 72 * 72)
+    ar[14] = RoundU(ch / 72 * 96)
+    ar[15] = RoundU(ch / 72 * 90)
+    ar[16] = RoundU(ch / 72 * 72)
+  elseif w == 'pc' then
+    ar[11] = RoundU(cw * (16 / 96 * 96))
+    ar[12] = RoundU(cw * (16 / 96 * 90))
+    ar[13] = RoundU(cw * (16 / 96 * 72))
+    ar[14] = RoundU(ch * (16 / 96 * 96))
+    ar[15] = RoundU(ch * (16 / 96 * 90))
+    ar[16] = RoundU(ch * (16 / 96 * 72))
+  elseif w == 'in' then
+    ar[11] = RoundU(cw * 96)
+    ar[12] = RoundU(cw * 90)
+    ar[13] = RoundU(cw * 72)
+    ar[14] = RoundU(ch * 96)
+    ar[15] = RoundU(ch * 90)
+    ar[16] = RoundU(ch * 72)
+  elseif w == 'cm' then
+    ar[11] = RoundU(cw / 2.54 * 96)
+    ar[12] = RoundU(cw / 2.54 * 90)
+    ar[13] = RoundU(cw / 2.54 * 72)
+    ar[14] = RoundU(ch / 2.54 * 96)
+    ar[15] = RoundU(ch / 2.54 * 90)
+    ar[16] = RoundU(ch / 2.54 * 72)
+  elseif w == 'mm' then
+    ar[11] = RoundU(cw / 25.4 * 96)
+    ar[12] = RoundU(cw / 25.4 * 90)
+    ar[13] = RoundU(cw / 25.4 * 72)
+    ar[14] = RoundU(ch / 25.4 * 96)
+    ar[15] = RoundU(ch / 25.4 * 90)
+    ar[16] = RoundU(ch / 25.4 * 72)
+  elseif (w == 'em') or (w == 'ex') then
+    GetFromViewBox()
+  end
 end
 
-function GetApp()
-  local n = string.find(fc, '<svg', 1, true)
-  if n < 8 then return nil end
-  local s = string.sub(fc, 1, n)
-  local n1 = string.find(s, '<!--', 1, true)
-  if n1 == nil then return nil end
-  local n2 = string.find(s, '-->', n1, true)
-  s = string.sub(s, n1, n2 - 1)
-  local t = {'Created with', 'Creator:', 'Generator:'}
-  local r
-  for i = 1, #t do
-    r = string.match(s, '<!%-%-%s*' .. t[i] .. '%s+(.+)')
-    if r ~= nil then return string.gsub(r, '%s*$', '') end
-  end
-  return nil
+function GetFromViewBox()
+  if ar[5] == '' then return nil end
+  local cw, ch = string.match(ar[5], '[0-9%.]+ [0-9%.]+ ([0-9%.]+) ([0-9%.]+)')
+  if cw == nil then return nil end
+  ar[11] = RoundU(tonumber(cw))
+  ar[12] = ar[11]
+  ar[13] = ar[11]
+  ar[14] = RoundU(tonumber(ch))
+  ar[15] = ar[14]
+  ar[16] = ar[14]
+end
+
+function RoundU(n)
+  return math.floor(n + 0.5)
 end
