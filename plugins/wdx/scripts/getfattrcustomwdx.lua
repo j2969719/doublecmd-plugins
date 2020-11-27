@@ -36,7 +36,7 @@ end
 
 function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
   if FieldIndex > 1 then return nil end
-  local h = io.popen('getfattr --dump --encoding=text --no-dereference --absolute-names "' .. FileName .. '"')
+  local h = io.popen('getfattr --dump --encoding=text --no-dereference --absolute-names "' .. FileName:gsub('"', '\\"') .. '"')
   if h == nil then return nil end
   local out = h:read('*a')
   h:close()

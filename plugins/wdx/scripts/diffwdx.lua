@@ -26,9 +26,9 @@ end
 function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
     if not SysUtils.DirectoryExists(FileName) and (UnitIndex == 0) then
         if (cmds[FieldIndex + 1] ~= nil) then
-            return getOutput (cmds[FieldIndex + 1][2] .. ' "' .. FileName .. '"');
+            return getOutput (cmds[FieldIndex + 1][2] .. ' "' .. FileName:gsub('"', '\\"') .. '"');
         elseif (files[FieldIndex - #cmds  + 1] ~= nil) then
-            if (getOutput('diff -q "' .. FileName .. '"' .. ' "' .. files[FieldIndex - #cmds  + 1] .. '"') ~= '') then
+            if (getOutput('diff -q "' .. FileName:gsub('"', '\\"') .. '"' .. ' "' .. files[FieldIndex - #cmds  + 1] .. '"') ~= '') then
                 return true;
             else
                 return false;

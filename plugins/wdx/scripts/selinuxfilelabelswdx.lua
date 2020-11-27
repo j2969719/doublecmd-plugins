@@ -21,7 +21,7 @@ end
 
 function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
   if (FieldIndex > 4) then return nil end;
-  local h = io.popen('ls -Z "' .. FileName .. '"', 'r')
+  local h = io.popen('ls -Z "' .. FileName:gsub('"', '\\"') .. '"', 'r')
   if not h then return nil end;
   local s = h:read("*a")
   h:close();

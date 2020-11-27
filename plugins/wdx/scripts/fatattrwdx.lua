@@ -35,7 +35,7 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
         if (attr < 0) or (math.floor(attr / 0x00000004) % 2 ~= 0) then
             return nil;
         end
-        local handle = io.popen(cmd .. ' "' .. FileName .. '"', 'r');
+        local handle = io.popen(cmd .. ' "' .. FileName:gsub('"', '\\"') .. '"', 'r');
         output = handle:read("*a");
         handle:close();
         if (output ~= nil) and (output:sub(1, 9) ~= FileName:sub(1, 9)) then

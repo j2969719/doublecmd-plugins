@@ -46,7 +46,7 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
     local d = h:read(20)
     h:close()
     if (BinToHex(d, 1, 4, '') == 0x4c000000) and (BinToHex(d, 5, 8, '') == 0x01140200) and (BinToHex(d, 9, 12, '') == 0x00000000) and (BinToHex(d, 13, 16, '') == 0xc0000000) and (BinToHex(d, 17, 20, '') == 0x00000046) then
-      h = io.popen('lnkinfo "' .. FileName .. '"')
+      h = io.popen('lnkinfo "' .. FileName:gsub('"', '\\"') .. '"')
       out = h:read('*a')
       h:close()
     else

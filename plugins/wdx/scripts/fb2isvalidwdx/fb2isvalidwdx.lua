@@ -39,10 +39,10 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
     end
     ps = '--xsd "' .. p .. v .. '/FictionBook.xsd"'
   end
-  local h = io.popen('xmlstarlet val ' .. ps .. ' "' .. FileName .. '"')
+  local h = io.popen('xmlstarlet val ' .. ps .. ' "' .. FileName:gsub('"', '\\"') .. '"')
   if not h then
     -- FreeBSD, some Linux distributions
-    h = io.popen('xml val ' .. ps .. ' "' .. FileName .. '"')
+    h = io.popen('xml val ' .. ps .. ' "' .. FileName:gsub('"', '\\"') .. '"')
     if not h then return nil end
   end
   local o = h:read("*a")

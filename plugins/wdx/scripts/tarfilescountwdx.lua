@@ -30,7 +30,7 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
         files = 0;
         folders = 0;
         symlinks = 0;
-        local handle = io.popen(cmd .. ' "' .. FileName .. '" ', 'r');
+        local handle = io.popen(cmd .. ' "' .. FileName:gsub('"', '\\"') .. '"', 'r');
         local output = handle:read("*a");
         handle:close();
         if (output == '') or (output == nil) then
