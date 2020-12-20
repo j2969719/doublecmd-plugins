@@ -1,5 +1,5 @@
 -- CheckSum.lua (cross-platform)
--- 2019.02.18
+-- 2020.12.20
 --
 -- Calculate or verify checksum (auto choose):
 -- if selected file is one of the DC supported (*.md5, *.sfv, *.sha and so on)
@@ -16,7 +16,7 @@
 local params = {...}
 
 function chk(e)
-  local l = {"blake2b", "blake2bp", "blake2s", "blake2sp", "crc32", "haval", "md4", "md5", "ripemd128", "ripemd160", "sfv", "sha", "sha224", "sha256", "sha384", "sha512", "sha3", "tiger"}
+  local l = {"blake2b", "blake2bp", "blake2s", "blake2sp", "blake3", "crc32", "haval", "md4", "md5", "ripemd128", "ripemd160", "sfv", "sha", "sha224", "sha256", "sha384", "sha512", "sha3", "tiger"}
   e = string.lower(e)
   for i = 1, #l do
     if l[i] == e then return 1 end;
