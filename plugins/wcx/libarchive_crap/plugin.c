@@ -427,7 +427,7 @@ static int archive_set_format_filter(struct archive *a, const char*ext)
 		else
 			ret = archive_write_set_format_ar_svr4(a);
 	}
-	else if (strcasecmp(ext, ".shar") == 0)
+	else if (strcasecmp(ext, ".shar") == 0 || strcasecmp(ext, ".run") == 0)
 	{
 		if (gSharFormatDump)
 			ret = archive_write_set_format_shar_dump(a);
