@@ -1720,7 +1720,12 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 				errmsg(archive_error_string(a), MB_OK | MB_ICONERROR);
 		}
 
-		ofd = open(PackedFile, O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+		mode_t omode = S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH;
+
+		if (strcasecmp(ext, ".shar") == 0 || strcasecmp(ext, ".run") == 0)
+			omode |= S_IXUSR | S_IXGRP | S_IXOTH;
+
+		ofd = open(PackedFile, O_WRONLY | O_CREAT | O_TRUNC, omode);
 
 		if (ofd == -1)
 			result = E_ECREATE;
