@@ -57,7 +57,7 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
         if (ext ~= nil) then
             ext = ext:lower();
             if (commands[ext] ~= nil) then
-                local handle = io.popen(commands[ext]:gsub("$FILE", FileName), 'r');
+                local handle = io.popen(commands[ext]:gsub("$FILE", escapestr(FileName)), 'r');
                 local result = handle:read("*a");
                 handle:close();
                 if (FieldIndex > 0) and (encoding[FieldIndex] ~= nil) then
@@ -69,4 +69,16 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
         end
     end
     return nil; -- invalid
+end
+
+function escapestr(str)
+    local magic_chars = {"%", ".", "-", "+", "*", "?", "^", "$", "(", ")", "["};
+    local result = nil;
+    if (str ~= nil) then
+        result = str;
+        for k, chr in pairs(magic_chars) do
+            result = result:gsub("%" .. chr, "%%%" .. chr);
+        end
+    end
+    return result;
 end
