@@ -1,7 +1,8 @@
 -- gitinfowdx.lua
 
 local result_true = "☑️"
-local result_false = "-"
+local result_false = "❎"
+local out = '(' .. result_true .. '/' .. result_false .. ')'
 
 local fields = {  -- field name, field type, command, strip newline, sort order
     {"Subject",         8,                                 "git log -1 --pretty=format:%s", false,  1},
@@ -21,9 +22,9 @@ local fields = {  -- field name, field type, command, strip newline, sort order
     {"Untracked",       6,                                               "git ls-files -o", true,  -1},
     {"Ignored",         6,                            "git ls-files -i --exclude-standard", true,  -1},
     {"Modified",        6,                                               "git ls-files -m", true,  -1},
-    {"Untracked (alt)", 7,                                               "git ls-files -o", true,  -1},
-    {"Ignored (alt)",   7,                            "git ls-files -i --exclude-standard", true,  -1},
-    {"Modified (alt)",  7,                                               "git ls-files -m", true,  -1},
+    {"Untracked "..out, 7,                                               "git ls-files -o", true,  -1},
+    {"Ignored "..out,   7,                            "git ls-files -i --exclude-standard", true,  -1},
+    {"Modified "..out,  7,                                               "git ls-files -m", true,  -1},
 }
 
 function ContentGetSupportedField(FieldIndex)
