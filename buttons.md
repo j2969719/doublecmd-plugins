@@ -711,6 +711,34 @@ DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
 </doublecmd>
 ```
 
+### kio fuse
+```xml
+DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
+<doublecmd>
+  <Program>
+    <ID>{8959646D-CFE9-43FB-BA8A-590C577FE914}</ID>
+    <Icon>network-server</Icon>
+    <Hint>kio fuse</Hint>
+    <Command>{!SHELL}</Command>
+    <Params>dbus-send --session --print-reply --type=method_call --dest=org.kde.KIOFuse /org/kde/KIOFuse org.kde.KIOFuse.VFS.mountUrl string:%[uri;ftp://user:password@server/directory]</Params>
+  </Program>
+</doublecmd>
+```
+
+### unmount dir
+```xml
+DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
+<doublecmd>
+  <Program>
+    <ID>{0EDE249B-2C27-4554-9250-79D486B2AB53}</ID>
+    <Icon>media-eject</Icon>
+    <Hint>unmount dir</Hint>
+    <Command>{!SHELL}</Command>
+    <Params>fusermount3  -u %D</Params>
+  </Program>
+</doublecmd>
+```
+
 ## Scripts
 
 You can change the script path, icon and description.
