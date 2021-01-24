@@ -2,7 +2,7 @@
   <Info>
     <General Name="Lua*" Extensions="LUA"/>
     <Author Name="Skif_off" Email="" Web="" Copyright="" Company="" Remark="Alternative variant"/>
-    <Version Version="1" Revision="3" Date="43667,798738912"/>
+    <Version Version="1" Revision="4" Date="43667,798738912"/>
     <History>
     </History>
     <Sample>
@@ -225,6 +225,8 @@
       <word value="LazUtf8.Pos"/>
       <word value="LazUtf8.UpperCase"/>
       <word value="SysUtils.CreateDirectory"/>
+      <word value="SysUtils.CreateHardLink"/>
+      <word value="SysUtils.CreateSymbolicLink"/>
       <word value="SysUtils.DirectoryExists"/>
       <word value="SysUtils.ExtractFileDir"/>
       <word value="SysUtils.ExtractFileDrive"/>
@@ -238,6 +240,7 @@
       <word value="SysUtils.FindNext"/>
       <word value="SysUtils.GetTickCount"/>
       <word value="SysUtils.PathDelim"/>
+      <word value="SysUtils.ReadSymbolicLink"/>
       <word value="SysUtils.Sleep"/>
     </Keywords>
     <Keywords Name="BasicAndLibs2" Attributes="8388608,16777215;False:False." Style="">
