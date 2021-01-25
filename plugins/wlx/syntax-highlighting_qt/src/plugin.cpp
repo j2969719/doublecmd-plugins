@@ -25,12 +25,18 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 	KSyntaxHighlighting::Definition definition = repo->definitionForFileName(FileToLoad);
 
 	if (!definition.isValid())
+	{
+		delete repo;
 		return NULL;
+	}
 
 	QFile file(FileToLoad);
 
 	if (!file.open(QFile::ReadOnly | QFile::Text))
+	{
+		delete repo;
 		return NULL;
+	}
 
 	QPlainTextEdit *view = new QPlainTextEdit((QWidget*)ParentWin);
 	view->setPlainText(file.readAll());
