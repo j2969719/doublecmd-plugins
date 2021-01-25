@@ -12,11 +12,15 @@
 
 #include "wlxplugin.h"
 
+Q_DECLARE_METATYPE(KSyntaxHighlighting::Repository *)
+Q_DECLARE_METATYPE(KSyntaxHighlighting::SyntaxHighlighter *)
+
 bool darktheme = false;
 QFont font;
 
 HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 {
+	QVariant vrepo, vhgl;
 	KSyntaxHighlighting::Repository *repo = new KSyntaxHighlighting::Repository();
 	KSyntaxHighlighting::Definition definition = repo->definitionForFileName(FileToLoad);
 
@@ -50,12 +54,44 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 	highlighter->setDocument(view->document());
 	view->show();
 
+	vrepo.setValue(repo);
+	vhgl.setValue(highlighter);
+	view->setProperty("repo", vrepo);
+	view->setProperty("hgl", vhgl);
+
 	return view;
+}
+
+int DCPCALL ListLoadNext(HWND ParentWin, HWND PluginWin, char* FileToLoad, int ShowFlags)
+{
+	QPlainTextEdit *view = (QPlainTextEdit*)PluginWin;
+	KSyntaxHighlighting::Repository *repo = view->property("repo").value<KSyntaxHighlighting::Repository *>();
+	KSyntaxHighlighting::SyntaxHighlighter *highlighter = view->property("hgl").value<KSyntaxHighlighting::SyntaxHighlighter *>();
+	KSyntaxHighlighting::Definition definition = repo->definitionForFileName(FileToLoad);
+
+	if (!definition.isValid())
+		return LISTPLUGIN_ERROR;
+
+	QFile file(FileToLoad);
+
+	if (!file.open(QFile::ReadOnly | QFile::Text))
+		return LISTPLUGIN_ERROR;
+
+	view->setPlainText(file.readAll());
+	file.close();
+	highlighter->setDefinition(definition);
+
+	return LISTPLUGIN_OK;
 }
 
 void DCPCALL ListCloseWindow(HANDLE ListWin)
 {
-	delete (QPlainTextEdit*)ListWin;
+	QPlainTextEdit *view = (QPlainTextEdit*)ListWin;
+	KSyntaxHighlighting::Repository *repo = view->property("repo").value<KSyntaxHighlighting::Repository *>();
+	KSyntaxHighlighting::SyntaxHighlighter *highlighter = view->property("hgl").value<KSyntaxHighlighting::SyntaxHighlighter *>();
+	delete repo;
+	delete highlighter;
+	delete view;
 }
 
 int DCPCALL ListSearchText(HWND ListWin, char* SearchString, int SearchParameter)
