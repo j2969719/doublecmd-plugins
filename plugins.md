@@ -316,9 +316,6 @@ Displays DOC, RTF, DOT, ABW, AWT, ZABW. Requires AbiWord (GTK2 version).
 - [atril-gtk2](plugins/wlx/atril-gtk2)<br>
 Displays PDF, DjVu, TIFF, PostScipt, CBR, CBZ, XPS. Requires Atril 2 (GTK2 version).
 
-- [dcpoppler](plugins/wlx/dcpoppler)<br>
-PDF Viewer ([original](https://yassernour.wordpress.com/2010/04/04/how-hard-to-build-a-pdf-viewer/)).
-
 - [evince2](plugins/wlx/evince2)<br>
 Displays PDF, DjVu, TIFF, PostScipt, CBR. Requires Evince 2 (GTK2 version).
 
@@ -370,6 +367,9 @@ Embeds Virtual Terminal Emulator (VTE) widget (GTK2 version).
 
 - [vte_ncdu](plugins/wlx/vte_ncdu)<br>
 Embeds Virtual Terminal Emulator (VTE) widget (GTK2 version) and runs `ncdu`.
+
+- [wlxpview](plugins/wlx/wlxpview)<br>
+PDF Viewer ([original](https://yassernour.wordpress.com/2010/04/04/how-hard-to-build-a-pdf-viewer/)).
 
 - [wlxwebkit](plugins/wlx/wlxwebkit)<br>
 This plugin allows you to view HTML/XHTML files. It is based on WebKitGTK2 engine.
