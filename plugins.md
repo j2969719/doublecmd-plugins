@@ -397,6 +397,9 @@ Document viewer based on Qt5WebKit and using HTML Export from Oracle Outside In 
 - [md4c_webkit_qt5](plugins/wlx/md4c_webkit_qt5)<br>
 This plugin allows you to view Markdown files.
 
+- [qtpdfview_qt5](plugins/wlx/qtpdfview_qt5)<br>
+PDF Viewer
+
 - [syntax-highlighting_qt](plugins/wlx/syntax-highlighting_qt)<br>
 Displays source code files with syntax highlighting. Requires `syntax-highlighting` from KF5 framework.
 
