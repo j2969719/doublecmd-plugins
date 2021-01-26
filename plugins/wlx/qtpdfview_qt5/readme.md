@@ -2,7 +2,7 @@ qtpdfview_qt5
 ========
 PDF Viewer.
 
-![plug-preview](https://i.imgur.com/g4hSoPc.gif)
+![plug-preview](https://i.imgur.com/v1A6AgA.png)
 
 ## Compatibility
 - `doublecmd-qt5`
