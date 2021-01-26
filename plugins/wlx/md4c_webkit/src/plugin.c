@@ -65,7 +65,7 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	if (md_html(contents, length, proc_md_cb, res, 0, MD_HTML_FLAG_SKIP_UTF8_BOM) != 0)
 	{
 		g_free(contents);
-		g_string_free(res, FALSE);
+		g_string_free(res, TRUE);
 		return NULL;
 	}
 
@@ -102,7 +102,7 @@ int DCPCALL ListLoadNext(HWND ParentWin, HWND PluginWin, char* FileToLoad, int S
 	if (md_html(contents, length, proc_md_cb, res, 0, MD_HTML_FLAG_SKIP_UTF8_BOM) != 0)
 	{
 		g_free(contents);
-		g_string_free(res, FALSE);
+		g_string_free(res, TRUE);
 		return LISTPLUGIN_ERROR;
 	}
 
