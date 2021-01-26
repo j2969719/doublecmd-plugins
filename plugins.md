@@ -350,6 +350,9 @@ If you have ImageMagick 6 (for example, Debian/Ubuntu-based distributions) then 
 - [libarchive_crap](plugins/wlx/libarchive_crap)<br>
 Displays file content with `libarchive` ([supported formats](https://github.com/libarchive/libarchive#supported-formats)).
 
+- [md4c_webkit](plugins/wlx/md4c_webkit)<br>
+This plugin allows you to view Markdown files.
+
 - [mimescript](plugins/wlx/mimescript)<br>
 Displays various information about file using command line utilities. Detection by MIME type.
 
@@ -390,6 +393,9 @@ Displays various information about file using command line utilities ([original]
 
 - [hx_webkit_qt_crap](plugins/wlx/hx_webkit_qt_crap)<br>
 Document viewer based on Qt5WebKit and using HTML Export from Oracle Outside In Technology.
+
+- [md4c_webkit_qt5](plugins/wlx/md4c_webkit_qt5)<br>
+This plugin allows you to view Markdown files.
 
 - [syntax-highlighting_qt](plugins/wlx/syntax-highlighting_qt)<br>
 Displays source code files with syntax highlighting. Requires `syntax-highlighting` from KF5 framework.
