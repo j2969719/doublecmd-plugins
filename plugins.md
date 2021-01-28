@@ -388,6 +388,9 @@ Displays PDF, DjVu, PostScipt, CBR. Requires `zathura`.
 ---
 <a name="wlxqt5"><h3>WLX plugins (Qt5)</h3></a>
 
+- [csvviewer_qt5](plugins/wlx/csvviewer_qt5)<br>
+Very primitive CSV viewer.
+
 - [fileinfo_qt](plugins/wlx/fileinfo_qt)<br>
 Displays various information about file using command line utilities ([original](https://github.com/doublecmd/doublecmd/wiki/Plugins#fileinfo)).
 
@@ -396,6 +399,9 @@ Document viewer based on Qt5WebKit and using HTML Export from Oracle Outside In 
 
 - [md4c_webkit_qt5](plugins/wlx/md4c_webkit_qt5)<br>
 This plugin allows you to view Markdown files.
+
+- [qmediaplayer_qt5](plugins/wlx/qmediaplayer_qt5)<br>
+Very primitive media player.
 
 - [qtpdfview_qt5](plugins/wlx/qtpdfview_qt5)<br>
 PDF Viewer.
