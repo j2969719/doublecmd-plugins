@@ -70,7 +70,7 @@ int DCPCALL ListSearchText(HWND ListWin, char* SearchString, int SearchParameter
 	QTextDocument::FindFlags sflags;
 
 	if (SearchParameter & lcs_matchcase)
-		sflags |= QTextDocument::FindBackward;
+		sflags |= QTextDocument::FindCaseSensitively;
 
 	if (SearchParameter & lcs_backwards)
 		sflags |= QTextDocument::FindBackward;
