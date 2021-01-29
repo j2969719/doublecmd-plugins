@@ -170,7 +170,7 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 
 int DCPCALL ListLoadNext(HWND ParentWin, HWND PluginWin, char* FileToLoad, int ShowFlags)
 {
-	QWidget *view = (QWidget*)PluginWin;
+	QFrame *view = (QFrame*)PluginWin;
 	QMediaPlayer *player = view->property("player").value<QMediaPlayer *>();
 
 	QMimeType type = db.mimeTypeForFile(QString(FileToLoad));
@@ -194,7 +194,7 @@ int DCPCALL ListLoadNext(HWND ParentWin, HWND PluginWin, char* FileToLoad, int S
 
 void DCPCALL ListCloseWindow(HANDLE ListWin)
 {
-	QMediaPlayer *view = (QMediaPlayer*)ListWin;
+	QFrame *view = (QFrame*)ListWin;
 	QMediaPlayer *player = view->property("player").value<QMediaPlayer *>();
 
 	delete player;
