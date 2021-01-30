@@ -48,8 +48,13 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 	linfo->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
 	main->addWidget(linfo);
 
-	QObject::connect(playlist, &QMediaPlaylist::currentIndexChanged, [player](int x)
+	QLabel *lnum = new QLabel(view);
+	lnum->hide();
+
+	QObject::connect(playlist, &QMediaPlaylist::currentIndexChanged, [player, linfo, lnum](int x)
 	{
+		linfo->setText("");
+		lnum->setText(QString("%1/%2").arg(x + 1).arg(player->playlist()->mediaCount()));
 		player->playlist()->setPlaybackMode(QMediaPlaylist::Loop);
 	});
 
@@ -98,16 +103,18 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 	bnext->setFocusPolicy(Qt::NoFocus);
 	bnext->hide();
 
-	QObject::connect(playlist, &QMediaPlaylist::loaded, [bnext, bprev]()
+	QObject::connect(playlist, &QMediaPlaylist::loaded, [bnext, bprev, lnum]()
 	{
 		bprev->show();
 		bnext->show();
+		lnum->show();
 	});
 
-	QObject::connect(playlist, &QMediaPlaylist::mediaRemoved, [linfo, player, bnext, bprev](int start, int end)
+	QObject::connect(playlist, &QMediaPlaylist::mediaRemoved, [linfo, player, bnext, bprev, lnum](int start, int end)
 	{
 		bprev->hide();
 		bnext->hide();
+		lnum->hide();
 		player->playlist()->setPlaybackMode(QMediaPlaylist::Loop);
 		linfo->setText("");
 	});
@@ -127,11 +134,11 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 		{
 			QString text = linfo->text();
 
-			if (!text.isEmpty())
-				text.append(" - ");
-
-			if (text.length() > 256)
+			if (text.length() > 256 || text.contains("\t—\t"))
 				text.clear();
+
+			if (!text.isEmpty())
+				text.append("\t—\t");
 
 			text.append(value.value<QString>());
 			linfo->setText(text);
@@ -150,6 +157,8 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 	controls->addSpacing(10);
 	controls->addWidget(bprev);
 	controls->addWidget(bnext);
+	controls->addSpacing(10);
+	controls->addWidget(lnum);
 	controls->addStretch(1);
 	controls->addWidget(svolume);
 	main->addLayout(controls);
