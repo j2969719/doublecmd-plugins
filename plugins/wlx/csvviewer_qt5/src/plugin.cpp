@@ -174,7 +174,7 @@ int DCPCALL ListSendCommand(HWND ListWin, int Command, int Parameter)
 		else
 		{
 			QMimeData *mimedata = new QMimeData;
-			QString html("<html><body><table><tr><td>");
+			QString html("<html><head><meta charset=\"utf-8\"></head><body><table><tr><td>");
 
 			for (int i = 0; i < sel.count(); ++i)
 			{

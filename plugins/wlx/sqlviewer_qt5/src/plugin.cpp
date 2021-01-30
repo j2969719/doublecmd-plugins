@@ -54,8 +54,6 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 
 	QMimeType type = db.mimeTypeForFile(QString(FileToLoad));
 
-	qDebug() << type.name();
-
 	const QString conname = QString("wlxsql_connection_%1").arg(QTime::currentTime().toString());
 
 	if (type.name() == "application/vnd.sqlite3" && QSqlDatabase::isDriverAvailable("QSQLITE"))
@@ -177,7 +175,7 @@ int DCPCALL ListSendCommand(HWND ListWin, int Command, int Parameter)
 		else
 		{
 			QMimeData *mimedata = new QMimeData;
-			QString html("<html><body><table><tr><td>");
+			QString html("<html><head><meta charset=\"utf-8\"></head><body><table><tr><td>");
 
 			for (int i = 0; i < sel.count(); ++i)
 			{
