@@ -1,17 +1,20 @@
 #include <QtSql>
-#include <QDebug>
 #include <QDialog>
 #include <QtWidgets>
 #include <QHeaderView>
 #include <QTableWidget>
 #include "wlxplugin.h"
 
-Q_DECLARE_METATYPE(QSqlDatabase)
-
 static QMimeDatabase db;
 
-static void fill_table(QTableWidget *table, QString strquery, QSqlQuery query)
+static void fill_table(QTableWidget *table, QString strquery, const QString conname)
 {
+	QSqlDatabase dbase = QSqlDatabase::database(conname);
+	QSqlQuery query(dbase);
+
+	if (!dbase.isValid())
+		QMessageBox::critical((QWidget*)table, "", "base not valid!");
+
 	table->setColumnCount(0);
 	table->setRowCount(0);
 
@@ -46,37 +49,29 @@ static void fill_table(QTableWidget *table, QString strquery, QSqlQuery query)
 
 HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 {
-	QVariant vdbase;
-	QString strquery;
 	QSqlDatabase dbase;
+	QString dbtype, opts;
 
 	QMimeType type = db.mimeTypeForFile(QString(FileToLoad));
 
 	qDebug() << type.name();
 
-	if (type.name() == "application/vnd.sqlite3")
+	const QString conname = QString("wlxsql_connection_%1").arg(QTime::currentTime().toString());
+
+	if (type.name() == "application/vnd.sqlite3" && QSqlDatabase::isDriverAvailable("QSQLITE"))
 	{
-		dbase = QSqlDatabase::addDatabase("QSQLITE");
-		dbase.setConnectOptions("QSQLITE_OPEN_READONLY");
-		strquery = QString("SELECT name, sql FROM sqlite_master WHERE type='table';");
+		dbtype = QString("QSQLITE");
+		opts = QString("QSQLITE_OPEN_READONLY");
 	}
 	else
 		return nullptr;
 
-
+	dbase = QSqlDatabase::addDatabase(dbtype, conname);
+	dbase.setConnectOptions(opts);
 	dbase.setDatabaseName(FileToLoad);
 
 	if (!dbase.open())
 		return nullptr;
-
-	QSqlQuery query;
-
-	if (!query.exec(strquery))
-	{
-		qDebug() << query.lastError();
-		dbase.close();
-		return nullptr;
-	}
 
 	QFrame *view = new QFrame((QWidget*)ParentWin);
 	view->setFrameStyle(QFrame::NoFrame);
@@ -104,7 +99,7 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 	table->horizontalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
 	main->addWidget(table);
 
-	QObject::connect(cbtables, QOverload<int>::of(&QComboBox::currentIndexChanged), [cbtables, table, lquery, type, query](int x)
+	QObject::connect(cbtables, QOverload<int>::of(&QComboBox::currentIndexChanged), [cbtables, table, lquery, type, conname](int x)
 	{
 		QString strquery;
 
@@ -114,27 +109,30 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 		if (!strquery.isEmpty())
 		{
 			lquery->setText(strquery);
-			fill_table(table, strquery, query);
+			fill_table(table, strquery, conname);
 		}
 	});
 
-	QObject::connect(bquery, &QPushButton::clicked, [cbtables, table, lquery, query](int x)
+	QObject::connect(bquery, &QPushButton::clicked, [cbtables, table, lquery, conname](int x)
 	{
 		bool ret;
-		QString strquery = QInputDialog::getText((QWidget*)table, "", "Query", QLineEdit::Normal, lquery->text(), &ret);
+		QString strquery = QInputDialog::getText((QWidget*)table, "",
+		                   "Please enter a new query and press OK to execute it", QLineEdit::Normal, lquery->text(), &ret);
 
 		if (ret && !strquery.isEmpty())
 		{
 			lquery->setText(strquery);
-			fill_table(table, strquery, query);
+			fill_table(table, strquery, conname);
 		}
 	});
 
-	while (query.next())
-		cbtables->addItem(query.value(0).toString());
+	QStringList tlist = dbase.tables();
 
-	vdbase.setValue(dbase);
-	view->setProperty("base", vdbase);
+	for (int i = 0; i < tlist.count(); i++)
+		cbtables->addItem(tlist[i]);
+
+
+	view->setProperty("base", conname);
 
 	view->show();
 
@@ -143,19 +141,22 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 
 void DCPCALL ListCloseWindow(HANDLE ListWin)
 {
-	QString name;
 	QFrame *view = (QFrame*)ListWin;
+	QString name = view->property("base").value<QString>();
+
+	if (view);
 
 	{
-		QSqlDatabase dbase = view->property("base").value<QSqlDatabase>();
-		name = dbase.connectionName();
-		dbase.close();
+		QSqlDatabase dbase = QSqlDatabase::database(name);
+
+		if (dbase.isValid() && dbase.isOpen())
+			dbase.close();
+
+		delete view;
 	}
 
-
-	delete view;
-
-	QSqlDatabase::removeDatabase(name);
+	if (!name.isEmpty())
+		QSqlDatabase::removeDatabase(name);
 }
 
 int DCPCALL ListSendCommand(HWND ListWin, int Command, int Parameter)
