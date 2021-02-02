@@ -62,7 +62,7 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 
 	GString *res = g_string_new(NULL);
 
-	if (md_html(contents, length, proc_md_cb, res, 0, MD_HTML_FLAG_SKIP_UTF8_BOM) != 0)
+	if (md_html(contents, length, proc_md_cb, res, MD_DIALECT_GITHUB, MD_HTML_FLAG_SKIP_UTF8_BOM) != 0)
 	{
 		g_free(contents);
 		g_string_free(res, TRUE);

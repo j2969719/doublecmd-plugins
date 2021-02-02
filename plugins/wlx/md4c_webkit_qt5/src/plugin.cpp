@@ -23,7 +23,7 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 	QByteArray text = file.readAll();
 	file.close();
 
-	if (md_html(text.data(), text.size(), proc_md_cb, &html_str, 0, MD_HTML_FLAG_SKIP_UTF8_BOM) != 0)
+	if (md_html(text.data(), text.size(), proc_md_cb, &html_str, MD_DIALECT_GITHUB, MD_HTML_FLAG_SKIP_UTF8_BOM) != 0)
 		return NULL;
 
 	QWebView *webView = new QWebView((QWidget*)ParentWin);
