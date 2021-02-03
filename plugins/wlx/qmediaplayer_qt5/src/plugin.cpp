@@ -148,7 +148,7 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 
 	QSlider *svolume = new QSlider(Qt::Horizontal, view);
 	svolume->setRange(0, 100);
-	QObject::connect(svolume, SIGNAL(sliderMoved(int)), player, SLOT(setVolume(int)));
+	QObject::connect(svolume, &QSlider::valueChanged, player, &QMediaPlayer::setVolume);
 	svolume->setValue(80);
 	svolume->setFocusPolicy(Qt::NoFocus);
 
