@@ -76,6 +76,9 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 	QVBoxLayout *main = new QVBoxLayout(view);
 	QHBoxLayout *controls = new QHBoxLayout;
 
+	QLabel *ltable = new QLabel(view);
+	ltable->setText("Table:");
+
 	QComboBox *cbtables = new QComboBox(view);
 
 	QLabel *lquery = new QLabel(view);
@@ -84,6 +87,7 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 	QPushButton *bquery = new QPushButton(view);
 	bquery->setText("Query");
 
+	controls->addWidget(ltable);
 	controls->addWidget(cbtables);
 	controls->addStretch(1);
 	controls->addWidget(lquery);

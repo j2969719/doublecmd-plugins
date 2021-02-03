@@ -52,7 +52,6 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 	if (settings.value(key).toBool())
 		tmpdir.setAutoRemove(false);
 
-
 	QString quoted = filename.replace("\'", "\\\'");
 	quoted.prepend("\'");
 	quoted.append("\'");
