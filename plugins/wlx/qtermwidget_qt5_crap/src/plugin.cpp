@@ -1,19 +1,17 @@
-#include <QUrl>
-#include <QProcess>
-#include <QWebView>
+#include <QDebug>
 #include <QSettings>
 #include <QFileInfo>
 #include <QMimeDatabase>
-#include <QTemporaryDir>
+#include <QProcessEnvironment>
 
 #include <dlfcn.h>
+#include <qtermwidget.h>
 #include "wlxplugin.h"
 
 static char inipath[PATH_MAX];
 
 HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 {
-	QProcess proc;
 	QMimeDatabase db;
 	QString cmd, key;
 
@@ -43,78 +41,67 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 	if (cmd.isEmpty())
 		return nullptr;
 
-	QTemporaryDir tmpdir("/tmp/_dc-webkit.XXXXXX");
-
-	QString out = QString("%1/output.html").arg(tmpdir.path());
-
-	key.replace("/command", "/noautoremove");
-
-	if (settings.value(key).toBool())
-		tmpdir.setAutoRemove(false);
-
-
 	QString quoted = filename.replace("\'", "\\\'");
 	quoted.prepend("\'");
 	quoted.append("\'");
 	cmd.replace("$FILE", quoted);
-	cmd.replace("$HTML", out);
 
 	QStringList params;
 	params << "-c" << cmd;
 
-	proc.start("/bin/sh", params);
-	proc.waitForFinished();
+	QTermWidget *view = new QTermWidget(0, (QWidget*)ParentWin);
+	QProcessEnvironment env;
+	env.insert("TERM", "screen-256color");
+	view->setEnvironment(env.toStringList());
+	view->setShellProgram("/bin/sh");
+	view->setArgs(params);
 
-	if (proc.exitStatus() != QProcess::NormalExit)
-		return nullptr;
+	if (settings.contains("qtermwidget/scheme"))
+		view->setColorScheme(settings.value("qtermwidget/scheme").toString());
+	else
+	{
+		qDebug() << "availableColorSchemes" << view->availableColorSchemes();
+		view->setColorScheme("WhiteOnBlack");
+	}
 
-	QFileInfo fiout(out);
+	if (settings.contains("qtermwidget/font"))
+	{
+		QFont font;
+		font.setFamily(settings.value("qtermwidget/font").toString());
 
-	if (!fiout.exists())
-		return nullptr;
+		if (settings.contains("qtermwidget/fontsize"))
+			font.setPointSize(settings.value("qtermwidget/fontsize").toInt());
 
-	QWebView *webView = new QWebView((QWidget*)ParentWin);
+		view->setTerminalFont(font);
+	}
 
-	webView->setStyleSheet("background-color:white;");
+	view->setAutoClose(false);
+	view->startShellProgram();
+	view->show();
 
-	webView->load(QUrl::fromLocalFile(out));
-	webView->show();
-	return webView;
+	return view;
 }
 
 void DCPCALL ListCloseWindow(HANDLE ListWin)
 {
-	QWebView *webView = (QWebView*)ListWin;
-	webView->~QWebView();
+	delete (QTermWidget*)ListWin;
 }
 
-int DCPCALL ListSearchText(HWND ListWin, char* SearchString, int SearchParameter)
+int DCPCALL ListSearchDialog(HWND ListWin, int FindNext)
 {
-	QWebPage::FindFlags sflags;
-
-	if (SearchParameter & lcs_matchcase)
-		sflags |= QWebPage::FindCaseSensitively;
-
-	if (SearchParameter & lcs_backwards)
-		sflags |= QWebPage::FindBackward;
-
-	QWebView *webView = (QWebView*)ListWin;
-	webView->findText(SearchString, sflags);
+	QTermWidget *view = (QTermWidget*)ListWin;
+	view->toggleShowSearchBar();
 	return LISTPLUGIN_OK;
 }
 
 int DCPCALL ListSendCommand(HWND ListWin, int Command, int Parameter)
 {
-	QWebView *webView = (QWebView*)ListWin;
+	QTermWidget *view = (QTermWidget*)ListWin;
 
 	switch (Command)
 	{
 	case lc_copy :
-		webView->triggerPageAction(QWebPage::Copy);
-		break;
-
-	case lc_selectall :
-		webView->triggerPageAction(QWebPage::SelectAll);
+		view->copyClipboard();
 		break;
 
 	default :

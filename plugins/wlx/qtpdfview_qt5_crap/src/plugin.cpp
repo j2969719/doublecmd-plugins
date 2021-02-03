@@ -52,8 +52,10 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 
 	QString out = QString("%1/output.pdf").arg(tmpdir.path());
 
-
-	cmd.replace("$FILE", filename.replace(" ", "\\ "));
+	QString quoted = filename.replace("\'", "\\\'");
+	quoted.prepend("\'");
+	quoted.append("\'");
+	cmd.replace("$FILE", quoted);
 	cmd.replace("$PDF", out);
 
 	QStringList params;
