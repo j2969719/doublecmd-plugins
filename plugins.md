@@ -397,20 +397,35 @@ Displays various information about file using command line utilities ([original]
 - [hx_webkit_qt_crap](plugins/wlx/hx_webkit_qt_crap)<br>
 Document viewer based on Qt5WebKit and using HTML Export from Oracle Outside In Technology.
 
+- [jsonview_qt5](plugins/wlx/jsonview_qt5)<br>
+Very primitive JSON Viewer.
+
 - [md4c_webkit_qt5](plugins/wlx/md4c_webkit_qt5)<br>
 This plugin allows you to view Markdown files.
 
 - [qmediaplayer_qt5](plugins/wlx/qmediaplayer_qt5)<br>
 Very primitive media player.
 
+- [qtermwidget_qt5_crap](plugins/wlx/qtermwidget_qt5_crap)<br>
+Embeds `qtermwidget` and runs command line utilities (see `settings.ini`).
+
 - [qtpdfview_qt5](plugins/wlx/qtpdfview_qt5)<br>
 PDF Viewer.
+
+- [qtpdfview_qt5_crap](plugins/wlx/qtpdfview_qt5_crap)<br>
+Converts some file to PDF via some external tool assigned by mime or ext in `settings.ini` and displays the result.
+
+- [sqlviewer_qt5](plugins/wlx/sqlviewer_qt5)<br>
+Very primitive SQL Viewer.
 
 - [syntax-highlighting_qt](plugins/wlx/syntax-highlighting_qt)<br>
 Displays source code files with syntax highlighting. Requires `syntax-highlighting` from KF5 framework.
 
 - [wlxwebkit_qt5](plugins/wlx/wlxwebkit_qt5)<br>
 This plugin allows you to view HTML/XHTML files. It is based on Qt5WebKit engine.
+
+- [wlxwebkit_qt5_crap](plugins/wlx/wlxwebkit_qt5_crap)<br>
+Like [wlxwebkit_qt5](plugins/wlx/wlxwebkit_qt5) but for any files if you can convert it to HTML file (see `settings.ini`).
 
 
 ---
