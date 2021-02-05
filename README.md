@@ -23,4 +23,5 @@ Not all but most of additions for Linux only.
 - [Yandex Disk WFX plugin for Total and Double commander](https://github.com/ivanenko/ydisk_commander)<br>
 - [Environment variables WFX plugin for Double Commander](https://github.com/ivanenko/env_vars_commander)<br>
 - [AnyELF (by Serge Lamikhov-Center) for Double Commander users (GTK2)](https://github.com/Pasha-From-Russia/AnyELF-for-Double-Commander)<br>
+- [ISO Plugin by S. Oblomov - builds for Linux](https://doublecmd.sourceforge.io/forum/viewtopic.php?f=5&t=3226)<br>
 - wlxmpv: [GitHub](https://github.com/bayarookie/wlxmpv) or [GitLab](https://gitlab.com/bayarookie/wlxmpv) (try to check both link and use latest version).
