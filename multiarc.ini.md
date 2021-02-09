@@ -7,6 +7,7 @@ Copy-paste to `multiarc.ini` and enable in *Options* > *Archivers*.<br>
 Also some separate files can be found [here](multiarc) (use *Options* > *Archivers* > *Other...* > *Import*).
 
 - [7Zip self-extracting archive](#7zsfx)
+- [AppImage](#appimage)
 - [BALZ](#balz)
 - [Base64](#b64)
 - [CHM](#chm)
@@ -50,6 +51,27 @@ ExtractWithoutPath=%P e -y {-p%W} {%S} %AQA @%LQU
 PasswordQuery=Enter password
 FormMode=8
 ```
+
+---
+<a name="appimage"><h3>AppImage</h3></a>
+```ini
+[AppImage]
+Archiver=7z
+Description=AppImage (Type 1 and 2, x32 or x64)
+ID=7F 45 4C 46 01 01 01 00 41 49 01, 7F 45 4C 46 01 01 01 00 41 49 02, 7F 45 4C 46 02 01 01 00 41 49 01, 7F 45 4C 46 02 01 01 00 41 49 02
+IDPos=0
+Extension=appimage2
+Start=^-------------------
+End=^-------------------
+Format0=yyyy tt dd hh mm ss aaaaa zzzzzzzzzzzz pppppppppppp  n+
+List=%P -r0 l {-p%W} %AQA
+Extract=%P x -y {-p%W} {%S} %AQA @%LQU
+ExtractWithoutPath=%P e -y {-p%W} {%S} %AQA @%LQU
+Test=%P t -y {%S} %AQA @%LQU
+PasswordQuery=Enter password
+FormMode=8
+```
+`appimage2` is a fake extension, this is a small workaround to open AppImage files with Ctrl+PgDn only.
 
 ---
 <a name="balz"><h3>BALZ</h3></a>
