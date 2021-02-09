@@ -10,6 +10,7 @@
 static int  g_width = 200;
 static bool g_resize = false;
 static bool g_expand = true;
+static bool g_sorting = false;
 static void check_value(const QJsonValue value, QTreeWidgetItem *item);
 
 static void walk_array(const QJsonArray array, QTreeWidgetItem *item)
@@ -65,7 +66,7 @@ static void check_value(const QJsonValue value, QTreeWidgetItem *item)
 	{
 		item->setText(2, "Double");
 		item->setText(1, QString::number(value.toDouble()));
-		item->setToolTip(1, QString::number(value.toDouble()));
+		item->setToolTip(1, QString::number(value.toDouble(), 'f', 1));
 		break;
 	}
 
@@ -152,7 +153,9 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 
 	view->setSelectionMode(QAbstractItemView::SingleSelection);
 	view->setSelectionBehavior(QAbstractItemView::SelectItems);
-	view->setSortingEnabled(true);
+
+	if (g_sorting)
+		view->setSortingEnabled(true);
 
 	view->show();
 
@@ -162,6 +165,7 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 void DCPCALL ListCloseWindow(HANDLE ListWin)
 {
 	QTreeWidget *view = (QTreeWidget*)ListWin;
+	view->clear();
 	view->~QTreeWidget();
 }
 
@@ -259,4 +263,9 @@ void DCPCALL ListSetDefaultParams(ListDefaultParamStruct* dps)
 			settings.setValue("jsonview/column_width", 10);
 		}
 	}
+
+	if (!settings.contains("jsonview/sorting"))
+		settings.setValue("jsonview/sorting", false);
+	else
+		g_sorting = settings.value("jsonview/sorting").toBool();
 }

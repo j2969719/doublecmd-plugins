@@ -130,6 +130,9 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 
 	QStringList tlist = dbase.tables();
 
+	if (tlist.isEmpty())
+		QMessageBox::warning((QWidget*)ParentWin, "", "Failed to fetch list of tables. Maybe DB is locked?");
+
 	for (int i = 0; i < tlist.count(); i++)
 		cbtables->addItem(tlist[i]);
 
