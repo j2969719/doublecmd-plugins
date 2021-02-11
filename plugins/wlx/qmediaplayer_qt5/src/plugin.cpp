@@ -91,6 +91,71 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 	QObject::connect(bpause, &QPushButton::clicked, player, &QMediaPlayer::pause);
 	bpause->setFocusPolicy(Qt::NoFocus);
 
+	QPushButton *binfo = new QPushButton(view);
+	binfo->setIcon(QApplication::style()->standardIcon(QStyle::SP_MessageBoxInformation));
+
+	QObject::connect(binfo, &QPushButton::clicked, [playlist, view]()
+	{
+		QString info;
+		QStringList keys =
+		{
+			"Title",
+			"SubTitle",
+			"Author",
+			"LeadPerformer",
+			"ContributingArtist",
+			"Director",
+			"Writer",
+			"Composer",
+			"AlbumArtist",
+			"AlbumTitle",
+			"TrackNumber",
+			"ChapterNumber",
+			"Comment",
+			"Description",
+			"Category",
+			"Genre",
+			"Year",
+			"Date",
+			"Language",
+			"Publisher",
+			"Copyright",
+			"Conductor",
+			"ParentalRating",
+			"RatingOrganization",
+			"Keywords",
+			"MediaType",
+			"Resolution",
+			"VideoCodec",
+			"AudioCodec",
+		};
+
+		for (int i = 0; i < keys.size(); ++i)
+			if (playlist->mediaObject()->metaData(keys[i]).isValid())
+			{
+				qDebug() << playlist->mediaObject()->metaData(keys[i]);
+				QString str;
+				str.append(keys[i]);
+				str.append(": ");
+
+				if (playlist->mediaObject()->metaData(keys[i]).canConvert(QMetaType::QString))
+					str.append(playlist->mediaObject()->metaData(keys[i]).toString());
+				else if (playlist->mediaObject()->metaData(keys[i]).canConvert(QMetaType::QSize))
+				{
+					QSize size = playlist->mediaObject()->metaData(keys[i]).toSize();
+					str.append(QString("%1x%2").arg(size.width()).arg(size.height()));
+				}
+
+				str.append("\n");
+				info.append(str);
+			}
+
+		if (!info.isEmpty())
+			QMessageBox::information(view, "", info);
+		else
+			QMessageBox::information(view, "", "⠄⠄⢿⣇⠄⠄⠘⣆⢀⣼⣿⣿⣿⣿⢿⡿⣿⢻⣿⣿⣿⣿⣿⣿⣿⣟⢧⡲⣿⢷⢦⡀\n⠄⠄⠈⣿⠄⠄⠄⢙⢞⢿⣿⢹⢿⣦⢏⣱⢿⠘⣿⣝⠹⢿⣿⡽⣿⣿⣏⣆⢿⣿⡞⠁\n⠄⠄⠄⢻⡀⠄⠄⠈⣾⡸⡏⢸⡾⣴⣿⣿⣶⣼⣎⢵⢀⡛⣿⣷⡙⡻⢻⡴⠨⠨⠖⠃\n⠄⠄⠄⠈⣧⢀⡴⠊⢹⠁⡇⠈⢣⣿⣿⣿⣿⣦⣿⣷⣜⡳⣝⢧⢃⢣⣼⢁⠘⠆⠄⠄\n⠄⠄⠄⠄⢹⡇⠄⣠⠔⠚⣅⠄⢰⣶⣦⣭⣿⣿⣿⡿⠟⠿⣷⡧⠄⣘⣟⣸⠄⠄⠄⠄\n⠄⠄⠄⠄⠄⢷⠎⠄⠄⠄⣼⣦⠻⣿⣿⡟⠛⠻⢿⣿⣿⣿⡾⢱⣿⡏⠸⡏⠄⠄⠄⠄\n⠄⠄⠄⠄⠄⠸⡄⠄⡄⠄⣿⢧⢗⠌⠻⣇⠿⠿⣸⣿⣿⡟⡐⣿⠟⢰⣇⠇⠄⠄⠄⠄\n⠄⠄⠄⠄⠄⣠⡆⠄⠃⢠⠏⣤⢀⢢⡰⣭⣛⡉⠩⠭⡅⣾⢳⡴⡀⢸⣿⡆⠄⠄⠄⠄\n⠄⠄⠄⢀⣶⡟⣽⠼⢀⡕⢀⠘⠸⢮⡳⡻⡍⡷⡆⠤⠤⠭⢸⢳⣷⢸⡟⣷⠄⠄⠄⠄\n⠄⠄⣴⣿⢫⢞⣵⢏⡞⠄⢸⠄⣛⣗⠩⠄⣰⣚⠒⠂⣀⡀⢸⢸⣿⣧⠇⡼⣧⠄⠄⠄\n⢠⣾⢟⡴⢫⡾⣱⢟⠄⠄⢸⠄⢈⡓⡮⡦⡬⠽⡠⠄⠔⠄⢸⠈⣿⣿⡄⣷⢹⣆⠄⠄\n⡿⢁⠞⢀⣿⢣⠇⣿⠄⠄⠸⢀⢳⢣⣗⣿⡇⡔⠄⠔⠄⠄⢠⠄⠹⣿⣷⡝⣧⢻⣆");
+	});
+
 	QPushButton *bprev = new QPushButton(view);
 	bprev->setIcon(QApplication::style()->standardIcon(QStyle::SP_ArrowBack));
 	QObject::connect(bprev, &QPushButton::clicked, playlist, &QMediaPlaylist::previous);
@@ -146,6 +211,21 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 	});
 
 
+	QPushButton *bmute = new QPushButton(view);
+	bmute->setIcon(QApplication::style()->standardIcon(QStyle::SP_MediaVolume));
+	bmute->setFocusPolicy(Qt::NoFocus);
+
+	QObject::connect(bmute, &QPushButton::clicked, [bmute, player]()
+	{
+		bool state = player->isMuted();
+		player->setMuted(!state);
+
+		if (state)
+			bmute->setIcon(QApplication::style()->standardIcon(QStyle::SP_MediaVolume));
+		else
+			bmute->setIcon(QApplication::style()->standardIcon(QStyle::SP_MediaVolumeMuted));
+	});
+
 	QSlider *svolume = new QSlider(Qt::Horizontal, view);
 	svolume->setRange(0, 100);
 	QObject::connect(svolume, &QSlider::valueChanged, player, &QMediaPlayer::setVolume);
@@ -155,11 +235,14 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 	controls->addWidget(bplay);
 	controls->addWidget(bpause);
 	controls->addSpacing(10);
+	controls->addWidget(binfo);
+	controls->addSpacing(10);
 	controls->addWidget(bprev);
 	controls->addWidget(bnext);
 	controls->addSpacing(10);
 	controls->addWidget(lnum);
 	controls->addStretch(1);
+	controls->addWidget(bmute);
 	controls->addWidget(svolume);
 	main->addLayout(controls);
 
