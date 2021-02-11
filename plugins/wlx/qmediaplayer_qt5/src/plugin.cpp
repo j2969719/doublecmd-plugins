@@ -93,6 +93,7 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 
 	QPushButton *binfo = new QPushButton(view);
 	binfo->setIcon(QApplication::style()->standardIcon(QStyle::SP_MessageBoxInformation));
+	binfo->setFocusPolicy(Qt::NoFocus);
 
 	QObject::connect(binfo, &QPushButton::clicked, [playlist, view]()
 	{
@@ -133,7 +134,6 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 		for (int i = 0; i < keys.size(); ++i)
 			if (playlist->mediaObject()->metaData(keys[i]).isValid())
 			{
-				qDebug() << playlist->mediaObject()->metaData(keys[i]);
 				QString str;
 				str.append(keys[i]);
 				str.append(": ");
@@ -153,7 +153,7 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 		if (!info.isEmpty())
 			QMessageBox::information(view, "", info);
 		else
-			QMessageBox::information(view, "", "⠄⠄⢿⣇⠄⠄⠘⣆⢀⣼⣿⣿⣿⣿⢿⡿⣿⢻⣿⣿⣿⣿⣿⣿⣿⣟⢧⡲⣿⢷⢦⡀\n⠄⠄⠈⣿⠄⠄⠄⢙⢞⢿⣿⢹⢿⣦⢏⣱⢿⠘⣿⣝⠹⢿⣿⡽⣿⣿⣏⣆⢿⣿⡞⠁\n⠄⠄⠄⢻⡀⠄⠄⠈⣾⡸⡏⢸⡾⣴⣿⣿⣶⣼⣎⢵⢀⡛⣿⣷⡙⡻⢻⡴⠨⠨⠖⠃\n⠄⠄⠄⠈⣧⢀⡴⠊⢹⠁⡇⠈⢣⣿⣿⣿⣿⣦⣿⣷⣜⡳⣝⢧⢃⢣⣼⢁⠘⠆⠄⠄\n⠄⠄⠄⠄⢹⡇⠄⣠⠔⠚⣅⠄⢰⣶⣦⣭⣿⣿⣿⡿⠟⠿⣷⡧⠄⣘⣟⣸⠄⠄⠄⠄\n⠄⠄⠄⠄⠄⢷⠎⠄⠄⠄⣼⣦⠻⣿⣿⡟⠛⠻⢿⣿⣿⣿⡾⢱⣿⡏⠸⡏⠄⠄⠄⠄\n⠄⠄⠄⠄⠄⠸⡄⠄⡄⠄⣿⢧⢗⠌⠻⣇⠿⠿⣸⣿⣿⡟⡐⣿⠟⢰⣇⠇⠄⠄⠄⠄\n⠄⠄⠄⠄⠄⣠⡆⠄⠃⢠⠏⣤⢀⢢⡰⣭⣛⡉⠩⠭⡅⣾⢳⡴⡀⢸⣿⡆⠄⠄⠄⠄\n⠄⠄⠄⢀⣶⡟⣽⠼⢀⡕⢀⠘⠸⢮⡳⡻⡍⡷⡆⠤⠤⠭⢸⢳⣷⢸⡟⣷⠄⠄⠄⠄\n⠄⠄⣴⣿⢫⢞⣵⢏⡞⠄⢸⠄⣛⣗⠩⠄⣰⣚⠒⠂⣀⡀⢸⢸⣿⣧⠇⡼⣧⠄⠄⠄\n⢠⣾⢟⡴⢫⡾⣱⢟⠄⠄⢸⠄⢈⡓⡮⡦⡬⠽⡠⠄⠔⠄⢸⠈⣿⣿⡄⣷⢹⣆⠄⠄\n⡿⢁⠞⢀⣿⢣⠇⣿⠄⠄⠸⢀⢳⢣⣗⣿⡇⡔⠄⠔⠄⠄⢠⠄⠹⣿⣷⡝⣧⢻⣆");
+			QMessageBox::information(view, "", "no suitable info available");
 	});
 
 	QPushButton *bprev = new QPushButton(view);
