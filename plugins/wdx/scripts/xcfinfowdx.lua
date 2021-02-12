@@ -2,6 +2,8 @@
 -- 2020.10.30
 --[[
 Getting some info from XCF files (GIMP native image format).
+  Documentation: https://gitlab.gnome.org/GNOME/gimp/-/blob/master/devel-docs/xcf.txt
+  Last check: 2021.02.12
 
 See list of supported fields in table "fields".
 
