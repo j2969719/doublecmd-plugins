@@ -115,7 +115,7 @@ void DCPCALL StartSearch(int PluginNr, tDsxSearchRecord* pSearchRec)
 
 	if (!g_spawn_async_with_pipes(NULL, argv, NULL, flags, NULL, NULL, &pid, NULL, &fp, NULL, &err))
 
-		gUpdateStatus(PluginNr, g_strdup(err->message), 0);
+		gUpdateStatus(PluginNr, err->message, 0);
 
 	else
 	{

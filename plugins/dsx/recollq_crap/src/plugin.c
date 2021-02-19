@@ -142,6 +142,8 @@ void DCPCALL StartSearch(int PluginNr, tDsxSearchRecord* pSearchRec)
 					g_free(bname);
 					g_free(fname);
 				}
+
+				g_free(line);
 			}
 		}
 

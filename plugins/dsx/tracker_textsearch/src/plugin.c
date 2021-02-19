@@ -105,6 +105,7 @@ void DCPCALL StartSearch(int PluginNr, tDsxSearchRecord* pSearchRec)
 					{
 						gAddFileProc(PluginNr, fname);
 						gUpdateStatus(PluginNr, fname, i++);
+						g_free(fname);
 					}
 				}
 			}

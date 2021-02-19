@@ -109,6 +109,8 @@ void DCPCALL StartSearch(int PluginNr, tDsxSearchRecord* pSearchRec)
 						gUpdateStatus(PluginNr, fname, i++);
 					}
 				}
+
+				g_free(fname);
 			}
 
 		}

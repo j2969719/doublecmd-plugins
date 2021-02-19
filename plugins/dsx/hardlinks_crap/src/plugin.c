@@ -36,7 +36,7 @@ int DCPCALL Init(tDsxDefaultParamStruct* dsp, tSAddFileProc pAddFileProc, tSUpda
 		if (pos)
 			strcpy(pos + 1, loc_dir);
 
-		setlocale (LC_ALL, "");
+		setlocale(LC_ALL, "");
 		bindtextdomain(GETTEXT_PACKAGE, plg_path);
 		textdomain(GETTEXT_PACKAGE);
 	}
@@ -60,7 +60,7 @@ void DCPCALL StartSearch(int PluginNr, tDsxSearchRecord* pSearchRec)
 
 	if (!g_shell_parse_argv(command, NULL, &argv, &err))
 	{
-		gUpdateStatus(PluginNr, g_strdup(err->message), 0);
+		gUpdateStatus(PluginNr, err->message, 0);
 		gAddFileProc(PluginNr, "");
 	}
 
@@ -68,7 +68,7 @@ void DCPCALL StartSearch(int PluginNr, tDsxSearchRecord* pSearchRec)
 
 	if (!g_spawn_async_with_pipes(NULL, argv, NULL, 0, NULL, NULL, &pid, NULL, &fp, NULL, &err))
 	{
-		gUpdateStatus(PluginNr, g_strdup(err->message), 0);
+		gUpdateStatus(PluginNr, err->message, 0);
 		gAddFileProc(PluginNr, "");
 	}
 	else
@@ -80,14 +80,19 @@ void DCPCALL StartSearch(int PluginNr, tDsxSearchRecord* pSearchRec)
 
 		while (!stop_search && (G_IO_STATUS_NORMAL == g_io_channel_read_line(stdout, &line, &len, &term, NULL)))
 		{
-			line[term] = '\0';
-
-			if (line[0] == '\0')
-				gAddFileProc(PluginNr, "-----------------------------------------");
-			else
+			if (line)
 			{
-				gAddFileProc(PluginNr, line);
-				gUpdateStatus(PluginNr, line, i++);
+				line[term] = '\0';
+
+				if (line[0] == '\0')
+					gAddFileProc(PluginNr, "-----------------------------------------");
+				else
+				{
+					gAddFileProc(PluginNr, line);
+					gUpdateStatus(PluginNr, line, i++);
+				}
+
+				g_free(line);
 			}
 		}
 

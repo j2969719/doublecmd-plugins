@@ -60,7 +60,7 @@ void DCPCALL StartSearch(int PluginNr, tDsxSearchRecord* pSearchRec)
 
 	if (!g_shell_parse_argv(command, NULL, &argv, &err))
 	{
-		gUpdateStatus(PluginNr, g_strdup(err->message), 0);
+		gUpdateStatus(PluginNr, err->message, 0);
 		gAddFileProc(PluginNr, "");
 	}
 
@@ -68,7 +68,7 @@ void DCPCALL StartSearch(int PluginNr, tDsxSearchRecord* pSearchRec)
 
 	if (!g_spawn_async_with_pipes(NULL, argv, NULL, 0, NULL, NULL, &pid, NULL, &fp, NULL, &err))
 	{
-		gUpdateStatus(PluginNr, g_strdup(err->message), 0);
+		gUpdateStatus(PluginNr, err->message, 0);
 		gAddFileProc(PluginNr, "");
 	}
 	else
@@ -89,6 +89,8 @@ void DCPCALL StartSearch(int PluginNr, tDsxSearchRecord* pSearchRec)
 				gAddFileProc(PluginNr, line);
 				gUpdateStatus(PluginNr, line, i++);
 			}
+
+			g_free(line);
 		}
 
 		kill(pid, SIGTERM);

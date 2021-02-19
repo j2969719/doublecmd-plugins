@@ -71,7 +71,7 @@ void DCPCALL StartSearch(int PluginNr, tDsxSearchRecord* pSearchRec)
 			gUpdateStatus(PluginNr, command, 0);
 
 			if (!g_shell_parse_argv(command, NULL, &argv, &err))
-				gUpdateStatus(PluginNr, g_strdup(err->message), 0);
+				gUpdateStatus(PluginNr, err->message, 0);
 			else
 			{
 				g_clear_error(&err);
@@ -98,7 +98,7 @@ void DCPCALL StartSearch(int PluginNr, tDsxSearchRecord* pSearchRec)
 					g_io_channel_unref(stdout);
 				}
 				else
-					gUpdateStatus(PluginNr, g_strdup(err->message), 0);
+					gUpdateStatus(PluginNr, err->message, 0);
 			}
 		}
 		else
