@@ -5,6 +5,15 @@
 #include <QtWidgets>
 #include <QClipboard>
 #include <QApplication>
+
+#include <QMessageBox>
+
+#include <dlfcn.h>
+#include <libintl.h>
+#include <locale.h>
+#define _(STRING) gettext(STRING)
+#define GETTEXT_PACKAGE "plugins"
+
 #include "wlxplugin.h"
 
 static int  g_width = 200;
@@ -42,21 +51,21 @@ static void check_value(const QJsonValue value, QTreeWidgetItem *item)
 	{
 	case QJsonValue::Object:
 	{
-		item->setText(2, "Object");
+		item->setText(2, _("Object"));
 		walk_object(value.toObject(), item);
 		break;
 	}
 
 	case QJsonValue::Array:
 	{
-		item->setText(2, "Array");
+		item->setText(2, _("Array"));
 		walk_array(value.toArray(), item);
 		break;
 	}
 
 	case QJsonValue::String:
 	{
-		item->setText(2, "String");
+		item->setText(2, _("String"));
 		item->setText(1, value.toString());
 		item->setToolTip(1, value.toString());
 		break;
@@ -64,7 +73,7 @@ static void check_value(const QJsonValue value, QTreeWidgetItem *item)
 
 	case QJsonValue::Double:
 	{
-		item->setText(2, "Double");
+		item->setText(2, _("Double"));
 		item->setText(1, QString::number(value.toDouble()));
 		item->setToolTip(1, QString::number(value.toDouble(), 'f', 1));
 		break;
@@ -72,25 +81,25 @@ static void check_value(const QJsonValue value, QTreeWidgetItem *item)
 
 	case QJsonValue::Bool:
 	{
-		item->setText(2, "Boolean");
+		item->setText(2, _("Boolean"));
 
 		if (value.toBool())
-			item->setText(1, "True");
+			item->setText(1, _("True"));
 		else
-			item->setText(1, "False");
+			item->setText(1, _("False"));
 
 		break;
 	}
 
 	case QJsonValue::Null:
 	{
-		item->setText(2, "Null");
+		item->setText(2, _("Null"));
 		break;
 	}
 
 	default:
 	{
-		item->setText(2, "Undefined");
+		item->setText(2, _("Undefined"));
 		break;
 	}
 	}
@@ -125,12 +134,12 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 
 	if (json.isObject())
 	{
-		root->setText(2, "Object");
+		root->setText(2, _("Object"));
 		walk_object(json.object(), root);
 	}
 	else if (json.isArray())
 	{
-		root->setText(2, "Array");
+		root->setText(2, _("Array"));
 		walk_array(json.array(), root);
 	}
 
@@ -148,7 +157,7 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 	}
 
 	QStringList headers;
-	headers << "Key" << "Value" << "Type";
+	headers << _("Key") << _("Value") << _("Type");
 	view->setHeaderLabels(headers);
 
 	view->setSelectionMode(QAbstractItemView::SingleSelection);
@@ -207,30 +216,22 @@ int DCPCALL ListSearchText(HWND ListWin, char* SearchString, int SearchParameter
 		int i = view->property("findit").value<int>();
 
 		if (needle != prev)
-		{
 			i = 0;
-		}
 		else if (SearchParameter & lcs_backwards)
-		{
-			if (i > 0)
 				i--;
-		}
 		else
-		{
-			if (i < list.size())
 				i++;
-		}
 
 		if (i >= 0 && i < list.size() && list.at(i))
 		{
 			view->scrollToItem(list.at(i));
 			view->setCurrentItem(list.at(i), view->currentColumn());
+			view->setProperty("findit", i);
+			return LISTPLUGIN_OK;
 		}
-
-		view->setProperty("findit", i);
-
-		return LISTPLUGIN_OK;
 	}
+
+	QMessageBox::information(view, "", QString::asprintf(_("\"%s\" not found!"), SearchString));
 
 	return LISTPLUGIN_ERROR;
 }
@@ -268,4 +269,23 @@ void DCPCALL ListSetDefaultParams(ListDefaultParamStruct* dps)
 		settings.setValue("jsonview/sorting", false);
 	else
 		g_sorting = settings.value("jsonview/sorting").toBool();
+
+	Dl_info dlinfo;
+	static char plg_path[PATH_MAX];
+	const char* loc_dir = "langs";
+
+	memset(&dlinfo, 0, sizeof(dlinfo));
+
+	if (dladdr(plg_path, &dlinfo) != 0)
+	{
+		strncpy(plg_path, dlinfo.dli_fname, PATH_MAX);
+		char *pos = strrchr(plg_path, '/');
+
+		if (pos)
+			strcpy(pos + 1, loc_dir);
+
+		setlocale(LC_ALL, "");
+		bindtextdomain(GETTEXT_PACKAGE, plg_path);
+		textdomain(GETTEXT_PACKAGE);
+	}
 }

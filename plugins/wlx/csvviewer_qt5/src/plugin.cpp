@@ -9,8 +9,15 @@
 #include <QSettings>
 #include <QMimeData>
 
+#include <QMessageBox>
+
 #include <enca.h>
+
+#include <dlfcn.h>
+#include <libintl.h>
 #include <locale.h>
+#define _(STRING) gettext(STRING)
+#define GETTEXT_PACKAGE "plugins"
 
 #include "wlxplugin.h"
 
@@ -232,30 +239,22 @@ int DCPCALL ListSearchText(HWND ListWin, char* SearchString, int SearchParameter
 		int i = view->property("findit").value<int>();
 
 		if (needle != prev)
-		{
 			i = 0;
-		}
 		else if (SearchParameter & lcs_backwards)
-		{
-			if (i > 0)
-				i--;
-		}
+			i--;
 		else
-		{
-			if (i < list.size())
-				i++;
-		}
+			i++;
 
 		if (i >= 0 && i < list.size() && list.at(i))
 		{
 			view->scrollToItem(list.at(i));
 			view->setCurrentItem(list.at(i));
+			view->setProperty("findit", i);
+			return LISTPLUGIN_OK;
 		}
-
-		view->setProperty("findit", i);
-
-		return LISTPLUGIN_OK;
 	}
+
+	QMessageBox::information(view, "", QString::asprintf(_("\"%s\" not found!"), SearchString));
 
 	return LISTPLUGIN_ERROR;
 }
@@ -294,4 +293,23 @@ void DCPCALL ListSetDefaultParams(ListDefaultParamStruct* dps)
 		settings.setValue("csvviewer/enca_readall", false);
 	else
 		g_readall = settings.value("csvviewer/enca_readall").toBool();
+
+	Dl_info dlinfo;
+	static char plg_path[PATH_MAX];
+	const char* loc_dir = "langs";
+
+	memset(&dlinfo, 0, sizeof(dlinfo));
+
+	if (dladdr(plg_path, &dlinfo) != 0)
+	{
+		strncpy(plg_path, dlinfo.dli_fname, PATH_MAX);
+		char *pos = strrchr(plg_path, '/');
+
+		if (pos)
+			strcpy(pos + 1, loc_dir);
+
+		setlocale(LC_ALL, "");
+		bindtextdomain(GETTEXT_PACKAGE, plg_path);
+		textdomain(GETTEXT_PACKAGE);
+	}
 }

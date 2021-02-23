@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-11-09 23:01+0300\n"
-"PO-Revision-Date: 2020-11-09 23:03+0300\n"
+"POT-Creation-Date: 2021-02-23 15:51+0300\n"
+"PO-Revision-Date: 2021-02-23 15:51+0300\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "Language: ru\n"
@@ -19,194 +19,170 @@ msgstr ""
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
 "%10<=4 && (n%100<12 || n%100>14) ? 1 : 2);\n"
 
-#: ../wlx/vte_in_quickview/plugin.c:48
+#: ../wlx/vte_in_quickview/src/plugin.c:48
 msgid "Copy"
 msgstr "Копировать"
 
-#: ../wlx/vte_in_quickview/plugin.c:49
+#: ../wlx/vte_in_quickview/src/plugin.c:49
 msgid "Paste"
 msgstr "Вставить"
 
-#: ../wlx/vte_in_quickview/plugin.c:50
+#: ../wlx/vte_in_quickview/src/plugin.c:50
 msgid "Send CTRL+C"
 msgstr "Послать CTRL+C"
 
-#: ../wlx/vte_in_quickview/plugin.c:51
+#: ../wlx/vte_in_quickview/src/plugin.c:51
 msgid "Send CTRL+Z"
 msgstr "Послать CTRL+Z"
 
-#: ../wlx/vte_in_quickview/plugin.c:67
+#: ../wlx/vte_in_quickview/src/plugin.c:67
 msgid "hit ctrl+q or type \"exit\" to remove grab"
 msgstr "жми ctrl+q или введи \"exit\", чтобы отпустило"
 
-#: ../wlx/imagemagick/wlximagemagick.c:172
-#: ../wlx/gtkimgview_crap/gtkimgview.c:336 ../wlx/gtkimgview/gtkimgview.c:199
-msgid "Zoom In"
-msgstr "Увеличить"
+#: ../wlx/jsonview_qt5/src/plugin.cpp:54 ../wlx/jsonview_qt5/src/plugin.cpp:137
+msgid "Object"
+msgstr ""
 
-#: ../wlx/imagemagick/wlximagemagick.c:177
-#: ../wlx/gtkimgview_crap/gtkimgview.c:341 ../wlx/gtkimgview/gtkimgview.c:204
-msgid "Zoom Out"
-msgstr "Уменьшить"
+#: ../wlx/jsonview_qt5/src/plugin.cpp:61 ../wlx/jsonview_qt5/src/plugin.cpp:142
+msgid "Array"
+msgstr ""
 
-#: ../wlx/imagemagick/wlximagemagick.c:182
-#: ../wlx/gtkimgview_crap/gtkimgview.c:346 ../wlx/gtkimgview/gtkimgview.c:209
-msgid "Original Size"
-msgstr "Исходный размер"
+#: ../wlx/jsonview_qt5/src/plugin.cpp:68
+msgid "String"
+msgstr ""
 
-#: ../wlx/imagemagick/wlximagemagick.c:187
-#: ../wlx/gtkimgview_crap/gtkimgview.c:351 ../wlx/gtkimgview/gtkimgview.c:214
-#: ../wlx/dcpoppler/wlxPView.c:421 ../wlx/dcpoppler/wlxPView.c:422
-msgid "Fit"
-msgstr "Вместить"
+#: ../wlx/jsonview_qt5/src/plugin.cpp:76
+msgid "Double"
+msgstr ""
 
-#: ../wlx/imagemagick/wlximagemagick.c:195
-#: ../wlx/gtkimgview_crap/gtkimgview.c:359 ../wlx/gtkimgview/gtkimgview.c:222
-msgid "Copy to Clipboard"
-msgstr "Копировать в буфер"
+#: ../wlx/jsonview_qt5/src/plugin.cpp:84
+msgid "Boolean"
+msgstr ""
 
-#: ../wlx/imagemagick/wlximagemagick.c:198
-#: ../wlx/imagemagick/wlximagemagick.c:201
-#: ../wlx/gtkimgview_crap/gtkimgview.c:362
-#: ../wlx/gtkimgview_crap/gtkimgview.c:365 ../wlx/gtkimgview/gtkimgview.c:225
-#: ../wlx/gtkimgview/gtkimgview.c:228
-msgid "Rotate"
-msgstr "Повернуть"
+#: ../wlx/jsonview_qt5/src/plugin.cpp:87
+msgid "True"
+msgstr ""
 
-#: ../wlx/imagemagick/wlximagemagick.c:204
-#: ../wlx/imagemagick/wlximagemagick.c:207
-#: ../wlx/gtkimgview_crap/gtkimgview.c:368
-#: ../wlx/gtkimgview_crap/gtkimgview.c:371 ../wlx/gtkimgview/gtkimgview.c:231
-#: ../wlx/gtkimgview/gtkimgview.c:234
-msgid "Rotate Clockwise"
-msgstr "Повернуть по часовой стрелке"
+#: ../wlx/jsonview_qt5/src/plugin.cpp:89
+msgid "False"
+msgstr ""
 
-#: ../wlx/imagemagick/wlximagemagick.c:210
-#: ../wlx/imagemagick/wlximagemagick.c:213
-#: ../wlx/gtkimgview_crap/gtkimgview.c:374
-#: ../wlx/gtkimgview_crap/gtkimgview.c:377 ../wlx/gtkimgview/gtkimgview.c:237
-#: ../wlx/gtkimgview/gtkimgview.c:240
-msgid "Flip Horizontally"
-msgstr "Отразить по горизонтали"
+#: ../wlx/jsonview_qt5/src/plugin.cpp:96
+msgid "Null"
+msgstr ""
 
-#: ../wlx/imagemagick/wlximagemagick.c:216
-#: ../wlx/imagemagick/wlximagemagick.c:219
-#: ../wlx/gtkimgview_crap/gtkimgview.c:380
-#: ../wlx/gtkimgview_crap/gtkimgview.c:383 ../wlx/gtkimgview/gtkimgview.c:243
-#: ../wlx/gtkimgview/gtkimgview.c:246
-msgid "Flip Vertically"
-msgstr "Отразить по вертикали"
+#: ../wlx/jsonview_qt5/src/plugin.cpp:102
+msgid "Undefined"
+msgstr ""
 
-#: ../wlx/wlxwebkit/wlxwebkit.c:117 ../wlx/yet_another_vte_plugin/plugin.c:288
-#: ../wlx/gtksourceview/gtksourceview.c:709 ../wlx/fileinfo/fileinfo.c:373
-#: ../wlx/mimescript/mimescriptwlx.c:289
+#: ../wlx/jsonview_qt5/src/plugin.cpp:160
+msgid "Key"
+msgstr ""
+
+#: ../wlx/jsonview_qt5/src/plugin.cpp:160
+msgid "Value"
+msgstr ""
+
+#: ../wlx/jsonview_qt5/src/plugin.cpp:160
+msgid "Type"
+msgstr ""
+
+#: ../wlx/jsonview_qt5/src/plugin.cpp:234 ../wlx/fileinfo_qt/src/plugin.cpp:90
+#: ../wlx/wlxwebkit/src/wlxwebkit.c:117 ../wlx/csvviewer_qt5/src/plugin.cpp:257
+#: ../wlx/sqlviewer_qt5/src/plugin.cpp:268
+#: ../wlx/yet_another_vte_plugin/src/plugin.c:288
+#: ../wlx/gtksourceview/src/gtksourceview.c:709
+#: ../wlx/syntax-highlighting_qt/src/plugin.cpp:126
+#: ../wlx/wlxwebkit_qt5_crap/src/wlxwebkit.cpp:111
+#: ../wlx/fileinfo/src/fileinfo.c:373 ../wlx/mimescript/src/mimescriptwlx.c:289
+#: ../wlx/wlxwebkit_qt5/src/wlxwebkit.cpp:57
+#: ../wlx/md4c_webkit_qt5/src/plugin.cpp:90
 #, c-format
 msgid "\"%s\" not found!"
 msgstr "\"%s\" не найден!"
 
-#: ../wlx/gtksourceview/gtksourceview.c:48
-msgid "Failed to load file"
-msgstr "Не удалось открыть файл"
+#: ../wlx/imagemagick/src/wlximagemagick.c:172
+#: ../wlx/gtkimgview_crap/src/gtkimgview.c:336
+#: ../wlx/gtkimgview/src/gtkimgview.c:199
+msgid "Zoom In"
+msgstr "Увеличить"
 
-#: ../wlx/gtksourceview/gtksourceview.c:49
-#: ../wlx/gtksourceview/gtksourceview.c:361
-#: ../wlx/gtksourceview/gtksourceview.c:566
-msgid "Default"
-msgstr "По умолчанию"
+#: ../wlx/imagemagick/src/wlximagemagick.c:177
+#: ../wlx/gtkimgview_crap/src/gtkimgview.c:341
+#: ../wlx/gtkimgview/src/gtkimgview.c:204
+msgid "Zoom Out"
+msgstr "Уменьшить"
 
-#: ../wlx/gtksourceview/gtksourceview.c:50
-#: ../wlx/gtksourceview/gtksourceview.c:381
-msgid "Encoding:"
-msgstr "Кодировка:"
+#: ../wlx/imagemagick/src/wlximagemagick.c:182
+#: ../wlx/gtkimgview_crap/src/gtkimgview.c:346
+#: ../wlx/gtkimgview/src/gtkimgview.c:209
+msgid "Original Size"
+msgstr "Исходный размер"
 
-#: ../wlx/gtksourceview/gtksourceview.c:197
-#: ../wlx/gtksourceview/gtksourceview.c:588
-msgid "Options"
-msgstr "Настройки"
+#: ../wlx/imagemagick/src/wlximagemagick.c:187
+#: ../wlx/wlxpview/src/wlxPView.c:421 ../wlx/wlxpview/src/wlxPView.c:422
+#: ../wlx/gtkimgview_crap/src/gtkimgview.c:351
+#: ../wlx/gtkimgview/src/gtkimgview.c:214
+msgid "Fit"
+msgstr "Вместить"
 
-#: ../wlx/gtksourceview/gtksourceview.c:204
-msgid "Font"
-msgstr "Шрифт"
+#: ../wlx/imagemagick/src/wlximagemagick.c:195
+#: ../wlx/gtkimgview_crap/src/gtkimgview.c:359
+#: ../wlx/gtkimgview/src/gtkimgview.c:222
+msgid "Copy to Clipboard"
+msgstr "Копировать в буфер"
 
-#: ../wlx/gtksourceview/gtksourceview.c:212
-msgid "Style"
-msgstr "Тема"
+#: ../wlx/imagemagick/src/wlximagemagick.c:198
+#: ../wlx/imagemagick/src/wlximagemagick.c:201
+#: ../wlx/gtkimgview_crap/src/gtkimgview.c:362
+#: ../wlx/gtkimgview_crap/src/gtkimgview.c:365
+#: ../wlx/gtkimgview/src/gtkimgview.c:225
+#: ../wlx/gtkimgview/src/gtkimgview.c:228
+msgid "Rotate"
+msgstr "Повернуть"
 
-#: ../wlx/gtksourceview/gtksourceview.c:229
-msgid "Blank space"
-msgstr "Отсупы"
+#: ../wlx/imagemagick/src/wlximagemagick.c:204
+#: ../wlx/imagemagick/src/wlximagemagick.c:207
+#: ../wlx/gtkimgview_crap/src/gtkimgview.c:368
+#: ../wlx/gtkimgview_crap/src/gtkimgview.c:371
+#: ../wlx/gtkimgview/src/gtkimgview.c:231
+#: ../wlx/gtkimgview/src/gtkimgview.c:234
+msgid "Rotate Clockwise"
+msgstr "Повернуть по часовой стрелке"
 
-#: ../wlx/gtksourceview/gtksourceview.c:235
-msgid "Above paragraphs"
-msgstr "Над текстом"
+#: ../wlx/imagemagick/src/wlximagemagick.c:210
+#: ../wlx/imagemagick/src/wlximagemagick.c:213
+#: ../wlx/gtkimgview_crap/src/gtkimgview.c:374
+#: ../wlx/gtkimgview_crap/src/gtkimgview.c:377
+#: ../wlx/gtkimgview/src/gtkimgview.c:237
+#: ../wlx/gtkimgview/src/gtkimgview.c:240
+msgid "Flip Horizontally"
+msgstr "Отразить по горизонтали"
 
-#: ../wlx/gtksourceview/gtksourceview.c:236
-msgid "Below paragraphs"
-msgstr "Под текстом"
+#: ../wlx/imagemagick/src/wlximagemagick.c:216
+#: ../wlx/imagemagick/src/wlximagemagick.c:219
+#: ../wlx/gtkimgview_crap/src/gtkimgview.c:380
+#: ../wlx/gtkimgview_crap/src/gtkimgview.c:383
+#: ../wlx/gtkimgview/src/gtkimgview.c:243
+#: ../wlx/gtkimgview/src/gtkimgview.c:246
+msgid "Flip Vertically"
+msgstr "Отразить по вертикали"
 
-#: ../wlx/gtksourceview/gtksourceview.c:237
-msgid "Tab width"
-msgstr "Ширина табуляции"
-
-#: ../wlx/gtksourceview/gtksourceview.c:257
-msgid "Enca Lang"
-msgstr "Локаль Enca"
-
-#: ../wlx/gtksourceview/gtksourceview.c:337
-msgid "Language:"
-msgstr "Язык:"
-
-#: ../wlx/gtksourceview/gtksourceview.c:357
-msgid "file seems empty"
-msgstr "походу файл пустой"
-
-#: ../wlx/gtksourceview/gtksourceview.c:576
-msgid "Custom encoding"
-msgstr "Другая кодировка"
-
-#: ../wlx/gtksourceview/gtksourceview.c:595
-msgid "Draw Spaces"
-msgstr "Пробелы"
-
-#: ../wlx/gtksourceview/gtksourceview.c:596
-msgid "Text Cursor"
-msgstr "Курсор"
-
-#: ../wlx/gtksourceview/gtksourceview.c:597
-msgid "Line Numbers"
-msgstr "Номера строк"
-
-#: ../wlx/gtksourceview/gtksourceview.c:598
-msgid "Highlight Line"
-msgstr "Подсветка строки"
-
-#: ../wlx/gtksourceview/gtksourceview.c:599
-msgid "Wrap Line"
-msgstr "Разрывы"
-
-#: ../wlx/gtkimgview/gtkimgview.c:253
-msgid "Play Animation"
-msgstr "Воспроизвести анимацию"
-
-#: ../wlx/gtkimgview/gtkimgview.c:258
-msgid "Stop Animation"
-msgstr "Остановить анимацию"
-
-#: ../wlx/dcpoppler/wlxPView.c:139
+#: ../wlx/wlxpview/src/wlxPView.c:139
 msgid "Scale ~x"
 msgstr "Масштаб ~x"
 
-#: ../wlx/dcpoppler/wlxPView.c:260 ../wlx/dcpoppler/wlxPView.c:429
-#: ../wlx/dcpoppler/wlxPView.c:430
+#: ../wlx/wlxpview/src/wlxPView.c:260 ../wlx/wlxpview/src/wlxPView.c:429
+#: ../wlx/wlxpview/src/wlxPView.c:430
 msgid "Text"
 msgstr "Текст"
 
-#: ../wlx/dcpoppler/wlxPView.c:288 ../wlx/dcpoppler/wlxPView.c:435
-#: ../wlx/dcpoppler/wlxPView.c:436
+#: ../wlx/wlxpview/src/wlxPView.c:288 ../wlx/wlxpview/src/wlxPView.c:435
+#: ../wlx/wlxpview/src/wlxPView.c:436
 msgid "Info"
 msgstr "Информация"
 
-#: ../wlx/dcpoppler/wlxPView.c:292
+#: ../wlx/wlxpview/src/wlxPView.c:292
 #, c-format
 msgid ""
 "Title: %s\n"
@@ -225,60 +201,174 @@ msgstr ""
 "Ключевые слова: %s\n"
 "Версия: %s"
 
-#: ../wlx/dcpoppler/wlxPView.c:310
+#: ../wlx/wlxpview/src/wlxPView.c:310
 msgid "metadata not found"
 msgstr "Метаданные не найдены"
 
-#: ../wlx/dcpoppler/wlxPView.c:372 ../wlx/dcpoppler/wlxPView.c:373
+#: ../wlx/wlxpview/src/wlxPView.c:372 ../wlx/wlxpview/src/wlxPView.c:373
 msgid "First page"
 msgstr "Первая страница"
 
-#: ../wlx/dcpoppler/wlxPView.c:378 ../wlx/dcpoppler/wlxPView.c:379
+#: ../wlx/wlxpview/src/wlxPView.c:378 ../wlx/wlxpview/src/wlxPView.c:379
 msgid "Previous page"
 msgstr "Предыдущая страница"
 
-#: ../wlx/dcpoppler/wlxPView.c:384 ../wlx/dcpoppler/wlxPView.c:385
+#: ../wlx/wlxpview/src/wlxPView.c:384 ../wlx/wlxpview/src/wlxPView.c:385
 msgid "Next page"
 msgstr "Следующая страница"
 
-#: ../wlx/dcpoppler/wlxPView.c:390 ../wlx/dcpoppler/wlxPView.c:391
+#: ../wlx/wlxpview/src/wlxPView.c:390 ../wlx/wlxpview/src/wlxPView.c:391
 msgid "Last page"
 msgstr "Последняя страница"
 
-#: ../wdx/fewfiles/plugin.c:44
+#: ../wlx/sqlviewer_qt5/src/plugin.cpp:25
+msgid "base not valid!"
+msgstr ""
+
+#: ../wlx/sqlviewer_qt5/src/plugin.cpp:89
+msgid "Table:"
+msgstr ""
+
+#: ../wlx/sqlviewer_qt5/src/plugin.cpp:97
+msgid "Query"
+msgstr ""
+
+#: ../wlx/sqlviewer_qt5/src/plugin.cpp:131
+msgid "Please enter a new query and press OK to execute it"
+msgstr ""
+
+#: ../wlx/sqlviewer_qt5/src/plugin.cpp:143
+msgid "Failed to fetch list of tables. Maybe DB is locked?"
+msgstr ""
+
+#: ../wlx/gtksourceview/src/gtksourceview.c:48
+msgid "Failed to load file"
+msgstr "Не удалось открыть файл"
+
+#: ../wlx/gtksourceview/src/gtksourceview.c:49
+#: ../wlx/gtksourceview/src/gtksourceview.c:361
+#: ../wlx/gtksourceview/src/gtksourceview.c:566
+msgid "Default"
+msgstr "По умолчанию"
+
+#: ../wlx/gtksourceview/src/gtksourceview.c:50
+#: ../wlx/gtksourceview/src/gtksourceview.c:381
+msgid "Encoding:"
+msgstr "Кодировка:"
+
+#: ../wlx/gtksourceview/src/gtksourceview.c:197
+#: ../wlx/gtksourceview/src/gtksourceview.c:588
+msgid "Options"
+msgstr "Настройки"
+
+#: ../wlx/gtksourceview/src/gtksourceview.c:204
+msgid "Font"
+msgstr "Шрифт"
+
+#: ../wlx/gtksourceview/src/gtksourceview.c:212
+msgid "Style"
+msgstr "Тема"
+
+#: ../wlx/gtksourceview/src/gtksourceview.c:229
+msgid "Blank space"
+msgstr "Отсупы"
+
+#: ../wlx/gtksourceview/src/gtksourceview.c:235
+msgid "Above paragraphs"
+msgstr "Над текстом"
+
+#: ../wlx/gtksourceview/src/gtksourceview.c:236
+msgid "Below paragraphs"
+msgstr "Под текстом"
+
+#: ../wlx/gtksourceview/src/gtksourceview.c:237
+msgid "Tab width"
+msgstr "Ширина табуляции"
+
+#: ../wlx/gtksourceview/src/gtksourceview.c:257
+msgid "Enca Lang"
+msgstr "Локаль Enca"
+
+#: ../wlx/gtksourceview/src/gtksourceview.c:337
+msgid "Language:"
+msgstr "Язык:"
+
+#: ../wlx/gtksourceview/src/gtksourceview.c:357
+msgid "file seems empty"
+msgstr "походу файл пустой"
+
+#: ../wlx/gtksourceview/src/gtksourceview.c:576
+msgid "Custom encoding"
+msgstr "Другая кодировка"
+
+#: ../wlx/gtksourceview/src/gtksourceview.c:595
+msgid "Draw Spaces"
+msgstr "Пробелы"
+
+#: ../wlx/gtksourceview/src/gtksourceview.c:596
+msgid "Text Cursor"
+msgstr "Курсор"
+
+#: ../wlx/gtksourceview/src/gtksourceview.c:597
+msgid "Line Numbers"
+msgstr "Номера строк"
+
+#: ../wlx/gtksourceview/src/gtksourceview.c:598
+msgid "Highlight Line"
+msgstr "Подсветка строки"
+
+#: ../wlx/gtksourceview/src/gtksourceview.c:599
+msgid "Wrap Line"
+msgstr "Разрывы"
+
+#: ../wlx/gtkimgview/src/gtkimgview.c:253
+msgid "Play Animation"
+msgstr "Воспроизвести анимацию"
+
+#: ../wlx/gtkimgview/src/gtkimgview.c:258
+msgid "Stop Animation"
+msgstr "Остановить анимацию"
+
+#: ../wdx/fewfiles/src/plugin.c:44
 #, c-format
 msgid "Permission denied"
 msgstr "Доступ запрещен"
 
-#: ../wdx/fewfiles/plugin.c:76
+#: ../wdx/fewfiles/src/plugin.c:76
 #, c-format
 msgid "Empty directory"
 msgstr "Пустой каталог"
 
-#: ../dsx/git_untracked/plugin.c:57 ../dsx/pacman_pkg_list/plugin.c:71
-#: ../dsx/lslocks/plugin.c:58 ../dsx/git_ignored/plugin.c:57
-#: ../dsx/git_modified/plugin.c:58
+#: ../dsx/git_untracked/src/plugin.c:57 ../dsx/pacman_pkg_list/src/plugin.c:71
+#: ../dsx/lslocks/src/plugin.c:58 ../dsx/git_ignored/src/plugin.c:57
+#: ../dsx/git_modified/src/plugin.c:58
 msgid "failed to launch command"
 msgstr "не удалось выполнить команду"
 
-#: ../dsx/git_untracked/plugin.c:60 ../dsx/tracker_textsearch/plugin.c:81
-#: ../dsx/in_filelist/plugin.c:74 ../dsx/duplicates_crap/plugin.c:77
-#: ../dsx/the_silver_searcher_crap/plugin.c:81 ../dsx/locate_crap/plugin.c:112
-#: ../dsx/pacman_pkg_list/plugin.c:74 ../dsx/gtkrecent/plugin.c:56
-#: ../dsx/hardlinks_crap/plugin.c:77 ../dsx/lslocks/plugin.c:61
-#: ../dsx/git_ignored/plugin.c:60 ../dsx/git_modified/plugin.c:61
+#: ../dsx/git_untracked/src/plugin.c:60
+#: ../dsx/tracker_textsearch/src/plugin.c:81 ../dsx/in_filelist/src/plugin.c:74
+#: ../dsx/duplicates_crap/src/plugin.c:77
+#: ../dsx/the_silver_searcher_crap/src/plugin.c:81
+#: ../dsx/recollq_crap/src/plugin.c:101 ../dsx/locate_crap/src/plugin.c:112
+#: ../dsx/pacman_pkg_list/src/plugin.c:74 ../dsx/gtkrecent/src/plugin.c:56
+#: ../dsx/hardlinks_crap/src/plugin.c:77 ../dsx/lslocks/src/plugin.c:61
+#: ../dsx/git_ignored/src/plugin.c:60 ../dsx/git_modified/src/plugin.c:61
 msgid "not found"
 msgstr "не найдено"
 
-#: ../dsx/the_silver_searcher_crap/plugin.c:105
+#: ../dsx/the_silver_searcher_crap/src/plugin.c:105
 msgid "no text pattern provided"
 msgstr "текстовый шаблон отсутствует"
 
-#: ../dsx/the_silver_searcher_crap/plugin.c:108
+#: ../dsx/the_silver_searcher_crap/src/plugin.c:108
 msgid "failed to launch ag..."
 msgstr "не удалось запустить ag..."
 
-#: ../dsx/pacman_pkg_list/plugin.c:96
+#: ../dsx/recollq_crap/src/plugin.c:72
+msgid "the search text was not specified"
+msgstr ""
+
+#: ../dsx/pacman_pkg_list/src/plugin.c:96
 msgid "enter pkgname"
 msgstr "введи pkgname"
 

@@ -1,6 +1,15 @@
 #include <QFile>
 #include <QWebView>
 #include <md4c-html.h>
+
+#include <QMessageBox>
+
+#include <dlfcn.h>
+#include <libintl.h>
+#include <locale.h>
+#define _(STRING) gettext(STRING)
+#define GETTEXT_PACKAGE "plugins"
+
 #include "wlxplugin.h"
 
 #define _detectstring "EXT=\"MD\""
@@ -76,7 +85,9 @@ int DCPCALL ListSearchText(HWND ListWin, char* SearchString, int SearchParameter
 		sflags |= QWebPage::FindBackward;
 
 	QWebView *webView = (QWebView*)ListWin;
-	webView->findText(SearchString, sflags);
+
+	if (!webView->findText(SearchString, sflags))
+		QMessageBox::information((QWidget*)ListWin, "", QString::asprintf(_("\"%s\" not found!"), SearchString));
 
 	return LISTPLUGIN_OK;
 }
@@ -100,4 +111,26 @@ int DCPCALL ListSendCommand(HWND ListWin, int Command, int Parameter)
 	}
 
 	return LISTPLUGIN_OK;
+}
+
+void DCPCALL ListSetDefaultParams(ListDefaultParamStruct* dps)
+{
+	Dl_info dlinfo;
+	static char plg_path[PATH_MAX];
+	const char* loc_dir = "langs";
+
+	memset(&dlinfo, 0, sizeof(dlinfo));
+
+	if (dladdr(plg_path, &dlinfo) != 0)
+	{
+		strncpy(plg_path, dlinfo.dli_fname, PATH_MAX);
+		char *pos = strrchr(plg_path, '/');
+
+		if (pos)
+			strcpy(pos + 1, loc_dir);
+
+		setlocale(LC_ALL, "");
+		bindtextdomain(GETTEXT_PACKAGE, plg_path);
+		textdomain(GETTEXT_PACKAGE);
+	}
 }

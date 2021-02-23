@@ -3,6 +3,15 @@
 #include <QtWidgets>
 #include <QHeaderView>
 #include <QTableWidget>
+
+#include <QMessageBox>
+
+#include <dlfcn.h>
+#include <libintl.h>
+#include <locale.h>
+#define _(STRING) gettext(STRING)
+#define GETTEXT_PACKAGE "plugins"
+
 #include "wlxplugin.h"
 
 static QMimeDatabase db;
@@ -13,7 +22,7 @@ static void fill_table(QTableWidget *table, QString strquery, const QString conn
 	QSqlQuery query(dbase);
 
 	if (!dbase.isValid())
-		QMessageBox::critical((QWidget*)table, "", "base not valid!");
+		QMessageBox::critical((QWidget*)table, "", _("base not valid!"));
 
 	table->setColumnCount(0);
 	table->setRowCount(0);
@@ -77,7 +86,7 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 	QHBoxLayout *controls = new QHBoxLayout;
 
 	QLabel *ltable = new QLabel(view);
-	ltable->setText("Table:");
+	ltable->setText(_("Table:"));
 
 	QComboBox *cbtables = new QComboBox(view);
 
@@ -85,7 +94,7 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 	lquery->setAlignment(Qt::AlignCenter);
 
 	QPushButton *bquery = new QPushButton(view);
-	bquery->setText("Query");
+	bquery->setText(_("Query"));
 
 	controls->addWidget(ltable);
 	controls->addWidget(cbtables);
@@ -119,7 +128,7 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 	{
 		bool ret;
 		QString strquery = QInputDialog::getText((QWidget*)table, "",
-		                   "Please enter a new query and press OK to execute it", QLineEdit::Normal, lquery->text(), &ret);
+		                   _("Please enter a new query and press OK to execute it"), QLineEdit::Normal, lquery->text(), &ret);
 
 		if (ret && !strquery.isEmpty())
 		{
@@ -131,7 +140,7 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 	QStringList tlist = dbase.tables();
 
 	if (tlist.isEmpty())
-		QMessageBox::warning((QWidget*)ParentWin, "", "Failed to fetch list of tables. Maybe DB is locked?");
+		QMessageBox::warning((QWidget*)ParentWin, "", _("Failed to fetch list of tables. Maybe DB is locked?"));
 
 	for (int i = 0; i < tlist.count(); i++)
 		cbtables->addItem(tlist[i]);
@@ -241,30 +250,44 @@ int DCPCALL ListSearchText(HWND ListWin, char* SearchString, int SearchParameter
 		int i = view->property("findit").value<int>();
 
 		if (needle != prev)
-		{
 			i = 0;
-		}
 		else if (SearchParameter & lcs_backwards)
-		{
-			if (i > 0)
-				i--;
-		}
+			i--;
 		else
-		{
-			if (i < list.size())
-				i++;
-		}
+			i++;
 
 		if (i >= 0 && i < list.size() && list.at(i))
 		{
 			view->scrollToItem(list.at(i));
 			view->setCurrentItem(list.at(i));
+			view->setProperty("findit", i);
+			return LISTPLUGIN_OK;
 		}
-
-		view->setProperty("findit", i);
-
-		return LISTPLUGIN_OK;
 	}
 
+	QMessageBox::information(view, "", QString::asprintf(_("\"%s\" not found!"), SearchString));
+
 	return LISTPLUGIN_ERROR;
+}
+
+void DCPCALL ListSetDefaultParams(ListDefaultParamStruct* dps)
+{
+	Dl_info dlinfo;
+	static char plg_path[PATH_MAX];
+	const char* loc_dir = "langs";
+
+	memset(&dlinfo, 0, sizeof(dlinfo));
+
+	if (dladdr(plg_path, &dlinfo) != 0)
+	{
+		strncpy(plg_path, dlinfo.dli_fname, PATH_MAX);
+		char *pos = strrchr(plg_path, '/');
+
+		if (pos)
+			strcpy(pos + 1, loc_dir);
+
+		setlocale(LC_ALL, "");
+		bindtextdomain(GETTEXT_PACKAGE, plg_path);
+		textdomain(GETTEXT_PACKAGE);
+	}
 }
