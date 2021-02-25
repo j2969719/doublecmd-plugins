@@ -134,12 +134,12 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 
 	if (json.isObject())
 	{
-		root->setText(2, _("Object"));
+		root->setText(2, _("Root object"));
 		walk_object(json.object(), root);
 	}
 	else if (json.isArray())
 	{
-		root->setText(2, _("Array"));
+		root->setText(2, _("Root array"));
 		walk_array(json.array(), root);
 	}
 

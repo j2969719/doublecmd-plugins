@@ -10,6 +10,8 @@
 #include <QSettings>
 #include <QFileInfo>
 
+#include <QMimeDatabase>
+
 #include <QMessageBox>
 
 #include <dlfcn.h>
@@ -25,9 +27,15 @@ Q_DECLARE_METATYPE(KSyntaxHighlighting::SyntaxHighlighter *)
 
 bool darktheme = false;
 QFont font;
+QMimeDatabase db;
 
 HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 {
+	QMimeType type = db.mimeTypeForFile(QString(FileToLoad));
+
+	if (type.name() == "application/octet-stream")
+		return nullptr;
+
 	QVariant vrepo, vhgl;
 	KSyntaxHighlighting::Repository *repo = new KSyntaxHighlighting::Repository();
 	KSyntaxHighlighting::Definition definition = repo->definitionForFileName(FileToLoad);
@@ -78,6 +86,11 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 
 int DCPCALL ListLoadNext(HWND ParentWin, HWND PluginWin, char* FileToLoad, int ShowFlags)
 {
+	QMimeType type = db.mimeTypeForFile(QString(FileToLoad));
+
+	if (type.name() == "application/octet-stream")
+		return LISTPLUGIN_ERROR;
+
 	QPlainTextEdit *view = (QPlainTextEdit*)PluginWin;
 	KSyntaxHighlighting::Repository *repo = view->property("repo").value<KSyntaxHighlighting::Repository *>();
 	KSyntaxHighlighting::SyntaxHighlighter *highlighter = view->property("hgl").value<KSyntaxHighlighting::SyntaxHighlighter *>();

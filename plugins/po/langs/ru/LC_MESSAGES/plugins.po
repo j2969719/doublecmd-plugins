@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-02-23 15:51+0300\n"
-"PO-Revision-Date: 2021-02-23 15:51+0300\n"
+"POT-Creation-Date: 2021-02-25 18:58+0300\n"
+"PO-Revision-Date: 2021-02-25 19:00+0300\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "Language: ru\n"
@@ -39,11 +39,11 @@ msgstr "Послать CTRL+Z"
 msgid "hit ctrl+q or type \"exit\" to remove grab"
 msgstr "жми ctrl+q или введи \"exit\", чтобы отпустило"
 
-#: ../wlx/jsonview_qt5/src/plugin.cpp:54 ../wlx/jsonview_qt5/src/plugin.cpp:137
+#: ../wlx/jsonview_qt5/src/plugin.cpp:54
 msgid "Object"
 msgstr ""
 
-#: ../wlx/jsonview_qt5/src/plugin.cpp:61 ../wlx/jsonview_qt5/src/plugin.cpp:142
+#: ../wlx/jsonview_qt5/src/plugin.cpp:61
 msgid "Array"
 msgstr ""
 
@@ -75,6 +75,14 @@ msgstr ""
 msgid "Undefined"
 msgstr ""
 
+#: ../wlx/jsonview_qt5/src/plugin.cpp:137
+msgid "Root object"
+msgstr ""
+
+#: ../wlx/jsonview_qt5/src/plugin.cpp:142
+msgid "Root array"
+msgstr ""
+
 #: ../wlx/jsonview_qt5/src/plugin.cpp:160
 msgid "Key"
 msgstr ""
@@ -92,7 +100,7 @@ msgstr ""
 #: ../wlx/sqlviewer_qt5/src/plugin.cpp:268
 #: ../wlx/yet_another_vte_plugin/src/plugin.c:288
 #: ../wlx/gtksourceview/src/gtksourceview.c:709
-#: ../wlx/syntax-highlighting_qt/src/plugin.cpp:126
+#: ../wlx/syntax-highlighting_qt/src/plugin.cpp:139
 #: ../wlx/wlxwebkit_qt5_crap/src/wlxwebkit.cpp:111
 #: ../wlx/fileinfo/src/fileinfo.c:373 ../wlx/mimescript/src/mimescriptwlx.c:289
 #: ../wlx/wlxwebkit_qt5/src/wlxwebkit.cpp:57
@@ -366,14 +374,8 @@ msgstr "не удалось запустить ag..."
 
 #: ../dsx/recollq_crap/src/plugin.c:72
 msgid "the search text was not specified"
-msgstr ""
+msgstr "искомый текст не указан"
 
 #: ../dsx/pacman_pkg_list/src/plugin.c:96
 msgid "enter pkgname"
 msgstr "введи pkgname"
-
-#~ msgid "Send CRTL+C"
-#~ msgstr "Послать CTRL+C"
-
-#~ msgid "failed to launch locate..."
-#~ msgstr "не удалось запустить locate..."
