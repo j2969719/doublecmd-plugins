@@ -24,6 +24,7 @@
 static bool g_enca = true;
 static bool g_resize = false;
 static bool g_readall = false;
+static bool g_quoted = true;
 static QString g_lang;
 
 HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
@@ -127,10 +128,45 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 		view->insertRow(row);
 		line = file.readLine();
 
+		QStringList rawlist;
+
 		if (codec)
-			list = codec->toUnicode(line).split(QLatin1Char(separator));
+			rawlist = codec->toUnicode(line).split(QLatin1Char(separator));
 		else
-			list = QString(line).split(QLatin1Char(separator));
+			rawlist = QString(line).split(QLatin1Char(separator));
+
+		list.clear();
+
+		if (!g_quoted)
+			list = rawlist;
+		else
+		{
+			for (int c = 0; c < rawlist.size(); ++c)
+			{
+				const QString itm = rawlist.at(c);
+
+				if (!itm.isEmpty() && itm.at(0) == '"')
+				{
+					QString temp(itm.trimmed());
+
+					for (int x = c + 1; x < rawlist.size(); x++)
+					{
+						const QString nitm = rawlist.at(x);
+
+						if (!nitm.isEmpty() && nitm.at(nitm.size() - 1) == '"')
+						{
+							temp = rawlist.mid(c, x - c + 1).join(QLatin1Char(separator));
+							c = x;
+							break;
+						}
+					}
+
+					list.append(temp);
+				}
+				else
+					list.append(rawlist.at(c).trimmed());
+			}
+		}
 
 		if (list.size() > columns)
 		{
@@ -293,6 +329,11 @@ void DCPCALL ListSetDefaultParams(ListDefaultParamStruct* dps)
 		settings.setValue("csvviewer/enca_readall", false);
 	else
 		g_readall = settings.value("csvviewer/enca_readall").toBool();
+
+	if (!settings.contains("csvviewer/doublequoted"))
+		settings.setValue("csvviewer/doublequoted", true);
+	else
+		g_quoted = settings.value("csvviewer/doublequoted").toBool();
 
 	Dl_info dlinfo;
 	static char plg_path[PATH_MAX];
