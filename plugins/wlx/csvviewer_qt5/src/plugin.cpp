@@ -149,7 +149,7 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 				{
 					QString temp(itm.trimmed());
 
-					if (itm.back() == '"' && itm.count(QLatin1Char('"')) % 2 == 0)
+					if (itm.back() == '"' && itm.count(QLatin1Char('"')) > 3 && itm.count(QLatin1Char('"')) % 2 == 0)
 						temp = QString(itm).remove(0, 1).remove(-1, 1);
 					else
 					{
