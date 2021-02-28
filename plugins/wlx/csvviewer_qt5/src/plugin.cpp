@@ -149,15 +149,24 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 				{
 					QString temp(itm.trimmed());
 
-					for (int x = c + 1; x < rawlist.size(); x++)
+					if (itm.back() == '"' && itm.count(QLatin1Char('"')) % 2 == 0)
+						temp = QString(itm).remove(0, 1).remove(-1, 1);
+					else
 					{
-						const QString nitm = rawlist.at(x);
-
-						if (!nitm.isEmpty() && nitm.back() == '"')
+						for (int x = c + 1; x < rawlist.size(); x++)
 						{
-							temp = rawlist.mid(c, x - c + 1).join(QLatin1Char(separator)).remove(0,1).remove(-1,1);
-							c = x;
-							break;
+							const QString nitm = rawlist.at(x);
+
+							if (!nitm.isEmpty() && nitm.back() == '"')
+							{
+								temp = rawlist.mid(c, x - c + 1).join(QLatin1Char(separator)).remove(0, 1).remove(-1, 1);
+
+								if (temp.count(QLatin1Char('"')) % 2 == 0)
+								{
+									c = x;
+									break;
+								}
+							}
 						}
 					}
 
@@ -165,6 +174,8 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 				}
 				else
 					list.append(rawlist.at(c).trimmed());
+
+				list.last().replace("\"\"", "\"");
 			}
 		}
 
