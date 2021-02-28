@@ -145,7 +145,7 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 			{
 				const QString itm = rawlist.at(c);
 
-				if (!itm.isEmpty() && itm.at(0) == '"')
+				if (!itm.isEmpty() && itm.front() == '"')
 				{
 					QString temp(itm.trimmed());
 
@@ -153,9 +153,9 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 					{
 						const QString nitm = rawlist.at(x);
 
-						if (!nitm.isEmpty() && nitm.at(nitm.size() - 1) == '"')
+						if (!nitm.isEmpty() && nitm.back() == '"')
 						{
-							temp = rawlist.mid(c, x - c + 1).join(QLatin1Char(separator));
+							temp = rawlist.mid(c, x - c + 1).join(QLatin1Char(separator)).remove(0,1).remove(-1,1);
 							c = x;
 							break;
 						}
