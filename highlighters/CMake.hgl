@@ -2,7 +2,7 @@
   <Info>
     <General Name="CMake*" Extensions="CMAKE"/>
     <Author Name="Skif_off" Email="" Web="" Copyright="" Company="" Remark="Based on '_cmake.coder' for AkelPad (CMake 3.8.2)"/>
-    <Version Version="1" Revision="3" Date="44013,2055439352"/>
+    <Version Version="1" Revision="4" Date="44257,0588672685"/>
     <History>
     </History>
     <Sample>
@@ -30,7 +30,6 @@
       <word value="while"/>
     </Keywords>
     <Keywords Name="Symbols" Attributes="13382297,16777215;False:False." Style="">
-      <word value="#"/>
       <word value="("/>
       <word value=")"/>
       <word value="{"/>
