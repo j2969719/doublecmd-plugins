@@ -135,7 +135,7 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 			if (playlist->mediaObject()->metaData(keys[i]).isValid())
 			{
 				QString str;
-				str.append(keys[i]);
+				str.append(QString(keys[i]).replace(QRegularExpression("([a-z])([A-Z])"), "\\1 \\2"));
 				str.append(": ");
 
 				if (playlist->mediaObject()->metaData(keys[i]).canConvert(QMetaType::QString))
