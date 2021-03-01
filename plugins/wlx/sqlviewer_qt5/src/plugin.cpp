@@ -249,8 +249,13 @@ int DCPCALL ListSearchText(HWND ListWin, char* SearchString, int SearchParameter
 	{
 		int i = view->property("findit").value<int>();
 
-		if (needle != prev)
-			i = 0;
+		if (needle != prev || SearchParameter & lcs_findfirst)
+		{
+			if (SearchParameter & lcs_backwards)
+				i = list.size() - 1;
+			else
+				i = 0;
+		}
 		else if (SearchParameter & lcs_backwards)
 			i--;
 		else

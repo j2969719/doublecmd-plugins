@@ -682,7 +682,9 @@ int DCPCALL ListSearchText(HWND ListWin, char* SearchString, int SearchParameter
   text = gtk_text_view_get_buffer (GTK_TEXT_VIEW (data->streams_list));
   last_pos = gtk_text_buffer_get_mark (text, "last_pos");
 
-  if (last_pos == NULL)
+  if (SearchParameter & lcs_findfirst && SearchParameter & lcs_backwards)
+    gtk_text_buffer_get_end_iter (text, &iter);
+  else if (last_pos == NULL || SearchParameter & lcs_findfirst)
     gtk_text_buffer_get_start_iter (text, &iter);
   else
     gtk_text_buffer_get_iter_at_mark (text, &iter, last_pos);

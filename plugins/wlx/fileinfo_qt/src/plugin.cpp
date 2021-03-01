@@ -84,6 +84,13 @@ int DCPCALL ListSearchText(HWND ListWin, char* SearchString, int SearchParameter
 
 	QPlainTextEdit *view = (QPlainTextEdit*)ListWin;
 
+	if (SearchParameter & lcs_findfirst)
+	{
+		QTextCursor cursor = view->textCursor();
+		cursor.movePosition(SearchParameter & lcs_backwards ? QTextCursor::End : QTextCursor::Start);
+		view->setTextCursor(cursor);
+	}
+
 	if (view->find(SearchString, sflags))
 		return LISTPLUGIN_OK;
 	else
