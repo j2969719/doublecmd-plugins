@@ -27,6 +27,63 @@ static bool g_readall = false;
 static bool g_quoted = true;
 static QString g_lang;
 
+
+static QStringList parse_line(QByteArray line, QTextCodec *codec, char separator)
+{
+	QStringList list, rawlist;
+
+	if (codec)
+		rawlist = codec->toUnicode(line).split(QLatin1Char(separator));
+	else
+		rawlist = QString(line).split(QLatin1Char(separator));
+
+	rawlist.last().remove(-1, 1);
+
+	if (!g_quoted || separator == '\t')
+		list = rawlist;
+	else
+	{
+		for (int c = 0; c < rawlist.size(); ++c)
+		{
+			const QString itm = rawlist.at(c);
+
+			if (!itm.isEmpty() && itm.front() == '"')
+			{
+				QString temp(itm.trimmed());
+
+				if (itm.back() == '"' && itm.count(QLatin1Char('"')) > 3 && itm.count(QLatin1Char('"')) % 2 == 0)
+					temp = QString(itm).remove(0, 1).remove(-1, 1);
+				else
+				{
+					for (int x = c + 1; x < rawlist.size(); x++)
+					{
+						const QString nitm = rawlist.at(x);
+
+						if (!nitm.isEmpty() && nitm.back() == '"')
+						{
+							temp = rawlist.mid(c, x - c + 1).join(QLatin1Char(separator)).remove(0, 1).remove(-1, 1);
+
+							if (temp.count(QLatin1Char('"')) % 2 == 0)
+							{
+								c = x;
+								break;
+							}
+						}
+					}
+				}
+
+				list.append(temp);
+			}
+			else
+				list.append(rawlist.at(c).trimmed());
+
+			list.last().replace("\"\"", "\"");
+		}
+	}
+
+	return list;
+}
+
 HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 {
 	char separator;
@@ -41,7 +98,6 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 
 	if (g_enca)
 	{
-
 		if (g_readall)
 			line = file.readAll();
 		else
@@ -96,11 +152,7 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 	{
 		separator = seps.at(i);
 
-		if (codec)
-			header = codec->toUnicode(line).split(QLatin1Char(separator));
-		else
-			header = QString(line).split(QLatin1Char(separator));
-
+		header = parse_line(line, codec, separator);
 		columns = header.size();
 
 		if (columns > 1)
@@ -126,58 +178,7 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 	while (!file.atEnd())
 	{
 		view->insertRow(row);
-		line = file.readLine();
-
-		QStringList rawlist;
-
-		if (codec)
-			rawlist = codec->toUnicode(line).split(QLatin1Char(separator));
-		else
-			rawlist = QString(line).split(QLatin1Char(separator));
-
-		list.clear();
-
-		if (!g_quoted)
-			list = rawlist;
-		else
-		{
-			for (int c = 0; c < rawlist.size(); ++c)
-			{
-				const QString itm = rawlist.at(c);
-
-				if (!itm.isEmpty() && itm.front() == '"')
-				{
-					QString temp(itm.trimmed());
-
-					if (itm.back() == '"' && itm.count(QLatin1Char('"')) > 3 && itm.count(QLatin1Char('"')) % 2 == 0)
-						temp = QString(itm).remove(0, 1).remove(-1, 1);
-					else
-					{
-						for (int x = c + 1; x < rawlist.size(); x++)
-						{
-							const QString nitm = rawlist.at(x);
-
-							if (!nitm.isEmpty() && nitm.back() == '"')
-							{
-								temp = rawlist.mid(c, x - c + 1).join(QLatin1Char(separator)).remove(0, 1).remove(-1, 1);
-
-								if (temp.count(QLatin1Char('"')) % 2 == 0)
-								{
-									c = x;
-									break;
-								}
-							}
-						}
-					}
-
-					list.append(temp);
-				}
-				else
-					list.append(rawlist.at(c).trimmed());
-
-				list.last().replace("\"\"", "\"");
-			}
-		}
+		list = parse_line(file.readLine(), codec, separator);
 
 		if (list.size() > columns)
 		{
