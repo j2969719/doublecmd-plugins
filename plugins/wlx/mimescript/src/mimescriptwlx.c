@@ -258,10 +258,13 @@ int DCPCALL ListSearchText(HWND ListWin, char* SearchString, int SearchParameter
 	sBuf = g_object_get_data(G_OBJECT(ListWin), "txtbuf");
 	last_pos = gtk_text_buffer_get_mark(GTK_TEXT_BUFFER(sBuf), "last_pos");
 
-	if (SearchParameter & lcs_findfirst && SearchParameter & lcs_backwards)
-		gtk_text_buffer_get_end_iter(GTK_TEXT_BUFFER(sBuf), &iter);
-	else if (last_pos == NULL || SearchParameter & lcs_findfirst)
-		gtk_text_buffer_get_start_iter(GTK_TEXT_BUFFER(sBuf), &iter);
+	if (last_pos == NULL || SearchParameter & lcs_findfirst)
+	{
+		if (SearchParameter & lcs_backwards)
+			gtk_text_buffer_get_end_iter(GTK_TEXT_BUFFER(sBuf), &iter);
+		else
+			gtk_text_buffer_get_start_iter(GTK_TEXT_BUFFER(sBuf), &iter);
+	}
 	else
 		gtk_text_buffer_get_iter_at_mark(GTK_TEXT_BUFFER(sBuf), &iter, last_pos);
 

@@ -135,7 +135,11 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 		}
 	}
 
+	if (!buffer)
+		return NULL;
+
 	lines = g_regex_split_simple("[\r\n]+", buffer, 0, 0);
+	g_free(buffer);
 
 	if (!lines)
 		return NULL;

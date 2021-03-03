@@ -682,10 +682,13 @@ int DCPCALL ListSearchText(HWND ListWin, char* SearchString, int SearchParameter
   text = gtk_text_view_get_buffer (GTK_TEXT_VIEW (data->streams_list));
   last_pos = gtk_text_buffer_get_mark (text, "last_pos");
 
-  if (SearchParameter & lcs_findfirst && SearchParameter & lcs_backwards)
-    gtk_text_buffer_get_end_iter (text, &iter);
-  else if (last_pos == NULL || SearchParameter & lcs_findfirst)
-    gtk_text_buffer_get_start_iter (text, &iter);
+
+  if (last_pos == NULL || SearchParameter & lcs_findfirst) {
+    if (SearchParameter & lcs_backwards)
+      gtk_text_buffer_get_end_iter (text, &iter);
+    else
+      gtk_text_buffer_get_start_iter (text, &iter);
+  }
   else
     gtk_text_buffer_get_iter_at_mark (text, &iter, last_pos);
 
@@ -694,7 +697,7 @@ int DCPCALL ListSearchText(HWND ListWin, char* SearchString, int SearchParameter
   else
     found = gtk_text_iter_forward_search (&iter, SearchString, GTK_TEXT_SEARCH_TEXT_ONLY, &mstart, &mend, NULL);
 
-  if (found){
+  if (found) {
     gtk_text_buffer_select_range (text, &mstart, &mend);
     gtk_text_buffer_create_mark (text, "last_pos", &mend, FALSE);
     gtk_text_view_scroll_mark_onscreen (GTK_TEXT_VIEW (data->streams_list),
