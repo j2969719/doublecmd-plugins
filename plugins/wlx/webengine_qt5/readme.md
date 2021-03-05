@@ -1,6 +1,6 @@
 webengine_qt5
 ========
-Even more "lightweight" HTML viewer.
+This plugin allows you to view HTML/XHTML files. It is based on Blink engine.
 
 ![plug-preview](https://i.imgur.com/djk3VVU.png)
 
