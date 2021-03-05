@@ -480,4 +480,4 @@ Full text search using [Recoll](https://www.lesbonscomptes.com/recoll/).
 Pattern matching using `the_silver_searcher`. FileMask also accepts only regexp(if filename pattern is specified, search for part of filename option must be disabled).
 
 - [tracker_textsearch](plugins/dsx/tracker_textsearch)<br>
-Full text search using [Tracker](https://wiki.gnome.org/Projects/Tracker). 
+Full text search using [Tracker](https://wiki.gnome.org/Projects/Tracker) (supported only tracker2 legacy version). 
