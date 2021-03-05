@@ -256,6 +256,8 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	gtk_container_add(GTK_CONTAINER(scroll), list);
 
 	gtk_widget_show_all(gFix);
+	gtk_widget_grab_focus(scroll);
+
 	return gFix;
 
 }
@@ -275,39 +277,48 @@ int DCPCALL ListSearchDialog(HWND ListWin, int FindNext)
 	return LISTPLUGIN_OK;
 }
 
+int DCPCALL ListSendCommand(HWND ListWin, int Command, int Parameter)
+{
+	if (Command == lc_copy)
+		gtk_clipboard_set_text(gtk_clipboard_get(GDK_SELECTION_CLIPBOARD),
+		                       gtk_clipboard_wait_for_text(gtk_clipboard_get(GDK_SELECTION_PRIMARY)), -1);
+
+	return LISTPLUGIN_OK;
+}
+
 void DCPCALL ListSetDefaultParams(ListDefaultParamStruct* dps)
 {
 	GKeyFile *cfg;
-	char gCfgPath[PATH_MAX];
+	char cfg_path[PATH_MAX];
 
-	g_strlcpy(gCfgPath, dps->DefaultIniName, PATH_MAX);
+	g_strlcpy(cfg_path, dps->DefaultIniName, PATH_MAX);
 
-	char *pos = strrchr(gCfgPath, '/');
+	char *pos = strrchr(cfg_path, '/');
 
 	if (pos)
 		strcpy(pos + 1, "j2969719.ini");
 
 	cfg = g_key_file_new();
 
-	g_key_file_load_from_file(cfg, gCfgPath, G_KEY_FILE_KEEP_COMMENTS, NULL);
+	g_key_file_load_from_file(cfg, cfg_path, G_KEY_FILE_KEEP_COMMENTS, NULL);
 
-	if (!g_key_file_has_key(cfg, "csvviewer", "enca", NULL))
+	if (!g_key_file_has_key(cfg, "csvview", "enca", NULL))
 	{
-		g_key_file_set_boolean(cfg, "csvviewer", "enca", use_iconv);
-		g_key_file_save_to_file(cfg, gCfgPath, NULL);
+		g_key_file_set_boolean(cfg, "csvview", "enca", use_iconv);
+		g_key_file_save_to_file(cfg, cfg_path, NULL);
 	}
 	else
-		use_iconv = g_key_file_get_boolean(cfg, "csvviewer", "enca", NULL);
+		use_iconv = g_key_file_get_boolean(cfg, "csvview", "enca", NULL);
 
-	if (!g_key_file_has_key(cfg, "csvviewer", "enca_lang", NULL))
+	if (!g_key_file_has_key(cfg, "csvview", "enca_lang", NULL))
 	{
 		snprintf(lang, 3, "%s", setlocale(LC_ALL, ""));
-		g_key_file_set_string(cfg, "csvviewer", "enca_lang", lang);
-		g_key_file_save_to_file(cfg, gCfgPath, NULL);
+		g_key_file_set_string(cfg, "csvview", "enca_lang", lang);
+		g_key_file_save_to_file(cfg, cfg_path, NULL);
 	}
 	else
 	{
-		gchar *val = g_key_file_get_string(cfg, "csvviewer", "enca_lang", NULL);
+		gchar *val = g_key_file_get_string(cfg, "csvview", "enca_lang", NULL);
 
 		if (val)
 		{

@@ -20,6 +20,7 @@ static int  g_width = 200;
 static bool g_resize = false;
 static bool g_expand = true;
 static bool g_sorting = false;
+static bool g_filename = true;
 static void check_value(const QJsonValue value, QTreeWidgetItem *item);
 
 static void walk_array(const QJsonArray array, QTreeWidgetItem *item)
@@ -129,17 +130,20 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 	view->setColumnCount(3);
 
 	QTreeWidgetItem *root = new QTreeWidgetItem(view);
-	root->setText(0, fi.fileName());
-	root->setToolTip(0, fi.fileName());
+
+	if (g_filename)
+		root->setText(0, fi.fileName());
+	else
+		root->setText(0,  _("Root"));
 
 	if (json.isObject())
 	{
-		root->setText(2, _("Root (Object)"));
+		root->setText(2, _("Object"));
 		walk_object(json.object(), root);
 	}
 	else if (json.isArray())
 	{
-		root->setText(2, _("Root (Array)"));
+		root->setText(2, _("Array"));
 		walk_array(json.array(), root);
 	}
 
@@ -157,7 +161,7 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 	}
 
 	QStringList headers;
-	headers << _("Key") << _("Value") << _("Type");
+	headers << _("Node") << _("Value") << _("Type");
 	view->setHeaderLabels(headers);
 
 	view->setSelectionMode(QAbstractItemView::SingleSelection);
@@ -248,17 +252,17 @@ void DCPCALL ListSetDefaultParams(ListDefaultParamStruct* dps)
 	QSettings settings(cfgpath, QSettings::IniFormat);
 
 	if (!settings.contains("jsonview/resize_columns"))
-		settings.setValue("jsonview/resize_columns", false);
+		settings.setValue("jsonview/resize_columns", g_resize);
 	else
 		g_resize = settings.value("jsonview/resize_columns").toBool();
 
 	if (!settings.contains("jsonview/tree_expand"))
-		settings.setValue("jsonview/tree_expand", true);
+		settings.setValue("jsonview/tree_expand", g_expand);
 	else
 		g_expand = settings.value("jsonview/tree_expand").toBool();
 
 	if (!settings.contains("jsonview/column_width"))
-		settings.setValue("jsonview/column_width", 200);
+		settings.setValue("jsonview/column_width", g_width);
 	else
 	{
 		g_width = settings.value("jsonview/column_width").toInt();
@@ -271,9 +275,14 @@ void DCPCALL ListSetDefaultParams(ListDefaultParamStruct* dps)
 	}
 
 	if (!settings.contains("jsonview/sorting"))
-		settings.setValue("jsonview/sorting", false);
+		settings.setValue("jsonview/sorting", g_sorting);
 	else
 		g_sorting = settings.value("jsonview/sorting").toBool();
+
+	if (!settings.contains("jsonview/show_filename"))
+		settings.setValue("jsonview/show_filename", g_filename);
+	else
+		g_filename = settings.value("jsonview/show_filename").toBool();
 
 	Dl_info dlinfo;
 	static char plg_path[PATH_MAX];

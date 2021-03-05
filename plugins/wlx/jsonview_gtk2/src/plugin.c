@@ -1,5 +1,6 @@
 #define _GNU_SOURCE
 #include <gtk/gtk.h>
+#include <sys/stat.h>
 #include <json-glib/json-glib.h>
 #include "wlxplugin.h"
 
@@ -25,6 +26,9 @@ enum
 	N_COLS
 };
 
+gboolean g_expand = TRUE;
+gboolean g_sorting = FALSE;
+gboolean g_filename = TRUE;
 static void check_value(JsonNode *node, CustomData *data, GtkTreeIter parent);
 
 static void walk_array(JsonArray *array, guint index_, JsonNode *element_node, gpointer user_data)
@@ -115,6 +119,10 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	JsonNode *root;
 	GError *err = NULL;
 	CustomData *data;
+	struct stat st;
+
+	if (lstat(FileToLoad, &st) == -1 || st.st_size == 0)
+		return NULL;
 
 	parser = json_parser_new();
 	json_parser_load_from_file(parser, FileToLoad, &err);
@@ -129,7 +137,16 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	data = g_new0(CustomData, 1);
 	data->store = gtk_tree_store_new(N_COLS, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING);
 	gtk_tree_store_append(data->store, &data->child, NULL);
-	gtk_tree_store_set(data->store, &data->child, KEY, _("Root"), -1);
+
+	if (g_filename)
+	{
+		gchar *fname = g_path_get_basename(FileToLoad);
+		gtk_tree_store_set(data->store, &data->child, KEY, fname, -1);
+		g_free(fname);
+	}
+	else
+		gtk_tree_store_set(data->store, &data->child, KEY, _("Root"), -1);
+
 	check_value(json_parser_get_root(parser), data, data->child);
 
 	g_object_unref(parser);
@@ -147,8 +164,11 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	g_value_set_boolean(&val, TRUE);
 
 	column = gtk_tree_view_column_new();
-	gtk_tree_view_column_set_title(column, _("Key"));
+	gtk_tree_view_column_set_title(column, _("Node"));
 	gtk_tree_view_append_column(GTK_TREE_VIEW(data->tree), column);
+
+	if (g_sorting)
+		gtk_tree_view_column_set_sort_column_id(column, KEY);
 
 	renderer = gtk_cell_renderer_text_new();
 	gtk_tree_view_column_pack_start(column, renderer, TRUE);
@@ -159,6 +179,9 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	gtk_tree_view_column_set_title(column, _("Value"));
 	gtk_tree_view_append_column(GTK_TREE_VIEW(data->tree), column);
 
+	if (g_sorting)
+		gtk_tree_view_column_set_sort_column_id(column, VALUE);
+
 	renderer = gtk_cell_renderer_text_new();
 	gtk_tree_view_column_pack_start(column, renderer, TRUE);
 	gtk_tree_view_column_add_attribute(column, renderer, "text", VALUE);
@@ -168,6 +191,9 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	gtk_tree_view_column_set_title(column, _("Type"));
 	gtk_tree_view_append_column(GTK_TREE_VIEW(data->tree), column);
 
+	if (g_sorting)
+		gtk_tree_view_column_set_sort_column_id(column, TYPE);
+
 	renderer = gtk_cell_renderer_text_new();
 	gtk_tree_view_column_pack_start(column, renderer, TRUE);
 	gtk_tree_view_column_add_attribute(column, renderer, "text", TYPE);
@@ -175,7 +201,9 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scroll), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
 	gtk_container_add(GTK_CONTAINER(scroll), data->tree);
 
-	gtk_tree_view_expand_all(GTK_TREE_VIEW(data->tree));
+	if (g_expand)
+		gtk_tree_view_expand_all(GTK_TREE_VIEW(data->tree));
+
 	g_value_unset(&val);
 	gtk_widget_show_all(gFix);
 	gtk_widget_grab_focus(scroll);
@@ -189,6 +217,10 @@ int DCPCALL ListLoadNext(HWND ParentWin, HWND PluginWin, char* FileToLoad, int S
 	JsonParser *parser;
 	JsonNode *root;
 	GError *err = NULL;
+	struct stat st;
+
+	if (lstat(FileToLoad, &st) == -1 || st.st_size == 0)
+		return LISTPLUGIN_ERROR;
 
 	parser = json_parser_new();
 	json_parser_load_from_file(parser, FileToLoad, &err);
@@ -204,9 +236,21 @@ int DCPCALL ListLoadNext(HWND ParentWin, HWND PluginWin, char* FileToLoad, int S
 	gtk_tree_store_clear(data->store);
 
 	gtk_tree_store_append(data->store, &data->child, NULL);
-	gtk_tree_store_set(data->store, &data->child, KEY, _("Root"), -1);
+
+	if (g_filename)
+	{
+		gchar *fname = g_path_get_basename(FileToLoad);
+		gtk_tree_store_set(data->store, &data->child, KEY, fname, -1);
+		g_free(fname);
+	}
+	else
+		gtk_tree_store_set(data->store, &data->child, KEY, _("Root"), -1);
+
 	check_value(json_parser_get_root(parser), data, data->child);
-	gtk_tree_view_expand_all(GTK_TREE_VIEW(data->tree));
+
+	if (g_expand)
+		gtk_tree_view_expand_all(GTK_TREE_VIEW(data->tree));
+
 	gtk_tree_view_columns_autosize(GTK_TREE_VIEW(data->tree));
 
 	g_object_unref(parser);
@@ -225,8 +269,19 @@ int DCPCALL ListSearchDialog(HWND ListWin, int FindNext)
 	return LISTPLUGIN_OK;
 }
 
+int DCPCALL ListSendCommand(HWND ListWin, int Command, int Parameter)
+{
+	if (Command == lc_copy)
+		gtk_clipboard_set_text(gtk_clipboard_get(GDK_SELECTION_CLIPBOARD),
+		                       gtk_clipboard_wait_for_text(gtk_clipboard_get(GDK_SELECTION_PRIMARY)), -1);
+
+	return LISTPLUGIN_OK;
+}
+
 void DCPCALL ListSetDefaultParams(ListDefaultParamStruct* dps)
 {
+	GKeyFile *cfg;
+	char cfg_path[PATH_MAX];
 	Dl_info dlinfo;
 	const gchar* dir_f = "%s/langs";
 
@@ -242,4 +297,41 @@ void DCPCALL ListSetDefaultParams(ListDefaultParamStruct* dps)
 		g_free(langdir);
 		textdomain(GETTEXT_PACKAGE);
 	}
+
+	g_strlcpy(cfg_path, dps->DefaultIniName, PATH_MAX);
+
+	char *pos = strrchr(cfg_path, '/');
+
+	if (pos)
+		strcpy(pos + 1, "j2969719.ini");
+
+	cfg = g_key_file_new();
+
+	g_key_file_load_from_file(cfg, cfg_path, G_KEY_FILE_KEEP_COMMENTS, NULL);
+
+	if (!g_key_file_has_key(cfg, "jsonview", "tree_expand", NULL))
+	{
+		g_key_file_set_boolean(cfg, "jsonview", "tree_expand", g_expand);
+		g_key_file_save_to_file(cfg, cfg_path, NULL);
+	}
+	else
+		g_expand = g_key_file_get_boolean(cfg, "jsonview", "tree_expand", NULL);
+
+	if (!g_key_file_has_key(cfg, "jsonview", "sorting", NULL))
+	{
+		g_key_file_set_boolean(cfg, "jsonview", "sorting", g_sorting);
+		g_key_file_save_to_file(cfg, cfg_path, NULL);
+	}
+	else
+		g_sorting = g_key_file_get_boolean(cfg, "jsonview", "sorting", NULL);
+
+	if (!g_key_file_has_key(cfg, "jsonview", "show_filename", NULL))
+	{
+		g_key_file_set_boolean(cfg, "jsonview", "show_filename", g_filename);
+		g_key_file_save_to_file(cfg, cfg_path, NULL);
+	}
+	else
+		g_filename = g_key_file_get_boolean(cfg, "jsonview", "show_filename", NULL);
+
+	g_key_file_free(cfg);
 }

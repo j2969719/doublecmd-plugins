@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-03-04 21:13+0300\n"
-"PO-Revision-Date: 2021-03-04 21:14+0300\n"
+"POT-Creation-Date: 2021-03-05 12:05+0300\n"
+"PO-Revision-Date: 2021-03-05 12:06+0300\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "Language: ru\n"
@@ -39,65 +39,64 @@ msgstr "Послать CTRL+Z"
 msgid "hit ctrl+q or type \"exit\" to remove grab"
 msgstr "жми ctrl+q или введи \"exit\", чтобы отпустило"
 
-#: ../wlx/jsonview_qt5/src/plugin.cpp:54 ../wlx/jsonview_gtk2/src/plugin.c:60
+#: ../wlx/jsonview_qt5/src/plugin.cpp:55 ../wlx/jsonview_qt5/src/plugin.cpp:141
+#: ../wlx/jsonview_gtk2/src/plugin.c:64
 msgid "Object"
 msgstr ""
 
-#: ../wlx/jsonview_qt5/src/plugin.cpp:61 ../wlx/jsonview_gtk2/src/plugin.c:66
+#: ../wlx/jsonview_qt5/src/plugin.cpp:62 ../wlx/jsonview_qt5/src/plugin.cpp:146
+#: ../wlx/jsonview_gtk2/src/plugin.c:70
 msgid "Array"
 msgstr ""
 
-#: ../wlx/jsonview_qt5/src/plugin.cpp:68 ../wlx/jsonview_gtk2/src/plugin.c:74
+#: ../wlx/jsonview_qt5/src/plugin.cpp:69 ../wlx/jsonview_gtk2/src/plugin.c:78
 msgid "String"
 msgstr ""
 
-#: ../wlx/jsonview_qt5/src/plugin.cpp:76 ../wlx/jsonview_gtk2/src/plugin.c:88
+#: ../wlx/jsonview_qt5/src/plugin.cpp:77 ../wlx/jsonview_gtk2/src/plugin.c:92
 msgid "Double"
 msgstr ""
 
-#: ../wlx/jsonview_qt5/src/plugin.cpp:84 ../wlx/jsonview_gtk2/src/plugin.c:95
+#: ../wlx/jsonview_qt5/src/plugin.cpp:85 ../wlx/jsonview_gtk2/src/plugin.c:99
 msgid "Boolean"
 msgstr ""
 
-#: ../wlx/jsonview_qt5/src/plugin.cpp:87 ../wlx/jsonview_gtk2/src/plugin.c:92
+#: ../wlx/jsonview_qt5/src/plugin.cpp:88 ../wlx/jsonview_gtk2/src/plugin.c:96
 msgid "True"
 msgstr ""
 
-#: ../wlx/jsonview_qt5/src/plugin.cpp:89 ../wlx/jsonview_gtk2/src/plugin.c:92
+#: ../wlx/jsonview_qt5/src/plugin.cpp:90 ../wlx/jsonview_gtk2/src/plugin.c:96
 msgid "False"
 msgstr ""
 
-#: ../wlx/jsonview_qt5/src/plugin.cpp:96 ../wlx/jsonview_gtk2/src/plugin.c:103
+#: ../wlx/jsonview_qt5/src/plugin.cpp:97 ../wlx/jsonview_gtk2/src/plugin.c:107
 msgid "Null"
 msgstr ""
 
-#: ../wlx/jsonview_qt5/src/plugin.cpp:102 ../wlx/jsonview_gtk2/src/plugin.c:98
+#: ../wlx/jsonview_qt5/src/plugin.cpp:103 ../wlx/jsonview_gtk2/src/plugin.c:102
 msgid "Undefined"
 msgstr ""
 
-#: ../wlx/jsonview_qt5/src/plugin.cpp:137
-msgid "Root (Object)"
+#: ../wlx/jsonview_qt5/src/plugin.cpp:137 ../wlx/jsonview_gtk2/src/plugin.c:148
+#: ../wlx/jsonview_gtk2/src/plugin.c:247
+msgid "Root"
 msgstr ""
 
-#: ../wlx/jsonview_qt5/src/plugin.cpp:142
-msgid "Root (Array)"
+#: ../wlx/jsonview_qt5/src/plugin.cpp:164 ../wlx/jsonview_gtk2/src/plugin.c:167
+msgid "Node"
 msgstr ""
 
-#: ../wlx/jsonview_qt5/src/plugin.cpp:160 ../wlx/jsonview_gtk2/src/plugin.c:150
-msgid "Key"
-msgstr ""
-
-#: ../wlx/jsonview_qt5/src/plugin.cpp:160 ../wlx/jsonview_gtk2/src/plugin.c:159
+#: ../wlx/jsonview_qt5/src/plugin.cpp:164 ../wlx/jsonview_gtk2/src/plugin.c:179
 msgid "Value"
 msgstr ""
 
-#: ../wlx/jsonview_qt5/src/plugin.cpp:160 ../wlx/jsonview_gtk2/src/plugin.c:168
+#: ../wlx/jsonview_qt5/src/plugin.cpp:164 ../wlx/jsonview_gtk2/src/plugin.c:191
 msgid "Type"
 msgstr ""
 
-#: ../wlx/jsonview_qt5/src/plugin.cpp:239 ../wlx/fileinfo_qt/src/plugin.cpp:97
-#: ../wlx/wlxwebkit/src/wlxwebkit.c:117 ../wlx/csvviewer_qt5/src/plugin.cpp:310
-#: ../wlx/sqlviewer_qt5/src/plugin.cpp:273
+#: ../wlx/jsonview_qt5/src/plugin.cpp:243 ../wlx/csvview_qt5/src/plugin.cpp:310
+#: ../wlx/sqlview_qt5/src/plugin.cpp:273 ../wlx/fileinfo_qt/src/plugin.cpp:97
+#: ../wlx/wlxwebkit/src/wlxwebkit.c:117
 #: ../wlx/yet_another_vte_plugin/src/plugin.c:288
 #: ../wlx/gtksourceview/src/gtksourceview.c:714
 #: ../wlx/syntax-highlighting_qt/src/plugin.cpp:146
@@ -108,6 +107,26 @@ msgstr ""
 #, c-format
 msgid "\"%s\" not found!"
 msgstr "\"%s\" не найден!"
+
+#: ../wlx/sqlview_qt5/src/plugin.cpp:25
+msgid "base not valid!"
+msgstr ""
+
+#: ../wlx/sqlview_qt5/src/plugin.cpp:89
+msgid "Table:"
+msgstr ""
+
+#: ../wlx/sqlview_qt5/src/plugin.cpp:97
+msgid "Query"
+msgstr ""
+
+#: ../wlx/sqlview_qt5/src/plugin.cpp:131
+msgid "Please enter a new query and press OK to execute it"
+msgstr ""
+
+#: ../wlx/sqlview_qt5/src/plugin.cpp:143
+msgid "Failed to fetch list of tables. Maybe DB is locked?"
+msgstr ""
 
 #: ../wlx/imagemagick/src/wlximagemagick.c:172
 #: ../wlx/gtkimgview_crap/src/gtkimgview.c:336
@@ -229,26 +248,6 @@ msgstr "Следующая страница"
 msgid "Last page"
 msgstr "Последняя страница"
 
-#: ../wlx/sqlviewer_qt5/src/plugin.cpp:25
-msgid "base not valid!"
-msgstr ""
-
-#: ../wlx/sqlviewer_qt5/src/plugin.cpp:89
-msgid "Table:"
-msgstr ""
-
-#: ../wlx/sqlviewer_qt5/src/plugin.cpp:97
-msgid "Query"
-msgstr ""
-
-#: ../wlx/sqlviewer_qt5/src/plugin.cpp:131
-msgid "Please enter a new query and press OK to execute it"
-msgstr ""
-
-#: ../wlx/sqlviewer_qt5/src/plugin.cpp:143
-msgid "Failed to fetch list of tables. Maybe DB is locked?"
-msgstr ""
-
 #: ../wlx/gtksourceview/src/gtksourceview.c:48
 msgid "Failed to load file"
 msgstr "Не удалось открыть файл"
@@ -337,12 +336,8 @@ msgstr "Воспроизвести анимацию"
 msgid "Stop Animation"
 msgstr "Остановить анимацию"
 
-#: ../wlx/jsonview_gtk2/src/plugin.c:81
+#: ../wlx/jsonview_gtk2/src/plugin.c:85
 msgid "Integer"
-msgstr ""
-
-#: ../wlx/jsonview_gtk2/src/plugin.c:132 ../wlx/jsonview_gtk2/src/plugin.c:207
-msgid "Root"
 msgstr ""
 
 #: ../wdx/fewfiles/src/plugin.c:44

@@ -323,34 +323,36 @@ void DCPCALL ListSetDefaultParams(ListDefaultParamStruct* dps)
 	QString cfgpath = defini.absolutePath() + "/j2969719.ini";
 	QSettings settings(cfgpath, QSettings::IniFormat);
 
-	if (!settings.contains("csvviewer/resize_columns"))
-		settings.setValue("csvviewer/resize_columns", false);
-	else
-		g_resize = settings.value("csvviewer/resize_columns").toBool();
+	settings.remove("csvviewer");
 
-	if (!settings.contains("csvviewer/enca"))
-		settings.setValue("csvviewer/enca", true);
+	if (!settings.contains("csvview/resize_columns"))
+		settings.setValue("csvview/resize_columns", false);
 	else
-		g_enca = settings.value("csvviewer/enca").toBool();
+		g_resize = settings.value("csvview/resize_columns").toBool();
 
-	if (!settings.contains("csvviewer/enca_lang"))
+	if (!settings.contains("csvview/enca"))
+		settings.setValue("csvview/enca", true);
+	else
+		g_enca = settings.value("csvview/enca").toBool();
+
+	if (!settings.contains("csvview/enca_lang"))
 	{
 		char lang[3];
 		snprintf(lang, 3, "%s", setlocale(LC_ALL, ""));
-		settings.setValue("csvviewer/enca_lang", lang);
+		settings.setValue("csvview/enca_lang", lang);
 	}
 	else
-		g_lang = settings.value("csvviewer/enca_lang").toString();
+		g_lang = settings.value("csvview/enca_lang").toString();
 
-	if (!settings.contains("csvviewer/enca_readall"))
-		settings.setValue("csvviewer/enca_readall", false);
+	if (!settings.contains("csvview/enca_readall"))
+		settings.setValue("csvview/enca_readall", false);
 	else
-		g_readall = settings.value("csvviewer/enca_readall").toBool();
+		g_readall = settings.value("csvview/enca_readall").toBool();
 
-	if (!settings.contains("csvviewer/doublequoted"))
-		settings.setValue("csvviewer/doublequoted", true);
+	if (!settings.contains("csvview/doublequoted"))
+		settings.setValue("csvview/doublequoted", true);
 	else
-		g_quoted = settings.value("csvviewer/doublequoted").toBool();
+		g_quoted = settings.value("csvview/doublequoted").toBool();
 
 	Dl_info dlinfo;
 	static char plg_path[PATH_MAX];
