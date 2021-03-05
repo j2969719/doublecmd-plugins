@@ -316,6 +316,9 @@ Displays DOC, RTF, DOT, ABW, AWT, ZABW. Requires AbiWord (GTK2 version).
 - [atril-gtk2](plugins/wlx/atril-gtk2)<br>
 Displays PDF, DjVu, TIFF, PostScipt, CBR, CBZ, XPS. Requires Atril 2 (GTK2 version).
 
+- [csvview_gtk2](plugins/wlx/csvview_gtk2)<br>
+Very primitive CSV viewer.
+
 - [evince2](plugins/wlx/evince2)<br>
 Displays PDF, DjVu, TIFF, PostScipt, CBR. Requires Evince 2 (GTK2 version).
 
@@ -336,6 +339,9 @@ Like `gtkimgview` but for any files if you can convert it to image (see `setting
 
 - [gtksourceview](plugins/wlx/gtksourceview)<br>
 Displays source code files with syntax highlighting. Requires `gtksourceview-2.0`.
+
+- [jsonview_gtk2](plugins/wlx/jsonview_gtk2)<br>
+Very primitive JSON Viewer.
 
 - [hx_webkit_crap](plugins/wlx/hx_webkit_crap)<br>
 Document viewer based on WebKitGTK2 and using HTML Export from Oracle Outside In Technology.
@@ -421,6 +427,9 @@ Very primitive SQL Viewer.
 - [syntax-highlighting_qt](plugins/wlx/syntax-highlighting_qt)<br>
 Displays source code files with syntax highlighting. Requires `syntax-highlighting` from KF5 framework.
 
+- [webengine_qt5](plugins/wlx/webengine_qt5)<br>
+Even more "lightweight" HTML viewer.
+
 - [wlxwebkit_qt5](plugins/wlx/wlxwebkit_qt5)<br>
 This plugin allows you to view HTML/XHTML files. It is based on Qt5WebKit engine.
 
@@ -463,6 +472,9 @@ List local system locks.
 
 - [pacman_pkg_list](plugins/dsx/pacman_pkg_list)<br>
 Feed to listbox local files of some installed archlinux package via `pacman`. Accepts only full pkgname in FileMask.
+
+- [recollq_crap](plugins/dsx/recollq_crap)<br>
+Full text search using [Recoll](https://www.lesbonscomptes.com/recoll/). 
 
 - [the_silver_searcher_crap](plugins/dsx/the_silver_searcher_crap)<br>
 Pattern matching using `the_silver_searcher`. FileMask also accepts only regexp(if filename pattern is specified, search for part of filename option must be disabled).
