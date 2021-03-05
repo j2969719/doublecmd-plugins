@@ -5,8 +5,10 @@
 #include <string.h>
 #include "wlxplugin.h"
 
-static char lang[3];
-gboolean use_iconv = TRUE;
+static char g_lang[3];
+gboolean g_enca = TRUE;
+gboolean g_quoted = TRUE;
+gboolean g_grid = FALSE;
 
 static gboolean quotes_not_closed(gchar *string)
 {
@@ -45,7 +47,7 @@ static gchar *get_value(gchar ***p, gchar *separator)
 	gchar *result = NULL;
 	gchar **itm = *p;
 
-	if (separator[0] != '\t' && *itm[0] == '"' && quotes_not_closed(*itm))
+	if (g_quoted && separator[0] != '\t' && *itm[0] == '"' && quotes_not_closed(*itm))
 	{
 		gchar **nitm = itm + 1;
 		gchar *cat = g_strdup(*itm);
@@ -72,7 +74,7 @@ static gchar *get_value(gchar ***p, gchar *separator)
 			result = g_strdup(*itm);
 
 	}
-	else if (separator[0] != '\t')
+	else if (g_quoted && separator[0] != '\t')
 	{
 		result = unqoute(*itm);
 	}
@@ -103,7 +105,7 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	if (!g_file_get_contents(FileToLoad, &buffer, &bytes_read, NULL))
 		return NULL;
 
-	if (use_iconv)
+	if (g_enca)
 	{
 		if (bytes_read == 0)
 		{
@@ -111,7 +113,7 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 			return NULL;
 		}
 
-		analyser = enca_analyser_alloc(lang);
+		analyser = enca_analyser_alloc(g_lang);
 
 		if (analyser)
 		{
@@ -157,6 +159,12 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 		{
 			separator = *chr;
 			list = gtk_tree_view_new();
+
+			if (g_grid)
+				gtk_tree_view_set_grid_lines(GTK_TREE_VIEW(list), GTK_TREE_VIEW_GRID_LINES_BOTH);
+			else
+				gtk_tree_view_set_grid_lines(GTK_TREE_VIEW(list), GTK_TREE_VIEW_GRID_LINES_NONE);
+
 			types = (GType*)g_malloc((columns + 1) * sizeof(GType));
 
 			for (i = 0; i <= columns; i++)
@@ -302,18 +310,40 @@ void DCPCALL ListSetDefaultParams(ListDefaultParamStruct* dps)
 
 	g_key_file_load_from_file(cfg, cfg_path, G_KEY_FILE_KEEP_COMMENTS, NULL);
 
-	if (!g_key_file_has_key(cfg, "csvview", "enca", NULL))
+	if (g_key_file_has_group(cfg, "csvviewer"))
 	{
-		g_key_file_set_boolean(cfg, "csvview", "enca", use_iconv);
+		g_key_file_remove_group(cfg, "csvviewer", NULL);
+		g_key_file_save_to_file(cfg, cfg_path, NULL);
+	}
+
+	if (!g_key_file_has_key(cfg, "csvview", "draw_grid", NULL))
+	{
+		g_key_file_set_boolean(cfg, "csvview", "draw_grid", g_grid);
 		g_key_file_save_to_file(cfg, cfg_path, NULL);
 	}
 	else
-		use_iconv = g_key_file_get_boolean(cfg, "csvview", "enca", NULL);
+		g_grid = g_key_file_get_boolean(cfg, "csvview", "draw_grid", NULL);
+
+	if (!g_key_file_has_key(cfg, "csvview", "enca", NULL))
+	{
+		g_key_file_set_boolean(cfg, "csvview", "enca", g_enca);
+		g_key_file_save_to_file(cfg, cfg_path, NULL);
+	}
+	else
+		g_enca = g_key_file_get_boolean(cfg, "csvview", "enca", NULL);
+
+	if (!g_key_file_has_key(cfg, "csvview", "doublequoted", NULL))
+	{
+		g_key_file_set_boolean(cfg, "csvview", "doublequoted", g_quoted);
+		g_key_file_save_to_file(cfg, cfg_path, NULL);
+	}
+	else
+		g_quoted = g_key_file_get_boolean(cfg, "csvview", "doublequoted", NULL);
 
 	if (!g_key_file_has_key(cfg, "csvview", "enca_lang", NULL))
 	{
-		snprintf(lang, 3, "%s", setlocale(LC_ALL, ""));
-		g_key_file_set_string(cfg, "csvview", "enca_lang", lang);
+		snprintf(g_lang, 3, "%s", setlocale(LC_ALL, ""));
+		g_key_file_set_string(cfg, "csvview", "enca_lang", g_lang);
 		g_key_file_save_to_file(cfg, cfg_path, NULL);
 	}
 	else
@@ -322,11 +352,11 @@ void DCPCALL ListSetDefaultParams(ListDefaultParamStruct* dps)
 
 		if (val)
 		{
-			g_strlcpy(lang, val, 3);
+			g_strlcpy(g_lang, val, 3);
 			g_free(val);
 		}
 		else
-			g_strlcpy(lang, "__", 3);
+			g_strlcpy(g_lang, "__", 3);
 	}
 
 	g_key_file_free(cfg);

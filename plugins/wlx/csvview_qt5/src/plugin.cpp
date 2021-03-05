@@ -25,6 +25,7 @@ static bool g_enca = true;
 static bool g_resize = false;
 static bool g_readall = false;
 static bool g_quoted = true;
+static bool g_grid = false;
 static QString g_lang;
 
 
@@ -200,6 +201,7 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 	file.close();
 
 	view->setSortingEnabled(true);
+	view->setShowGrid(g_grid);
 
 	view->show();
 
@@ -326,12 +328,12 @@ void DCPCALL ListSetDefaultParams(ListDefaultParamStruct* dps)
 	settings.remove("csvviewer");
 
 	if (!settings.contains("csvview/resize_columns"))
-		settings.setValue("csvview/resize_columns", false);
+		settings.setValue("csvview/resize_columns", g_resize);
 	else
 		g_resize = settings.value("csvview/resize_columns").toBool();
 
 	if (!settings.contains("csvview/enca"))
-		settings.setValue("csvview/enca", true);
+		settings.setValue("csvview/enca", g_enca);
 	else
 		g_enca = settings.value("csvview/enca").toBool();
 
@@ -345,14 +347,19 @@ void DCPCALL ListSetDefaultParams(ListDefaultParamStruct* dps)
 		g_lang = settings.value("csvview/enca_lang").toString();
 
 	if (!settings.contains("csvview/enca_readall"))
-		settings.setValue("csvview/enca_readall", false);
+		settings.setValue("csvview/enca_readall", g_readall);
 	else
 		g_readall = settings.value("csvview/enca_readall").toBool();
 
 	if (!settings.contains("csvview/doublequoted"))
-		settings.setValue("csvview/doublequoted", true);
+		settings.setValue("csvview/doublequoted", g_quoted);
 	else
 		g_quoted = settings.value("csvview/doublequoted").toBool();
+
+	if (!settings.contains("csvview/draw_grid"))
+		settings.setValue("csvview/draw_grid", g_grid);
+	else
+		g_grid = settings.value("csvview/draw_grid").toBool();
 
 	Dl_info dlinfo;
 	static char plg_path[PATH_MAX];
