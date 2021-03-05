@@ -428,7 +428,7 @@ Very primitive SQL Viewer.
 Displays source code files with syntax highlighting. Requires `syntax-highlighting` from KF5 framework.
 
 - [webengine_qt5](plugins/wlx/webengine_qt5)<br>
-Even more "lightweight" HTML viewer.
+Even more "lightweight" HTML viewer. :trollface:
 
 - [wlxwebkit_qt5](plugins/wlx/wlxwebkit_qt5)<br>
 This plugin allows you to view HTML/XHTML files. It is based on Qt5WebKit engine.
