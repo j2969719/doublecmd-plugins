@@ -388,7 +388,7 @@ Displays PDF, DjVu, PostScipt, CBR. Requires `zathura`.
 ---
 <a name="wlxqt5"><h3>WLX plugins (Qt5)</h3></a>
 
-- [csvviewer_qt5](plugins/wlx/csvviewer_qt5)<br>
+- [csvview_qt5](plugins/wlx/csvview_qt5)<br>
 Very primitive CSV viewer.
 
 - [fileinfo_qt](plugins/wlx/fileinfo_qt)<br>
@@ -415,7 +415,7 @@ PDF Viewer.
 - [qtpdfview_qt5_crap](plugins/wlx/qtpdfview_qt5_crap)<br>
 Converts some file to PDF via some external tool assigned by mime or ext in `settings.ini` and displays the result.
 
-- [sqlviewer_qt5](plugins/wlx/sqlviewer_qt5)<br>
+- [sqlview_qt5](plugins/wlx/sqlview_qt5)<br>
 Very primitive SQL Viewer.
 
 - [syntax-highlighting_qt](plugins/wlx/syntax-highlighting_qt)<br>

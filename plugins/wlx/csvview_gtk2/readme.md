@@ -1,4 +1,4 @@
-csvviewer_gtk2
+csvview_gtk2
 ========
 Very primitive CSV viewer.
 
