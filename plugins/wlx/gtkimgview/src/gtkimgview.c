@@ -125,6 +125,23 @@ static void tb_stop_clicked(GtkToolItem *tooleditcopy, GtkWidget *imgview)
 		gtk_anim_view_set_is_playing(GTK_ANIM_VIEW(imgview), FALSE);
 }
 
+static void zoom_changed_cb(GtkWidget *view, GtkWidget *label)
+{
+	gchar *str;
+	GdkPixbuf *pixbuf = gtk_image_view_get_pixbuf(GTK_IMAGE_VIEW(view));
+	int width = gdk_pixbuf_get_width(pixbuf);
+	int height = gdk_pixbuf_get_height(pixbuf);
+	gdouble zoom = gtk_image_view_get_zoom(GTK_IMAGE_VIEW(view));
+
+	if (zoom == 1)
+		str = g_strdup_printf("%dx%d", width, height);
+	else
+		str = g_strdup_printf("%dx%d (%.0fx%.0f %.0f%%)", width, height, width*zoom, height*zoom, zoom*100);
+
+	gtk_label_set_text(GTK_LABEL(label), str);
+	g_free(str);
+}
+
 HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 {
 	GtkWidget *gFix;
@@ -277,6 +294,8 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 
 	gtk_widget_grab_focus(view);
 	gtk_widget_show_all(gFix);
+
+	g_signal_connect(G_OBJECT(view), "zoom_changed", G_CALLBACK(zoom_changed_cb), (gpointer)(GtkWidget*)(label));
 
 	if (g_strcmp0(gtk_window_get_title(GTK_WINDOW(gtk_widget_get_toplevel(GTK_WIDGET(ParentWin)))), FileToLoad) != 0)
 		gtk_widget_hide(mtb);
