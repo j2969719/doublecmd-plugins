@@ -14,37 +14,6 @@
 
 #define _detectstring "(EXT=\"DDS\")|(EXT=\"TGA\")|(EXT=\"PCX\")|(EXT=\"BMP\")|(EXT=\"WEBP\")"
 
-GtkWidget* find_child(GtkWidget* parent, const gchar* name)
-{
-	if (g_ascii_strcasecmp(gtk_widget_get_name((GtkWidget*)parent), (gchar*)name) == 0)
-	{
-		return parent;
-	}
-
-	if (GTK_IS_BIN(parent))
-	{
-		GtkWidget *child = gtk_bin_get_child(GTK_BIN(parent));
-		return find_child(child, name);
-	}
-
-	if (GTK_IS_CONTAINER(parent))
-	{
-		GList *children = gtk_container_get_children(GTK_CONTAINER(parent));
-
-		while ((children = g_list_next(children)) != NULL)
-		{
-			GtkWidget* widget = find_child(children->data, name);
-
-			if (widget != NULL)
-			{
-				return widget;
-			}
-		}
-	}
-
-	return NULL;
-}
-
 static void tb_zoom_in_clicked(GtkToolItem *tooleditcut, GtkWidget *imgview)
 {
 	gtk_image_view_zoom_in(GTK_IMAGE_VIEW(imgview));
@@ -97,6 +66,65 @@ static void tb_vflip_clicked(GtkToolItem *tooleditcopy, GtkWidget *imgview)
 	                          gdk_pixbuf_flip(gtk_image_view_get_pixbuf(GTK_IMAGE_VIEW(imgview)), FALSE), TRUE);
 }
 
+static void zoom_changed_cb(GtkWidget *view, GtkWidget *label)
+{
+	gchar *str;
+	GdkPixbuf *pixbuf = gtk_image_view_get_pixbuf(GTK_IMAGE_VIEW(view));
+
+	if (!GDK_IS_PIXBUF(pixbuf))
+	{
+		gtk_label_set_text(GTK_LABEL(label), "");
+		return;
+	}
+
+	int width = gdk_pixbuf_get_width(pixbuf);
+	int height = gdk_pixbuf_get_height(pixbuf);
+	gdouble zoom = gtk_image_view_get_zoom(GTK_IMAGE_VIEW(view));
+
+	if (zoom == 1)
+		str = g_strdup_printf("%dx%d", width, height);
+	else
+		str = g_strdup_printf("%dx%d (%.0fx%.0f %.0f%%)", width, height, width * zoom, height * zoom, zoom * 100);
+
+	gtk_label_set_text(GTK_LABEL(label), str);
+	g_free(str);
+}
+
+static GdkPixbuf *load_pixbuf(char *filename)
+{
+	MagickWand *magick_wand = NULL;
+
+	MagickWandGenesis();
+	magick_wand = NewMagickWand();
+
+	if (MagickReadImage(magick_wand, filename) == MagickFalse)
+	{
+		magick_wand = DestroyMagickWand(magick_wand);
+		MagickWandTerminus();
+		return NULL;
+	}
+
+	MagickResetIterator(magick_wand);
+
+	size_t width = MagickGetImageWidth(magick_wand);
+	size_t height = MagickGetImageHeight(magick_wand);
+	size_t depth = MagickGetImageDepth(magick_wand);
+	GdkPixbuf *pixbuf = gdk_pixbuf_new(GDK_COLORSPACE_RGB, TRUE, depth, width, height);
+	const guint8 *pixels = gdk_pixbuf_get_pixels(pixbuf);
+	int rowstride = gdk_pixbuf_get_rowstride(pixbuf);
+
+	for (size_t row = 0; row < height; row++)
+	{
+		guchar *data = (guchar*)pixels + row * rowstride;
+		MagickExportImagePixels(magick_wand, 0, row, width, 1, "RGBA", CharPixel, data);
+	}
+
+	magick_wand = DestroyMagickWand(magick_wand);
+	MagickWandTerminus();
+
+	return pixbuf;
+}
+
 HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 {
 	GtkWidget *gFix;
@@ -117,14 +145,11 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	GtkToolItem *tb_hflip;
 	GtkToolItem *tb_vflip;
 	GtkToolItem *tb_size;
-	gint width;
-	gint height;
-	gint depth;
-	gint rowstride;
-	gint row;
-	guchar *pixels;
-	gchar *tstr;
-	MagickWand *magick_wand = NULL;
+
+	pixbuf = load_pixbuf(FileToLoad);
+
+	if (!pixbuf)
+		return NULL;
 
 	gFix = gtk_vbox_new(FALSE, 1);
 	gtk_container_add(GTK_CONTAINER(GTK_WIDGET(ParentWin)), gFix);
@@ -133,59 +158,34 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	gtk_toolbar_set_style(GTK_TOOLBAR(mtb), GTK_TOOLBAR_ICONS);
 	gtk_box_pack_start(GTK_BOX(gFix), mtb, FALSE, FALSE, 2);
 	view = gtk_image_view_new();
-	gtk_widget_set_name(view, "imageview");
 	scroll = gtk_image_scroll_win_new(GTK_IMAGE_VIEW(view));
 	gtk_container_add(GTK_CONTAINER(gFix), scroll);
-	MagickWandGenesis();
-	magick_wand = NewMagickWand();
 
-	if (MagickReadImage(magick_wand, FileToLoad) == MagickFalse)
-	{
-		gtk_widget_destroy(gFix);
-		magick_wand = DestroyMagickWand(magick_wand);
-		MagickWandTerminus();
-		return NULL;
-	}
+	label = gtk_label_new(NULL);
+	g_signal_connect(G_OBJECT(view), "zoom_changed", G_CALLBACK(zoom_changed_cb), (gpointer)label);
+	g_signal_connect(G_OBJECT(view), "pixbuf_changed", G_CALLBACK(zoom_changed_cb), (gpointer)label);
 
-	MagickResetIterator(magick_wand);
-	width = MagickGetImageWidth(magick_wand);
-	height = MagickGetImageHeight(magick_wand);
-	depth = MagickGetImageDepth(magick_wand);
-	pixbuf = gdk_pixbuf_new(GDK_COLORSPACE_RGB, TRUE, depth, width, height);
-	pixels = gdk_pixbuf_get_pixels(pixbuf);
-	rowstride = gdk_pixbuf_get_rowstride(pixbuf);
-
-	for (row = 0; row < height; row++)
-	{
-		guchar *data = pixels + row * rowstride;
-		MagickExportImagePixels(magick_wand, 0, row, width, 1, "RGBA", CharPixel, data);
-	}
-
-	if (pixbuf)
-		gtk_image_view_set_pixbuf(GTK_IMAGE_VIEW(view), pixbuf, TRUE);
-
-	magick_wand = DestroyMagickWand(magick_wand);
-	MagickWandTerminus();
+	gtk_image_view_set_pixbuf(GTK_IMAGE_VIEW(view), pixbuf, TRUE);
 
 	tb_zoom_in = gtk_tool_button_new_from_stock(GTK_STOCK_ZOOM_IN);
 	gtk_toolbar_insert(GTK_TOOLBAR(mtb), tb_zoom_in, 0);
 	gtk_widget_set_tooltip_text(GTK_WIDGET(tb_zoom_in), _("Zoom In"));
-	g_signal_connect(G_OBJECT(tb_zoom_in), "clicked", G_CALLBACK(tb_zoom_in_clicked), (gpointer)(GtkWidget*)(view));
+	g_signal_connect(G_OBJECT(tb_zoom_in), "clicked", G_CALLBACK(tb_zoom_in_clicked), (gpointer)view);
 
 	tb_zoom_out = gtk_tool_button_new_from_stock(GTK_STOCK_ZOOM_OUT);
 	gtk_toolbar_insert(GTK_TOOLBAR(mtb), tb_zoom_out, 1);
 	gtk_widget_set_tooltip_text(GTK_WIDGET(tb_zoom_out), _("Zoom Out"));
-	g_signal_connect(G_OBJECT(tb_zoom_out), "clicked", G_CALLBACK(tb_zoom_out_clicked), (gpointer)(GtkWidget*)(view));
+	g_signal_connect(G_OBJECT(tb_zoom_out), "clicked", G_CALLBACK(tb_zoom_out_clicked), (gpointer)view);
 
 	tb_orgsize = gtk_tool_button_new_from_stock(GTK_STOCK_ZOOM_100);
 	gtk_toolbar_insert(GTK_TOOLBAR(mtb), tb_orgsize, 2);
 	gtk_widget_set_tooltip_text(GTK_WIDGET(tb_orgsize), _("Original Size"));
-	g_signal_connect(G_OBJECT(tb_orgsize), "clicked", G_CALLBACK(tb_orgsize_clicked), (gpointer)(GtkWidget*)(view));
+	g_signal_connect(G_OBJECT(tb_orgsize), "clicked", G_CALLBACK(tb_orgsize_clicked), (gpointer)view);
 
 	tb_fit = gtk_tool_button_new_from_stock(GTK_STOCK_ZOOM_FIT);
 	gtk_toolbar_insert(GTK_TOOLBAR(mtb), tb_fit, 3);
 	gtk_widget_set_tooltip_text(GTK_WIDGET(tb_fit), _("Fit"));
-	g_signal_connect(G_OBJECT(tb_fit), "clicked", G_CALLBACK(tb_fit_clicked), (gpointer)(GtkWidget*)(view));
+	g_signal_connect(G_OBJECT(tb_fit), "clicked", G_CALLBACK(tb_fit_clicked), (gpointer)view);
 
 	tb_separator = gtk_separator_tool_item_new();
 	gtk_toolbar_insert(GTK_TOOLBAR(mtb), tb_separator, 4);
@@ -193,39 +193,37 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	tb_copy = gtk_tool_button_new_from_stock(GTK_STOCK_COPY);
 	gtk_toolbar_insert(GTK_TOOLBAR(mtb), tb_copy, 5);
 	gtk_widget_set_tooltip_text(GTK_WIDGET(tb_copy), _("Copy to Clipboard"));
-	g_signal_connect(G_OBJECT(tb_copy), "clicked", G_CALLBACK(tb_copy_clicked), (gpointer)(GtkWidget*)(view));
+	g_signal_connect(G_OBJECT(tb_copy), "clicked", G_CALLBACK(tb_copy_clicked), (gpointer)view);
 
 	tb_rotare = gtk_tool_button_new(NULL, _("Rotate"));
 	gtk_tool_button_set_icon_name(GTK_TOOL_BUTTON(tb_rotare), "object-rotate-left");
 	gtk_toolbar_insert(GTK_TOOLBAR(mtb), tb_rotare, 6);
 	gtk_widget_set_tooltip_text(GTK_WIDGET(tb_rotare), _("Rotate"));
-	g_signal_connect(G_OBJECT(tb_rotare), "clicked", G_CALLBACK(tb_rotare_clicked), (gpointer)(GtkWidget*)(view));
+	g_signal_connect(G_OBJECT(tb_rotare), "clicked", G_CALLBACK(tb_rotare_clicked), (gpointer)view);
 
 	tb_rotare1 = gtk_tool_button_new(NULL, _("Rotate Clockwise"));
 	gtk_tool_button_set_icon_name(GTK_TOOL_BUTTON(tb_rotare1), "object-rotate-right");
 	gtk_toolbar_insert(GTK_TOOLBAR(mtb), tb_rotare1, 7);
 	gtk_widget_set_tooltip_text(GTK_WIDGET(tb_rotare1), _("Rotate Clockwise"));
-	g_signal_connect(G_OBJECT(tb_rotare1), "clicked", G_CALLBACK(tb_rotare1_clicked), (gpointer)(GtkWidget*)(view));
+	g_signal_connect(G_OBJECT(tb_rotare1), "clicked", G_CALLBACK(tb_rotare1_clicked), (gpointer)view);
 
 	tb_hflip = gtk_tool_button_new(NULL, _("Flip Horizontally"));
 	gtk_tool_button_set_icon_name(GTK_TOOL_BUTTON(tb_hflip), "object-flip-horizontal");
 	gtk_toolbar_insert(GTK_TOOLBAR(mtb), tb_hflip, 8);
 	gtk_widget_set_tooltip_text(GTK_WIDGET(tb_hflip), _("Flip Horizontally"));
-	g_signal_connect(G_OBJECT(tb_hflip), "clicked", G_CALLBACK(tb_hflip_clicked), (gpointer)(GtkWidget*)(view));
+	g_signal_connect(G_OBJECT(tb_hflip), "clicked", G_CALLBACK(tb_hflip_clicked), (gpointer)view);
 
 	tb_vflip = gtk_tool_button_new(NULL, _("Flip Vertically"));
 	gtk_tool_button_set_icon_name(GTK_TOOL_BUTTON(tb_vflip), "object-flip-vertical");
 	gtk_toolbar_insert(GTK_TOOLBAR(mtb), tb_vflip, 9);
 	gtk_widget_set_tooltip_text(GTK_WIDGET(tb_vflip), _("Flip Vertically"));
-	g_signal_connect(G_OBJECT(tb_vflip), "clicked", G_CALLBACK(tb_vflip_clicked), (gpointer)(GtkWidget*)(view));
+	g_signal_connect(G_OBJECT(tb_vflip), "clicked", G_CALLBACK(tb_vflip_clicked), (gpointer)view);
 
 	tb_separator1 = gtk_separator_tool_item_new();
 	gtk_toolbar_insert(GTK_TOOLBAR(mtb), tb_separator1, 10);
-	tstr = g_strdup_printf("%dx%d", width, height);
+
 	tb_size = gtk_tool_item_new();
-	label = gtk_label_new(tstr);
 	gtk_container_add(GTK_CONTAINER(tb_size), label);
-	g_free(tstr);
 	gtk_toolbar_insert(GTK_TOOLBAR(mtb), tb_size, 11);
 
 	gtk_widget_grab_focus(view);
@@ -234,28 +232,58 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	if (g_strcmp0(gtk_window_get_title(GTK_WINDOW(gtk_widget_get_toplevel(GTK_WIDGET(ParentWin)))), FileToLoad) != 0)
 		gtk_widget_hide(mtb);
 
+	g_object_set_data(G_OBJECT(gFix), "imageview", view);
+
+
+	if (G_IS_OBJECT(pixbuf))
+		g_object_unref(pixbuf);
+
 	return gFix;
+}
+
+int DCPCALL ListLoadNext(HWND ParentWin, HWND PluginWin, char* FileToLoad, int ShowFlags)
+{
+	GtkWidget *view = (GtkWidget*)g_object_get_data(G_OBJECT(PluginWin), "imageview");
+
+	GdkPixbuf *pixbuf = load_pixbuf(FileToLoad);
+
+	if (!pixbuf)
+		return LISTPLUGIN_ERROR;
+
+	gtk_image_view_set_pixbuf(GTK_IMAGE_VIEW(view), NULL, FALSE);
+	gtk_image_view_set_pixbuf(GTK_IMAGE_VIEW(view), pixbuf, TRUE);
+
+	if (G_IS_OBJECT(pixbuf))
+		g_object_unref(pixbuf);
+
+	return LISTPLUGIN_OK;
 }
 
 void DCPCALL ListCloseWindow(HWND ListWin)
 {
-	GdkPixbuf *pixbuf = gtk_image_view_get_pixbuf(GTK_IMAGE_VIEW(find_child(ListWin, "imageview")));
+	GtkWidget *view = (GtkWidget*)g_object_get_data(G_OBJECT(ListWin), "imageview");
+	GdkPixbuf *pixbuf = gtk_image_view_get_pixbuf(GTK_IMAGE_VIEW(view));
+	gtk_image_view_set_pixbuf(GTK_IMAGE_VIEW(view), NULL, FALSE);
 	gtk_widget_destroy(GTK_WIDGET(ListWin));
-	g_object_unref(pixbuf);
+
+	if (G_IS_OBJECT(pixbuf))
+		g_object_unref(pixbuf);
 }
 
 void DCPCALL ListGetDetectString(char* DetectString, int maxlen)
 {
-	g_strlcpy(DetectString, _detectstring, maxlen-1);
+	g_strlcpy(DetectString, _detectstring, maxlen - 1);
 }
 
 int DCPCALL ListSendCommand(HWND ListWin, int Command, int Parameter)
 {
+	GtkWidget *view = (GtkWidget*)g_object_get_data(G_OBJECT(ListWin), "imageview");
+
 	switch (Command)
 	{
 	case lc_copy :
 		gtk_clipboard_set_image(gtk_clipboard_get(GDK_SELECTION_CLIPBOARD),
-		                        gtk_image_view_get_pixbuf(GTK_IMAGE_VIEW(find_child(ListWin, "imageview"))));
+		                        gtk_image_view_get_pixbuf(GTK_IMAGE_VIEW(view)));
 		break;
 
 	default :
@@ -280,8 +308,11 @@ void DCPCALL ListSetDefaultParams(ListDefaultParamStruct* dps)
 	if (dladdr(dir_f, &dlinfo) != 0)
 	{
 		setlocale(LC_ALL, "");
-		bindtextdomain(GETTEXT_PACKAGE, g_strdup_printf(dir_f,
-		                g_path_get_dirname(dlinfo.dli_fname)));
+		gchar *plugdir = g_path_get_dirname(dlinfo.dli_fname);
+		gchar *langdir = g_strdup_printf(dir_f, plugdir);
+		g_free(plugdir);
+		bindtextdomain(GETTEXT_PACKAGE, langdir);
+		g_free(langdir);
 		textdomain(GETTEXT_PACKAGE);
 	}
 }

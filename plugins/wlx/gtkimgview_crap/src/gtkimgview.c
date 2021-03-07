@@ -1,7 +1,6 @@
 #define _GNU_SOURCE
 
 #include <gio/gio.h>
-#include <gtkimageview/gtkanimview.h>
 #include <gtkimageview/gtkimageview.h>
 #include <gtkimageview/gtkimagescrollwin.h>
 #include "wlxplugin.h"
@@ -12,9 +11,9 @@
 #include <locale.h>
 #define GETTEXT_PACKAGE "plugins"
 
-gchar *cfgpath = "";
+static gchar *g_cfgpath = NULL;
 
-gchar *get_file_ext(const gchar *Filename)
+static gchar *get_file_ext(const gchar *Filename)
 {
 	if (g_file_test(Filename, G_FILE_TEST_IS_DIR))
 		return NULL;
@@ -41,7 +40,7 @@ gchar *get_file_ext(const gchar *Filename)
 	return result;
 }
 
-gchar *str_replace(gchar *text, gchar *str, gchar *repl)
+static gchar *str_replace(gchar *text, gchar *str, gchar *repl)
 {
 	gchar **split = g_strsplit(text, str, -1);
 	gchar *result = g_strjoinv(repl, split);
@@ -49,11 +48,11 @@ gchar *str_replace(gchar *text, gchar *str, gchar *repl)
 	return result;
 }
 
-gchar *replace_tmpls(gchar *orig, gchar *file, gchar *tmpdir, gchar *output, gboolean quote)
+static gchar *replace_tmpls(gchar *orig, gchar *file, gchar *tmpdir, gchar *output, gboolean quote)
 {
 	gchar *result = g_strdup(orig);
 	gchar *basename = g_path_get_basename(file);
-	gchar *plugdir = g_path_get_dirname(cfgpath);
+	gchar *plugdir = g_path_get_dirname(g_cfgpath);
 	gchar *filedir = g_path_get_dirname(file);
 	gchar *basenamenoext = g_strdup(basename);
 	gchar *dot = g_strrstr(basenamenoext, ".");
@@ -69,7 +68,7 @@ gchar *replace_tmpls(gchar *orig, gchar *file, gchar *tmpdir, gchar *output, gbo
 
 	result = str_replace(result, "$FILEDIR", quote ? g_shell_quote(filedir) : filedir);
 	result = str_replace(result, "$FILE", quote ? g_shell_quote(file) : file);
-	result = str_replace(result, "$IMG", quote ? g_shell_quote(output): output);
+	result = str_replace(result, "$IMG", quote ? g_shell_quote(output) : output);
 	result = str_replace(result, "$TMPDIR", quote ? g_shell_quote(tmpdir) : tmpdir);
 	result = str_replace(result, "$PLUGDIR", quote ? g_shell_quote(plugdir) : plugdir);
 	result = str_replace(result, "$BASENAMENOEXT", basenamenoext);
@@ -81,9 +80,9 @@ gchar *replace_tmpls(gchar *orig, gchar *file, gchar *tmpdir, gchar *output, gbo
 	return result;
 }
 
-gboolean isabsolute(const gchar *file)
+static gboolean isabsolute(const gchar *file)
 {
-	if (file[0] =='/')
+	if (file[0] == '/')
 		return TRUE;
 	else if (g_strrstr(file, "$TMPDIR") != NULL)
 		return TRUE;
@@ -95,35 +94,94 @@ gboolean isabsolute(const gchar *file)
 	return FALSE;
 }
 
-GtkWidget* find_child(GtkWidget* parent, const gchar* name)
+
+static void rm_tmpdir(gchar *tmpdir)
 {
-	if (g_ascii_strcasecmp(gtk_widget_get_name((GtkWidget*)parent), (gchar*)name) == 0)
-	{
-		return parent;
-	}
+	gchar *quoted = g_shell_quote(tmpdir);
+	gchar *command = g_strdup_printf("rm -r %s", quoted);
+	system(command);
+	g_free(command);
+	g_free(quoted);
+}
 
-	if (GTK_IS_BIN(parent))
-	{
-		GtkWidget *child = gtk_bin_get_child(GTK_BIN(parent));
-		return find_child(child, name);
-	}
+static GdkPixbuf *load_pixbuf(GKeyFile *cfg, gchar *filename, gchar *ext, gchar *tmpdir)
+{
+	gchar *output = NULL;
+	gchar *cmdtmpl = g_key_file_get_string(cfg, ext, "command", NULL);
+	gboolean keeptmp = g_key_file_get_boolean(cfg, ext, "keeptmp", NULL);
 
-	if (GTK_IS_CONTAINER(parent))
-	{
-		GList *children = gtk_container_get_children(GTK_CONTAINER(parent));
+	if (!cmdtmpl)
+		return NULL;
 
-		while ((children = g_list_next(children)) != NULL)
+	gchar *outfile = g_key_file_get_string(cfg, ext, "filename", NULL);
+
+	if (outfile)
+	{
+		if (!isabsolute(outfile))
 		{
-			GtkWidget* widget = find_child(children->data, name);
+			output = g_strdup_printf("$TMPDIR/%s", outfile);
+			g_free(outfile);
+			outfile = output;
+		}
 
-			if (widget != NULL)
+		output = replace_tmpls(outfile, filename, tmpdir, NULL, FALSE);
+		g_free(outfile);
+	}
+	else
+		output = g_strdup_printf("%s/output.png", tmpdir);
+
+
+	gchar *command = replace_tmpls(cmdtmpl, filename, tmpdir, output, TRUE);
+	g_free(cmdtmpl);
+	g_print("%s\n", command);
+
+	if (system(command) != 0)
+	{
+		g_free(command);
+		g_free(output);
+
+		if (!keeptmp)
+			rm_tmpdir(tmpdir);
+
+		return NULL;
+	}
+
+	g_free(command);
+
+	if (!g_file_test(output, G_FILE_TEST_EXISTS))
+	{
+		g_free(output);
+		outfile = g_key_file_get_string(cfg, ext, "fallbackopen", NULL);
+
+		if (outfile)
+		{
+
+			if (!isabsolute(outfile))
 			{
-				return widget;
+				output = g_strdup_printf("$TMPDIR/%s", outfile);
+				g_free(outfile);
+				outfile = output;
+			}
+
+			output = replace_tmpls(outfile, filename, tmpdir, NULL, FALSE);
+			g_free(outfile);
+
+			if (!g_file_test(output, G_FILE_TEST_EXISTS))
+			{
+				g_free(output);
+
+				if (!keeptmp)
+					rm_tmpdir(tmpdir);
+
+				return NULL;
 			}
 		}
 	}
 
-	return NULL;
+	GdkPixbuf *pixbuf = gdk_pixbuf_new_from_file(output, NULL);
+	g_free(output);
+
+	return pixbuf;
 }
 
 static void tb_zoom_in_clicked(GtkToolItem *tooleditcut, GtkWidget *imgview)
@@ -154,9 +212,6 @@ static void tb_copy_clicked(GtkToolItem *tooleditcopy, GtkWidget *imgview)
 
 static void tb_rotare_clicked(GtkToolItem *tooleditcopy, GtkWidget *imgview)
 {
-	if (gtk_anim_view_get_is_playing(GTK_ANIM_VIEW(imgview)))
-		gtk_anim_view_set_is_playing(GTK_ANIM_VIEW(imgview), FALSE);
-
 	gtk_image_view_set_pixbuf(GTK_IMAGE_VIEW(imgview),
 	                          gdk_pixbuf_rotate_simple(gtk_image_view_get_pixbuf(GTK_IMAGE_VIEW(imgview)),
 	                                          GDK_PIXBUF_ROTATE_COUNTERCLOCKWISE), TRUE);
@@ -164,9 +219,6 @@ static void tb_rotare_clicked(GtkToolItem *tooleditcopy, GtkWidget *imgview)
 
 static void tb_rotare1_clicked(GtkToolItem *tooleditcopy, GtkWidget *imgview)
 {
-	if (gtk_anim_view_get_is_playing(GTK_ANIM_VIEW(imgview)))
-		gtk_anim_view_set_is_playing(GTK_ANIM_VIEW(imgview), FALSE);
-
 	gtk_image_view_set_pixbuf(GTK_IMAGE_VIEW(imgview),
 	                          gdk_pixbuf_rotate_simple(gtk_image_view_get_pixbuf(GTK_IMAGE_VIEW(imgview)),
 	                                          GDK_PIXBUF_ROTATE_CLOCKWISE), TRUE);
@@ -174,38 +226,27 @@ static void tb_rotare1_clicked(GtkToolItem *tooleditcopy, GtkWidget *imgview)
 
 static void tb_hflip_clicked(GtkToolItem *tooleditcopy, GtkWidget *imgview)
 {
-	if (gtk_anim_view_get_is_playing(GTK_ANIM_VIEW(imgview)))
-		gtk_anim_view_set_is_playing(GTK_ANIM_VIEW(imgview), FALSE);
-
 	gtk_image_view_set_pixbuf(GTK_IMAGE_VIEW(imgview),
 	                          gdk_pixbuf_flip(gtk_image_view_get_pixbuf(GTK_IMAGE_VIEW(imgview)), TRUE), TRUE);
 }
 
 static void tb_vflip_clicked(GtkToolItem *tooleditcopy, GtkWidget *imgview)
 {
-	if (gtk_anim_view_get_is_playing(GTK_ANIM_VIEW(imgview)))
-		gtk_anim_view_set_is_playing(GTK_ANIM_VIEW(imgview), FALSE);
-
 	gtk_image_view_set_pixbuf(GTK_IMAGE_VIEW(imgview),
 	                          gdk_pixbuf_flip(gtk_image_view_get_pixbuf(GTK_IMAGE_VIEW(imgview)), FALSE), TRUE);
-}
-
-static void tb_play_clicked(GtkToolItem *tooleditcopy, GtkWidget *imgview)
-{
-	if (!gtk_anim_view_get_is_playing(GTK_ANIM_VIEW(imgview)))
-		gtk_anim_view_set_is_playing(GTK_ANIM_VIEW(imgview), TRUE);
-}
-
-static void tb_stop_clicked(GtkToolItem *tooleditcopy, GtkWidget *imgview)
-{
-	if (gtk_anim_view_get_is_playing(GTK_ANIM_VIEW(imgview)))
-		gtk_anim_view_set_is_playing(GTK_ANIM_VIEW(imgview), FALSE);
 }
 
 static void zoom_changed_cb(GtkWidget *view, GtkWidget *label)
 {
 	gchar *str;
 	GdkPixbuf *pixbuf = gtk_image_view_get_pixbuf(GTK_IMAGE_VIEW(view));
+
+	if (!GDK_IS_PIXBUF(pixbuf))
+	{
+		gtk_label_set_text(GTK_LABEL(label), "");
+		return;
+	}
+
 	int width = gdk_pixbuf_get_width(pixbuf);
 	int height = gdk_pixbuf_get_height(pixbuf);
 	gdouble zoom = gtk_image_view_get_zoom(GTK_IMAGE_VIEW(view));
@@ -213,7 +254,7 @@ static void zoom_changed_cb(GtkWidget *view, GtkWidget *label)
 	if (zoom == 1)
 		str = g_strdup_printf("%dx%d", width, height);
 	else
-		str = g_strdup_printf("%dx%d (%.0fx%.0f %.0f%%)", width, height, width*zoom, height*zoom, zoom*100);
+		str = g_strdup_printf("%dx%d (%.0fx%.0f %.0f%%)", width, height, width * zoom, height * zoom, zoom * 100);
 
 	gtk_label_set_text(GTK_LABEL(label), str);
 	g_free(str);
@@ -241,20 +282,13 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	GtkToolItem *tb_stop;
 	GtkToolItem *tb_size;
 	GdkPixbuf *pixbuf;
-	GdkPixbufAnimation *anim = NULL;
-	gchar *tstr;
-	gboolean is_certain = FALSE;
-	gint tb_last = 11, i;
 	GKeyFile *cfg;
-	gchar *command;
 	gchar *tmpdir;
-	gchar *output;
 	gchar *fileExt;
-	gchar *outfile = NULL;
-	gchar *fallbackfile = NULL;
 	gchar *bgcolor = NULL;
 	gboolean hidetoolbar;
 	gboolean keeptmp;
+	gboolean quickview = FALSE;
 	GdkColor color;
 
 	fileExt = get_file_ext(FileToLoad);
@@ -264,63 +298,26 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 
 	cfg = g_key_file_new();
 
-	if (!g_key_file_load_from_file(cfg, cfgpath, G_KEY_FILE_KEEP_COMMENTS, NULL))
-		return NULL;
-	else
+	if (!g_key_file_load_from_file(cfg, g_cfgpath, G_KEY_FILE_KEEP_COMMENTS, NULL))
 	{
-		command = g_key_file_get_string(cfg, fileExt, "command", NULL);
-		outfile = g_key_file_get_string(cfg, fileExt, "filename", NULL);
-		fallbackfile = g_key_file_get_string(cfg, fileExt, "fallbackopen", NULL);
-		bgcolor = g_key_file_get_string(cfg, fileExt, "bgcolor", NULL);
-		hidetoolbar = g_key_file_get_boolean(cfg, fileExt, "hidetoolbar", NULL);
-		keeptmp = g_key_file_get_boolean(cfg, fileExt, "keeptmp", NULL);
-	}
-
-	g_key_file_free(cfg);
-
-	if (!command)
+		g_key_file_free(cfg);
+		g_free(fileExt);
 		return NULL;
+	}
 
 	tmpdir = g_dir_make_tmp("_dc-imgview.XXXXXX", NULL);
+	pixbuf = load_pixbuf(cfg, FileToLoad, fileExt, tmpdir);
+	keeptmp = g_key_file_get_boolean(cfg, fileExt, "keeptmp", NULL);
 
-	if (outfile)
+	if (!pixbuf)
 	{
-		output = g_strdup(outfile);
+		g_key_file_free(cfg);
+		g_free(fileExt);
 
-		if (!isabsolute(output))
-			output = g_strdup_printf("$TMPDIR/%s", outfile);
-
-		output = replace_tmpls(output, FileToLoad, tmpdir, NULL, FALSE);
-	}
-	else
-		output = g_strdup_printf("%s/output.png", tmpdir);
-
-	command = replace_tmpls(command, FileToLoad, tmpdir, output, TRUE);
-	g_print("%s\n", command);
-
-	if (system(command) != 0)
-	{
 		if (!keeptmp)
-			system(g_strdup_printf("rm -r %s", g_shell_quote(tmpdir)));
+			rm_tmpdir(tmpdir);
 
-		return NULL;
-	}
-
-	if (!g_file_test(output, G_FILE_TEST_EXISTS) && fallbackfile)
-	{
-		output = g_strdup(fallbackfile);
-
-		if (!isabsolute(output))
-			output = g_strdup_printf("$TMPDIR/%s", fallbackfile);
-
-		output = replace_tmpls(output, FileToLoad, tmpdir, NULL, FALSE);
-	}
-
-	if (!g_file_test(output, G_FILE_TEST_EXISTS))
-	{
-		if (!keeptmp)
-			system(g_strdup_printf("rm -r %s", g_shell_quote(tmpdir)));
-
+		g_free(tmpdir);
 		return NULL;
 	}
 
@@ -330,43 +327,35 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	gtk_toolbar_set_show_arrow(GTK_TOOLBAR(mtb), TRUE);
 	gtk_toolbar_set_style(GTK_TOOLBAR(mtb), GTK_TOOLBAR_ICONS);
 	gtk_box_pack_start(GTK_BOX(gFix), mtb, FALSE, FALSE, 2);
-	view = gtk_anim_view_new();
-	gtk_widget_set_name(view, "imageview");
+	view = gtk_image_view_new();
 	scroll = gtk_image_scroll_win_new(GTK_IMAGE_VIEW(view));
 	gtk_container_add(GTK_CONTAINER(gFix), scroll);
 
-	pixbuf = gdk_pixbuf_new_from_file(output, NULL);
-
-	if (!pixbuf)
-	{
-		if (!keeptmp)
-			system(g_strdup_printf("rm -r %s", g_shell_quote(tmpdir)));
-
-		gtk_widget_destroy(gFix);
-		return NULL;
-	}
+	label = gtk_label_new(NULL);
+	g_signal_connect(G_OBJECT(view), "zoom_changed", G_CALLBACK(zoom_changed_cb), (gpointer)label);
+	g_signal_connect(G_OBJECT(view), "pixbuf_changed", G_CALLBACK(zoom_changed_cb), (gpointer)label);
 
 	gtk_image_view_set_pixbuf(GTK_IMAGE_VIEW(view), pixbuf, TRUE);
 
 	tb_zoom_in = gtk_tool_button_new_from_stock(GTK_STOCK_ZOOM_IN);
 	gtk_toolbar_insert(GTK_TOOLBAR(mtb), tb_zoom_in, 0);
 	gtk_widget_set_tooltip_text(GTK_WIDGET(tb_zoom_in), _("Zoom In"));
-	g_signal_connect(G_OBJECT(tb_zoom_in), "clicked", G_CALLBACK(tb_zoom_in_clicked), (gpointer)(GtkWidget*)(view));
+	g_signal_connect(G_OBJECT(tb_zoom_in), "clicked", G_CALLBACK(tb_zoom_in_clicked), (gpointer)view);
 
 	tb_zoom_out = gtk_tool_button_new_from_stock(GTK_STOCK_ZOOM_OUT);
 	gtk_toolbar_insert(GTK_TOOLBAR(mtb), tb_zoom_out, 1);
 	gtk_widget_set_tooltip_text(GTK_WIDGET(tb_zoom_out), _("Zoom Out"));
-	g_signal_connect(G_OBJECT(tb_zoom_out), "clicked", G_CALLBACK(tb_zoom_out_clicked), (gpointer)(GtkWidget*)(view));
+	g_signal_connect(G_OBJECT(tb_zoom_out), "clicked", G_CALLBACK(tb_zoom_out_clicked), (gpointer)view);
 
 	tb_orgsize = gtk_tool_button_new_from_stock(GTK_STOCK_ZOOM_100);
 	gtk_toolbar_insert(GTK_TOOLBAR(mtb), tb_orgsize, 2);
 	gtk_widget_set_tooltip_text(GTK_WIDGET(tb_orgsize), _("Original Size"));
-	g_signal_connect(G_OBJECT(tb_orgsize), "clicked", G_CALLBACK(tb_orgsize_clicked), (gpointer)(GtkWidget*)(view));
+	g_signal_connect(G_OBJECT(tb_orgsize), "clicked", G_CALLBACK(tb_orgsize_clicked), (gpointer)view);
 
 	tb_fit = gtk_tool_button_new_from_stock(GTK_STOCK_ZOOM_FIT);
 	gtk_toolbar_insert(GTK_TOOLBAR(mtb), tb_fit, 3);
 	gtk_widget_set_tooltip_text(GTK_WIDGET(tb_fit), _("Fit"));
-	g_signal_connect(G_OBJECT(tb_fit), "clicked", G_CALLBACK(tb_fit_clicked), (gpointer)(GtkWidget*)(view));
+	g_signal_connect(G_OBJECT(tb_fit), "clicked", G_CALLBACK(tb_fit_clicked), (gpointer)view);
 
 	tb_separator = gtk_separator_tool_item_new();
 	gtk_toolbar_insert(GTK_TOOLBAR(mtb), tb_separator, 4);
@@ -374,41 +363,41 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	tb_copy = gtk_tool_button_new_from_stock(GTK_STOCK_COPY);
 	gtk_toolbar_insert(GTK_TOOLBAR(mtb), tb_copy, 5);
 	gtk_widget_set_tooltip_text(GTK_WIDGET(tb_copy), _("Copy to Clipboard"));
-	g_signal_connect(G_OBJECT(tb_copy), "clicked", G_CALLBACK(tb_copy_clicked), (gpointer)(GtkWidget*)(view));
+	g_signal_connect(G_OBJECT(tb_copy), "clicked", G_CALLBACK(tb_copy_clicked), (gpointer)view);
 
 	tb_rotare = gtk_tool_button_new(NULL, _("Rotate"));
 	gtk_tool_button_set_icon_name(GTK_TOOL_BUTTON(tb_rotare), "object-rotate-left");
 	gtk_toolbar_insert(GTK_TOOLBAR(mtb), tb_rotare, 6);
 	gtk_widget_set_tooltip_text(GTK_WIDGET(tb_rotare), _("Rotate"));
-	g_signal_connect(G_OBJECT(tb_rotare), "clicked", G_CALLBACK(tb_rotare_clicked), (gpointer)(GtkWidget*)(view));
+	g_signal_connect(G_OBJECT(tb_rotare), "clicked", G_CALLBACK(tb_rotare_clicked), (gpointer)view);
 
 	tb_rotare1 = gtk_tool_button_new(NULL, _("Rotate Clockwise"));
 	gtk_tool_button_set_icon_name(GTK_TOOL_BUTTON(tb_rotare1), "object-rotate-right");
 	gtk_toolbar_insert(GTK_TOOLBAR(mtb), tb_rotare1, 7);
 	gtk_widget_set_tooltip_text(GTK_WIDGET(tb_rotare1), _("Rotate Clockwise"));
-	g_signal_connect(G_OBJECT(tb_rotare1), "clicked", G_CALLBACK(tb_rotare1_clicked), (gpointer)(GtkWidget*)(view));
+	g_signal_connect(G_OBJECT(tb_rotare1), "clicked", G_CALLBACK(tb_rotare1_clicked), (gpointer)view);
 
 	tb_hflip = gtk_tool_button_new(NULL, _("Flip Horizontally"));
 	gtk_tool_button_set_icon_name(GTK_TOOL_BUTTON(tb_hflip), "object-flip-horizontal");
 	gtk_toolbar_insert(GTK_TOOLBAR(mtb), tb_hflip, 8);
 	gtk_widget_set_tooltip_text(GTK_WIDGET(tb_hflip), _("Flip Horizontally"));
-	g_signal_connect(G_OBJECT(tb_hflip), "clicked", G_CALLBACK(tb_hflip_clicked), (gpointer)(GtkWidget*)(view));
+	g_signal_connect(G_OBJECT(tb_hflip), "clicked", G_CALLBACK(tb_hflip_clicked), (gpointer)view);
 
 	tb_vflip = gtk_tool_button_new(NULL, _("Flip Vertically"));
 	gtk_tool_button_set_icon_name(GTK_TOOL_BUTTON(tb_vflip), "object-flip-vertical");
 	gtk_toolbar_insert(GTK_TOOLBAR(mtb), tb_vflip, 9);
 	gtk_widget_set_tooltip_text(GTK_WIDGET(tb_vflip), _("Flip Vertically"));
-	g_signal_connect(G_OBJECT(tb_vflip), "clicked", G_CALLBACK(tb_vflip_clicked), (gpointer)(GtkWidget*)(view));
+	g_signal_connect(G_OBJECT(tb_vflip), "clicked", G_CALLBACK(tb_vflip_clicked), (gpointer)view);
 
 	tb_separator1 = gtk_separator_tool_item_new();
 	gtk_toolbar_insert(GTK_TOOLBAR(mtb), tb_separator1, 10);
 
-	tstr = g_strdup_printf("%dx%d", gdk_pixbuf_get_width(pixbuf), gdk_pixbuf_get_height(pixbuf));
 	tb_size = gtk_tool_item_new();
-	label = gtk_label_new(tstr);
 	gtk_container_add(GTK_CONTAINER(tb_size), label);
-	g_free(tstr);
-	gtk_toolbar_insert(GTK_TOOLBAR(mtb), tb_size, tb_last);
+	gtk_toolbar_insert(GTK_TOOLBAR(mtb), tb_size, 11);
+
+	bgcolor = g_key_file_get_string(cfg, fileExt, "bgcolor", NULL);
+	hidetoolbar = g_key_file_get_boolean(cfg, fileExt, "hidetoolbar", NULL);
 
 	if (bgcolor)
 	{
@@ -418,40 +407,108 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 		g_free(bgcolor);
 	}
 
-	g_object_set_data(G_OBJECT(gFix), "tmpdir", tmpdir);
-
 	gtk_widget_grab_focus(view);
 	gtk_widget_show_all(gFix);
 
-	g_signal_connect(G_OBJECT(view), "zoom_changed", G_CALLBACK(zoom_changed_cb), (gpointer)(GtkWidget*)(label));
+	if (g_strcmp0(gtk_window_get_title(GTK_WINDOW(gtk_widget_get_toplevel(GTK_WIDGET(ParentWin)))), FileToLoad) != 0)
+		quickview = TRUE;
 
-	if (hidetoolbar || g_strcmp0(gtk_window_get_title(GTK_WINDOW(gtk_widget_get_toplevel(GTK_WIDGET(ParentWin)))), FileToLoad) != 0)
+	if (hidetoolbar || quickview)
 		gtk_widget_hide(mtb);
 
+	g_object_set_data(G_OBJECT(gFix), "imageview", view);
+	g_object_set_data(G_OBJECT(gFix), "tmpdir", tmpdir);
+	g_object_set_data(G_OBJECT(gFix), "toolbar", mtb);
+	g_object_set_data(G_OBJECT(gFix), "config", cfg);
+	g_object_set_data(G_OBJECT(gFix), "quickview", GINT_TO_POINTER((gint)quickview));
+
+	if (G_IS_OBJECT(pixbuf))
+		g_object_unref(pixbuf);
+
 	return gFix;
+}
+
+int DCPCALL ListLoadNext(HWND ParentWin, HWND PluginWin, char* FileToLoad, int ShowFlags)
+{
+	gchar *fileExt = get_file_ext(FileToLoad);
+
+	if (!fileExt)
+		return LISTPLUGIN_ERROR;
+
+	gchar *tmpdir = g_object_get_data(G_OBJECT(PluginWin), "tmpdir");
+	GKeyFile *cfg = g_object_get_data(G_OBJECT(PluginWin), "config");
+	GtkWidget *view = g_object_get_data(G_OBJECT(PluginWin), "imageview");
+	GtkWidget *mtb = g_object_get_data(G_OBJECT(PluginWin), "toolbar");
+	GdkPixbuf *pixbuf = load_pixbuf(cfg, FileToLoad, fileExt, tmpdir);
+	gboolean quickview = (gboolean)GPOINTER_TO_INT(g_object_get_data(G_OBJECT(PluginWin), "quickview"));
+	gboolean keeptmp = g_key_file_get_boolean(cfg, fileExt, "keeptmp", NULL);
+
+	if (!pixbuf)
+	{
+		g_free(fileExt);
+
+		return LISTPLUGIN_ERROR;
+	}
+
+	gtk_image_view_set_pixbuf(GTK_IMAGE_VIEW(view), NULL, FALSE);
+
+	gchar *bgcolor = g_key_file_get_string(cfg, fileExt, "bgcolor", NULL);
+	gboolean hidetoolbar = g_key_file_get_boolean(cfg, fileExt, "hidetoolbar", NULL);
+
+	if (bgcolor)
+	{
+		GdkColor color;
+		gtk_image_view_set_show_frame(GTK_IMAGE_VIEW(view), FALSE);
+		gdk_color_parse(bgcolor, &color);
+		gtk_widget_modify_bg(view, GTK_STATE_NORMAL, &color);
+		g_free(bgcolor);
+	}
+	else
+		gtk_widget_modify_bg(view, GTK_STATE_NORMAL, NULL);
+
+	if (hidetoolbar || quickview)
+		gtk_widget_hide(mtb);
+	else
+		gtk_widget_show(mtb);
+
+	gtk_image_view_set_pixbuf(GTK_IMAGE_VIEW(view), pixbuf, TRUE);
+
+	if (G_IS_OBJECT(pixbuf))
+		g_object_unref(pixbuf);
+
+	return LISTPLUGIN_OK;
 }
 
 void DCPCALL ListCloseWindow(HWND ListWin)
 {
 	gchar *tmpdir = g_object_get_data(G_OBJECT(ListWin), "tmpdir");
-	GdkPixbuf *pixbuf = gtk_image_view_get_pixbuf(GTK_IMAGE_VIEW(find_child(ListWin, "imageview")));
+	GtkWidget *view = (GtkWidget*)g_object_get_data(G_OBJECT(ListWin), "imageview");
+	GdkPixbuf *pixbuf = gtk_image_view_get_pixbuf(GTK_IMAGE_VIEW(view));
+	GKeyFile *cfg = g_object_get_data(G_OBJECT(ListWin), "config");
+	gtk_image_view_set_pixbuf(GTK_IMAGE_VIEW(view), NULL, FALSE);
 	gtk_widget_destroy(GTK_WIDGET(ListWin));
-	g_object_unref(pixbuf);
+
+	if (G_IS_OBJECT(pixbuf))
+		g_object_unref(pixbuf);
+
+	g_key_file_free(cfg);
 
 	if (tmpdir)
 	{
-		system(g_strdup_printf("rm -r %s", g_shell_quote(tmpdir)));
+		rm_tmpdir(tmpdir);
 		g_free(tmpdir);
 	}
 }
 
 int DCPCALL ListSendCommand(HWND ListWin, int Command, int Parameter)
 {
+	GtkWidget *view = (GtkWidget*)g_object_get_data(G_OBJECT(ListWin), "imageview");
+
 	switch (Command)
 	{
 	case lc_copy :
 		gtk_clipboard_set_image(gtk_clipboard_get(GDK_SELECTION_CLIPBOARD),
-		                        gtk_image_view_get_pixbuf(GTK_IMAGE_VIEW(find_child(ListWin, "imageview"))));
+		                        gtk_image_view_get_pixbuf(GTK_IMAGE_VIEW(view)));
 		break;
 
 	default :
@@ -476,9 +533,12 @@ void DCPCALL ListSetDefaultParams(ListDefaultParamStruct* dps)
 	if (dladdr(dir_f, &dlinfo) != 0)
 	{
 		setlocale(LC_ALL, "");
-		bindtextdomain(GETTEXT_PACKAGE, g_strdup_printf(dir_f,
-		                g_path_get_dirname(dlinfo.dli_fname)));
+		gchar *plugdir = g_path_get_dirname(dlinfo.dli_fname);
+		gchar *langdir = g_strdup_printf(dir_f, plugdir);
+		g_cfgpath = g_strdup_printf("%s/settings.ini", plugdir);
+		g_free(plugdir);
+		bindtextdomain(GETTEXT_PACKAGE, langdir);
+		g_free(langdir);
 		textdomain(GETTEXT_PACKAGE);
-		cfgpath = g_strdup_printf("%s/settings.ini", g_path_get_dirname(dlinfo.dli_fname));
 	}
 }
