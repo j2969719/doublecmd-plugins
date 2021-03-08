@@ -14,56 +14,86 @@
 
 #define _detectstring "(EXT=\"DDS\")|(EXT=\"TGA\")|(EXT=\"PCX\")|(EXT=\"BMP\")|(EXT=\"WEBP\")"
 
-static void tb_zoom_in_clicked(GtkToolItem *tooleditcut, GtkWidget *imgview)
+static void tb_zoom_in_clicked(GtkToolItem *item, GtkWidget *view)
 {
-	gtk_image_view_zoom_in(GTK_IMAGE_VIEW(imgview));
+	gtk_image_view_zoom_in(GTK_IMAGE_VIEW(view));
 }
 
-static void tb_zoom_out_clicked(GtkToolItem *tooleditcopy, GtkWidget *imgview)
+static void tb_zoom_out_clicked(GtkToolItem *item, GtkWidget *view)
 {
-	gtk_image_view_zoom_out(GTK_IMAGE_VIEW(imgview));
+	gtk_image_view_zoom_out(GTK_IMAGE_VIEW(view));
 }
 
-static void tb_orgsize_clicked(GtkToolItem *tooleditcopy, GtkWidget *imgview)
+static void tb_orgsize_clicked(GtkToolItem *item, GtkWidget *view)
 {
-	gtk_image_view_set_zoom(GTK_IMAGE_VIEW(imgview), 1);
+	gtk_image_view_set_zoom(GTK_IMAGE_VIEW(view), 1);
 }
 
-static void tb_fit_clicked(GtkToolItem *tooleditcopy, GtkWidget *imgview)
+static void tb_fit_clicked(GtkToolItem *item, GtkWidget *view)
 {
-	gtk_image_view_set_fitting(GTK_IMAGE_VIEW(imgview), TRUE);
+	gtk_image_view_set_fitting(GTK_IMAGE_VIEW(view), TRUE);
 }
 
-static void tb_copy_clicked(GtkToolItem *tooleditcopy, GtkWidget *imgview)
+static void tb_copy_clicked(GtkToolItem *item, GtkWidget *view)
 {
 	gtk_clipboard_set_image(gtk_clipboard_get(GDK_SELECTION_CLIPBOARD),
-	                        gtk_image_view_get_pixbuf(GTK_IMAGE_VIEW(imgview)));
+	                        gtk_image_view_get_pixbuf(GTK_IMAGE_VIEW(view)));
 }
 
-static void tb_rotare_clicked(GtkToolItem *tooleditcopy, GtkWidget *imgview)
+static void tb_rotare_clicked(GtkToolItem *item, GtkWidget *view)
 {
-	gtk_image_view_set_pixbuf(GTK_IMAGE_VIEW(imgview),
-	                          gdk_pixbuf_rotate_simple(gtk_image_view_get_pixbuf(GTK_IMAGE_VIEW(imgview)),
-	                                          GDK_PIXBUF_ROTATE_COUNTERCLOCKWISE), TRUE);
+	GdkPixbuf *pixbuf = gtk_image_view_get_pixbuf(GTK_IMAGE_VIEW(view));
+
+	if (GDK_IS_PIXBUF(pixbuf))
+	{
+		GdkPixbuf *new = gdk_pixbuf_rotate_simple(pixbuf, GDK_PIXBUF_ROTATE_COUNTERCLOCKWISE);
+		gtk_image_view_set_pixbuf(GTK_IMAGE_VIEW(view), new, TRUE);
+
+		if (GDK_IS_PIXBUF(new))
+			g_object_unref(new);
+	}
 }
 
-static void tb_rotare1_clicked(GtkToolItem *tooleditcopy, GtkWidget *imgview)
+static void tb_rotare1_clicked(GtkToolItem *item, GtkWidget *view)
 {
-	gtk_image_view_set_pixbuf(GTK_IMAGE_VIEW(imgview),
-	                          gdk_pixbuf_rotate_simple(gtk_image_view_get_pixbuf(GTK_IMAGE_VIEW(imgview)),
-	                                          GDK_PIXBUF_ROTATE_CLOCKWISE), TRUE);
+	GdkPixbuf *pixbuf = gtk_image_view_get_pixbuf(GTK_IMAGE_VIEW(view));
+
+	if (GDK_IS_PIXBUF(pixbuf))
+	{
+		GdkPixbuf *new = gdk_pixbuf_rotate_simple(pixbuf, GDK_PIXBUF_ROTATE_CLOCKWISE);
+		gtk_image_view_set_pixbuf(GTK_IMAGE_VIEW(view), new, TRUE);
+
+		if (GDK_IS_PIXBUF(new))
+			g_object_unref(new);
+	}
 }
 
-static void tb_hflip_clicked(GtkToolItem *tooleditcopy, GtkWidget *imgview)
+static void tb_hflip_clicked(GtkToolItem *item, GtkWidget *view)
 {
-	gtk_image_view_set_pixbuf(GTK_IMAGE_VIEW(imgview),
-	                          gdk_pixbuf_flip(gtk_image_view_get_pixbuf(GTK_IMAGE_VIEW(imgview)), TRUE), TRUE);
+	GdkPixbuf *pixbuf = gtk_image_view_get_pixbuf(GTK_IMAGE_VIEW(view));
+
+	if (GDK_IS_PIXBUF(pixbuf))
+	{
+		GdkPixbuf *new = gdk_pixbuf_flip(pixbuf, TRUE);
+		gtk_image_view_set_pixbuf(GTK_IMAGE_VIEW(view), new, TRUE);
+
+		if (GDK_IS_PIXBUF(new))
+			g_object_unref(new);
+	}
 }
 
-static void tb_vflip_clicked(GtkToolItem *tooleditcopy, GtkWidget *imgview)
+static void tb_vflip_clicked(GtkToolItem *item, GtkWidget *view)
 {
-	gtk_image_view_set_pixbuf(GTK_IMAGE_VIEW(imgview),
-	                          gdk_pixbuf_flip(gtk_image_view_get_pixbuf(GTK_IMAGE_VIEW(imgview)), FALSE), TRUE);
+	GdkPixbuf *pixbuf = gtk_image_view_get_pixbuf(GTK_IMAGE_VIEW(view));
+
+	if (GDK_IS_PIXBUF(pixbuf))
+	{
+		GdkPixbuf *new = gdk_pixbuf_flip(pixbuf, FALSE);
+		gtk_image_view_set_pixbuf(GTK_IMAGE_VIEW(view), new, TRUE);
+
+		if (GDK_IS_PIXBUF(new))
+			g_object_unref(new);
+	}
 }
 
 static void zoom_changed_cb(GtkWidget *view, GtkWidget *label)
@@ -137,8 +167,6 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	GtkToolItem *tb_zoom_out;
 	GtkToolItem *tb_orgsize;
 	GtkToolItem *tb_fit;
-	GtkToolItem *tb_separator;
-	GtkToolItem *tb_separator1;
 	GtkToolItem *tb_copy;
 	GtkToolItem *tb_rotare;
 	GtkToolItem *tb_rotare1;
@@ -167,64 +195,63 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 
 	gtk_image_view_set_pixbuf(GTK_IMAGE_VIEW(view), pixbuf, TRUE);
 
+	guint tb_pos = 0;
 	tb_zoom_in = gtk_tool_button_new_from_stock(GTK_STOCK_ZOOM_IN);
-	gtk_toolbar_insert(GTK_TOOLBAR(mtb), tb_zoom_in, 0);
+	gtk_toolbar_insert(GTK_TOOLBAR(mtb), tb_zoom_in, tb_pos++);
 	gtk_widget_set_tooltip_text(GTK_WIDGET(tb_zoom_in), _("Zoom In"));
 	g_signal_connect(G_OBJECT(tb_zoom_in), "clicked", G_CALLBACK(tb_zoom_in_clicked), (gpointer)view);
 
 	tb_zoom_out = gtk_tool_button_new_from_stock(GTK_STOCK_ZOOM_OUT);
-	gtk_toolbar_insert(GTK_TOOLBAR(mtb), tb_zoom_out, 1);
+	gtk_toolbar_insert(GTK_TOOLBAR(mtb), tb_zoom_out, tb_pos++);
 	gtk_widget_set_tooltip_text(GTK_WIDGET(tb_zoom_out), _("Zoom Out"));
 	g_signal_connect(G_OBJECT(tb_zoom_out), "clicked", G_CALLBACK(tb_zoom_out_clicked), (gpointer)view);
 
 	tb_orgsize = gtk_tool_button_new_from_stock(GTK_STOCK_ZOOM_100);
-	gtk_toolbar_insert(GTK_TOOLBAR(mtb), tb_orgsize, 2);
+	gtk_toolbar_insert(GTK_TOOLBAR(mtb), tb_orgsize, tb_pos++);
 	gtk_widget_set_tooltip_text(GTK_WIDGET(tb_orgsize), _("Original Size"));
 	g_signal_connect(G_OBJECT(tb_orgsize), "clicked", G_CALLBACK(tb_orgsize_clicked), (gpointer)view);
 
 	tb_fit = gtk_tool_button_new_from_stock(GTK_STOCK_ZOOM_FIT);
-	gtk_toolbar_insert(GTK_TOOLBAR(mtb), tb_fit, 3);
+	gtk_toolbar_insert(GTK_TOOLBAR(mtb), tb_fit, tb_pos++);
 	gtk_widget_set_tooltip_text(GTK_WIDGET(tb_fit), _("Fit"));
 	g_signal_connect(G_OBJECT(tb_fit), "clicked", G_CALLBACK(tb_fit_clicked), (gpointer)view);
 
-	tb_separator = gtk_separator_tool_item_new();
-	gtk_toolbar_insert(GTK_TOOLBAR(mtb), tb_separator, 4);
+	gtk_toolbar_insert(GTK_TOOLBAR(mtb), gtk_separator_tool_item_new(), tb_pos++);
 
 	tb_copy = gtk_tool_button_new_from_stock(GTK_STOCK_COPY);
-	gtk_toolbar_insert(GTK_TOOLBAR(mtb), tb_copy, 5);
+	gtk_toolbar_insert(GTK_TOOLBAR(mtb), tb_copy, tb_pos++);
 	gtk_widget_set_tooltip_text(GTK_WIDGET(tb_copy), _("Copy to Clipboard"));
 	g_signal_connect(G_OBJECT(tb_copy), "clicked", G_CALLBACK(tb_copy_clicked), (gpointer)view);
 
 	tb_rotare = gtk_tool_button_new(NULL, _("Rotate"));
 	gtk_tool_button_set_icon_name(GTK_TOOL_BUTTON(tb_rotare), "object-rotate-left");
-	gtk_toolbar_insert(GTK_TOOLBAR(mtb), tb_rotare, 6);
+	gtk_toolbar_insert(GTK_TOOLBAR(mtb), tb_rotare, tb_pos++);
 	gtk_widget_set_tooltip_text(GTK_WIDGET(tb_rotare), _("Rotate"));
 	g_signal_connect(G_OBJECT(tb_rotare), "clicked", G_CALLBACK(tb_rotare_clicked), (gpointer)view);
 
 	tb_rotare1 = gtk_tool_button_new(NULL, _("Rotate Clockwise"));
 	gtk_tool_button_set_icon_name(GTK_TOOL_BUTTON(tb_rotare1), "object-rotate-right");
-	gtk_toolbar_insert(GTK_TOOLBAR(mtb), tb_rotare1, 7);
+	gtk_toolbar_insert(GTK_TOOLBAR(mtb), tb_rotare1, tb_pos++);
 	gtk_widget_set_tooltip_text(GTK_WIDGET(tb_rotare1), _("Rotate Clockwise"));
 	g_signal_connect(G_OBJECT(tb_rotare1), "clicked", G_CALLBACK(tb_rotare1_clicked), (gpointer)view);
 
 	tb_hflip = gtk_tool_button_new(NULL, _("Flip Horizontally"));
 	gtk_tool_button_set_icon_name(GTK_TOOL_BUTTON(tb_hflip), "object-flip-horizontal");
-	gtk_toolbar_insert(GTK_TOOLBAR(mtb), tb_hflip, 8);
+	gtk_toolbar_insert(GTK_TOOLBAR(mtb), tb_hflip, tb_pos++);
 	gtk_widget_set_tooltip_text(GTK_WIDGET(tb_hflip), _("Flip Horizontally"));
 	g_signal_connect(G_OBJECT(tb_hflip), "clicked", G_CALLBACK(tb_hflip_clicked), (gpointer)view);
 
 	tb_vflip = gtk_tool_button_new(NULL, _("Flip Vertically"));
 	gtk_tool_button_set_icon_name(GTK_TOOL_BUTTON(tb_vflip), "object-flip-vertical");
-	gtk_toolbar_insert(GTK_TOOLBAR(mtb), tb_vflip, 9);
+	gtk_toolbar_insert(GTK_TOOLBAR(mtb), tb_vflip, tb_pos++);
 	gtk_widget_set_tooltip_text(GTK_WIDGET(tb_vflip), _("Flip Vertically"));
 	g_signal_connect(G_OBJECT(tb_vflip), "clicked", G_CALLBACK(tb_vflip_clicked), (gpointer)view);
 
-	tb_separator1 = gtk_separator_tool_item_new();
-	gtk_toolbar_insert(GTK_TOOLBAR(mtb), tb_separator1, 10);
+	gtk_toolbar_insert(GTK_TOOLBAR(mtb), gtk_separator_tool_item_new(), tb_pos++);
 
 	tb_size = gtk_tool_item_new();
 	gtk_container_add(GTK_CONTAINER(tb_size), label);
-	gtk_toolbar_insert(GTK_TOOLBAR(mtb), tb_size, 11);
+	gtk_toolbar_insert(GTK_TOOLBAR(mtb), tb_size, tb_pos++);
 
 	gtk_widget_grab_focus(view);
 	gtk_widget_show_all(gFix);

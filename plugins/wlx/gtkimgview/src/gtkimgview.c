@@ -18,80 +18,115 @@ const gchar *anims[] =
 	"application/x-navi-animation",
 };
 
-static void tb_zoom_in_clicked(GtkToolItem *tooleditcut, GtkWidget *imgview)
+static void tb_zoom_in_clicked(GtkToolItem *item, GtkWidget *view)
 {
-	gtk_image_view_zoom_in(GTK_IMAGE_VIEW(imgview));
+	gtk_image_view_zoom_in(GTK_IMAGE_VIEW(view));
 }
 
-static void tb_zoom_out_clicked(GtkToolItem *tooleditcopy, GtkWidget *imgview)
+static void tb_zoom_out_clicked(GtkToolItem *item, GtkWidget *view)
 {
-	gtk_image_view_zoom_out(GTK_IMAGE_VIEW(imgview));
+	gtk_image_view_zoom_out(GTK_IMAGE_VIEW(view));
 }
 
-static void tb_orgsize_clicked(GtkToolItem *tooleditcopy, GtkWidget *imgview)
+static void tb_orgsize_clicked(GtkToolItem *item, GtkWidget *view)
 {
-	gtk_image_view_set_zoom(GTK_IMAGE_VIEW(imgview), 1);
+	gtk_image_view_set_zoom(GTK_IMAGE_VIEW(view), 1);
 }
 
-static void tb_fit_clicked(GtkToolItem *tooleditcopy, GtkWidget *imgview)
+static void tb_fit_clicked(GtkToolItem *item, GtkWidget *view)
 {
-	gtk_image_view_set_fitting(GTK_IMAGE_VIEW(imgview), TRUE);
+	gtk_image_view_set_fitting(GTK_IMAGE_VIEW(view), TRUE);
 }
 
-static void tb_copy_clicked(GtkToolItem *tooleditcopy, GtkWidget *imgview)
+static void tb_copy_clicked(GtkToolItem *item, GtkWidget *view)
 {
 	gtk_clipboard_set_image(gtk_clipboard_get(GDK_SELECTION_CLIPBOARD),
-	                        gtk_image_view_get_pixbuf(GTK_IMAGE_VIEW(imgview)));
+	                        gtk_image_view_get_pixbuf(GTK_IMAGE_VIEW(view)));
 }
 
-static void tb_rotare_clicked(GtkToolItem *tooleditcopy, GtkWidget *imgview)
+static void tb_rotare_clicked(GtkToolItem *item, GtkWidget *view)
 {
-	if (gtk_anim_view_get_is_playing(GTK_ANIM_VIEW(imgview)))
-		gtk_anim_view_set_is_playing(GTK_ANIM_VIEW(imgview), FALSE);
+	if (gtk_anim_view_get_is_playing(GTK_ANIM_VIEW(view)))
+		gtk_anim_view_set_is_playing(GTK_ANIM_VIEW(view), FALSE);
 
-	gtk_image_view_set_pixbuf(GTK_IMAGE_VIEW(imgview),
-	                          gdk_pixbuf_rotate_simple(gtk_image_view_get_pixbuf(GTK_IMAGE_VIEW(imgview)),
-	                                          GDK_PIXBUF_ROTATE_COUNTERCLOCKWISE), TRUE);
+	GdkPixbuf *pixbuf = gtk_image_view_get_pixbuf(GTK_IMAGE_VIEW(view));
+
+	if (GDK_IS_PIXBUF(pixbuf))
+	{
+		GdkPixbuf *new = gdk_pixbuf_rotate_simple(pixbuf, GDK_PIXBUF_ROTATE_COUNTERCLOCKWISE);
+		gtk_image_view_set_pixbuf(GTK_IMAGE_VIEW(view), new, TRUE);
+
+		if (GDK_IS_PIXBUF(new))
+			g_object_unref(new);
+	}
 }
 
-static void tb_rotare1_clicked(GtkToolItem *tooleditcopy, GtkWidget *imgview)
+static void tb_rotare1_clicked(GtkToolItem *item, GtkWidget *view)
 {
-	if (gtk_anim_view_get_is_playing(GTK_ANIM_VIEW(imgview)))
-		gtk_anim_view_set_is_playing(GTK_ANIM_VIEW(imgview), FALSE);
+	if (gtk_anim_view_get_is_playing(GTK_ANIM_VIEW(view)))
+		gtk_anim_view_set_is_playing(GTK_ANIM_VIEW(view), FALSE);
 
-	gtk_image_view_set_pixbuf(GTK_IMAGE_VIEW(imgview),
-	                          gdk_pixbuf_rotate_simple(gtk_image_view_get_pixbuf(GTK_IMAGE_VIEW(imgview)),
-	                                          GDK_PIXBUF_ROTATE_CLOCKWISE), TRUE);
+	GdkPixbuf *pixbuf = gtk_image_view_get_pixbuf(GTK_IMAGE_VIEW(view));
+
+	if (GDK_IS_PIXBUF(pixbuf))
+	{
+		GdkPixbuf *new = gdk_pixbuf_rotate_simple(pixbuf, GDK_PIXBUF_ROTATE_CLOCKWISE);
+		gtk_image_view_set_pixbuf(GTK_IMAGE_VIEW(view), new, TRUE);
+
+		if (GDK_IS_PIXBUF(new))
+			g_object_unref(new);
+	}
 }
 
-static void tb_hflip_clicked(GtkToolItem *tooleditcopy, GtkWidget *imgview)
+static void tb_hflip_clicked(GtkToolItem *item, GtkWidget *view)
 {
-	if (gtk_anim_view_get_is_playing(GTK_ANIM_VIEW(imgview)))
-		gtk_anim_view_set_is_playing(GTK_ANIM_VIEW(imgview), FALSE);
+	if (gtk_anim_view_get_is_playing(GTK_ANIM_VIEW(view)))
+		gtk_anim_view_set_is_playing(GTK_ANIM_VIEW(view), FALSE);
 
-	gtk_image_view_set_pixbuf(GTK_IMAGE_VIEW(imgview),
-	                          gdk_pixbuf_flip(gtk_image_view_get_pixbuf(GTK_IMAGE_VIEW(imgview)), TRUE), TRUE);
+	GdkPixbuf *pixbuf = gtk_image_view_get_pixbuf(GTK_IMAGE_VIEW(view));
+
+	if (GDK_IS_PIXBUF(pixbuf))
+	{
+		GdkPixbuf *new = gdk_pixbuf_flip(pixbuf, TRUE);
+		gtk_image_view_set_pixbuf(GTK_IMAGE_VIEW(view), new, TRUE);
+
+		if (GDK_IS_PIXBUF(new))
+			g_object_unref(new);
+	}
 }
 
-static void tb_vflip_clicked(GtkToolItem *tooleditcopy, GtkWidget *imgview)
+static void tb_vflip_clicked(GtkToolItem *item, GtkWidget *view)
 {
-	if (gtk_anim_view_get_is_playing(GTK_ANIM_VIEW(imgview)))
-		gtk_anim_view_set_is_playing(GTK_ANIM_VIEW(imgview), FALSE);
+	if (gtk_anim_view_get_is_playing(GTK_ANIM_VIEW(view)))
+		gtk_anim_view_set_is_playing(GTK_ANIM_VIEW(view), FALSE);
 
-	gtk_image_view_set_pixbuf(GTK_IMAGE_VIEW(imgview),
-	                          gdk_pixbuf_flip(gtk_image_view_get_pixbuf(GTK_IMAGE_VIEW(imgview)), FALSE), TRUE);
+	GdkPixbuf *pixbuf = gtk_image_view_get_pixbuf(GTK_IMAGE_VIEW(view));
+
+	if (GDK_IS_PIXBUF(pixbuf))
+	{
+		GdkPixbuf *new = gdk_pixbuf_flip(pixbuf, FALSE);
+		gtk_image_view_set_pixbuf(GTK_IMAGE_VIEW(view), new, TRUE);
+
+		if (GDK_IS_PIXBUF(new))
+			g_object_unref(new);
+	}
 }
 
-static void tb_play_clicked(GtkToolItem *tooleditcopy, GtkWidget *imgview)
+static void tb_play_clicked(GtkToolItem *item, GtkWidget *view)
 {
-	if (!gtk_anim_view_get_is_playing(GTK_ANIM_VIEW(imgview)))
-		gtk_anim_view_set_is_playing(GTK_ANIM_VIEW(imgview), TRUE);
+	if (!gtk_anim_view_get_is_playing(GTK_ANIM_VIEW(view)))
+		gtk_anim_view_set_is_playing(GTK_ANIM_VIEW(view), TRUE);
 }
 
-static void tb_stop_clicked(GtkToolItem *tooleditcopy, GtkWidget *imgview)
+static void tb_stop_clicked(GtkToolItem *item, GtkWidget *view)
 {
-	if (gtk_anim_view_get_is_playing(GTK_ANIM_VIEW(imgview)))
-		gtk_anim_view_set_is_playing(GTK_ANIM_VIEW(imgview), FALSE);
+	if (gtk_anim_view_get_is_playing(GTK_ANIM_VIEW(view)))
+		gtk_anim_view_set_is_playing(GTK_ANIM_VIEW(view), FALSE);
+}
+
+static void tb_step_clicked(GtkToolItem *item, GtkWidget *view)
+{
+	gtk_anim_view_step(GTK_ANIM_VIEW(view));
 }
 
 static void zoom_changed_cb(GtkWidget *view, GtkWidget *label)
@@ -112,7 +147,7 @@ static void zoom_changed_cb(GtkWidget *view, GtkWidget *label)
 	if (zoom == 1)
 		str = g_strdup_printf("%dx%d", width, height);
 	else
-		str = g_strdup_printf("%dx%d (%.0fx%.0f %.0f%%)", width, height, width*zoom, height*zoom, zoom*100);
+		str = g_strdup_printf("%dx%d (%.0fx%.0f %.0f%%)", width, height, width * zoom, height * zoom, zoom * 100);
 
 	gtk_label_set_text(GTK_LABEL(label), str);
 	g_free(str);
@@ -129,8 +164,6 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	GtkToolItem *tb_zoom_out;
 	GtkToolItem *tb_orgsize;
 	GtkToolItem *tb_fit;
-	GtkToolItem *tb_separator;
-	GtkToolItem *tb_separator1;
 	GtkToolItem *tb_copy;
 	GtkToolItem *tb_rotare;
 	GtkToolItem *tb_rotare1;
@@ -138,6 +171,7 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	GtkToolItem *tb_vflip;
 	GtkToolItem *tb_play;
 	GtkToolItem *tb_stop;
+	GtkToolItem *tb_step;
 	GtkToolItem *tb_size;
 	GdkPixbuf *pixbuf;
 	GdkPixbufAnimation *anim = NULL;
@@ -168,6 +202,7 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	g_signal_connect(G_OBJECT(view), "pixbuf_changed", G_CALLBACK(zoom_changed_cb), (gpointer)label);
 
 	gtk_image_view_set_pixbuf(GTK_IMAGE_VIEW(view), pixbuf, TRUE);
+	gtk_anim_view_set_anim(GTK_ANIM_VIEW(view), NULL);
 
 	for (gint i = 0; anims[i] != NULL; i++)
 	{
@@ -186,74 +221,78 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 
 	g_free(content_type);
 
+	guint tb_pos = 0;
 	tb_zoom_in = gtk_tool_button_new_from_stock(GTK_STOCK_ZOOM_IN);
-	gtk_toolbar_insert(GTK_TOOLBAR(mtb), tb_zoom_in, 0);
+	gtk_toolbar_insert(GTK_TOOLBAR(mtb), tb_zoom_in, tb_pos++);
 	gtk_widget_set_tooltip_text(GTK_WIDGET(tb_zoom_in), _("Zoom In"));
 	g_signal_connect(G_OBJECT(tb_zoom_in), "clicked", G_CALLBACK(tb_zoom_in_clicked), (gpointer)view);
 
 	tb_zoom_out = gtk_tool_button_new_from_stock(GTK_STOCK_ZOOM_OUT);
-	gtk_toolbar_insert(GTK_TOOLBAR(mtb), tb_zoom_out, 1);
+	gtk_toolbar_insert(GTK_TOOLBAR(mtb), tb_zoom_out, tb_pos++);
 	gtk_widget_set_tooltip_text(GTK_WIDGET(tb_zoom_out), _("Zoom Out"));
 	g_signal_connect(G_OBJECT(tb_zoom_out), "clicked", G_CALLBACK(tb_zoom_out_clicked), (gpointer)view);
 
 	tb_orgsize = gtk_tool_button_new_from_stock(GTK_STOCK_ZOOM_100);
-	gtk_toolbar_insert(GTK_TOOLBAR(mtb), tb_orgsize, 2);
+	gtk_toolbar_insert(GTK_TOOLBAR(mtb), tb_orgsize, tb_pos++);
 	gtk_widget_set_tooltip_text(GTK_WIDGET(tb_orgsize), _("Original Size"));
 	g_signal_connect(G_OBJECT(tb_orgsize), "clicked", G_CALLBACK(tb_orgsize_clicked), (gpointer)view);
 
 	tb_fit = gtk_tool_button_new_from_stock(GTK_STOCK_ZOOM_FIT);
-	gtk_toolbar_insert(GTK_TOOLBAR(mtb), tb_fit, 3);
+	gtk_toolbar_insert(GTK_TOOLBAR(mtb), tb_fit, tb_pos++);
 	gtk_widget_set_tooltip_text(GTK_WIDGET(tb_fit), _("Fit"));
 	g_signal_connect(G_OBJECT(tb_fit), "clicked", G_CALLBACK(tb_fit_clicked), (gpointer)view);
 
-	tb_separator = gtk_separator_tool_item_new();
-	gtk_toolbar_insert(GTK_TOOLBAR(mtb), tb_separator, 4);
+	gtk_toolbar_insert(GTK_TOOLBAR(mtb), gtk_separator_tool_item_new(), tb_pos++);
 
 	tb_copy = gtk_tool_button_new_from_stock(GTK_STOCK_COPY);
-	gtk_toolbar_insert(GTK_TOOLBAR(mtb), tb_copy, 5);
+	gtk_toolbar_insert(GTK_TOOLBAR(mtb), tb_copy, tb_pos++);
 	gtk_widget_set_tooltip_text(GTK_WIDGET(tb_copy), _("Copy to Clipboard"));
 	g_signal_connect(G_OBJECT(tb_copy), "clicked", G_CALLBACK(tb_copy_clicked), (gpointer)view);
 
 	tb_rotare = gtk_tool_button_new(NULL, _("Rotate"));
 	gtk_tool_button_set_icon_name(GTK_TOOL_BUTTON(tb_rotare), "object-rotate-left");
-	gtk_toolbar_insert(GTK_TOOLBAR(mtb), tb_rotare, 6);
+	gtk_toolbar_insert(GTK_TOOLBAR(mtb), tb_rotare, tb_pos++);
 	gtk_widget_set_tooltip_text(GTK_WIDGET(tb_rotare), _("Rotate"));
 	g_signal_connect(G_OBJECT(tb_rotare), "clicked", G_CALLBACK(tb_rotare_clicked), (gpointer)view);
 
 	tb_rotare1 = gtk_tool_button_new(NULL, _("Rotate Clockwise"));
 	gtk_tool_button_set_icon_name(GTK_TOOL_BUTTON(tb_rotare1), "object-rotate-right");
-	gtk_toolbar_insert(GTK_TOOLBAR(mtb), tb_rotare1, 7);
+	gtk_toolbar_insert(GTK_TOOLBAR(mtb), tb_rotare1, tb_pos++);
 	gtk_widget_set_tooltip_text(GTK_WIDGET(tb_rotare1), _("Rotate Clockwise"));
 	g_signal_connect(G_OBJECT(tb_rotare1), "clicked", G_CALLBACK(tb_rotare1_clicked), (gpointer)view);
 
 	tb_hflip = gtk_tool_button_new(NULL, _("Flip Horizontally"));
 	gtk_tool_button_set_icon_name(GTK_TOOL_BUTTON(tb_hflip), "object-flip-horizontal");
-	gtk_toolbar_insert(GTK_TOOLBAR(mtb), tb_hflip, 8);
+	gtk_toolbar_insert(GTK_TOOLBAR(mtb), tb_hflip, tb_pos++);
 	gtk_widget_set_tooltip_text(GTK_WIDGET(tb_hflip), _("Flip Horizontally"));
 	g_signal_connect(G_OBJECT(tb_hflip), "clicked", G_CALLBACK(tb_hflip_clicked), (gpointer)view);
 
 	tb_vflip = gtk_tool_button_new(NULL, _("Flip Vertically"));
 	gtk_tool_button_set_icon_name(GTK_TOOL_BUTTON(tb_vflip), "object-flip-vertical");
-	gtk_toolbar_insert(GTK_TOOLBAR(mtb), tb_vflip, 9);
+	gtk_toolbar_insert(GTK_TOOLBAR(mtb), tb_vflip, tb_pos++);
 	gtk_widget_set_tooltip_text(GTK_WIDGET(tb_vflip), _("Flip Vertically"));
 	g_signal_connect(G_OBJECT(tb_vflip), "clicked", G_CALLBACK(tb_vflip_clicked), (gpointer)view);
 
 	tb_play = gtk_tool_button_new_from_stock(GTK_STOCK_MEDIA_PLAY);
-	gtk_toolbar_insert(GTK_TOOLBAR(mtb), tb_play, 10);
+	gtk_toolbar_insert(GTK_TOOLBAR(mtb), tb_play, tb_pos++);
 	gtk_widget_set_tooltip_text(GTK_WIDGET(tb_play), _("Play Animation"));
 	g_signal_connect(G_OBJECT(tb_play), "clicked", G_CALLBACK(tb_play_clicked), (gpointer)view);
-
+/*
+	tb_step = gtk_tool_button_new_from_stock(GTK_STOCK_MEDIA_FORWARD);
+	gtk_toolbar_insert(GTK_TOOLBAR(mtb), tb_step, tb_pos++);
+	gtk_widget_set_tooltip_text(GTK_WIDGET(tb_step), _("Step By Step"));
+	g_signal_connect(G_OBJECT(tb_step), "clicked", G_CALLBACK(tb_step_clicked), (gpointer)view);
+*/
 	tb_stop = gtk_tool_button_new_from_stock(GTK_STOCK_MEDIA_PAUSE);
-	gtk_toolbar_insert(GTK_TOOLBAR(mtb), tb_stop, 11);
+	gtk_toolbar_insert(GTK_TOOLBAR(mtb), tb_stop, tb_pos++);
 	gtk_widget_set_tooltip_text(GTK_WIDGET(tb_stop), _("Stop Animation"));
 	g_signal_connect(G_OBJECT(tb_stop), "clicked", G_CALLBACK(tb_stop_clicked), (gpointer)view);
 
-	tb_separator1 = gtk_separator_tool_item_new();
-	gtk_toolbar_insert(GTK_TOOLBAR(mtb), tb_separator1, 12);
+	gtk_toolbar_insert(GTK_TOOLBAR(mtb), gtk_separator_tool_item_new(), tb_pos++);
 
 	tb_size = gtk_tool_item_new();
 	gtk_container_add(GTK_CONTAINER(tb_size), label);
-	gtk_toolbar_insert(GTK_TOOLBAR(mtb), tb_size, 13);
+	gtk_toolbar_insert(GTK_TOOLBAR(mtb), tb_size, tb_pos++);
 
 	gtk_widget_grab_focus(view);
 	gtk_widget_show_all(gFix);
@@ -262,6 +301,7 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	{
 		gtk_widget_hide(GTK_WIDGET(tb_play));
 		gtk_widget_hide(GTK_WIDGET(tb_stop));
+		//gtk_widget_hide(GTK_WIDGET(tb_step));
 	}
 
 	if (g_strcmp0(gtk_window_get_title(GTK_WINDOW(gtk_widget_get_toplevel(GTK_WIDGET(ParentWin)))), FileToLoad) != 0)
@@ -270,6 +310,7 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	g_object_set_data(G_OBJECT(gFix), "imageview", view);
 	g_object_set_data(G_OBJECT(gFix), "play", GTK_WIDGET(tb_play));
 	g_object_set_data(G_OBJECT(gFix), "stop", GTK_WIDGET(tb_stop));
+	//g_object_set_data(G_OBJECT(gFix), "step", GTK_WIDGET(tb_step));
 
 	if (G_IS_OBJECT(pixbuf))
 		g_object_unref(pixbuf);
@@ -295,8 +336,8 @@ int DCPCALL ListLoadNext(HWND ParentWin, HWND PluginWin, char* FileToLoad, int S
 	gchar *content_type = g_content_type_guess(FileToLoad, NULL, 0, NULL);
 	g_print("content_type = %s\n", content_type);
 
-	gtk_image_view_set_pixbuf(GTK_IMAGE_VIEW(view), NULL, FALSE);
 	gtk_anim_view_set_anim(GTK_ANIM_VIEW(view), NULL);
+	gtk_image_view_set_pixbuf(GTK_IMAGE_VIEW(view), NULL, FALSE);
 
 	for (gint i = 0; anims[i] != NULL; i++)
 	{
@@ -308,16 +349,19 @@ int DCPCALL ListLoadNext(HWND ParentWin, HWND PluginWin, char* FileToLoad, int S
 
 	GtkWidget *tb_play = (GtkWidget*)g_object_get_data(G_OBJECT(PluginWin), "play");
 	GtkWidget *tb_stop = (GtkWidget*)g_object_get_data(G_OBJECT(PluginWin), "stop");
+	//GtkWidget *tb_step = (GtkWidget*)g_object_get_data(G_OBJECT(PluginWin), "step");
 
 	if (!anim || gdk_pixbuf_animation_is_static_image(anim))
 	{
 		gtk_widget_hide(GTK_WIDGET(tb_play));
 		gtk_widget_hide(GTK_WIDGET(tb_stop));
+		//gtk_widget_hide(GTK_WIDGET(tb_step));
 	}
 	else
 	{
 		gtk_widget_show(GTK_WIDGET(tb_play));
 		gtk_widget_show(GTK_WIDGET(tb_stop));
+		//gtk_widget_show(GTK_WIDGET(tb_step));
 	}
 
 	gtk_image_view_set_pixbuf(GTK_IMAGE_VIEW(view), pixbuf, TRUE);
@@ -344,8 +388,8 @@ void DCPCALL ListCloseWindow(HWND ListWin)
 	GdkPixbuf *pixbuf = gtk_image_view_get_pixbuf(GTK_IMAGE_VIEW(view));
 	GdkPixbufAnimationIter *iter = GTK_ANIM_VIEW(view)->iter;
 
-	gtk_image_view_set_pixbuf(GTK_IMAGE_VIEW(view), NULL, FALSE);
 	gtk_anim_view_set_anim(GTK_ANIM_VIEW(view), NULL);
+	gtk_image_view_set_pixbuf(GTK_IMAGE_VIEW(view), NULL, FALSE);
 
 	gtk_widget_destroy(GTK_WIDGET(ListWin));
 
