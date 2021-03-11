@@ -14,6 +14,8 @@ tProgressProc gProgressProc = NULL;
 tLogProc gLogProc = NULL;
 tRequestProc gRequestProc = NULL;
 
+clock_t start_t;
+
 void UnixTimeToFileTime(time_t t, LPFILETIME pft)
 {
 	int64_t ll = Int32x32To64(t, 10000000) + 116444736000000000;
@@ -59,13 +61,14 @@ int DCPCALL FsInit(int PluginNr, tProgressProc pProgressProc, tLogProc pLogProc,
 	gLogProc = pLogProc;
 	gRequestProc = pRequestProc;
 	return 0;
-
 }
 
 HANDLE DCPCALL FsFindFirst(char* Path, WIN32_FIND_DATAA *FindData)
 {
 	if (system("curl https://aur.archlinux.org/packages.gz | gzip -cd > /tmp/doublecmd-aur.lst") != 0)
 		return (HANDLE)(-1);
+
+	start_t = clock();
 
 	FILE *fp = fopen("/tmp/doublecmd-aur.lst", "r");
 
@@ -79,16 +82,14 @@ BOOL DCPCALL FsFindNext(HANDLE Hdl, WIN32_FIND_DATAA *FindData)
 {
 	FILE *fp = (FILE*)Hdl;
 
-	if (getFileFromList(fp, FindData))
-		return true;
-
-	return false;
+	return getFileFromList(fp, FindData);
 }
 
 int DCPCALL FsFindClose(HANDLE Hdl)
 {
 	FILE *fp = (FILE*)Hdl;
 	fclose(fp);
+	printf("--> FsFindFirst/FsFindClose = %.2f\n", (double)(clock() - start_t) / CLOCKS_PER_SEC);
 	return 0;
 }
 
