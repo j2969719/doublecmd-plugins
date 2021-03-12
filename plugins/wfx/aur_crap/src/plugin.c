@@ -25,7 +25,6 @@ void UnixTimeToFileTime(time_t t, LPFILETIME pft)
 
 bool getFileFromList(FILE *List, WIN32_FIND_DATAA *FindData)
 {
-	char name[MAX_PATH];
 	char *line = NULL;
 	size_t len = 0;
 	ssize_t read;
@@ -65,7 +64,7 @@ int DCPCALL FsInit(int PluginNr, tProgressProc pProgressProc, tLogProc pLogProc,
 
 HANDLE DCPCALL FsFindFirst(char* Path, WIN32_FIND_DATAA *FindData)
 {
-	if (system("curl https://aur.archlinux.org/packages.gz | gzip -cd > /tmp/doublecmd-aur.lst") != 0)
+	if (system("curl https://aur.archlinux.org/pkgbase.gz | gzip -cd > /tmp/doublecmd-aur.lst") != 0)
 		return (HANDLE)(-1);
 
 	start_t = clock();
