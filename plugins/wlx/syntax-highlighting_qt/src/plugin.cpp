@@ -38,7 +38,7 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 
 	QVariant vrepo, vhgl;
 	KSyntaxHighlighting::Repository *repo = new KSyntaxHighlighting::Repository();
-	KSyntaxHighlighting::Definition definition = repo->definitionForFileName(FileToLoad);
+	KSyntaxHighlighting::Definition definition = repo->definitionForMimeType(type.name());
 
 	if (!definition.isValid())
 	{
