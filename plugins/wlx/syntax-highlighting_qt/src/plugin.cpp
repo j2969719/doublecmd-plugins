@@ -94,7 +94,7 @@ int DCPCALL ListLoadNext(HWND ParentWin, HWND PluginWin, char* FileToLoad, int S
 	QPlainTextEdit *view = (QPlainTextEdit*)PluginWin;
 	KSyntaxHighlighting::Repository *repo = view->property("repo").value<KSyntaxHighlighting::Repository *>();
 	KSyntaxHighlighting::SyntaxHighlighter *highlighter = view->property("hgl").value<KSyntaxHighlighting::SyntaxHighlighter *>();
-	KSyntaxHighlighting::Definition definition = repo->definitionForFileName(FileToLoad);
+	KSyntaxHighlighting::Definition definition = repo->definitionForMimeType(type.name());
 
 	if (!definition.isValid())
 		return LISTPLUGIN_ERROR;
