@@ -1,0 +1,109 @@
+object DialogBox: TDialogBox
+  Left = 164
+  Height = 288
+  Top = 233
+  Width = 719
+  AutoSize = True
+  BorderStyle = bsDialog
+  Caption = 'Double Commander'
+  ChildSizing.LeftRightSpacing = 10
+  ChildSizing.TopBottomSpacing = 10
+  ClientHeight = 288
+  ClientWidth = 719
+  OnCreate = DialogBoxShow
+  Position = poScreenCenter
+  LCLVersion = '2.0.11.0'
+  object btnCancel: TBitBtn
+    AnchorSideTop.Control = btnOK
+    AnchorSideRight.Control = btnOK
+    AnchorSideBottom.Control = btnOK
+    AnchorSideBottom.Side = asrBottom
+    Left = 502
+    Height = 30
+    Top = 241
+    Width = 96
+    Anchors = [akTop, akRight, akBottom]
+    BorderSpacing.Right = 10
+    Cancel = True
+    DefaultCaption = True
+    Kind = bkCancel
+    ModalResult = 2
+    OnClick = ButtonClick
+    TabOrder = 0
+  end
+  object btnOK: TBitBtn
+    AnchorSideTop.Control = lblInfo
+    AnchorSideTop.Side = asrBottom
+    AnchorSideRight.Control = cbURL
+    AnchorSideRight.Side = asrBottom
+    Left = 608
+    Height = 30
+    Top = 241
+    Width = 96
+    Anchors = [akTop, akRight]
+    BorderSpacing.Top = 20
+    Default = True
+    DefaultCaption = True
+    Kind = bkOK
+    ModalResult = 1
+    OnClick = ButtonClick
+    TabOrder = 1
+  end
+  object gbOptions: TGroupBox
+    AnchorSideLeft.Control = cbURL
+    AnchorSideTop.Control = cbURL
+    AnchorSideTop.Side = asrBottom
+    AnchorSideRight.Control = cbURL
+    AnchorSideRight.Side = asrBottom
+    Left = 16
+    Height = 105
+    Top = 81
+    Width = 688
+    Anchors = [akTop, akLeft, akRight]
+    BorderSpacing.Top = 20
+    Caption = 'Options'
+    TabOrder = 2
+    Visible = False
+  end
+  object lblURL: TLabel
+    AnchorSideLeft.Control = cbURL
+    AnchorSideTop.Control = Owner
+    AnchorSideRight.Control = cbURL
+    AnchorSideRight.Side = asrBottom
+    Left = 16
+    Height = 15
+    Top = 15
+    Width = 688
+    Anchors = [akTop, akLeft, akRight]
+    BorderSpacing.Top = 15
+    Caption = 'URL:'
+    ParentColor = False
+  end
+  object cbURL: TComboBox
+    AnchorSideTop.Control = lblURL
+    AnchorSideTop.Side = asrBottom
+    Left = 16
+    Height = 26
+    Top = 35
+    Width = 688
+    BorderSpacing.Top = 5
+    ItemHeight = 0
+    TabOrder = 3
+  end
+  object lblInfo: TLabel
+    AnchorSideLeft.Control = gbOptions
+    AnchorSideTop.Control = gbOptions
+    AnchorSideTop.Side = asrBottom
+    AnchorSideRight.Control = cbURL
+    AnchorSideRight.Side = asrBottom
+    Left = 16
+    Height = 15
+    Top = 206
+    Width = 688
+    Anchors = [akTop, akLeft, akRight]
+    BorderSpacing.Top = 20
+    Caption = 'Please note that this dialog can always be invoked using the Alt + Enter keyboard shortcut.'
+    ParentColor = False
+    WordWrap = True
+  end
+end
