@@ -48,6 +48,8 @@ static void walk_object(const QJsonObject object, QTreeWidgetItem *item)
 
 static void check_value(const QJsonValue value, QTreeWidgetItem *item)
 {
+	double d;
+
 	switch (value.type())
 	{
 	case QJsonValue::Object:
@@ -74,9 +76,20 @@ static void check_value(const QJsonValue value, QTreeWidgetItem *item)
 
 	case QJsonValue::Double:
 	{
-		item->setText(2, _("Double"));
-		item->setText(1, QString::number(value.toDouble()));
-		item->setToolTip(1, QString::number(value.toDouble(), 'f', 1));
+		d = value.toDouble();
+
+		if (trunc(d) == d)
+		{
+			item->setText(2, _("Integer"));
+			item->setText(1, QString::number(d, 'f', 0));
+		}
+		else
+		{
+			item->setText(2, _("Double"));
+			item->setText(1, QString::number(d));
+		}
+
+		item->setToolTip(1, QString::number(d, 'f', 1));
 		break;
 	}
 
@@ -227,9 +240,9 @@ int DCPCALL ListSearchText(HWND ListWin, char* SearchString, int SearchParameter
 				i = 0;
 		}
 		else if (SearchParameter & lcs_backwards)
-				i--;
+			i--;
 		else
-				i++;
+			i++;
 
 		if (i >= 0 && i < list.size() && list.at(i))
 		{

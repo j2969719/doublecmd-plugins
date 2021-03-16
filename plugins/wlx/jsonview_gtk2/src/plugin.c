@@ -79,7 +79,7 @@ static void check_value(JsonNode *node, CustomData *data, GtkTreeIter parent)
 		}
 		else if (json_node_get_value_type(node) == G_TYPE_INT64)
 		{
-			gchar *str = g_strdup_printf("%d", json_node_get_int(node));
+			gchar *str = g_strdup_printf("%ld", (long)json_node_get_int(node));
 			gtk_tree_store_set(data->store, &parent, VALUE, str, -1);
 			g_free(str);
 			gtk_tree_store_set(data->store, &parent, TYPE, _("Integer"), -1);
