@@ -113,12 +113,12 @@ static size_t write_to_buffer_cb(void *contents, size_t size, size_t nmemb, void
 	return realsize;
 }
 
-static xmlChar *name_to_url(char *name)
+static xmlChar *name_to_url(char *name, xmlDocPtr doc)
 {
 	xmlChar *url = NULL;
 
 	gchar *xpath = g_strdup_printf("/links/link[@name=\"%s\"]", name);
-	xmlXPathContextPtr context = xmlXPathNewContext(g_doc);
+	xmlXPathContextPtr context = xmlXPathNewContext(doc);
 	xmlXPathObjectPtr obj = xmlXPathEvalExpression((xmlChar*)xpath, context);
 	xmlXPathFreeContext(context);
 	g_free(xpath);
@@ -136,6 +136,47 @@ static xmlChar *name_to_url(char *name)
 	return url;
 }
 
+static void curl_set_additional_options(CURL *curl)
+{
+	curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
+}
+
+static gchar *prepare_name(char *text, xmlDocPtr doc)
+{
+	gint index = 1;
+	xmlChar *url = NULL;
+	gchar **split = NULL;
+	gchar *temp = g_strdup(text);
+
+	if (temp[strlen((char*)temp) - 1] == '/')
+		temp[strlen((char*)temp) - 1] = '\0';
+
+	gchar *grabage[] = { "\a", "\b", "\f", "\n", "\r", "\t", "\v", "\\", "/", "→", NULL };
+
+	for (gchar **p = grabage; *p != NULL; p++)
+	{
+		split = g_strsplit(temp, *p, -1);
+		g_free(temp);
+		temp = g_strjoinv(" ", split);
+		g_strfreev(split);
+	}
+
+	gchar *name = g_utf8_make_valid(temp, -1);
+	g_free(temp);
+	g_strstrip(name);
+	gchar *result = g_strdup(name);
+
+	while ((url = name_to_url(result, doc)) != NULL && index < MAX_PATH)
+	{
+		xmlFree(url);
+		g_free(result);
+		result = g_strdup_printf("%s (%d)", name, index);
+		index++;
+	}
+
+	return result;
+}
+
 static xmlNodePtr get_links(gchar *url)
 {
 	htmlDocPtr doc;
@@ -151,6 +192,7 @@ static xmlNodePtr get_links(gchar *url)
 	membuf.size = 0;
 
 	curl_easy_setopt(g_curl, CURLOPT_URL, url);
+	curl_set_additional_options(g_curl);
 	curl_easy_setopt(g_curl, CURLOPT_WRITEFUNCTION, write_to_buffer_cb);
 	curl_easy_setopt(g_curl, CURLOPT_WRITEDATA, (void *)&membuf);
 
@@ -185,7 +227,9 @@ static xmlNodePtr get_links(gchar *url)
 
 	if (!xmlXPathNodeSetIsEmpty(nodeset))
 	{
+		xmlDocPtr tmpdoc = xmlNewDoc(BAD_CAST "1.0");
 		result = xmlNewNode(NULL, BAD_CAST "links");
+		xmlDocSetRootElement(tmpdoc, result);
 
 		for (int i = 0; i < nodeset->nodeNr; i++)
 		{
@@ -194,31 +238,28 @@ static xmlNodePtr get_links(gchar *url)
 			const xmlNode *node = nodeset->nodeTab[i]->parent;
 			xmlChar *href = xmlGetProp(node, "href");
 
-			if (strchr((char*)href, '?') != NULL)
+			if (!href)
+				continue;
+
+			if (href[0] == '\0' || href[0] == '#' || strchr((char*)href, '{') || strchr((char*)href, '?') != NULL)
 			{
 				continue;
 				xmlFree(href);
 			}
 
-			if (href[strlen((char*)href) - 1] != '/' && strncmp("http", (char*)href, 4) != 0 && strchr((char*)href, '.'))
+			if (strncmp("http", (char*)href, 4) != 0 && strchr((char*)href, '/') == NULL && strchr((char*)href, '.'))
 			{
-				gchar **split = g_strsplit((char*)href, "/", -1);
-				gchar *result = g_strjoinv("_", split);
-				g_strlcpy(name, (char*)result, MAX_PATH);
-				g_free(result);
-				g_strfreev(split);
+				gchar *temp = prepare_name((char*)href, tmpdoc);
+				g_strlcpy(name, (char*)temp, MAX_PATH);
+				g_free(temp);
 			}
 			else
 			{
 				xmlChar *text = xmlNodeGetContent(node);
-				g_strstrip((char*)text);
-				g_strlcpy(name, (char*)text, MAX_PATH);
-
-
-				if (name[strlen(name) - 1] == '/')
-					name[strlen(name) - 1] = '\0';
-
+				gchar *temp = prepare_name((char*)text, tmpdoc);
 				xmlFree(text);
+				g_strlcpy(name, temp, MAX_PATH);
+				g_free(temp);
 			}
 
 			if (strlen(name) < 1)
@@ -227,7 +268,7 @@ static xmlNodePtr get_links(gchar *url)
 				continue;
 			}
 
-			if (strcmp("..", (char*)name) == 0)
+			if (strcmp("..", (char*)name) == 0 || strcmp("Parent Directory", (char*)name) == 0)
 				xmlNewProp(link, "name", "<Parent Directory>");
 			else
 				xmlNewProp(link, "name", name);
@@ -238,12 +279,15 @@ static xmlNodePtr get_links(gchar *url)
 			}
 
 			xmlChar *orig = href;
-			href = xmlBuildURI(href, (xmlChar *) url);
+			href = xmlBuildURI(href, (xmlChar*)url);
 			xmlFree(orig);
 			xmlNodeSetContent(link, href);
 			xmlFree(href);
 			xmlAddChild(result, link);
 		}
+
+		xmlUnlinkNode(result);
+		xmlFreeDoc(tmpdoc);
 	}
 
 	xmlXPathFreeObject(obj);
@@ -317,7 +361,7 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 	return 0;
 }
 
-static void ShowCfgURLDlg(gboolean init)
+static void ShowCfgURLDlg(void)
 {
 	if (gDialogApi)
 	{
@@ -366,7 +410,7 @@ int DCPCALL FsInit(int PluginNr, tProgressProc pProgressProc, tLogProc pLogProc,
 	gRequestProc = pRequestProc;
 	g_doc = xmlNewDoc(BAD_CAST "1.0");
 	g_curl = curl_easy_init();
-	ShowCfgURLDlg(TRUE);
+	ShowCfgURLDlg();
 
 	return 0;
 }
@@ -452,7 +496,7 @@ int DCPCALL FsGetFile(char* RemoteName, char* LocalName, int CopyFlags, RemoteIn
 	if (CopyFlags == 0 && g_file_test(LocalName, G_FILE_TEST_EXISTS))
 		return FS_FILE_EXISTS;
 
-	xmlChar *url = name_to_url(RemoteName + 1);
+	xmlChar *url = name_to_url(RemoteName + 1, g_doc);
 
 	if (!url)
 		return FS_FILE_READERROR;
@@ -461,6 +505,7 @@ int DCPCALL FsGetFile(char* RemoteName, char* LocalName, int CopyFlags, RemoteIn
 	tOutFile output = { LocalName, url, NULL };
 
 	curl_easy_setopt(g_curl, CURLOPT_URL, url);
+	curl_set_additional_options(g_curl);
 	curl_easy_setopt(g_curl, CURLOPT_WRITEFUNCTION, write_to_file_cb);
 	curl_easy_setopt(g_curl, CURLOPT_WRITEDATA, &output);
 
@@ -469,15 +514,15 @@ int DCPCALL FsGetFile(char* RemoteName, char* LocalName, int CopyFlags, RemoteIn
 	if (output.fp)
 		fclose(output.fp);
 
+	if (CURLE_OK != res)
+		errmsg(curl_easy_strerror(res) ? (char*)curl_easy_strerror(res) : "unknown error");
+
 	xmlFree(url);
 
-	if (CURLE_OK != res)
-		return FS_FILE_WRITEERROR;
+	gProgressProc(gPluginNr, RemoteName, LocalName, 100);
 
 	if (!g_file_test(LocalName, G_FILE_TEST_EXISTS))
 		return FS_FILE_WRITEERROR;
-
-	gProgressProc(gPluginNr, RemoteName, LocalName, 100);
 
 	return FS_FILE_OK;
 }
@@ -488,7 +533,7 @@ int DCPCALL FsExecuteFile(HWND MainWin, char* RemoteName, char* Verb)
 
 	if (strcmp(Verb, "open") == 0)
 	{
-		xmlChar *url = name_to_url(RemoteName + 1);
+		xmlChar *url = name_to_url(RemoteName + 1, g_doc);
 
 		if (url)
 		{
@@ -497,14 +542,14 @@ int DCPCALL FsExecuteFile(HWND MainWin, char* RemoteName, char* Verb)
 				g_strlcpy(g_url, (char*)url, PATH_MAX);
 				result = FS_EXEC_OK;
 			}
+			else
+				result = FS_EXEC_YOURSELF;
 
 			xmlFree(url);
 		}
-		else
-			result = FS_EXEC_YOURSELF;
 	}
 	else if (strcmp(Verb, "properties") == 0)
-		ShowCfgURLDlg(FALSE);
+		ShowCfgURLDlg();
 
 	return result;
 }
