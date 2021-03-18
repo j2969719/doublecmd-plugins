@@ -11,12 +11,14 @@
 #include "extension.h"
 
 #define Int32x32To64(a,b) ((gint64)(a)*(gint64)(b))
+#define DEFAULT_URL "https://vc.kiev.ua/download/"
 
 typedef struct sVFSDirData
 {
 	xmlXPathObjectPtr obj;
 	xmlNodeSetPtr nodeset;
 	gsize index;
+	CURL *curl;
 } tVFSDirData;
 
 typedef struct sOutFile
@@ -24,6 +26,8 @@ typedef struct sOutFile
 	char *filename;
 	xmlChar *url;
 	FILE *fp;
+	size_t total;
+	size_t cur;
 } tOutFile;
 
 typedef struct sMemBuf
@@ -31,6 +35,15 @@ typedef struct sMemBuf
 	char *buf;
 	size_t size;
 } tMemBuf;
+
+typedef struct sPlugSettings
+{
+	gboolean init;
+	gboolean ask_sizes;
+	gboolean follow;
+	gboolean verbose;
+	char url[PATH_MAX];
+} tPlugSettings;
 
 int gPluginNr;
 tProgressProc gProgressProc = NULL;
@@ -40,9 +53,11 @@ tExtensionStartupInfo* gDialogApi = NULL;
 xmlDocPtr g_doc = NULL;
 CURL *g_curl;
 
-static char g_url[PATH_MAX] = "https://vc.kiev.ua/download/";
 static char g_lfm_path[PATH_MAX];
 static char g_history_file[PATH_MAX];
+static char g_selected_file[PATH_MAX];
+tPlugSettings g_settings;
+
 
 
 static gboolean UnixTimeToFileTime(unsigned long mtime, LPFILETIME ft)
@@ -71,31 +86,45 @@ static void errmsg(char *msg)
 		g_print("%s\n", msg);
 }
 
-static size_t write_to_file_cb(void *buffer, size_t size, size_t nmemb, void *stream)
+static size_t write_to_file_cb(void *buffer, size_t size, size_t nitems, void *userdata)
 {
-	tOutFile *out = (tOutFile*)stream;
+	tOutFile *data = (tOutFile*)userdata;
 
-	if (gProgressProc(gPluginNr, out->url, out->filename, 0))
-		return 0;
-
-	if (!out->fp)
+	if (!data->fp)
 	{
-		out->fp = fopen(out->filename, "wb");
+		data->fp = fopen(data->filename, "wb");
 
-		if (!out->fp)
+		if (!data->fp)
 		{
 			errmsg(strerror(EBADFD));
 			return 0;
 		}
 	}
 
-	return fwrite(buffer, size, nmemb, out->fp);
+	int done = 0;
+	size_t out = fwrite(buffer, size, nitems, data->fp);
+
+	if (data->total > 0)
+	{
+		data->cur += out;
+
+		if (data->cur > 0)
+			done = (int)(data->cur * 100 / data->total);
+
+		if (done > 100)
+			done = 100;
+	}
+
+	if (gProgressProc(gPluginNr, data->url, data->filename, done))
+		return 0;
+
+	return out;
 }
 
-static size_t write_to_buffer_cb(void *contents, size_t size, size_t nmemb, void *userp)
+static size_t write_to_buffer_cb(void *buffer, size_t size, size_t nitems, void *userdata)
 {
-	size_t realsize = size * nmemb;
-	tMemBuf *mem = (tMemBuf*)userp;
+	size_t realsize = size * nitems;
+	tMemBuf *mem = (tMemBuf*)userdata;
 
 	char *ptr = realloc(mem->buf, mem->size + realsize + 1);
 
@@ -106,11 +135,16 @@ static size_t write_to_buffer_cb(void *contents, size_t size, size_t nmemb, void
 	}
 
 	mem->buf = ptr;
-	memcpy(&(mem->buf[mem->size]), contents, realsize);
+	memcpy(&(mem->buf[mem->size]), buffer, realsize);
 	mem->size += realsize;
 	mem->buf[mem->size] = 0;
 
 	return realsize;
+}
+
+static size_t do_nothing_cb(void *buffer, size_t size, size_t nitems, void *userdata)
+{
+	return size * nitems;
 }
 
 static xmlChar *name_to_url(char *name, xmlDocPtr doc)
@@ -138,7 +172,8 @@ static xmlChar *name_to_url(char *name, xmlDocPtr doc)
 
 static void curl_set_additional_options(CURL *curl)
 {
-	curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
+	curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, (long)g_settings.follow);
+	curl_easy_setopt(curl, CURLOPT_VERBOSE, (long)g_settings.verbose);
 }
 
 static gchar *prepare_name(char *text, xmlDocPtr doc)
@@ -151,7 +186,7 @@ static gchar *prepare_name(char *text, xmlDocPtr doc)
 	if (temp[strlen((char*)temp) - 1] == '/')
 		temp[strlen((char*)temp) - 1] = '\0';
 
-	gchar *grabage[] = { "\a", "\b", "\f", "\n", "\r", "\t", "\v", "\\", "/", "→", NULL };
+	gchar *grabage[] = { "http://", "https://", "ftp://", "\a", "\b", "\f", "\n", "\r", "\t", "\v", "\\", "/", "→", NULL };
 
 	for (gchar **p = grabage; *p != NULL; p++)
 	{
@@ -212,13 +247,14 @@ static xmlNodePtr get_links(gchar *url)
 	if (!doc)
 		return NULL;
 
-	xmlChar *xpath = (xmlChar*)"//a/@href";
+	xmlChar *xpath = (xmlChar*)"//@href";
 	xmlXPathContextPtr context = xmlXPathNewContext(doc);
 	xmlXPathObjectPtr obj = xmlXPathEvalExpression(xpath, context);
 	xmlXPathFreeContext(context);
 
 	if (!obj)
 	{
+
 		xmlFreeDoc(doc);
 		return NULL;
 	}
@@ -256,7 +292,13 @@ static xmlNodePtr get_links(gchar *url)
 			else
 			{
 				xmlChar *text = xmlNodeGetContent(node);
-				gchar *temp = prepare_name((char*)text, tmpdoc);
+				gchar *temp = NULL;
+
+				if (text[0] == '\0')
+					temp = prepare_name((char*)href, tmpdoc);
+				else
+					temp = prepare_name((char*)text, tmpdoc);
+
 				xmlFree(text);
 				g_strlcpy(name, temp, MAX_PATH);
 				g_free(temp);
@@ -307,6 +349,12 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 	switch (Msg)
 	{
 	case DN_INITDIALOG:
+
+		if (g_settings.init)
+			g_settings.init = FALSE;
+		else
+			gDialogApi->SendDlgMsg(pDlg, "lblInfo", DM_SHOWITEM, 0, 0);
+
 		if ((fp = fopen(g_history_file, "r")) != NULL)
 		{
 			while ((read = getline(&line, &len, fp)) != -1 && count < MAX_PATH)
@@ -322,28 +370,43 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 		}
 
 		if (count == 0)
-			gDialogApi->SendDlgMsg(pDlg, "cbURL", DM_LISTADD, (intptr_t)g_url, 0);
+			gDialogApi->SendDlgMsg(pDlg, "cbURL", DM_LISTADD, (intptr_t)g_settings.url, 0);
 
 
-		gDialogApi->SendDlgMsg(pDlg, "cbURL", DM_SETTEXT, (intptr_t)g_url, 0);
+		gDialogApi->SendDlgMsg(pDlg, "cbURL", DM_SETTEXT, (intptr_t)g_settings.url, 0);
+
+		if (g_selected_file[0] != '\0' && g_selected_file[1] != '\0' && strcmp("..", g_selected_file) != 0)
+		{
+			gDialogApi->SendDlgMsg(pDlg, "gbCurrent", DM_SHOWITEM, 1, 0);
+			gDialogApi->SendDlgMsg(pDlg, "edName", DM_SETTEXT, (intptr_t)g_selected_file, 0);
+			xmlChar *url = name_to_url(g_selected_file, g_doc);
+			gDialogApi->SendDlgMsg(pDlg, "edlURL", DM_SETTEXT, (intptr_t)url, 0);
+			xmlFree(url);
+		}
+		else
+			gDialogApi->SendDlgMsg(pDlg, "gbCurrent", DM_SHOWITEM, 0, 0);
+
+		gDialogApi->SendDlgMsg(pDlg, "ckSizes", DM_SETCHECK, (intptr_t)g_settings.ask_sizes, 0);
+		gDialogApi->SendDlgMsg(pDlg, "ckFollow", DM_SETCHECK, (intptr_t)g_settings.follow, 0);
+		gDialogApi->SendDlgMsg(pDlg, "ckVerbose", DM_SETCHECK, (intptr_t)g_settings.verbose, 0);
 
 		break;
 
 	case DN_CLICK:
 		if (strcmp(DlgItemName, "btnOK") == 0)
 		{
-			g_strlcpy(g_url, (char*)gDialogApi->SendDlgMsg(pDlg, "cbURL", DM_GETTEXT, 0, 0), PATH_MAX);
+			g_strlcpy(g_settings.url, (char*)gDialogApi->SendDlgMsg(pDlg, "cbURL", DM_GETTEXT, 0, 0), PATH_MAX);
 
 			if ((fp = fopen(g_history_file, "w")) != NULL)
 			{
-				fprintf(fp, "%s\n", g_url);
+				fprintf(fp, "%s\n", g_settings.url);
 				count = (int)gDialogApi->SendDlgMsg(pDlg, "cbURL", DM_LISTGETCOUNT, 0, 0);
 
 				for (int i = 0; i < count; i++)
 				{
 					line = g_strdup((char*)gDialogApi->SendDlgMsg(pDlg, "cbURL", DM_LISTGETITEM, i, 0));
 
-					if (line && (strcmp(g_url, line) != 0))
+					if (line && (strcmp(g_settings.url, line) != 0))
 						fprintf(fp, "%s\n", line);
 
 					g_free(line);
@@ -352,10 +415,16 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 				fclose(fp);
 			}
 
+			g_settings.ask_sizes = (gboolean)gDialogApi->SendDlgMsg(pDlg, "ckSizes", DM_GETCHECK, 0, 0);
+			g_settings.follow = (gboolean)gDialogApi->SendDlgMsg(pDlg, "ckFollow", DM_GETCHECK, 0, 0);
+			g_settings.verbose = (gboolean)gDialogApi->SendDlgMsg(pDlg, "ckVerbose", DM_GETCHECK, 0, 0);
+
 			gDialogApi->SendDlgMsg(pDlg, DlgItemName, DM_CLOSE, ID_OK, 0);
 		}
 		else if (strcmp(DlgItemName, "btnCancel") == 0)
 			gDialogApi->SendDlgMsg(pDlg, DlgItemName, DM_CLOSE, ID_CANCEL, 0);
+
+		break;
 	}
 
 	return 0;
@@ -368,15 +437,18 @@ static void ShowCfgURLDlg(void)
 		if (g_file_test(g_lfm_path, G_FILE_TEST_EXISTS))
 			gDialogApi->DialogBoxLFMFile(g_lfm_path, DlgProc);
 		else
-			gDialogApi->InputBox("Double Commander", "URL:", FALSE, g_url, PATH_MAX);
+			gDialogApi->InputBox("Double Commander", "URL:", FALSE, g_settings.url, PATH_MAX);
 	}
 
 	else if (gRequestProc)
-		gRequestProc(gPluginNr, RT_URL, NULL, NULL, g_url, PATH_MAX);
+		gRequestProc(gPluginNr, RT_URL, NULL, NULL, g_settings.url, PATH_MAX);
 }
 
 static gboolean SetFindData(tVFSDirData *dirdata, WIN32_FIND_DATAA *FindData)
 {
+	long filetime = -1;
+	double filesize = 0.0;
+	CURL *curl =  dirdata->curl;
 	xmlNodeSetPtr nodeset = dirdata->nodeset;
 	memset(FindData, 0, sizeof(WIN32_FIND_DATAA));
 
@@ -391,14 +463,45 @@ static gboolean SetFindData(tVFSDirData *dirdata, WIN32_FIND_DATAA *FindData)
 
 	if (url)
 	{
+		if (curl)
+		{
+			curl_easy_setopt(curl, CURLOPT_URL, url);
+
+			if (curl_easy_perform(curl) == CURLE_OK)
+			{
+				curl_easy_getinfo(curl, CURLINFO_FILETIME, &filetime);
+				curl_easy_getinfo(curl, CURLINFO_CONTENT_LENGTH_DOWNLOAD, &filesize);
+			}
+		}
+
 		if (url[strlen(url) - 1] == '/')
 			FindData->dwFileAttributes = FILE_ATTRIBUTE_REPARSE_POINT;
 
 		xmlFree(url);
 	}
 
-	SetCurrentFileTime(&FindData->ftLastWriteTime);
-	FindData->nFileSizeLow = 0;
+	if (filetime < 0)
+	{
+		SetCurrentFileTime(&FindData->ftCreationTime);
+		SetCurrentFileTime(&FindData->ftLastAccessTime);
+		SetCurrentFileTime(&FindData->ftLastWriteTime);
+	}
+	else
+	{
+		UnixTimeToFileTime((time_t)filetime, &FindData->ftCreationTime);
+		UnixTimeToFileTime((time_t)filetime, &FindData->ftLastAccessTime);
+		UnixTimeToFileTime((time_t)filetime, &FindData->ftLastWriteTime);
+	}
+
+	if (filesize > 0)
+	{
+		FindData->nFileSizeHigh = ((int64_t)filesize & 0xFFFFFFFF00000000) >> 32;
+		FindData->nFileSizeLow = (int64_t)filesize & 0x00000000FFFFFFFF;
+	}
+	else
+		FindData->nFileSizeLow = 0;
+
+
 	return TRUE;
 }
 
@@ -410,7 +513,9 @@ int DCPCALL FsInit(int PluginNr, tProgressProc pProgressProc, tLogProc pLogProc,
 	gRequestProc = pRequestProc;
 	g_doc = xmlNewDoc(BAD_CAST "1.0");
 	g_curl = curl_easy_init();
-	ShowCfgURLDlg();
+
+	if (g_settings.init)
+		ShowCfgURLDlg();
 
 	return 0;
 }
@@ -426,7 +531,7 @@ HANDLE DCPCALL FsFindFirst(char* Path, WIN32_FIND_DATAA *FindData)
 		xmlFreeNode(root);
 	}
 
-	root = get_links(g_url);
+	root = get_links(g_settings.url);
 
 	if (!root)
 		return (HANDLE)(-1);
@@ -458,6 +563,16 @@ HANDLE DCPCALL FsFindFirst(char* Path, WIN32_FIND_DATAA *FindData)
 	dirdata->nodeset = nodeset;
 	dirdata->index = 0;
 
+	if (g_settings.ask_sizes)
+	{
+		dirdata->curl = curl_easy_init();
+		curl_easy_setopt(dirdata->curl, CURLOPT_NOBODY, 1L);
+		curl_easy_setopt(dirdata->curl, CURLOPT_FILETIME, 1L);
+		curl_easy_setopt(dirdata->curl, CURLOPT_HEADERFUNCTION, do_nothing_cb);
+		curl_easy_setopt(dirdata->curl, CURLOPT_HEADER, 0L);
+		curl_set_additional_options(dirdata->curl);
+	}
+
 	if (!SetFindData(dirdata, FindData))
 	{
 		xmlXPathFreeObject(dirdata->obj);
@@ -483,6 +598,9 @@ int DCPCALL FsFindClose(HANDLE Hdl)
 	if (dirdata->obj)
 		xmlXPathFreeObject(dirdata->obj);
 
+	if (dirdata->curl)
+		curl_easy_cleanup(dirdata->curl);
+
 	g_free(dirdata);
 
 	return 0;
@@ -502,7 +620,7 @@ int DCPCALL FsGetFile(char* RemoteName, char* LocalName, int CopyFlags, RemoteIn
 		return FS_FILE_READERROR;
 
 	CURLcode res;
-	tOutFile output = { LocalName, url, NULL };
+	tOutFile output = { LocalName, url, NULL, (size_t)ri->SizeHigh << 32 | ri->SizeLow, 0 };
 
 	curl_easy_setopt(g_curl, CURLOPT_URL, url);
 	curl_set_additional_options(g_curl);
@@ -515,7 +633,7 @@ int DCPCALL FsGetFile(char* RemoteName, char* LocalName, int CopyFlags, RemoteIn
 		fclose(output.fp);
 
 	if (CURLE_OK != res)
-		errmsg(curl_easy_strerror(res) ? (char*)curl_easy_strerror(res) : "unknown error");
+		gLogProc(gPluginNr, MSGTYPE_IMPORTANTERROR, (char*)curl_easy_strerror(res));
 
 	xmlFree(url);
 
@@ -539,7 +657,7 @@ int DCPCALL FsExecuteFile(HWND MainWin, char* RemoteName, char* Verb)
 		{
 			if (url[strlen(url) - 1] == '/')
 			{
-				g_strlcpy(g_url, (char*)url, PATH_MAX);
+				g_strlcpy(g_settings.url, (char*)url, PATH_MAX);
 				result = FS_EXEC_OK;
 			}
 			else
@@ -549,7 +667,18 @@ int DCPCALL FsExecuteFile(HWND MainWin, char* RemoteName, char* Verb)
 		}
 	}
 	else if (strcmp(Verb, "properties") == 0)
+	{
+		g_strlcpy(g_selected_file, RemoteName + 1, PATH_MAX);
 		ShowCfgURLDlg();
+		result = FS_EXEC_OK;
+	}
+	else if (strncmp(Verb, "quote", 5) == 0)
+	{
+		if (strncmp(Verb + 6, "sizes", 9) == 0)
+			g_settings.ask_sizes = !g_settings.ask_sizes;
+
+		result = FS_EXEC_OK;
+	}
 
 	return result;
 }
@@ -592,17 +721,24 @@ void DCPCALL FsSetDefaultParams(FsDefaultParamStruct* dps)
 			if (line[read - 1] == '\n')
 				line[read - 1] = '\0';
 
-			g_strlcpy(g_url, line, PATH_MAX);
+			g_strlcpy(g_settings.url, line, PATH_MAX);
 		}
 
 		fclose(fp);
 	}
+	else
+		g_strlcpy(g_settings.url, DEFAULT_URL, PATH_MAX);
+
+	g_settings.ask_sizes = FALSE;
+	g_settings.follow = TRUE;
+	g_settings.verbose = FALSE;
 }
 
 void DCPCALL ExtensionInitialize(tExtensionStartupInfo* StartupInfo)
 {
 	if (gDialogApi == NULL)
 	{
+		g_settings.init = TRUE;
 		gDialogApi = malloc(sizeof(tExtensionStartupInfo));
 		memcpy(gDialogApi, StartupInfo, sizeof(tExtensionStartupInfo));
 	}
