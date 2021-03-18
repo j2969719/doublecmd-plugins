@@ -503,7 +503,7 @@ DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
         <Icon>cm_gotofirstfile</Icon>
         <Hint>Push</Hint>
         <Command>git</Command>
-        <Params>push %[Target;origin master] %t1</Params>
+        <Params>push %[Target;origin HEAD] %t1</Params>
         <StartPath>%d</StartPath>
       </Program>
       <Program>
