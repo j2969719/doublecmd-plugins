@@ -1,5 +1,7 @@
 #define _GNU_SOURCE
 #include <glib.h>
+#include <math.h>
+#include <time.h>
 #include <dlfcn.h>
 #include <errno.h>
 #include <string.h>
@@ -175,6 +177,105 @@ static void curl_set_additional_options(CURL *curl)
 	curl_easy_setopt(curl, CURLOPT_VERBOSE, (long)g_settings.verbose);
 }
 
+static gchar *parse_date(char *text, gint index)
+{
+	struct tm tm;
+	gchar *formats[] =
+	{
+		"%d-%b-%Y %R",
+		"%Y-%m-%d %R",
+		NULL
+	};
+
+	if (!formats[index])
+		return NULL;
+
+	if (!strptime(text, formats[index], &tm))
+		return NULL;
+
+	return g_strdup_printf("%ld", (long)timegm(&tm)); //mktime(&tm));
+}
+
+static gchar *parse_size(char *text)
+{
+	if (!g_regex_match_simple("^[\\d.]+[kKmMgGtT]?$", text, 0, 0))
+		return NULL;
+
+	gdouble size = g_ascii_strtod(text, NULL);
+
+	gchar last = text[strlen(text) - 1];
+
+	if (last == 'k' || last == 'K')
+		size = size * 1024;
+	else if (last == 'm' || last == 'M')
+		size = size * pow(1024, 2);
+	else if (last == 'g' || last == 'G')
+		size = size * pow(1024, 3);
+	else if (last == 't' || last == 'T')
+		size = size * pow(1024, 4);
+
+	return g_strdup_printf("%.0f", size);
+}
+
+static void parse_fileinfo(char *text, xmlNodePtr link, xmlDocPtr doc)
+{
+	GRegex *regex;
+	GMatchInfo *match_info;
+	guint re_index = 0;
+	gboolean found = FALSE;
+
+	gchar *regexs[] =
+	{
+		"(\\d{2}\\-\\w{3}\\-\\d{4}\\s\\d{2}:\\d{2})\\s+([\\d.]*[-kKmMgGtT]?)",
+		"(\\d{4}\\-\\d{2}\\-\\d{2}\\s\\d{2}:\\d{2})\\s+([\\d.]*[-kKmMgGtT]?)",
+		NULL
+	};
+
+	for (gchar **p = regexs; *p != NULL; p++)
+	{
+		regex = g_regex_new(*p, 0, 0, NULL);
+		g_regex_match(regex, text, 0, &match_info);
+
+		if (g_match_info_matches(match_info))
+		{
+			for (gint i = 1; i <= 2; i++)
+			{
+				gchar *match = g_match_info_fetch(match_info, i);
+
+				gchar *size = parse_size(match);
+
+				if (size)
+				{
+					xmlNewProp(link, (xmlChar*)"size", (xmlChar*)size);
+					g_free(size);
+					found = TRUE;
+				}
+				else
+				{
+					gchar *date = parse_date(match, re_index);
+
+					if (date)
+					{
+						xmlNewProp(link, (xmlChar*)"date", (xmlChar*)date);
+						g_free(date);
+						found = TRUE;
+					}
+				}
+
+				g_free(match);
+			}
+		}
+
+		g_match_info_free(match_info);
+		g_regex_unref(regex);
+
+		if (found)
+			break;
+
+		re_index++;
+	}
+}
+
 static gchar *prepare_name(char *text, xmlDocPtr doc)
 {
 	gint index = 1;
@@ -185,7 +286,24 @@ static gchar *prepare_name(char *text, xmlDocPtr doc)
 	if (temp[strlen((char*)temp) - 1] == '/')
 		temp[strlen((char*)temp) - 1] = '\0';
 
-	gchar *grabage[] = { "http://", "https://", "ftp://", "\a", "\b", "\f", "\n", "\r", "\t", "\v", "\\", "/", "→", NULL };
+	gchar *grabage[] =
+	{
+		"https://",
+		"http://",
+		"ftp://",
+		"\a",
+		"\b",
+		"\f",
+		"\n",
+		"\r",
+		"\t",
+		"\v",
+		"\\",
+		"\"",
+		"/",
+		"→",
+		NULL
+	};
 
 	for (gchar **p = grabage; *p != NULL; p++)
 	{
@@ -292,7 +410,7 @@ static xmlNodePtr get_links(gchar *url)
 				xmlChar *text = xmlNodeGetContent(node);
 				gchar *temp = NULL;
 
-				if (text[0] == '\0')
+				if (!text || text[0] == '\0')
 					temp = prepare_name((char*)href, tmpdoc);
 				else
 					temp = prepare_name((char*)text, tmpdoc);
@@ -315,7 +433,8 @@ static xmlNodePtr get_links(gchar *url)
 
 			if (node->next && node->next->type == XML_TEXT_NODE)
 			{
-				//g_printf("%s", (char *)node->next->content);
+				xmlNewProp(link, (xmlChar*)"extra", (xmlChar*)g_strstrip((char *)node->next->content));
+				parse_fileinfo((char*)node->next->content, link, tmpdoc);
 			}
 
 			xmlChar *orig = href;
@@ -348,9 +467,7 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 	{
 	case DN_INITDIALOG:
 
-		if (g_settings.init)
-			g_settings.init = FALSE;
-		else
+		if (!g_settings.init)
 			gDialogApi->SendDlgMsg(pDlg, "lblInfo", DM_SHOWITEM, 0, 0);
 
 		if ((fp = fopen(g_history_file, "r")) != NULL)
@@ -398,7 +515,9 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 
 			if ((fp = fopen(g_history_file, "w")) != NULL)
 			{
-				fprintf(fp, "%s\n", g_settings.url);
+				if (g_settings.url[0] != '\0')
+					fprintf(fp, "%s\n", g_settings.url);
+
 				count = (int)gDialogApi->SendDlgMsg(pDlg, "cbURL", DM_LISTGETCOUNT, 0, 0);
 
 				for (int i = 0; i < count; i++)
@@ -417,10 +536,21 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 			g_settings.follow = (gboolean)gDialogApi->SendDlgMsg(pDlg, "ckFollow", DM_GETCHECK, 0, 0);
 			g_settings.verbose = (gboolean)gDialogApi->SendDlgMsg(pDlg, "ckVerbose", DM_GETCHECK, 0, 0);
 
+			if (g_settings.init)
+				g_settings.init = FALSE;
+
 			gDialogApi->SendDlgMsg(pDlg, DlgItemName, DM_CLOSE, ID_OK, 0);
 		}
 		else if (strcmp(DlgItemName, "btnCancel") == 0)
+		{
+			if (g_settings.init)
+			{
+				g_settings.url[0] = '\0';
+				g_settings.init = FALSE;
+			}
+
 			gDialogApi->SendDlgMsg(pDlg, DlgItemName, DM_CLOSE, ID_CANCEL, 0);
+		}
 
 		break;
 	}
@@ -471,6 +601,22 @@ static gboolean SetFindData(tVFSDirData *dirdata, WIN32_FIND_DATAA *FindData)
 				curl_easy_getinfo(curl, CURLINFO_CONTENT_LENGTH_DOWNLOAD, &filesize);
 			}
 		}
+		else
+		{
+			xmlChar *size = xmlGetProp(node, (xmlChar*)"size");
+
+			if (size && size[0] != '\0')
+				filesize = g_ascii_strtod((char*)size, NULL);
+
+			xmlFree(size);
+
+			xmlChar *date = xmlGetProp(node, (xmlChar*)"date");
+
+			if (date && date[0] != '\0')
+				filetime = (long)g_ascii_strtod((char*)date, NULL);
+
+			xmlFree(date);
+		}
 
 		if (url[strlen((char*)url) - 1] == '/')
 			FindData->dwFileAttributes = FILE_ATTRIBUTE_REPARSE_POINT;
@@ -505,12 +651,36 @@ static gboolean SetFindData(tVFSDirData *dirdata, WIN32_FIND_DATAA *FindData)
 
 int DCPCALL FsInit(int PluginNr, tProgressProc pProgressProc, tLogProc pLogProc, tRequestProc pRequestProc)
 {
+	FILE *fp;
+	size_t len = 0;
+	ssize_t read = 0;
+	char *line = NULL;
+
 	gPluginNr = PluginNr;
 	gProgressProc = pProgressProc;
 	gLogProc = pLogProc;
 	gRequestProc = pRequestProc;
 	g_doc = xmlNewDoc(BAD_CAST "1.0");
 	g_curl = curl_easy_init();
+
+	if ((fp = fopen(g_history_file, "r")) != NULL)
+	{
+		if ((read = getline(&line, &len, fp)) != -1)
+		{
+			if (line[read - 1] == '\n')
+				line[read - 1] = '\0';
+
+			g_strlcpy(g_settings.url, line, PATH_MAX);
+		}
+
+		fclose(fp);
+	}
+	else
+		g_strlcpy(g_settings.url, DEFAULT_URL, PATH_MAX);
+
+	g_settings.ask_sizes = FALSE;
+	g_settings.follow = TRUE;
+	g_settings.verbose = FALSE;
 
 	if (g_settings.init)
 		ShowCfgURLDlg();
@@ -521,6 +691,10 @@ int DCPCALL FsInit(int PluginNr, tProgressProc pProgressProc, tLogProc pLogProc,
 HANDLE DCPCALL FsFindFirst(char* Path, WIN32_FIND_DATAA *FindData)
 {
 	tVFSDirData *dirdata;
+
+	if (g_settings.url[0] == '\0')
+		return (HANDLE)(-1);
+
 	xmlNodePtr root = xmlDocGetRootElement(g_doc);
 
 	if (root)
@@ -688,10 +862,6 @@ void DCPCALL FsGetDefRootName(char* DefRootName, int maxlen)
 
 void DCPCALL FsSetDefaultParams(FsDefaultParamStruct* dps)
 {
-	FILE *fp;
-	size_t len = 0;
-	ssize_t read = 0;
-	char *line = NULL;
 	Dl_info dlinfo;
 	const char* lfm_name = "dialog.lfm";
 
@@ -712,24 +882,68 @@ void DCPCALL FsSetDefaultParams(FsDefaultParamStruct* dps)
 	if (pos)
 		strcpy(pos + 1, "history_href.txt");
 
-	if ((fp = fopen(g_history_file, "r")) != NULL)
-	{
-		if ((read = getline(&line, &len, fp)) != -1)
-		{
-			if (line[read - 1] == '\n')
-				line[read - 1] = '\0';
+}
 
-			g_strlcpy(g_settings.url, line, PATH_MAX);
+int DCPCALL FsContentGetSupportedField(int FieldIndex, char* FieldName, char* Units, int maxlen)
+{
+	switch (FieldIndex)
+	{
+	case 0:
+		g_strlcpy(FieldName, "URL", maxlen - 1);
+		break;
+
+	case 1:
+		g_strlcpy(FieldName, "Extra", maxlen - 1);
+		break;
+
+	default:
+		return ft_nomorefields;
+	}
+
+	Units[0] = '\0';
+
+	return ft_string;
+}
+
+int DCPCALL FsContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void* FieldValue, int maxlen, int flags)
+{
+	if (FieldIndex < 0 || FieldIndex > 1)
+		return ft_nosuchfield;
+
+	int result = ft_fieldempty;
+
+	gchar *xpath = g_strdup_printf("/links/link[@name=\"%s\"]", FileName + 1);
+	xmlXPathContextPtr context = xmlXPathNewContext(g_doc);
+	xmlXPathObjectPtr obj = xmlXPathEvalExpression((xmlChar*)xpath, context);
+	xmlXPathFreeContext(context);
+	g_free(xpath);
+
+	if (obj)
+	{
+		xmlNodeSetPtr nodeset = obj->nodesetval;
+
+		if (!xmlXPathNodeSetIsEmpty(nodeset))
+		{
+			xmlChar *value = NULL;
+
+			if (FieldIndex == 0)
+				value = xmlNodeGetContent(nodeset->nodeTab[0]);
+			else
+				value = xmlGetProp(nodeset->nodeTab[0], (xmlChar*)"extra");
+
+			if (value && value[0] != '\0')
+			{
+				g_strlcpy((char*)FieldValue, (char*)value, maxlen - 1);
+				result = ft_string;
+			}
+
+			xmlFree(value);
 		}
 
-		fclose(fp);
+		xmlXPathFreeObject(obj);
 	}
-	else
-		g_strlcpy(g_settings.url, DEFAULT_URL, PATH_MAX);
 
-	g_settings.ask_sizes = FALSE;
-	g_settings.follow = TRUE;
-	g_settings.verbose = FALSE;
+	return result;
 }
 
 void DCPCALL ExtensionInitialize(tExtensionStartupInfo* StartupInfo)
