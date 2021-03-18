@@ -115,7 +115,6 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 	switch (Msg)
 	{
 	case DN_INITDIALOG:
-		//printf("DlgProc(%s): DN_INITDIALOG stub\n", DlgItemName);
 		gDialogApi->SendDlgMsg(pDlg, "lbMounts", DM_ENABLE, 0, 0);
 		gDialogApi->SendDlgMsg(pDlg, "btnDelete", DM_ENABLE, 0, 0);
 		gDialogApi->SendDlgMsg(pDlg, "btnUp", DM_ENABLE, 0, 0);
@@ -154,14 +153,7 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 
 		break;
 
-	case DN_CLOSE:
-		printf("DlgProc(%s): DN_CLOSE stub\n", DlgItemName);
-
-		break;
-
 	case DN_CLICK:
-
-		//printf("DlgProc(%s): DN_CLICK stub\n", DlgItemName);
 
 		if (strcmp(DlgItemName, "btnAdd") == 0)
 		{
@@ -256,36 +248,6 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 		{
 			gDialogApi->SendDlgMsg(pDlg, DlgItemName, DM_CLOSE, ID_CANCEL, 0);
 		}
-
-		break;
-
-	case DN_DBLCLICK:
-		printf("DlgProc(%s): DN_DBLCLICK stub\n", DlgItemName);
-
-		break;
-
-	case DN_CHANGE:
-		printf("DlgProc(%s): DN_CHANGE stub\n", DlgItemName);
-
-		break;
-
-	case DN_GOTFOCUS:
-		printf("DlgProc(%s): DN_GOTFOCUS stub\n", DlgItemName);
-
-		break;
-
-	case DN_KILLFOCUS:
-		printf("DlgProc(%s): DN_KILLFOCUS stub\n", DlgItemName);
-
-		break;
-
-	case DN_KEYDOWN:
-		printf("DlgProc(%s): DN_KEYDOWN stub\n", DlgItemName);
-
-		break;
-
-	case DN_KEYUP:
-		printf("DlgProc(%s): DN_KEYUP stub\n", DlgItemName);
 
 		break;
 	}

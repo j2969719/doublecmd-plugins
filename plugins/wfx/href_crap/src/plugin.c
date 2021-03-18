@@ -59,7 +59,6 @@ static char g_selected_file[PATH_MAX];
 tPlugSettings g_settings;
 
 
-
 static gboolean UnixTimeToFileTime(unsigned long mtime, LPFILETIME ft)
 {
 	gint64 ll = Int32x32To64(mtime, 10000000) + 116444736000000000;
@@ -254,7 +253,6 @@ static xmlNodePtr get_links(gchar *url)
 
 	if (!obj)
 	{
-
 		xmlFreeDoc(doc);
 		return NULL;
 	}
@@ -366,6 +364,7 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 				count++;
 			}
 
+			g_free(line);
 			fclose(fp);
 		}
 
@@ -404,12 +403,11 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 
 				for (int i = 0; i < count; i++)
 				{
-					line = g_strdup((char*)gDialogApi->SendDlgMsg(pDlg, "cbURL", DM_LISTGETITEM, i, 0));
+					line = (char*)gDialogApi->SendDlgMsg(pDlg, "cbURL", DM_LISTGETITEM, i, 0);
 
 					if (line && (strcmp(g_settings.url, line) != 0))
 						fprintf(fp, "%s\n", line);
 
-					g_free(line);
 				}
 
 				fclose(fp);
@@ -620,7 +618,7 @@ int DCPCALL FsGetFile(char* RemoteName, char* LocalName, int CopyFlags, RemoteIn
 		return FS_FILE_READERROR;
 
 	CURLcode res;
-	tOutFile output = { LocalName, url, NULL, (size_t)ri->SizeHigh << 32 | ri->SizeLow, 0 };
+	tOutFile output = { LocalName, url, NULL, (size_t)((int64_t)ri->SizeHigh << 32 | ri->SizeLow), 0 };
 
 	curl_easy_setopt(g_curl, CURLOPT_URL, url);
 	curl_set_additional_options(g_curl);

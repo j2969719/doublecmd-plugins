@@ -80,7 +80,10 @@ static char *basenamenoext(char *file)
 		result[offset] = '\0';
 
 		if (result[0] == '\0')
+		{
+			free(result);
 			result = strdup(str);
+		}
 	}
 
 	return result;
@@ -96,16 +99,13 @@ bool getFileFromList(FILE *List, WIN32_FIND_DATAA *FindData)
 
 	memset(FindData, 0, sizeof(WIN32_FIND_DATAA));
 
-	while ((read = getline(&line, &len, List)) != -1)
+	while (!found && (read = getline(&line, &len, List)) != -1)
 	{
 		if (line[read - 1] == '\n')
 			line[read - 1] = '\0';
 
 		if ((stat(line, &buf) == 0) && S_ISREG(buf.st_mode))
-		{
 			found = true;
-			break;
-		}
 	}
 
 	if (found)
@@ -121,10 +121,11 @@ bool getFileFromList(FILE *List, WIN32_FIND_DATAA *FindData)
 
 		UnixTimeToFileTime(buf.st_mtime, &FindData->ftLastWriteTime);
 		UnixTimeToFileTime(buf.st_atime, &FindData->ftLastAccessTime);
-		return true;
 	}
 
-	return false;
+	free(line);
+
+	return found;
 }
 
 bool inFileList(char *filename)
@@ -133,27 +134,26 @@ bool inFileList(char *filename)
 	char *line = NULL;
 	size_t len = 0;
 	ssize_t read;
+	bool found = false;
 
 	tfp = fopen(inFile, "r");
 
 	if (tfp)
 	{
-		while ((read = getline(&line, &len, tfp)) != -1)
+		while (!found && (read = getline(&line, &len, tfp)) != -1)
 		{
 			if (line[read - 1] == '\n')
 				line[read - 1] = '\0';
 
 			if (strcmp(line, filename) == 0)
-			{
-				fclose(tfp);
-				return true;
-			}
+				found = true;
 		}
 
+		free(line);
 		fclose(tfp);
 	}
 
-	return false;
+	return found;
 }
 
 int DCPCALL FsInit(int PluginNr, tProgressProc pProgressProc, tLogProc pLogProc, tRequestProc pRequestProc)
@@ -162,6 +162,7 @@ int DCPCALL FsInit(int PluginNr, tProgressProc pProgressProc, tLogProc pLogProc,
 	gProgressProc = pProgressProc;
 	gLogProc = pLogProc;
 	gRequestProc = pRequestProc;
+
 	return 0;
 
 }
@@ -181,16 +182,15 @@ BOOL DCPCALL FsFindNext(HANDLE Hdl, WIN32_FIND_DATAA *FindData)
 {
 	FILE *fp = (FILE*)Hdl;
 
-	if (getFileFromList(fp, FindData))
-		return true;
-
-	return false;
+	return getFileFromList(fp, FindData);
 }
 
 int DCPCALL FsFindClose(HANDLE Hdl)
 {
 	FILE *fp = (FILE*)Hdl;
+
 	fclose(fp);
+
 	return 0;
 }
 
@@ -198,7 +198,7 @@ BOOL DCPCALL FsDeleteFile(char* RemoteName)
 {
 	FILE *ifp, *ofp;
 	char *line = NULL;
-	char tname[PATH_MAX + 1];
+	char tname[PATH_MAX];
 	char tmpFile[PATH_MAX];
 	size_t len = 0;
 
@@ -213,16 +213,17 @@ BOOL DCPCALL FsDeleteFile(char* RemoteName)
 		{
 			while (getline(&line, &len, ifp) != -1)
 			{
-				strlcpy(line, line, PATH_MAX);
-				snprintf(tname, PATH_MAX + 1, "/%s", line);
-				strlcpy(tname, tname, strlen(tname) - 1);
+				snprintf(tname, PATH_MAX, "/%s", line);
+
+				if (tname[strlen(tname) - 1] == '\n')
+					tname[strlen(tname) - 1] = '\0';
 
 				if (strcmp(tname, RemoteName) != 0)
-				{
 					fprintf(ofp, line);
-				}
+
 			}
 
+			free(line);
 			fclose(ofp);
 		}
 
@@ -230,6 +231,7 @@ BOOL DCPCALL FsDeleteFile(char* RemoteName)
 	}
 
 	rename(tmpFile, inFile);
+
 	return true;
 }
 
@@ -251,7 +253,7 @@ int DCPCALL FsPutFile(char* LocalName, char* RemoteName, int CopyFlags)
 	if (err)
 		return FS_FILE_USERABORT;
 
-	if ((CopyFlags == 0) && (inFileList(LocalName)))
+	if (CopyFlags == 0 && inFileList(LocalName))
 	{
 		gProgressProc(gPluginNr, RemoteName, LocalName, 100);
 		return FS_FILE_OK;
@@ -297,7 +299,7 @@ int DCPCALL FsGetFile(char* RemoteName, char* LocalName, int CopyFlags, RemoteIn
 	if (strcmp(dpath, rpath) == 0)
 		return FS_FILE_NOTSUPPORTED;
 
-	if ((CopyFlags == 0) && (access(dpath, F_OK) == 0))
+	if (CopyFlags == 0 && access(dpath, F_OK) == 0)
 		return FS_FILE_EXISTS;
 
 	if (gProgressProc(gPluginNr, rpath, dpath, 0) == 1)
@@ -312,7 +314,7 @@ int DCPCALL FsGetFile(char* RemoteName, char* LocalName, int CopyFlags, RemoteIn
 
 	if (ofd > -1)
 	{
-		size_t rsize = ((int64_t)ri->SizeHigh << 32) | ri->SizeLow;
+		size_t rsize = (size_t)((int64_t)ri->SizeHigh << 32 | ri->SizeLow);
 
 		while ((len = read(ifd, buff, sizeof(buff))) > 0)
 		{
@@ -454,7 +456,10 @@ int DCPCALL FsContentGetValue(char* FileName, int FieldIndex, int UnitIndex, voi
 		strvalue = basenamenoext(FileName);
 
 		if (strvalue)
+		{
 			strlcpy((char*)FieldValue, strvalue, maxlen - 1);
+			free(strvalue);
+		}
 		else
 			result = ft_fieldempty;
 

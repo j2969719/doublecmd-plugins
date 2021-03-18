@@ -46,6 +46,7 @@ bool getFileFromList(FILE *List, WIN32_FIND_DATAA *FindData)
 		UnixTimeToFileTime(time(0), &FindData->ftCreationTime);
 		UnixTimeToFileTime(time(0), &FindData->ftLastAccessTime);
 		UnixTimeToFileTime(time(0), &FindData->ftLastWriteTime);
+		free(line);
 
 		return true;
 	}

@@ -194,8 +194,6 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 	switch (Msg)
 	{
 	case DN_INITDIALOG:
-		//printf("DlgProc(%s): DN_INITDIALOG stub\n", DlgItemName);
-
 		snprintf(lpath, PATH_MAX, "/proc/%s/status", gLastPath);
 
 		if ((info = fopen(lpath, "r")) != NULL)
@@ -215,6 +213,7 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 				}
 			}
 
+			free(line);
 			fclose(info);
 		}
 
@@ -243,25 +242,10 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 
 		break;
 
-	case DN_CLOSE:
-		printf("DlgProc(%s): DN_CLOSE stub\n", DlgItemName);
-
-		break;
-
-	case DN_CLICK:
-		printf("DlgProc(%s): DN_CLICK stub\n", DlgItemName);
-
-		break;
-
-	case DN_DBLCLICK:
-		printf("DlgProc(%s): DN_DBLCLICK stub\n", DlgItemName);
-
-		break;
-
 	case DN_CHANGE:
 		if (strcmp(DlgItemName, "edPpid") == 0)
 		{
-			line = strdup((char*)gDialogApi->SendDlgMsg(pDlg, "edPpid", DM_GETTEXT, 0, 0));
+			line = (char*)gDialogApi->SendDlgMsg(pDlg, "edPpid", DM_GETTEXT, 0, 0);
 
 			if (line && strcmp(line, "N/A") != 0)
 			{
@@ -278,7 +262,7 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 		}
 		else if (strncmp(DlgItemName, "edVm", 4) == 0)
 		{
-			line = strdup((char*)gDialogApi->SendDlgMsg(pDlg, DlgItemName, DM_GETTEXT, 0, 0));
+			line = (char*)gDialogApi->SendDlgMsg(pDlg, DlgItemName, DM_GETTEXT, 0, 0);
 			len = strlen(line);
 
 			if (len > 7 && len + 2 < PATH_MAX)
@@ -303,35 +287,9 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 		{
 			strlcpy(gLinkPath, (char*)gDialogApi->SendDlgMsg(pDlg, DlgItemName, DM_GETTEXT, 0, 0), PATH_MAX - 1);
 		}
-		else
-
-			printf("DlgProc(%s): DN_CHANGE stub\n", DlgItemName);
-
-		break;
-
-	case DN_GOTFOCUS:
-		printf("DlgProc(%s): DN_GOTFOCUS stub\n", DlgItemName);
-
-		break;
-
-	case DN_KILLFOCUS:
-		printf("DlgProc(%s): DN_KILLFOCUS stub\n", DlgItemName);
-
-		break;
-
-	case DN_KEYDOWN:
-		printf("DlgProc(%s): DN_KEYDOWN stub\n", DlgItemName);
-
-		break;
-
-	case DN_KEYUP:
-		printf("DlgProc(%s): DN_KEYUP stub\n", DlgItemName);
 
 		break;
 	}
-
-	if (line)
-		free(line);
 
 	return 0;
 }
@@ -427,7 +385,7 @@ int DCPCALL FsExecuteFile(HWND MainWin, char* RemoteName, char* Verb)
 	}
 	else if (strncmp(Verb, "quote", 5) == 0)
 	{
-		snprintf(RemoteName, MAX_PATH, "/proc/%s/", Verb+6);
+		snprintf(RemoteName, MAX_PATH, "/proc/%s/", Verb + 6);
 
 		if (access(RemoteName, F_OK) == 0)
 			return FS_EXEC_SYMLINK;
@@ -539,6 +497,7 @@ int DCPCALL FsContentGetValue(char* FileName, int FieldIndex, int UnitIndex, voi
 				}
 			}
 
+			free(line);
 			fclose(info);
 		}
 		else
@@ -546,9 +505,6 @@ int DCPCALL FsContentGetValue(char* FileName, int FieldIndex, int UnitIndex, voi
 	}
 	else
 		result = ft_fileerror;
-
-	if (line)
-		free(line);
 
 	return result;
 }

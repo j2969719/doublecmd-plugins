@@ -125,11 +125,11 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 				if (line[read - 1] == '\n')
 					line[read - 1] = '\0';
 
-				strlcpy(line, strdup(line), PATH_MAX);
 				gStartupInfo->SendDlgMsg(pDlg, "cmbPath", DM_LISTADD, (intptr_t)line, 0);
 				gListItems++;
 			}
 
+			free(line);
 			fclose(fp);
 		}
 
@@ -146,21 +146,25 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 	case DN_CLICK:
 		if (strncmp(DlgItemName, "btnOK", 5) == 0)
 		{
-			path = strdup((char*)gStartupInfo->SendDlgMsg(pDlg, "cmbPath", DM_GETTEXT, 0, 0));
-			file = strdup((char*)gStartupInfo->SendDlgMsg(pDlg, "fneLocalFile", DM_GETTEXT, 0, 0));
 			localfile = (bool)gStartupInfo->SendDlgMsg(pDlg, "chkLocalFile", DM_GETCHECK, 0, 0);
+			file = (char*)gStartupInfo->SendDlgMsg(pDlg, "fneLocalFile", DM_GETTEXT, 0, 0);
 
-			if (localfile && file != NULL && file[0] != '\0')
+			if (localfile && file[0] != '\0')
 			{
 				if (strrchr(file, '#') == NULL)
 					snprintf(gAVFSPath, sizeof(gAVFSPath), "%s#", file);
 				else
 					strlcpy(gAVFSPath, file, sizeof(gAVFSPath));
 			}
-			else if (!localfile && path != NULL && path[0] != '\0')
-				strlcpy(gAVFSPath, path, sizeof(gAVFSPath));
 			else
-				strlcpy(gAVFSPath, "/#avfsstat", sizeof(gAVFSPath));
+			{
+				path = (char*)gStartupInfo->SendDlgMsg(pDlg, "cmbPath", DM_GETTEXT, 0, 0);
+
+				if (!localfile && path[0] != '\0')
+					strlcpy(gAVFSPath, path, sizeof(gAVFSPath));
+				else
+					strlcpy(gAVFSPath, "/#avfsstat", sizeof(gAVFSPath));
+			}
 
 			if ((fp = fopen(gHistoryFile, "w")) != NULL)
 			{
@@ -168,7 +172,7 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 
 				for (i = 0; i < gListItems; i++)
 				{
-					line = strdup((char*)gStartupInfo->SendDlgMsg(pDlg, "cmbPath", DM_LISTGETITEM, i, 0));
+					line = (char*)gStartupInfo->SendDlgMsg(pDlg, "cmbPath", DM_LISTGETITEM, i, 0);
 
 					if (line != NULL && (strcmp(gAVFSPath, line) != 0))
 						fprintf(fp, "%s\n", line);
@@ -177,12 +181,12 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 				fclose(fp);
 			}
 
-			gStartupInfo->SendDlgMsg(pDlg, DlgItemName, DM_CLOSE, 1, 0);
+			gStartupInfo->SendDlgMsg(pDlg, DlgItemName, DM_CLOSE, ID_OK, 0);
 		}
 		else if (strncmp(DlgItemName, "btnCancel", 9) == 0)
 		{
 			gAbortCD = true;
-			gStartupInfo->SendDlgMsg(pDlg, DlgItemName, DM_CLOSE, 2, 0);
+			gStartupInfo->SendDlgMsg(pDlg, DlgItemName, DM_CLOSE, ID_CANCEL, 0);
 		}
 
 		break;
@@ -197,15 +201,6 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 
 		break;
 	}
-
-	if (file)
-		free(file);
-
-	if (path)
-		free(path);
-
-	if (line)
-		free(line);
 
 	return 0;
 }
@@ -291,7 +286,7 @@ int DCPCALL FsFindClose(HANDLE Hdl)
 int DCPCALL FsGetFile(char* RemoteName, char* LocalName, int CopyFlags, RemoteInfoStruct* ri)
 {
 	int ifd, ofd, done;
-	ssize_t len, total = 0;
+	ssize_t len, cur = 0;
 	char rpath[PATH_MAX];
 	char buff[8192];
 	struct stat buf;
@@ -315,7 +310,7 @@ int DCPCALL FsGetFile(char* RemoteName, char* LocalName, int CopyFlags, RemoteIn
 
 	if (ofd > -1)
 	{
-		size_t rsize = ((int64_t)ri->SizeHigh << 32) | ri->SizeLow;
+		size_t total = (size_t)((int64_t)ri->SizeHigh << 32 | ri->SizeLow);
 
 		while ((len = virt_read(ifd, buff, sizeof(buff))) > 0)
 		{
@@ -325,10 +320,10 @@ int DCPCALL FsGetFile(char* RemoteName, char* LocalName, int CopyFlags, RemoteIn
 				break;
 			}
 
-			total += len;
+			cur += len;
 
-			if (rsize > 0)
-				done = total * 100 / rsize;
+			if (total > 0)
+				done = cur * 100 / total;
 			else
 				done = 0;
 

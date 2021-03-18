@@ -24,18 +24,11 @@ tRequestProc gRequestProc = NULL;
 tExtensionStartupInfo* gStartupInfo = NULL;
 
 GKeyFile *gCfg;
-gchar *gCfgPath = "";
-gchar *gInfoPath = "";
-gchar *gLFMPath = "";
+gchar *gCfgPath = NULL;
+gchar *gInfoPath = NULL;
+gchar *gLFMPath = NULL;
 static gchar gConnection[PATH_MAX];
 
-static void try_free_str(gchar *str)
-{
-	if (str)
-		g_free(str);
-
-	str = NULL;
-}
 
 void UnixTimeToFileTime(time_t t, LPFILETIME pft)
 {
@@ -81,19 +74,27 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 			value = g_key_file_get_string(gCfg, gConnection, "URI", NULL);
 
 			if (value)
+			{
 				gStartupInfo->SendDlgMsg(pDlg, "edURI", DM_SETTEXT, (intptr_t)value, 0);
+				g_free(value);
+			}
 
 			value = g_key_file_get_string(gCfg, gConnection, "User", NULL);
 
 			if (value)
+			{
 				gStartupInfo->SendDlgMsg(pDlg, "edUser", DM_SETTEXT, (intptr_t)value, 0);
+				g_free(value);
+			}
 
 			value = g_key_file_get_string(gCfg, gConnection, "Password", NULL);
 
 			if (value)
 			{
-				value = (gchar*)g_base64_decode(g_strdup(value), &len);
-				gStartupInfo->SendDlgMsg(pDlg, "edPasswd", DM_SETTEXT, (intptr_t)value, 0);
+				gchar *dec = (gchar*)g_base64_decode(value, &len);
+				gStartupInfo->SendDlgMsg(pDlg, "edPasswd", DM_SETTEXT, (intptr_t)dec, 0);
+				g_free(value);
+				g_free(dec);
 			}
 
 			bval = g_key_file_get_boolean(gCfg, gConnection, "Anonymous", NULL);
@@ -109,13 +110,14 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 	case DN_CLICK:
 		if (strncmp(DlgItemName, "btnOK", 5) == 0)
 		{
-			value = g_strdup((gchar*)gStartupInfo->SendDlgMsg(pDlg, "edURI", DM_GETTEXT, 0, 0));
+			value = (gchar*)gStartupInfo->SendDlgMsg(pDlg, "edURI", DM_GETTEXT, 0, 0);
 			g_key_file_set_string(gCfg, gConnection, "URI", value);
-			value = g_strdup((gchar*)gStartupInfo->SendDlgMsg(pDlg, "edUser", DM_GETTEXT, 0, 0));
+			value = (gchar*)gStartupInfo->SendDlgMsg(pDlg, "edUser", DM_GETTEXT, 0, 0);
 			g_key_file_set_string(gCfg, gConnection, "User", value);
-			value = g_strdup((gchar*)gStartupInfo->SendDlgMsg(pDlg, "edPasswd", DM_GETTEXT, 0, 0));
-			value = g_base64_encode((guchar*)g_strdup(value), strlen(value));
-			g_key_file_set_string(gCfg, gConnection, "Password", value);
+			value = (gchar*)gStartupInfo->SendDlgMsg(pDlg, "edPasswd", DM_GETTEXT, 0, 0);
+			gchar *base64 = g_base64_encode((guchar*)value, strlen(value));
+			g_key_file_set_string(gCfg, gConnection, "Password", base64);
+			g_free(base64);
 			bval = (gboolean)gStartupInfo->SendDlgMsg(pDlg, "chkAnon", DM_GETCHECK, 0, 0);
 
 			if (bval)
@@ -127,7 +129,7 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 
 			if (bval)
 			{
-				value = g_strdup((gchar*)gStartupInfo->SendDlgMsg(pDlg, "edDomain", DM_GETTEXT, 0, 0));
+				value = (gchar*)gStartupInfo->SendDlgMsg(pDlg, "edDomain", DM_GETTEXT, 0, 0);
 				g_key_file_set_string(gCfg, gConnection, "Domain", value);
 			}
 			else
@@ -157,21 +159,20 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 		else if (strncmp(DlgItemName, "cbURI", 5) == 0)
 		{
 			value = (gchar*)gStartupInfo->SendDlgMsg(pDlg, "cbURI", DM_GETTEXT, 0, 0);
-			value = g_strdup_printf("%s://", value);
-			gStartupInfo->SendDlgMsg(pDlg, "edURI", DM_SETTEXT, (intptr_t)value, 0);
+			gchar *uri = g_strdup_printf("%s://", value);
+			gStartupInfo->SendDlgMsg(pDlg, "edURI", DM_SETTEXT, (intptr_t)uri, 0);
+			g_free(uri);
 		}
 
 		break;
 	}
-
-	try_free_str(value);
 
 	return 0;
 }
 
 static void ShowCFGDlg(void)
 {
-	if (gStartupInfo && gLFMPath[0] != '\0')
+	if (gStartupInfo && gLFMPath)
 	{
 		if (g_file_test(gLFMPath, G_FILE_TEST_EXISTS))
 			gStartupInfo->DialogBoxLFMFile(gLFMPath, DlgProc);
@@ -184,6 +185,7 @@ static void ask_password_cb(GMountOperation *op, const char *msg, const char *us
 {
 	gsize len;
 	gchar *value = NULL;
+	char input[MAX_PATH];
 
 	if (user && strncmp(user, "ABORT", 5) == 0)
 	{
@@ -211,16 +213,18 @@ static void ask_password_cb(GMountOperation *op, const char *msg, const char *us
 			g_mount_operation_set_username(op, value);
 		else
 		{
-			value = g_strdup(user);
+			g_strlcpy(input, user, MAX_PATH);
 
-			if (gRequestProc(gPluginNr, RT_UserName, (char*)msg, NULL, value, MAX_PATH))
-				g_mount_operation_set_username(op, value);
+			if (gRequestProc(gPluginNr, RT_UserName, (char*)msg, NULL, input, MAX_PATH))
+				g_mount_operation_set_username(op, input);
 			else
 			{
 				g_mount_operation_reply(op, G_MOUNT_OPERATION_ABORTED);
 				return;
 			}
 		}
+
+		g_free(value);
 	}
 
 	if (flags & G_ASK_PASSWORD_NEED_PASSWORD)
@@ -228,14 +232,25 @@ static void ask_password_cb(GMountOperation *op, const char *msg, const char *us
 		value = g_key_file_get_string(gCfg, gConnection, "Password", NULL);
 
 		if (value && value[0] != '\0')
-			g_mount_operation_set_password(op, (gchar*)g_base64_decode(value, &len));
-		else if (gRequestProc(gPluginNr, RT_Password, (char*)msg, NULL, value, MAX_PATH))
-			g_mount_operation_set_password(op, value);
+		{
+			gchar *dec = (gchar*)g_base64_decode(value, &len);
+			g_mount_operation_set_password(op, dec);
+			g_free(dec);
+		}
 		else
 		{
-			g_mount_operation_reply(op, G_MOUNT_OPERATION_ABORTED);
-			return;
+			input[0] = '\0';
+
+			if (gRequestProc(gPluginNr, RT_Password, (char*)msg, NULL, input, MAX_PATH))
+				g_mount_operation_set_password(op, input);
+			else
+			{
+				g_mount_operation_reply(op, G_MOUNT_OPERATION_ABORTED);
+				return;
+			}
 		}
+
+		g_free(value);
 	}
 
 	if (flags & G_ASK_PASSWORD_NEED_DOMAIN)
@@ -246,16 +261,18 @@ static void ask_password_cb(GMountOperation *op, const char *msg, const char *us
 			g_mount_operation_set_domain(op, value);
 		else
 		{
-			value = g_strdup(domain);
+			g_strlcpy(input, domain, MAX_PATH);
 
-			if (gRequestProc(gPluginNr, RT_Other, (char*)msg, "Domain:", value, MAX_PATH))
-				g_mount_operation_set_domain(op, value);
+			if (gRequestProc(gPluginNr, RT_Other, (char*)msg, "Domain:", input, MAX_PATH))
+				g_mount_operation_set_domain(op, input);
 			else
 			{
 				g_mount_operation_reply(op, G_MOUNT_OPERATION_ABORTED);
 				return;
 			}
 		}
+
+		g_free(value);
 	}
 
 	g_mount_operation_reply(op, G_MOUNT_OPERATION_HANDLED);
@@ -272,7 +289,7 @@ int DCPCALL FsInit(int PluginNr, tProgressProc pProgressProc, tLogProc pLogProc,
 	Dl_info dlinfo;
 	memset(&dlinfo, 0, sizeof(dlinfo));
 
-	if (dladdr(gInfoPath, &dlinfo) != 0)
+	if (dladdr(gConnection, &dlinfo) != 0)
 	{
 		gInfoPath = g_strdup_printf("%s/info.txt", g_path_get_dirname(dlinfo.dli_fname));
 		gLFMPath = g_strdup_printf("%s/dialog.lfm", g_path_get_dirname(dlinfo.dli_fname));
@@ -367,13 +384,14 @@ int DCPCALL FsExecuteFile(HWND MainWin, char* RemoteName, char* Verb)
 			{
 				GFile *f = g_file_new_for_uri(uri);
 				g_strlcpy(RemoteName, uri, MAX_PATH - 1);
-				try_free_str(uri);
+				g_free(uri);
 
 				GMountOperation *op = g_mount_operation_new();
 				g_signal_connect(op, "ask_password", G_CALLBACK(ask_password_cb), NULL);
 				g_file_mount_enclosing_volume(f, 0, op, NULL, NULL, NULL);
 
 				g_object_unref(op);
+				g_object_unref(f);
 				g_key_file_set_int64(gCfg, gConnection, "LastAccess", g_get_real_time());
 
 				return FS_EXEC_SYMLINK;
@@ -408,7 +426,7 @@ int DCPCALL FsGetFile(char* RemoteName, char* LocalName, int CopyFlags, RemoteIn
 	else
 		return FS_FILE_READERROR;
 
-	try_free_str(contents);
+	g_free(contents);
 
 	return FS_FILE_OK;
 }
@@ -427,7 +445,7 @@ int DCPCALL FsRenMovFile(char* OldName, char* NewName, BOOL Move, BOOL OverWrite
 	{
 		gchar *value = g_key_file_get_string(gCfg, OldName + 1, keys[i], NULL);
 		g_key_file_set_string(gCfg, NewName + 1, keys[i], value);
-		try_free_str(value);
+		g_free(value);
 	}
 
 	if (keys)
@@ -465,7 +483,9 @@ void DCPCALL FsSetDefaultParams(FsDefaultParamStruct* dps)
 	if (!g_key_file_load_from_file(gCfg, gCfgPath, G_KEY_FILE_KEEP_COMMENTS, NULL))
 	{
 		legacycfg = g_key_file_new();
-		lcfgpath = g_strdup_printf("%s/gvfs.ini", g_path_get_dirname(dps->DefaultIniName));
+		gchar *cfgdir = g_path_get_dirname(dps->DefaultIniName);
+		lcfgpath = g_strdup_printf("%s/gvfs.ini", cfgdir);
+		g_free(cfgdir);
 
 		if (g_key_file_load_from_file(legacycfg, lcfgpath, G_KEY_FILE_KEEP_COMMENTS, NULL))
 		{
@@ -477,67 +497,81 @@ void DCPCALL FsSetDefaultParams(FsDefaultParamStruct* dps)
 				{
 					key = g_strdup_printf("Connection%dName", i);
 					group = g_key_file_get_string(legacycfg, "gvfs", key, NULL);
+					g_free(key);
 
 					if (group)
 					{
 						key = g_strdup_printf("Connection%dHost", i);
 						value = g_key_file_get_string(legacycfg, "gvfs", key, NULL);
+						g_free(key);
 
 						if (value)
 						{
 							key = g_strdup_printf("Connection%dPath", i);
 							gchar *path = g_key_file_get_string(legacycfg, "gvfs", key, NULL);
+							g_free(key);
 
 							if (path)
 							{
-								if (value[strlen(value) - 1] == '/' && path[0] == '/')
-									value = g_strdup_printf("%s%s", value, path + 1);
-								else
-									value = g_strdup_printf("%s%s", value, path);
+								gchar *host = value;
 
-								try_free_str(path);
+								if (value[strlen(host) - 1] == '/' && host[0] == '/')
+									value = g_strdup_printf("%s%s", host, path + 1);
+								else
+									value = g_strdup_printf("%s%s", host, path);
+
+								g_free(host);
+								g_free(path);
 							}
 
 							g_key_file_set_string(gCfg, group, "URI", value);
+							g_free(value);
 						}
 
 						key = g_strdup_printf("Connection%dUserName", i);
 						value = g_key_file_get_string(legacycfg, "gvfs", key, NULL);
-
-						if (value)
-							g_key_file_set_string(gCfg, group, "User", value);
-
-						key = g_strdup_printf("Connection%dPassword", i);
-						value = g_key_file_get_string(legacycfg, "gvfs", key, NULL);
+						g_free(key);
 
 						if (value)
 						{
-							value = g_base64_encode((guchar*)g_strdup(value), strlen(value));
-							g_key_file_set_string(gCfg, group, "Password", value);
+							g_key_file_set_string(gCfg, group, "User", value);
+							g_free(value);
+						}
+
+						key = g_strdup_printf("Connection%dPassword", i);
+						value = g_key_file_get_string(legacycfg, "gvfs", key, NULL);
+						g_free(key);
+
+						if (value)
+						{
+							gchar *base64 = g_base64_encode((guchar*)value, strlen(value));
+							g_key_file_set_string(gCfg, group, "Password", base64);
+							g_free(base64);
+							g_free(value);
 						}
 
 						key = g_strdup_printf("Connection%dType", i);
 						value = g_key_file_get_string(legacycfg, "gvfs", key, NULL);
+						g_free(key);
 
 						if (value)
+						{
 							g_key_file_set_string(gCfg, group, "Type", value);
+							g_free(value);
+						}
 
+						g_free(group);
 					}
 				}
 			}
 		}
 
+		g_free(lcfgpath);
 		g_key_file_save_to_file(gCfg, gCfgPath, NULL);
 
 		if (legacycfg)
 			g_key_file_free(legacycfg);
 	}
-
-	try_free_str(lcfgpath);
-	try_free_str(key);
-	try_free_str(value);
-	try_free_str(group);
-
 }
 
 void DCPCALL ExtensionInitialize(tExtensionStartupInfo* StartupInfo)
@@ -557,9 +591,9 @@ void DCPCALL ExtensionFinalize(void* Reserved)
 		g_key_file_free(gCfg);
 	}
 
-	try_free_str(gCfgPath);
-	try_free_str(gInfoPath);
-	try_free_str(gLFMPath);
+	g_free(gCfgPath);
+	g_free(gInfoPath);
+	g_free(gLFMPath);
 
 	if (gStartupInfo != NULL)
 		free(gStartupInfo);

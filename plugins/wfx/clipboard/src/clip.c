@@ -38,10 +38,10 @@ const gchar *gEntries[] =
 	"PRIMARY.TXT",
 	"SECONDARY.TXT",
 	"CLIPBOARD.TXT",
-	"Clipboard.png",
-	"Clipboard.jpg",
-	"Clipboard.bmp",
-	"Clipboard.ico",
+	"CLIPBOARD.png",
+	"CLIPBOARD.jpeg",
+	"CLIPBOARD.bmp",
+	"CLIPBOARD.ico",
 	NULL
 };
 
@@ -52,34 +52,22 @@ static gboolean SelectionExist(int index)
 	case 0:
 		gClipboard = gtk_clipboard_get(GDK_SELECTION_PRIMARY);
 
-		if (gtk_clipboard_wait_is_text_available(gClipboard))
-			return TRUE;
-
-		break;
+		return gtk_clipboard_wait_is_text_available(gClipboard);
 
 	case 1:
 		gClipboard = gtk_clipboard_get(GDK_SELECTION_SECONDARY);
 
-		if (gtk_clipboard_wait_is_text_available(gClipboard))
-			return TRUE;
-
-		break;
+		return gtk_clipboard_wait_is_text_available(gClipboard);
 
 	case 2:
 		gClipboard = gtk_clipboard_get(GDK_SELECTION_CLIPBOARD);
 
-		if (gtk_clipboard_wait_is_text_available(gClipboard))
-			return TRUE;
-
-		break;
+		return gtk_clipboard_wait_is_text_available(gClipboard);
 
 	default:
 		gClipboard = gtk_clipboard_get(GDK_SELECTION_CLIPBOARD);
 
-		if (gtk_clipboard_wait_is_image_available(gClipboard))
-			return TRUE;
-
-		break;
+		return gtk_clipboard_wait_is_image_available(gClipboard);
 	}
 
 	return FALSE;
@@ -98,26 +86,20 @@ static gboolean SetFindData(tVFSDirData *dirdata, WIN32_FIND_DATAA *FindData)
 	gboolean found = FALSE;
 	memset(FindData, 0, sizeof(WIN32_FIND_DATAA));
 
-	while (gEntries[dirdata->i] != NULL)
+	while (gEntries[dirdata->i] != NULL && !found)
 	{
+		found = SelectionExist(dirdata->i);
 		dirdata->i++;
-
-		if (SelectionExist(dirdata->i - 1))
-		{
-			found = TRUE;
-			break;
-		}
 	}
 
 	if (found)
 	{
 		FindData->nFileSizeLow = 1024;
-		g_strlcpy(FindData->cFileName, gEntries[dirdata->i - 1], MAX_PATH - 1);
+		g_strlcpy(FindData->cFileName, gEntries[dirdata->i - 1], MAX_PATH);
 		GetCurrentFileTime(&FindData->ftCreationTime);
 		GetCurrentFileTime(&FindData->ftLastAccessTime);
 		GetCurrentFileTime(&FindData->ftLastWriteTime);
 		FindData->dwFileAttributes = 0;
-		return found;
 	}
 
 	return found;
@@ -184,19 +166,31 @@ int DCPCALL FsGetFile(char* RemoteName, char* LocalName, int CopyFlags, RemoteIn
 	{
 		gClipboard = gtk_clipboard_get(GDK_SELECTION_PRIMARY);
 		contents = gtk_clipboard_wait_for_text(gClipboard);
-		g_file_set_contents(LocalName, contents, -1, &err);
+
+		if (contents)
+			g_file_set_contents(LocalName, contents, -1, &err);
+		else
+			return FS_FILE_NOTFOUND;
 	}
 	else if (g_strcmp0(RemoteName + 1, gEntries[1]) == 0)
 	{
 		gClipboard = gtk_clipboard_get(GDK_SELECTION_SECONDARY);
 		contents = gtk_clipboard_wait_for_text(gClipboard);
-		g_file_set_contents(LocalName, contents, -1, &err);
+
+		if (contents)
+			g_file_set_contents(LocalName, contents, -1, &err);
+		else
+			return FS_FILE_NOTFOUND;
 	}
 	else if (g_strcmp0(RemoteName + 1, gEntries[2]) == 0)
 	{
 		gClipboard = gtk_clipboard_get(GDK_SELECTION_CLIPBOARD);
 		contents = gtk_clipboard_wait_for_text(gClipboard);
-		g_file_set_contents(LocalName, contents, -1, &err);
+
+		if (contents)
+			g_file_set_contents(LocalName, contents, -1, &err);
+		else
+			return FS_FILE_NOTFOUND;
 	}
 	else
 	{
@@ -205,17 +199,14 @@ int DCPCALL FsGetFile(char* RemoteName, char* LocalName, int CopyFlags, RemoteIn
 
 		if (pixbuf)
 		{
-			if ((SelectionExist(3)) && (g_strcmp0(RemoteName + 1, gEntries[3]) == 0))
-				gdk_pixbuf_save(pixbuf, LocalName, "png", &err, NULL);
+			if (SelectionExist(3))
+			{
 
-			if ((SelectionExist(4)) && (g_strcmp0(RemoteName + 1, gEntries[4]) == 0))
-				gdk_pixbuf_save(pixbuf, LocalName, "jpeg", &err, NULL);
+				char *dot = strchr(RemoteName, '.');
 
-			if ((SelectionExist(5)) && (g_strcmp0(RemoteName + 1, gEntries[5]) == 0))
-				gdk_pixbuf_save(pixbuf, LocalName, "bmp", &err, NULL);
-
-			if ((SelectionExist(6)) && (g_strcmp0(RemoteName + 1, gEntries[6]) == 0))
-				gdk_pixbuf_save(pixbuf, LocalName, "ico", &err, NULL);
+				if (dot)
+					gdk_pixbuf_save(pixbuf, LocalName, dot + 1, &err, NULL);
+			}
 
 			g_object_unref(pixbuf);
 		}
@@ -223,9 +214,7 @@ int DCPCALL FsGetFile(char* RemoteName, char* LocalName, int CopyFlags, RemoteIn
 			return FS_FILE_NOTFOUND;
 	}
 
-
-	if (contents)
-		g_free(contents);
+	g_free(contents);
 
 	if (err)
 	{
@@ -267,24 +256,24 @@ int DCPCALL FsPutFile(char* LocalName, char* RemoteName, int CopyFlags)
 	}
 	else
 	{
-		gchar *uri = g_filename_to_uri(LocalName, NULL, NULL);
-		uri = g_uri_unescape_string(g_strdup(uri), NULL);
+		gchar *temp = g_filename_to_uri(LocalName, NULL, NULL);
+		gchar *uri = g_uri_unescape_string(temp, NULL);
+		g_free(temp);
 		contents = gtk_clipboard_wait_for_text(gClipboard);
 
 		if (contents)
 		{
-			contents = g_strdup_printf("%s\n%s", g_strdup(contents), uri);
-			gtk_clipboard_set_text(gClipboard, contents, -1);
+			temp = g_strdup_printf("%s\n%s", contents, uri);
+			gtk_clipboard_set_text(gClipboard, temp, -1);
+			g_free(temp);
 		}
 		else
 			gtk_clipboard_set_text(gClipboard, uri, -1);
 
-		if (uri)
-			g_free(uri);
+		g_free(uri);
 	}
 
-	if (contents)
-		g_free(contents);
+	g_free(contents);
 
 	gProgressProc(gPluginNr, RemoteName, LocalName, 100);
 
@@ -315,9 +304,7 @@ BOOL DCPCALL FsDeleteFile(char* RemoteName)
 int DCPCALL FsExecuteFile(HWND MainWin, char* RemoteName, char* Verb)
 {
 	if (strncmp(Verb, "open", 5) == 0)
-	{
 		return FS_EXEC_YOURSELF;
-	}
 	else if (gRequestProc)
 		gRequestProc(gPluginNr, RT_MsgOK, NULL, strerror(EOPNOTSUPP), NULL, 0);
 
@@ -354,7 +341,6 @@ int DCPCALL FsContentGetValue(char* FileName, int FieldIndex, int UnitIndex, voi
 			result = ft_fieldempty;
 		else
 		{
-
 			strvalue = gtk_clipboard_wait_for_text(gClipboard);
 
 			if (strvalue)
@@ -381,8 +367,7 @@ int DCPCALL FsContentGetValue(char* FileName, int FieldIndex, int UnitIndex, voi
 		result = ft_nosuchfield;
 	}
 
-	if (strvalue)
-		g_free(strvalue);
+	g_free(strvalue);
 
 	return result;
 }

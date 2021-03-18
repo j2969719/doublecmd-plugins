@@ -16,6 +16,7 @@
 typedef struct sVFSDirData
 {
 	GList *list;
+	GList *head;
 } tVFSDirData;
 
 typedef struct sField
@@ -74,7 +75,10 @@ static gchar *basenamenoext(const gchar *file)
 		result[offset] = '\0';
 
 		if (result[0] == '\0')
+		{
+			g_free(result);
 			result = g_strdup(basename);
+		}
 	}
 
 	g_free(basename);
@@ -176,13 +180,14 @@ HANDLE DCPCALL FsFindFirst(char* Path, WIN32_FIND_DATAA *FindData)
 		return (HANDLE)(-1);
 
 	dirdata->list = gtk_recent_manager_get_items(gManager);
+	dirdata->head = dirdata->list;
 
 	if (SetFindData(dirdata, FindData))
 		return (HANDLE)dirdata;
 	else
 	{
-		if (dirdata->list != NULL)
-			g_list_free(dirdata->list);
+		if (dirdata->head != NULL)
+			g_list_free(dirdata->head);
 
 		g_free(dirdata);
 
@@ -202,8 +207,8 @@ int DCPCALL FsFindClose(HANDLE Hdl)
 {
 	tVFSDirData *dirdata = (tVFSDirData*)Hdl;
 
-	if (dirdata->list != NULL)
-		g_list_free(dirdata->list);
+	if (dirdata->head != NULL)
+		g_list_free(dirdata->head);
 
 	g_free(dirdata);
 
@@ -224,8 +229,10 @@ int DCPCALL FsGetFile(char* RemoteName, char* LocalName, int CopyFlags, RemoteIn
 
 	if (strlen(LocalName) > strlen(info->in_file) && strstr(LocalName, RemoteName))
 	{
+		gchar *basename = g_path_get_basename(LocalName);
 		g_strlcpy(info->out_file, LocalName, strlen(LocalName) - (strlen(info->in_file) - 1));
-		strncat(info->out_file, g_path_get_basename(LocalName), PATH_MAX);
+		strncat(info->out_file, basename, PATH_MAX);
+		g_free(basename);
 	}
 	else
 		g_strlcpy(info->out_file, LocalName, PATH_MAX);
@@ -336,12 +343,14 @@ int DCPCALL FsExecuteFile(HWND MainWin, char* RemoteName, char* Verb)
 			if (buf.st_mode & S_IXUSR)
 				command = g_shell_quote(RemoteName + 1);
 			else
-				command = g_strdup_printf("xdg-open %s", g_shell_quote(RemoteName + 1));
+			{
+				gchar *quoted = g_shell_quote(RemoteName + 1);
+				command = g_strdup_printf("xdg-open %s", quoted);
+				g_free(quoted);
+			}
 
 			g_spawn_command_line_async(command, NULL);
-
-			if (command)
-				g_free(command);
+			g_free(command);
 		}
 		else
 			result = FS_EXEC_ERROR;
@@ -358,14 +367,10 @@ int DCPCALL FsExecuteFile(HWND MainWin, char* RemoteName, char* Verb)
 	else if (RemoteName[1] != '\0' && strcmp(Verb, "properties") == 0)
 	{
 		gchar *uri = g_filename_to_uri(RemoteName + 1, NULL, NULL);
-		gchar *command = g_strdup_printf("dbus-send  --dest=org.freedesktop.FileManager1 --type=method_call /org/freedesktop/FileManager1 org.freedesktop.FileManager1.ShowItemProperties array:string:\"%s\", string:\"0\"", uri);
+		command = g_strdup_printf("dbus-send  --dest=org.freedesktop.FileManager1 --type=method_call /org/freedesktop/FileManager1 org.freedesktop.FileManager1.ShowItemProperties array:string:\"%s\", string:\"0\"", uri);
 		g_spawn_command_line_async(command, NULL);
-
-		if (uri)
-			g_free(uri);
-
-		if (command)
-			g_free(command);
+		g_free(uri);
+		g_free(command);
 
 		result = FS_FILE_OK;
 	}
@@ -454,8 +459,7 @@ int DCPCALL FsContentGetValue(char* FileName, int FieldIndex, int UnitIndex, voi
 		result = ft_nosuchfield;
 	}
 
-	if (strvalue)
-		g_free(strvalue);
+	g_free(strvalue);
 
 	return result;
 }

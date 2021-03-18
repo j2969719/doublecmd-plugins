@@ -59,12 +59,6 @@ static void SetCurrentFileTime(LPFILETIME ft)
 	ft->dwHighDateTime = ll >> 32;
 }
 
-static void try_free_str(gchar *str)
-{
-	if (str)
-		g_free(str);
-}
-
 static void copy_progress_cb(goffset current_num_bytes, goffset total_num_bytes, gpointer user_data)
 {
 	tCopyInfo *info = (tCopyInfo*)user_data;
@@ -198,13 +192,13 @@ BOOL DCPCALL FsGetLocalName(char* RemoteName, int maxlen)
 	gchar *group = g_path_get_dirname(RemoteName);
 	gchar *key = g_path_get_basename(RemoteName);
 	gchar *result = g_key_file_get_string(gCfg, group, key, NULL);
-	try_free_str(group);
-	try_free_str(key);
+	g_free(group);
+	g_free(key);
 
 	if (result)
 	{
 		g_strlcpy(RemoteName, result, maxlen - 1);
-		try_free_str(result);
+		g_free(result);
 		return TRUE;
 	}
 	else
@@ -225,20 +219,20 @@ int DCPCALL FsGetFile(char* RemoteName, char* LocalName, int CopyFlags, RemoteIn
 	gchar *group = g_path_get_dirname(RemoteName);
 	gchar *key = g_path_get_basename(RemoteName);
 	gchar *realname = g_key_file_get_string(gCfg, group, key, NULL);
-	try_free_str(group);
-	try_free_str(key);
+	g_free(group);
+	g_free(key);
 
 	if (realname)
 	{
 		if (g_strcmp0(realname, LocalName) == 0)
 		{
-			try_free_str(realname);
+			g_free(realname);
 			return FS_FILE_NOTSUPPORTED;
 		}
 
 		tCopyInfo *info = g_new0(tCopyInfo, 1);
-		info->in_file = g_strdup(realname);
-		info->out_file = g_strdup(LocalName);
+		info->in_file = realname;
+		info->out_file = LocalName;
 		GFile *src = g_file_new_for_path(info->in_file);
 		GFile *dest = g_file_new_for_path(info->out_file);
 
@@ -253,9 +247,7 @@ int DCPCALL FsGetFile(char* RemoteName, char* LocalName, int CopyFlags, RemoteIn
 			}
 		}
 
-		try_free_str(info->in_file);
-		try_free_str(info->out_file);
-		try_free_str(realname);
+		g_free(realname);
 		g_object_unref(src);
 		g_object_unref(dest);
 		g_free(info);
@@ -278,8 +270,8 @@ BOOL DCPCALL FsMkDir(char* Path)
 		result = TRUE;
 	}
 
-	try_free_str(group);
-	try_free_str(key);
+	g_free(group);
+	g_free(key);
 
 	return result;
 }
@@ -296,8 +288,8 @@ BOOL DCPCALL FsRemoveDir(char* RemoteName)
 		result = TRUE;
 	}
 
-	try_free_str(group);
-	try_free_str(key);
+	g_free(group);
+	g_free(key);
 
 	return result;
 }
@@ -311,8 +303,8 @@ BOOL DCPCALL FsDeleteFile(char* RemoteName)
 	if (g_key_file_remove_key(gCfg, group, key, NULL))
 		result = TRUE;
 
-	try_free_str(group);
-	try_free_str(key);
+	g_free(group);
+	g_free(key);
 
 	return result;
 
@@ -337,9 +329,9 @@ int DCPCALL FsPutFile(char* LocalName, char* RemoteName, int CopyFlags)
 	else
 		g_key_file_set_string(gCfg, group, key, LocalName);
 
-	try_free_str(group);
-	try_free_str(key);
-	try_free_str(value);
+	g_free(group);
+	g_free(key);
+	g_free(value);
 	gProgressProc(gPluginNr, RemoteName, LocalName, 100);
 
 	return result;
@@ -373,11 +365,11 @@ int DCPCALL FsRenMovFile(char* OldName, char* NewName, BOOL Move, BOOL OverWrite
 
 	}
 
-	try_free_str(group);
-	try_free_str(key);
-	try_free_str(value);
-	try_free_str(newgroup);
-	try_free_str(newkey);
+	g_free(group);
+	g_free(key);
+	g_free(value);
+	g_free(newgroup);
+	g_free(newkey);
 	gProgressProc(gPluginNr, OldName, NewName, 100);
 
 	return result;
@@ -391,8 +383,8 @@ int DCPCALL FsExecuteFile(HWND MainWin, char* RemoteName, char* Verb)
 	gchar *group = g_path_get_dirname(RemoteName);
 	gchar *key = g_path_get_basename(RemoteName);
 	gchar *path = g_key_file_get_string(gCfg, group, key, NULL);
-	try_free_str(group);
-	try_free_str(key);
+	g_free(group);
+	g_free(key);
 
 	if (strncmp(Verb, "open", 5) == 0)
 	{
@@ -401,10 +393,14 @@ int DCPCALL FsExecuteFile(HWND MainWin, char* RemoteName, char* Verb)
 			if (buf.st_mode & S_IXUSR)
 				command = g_shell_quote(path);
 			else
-				command = g_strdup_printf("xdg-open %s", g_shell_quote(path));
+			{
+				gchar *quoted = g_shell_quote(path);
+				command = g_strdup_printf("xdg-open %s", quoted);
+				g_free(quoted);
+			}
 
 			g_spawn_command_line_async(command, NULL);
-			try_free_str(command);
+			g_free(command);
 			result = FS_FILE_OK;
 		}
 	}
@@ -423,16 +419,16 @@ int DCPCALL FsExecuteFile(HWND MainWin, char* RemoteName, char* Verb)
 	else if (path && path[1] != '\0' && strncmp(path, "folder", 6) != 0 && strcmp(Verb, "properties") == 0)
 	{
 		gchar *uri = g_filename_to_uri(path, NULL, NULL);
-		gchar *command = g_strdup_printf("dbus-send  --dest=org.freedesktop.FileManager1 --type=method_call /org/freedesktop/FileManager1 org.freedesktop.FileManager1.ShowItemProperties array:string:\"%s\", string:\"0\"", uri);
+		command = g_strdup_printf("dbus-send  --dest=org.freedesktop.FileManager1 --type=method_call /org/freedesktop/FileManager1 org.freedesktop.FileManager1.ShowItemProperties array:string:\"%s\", string:\"0\"", uri);
 		g_spawn_command_line_async(command, NULL);
-		try_free_str(uri);
-		try_free_str(command);
+		g_free(uri);
+		g_free(command);
 		result = FS_FILE_OK;
 	}
 	else if (gRequestProc)
 		gRequestProc(gPluginNr, RT_MsgOK, NULL, strerror(EOPNOTSUPP), NULL, 0);
 
-	try_free_str(path);
+	g_free(path);
 
 	return result;
 }
@@ -466,9 +462,9 @@ BOOL DCPCALL FsSetTime(char* RemoteName, FILETIME *CreationTime, FILETIME *LastA
 				result = TRUE;
 		}
 
-		try_free_str(group);
-		try_free_str(key);
-		try_free_str(value);
+		g_free(group);
+		g_free(key);
+		g_free(value);
 	}
 
 
