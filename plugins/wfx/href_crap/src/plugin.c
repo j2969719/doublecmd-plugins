@@ -114,7 +114,7 @@ static size_t write_to_file_cb(void *buffer, size_t size, size_t nitems, void *u
 			done = 100;
 	}
 
-	if (gProgressProc(gPluginNr, data->url, data->filename, done))
+	if (gProgressProc(gPluginNr, (char*)data->url, data->filename, done))
 		return 0;
 
 	return out;
@@ -270,7 +270,7 @@ static xmlNodePtr get_links(gchar *url)
 			xmlNodePtr link = xmlNewNode(NULL, BAD_CAST "link");
 
 			const xmlNode *node = nodeset->nodeTab[i]->parent;
-			xmlChar *href = xmlGetProp(node, "href");
+			xmlChar *href = xmlGetProp(node, (xmlChar*)"href");
 
 			if (!href)
 				continue;
@@ -309,9 +309,9 @@ static xmlNodePtr get_links(gchar *url)
 			}
 
 			if (strcmp("..", (char*)name) == 0 || strcmp("Parent Directory", (char*)name) == 0)
-				xmlNewProp(link, "name", "<Parent Directory>");
+				xmlNewProp(link, (xmlChar*)"name", (xmlChar*)"<Parent Directory>");
 			else
-				xmlNewProp(link, "name", name);
+				xmlNewProp(link, (xmlChar*)"name", (xmlChar*)name);
 
 			if (node->next && node->next->type == XML_TEXT_NODE)
 			{
@@ -454,7 +454,7 @@ static gboolean SetFindData(tVFSDirData *dirdata, WIN32_FIND_DATAA *FindData)
 		return FALSE;
 
 	const xmlNode *node = nodeset->nodeTab[dirdata->index++];
-	xmlChar *name = xmlGetProp(node, "name");
+	xmlChar *name = xmlGetProp(node, (xmlChar*)"name");
 	g_strlcpy(FindData->cFileName, (char*)name, sizeof(FindData->cFileName));
 
 	xmlChar *url = xmlNodeGetContent(node);
@@ -472,7 +472,7 @@ static gboolean SetFindData(tVFSDirData *dirdata, WIN32_FIND_DATAA *FindData)
 			}
 		}
 
-		if (url[strlen(url) - 1] == '/')
+		if (url[strlen((char*)url) - 1] == '/')
 			FindData->dwFileAttributes = FILE_ATTRIBUTE_REPARSE_POINT;
 
 		xmlFree(url);
@@ -653,7 +653,7 @@ int DCPCALL FsExecuteFile(HWND MainWin, char* RemoteName, char* Verb)
 
 		if (url)
 		{
-			if (url[strlen(url) - 1] == '/')
+			if (url[strlen((char*)url) - 1] == '/')
 			{
 				g_strlcpy(g_settings.url, (char*)url, PATH_MAX);
 				result = FS_EXEC_OK;
