@@ -179,11 +179,12 @@ static void curl_set_additional_options(CURL *curl)
 
 static gchar *parse_date(char *text, gint index)
 {
-	struct tm tm;
+	struct tm tm = {0};
 	gchar *formats[] =
 	{
 		"%d-%b-%Y %R",
 		"%Y-%m-%d %R",
+		"%Y.%m.%d %R",
 		NULL
 	};
 
@@ -193,7 +194,7 @@ static gchar *parse_date(char *text, gint index)
 	if (!strptime(text, formats[index], &tm))
 		return NULL;
 
-	return g_strdup_printf("%ld", (long)timegm(&tm)); //mktime(&tm));
+	return g_strdup_printf("%ld", (long)mktime(&tm));
 }
 
 static gchar *parse_size(char *text)
@@ -228,6 +229,7 @@ static void parse_fileinfo(char *text, xmlNodePtr link, xmlDocPtr doc)
 	{
 		"(\\d{2}\\-\\w{3}\\-\\d{4}\\s\\d{2}:\\d{2})\\s+([\\d.]*[-kKmMgGtT]?)",
 		"(\\d{4}\\-\\d{2}\\-\\d{2}\\s\\d{2}:\\d{2})\\s+([\\d.]*[-kKmMgGtT]?)",
+		"([\\d.]*[-kKmMgGtT]?)\\s+(\\d{4}\\.\\d{2}\\.\\d{2}\\s\\d{2}:\\d{2})",
 		NULL
 	};
 
@@ -276,6 +278,62 @@ static void parse_fileinfo(char *text, xmlNodePtr link, xmlDocPtr doc)
 	}
 }
 
+static gboolean is_reparse_point(char *url)
+{
+	if (url[strlen(url) - 1] == '/')
+		return TRUE;
+
+	char *dot = strrchr(url, '.');
+
+	if (!dot)
+		return FALSE;
+
+	char *exts[] =
+	{
+		".htm",
+		".html",
+		".php",
+		".xml",
+		NULL
+	};
+
+	for (char **p = exts; *p != NULL; p++)
+	{
+		if (g_strcmp0(*p, dot) == 0)
+			return TRUE;
+	}
+
+
+	return FALSE;
+}
+
+static gboolean is_ext_candidate(char *text, char *dot)
+{
+	char *exts[] =
+	{
+		".htm",
+		".html",
+		".php",
+		".xml",
+		".zip",
+		".gz",
+		".png",
+		".jpg",
+		".json",
+		".css",
+		".js",
+		NULL
+	};
+
+	for (char **p = exts; *p != NULL; p++)
+	{
+		if (g_strcmp0(*p, dot) == 0 && !g_strrstr(text, dot))
+			return TRUE;
+	}
+
+	return FALSE;
+}
+
 static gchar *prepare_name(char *text, xmlDocPtr doc)
 {
 	gint index = 1;
@@ -285,6 +343,13 @@ static gchar *prepare_name(char *text, xmlDocPtr doc)
 
 	if (temp[strlen((char*)temp) - 1] == '/')
 		temp[strlen((char*)temp) - 1] = '\0';
+
+	if (strchr((char*)temp, '/') != NULL)
+	{
+		gchar *end = g_path_get_basename(temp);
+		g_free(temp);
+		temp = end;
+	}
 
 	gchar *grabage[] =
 	{
@@ -301,6 +366,7 @@ static gchar *prepare_name(char *text, xmlDocPtr doc)
 		"\\",
 		"\"",
 		"/",
+		"?",
 		"→",
 		NULL
 	};
@@ -393,32 +459,48 @@ static xmlNodePtr get_links(gchar *url)
 			if (!href)
 				continue;
 
-			if (href[0] == '\0' || href[0] == '#' || strchr((char*)href, '{') || strchr((char*)href, '?') != NULL)
+			if (href[0] == '\0' || href[0] == '#' || strchr((char*)href, '{') || strrchr((char*)href, '?'))
 			{
 				continue;
 				xmlFree(href);
 			}
 
-			if (strncmp("http", (char*)href, 4) != 0 && strchr((char*)href, '/') == NULL && strchr((char*)href, '.'))
-			{
-				gchar *temp = prepare_name((char*)href, tmpdoc);
-				g_strlcpy(name, (char*)temp, MAX_PATH);
-				g_free(temp);
-			}
+			xmlChar *text = xmlNodeGetContent(node);
+			gchar *temp = NULL;
+
+			if (!text || text[0] == '\0')
+				temp = prepare_name((char*)href, tmpdoc);
 			else
 			{
-				xmlChar *text = xmlNodeGetContent(node);
-				gchar *temp = NULL;
+				size_t len = strlen((char*)text);
 
-				if (!text || text[0] == '\0')
-					temp = prepare_name((char*)href, tmpdoc);
-				else
+				if (len > 3)
+				{
+					char *p = (char*)text + (len - 3);
+
+					if (g_strcmp0(p, "..>") == 0)
+						temp = prepare_name((char*)href, tmpdoc);
+					else
+					{
+						char *dot = strrchr((char*)href, '.');
+
+						if (dot && is_ext_candidate((char*)text, dot))
+						{
+							gchar *concat = g_strconcat((char*)text, dot, NULL);
+							temp = prepare_name((char*)concat, tmpdoc);
+							g_free(concat);
+						}
+					}
+				}
+
+				if (!temp)
 					temp = prepare_name((char*)text, tmpdoc);
-
-				xmlFree(text);
-				g_strlcpy(name, temp, MAX_PATH);
-				g_free(temp);
 			}
+
+			xmlFree(text);
+			g_strlcpy(name, temp, MAX_PATH);
+			g_free(temp);
+
 
 			if (strlen(name) < 1)
 			{
@@ -435,6 +517,43 @@ static xmlNodePtr get_links(gchar *url)
 			{
 				xmlNewProp(link, (xmlChar*)"extra", (xmlChar*)g_strstrip((char *)node->next->content));
 				parse_fileinfo((char*)node->next->content, link, tmpdoc);
+			}
+			else if (node->parent)
+			{
+				xmlNodePtr parent = node->parent;
+
+				if (parent->name && strcmp((char*)parent->name, "td") == 0)
+				{
+					gboolean extra2_is_text = FALSE;
+					xmlNodePtr extra1 = parent->next;
+
+					if (extra1 && extra1->name && strcmp((char*)extra1->name, "td") == 0)
+					{
+						if (extra1->children && extra1->children->type == XML_TEXT_NODE)
+						{
+							xmlNodePtr extra2 = extra1->next;
+
+							if (extra2 && extra2->name && strcmp((char*)extra2->name, "td") == 0)
+							{
+								if (extra2->children && extra2->children->type == XML_TEXT_NODE)
+								{
+									gchar *temp = g_strjoin(" ", (char *)extra1->children->content, (char *)extra2->children->content, NULL);
+									xmlNewProp(link, (xmlChar*)"extra", (xmlChar*)g_strstrip(temp));
+									parse_fileinfo(temp, link, tmpdoc);
+									extra2_is_text = TRUE;
+									g_free(temp);
+								}
+
+							}
+
+							if (!extra2_is_text)
+							{
+								xmlNewProp(link, (xmlChar*)"extra", (xmlChar*)g_strstrip((char *)extra1->children->content));
+								parse_fileinfo((char*)extra1->children->content, link, tmpdoc);
+							}
+						}
+					}
+				}
 			}
 
 			xmlChar *orig = href;
@@ -618,7 +737,7 @@ static gboolean SetFindData(tVFSDirData *dirdata, WIN32_FIND_DATAA *FindData)
 			xmlFree(date);
 		}
 
-		if (url[strlen((char*)url) - 1] == '/')
+		if (is_reparse_point((char*)url))
 			FindData->dwFileAttributes = FILE_ATTRIBUTE_REPARSE_POINT;
 
 		xmlFree(url);
@@ -827,7 +946,7 @@ int DCPCALL FsExecuteFile(HWND MainWin, char* RemoteName, char* Verb)
 
 		if (url)
 		{
-			if (url[strlen((char*)url) - 1] == '/')
+			if (is_reparse_point((char*)url))
 			{
 				g_strlcpy(g_settings.url, (char*)url, PATH_MAX);
 				result = FS_EXEC_OK;
