@@ -116,7 +116,6 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	GtkCellRenderer *renderer;
 	GtkTreeViewColumn *column;
 	JsonParser *parser;
-	JsonNode *root;
 	GError *err = NULL;
 	CustomData *data;
 	struct stat st;
@@ -155,7 +154,7 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	gtk_container_add(GTK_CONTAINER(GTK_WIDGET(ParentWin)), gFix);
 	scroll = gtk_scrolled_window_new(NULL, NULL);
 	gtk_container_add(GTK_CONTAINER(gFix), scroll);
-	g_object_set_data(G_OBJECT(gFix), "custom-data", data);
+	g_object_set_data_full(G_OBJECT(gFix), "custom-data", data, g_free);
 
 	data->tree = gtk_tree_view_new_with_model(GTK_TREE_MODEL(data->store));
 
@@ -215,7 +214,6 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 int DCPCALL ListLoadNext(HWND ParentWin, HWND PluginWin, char* FileToLoad, int ShowFlags)
 {
 	JsonParser *parser;
-	JsonNode *root;
 	GError *err = NULL;
 	struct stat st;
 
@@ -260,7 +258,8 @@ int DCPCALL ListLoadNext(HWND ParentWin, HWND PluginWin, char* FileToLoad, int S
 void DCPCALL ListCloseWindow(HWND ListWin)
 {
 	CustomData *data = (CustomData*)g_object_get_data(G_OBJECT(ListWin), "custom-data");
-	g_free(data);
+	gtk_tree_store_clear(data->store);
+	g_object_unref(data->store);
 	gtk_widget_destroy(GTK_WIDGET(ListWin));
 }
 

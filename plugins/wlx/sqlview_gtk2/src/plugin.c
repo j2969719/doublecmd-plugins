@@ -171,8 +171,6 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	GtkWidget *scroll;
 	GtkWidget *controls;
 	GtkWidget *button;
-	GtkCellRenderer *renderer;
-	GtkTreeViewColumn *column;
 	CustomData *data;
 	char *err = NULL;
 
@@ -247,7 +245,7 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	g_signal_connect(G_OBJECT(data->tables), "changed", G_CALLBACK(tables_changed_cb), data);
 
 	gtk_combo_box_set_active(GTK_COMBO_BOX(data->tables), 0);
-	g_object_set_data(G_OBJECT(gFix), "custom-data", data);
+	g_object_set_data_full(G_OBJECT(gFix), "custom-data", data, g_free);
 
 	gtk_widget_show_all(gFix);
 	gtk_widget_grab_focus(scroll);
@@ -261,15 +259,21 @@ void DCPCALL ListCloseWindow(HWND ListWin)
 	CustomData *data = (CustomData*)g_object_get_data(G_OBJECT(ListWin), "custom-data");
 
 	if (GTK_IS_LIST_STORE(data->store))
+	{
 		gtk_list_store_clear(data->store);
+		g_object_unref(data->store);
+	}
 
 	sqlite3_close(data->db);
-	g_free(data);
 	gtk_widget_destroy(GTK_WIDGET(ListWin));
 }
 
 int DCPCALL ListSearchDialog(HWND ListWin, int FindNext)
 {
+	CustomData *data = (CustomData*)g_object_get_data(G_OBJECT(ListWin), "custom-data");
+
+	query_clicked_cb(NULL, data);
+
 	return LISTPLUGIN_OK;
 }
 
@@ -284,8 +288,6 @@ int DCPCALL ListSendCommand(HWND ListWin, int Command, int Parameter)
 
 void DCPCALL ListSetDefaultParams(ListDefaultParamStruct* dps)
 {
-	GKeyFile *cfg;
-	char cfg_path[PATH_MAX];
 	Dl_info dlinfo;
 	const gchar* dir_f = "%s/langs";
 

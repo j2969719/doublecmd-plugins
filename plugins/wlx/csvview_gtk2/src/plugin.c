@@ -265,13 +265,15 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 
 	gtk_widget_show_all(gFix);
 	gtk_widget_grab_focus(scroll);
+	g_object_set_data_full(G_OBJECT(gFix), "store", store, g_object_unref);
 
 	return gFix;
-
 }
 
 void DCPCALL ListCloseWindow(HWND ListWin)
 {
+	GtkListStore *store = g_object_get_data(G_OBJECT(ListWin), "store");
+	gtk_list_store_clear(store);
 	gtk_widget_destroy(GTK_WIDGET(ListWin));
 }
 

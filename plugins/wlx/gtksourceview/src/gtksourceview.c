@@ -29,13 +29,15 @@ typedef struct tCustomData
 	GtkSourceView *sView;
 	GtkSourceBuffer *sBuf;
 	GtkLabel *lInfo;
-	GtkSourceStyleSchemeManager *sMgr;
 	GtkWidget *cEncoding;
 	gchar *filename;
 	GKeyFile *cfg;
 } CustomData;
 
 static char gCfgPath[PATH_MAX];
+static GtkSourceStyleSchemeManager *gStyleManager = NULL;
+static GtkSourceLanguageManager *gLanguageManager = NULL;
+
 static gboolean open_file(CustomData *data, const gchar *filename, const gchar *enc);
 
 static void reload_with_enc_cb(GtkComboBoxText *combo_box, CustomData *data)
@@ -165,7 +167,7 @@ static void scheme_changed_cb(GtkComboBoxText *combo_box, CustomData *data)
 {
 	gchar *style = gtk_combo_box_text_get_active_text(combo_box);
 	g_key_file_set_string(data->cfg, "Appearance", "Style", style);
-	GtkSourceStyleScheme *scheme = gtk_source_style_scheme_manager_get_scheme(data->sMgr, style);
+	GtkSourceStyleScheme *scheme = gtk_source_style_scheme_manager_get_scheme(gStyleManager, style);
 	gtk_source_buffer_set_style_scheme(data->sBuf, scheme);
 	g_free(style);
 }
@@ -218,7 +220,7 @@ static void options_dlg_cb(GtkButton *button, CustomData *data)
 	gtk_editable_set_editable(GTK_EDITABLE(gtk_bin_get_child(GTK_BIN(cScheme))), FALSE);
 	g_free(style);
 	g_signal_connect(G_OBJECT(cScheme), "changed", G_CALLBACK(scheme_changed_cb), (gpointer)data);
-	const gchar * const *scheme_ids = gtk_source_style_scheme_manager_get_scheme_ids(data->sMgr);
+	const gchar * const *scheme_ids = gtk_source_style_scheme_manager_get_scheme_ids(gStyleManager);
 
 	while (*scheme_ids)
 	{
@@ -282,7 +284,6 @@ static void options_dlg_cb(GtkButton *button, CustomData *data)
 
 static gboolean open_file(CustomData *data, const gchar *filename, const gchar *enc)
 {
-	GtkSourceLanguageManager *lm;
 	GtkSourceLanguage *language = NULL;
 	GError *err = NULL;
 	GtkTextIter iter;
@@ -296,9 +297,6 @@ static gboolean open_file(CustomData *data, const gchar *filename, const gchar *
 	g_return_val_if_fail(filename != NULL, FALSE);
 	g_return_val_if_fail(GTK_SOURCE_BUFFER(sBuf), FALSE);
 
-	/* get the Language for source mimetype */
-	lm = g_object_get_data(G_OBJECT(sBuf), "languages-manager");
-
 	GFile *gfile = g_file_new_for_path(filename);
 	g_return_val_if_fail(gfile != NULL, FALSE);
 	GFileInfo *fileinfo = g_file_query_info(gfile, G_FILE_ATTRIBUTE_STANDARD_CONTENT_TYPE, 0, NULL, NULL);
@@ -306,7 +304,7 @@ static gboolean open_file(CustomData *data, const gchar *filename, const gchar *
 
 	content_type = g_file_info_get_content_type(fileinfo);
 
-	language = gtk_source_language_manager_guess_language(lm, filename, content_type);
+	language = gtk_source_language_manager_guess_language(gLanguageManager, filename, content_type);
 
 	g_object_unref(fileinfo);
 	g_object_unref(gfile);
@@ -322,7 +320,7 @@ static gboolean open_file(CustomData *data, const gchar *filename, const gchar *
 
 			if (lng && lng[0] != '\0')
 			{
-				language = gtk_source_language_manager_get_language(lm, lng);
+				language = gtk_source_language_manager_get_language(gLanguageManager, lng);
 				g_free(lng);
 			}
 
@@ -463,7 +461,6 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 {
 	GtkWidget *gFix;
 	GtkWidget *pScrollWin;
-	GtkSourceLanguageManager *lm;
 	GtkSourceStyleScheme *scheme;
 	CustomData *data;
 
@@ -476,13 +473,8 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	pScrollWin = gtk_scrolled_window_new(NULL, NULL);
 	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(pScrollWin), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
 
-	/* Now create a GtkSourceLanguageManager */
-	lm = gtk_source_language_manager_new();
-
 	/* and a GtkSourceBuffer to hold text (similar to GtkTextBuffer) */
 	data->sBuf = GTK_SOURCE_BUFFER(gtk_source_buffer_new(NULL));
-	g_object_ref(lm);
-	g_object_set_data_full(G_OBJECT(data->sBuf), "languages-manager", lm, (GDestroyNotify)g_object_unref);
 
 	/* Create the GtkSourceView and associate it with the buffer */
 	data->sView = GTK_SOURCE_VIEW(gtk_source_view_new_with_buffer(data->sBuf));
@@ -516,9 +508,8 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	pango_font_description_free(desc);
 	g_free(font);
 
-	data->sMgr = gtk_source_style_scheme_manager_get_default();
 	gchar *style = config_get_string(data->cfg, "Appearance", "Style", "classic");
-	scheme = gtk_source_style_scheme_manager_get_scheme(data->sMgr, style);
+	scheme = gtk_source_style_scheme_manager_get_scheme(gStyleManager, style);
 	g_free(style);
 	gtk_source_buffer_set_style_scheme(data->sBuf, scheme);
 	gtk_text_view_set_editable(GTK_TEXT_VIEW(data->sView), FALSE);
@@ -632,6 +623,7 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 int DCPCALL ListLoadNext(HWND ParentWin, HWND PluginWin, char* FileToLoad, int ShowFlags)
 {
 	CustomData *data = (CustomData*)g_object_get_data(G_OBJECT(PluginWin), "custom-data");
+
 	gtk_text_buffer_set_text(GTK_TEXT_BUFFER(data->sBuf), "", 0);
 
 	gtk_combo_box_set_active(GTK_COMBO_BOX(data->cEncoding), -1);
@@ -664,6 +656,10 @@ void DCPCALL ListCloseWindow(HWND ListWin)
 
 	gtk_widget_destroy(GTK_WIDGET(ListWin));
 	g_free(data->filename);
+
+	if (G_IS_OBJECT(data->sBuf))
+		g_object_unref(data->sBuf);
+
 	g_free(data);
 }
 
@@ -756,113 +752,118 @@ void DCPCALL ListSetDefaultParams(ListDefaultParamStruct* dps)
 	gchar lcode[3], *loc = NULL;
 	gboolean import_oldcfg;
 
-	cfg = g_key_file_new();
-	memset(&dlinfo, 0, sizeof(dlinfo));
-
-	if (dladdr(gCfgPath, &dlinfo) != 0)
+	if (!gLanguageManager || !gStyleManager)
 	{
-		gchar *plugpath = g_path_get_dirname(dlinfo.dli_fname);
-		gchar *langpath = g_strdup_printf("%s/langs", plugpath);
-		loc = setlocale(LC_ALL, "");
-		bindtextdomain(GETTEXT_PACKAGE, langpath);
-		textdomain(GETTEXT_PACKAGE);
+		gLanguageManager = gtk_source_language_manager_get_default();
+		gStyleManager = gtk_source_style_scheme_manager_get_default();
 
-		oldcfg = g_strdup_printf("%s/settings.ini", plugpath);
-		bakcfg = g_strdup_printf("%s/settings.ini.bak", plugpath);
-		import_oldcfg = g_key_file_load_from_file(cfg, oldcfg, G_KEY_FILE_KEEP_COMMENTS, NULL);
+		cfg = g_key_file_new();
+		memset(&dlinfo, 0, sizeof(dlinfo));
 
-		g_free(plugpath);
-		g_free(langpath);
-	}
-
-	if (gCfgPath[0] == '\0')
-	{
-		g_strlcpy(gCfgPath, dps->DefaultIniName, PATH_MAX - 1);
-		char *pos = strrchr(gCfgPath, '/');
-
-		if (pos)
-			strcpy(pos + 1, "wlx_gtksourceview.ini");
-
-		if (import_oldcfg)
+		if (dladdr(gCfgPath, &dlinfo) != 0)
 		{
-			gsize length;
-			gchar **keys = g_key_file_get_keys(cfg, "Override", &length, NULL);
+			gchar *plugpath = g_path_get_dirname(dlinfo.dli_fname);
+			gchar *langpath = g_strdup_printf("%s/langs", plugpath);
+			loc = setlocale(LC_ALL, "");
+			bindtextdomain(GETTEXT_PACKAGE, langpath);
+			textdomain(GETTEXT_PACKAGE);
 
-			if (keys != NULL)
+			oldcfg = g_strdup_printf("%s/settings.ini", plugpath);
+			bakcfg = g_strdup_printf("%s/settings.ini.bak", plugpath);
+			import_oldcfg = g_key_file_load_from_file(cfg, oldcfg, G_KEY_FILE_KEEP_COMMENTS, NULL);
+
+			g_free(plugpath);
+			g_free(langpath);
+		}
+
+		if (gCfgPath[0] == '\0')
+		{
+			g_strlcpy(gCfgPath, dps->DefaultIniName, PATH_MAX - 1);
+			char *pos = strrchr(gCfgPath, '/');
+
+			if (pos)
+				strcpy(pos + 1, "wlx_gtksourceview.ini");
+
+			if (import_oldcfg)
 			{
-				for (gsize i = 0; i < length; i++)
-				{
-					gchar *exts = g_key_file_get_string(cfg, "Override", keys[i], NULL);
-					gchar **split = g_strsplit(exts, ";", -1);
+				gsize length;
+				gchar **keys = g_key_file_get_keys(cfg, "Override", &length, NULL);
 
-					for (gchar **ext = split; *ext != NULL; *ext++)
+				if (keys != NULL)
+				{
+					for (gsize i = 0; i < length; i++)
 					{
-						if (*ext[0] != '\0')
+						gchar *exts = g_key_file_get_string(cfg, "Override", keys[i], NULL);
+						gchar **split = g_strsplit(exts, ";", -1);
+
+						for (gchar **ext = split; *ext != NULL; *ext++)
 						{
-							gchar *ext_lower = g_ascii_strdown(*ext + 1, -1);
-							gchar *lang_lower = g_ascii_strdown(keys[i], -1);
-							g_key_file_set_string(cfg, "Override", ext_lower,  lang_lower);
-							g_free(ext_lower);
-							g_free(lang_lower);
+							if (*ext[0] != '\0')
+							{
+								gchar *ext_lower = g_ascii_strdown(*ext + 1, -1);
+								gchar *lang_lower = g_ascii_strdown(keys[i], -1);
+								g_key_file_set_string(cfg, "Override", ext_lower,  lang_lower);
+								g_free(ext_lower);
+								g_free(lang_lower);
+							}
 						}
+
+						g_strfreev(split);
+						g_free(exts);
+						g_key_file_remove_key(cfg, "Override", keys[i], NULL);
 					}
 
-					g_strfreev(split);
-					g_free(exts);
-					g_key_file_remove_key(cfg, "Override", keys[i], NULL);
+					g_strfreev(keys);
 				}
 
-				g_strfreev(keys);
+				if (bakcfg && oldcfg)
+					rename(oldcfg, bakcfg);
 			}
-
-			if (bakcfg && oldcfg)
-				rename(oldcfg, bakcfg);
-		}
-		else
-		{
-			g_key_file_load_from_file(cfg, gCfgPath, G_KEY_FILE_KEEP_COMMENTS, NULL);
-
-			if (!g_key_file_has_key(cfg, "Enca", "Lang", NULL))
+			else
 			{
-				if (loc)
-					g_strlcpy(lcode, loc, 3);
+				g_key_file_load_from_file(cfg, gCfgPath, G_KEY_FILE_KEEP_COMMENTS, NULL);
 
-				size_t langscount;
-				gboolean lang_ok = FALSE;
-				const char **langs = enca_get_languages(&langscount);
+				if (!g_key_file_has_key(cfg, "Enca", "Lang", NULL))
+				{
+					if (loc)
+						g_strlcpy(lcode, loc, 3);
 
-				for (size_t i = 0; i < langscount; i++)
-					if (g_strcmp0(langs[i], lcode) == 0)
-						g_key_file_set_string(cfg, "Enca", "Lang", langs[i]);
+					size_t langscount;
+					const char **langs = enca_get_languages(&langscount);
+
+					for (size_t i = 0; i < langscount; i++)
+						if (g_strcmp0(langs[i], lcode) == 0)
+							g_key_file_set_string(cfg, "Enca", "Lang", langs[i]);
+				}
+
+				if (!g_key_file_has_group(cfg, "Override") || g_key_file_has_key(cfg, "Override", "Pascal", NULL))
+				{
+					g_key_file_set_string(cfg, "Override", "lpr", "pascal");
+					g_key_file_set_comment(cfg, "Override", "lpr", "ext=language", NULL);
+					g_key_file_set_string(cfg, "Override", "pp", "pascal");
+					g_key_file_set_string(cfg, "Override", "dpr", "pascal");
+					g_key_file_set_string(cfg, "Override", "lpi", "xml");
+					g_key_file_set_string(cfg, "Override", "lpk", "xml");
+					g_key_file_set_string(cfg, "Override", "hgl", "xml");
+					g_key_file_set_string(cfg, "Override", "lfm", "ini");
+					g_key_file_set_string(cfg, "Override", "dof", "ini");
+					g_key_file_set_string(cfg, "Override", "cfg", "ini");
+					g_key_file_remove_key(cfg, "Override", "Pascal", NULL);
+					g_key_file_remove_key(cfg, "Override", "XML", NULL);
+					g_key_file_remove_key(cfg, "Override", "INI", NULL);
+
+				}
 			}
 
-			if (!g_key_file_has_group(cfg, "Override") || g_key_file_has_key(cfg, "Override", "Pascal", NULL))
-			{
-				g_key_file_set_string(cfg, "Override", "lpr", "pascal");
-				g_key_file_set_comment(cfg, "Override", "lpr", "ext=language", NULL);
-				g_key_file_set_string(cfg, "Override", "pp", "pascal");
-				g_key_file_set_string(cfg, "Override", "dpr", "pascal");
-				g_key_file_set_string(cfg, "Override", "lpi", "xml");
-				g_key_file_set_string(cfg, "Override", "lpk", "xml");
-				g_key_file_set_string(cfg, "Override", "hgl", "xml");
-				g_key_file_set_string(cfg, "Override", "lfm", "ini");
-				g_key_file_set_string(cfg, "Override", "dof", "ini");
-				g_key_file_set_string(cfg, "Override", "cfg", "ini");
-				g_key_file_remove_key(cfg, "Override", "Pascal", NULL);
-				g_key_file_remove_key(cfg, "Override", "XML", NULL);
-				g_key_file_remove_key(cfg, "Override", "INI", NULL);
-
-			}
+			g_key_file_save_to_file(cfg, gCfgPath, NULL);
 		}
 
-		g_key_file_save_to_file(cfg, gCfgPath, NULL);
+		if (oldcfg)
+			g_free(oldcfg);
+
+		if (bakcfg)
+			g_free(bakcfg);
+
+		g_key_file_free(cfg);
 	}
-
-	if (oldcfg)
-		g_free(oldcfg);
-
-	if (bakcfg)
-		g_free(bakcfg);
-
-	g_key_file_free(cfg);
 }
