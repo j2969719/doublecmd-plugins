@@ -44,7 +44,11 @@ typedef struct sPlugSettings
 	gboolean ask_sizes;
 	gboolean follow;
 	gboolean verbose;
+	gboolean fail;
+	long max_redir;
+	long timeout;
 	char url[PATH_MAX];
+	char user_agent[MAX_PATH];
 } tPlugSettings;
 
 int gPluginNr;
@@ -79,6 +83,13 @@ static void SetCurrentFileTime(LPFILETIME ft)
 
 static void errmsg(char *msg)
 {
+	gLogProc(gPluginNr, MSGTYPE_IMPORTANTERROR, msg);
+	g_print("%s\n", msg);
+}
+/*
+static void errmsg_dialog(char *msg)
+{
+
 	if (gDialogApi)
 		gDialogApi->MessageBox(msg, "Double Commander", MB_OK | MB_ICONERROR);
 	else if (gRequestProc)
@@ -86,7 +97,7 @@ static void errmsg(char *msg)
 	else
 		g_print("%s\n", msg);
 }
-
+*/
 static size_t write_to_file_cb(void *buffer, size_t size, size_t nitems, void *userdata)
 {
 	tOutFile *data = (tOutFile*)userdata;
@@ -175,6 +186,12 @@ static void curl_set_additional_options(CURL *curl)
 {
 	curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, (long)g_settings.follow);
 	curl_easy_setopt(curl, CURLOPT_VERBOSE, (long)g_settings.verbose);
+	curl_easy_setopt(curl, CURLOPT_MAXREDIRS, g_settings.max_redir);
+
+	if (g_settings.user_agent[0] != '\0')
+		curl_easy_setopt(curl, CURLOPT_USERAGENT, g_settings.user_agent);
+
+	curl_easy_setopt(curl, CURLOPT_FAILONERROR, (long)g_settings.fail);
 }
 
 static gchar *parse_date(char *text, gint index)
@@ -384,13 +401,24 @@ static gchar *prepare_name(char *text, xmlDocPtr doc)
 	g_strstrip(name);
 	gchar *result = g_strdup(name);
 
+	char *ext = "";
+	char *dot = strrchr(name, '.');
+
+	if (dot)
+	{
+		ext = dot + 1;
+		*dot = '\0';
+	}
+
 	while ((url = name_to_url(result, doc)) != NULL && index < MAX_PATH)
 	{
 		xmlFree(url);
 		g_free(result);
-		result = g_strdup_printf("%s (%d)", name, index);
+		result = g_strdup_printf("%s (%d).%s", name, index, ext);
 		index++;
 	}
+
+	g_free(name);
 
 	return result;
 }
@@ -413,6 +441,7 @@ static xmlNodePtr get_links(gchar *url)
 	curl_set_additional_options(g_curl);
 	curl_easy_setopt(g_curl, CURLOPT_WRITEFUNCTION, write_to_buffer_cb);
 	curl_easy_setopt(g_curl, CURLOPT_WRITEDATA, (void *)&membuf);
+	curl_easy_setopt(g_curl, CURLOPT_TIMEOUT, g_settings.timeout);
 
 	res = curl_easy_perform(g_curl);
 
@@ -615,7 +644,7 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 			gDialogApi->SendDlgMsg(pDlg, "gbCurrent", DM_SHOWITEM, 1, 0);
 			gDialogApi->SendDlgMsg(pDlg, "edName", DM_SETTEXT, (intptr_t)g_selected_file, 0);
 			xmlChar *url = name_to_url(g_selected_file, g_doc);
-			gDialogApi->SendDlgMsg(pDlg, "edlURL", DM_SETTEXT, (intptr_t)url, 0);
+			gDialogApi->SendDlgMsg(pDlg, "edURL", DM_SETTEXT, (intptr_t)url, 0);
 			xmlFree(url);
 		}
 		else
@@ -624,6 +653,17 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 		gDialogApi->SendDlgMsg(pDlg, "ckSizes", DM_SETCHECK, (intptr_t)g_settings.ask_sizes, 0);
 		gDialogApi->SendDlgMsg(pDlg, "ckFollow", DM_SETCHECK, (intptr_t)g_settings.follow, 0);
 		gDialogApi->SendDlgMsg(pDlg, "ckVerbose", DM_SETCHECK, (intptr_t)g_settings.verbose, 0);
+		gDialogApi->SendDlgMsg(pDlg, "ckFail", DM_SETCHECK, (intptr_t)g_settings.fail, 0);
+
+		gchar *num = g_strdup_printf("%ld", g_settings.max_redir);
+		gDialogApi->SendDlgMsg(pDlg, "edMaxRedir", DM_SETTEXT, (intptr_t)num, 0);
+		g_free(num);
+
+		num = g_strdup_printf("%ld", g_settings.timeout);
+		gDialogApi->SendDlgMsg(pDlg, "edTimeout", DM_SETTEXT, (intptr_t)num, 0);
+		g_free(num);
+
+		gDialogApi->SendDlgMsg(pDlg, "cbUserAgent", DM_SETTEXT, (intptr_t)g_settings.user_agent, 0);
 
 		break;
 
@@ -654,6 +694,16 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 			g_settings.ask_sizes = (gboolean)gDialogApi->SendDlgMsg(pDlg, "ckSizes", DM_GETCHECK, 0, 0);
 			g_settings.follow = (gboolean)gDialogApi->SendDlgMsg(pDlg, "ckFollow", DM_GETCHECK, 0, 0);
 			g_settings.verbose = (gboolean)gDialogApi->SendDlgMsg(pDlg, "ckVerbose", DM_GETCHECK, 0, 0);
+			g_settings.fail = (gboolean)gDialogApi->SendDlgMsg(pDlg, "ckFail", DM_GETCHECK, 0, 0);
+
+			line = (char*)gDialogApi->SendDlgMsg(pDlg, "edMaxRedir", DM_GETTEXT, 0, 0);
+			g_settings.max_redir = (long)g_ascii_strtod((char*)line, NULL);
+
+			line = (char*)gDialogApi->SendDlgMsg(pDlg, "edTimeout", DM_GETTEXT, 0, 0);
+			g_settings.timeout = (long)g_ascii_strtod((char*)line, NULL);
+
+			line = (char*)gDialogApi->SendDlgMsg(pDlg, "cbUserAgent", DM_GETTEXT, 0, 0);
+			g_strlcpy(g_settings.user_agent, line, MAX_PATH);
 
 			if (g_settings.init)
 				g_settings.init = FALSE;
@@ -663,10 +713,7 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 		else if (strcmp(DlgItemName, "btnCancel") == 0)
 		{
 			if (g_settings.init)
-			{
 				g_settings.url[0] = '\0';
-				g_settings.init = FALSE;
-			}
 
 			gDialogApi->SendDlgMsg(pDlg, DlgItemName, DM_CLOSE, ID_CANCEL, 0);
 		}
@@ -765,6 +812,8 @@ static gboolean SetFindData(tVFSDirData *dirdata, WIN32_FIND_DATAA *FindData)
 		FindData->nFileSizeLow = 0;
 
 
+	xmlFree(name);
+
 	return TRUE;
 }
 
@@ -800,6 +849,10 @@ int DCPCALL FsInit(int PluginNr, tProgressProc pProgressProc, tLogProc pLogProc,
 	g_settings.ask_sizes = FALSE;
 	g_settings.follow = TRUE;
 	g_settings.verbose = FALSE;
+	g_settings.max_redir = 3;
+	g_settings.fail = TRUE;
+
+	g_settings.timeout = 30;
 
 	if (g_settings.init)
 		ShowCfgURLDlg();
@@ -861,6 +914,7 @@ HANDLE DCPCALL FsFindFirst(char* Path, WIN32_FIND_DATAA *FindData)
 		curl_easy_setopt(dirdata->curl, CURLOPT_FILETIME, 1L);
 		curl_easy_setopt(dirdata->curl, CURLOPT_HEADERFUNCTION, do_nothing_cb);
 		curl_easy_setopt(dirdata->curl, CURLOPT_HEADER, 0L);
+		curl_easy_setopt(dirdata->curl, CURLOPT_TIMEOUT, g_settings.timeout);
 		curl_set_additional_options(dirdata->curl);
 	}
 
@@ -884,7 +938,6 @@ BOOL DCPCALL FsFindNext(HANDLE Hdl, WIN32_FIND_DATAA *FindData)
 int DCPCALL FsFindClose(HANDLE Hdl)
 {
 	tVFSDirData *dirdata = (tVFSDirData*)Hdl;
-
 
 	if (dirdata->obj)
 		xmlXPathFreeObject(dirdata->obj);
@@ -917,6 +970,7 @@ int DCPCALL FsGetFile(char* RemoteName, char* LocalName, int CopyFlags, RemoteIn
 	curl_set_additional_options(g_curl);
 	curl_easy_setopt(g_curl, CURLOPT_WRITEFUNCTION, write_to_file_cb);
 	curl_easy_setopt(g_curl, CURLOPT_WRITEDATA, &output);
+	curl_easy_setopt(g_curl, CURLOPT_TIMEOUT, 0);
 
 	res = curl_easy_perform(g_curl);
 
@@ -924,7 +978,7 @@ int DCPCALL FsGetFile(char* RemoteName, char* LocalName, int CopyFlags, RemoteIn
 		fclose(output.fp);
 
 	if (CURLE_OK != res)
-		gLogProc(gPluginNr, MSGTYPE_IMPORTANTERROR, (char*)curl_easy_strerror(res));
+		errmsg(curl_easy_strerror(res) ? (char*)curl_easy_strerror(res) : "unknown error");
 
 	xmlFree(url);
 
@@ -959,8 +1013,14 @@ int DCPCALL FsExecuteFile(HWND MainWin, char* RemoteName, char* Verb)
 	}
 	else if (strcmp(Verb, "properties") == 0)
 	{
-		g_strlcpy(g_selected_file, RemoteName + 1, PATH_MAX);
-		ShowCfgURLDlg();
+		if (RemoteName[1] == '\0' && g_settings.init)
+			return result;
+		else
+		{
+			g_strlcpy(g_selected_file, RemoteName + 1, PATH_MAX);
+			ShowCfgURLDlg();
+		}
+
 		result = FS_EXEC_OK;
 	}
 	else if (strncmp(Verb, "quote", 5) == 0)
