@@ -298,8 +298,8 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 				lastfile_ok = false;
 		}
 
-			archive_read_close(a);
-			archive_read_free(a);
+		archive_read_close(a);
+		archive_read_free(a);
 
 	}
 

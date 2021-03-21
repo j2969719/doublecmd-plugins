@@ -154,7 +154,7 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	gtk_container_add(GTK_CONTAINER(GTK_WIDGET(ParentWin)), gFix);
 	scroll = gtk_scrolled_window_new(NULL, NULL);
 	gtk_container_add(GTK_CONTAINER(gFix), scroll);
-	g_object_set_data_full(G_OBJECT(gFix), "custom-data", data, g_free);
+	g_object_set_data_full(G_OBJECT(gFix), "custom-data", data, (GDestroyNotify)g_free);
 
 	data->tree = gtk_tree_view_new_with_model(GTK_TREE_MODEL(data->store));
 

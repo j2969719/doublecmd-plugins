@@ -66,30 +66,23 @@ GKeyFile *gCfg;
 gchar *gCfgPath = NULL;
 
 
-char* strlcpy(char* p, const char* p2, int maxlen)
-{
-	if ((int)strlen(p2) >= maxlen)
-	{
-		strncpy(p, p2, maxlen);
-		p[maxlen] = 0;
-	}
-	else
-		strcpy(p, p2);
-
-	return p;
-}
-
 static void config_get_options(void)
 {
 	gchar *last_opts = g_key_file_get_string(gCfg, "Global", "LastOptions", NULL);
 
 	if (last_opts)
-		strlcpy(gOptions, last_opts, PATH_MAX);
+	{
+		g_strlcpy(gOptions, last_opts, PATH_MAX);
+		g_free(last_opts);
+	}
 
 	gchar *encrypt = g_key_file_get_string(gCfg, "Global", "Encryption", NULL);
 
 	if (encrypt)
-		strlcpy(gEncryption, encrypt, PATH_MAX);
+	{
+		g_strlcpy(gEncryption, encrypt, PATH_MAX);
+		g_free(encrypt);
+	}
 
 	gMtreeClasic = g_key_file_get_boolean(gCfg, "Global", "MtreeClasic", NULL);
 	gMtreeCheckFS = g_key_file_get_boolean(gCfg, "Global", "MtreeCheckFS", NULL);
@@ -137,7 +130,7 @@ void DCPCALL ExtensionInitialize(tExtensionStartupInfo* StartupInfo)
 
 	if (dladdr(lfm_name, &dlinfo) != 0)
 	{
-		strlcpy(gLFMPath, dlinfo.dli_fname, PATH_MAX);
+		g_strlcpy(gLFMPath, dlinfo.dli_fname, PATH_MAX);
 		char *pos = strrchr(gLFMPath, '/');
 
 		if (pos)
@@ -154,12 +147,7 @@ void DCPCALL ExtensionFinalize(void* Reserved)
 
 
 	if (gCfg != NULL)
-	{
-		//g_key_file_load_from_file(gCfg, gCfgPath, G_KEY_FILE_KEEP_COMMENTS, NULL);
-		//config_set_options();
-		//g_key_file_save_to_file(gCfg, gCfgPath, NULL);
 		g_key_file_free(gCfg);
-	}
 
 	if (gCfgPath)
 		g_free(gCfgPath);
@@ -495,7 +483,7 @@ int archive_repack_existing(struct archive *a, char* filename, char** tmpfn, int
 		return E_EABORTED;
 	else
 	{
-		strlcpy(infile, filename, PATH_MAX);
+		g_strlcpy(infile, filename, PATH_MAX);
 		*tmpfn = tempnam(dirname(infile), "arc_");
 
 		if (gOptions[0] != '\0')
@@ -547,15 +535,19 @@ int archive_repack_existing(struct archive *a, char* filename, char** tmpfn, int
 			csize = 0;
 
 			skiplist = headlist;
-			strlcpy(infile, archive_entry_pathname(entry), PATH_MAX);
+			g_strlcpy(infile, archive_entry_pathname(entry), PATH_MAX);
 			skip_file = false;
 
 			while (*skiplist)
 			{
-				strlcpy(fname, skiplist, PATH_MAX);
+				g_strlcpy(fname, skiplist, PATH_MAX);
 
 				if (!(flags & PK_PACK_SAVE_PATHS))
-					strlcpy(fname, strdup(basename(fname)), PATH_MAX);
+				{
+					gchar *bname = g_path_get_basename(fname);
+					g_strlcpy(fname, bname, PATH_MAX);
+					g_free(bname);
+				}
 
 				if (!subpath)
 					strcpy(rmfile, fname);
@@ -631,34 +623,34 @@ int archive_repack_existing(struct archive *a, char* filename, char** tmpfn, int
 	return result;
 }
 
-static void checkbox_get_option(uintptr_t pDlg, char* DlgItemName, const char* optstr, bool defval, char *strval)
+static void checkbox_get_option(uintptr_t pDlg, char* DlgItemName, const char* optstr, bool defval, char *string)
 {
 	bool chk = (bool)gStartupInfo->SendDlgMsg(pDlg, DlgItemName, DM_GETCHECK, 0, 0);
 
 	if ((chk && !defval) || (!chk && defval))
 	{
-		if (strval[strlen(strval) - 1] != ':')
-			strcat(strval, ",");
+		if (string[strlen(string) - 1] != ':')
+			strcat(string, ",");
 
 		if (!chk && defval)
-			strcat(strval, "!");
+			strcat(string, "!");
 
-		strcat(strval, optstr);
+		strcat(string, optstr);
 	}
 }
 
-static void textfield_get_option(uintptr_t pDlg, char* DlgItemName, const char* optstr, char *strval)
+static void textfield_get_option(uintptr_t pDlg, char* DlgItemName, const char* optstr, char *string)
 {
 	char *tmpval = malloc(PATH_MAX);
 	memset(tmpval, 0, PATH_MAX);
-	strlcpy(tmpval, (char*)gStartupInfo->SendDlgMsg(pDlg, DlgItemName, DM_GETTEXT, 0, 0), PATH_MAX);
+	g_strlcpy(tmpval, (char*)gStartupInfo->SendDlgMsg(pDlg, DlgItemName, DM_GETTEXT, 0, 0), PATH_MAX);
 
 	if (tmpval[0] != '\0')
 	{
-		if (strval[strlen(strval) - 1] != ':')
-			strcat(strval, ",");
+		if (string[strlen(string) - 1] != ':')
+			strcat(string, ",");
 
-		snprintf(strval, PATH_MAX, "%s%s=%s", strdup(strval), optstr, tmpval);
+		snprintf(string, PATH_MAX, "%s%s=%s", strdup(string), optstr, tmpval);
 	}
 
 	free(tmpval);
@@ -733,7 +725,7 @@ static bool check_hex_signature(char* str)
 
 	for (size_t i = 0; i + 3 <= len + 1; i += 3)
 	{
-		strlcpy(val, str + i, 3);
+		g_strlcpy(val, str + i, 3);
 
 		if (sscanf(val, "%02X", &chr) != 1)
 			return false;
@@ -758,8 +750,7 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 	GError *err = NULL;
 	int numval;
 	bool bval;
-	char *strval = malloc(PATH_MAX);
-	memset(strval, 0, PATH_MAX);
+	char string[PATH_MAX];
 
 	switch (Msg)
 	{
@@ -769,8 +760,8 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 
 		gStartupInfo->SendDlgMsg(pDlg, "edOptions", DM_SETTEXT, (intptr_t)gOptions, 0);
 		gStartupInfo->SendDlgMsg(pDlg, "chkClassic", DM_SETCHECK, (intptr_t)gMtreeClasic, 0);
-		snprintf(strval, PATH_MAX, "%s", archive_version_details());
-		gStartupInfo->SendDlgMsg(pDlg, "lblInfo", DM_SETTEXT, (intptr_t)strval, 0);
+		snprintf(string, PATH_MAX, "%s", archive_version_details());
+		gStartupInfo->SendDlgMsg(pDlg, "lblInfo", DM_SETTEXT, (intptr_t)string, 0);
 		gStartupInfo->SendDlgMsg(pDlg, "cbZISOCompLvl", DM_ENABLE, 0, 0);
 
 		switch (gTarFormat)
@@ -865,11 +856,11 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 	case DN_CLICK:
 		if (strncmp(DlgItemName, "btnOK", 5) == 0)
 		{
-			strlcpy(gOptions, (char*)gStartupInfo->SendDlgMsg(pDlg, "edOptions", DM_GETTEXT, 0, 0), PATH_MAX);
+			g_strlcpy(gOptions, (char*)gStartupInfo->SendDlgMsg(pDlg, "edOptions", DM_GETTEXT, 0, 0), PATH_MAX);
 			gMtreeClasic = (bool)gStartupInfo->SendDlgMsg(pDlg, "chkClassic", DM_GETCHECK, 0, 0);
-			strlcpy(gEncryption, (char*)gStartupInfo->SendDlgMsg(pDlg, "cbEncrypt", DM_GETTEXT, 0, 0), PATH_MAX);
+			g_strlcpy(gEncryption, (char*)gStartupInfo->SendDlgMsg(pDlg, "cbEncrypt", DM_GETTEXT, 0, 0), PATH_MAX);
 
-			strlcpy(gReadCharset, (char*)gStartupInfo->SendDlgMsg(pDlg, "cbReadCharset", DM_GETTEXT, 0, 0), 255);
+			g_strlcpy(gReadCharset, (char*)gStartupInfo->SendDlgMsg(pDlg, "cbReadCharset", DM_GETTEXT, 0, 0), 255);
 			gMtreeCheckFS = (bool)gStartupInfo->SendDlgMsg(pDlg, "chkReadMtreeckfs", DM_GETCHECK, 0, 0);
 			gReadCompat2x = (bool)gStartupInfo->SendDlgMsg(pDlg, "chkReadCompat2x", DM_GETCHECK, 0, 0);
 			gReadIgnoreCRC = (bool)gStartupInfo->SendDlgMsg(pDlg, "chkReadIgnoreCRC", DM_GETCHECK, 0, 0);
@@ -958,8 +949,8 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 		else if (strncmp(DlgItemName, "btnEditINI", 8) == 0)
 		{
 			g_key_file_save_to_file(gCfg, gCfgPath, NULL);
-			snprintf(strval, PATH_MAX, "xdg-open \"%s\"", gCfgPath);
-			system(strval);
+			snprintf(string, PATH_MAX, "xdg-open \"%s\"", gCfgPath);
+			system(string);
 
 			errmsg("Click OK when done editing.", MB_OK | MB_ICONINFORMATION);
 
@@ -981,8 +972,8 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 			gStartupInfo->SendDlgMsg(pDlg, "btnExternalSave", DM_ENABLE, 0, 0);
 			gStartupInfo->SendDlgMsg(pDlg, "btnExternalReload", DM_ENABLE, 0, 0);
 			ed_external_clear(pDlg);
-			strlcpy(strval, ".", PATH_MAX);
-			gStartupInfo->SendDlgMsg(pDlg, "edExternalExt", DM_SETTEXT, (intptr_t)strval, 0);
+			g_strlcpy(string, ".", PATH_MAX);
+			gStartupInfo->SendDlgMsg(pDlg, "edExternalExt", DM_SETTEXT, (intptr_t)string, 0);
 		}
 		else if (strcmp(DlgItemName, "btnExternalDelete") == 0)
 		{
@@ -1005,29 +996,28 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 		}
 		else if (strcmp(DlgItemName, "btnExternalSave") == 0)
 		{
-			size_t signature_size;
 			gchar *ext = (char*)gStartupInfo->SendDlgMsg(pDlg, "edExternalExt", DM_GETTEXT, 0, 0);
 
 			if (ext && ext[0] == '.' && ext[1] != '\0')
 			{
-				strlcpy(strval, (char*)gStartupInfo->SendDlgMsg(pDlg, "edExternalWrite", DM_GETTEXT, 0, 0), PATH_MAX);
+				g_strlcpy(string, (char*)gStartupInfo->SendDlgMsg(pDlg, "edExternalWrite", DM_GETTEXT, 0, 0), PATH_MAX);
 
-				if (strval && strval[0] != '\0')
-					g_key_file_set_string(gCfg, ext, "write_cmd", strval);
+				if (string[0] != '\0')
+					g_key_file_set_string(gCfg, ext, "write_cmd", string);
 
-				strlcpy(strval, (char*)gStartupInfo->SendDlgMsg(pDlg, "edExternalRead", DM_GETTEXT, 0, 0), PATH_MAX);
+				g_strlcpy(string, (char*)gStartupInfo->SendDlgMsg(pDlg, "edExternalRead", DM_GETTEXT, 0, 0), PATH_MAX);
 
-				if (strval && strval[0] != '\0')
-					g_key_file_set_string(gCfg, ext, "read_cmd", strval);
+				if (string[0] != '\0')
+					g_key_file_set_string(gCfg, ext, "read_cmd", string);
 
-				strlcpy(strval, (char*)gStartupInfo->SendDlgMsg(pDlg, "edExternalHEX", DM_GETTEXT, 0, 0), PATH_MAX);
+				g_strlcpy(string, (char*)gStartupInfo->SendDlgMsg(pDlg, "edExternalHEX", DM_GETTEXT, 0, 0), PATH_MAX);
 
-				if (strval && strval[0] != '\0')
+				if (string[0] != '\0')
 				{
-					if (check_hex_signature(strval) == false)
+					if (check_hex_signature(string) == false)
 						errmsg("Invalid hex value.", MB_OK | MB_ICONERROR);
 					else
-						g_key_file_set_string(gCfg, ext, "signature", strval);
+						g_key_file_set_string(gCfg, ext, "signature", string);
 				}
 			}
 			else
@@ -1049,39 +1039,39 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 			gStartupInfo->SendDlgMsg(pDlg, "gbMtreeAttr", DM_ENABLE, (intptr_t)!bval, 0);
 			gStartupInfo->SendDlgMsg(pDlg, "gbMtreeCkSum", DM_ENABLE, (intptr_t)!bval, 0);
 
-			strlcpy(strval, "mtree:", PATH_MAX);
+			g_strlcpy(string, "mtree:", PATH_MAX);
 
 			if (bval)
-				checkbox_get_option(pDlg, "chkMtreeAll", "all", false, strval);
+				checkbox_get_option(pDlg, "chkMtreeAll", "all", false, string);
 			else
 			{
-				checkbox_get_option(pDlg, "chkMtreeCksum", "cksum", false, strval);
-				checkbox_get_option(pDlg, "chkMtreeDevice", "device", true, strval);
-				checkbox_get_option(pDlg, "chkMtreeFlags", "flags", true, strval);
-				checkbox_get_option(pDlg, "chkMtreeGid", "gid", true, strval);
-				checkbox_get_option(pDlg, "chkMtreeGname", "gname", true, strval);
-				checkbox_get_option(pDlg, "chkMtreeLink", "link", true, strval);
-				checkbox_get_option(pDlg, "chkMtreeMd5", "md5", false, strval);
-				checkbox_get_option(pDlg, "chkMtreeMode", "mode", true, strval);
-				checkbox_get_option(pDlg, "chkMtreeNlink", "nlink", true, strval);
-				checkbox_get_option(pDlg, "chkMtreeRmd160", "rmd160", false, strval);
-				checkbox_get_option(pDlg, "chkMtreeSha1", "sha1", false, strval);
-				checkbox_get_option(pDlg, "chkMtreeSha256", "sha256", false, strval);
-				checkbox_get_option(pDlg, "chkMtreeSha384", "sha384", false, strval);
-				checkbox_get_option(pDlg, "chkMtreeSha512", "sha512", false, strval);
-				checkbox_get_option(pDlg, "chkMtreeSize", "size", true, strval);
-				checkbox_get_option(pDlg, "chkMtreeTime", "time", true, strval);
-				checkbox_get_option(pDlg, "chkMtreeUid", "uid", true, strval);
-				checkbox_get_option(pDlg, "chkMtreeUname", "uname", true, strval);
-				checkbox_get_option(pDlg, "chkMtreeResdevice", "resdevice", false, strval);
+				checkbox_get_option(pDlg, "chkMtreeCksum", "cksum", false, string);
+				checkbox_get_option(pDlg, "chkMtreeDevice", "device", true, string);
+				checkbox_get_option(pDlg, "chkMtreeFlags", "flags", true, string);
+				checkbox_get_option(pDlg, "chkMtreeGid", "gid", true, string);
+				checkbox_get_option(pDlg, "chkMtreeGname", "gname", true, string);
+				checkbox_get_option(pDlg, "chkMtreeLink", "link", true, string);
+				checkbox_get_option(pDlg, "chkMtreeMd5", "md5", false, string);
+				checkbox_get_option(pDlg, "chkMtreeMode", "mode", true, string);
+				checkbox_get_option(pDlg, "chkMtreeNlink", "nlink", true, string);
+				checkbox_get_option(pDlg, "chkMtreeRmd160", "rmd160", false, string);
+				checkbox_get_option(pDlg, "chkMtreeSha1", "sha1", false, string);
+				checkbox_get_option(pDlg, "chkMtreeSha256", "sha256", false, string);
+				checkbox_get_option(pDlg, "chkMtreeSha384", "sha384", false, string);
+				checkbox_get_option(pDlg, "chkMtreeSha512", "sha512", false, string);
+				checkbox_get_option(pDlg, "chkMtreeSize", "size", true, string);
+				checkbox_get_option(pDlg, "chkMtreeTime", "time", true, string);
+				checkbox_get_option(pDlg, "chkMtreeUid", "uid", true, string);
+				checkbox_get_option(pDlg, "chkMtreeUname", "uname", true, string);
+				checkbox_get_option(pDlg, "chkMtreeResdevice", "resdevice", false, string);
 			}
 
-			checkbox_get_option(pDlg, "chkMtreeDirsOnly", "dironly", false, strval);
-			checkbox_get_option(pDlg, "chkMtreeUseSet", "use-set", false, strval);
-			checkbox_get_option(pDlg, "chkMtreeIndent", "indent", false, strval);
+			checkbox_get_option(pDlg, "chkMtreeDirsOnly", "dironly", false, string);
+			checkbox_get_option(pDlg, "chkMtreeUseSet", "use-set", false, string);
+			checkbox_get_option(pDlg, "chkMtreeIndent", "indent", false, string);
 
-			if (strcmp(strval, "mtree:") != 0)
-				gStartupInfo->SendDlgMsg(pDlg, "edOptions", DM_SETTEXT, (intptr_t)strval, 0);
+			if (strcmp(string, "mtree:") != 0)
+				gStartupInfo->SendDlgMsg(pDlg, "edOptions", DM_SETTEXT, (intptr_t)string, 0);
 			else
 				gStartupInfo->SendDlgMsg(pDlg, "edOptions", DM_SETTEXT, 0, 0);
 		}
@@ -1091,23 +1081,23 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 
 			if (numval > -1)
 			{
-				snprintf(strval, PATH_MAX, "7zip:compression=%s", (char*)gStartupInfo->SendDlgMsg(pDlg, "cb7ZCompression", DM_GETTEXT, 0, 0));
+				snprintf(string, PATH_MAX, "7zip:compression=%s", (char*)gStartupInfo->SendDlgMsg(pDlg, "cb7ZCompression", DM_GETTEXT, 0, 0));
 			}
 			else
-				strlcpy(strval, "7zip:", PATH_MAX);
+				g_strlcpy(string, "7zip:", PATH_MAX);
 
 			numval = (int)gStartupInfo->SendDlgMsg(pDlg, "cb7ZCompLvl", DM_LISTGETITEMINDEX, 0, 0);
 
 			if (numval > -1)
 			{
-				if (strval[strlen(strval) - 1] != ':')
-					strcat(strval, ",");
+				if (string[strlen(string) - 1] != ':')
+					strcat(string, ",");
 
-				snprintf(strval, PATH_MAX, "%scompression-level=%d", strdup(strval), numval);
+				snprintf(string, PATH_MAX, "%scompression-level=%d", strdup(string), numval);
 			}
 
-			if (strcmp(strval, "7zip:") != 0)
-				gStartupInfo->SendDlgMsg(pDlg, "edOptions", DM_SETTEXT, (intptr_t)strval, 0);
+			if (strcmp(string, "7zip:") != 0)
+				gStartupInfo->SendDlgMsg(pDlg, "edOptions", DM_SETTEXT, (intptr_t)string, 0);
 			else
 				gStartupInfo->SendDlgMsg(pDlg, "edOptions", DM_SETTEXT, 0, 0);
 
@@ -1118,63 +1108,63 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 
 			if (numval > -1)
 			{
-				snprintf(strval, PATH_MAX, "zip:compression=%s", (char*)gStartupInfo->SendDlgMsg(pDlg, "cbZipCompression", DM_GETTEXT, 0, 0));
+				snprintf(string, PATH_MAX, "zip:compression=%s", (char*)gStartupInfo->SendDlgMsg(pDlg, "cbZipCompression", DM_GETTEXT, 0, 0));
 			}
 			else
-				strlcpy(strval, "zip:", PATH_MAX);
+				g_strlcpy(string, "zip:", PATH_MAX);
 
 			numval = (int)gStartupInfo->SendDlgMsg(pDlg, "cbZipCompLvl", DM_LISTGETITEMINDEX, 0, 0);
 
 			if (numval > -1)
 			{
-				if (strval[strlen(strval) - 1] != ':')
-					strcat(strval, ",");
+				if (string[strlen(string) - 1] != ':')
+					strcat(string, ",");
 
-				snprintf(strval, PATH_MAX, "%scompression-level=%d", strdup(strval), numval);
+				snprintf(string, PATH_MAX, "%scompression-level=%d", strdup(string), numval);
 			}
 
-			textfield_get_option(pDlg, "cbZipCharset", "hdrcharset", strval);
-			checkbox_get_option(pDlg, "chkZipExperimental", "experimental", false, strval);
-			checkbox_get_option(pDlg, "chkZipFakeCRC32", "fakecrc32", false, strval);
-			checkbox_get_option(pDlg, "chkZip64", "zip64", true, strval);
+			textfield_get_option(pDlg, "cbZipCharset", "hdrcharset", string);
+			checkbox_get_option(pDlg, "chkZipExperimental", "experimental", false, string);
+			checkbox_get_option(pDlg, "chkZipFakeCRC32", "fakecrc32", false, string);
+			checkbox_get_option(pDlg, "chkZip64", "zip64", true, string);
 
 
-			if (strcmp(strval, "zip:") != 0)
-				gStartupInfo->SendDlgMsg(pDlg, "edOptions", DM_SETTEXT, (intptr_t)strval, 0);
+			if (strcmp(string, "zip:") != 0)
+				gStartupInfo->SendDlgMsg(pDlg, "edOptions", DM_SETTEXT, (intptr_t)string, 0);
 			else
 				gStartupInfo->SendDlgMsg(pDlg, "edOptions", DM_SETTEXT, 0, 0);
 		}
 		else if (strstr(DlgItemName, "ISO") != NULL)
 		{
-			strlcpy(strval, "iso9660:", PATH_MAX);
-			textfield_get_option(pDlg, "edISOVolumeID", "volume-id", strval);
-			textfield_get_option(pDlg, "edISOAbstractFile", "abstract-file", strval);
-			textfield_get_option(pDlg, "edISOApplicationID", "application-id", strval);
-			textfield_get_option(pDlg, "edISOCopyrightFile", "copyright-file", strval);
-			textfield_get_option(pDlg, "edISOPublisher", "publisher", strval);
-			textfield_get_option(pDlg, "edISOBiblioFile", "biblio-file", strval);
+			g_strlcpy(string, "iso9660:", PATH_MAX);
+			textfield_get_option(pDlg, "edISOVolumeID", "volume-id", string);
+			textfield_get_option(pDlg, "edISOAbstractFile", "abstract-file", string);
+			textfield_get_option(pDlg, "edISOApplicationID", "application-id", string);
+			textfield_get_option(pDlg, "edISOCopyrightFile", "copyright-file", string);
+			textfield_get_option(pDlg, "edISOPublisher", "publisher", string);
+			textfield_get_option(pDlg, "edISOBiblioFile", "biblio-file", string);
 
 			numval = (int)gStartupInfo->SendDlgMsg(pDlg, "cbISOLevel", DM_LISTGETITEMINDEX, 0, 0);
 
 			if (numval > -1)
 			{
-				if (strval[strlen(strval) - 1] != ':')
-					strcat(strval, ",");
+				if (string[strlen(string) - 1] != ':')
+					strcat(string, ",");
 
-				snprintf(strval, PATH_MAX, "%siso-level=%d", strdup(strval), numval + 1);
+				snprintf(string, PATH_MAX, "%siso-level=%d", strdup(string), numval + 1);
 			}
 
-			checkbox_get_option(pDlg, "chkISOAllowVernum", "allow-vernum", true, strval);
-			checkbox_get_option(pDlg, "chkISOJoliet", "joliet", true, strval);
-			checkbox_get_option(pDlg, "chkISOLimitDepth", "limit-depth", true, strval);
-			checkbox_get_option(pDlg, "chkISOLimitDirs", "limit-dirs", true, strval);
-			checkbox_get_option(pDlg, "chkISOPad", "pad", true, strval);
-			checkbox_get_option(pDlg, "chkISORockridge", "rockridge", true, strval);
+			checkbox_get_option(pDlg, "chkISOAllowVernum", "allow-vernum", true, string);
+			checkbox_get_option(pDlg, "chkISOJoliet", "joliet", true, string);
+			checkbox_get_option(pDlg, "chkISOLimitDepth", "limit-depth", true, string);
+			checkbox_get_option(pDlg, "chkISOLimitDirs", "limit-dirs", true, string);
+			checkbox_get_option(pDlg, "chkISOPad", "pad", true, string);
+			checkbox_get_option(pDlg, "chkISORockridge", "rockridge", true, string);
 
-			textfield_get_option(pDlg, "edISOBoot", "boot", strval);
-			textfield_get_option(pDlg, "edISOBootCatalog", "boot-catalog", strval);
-			textfield_get_option(pDlg, "cbISOBootType", "boot-type", strval);
-			checkbox_get_option(pDlg, "chkISOBootInfoTable", "boot-info-table", false, strval);
+			textfield_get_option(pDlg, "edISOBoot", "boot", string);
+			textfield_get_option(pDlg, "edISOBootCatalog", "boot-catalog", string);
+			textfield_get_option(pDlg, "cbISOBootType", "boot-type", string);
+			checkbox_get_option(pDlg, "chkISOBootInfoTable", "boot-info-table", false, string);
 
 
 			numval = (int)gStartupInfo->SendDlgMsg(pDlg, "cbISOBootType", DM_LISTGETITEMINDEX, 0, 0);
@@ -1189,11 +1179,11 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 			{
 				gStartupInfo->SendDlgMsg(pDlg, "edISOBootLoadSeg", DM_ENABLE, 1, 0);
 				gStartupInfo->SendDlgMsg(pDlg, "edISOBootLoadSize", DM_ENABLE, 1, 0);
-				textfield_get_option(pDlg, "edISOBootLoadSeg", "boot-load-seg", strval);
-				textfield_get_option(pDlg, "edISOBootLoadSize", "boot-load-size", strval);
+				textfield_get_option(pDlg, "edISOBootLoadSeg", "boot-load-seg", string);
+				textfield_get_option(pDlg, "edISOBootLoadSize", "boot-load-size", string);
 			}
 
-			checkbox_get_option(pDlg, "chkZISOfs", "zisofs", false, strval);
+			checkbox_get_option(pDlg, "chkZISOfs", "zisofs", false, string);
 			bval = (bool)gStartupInfo->SendDlgMsg(pDlg, "chkZISOfs", DM_GETCHECK, 0, 0);
 
 			if (bval)
@@ -1204,17 +1194,17 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 
 				if (numval > -1)
 				{
-					if (strval[strlen(strval) - 1] != ':')
-						strcat(strval, ",");
+					if (string[strlen(string) - 1] != ':')
+						strcat(string, ",");
 
-					snprintf(strval, PATH_MAX, "%scompression-level=%d", strdup(strval), numval);
+					snprintf(string, PATH_MAX, "%scompression-level=%d", strdup(string), numval);
 				}
 			}
 			else
 				gStartupInfo->SendDlgMsg(pDlg, "cbZISOCompLvl", DM_ENABLE, 0, 0);
 
-			if (strcmp(strval, "iso9660:") != 0)
-				gStartupInfo->SendDlgMsg(pDlg, "edOptions", DM_SETTEXT, (intptr_t)strval, 0);
+			if (strcmp(string, "iso9660:") != 0)
+				gStartupInfo->SendDlgMsg(pDlg, "edOptions", DM_SETTEXT, (intptr_t)string, 0);
 			else
 				gStartupInfo->SendDlgMsg(pDlg, "edOptions", DM_SETTEXT, 0, 0);
 
@@ -1223,52 +1213,52 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 		{
 			if (strcmp(DlgItemName, "cbFiltersZSTDComprLvl") == 0)
 			{
-				strlcpy(strval, "zstd:", PATH_MAX);
+				g_strlcpy(string, "zstd:", PATH_MAX);
 
 				numval = (int)gStartupInfo->SendDlgMsg(pDlg, "cbFiltersZSTDComprLvl", DM_LISTGETITEMINDEX, 0, 0);
 
 				if (numval > -1)
 				{
 					gStartupInfo->SendDlgMsg(pDlg, "cbFiltersCompLvl", DM_SETTEXT, 0, 0);
-					snprintf(strval, PATH_MAX, "%scompression-level=%d", strdup(strval), numval + 1);
+					snprintf(string, PATH_MAX, "%scompression-level=%d", strdup(string), numval + 1);
 				}
 			}
 			else if (strstr(DlgItemName, "FiltersLZ4") != NULL)
 			{
-				strlcpy(strval, "lz4:", PATH_MAX);
-				checkbox_get_option(pDlg, "chkFiltersLZ4StreamChksum", "stream-checksum", true, strval);
-				checkbox_get_option(pDlg, "chkFiltersLZ4BlockChksum", "block-checksum", true, strval);
-				checkbox_get_option(pDlg, "chkFiltersLZ4BlockDependence", "block-dependence", false, strval);
-				textfield_get_option(pDlg, "cbFiltersLZ4BlockSize", "block-size", strval);
+				g_strlcpy(string, "lz4:", PATH_MAX);
+				checkbox_get_option(pDlg, "chkFiltersLZ4StreamChksum", "stream-checksum", true, string);
+				checkbox_get_option(pDlg, "chkFiltersLZ4BlockChksum", "block-checksum", true, string);
+				checkbox_get_option(pDlg, "chkFiltersLZ4BlockDependence", "block-dependence", false, string);
+				textfield_get_option(pDlg, "cbFiltersLZ4BlockSize", "block-size", string);
 			}
 			else if (strcmp(DlgItemName, "chkFiltersGZTimestamp") == 0)
 			{
-				strlcpy(strval, "gzip:", PATH_MAX);
-				checkbox_get_option(pDlg, "chkFiltersGZTimestamp", "timestamp", true, strval);
+				g_strlcpy(string, "gzip:", PATH_MAX);
+				checkbox_get_option(pDlg, "chkFiltersGZTimestamp", "timestamp", true, string);
 			}
 			else if (strcmp(DlgItemName, "edFiltersLZMAThreads") == 0)
 			{
-				strlcpy(strval, "lzma:", PATH_MAX);
-				textfield_get_option(pDlg, "edFiltersLZMAThreads", "threads", strval);
+				g_strlcpy(string, "lzma:", PATH_MAX);
+				textfield_get_option(pDlg, "edFiltersLZMAThreads", "threads", string);
 			}
 			else if (strcmp(DlgItemName, "cbFiltersLrzipCompr") == 0)
 			{
-				strlcpy(strval, "lrzip:", PATH_MAX);
-				textfield_get_option(pDlg, "cbFiltersLrzipCompr", "compression", strval);
+				g_strlcpy(string, "lrzip:", PATH_MAX);
+				textfield_get_option(pDlg, "cbFiltersLrzipCompr", "compression", string);
 			}
 
 			numval = (int)gStartupInfo->SendDlgMsg(pDlg, "cbFiltersCompLvl", DM_LISTGETITEMINDEX, 0, 0);
 
 			if (numval > -1)
 			{
-				if (strval[strlen(strval) - 1] == ':')
-					snprintf(strval, PATH_MAX, "compression-level=%d", numval);
+				if (string[strlen(string) - 1] == ':')
+					snprintf(string, PATH_MAX, "compression-level=%d", numval);
 				else
 				{
-					if (strval[strlen(strval) - 1] != '\0')
-						strcat(strval, ",");
+					if (string[strlen(string) - 1] != '\0')
+						strcat(string, ",");
 
-					snprintf(strval, PATH_MAX, "%scompression-level=%d", strdup(strval), numval);
+					snprintf(string, PATH_MAX, "%scompression-level=%d", strdup(string), numval);
 				}
 			}
 
@@ -1276,19 +1266,19 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 
 			if (tmpval[0] != '\0')
 			{
-				if (strval[strlen(strval) - 1] == ':')
-					snprintf(strval, PATH_MAX, "hdrcharset=%s", tmpval);
+				if (string[strlen(string) - 1] == ':')
+					snprintf(string, PATH_MAX, "hdrcharset=%s", tmpval);
 				else
 				{
-					if (strval[strlen(strval) - 1] != '\0')
-						strcat(strval, ",");
+					if (string[strlen(string) - 1] != '\0')
+						strcat(string, ",");
 
-					snprintf(strval, PATH_MAX, "%shdrcharset=%s", strdup(strval), tmpval);
+					snprintf(string, PATH_MAX, "%shdrcharset=%s", strdup(string), tmpval);
 				}
 			}
 
-			if (strval[strlen(strval) - 1] != ':')
-				gStartupInfo->SendDlgMsg(pDlg, "edOptions", DM_SETTEXT, (intptr_t)strval, 0);
+			if (string[strlen(string) - 1] != ':')
+				gStartupInfo->SendDlgMsg(pDlg, "edOptions", DM_SETTEXT, (intptr_t)string, 0);
 			else
 				gStartupInfo->SendDlgMsg(pDlg, "edOptions", DM_SETTEXT, 0, 0);
 		}
@@ -1312,9 +1302,6 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 
 	if (err)
 		g_error_free(err);
-
-	if (strval)
-		free(strval);
 
 	return 0;
 }
@@ -1346,7 +1333,7 @@ HANDLE DCPCALL OpenArchive(tOpenArchiveData *ArchiveData)
 	else
 		archive_read_support_format_all(handle->archive);
 
-	strlcpy(handle->arcname, ArchiveData->ArcName, PATH_MAX);
+	g_strlcpy(handle->arcname, ArchiveData->ArcName, PATH_MAX);
 
 	if (gMtreeCheckFS && strcasestr(ArchiveData->ArcName, ".mtree") != NULL)
 		archive_read_set_options(handle->archive, "checkfs");
@@ -1377,6 +1364,9 @@ HANDLE DCPCALL OpenArchive(tOpenArchiveData *ArchiveData)
 
 	if (r != ARCHIVE_OK)
 	{
+		archive_read_close(handle->archive);
+		archive_read_free(handle->archive);
+		free(handle);
 		ArchiveData->OpenResult = E_UNKNOWN_FORMAT;
 		return E_SUCCESS;
 	}
@@ -1420,7 +1410,7 @@ int DCPCALL ReadHeaderEx(HANDLE hArcData, tHeaderDataEx *HeaderDataEx)
 
 		if (archive_format(handle->archive) == ARCHIVE_FORMAT_RAW)
 		{
-			strlcpy(arcname, handle->arcname, PATH_MAX);
+			g_strlcpy(arcname, handle->arcname, PATH_MAX);
 			filename = basename(arcname);
 
 			if (filename)
@@ -1430,7 +1420,7 @@ int DCPCALL ReadHeaderEx(HANDLE hArcData, tHeaderDataEx *HeaderDataEx)
 				if (dot != NULL)
 					*dot = '\0';
 
-				strlcpy(HeaderDataEx->FileName, filename, sizeof(HeaderDataEx->FileName) - 1);
+				g_strlcpy(HeaderDataEx->FileName, filename, sizeof(HeaderDataEx->FileName) - 1);
 
 				if (stat(handle->arcname, &st) == 0)
 				{
@@ -1443,22 +1433,22 @@ int DCPCALL ReadHeaderEx(HANDLE hArcData, tHeaderDataEx *HeaderDataEx)
 				}
 			}
 			else
-				strlcpy(HeaderDataEx->FileName, "<!!!ERROR!!!>", sizeof(HeaderDataEx->FileName) - 1);
+				g_strlcpy(HeaderDataEx->FileName, "<!!!ERROR!!!>", sizeof(HeaderDataEx->FileName) - 1);
 		}
 		else
 		{
 			filename = (char*)archive_entry_pathname(handle->entry);
 
 			if (!filename)
-				strlcpy(HeaderDataEx->FileName, "<!!!ERROR!!!>", sizeof(HeaderDataEx->FileName) - 1);
+				g_strlcpy(HeaderDataEx->FileName, "<!!!ERROR!!!>", sizeof(HeaderDataEx->FileName) - 1);
 			else
 			{
 				if (filename[0] == '/')
-					strlcpy(HeaderDataEx->FileName, filename + 1, sizeof(HeaderDataEx->FileName) - 1);
+					g_strlcpy(HeaderDataEx->FileName, filename + 1, sizeof(HeaderDataEx->FileName) - 1);
 				else if (gReadSkipDot && filename[0] == '.' && filename[1] == '/')
-					strlcpy(HeaderDataEx->FileName, filename + 2, sizeof(HeaderDataEx->FileName) - 1);
+					g_strlcpy(HeaderDataEx->FileName, filename + 2, sizeof(HeaderDataEx->FileName) - 1);
 				else
-					strlcpy(HeaderDataEx->FileName, filename, sizeof(HeaderDataEx->FileName) - 1);
+					g_strlcpy(HeaderDataEx->FileName, filename, sizeof(HeaderDataEx->FileName) - 1);
 			}
 
 			size = archive_entry_size(handle->entry);
@@ -1496,9 +1486,9 @@ int DCPCALL ProcessFile(HANDLE hArcData, int Operation, char *DestPath, char *De
 		pathname = archive_entry_pathname(handle->entry);
 
 		if (!pathname)
-			strlcpy(filename, handle->arcname, PATH_MAX);
+			g_strlcpy(filename, handle->arcname, PATH_MAX);
 		else
-			strlcpy(filename, pathname, PATH_MAX);
+			g_strlcpy(filename, pathname, PATH_MAX);
 
 		if (Operation == PK_EXTRACT)
 		{
@@ -1606,6 +1596,7 @@ BOOL DCPCALL CanYouHandleThisFile(char *FileName)
 		archive_read_support_format_all(a);
 
 	int r = archive_read_open_filename(a, FileName, 10240);
+	archive_read_close(a);
 	archive_read_free(a);
 
 	if (r != ARCHIVE_OK)
@@ -1696,7 +1687,7 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 
 			strcpy(infile, SrcPath);
 			char* pos = strrchr(infile, '/');
-			strlcpy(fname, AddList, PATH_MAX);
+			g_strlcpy(fname, AddList, PATH_MAX);
 
 			if (pos != NULL)
 				strcpy(pos + 1, fname);
@@ -1746,7 +1737,7 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 		{
 			strcpy(infile, SrcPath);
 			char* pos = strrchr(infile, '/');
-			strlcpy(fname, AddList, PATH_MAX);
+			g_strlcpy(fname, AddList, PATH_MAX);
 
 			if (pos != NULL)
 				strcpy(pos + 1, fname);
@@ -1754,7 +1745,7 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 				strcpy(infile, fname);
 
 			if (!(Flags & PK_PACK_SAVE_PATHS))
-				strlcpy(fname, strdup(basename(fname)), PATH_MAX);
+				g_strlcpy(fname, strdup(basename(fname)), PATH_MAX);
 
 			if (!SubPath)
 				strcpy(pkfile, fname);

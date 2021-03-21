@@ -8,8 +8,8 @@
 
 typedef struct sArcData
 {
-	char arcname[PATH_MAX + 1];
-	char filename[PATH_MAX + 1];
+	char arcname[PATH_MAX];
+	char filename[MAX_PATH];
 	xmlDoc *document;
 	xmlNode *node;
 	gsize out_len;
@@ -31,7 +31,7 @@ HANDLE DCPCALL OpenArchive(tOpenArchiveData *ArchiveData)
 	tArcData * handle;
 	handle = malloc(sizeof(tArcData));
 	memset(handle, 0, sizeof(tArcData));
-	strncpy(handle->arcname, ArchiveData->ArcName, PATH_MAX);
+	snprintf(handle->arcname, PATH_MAX, "%s", ArchiveData->ArcName);
 	handle->document = xmlReadFile(ArchiveData->ArcName, NULL, 0);
 
 	if (handle->document == NULL)
@@ -43,7 +43,7 @@ HANDLE DCPCALL OpenArchive(tOpenArchiveData *ArchiveData)
 
 	xmlNode *root = xmlDocGetRootElement(handle->document);
 
-	if (strcmp(root->name, "FictionBook") != 0)
+	if (strcmp((char*)root->name, "FictionBook") != 0)
 	{
 		xmlFreeDoc(handle->document);
 		free(handle);
@@ -61,7 +61,7 @@ HANDLE DCPCALL OpenArchive(tOpenArchiveData *ArchiveData)
 
 int DCPCALL ReadHeader(HANDLE hArcData, tHeaderData *HeaderData)
 {
-	memset(HeaderData, 0, sizeof(HeaderData));
+	memset(HeaderData, 0, sizeof(tHeaderData));
 	ArcData handle = (ArcData)hArcData;
 
 	xmlNode *node = handle->node;
@@ -70,24 +70,24 @@ int DCPCALL ReadHeader(HANDLE hArcData, tHeaderData *HeaderData)
 
 	if (node)
 	{
-		if (strcmp(node->name, "binary") == 0)
+		if (strcmp((char*)node->name, "binary") == 0)
 		{
 			xmlChar *bin_id, *bin_content;
-			bin_id = xmlGetProp(node, "id");
+			bin_id = xmlGetProp(node, (xmlChar*)"id");
 
 			char *pdot = strchr((char*)bin_id, '.');
 
 			if (pdot != NULL)
 			{
-				snprintf(handle->filename, PATH_MAX, "%s", bin_id);
+				snprintf(handle->filename, MAX_PATH, "%s", (char*)bin_id);
 			}
 			else
 			{
-				bin_content = xmlGetProp(node, "content-type");
+				bin_content = xmlGetProp(node, (xmlChar*)"content-type");
 				char *p = strchr((char*)bin_content, '/');
 
 				if (p != NULL)
-					snprintf(handle->filename, PATH_MAX, "%s.%s", bin_id, p + 1);
+					snprintf(handle->filename, PATH_MAX, "%s.%s", (char*)bin_id, p + 1);
 
 				xmlFree(bin_content);
 			}
@@ -96,7 +96,7 @@ int DCPCALL ReadHeader(HANDLE hArcData, tHeaderData *HeaderData)
 
 			if (handle->filename[0] != '\0')
 			{
-				strncpy(HeaderData->FileName, handle->filename, sizeof(HeaderData->FileName) - 1);
+				snprintf(HeaderData->FileName, MAX_PATH, "%s", handle->filename);
 				HeaderData->FileTime = handle->filetime;
 				handle->data = g_base64_decode((char*)node->children->content, &handle->out_len);
 				HeaderData->UnpSize = handle->out_len;

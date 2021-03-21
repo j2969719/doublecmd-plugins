@@ -50,7 +50,11 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	r = archive_read_open_filename(a, FileToLoad, 10240);
 
 	if (r != ARCHIVE_OK)
+	{
+		archive_read_close(a);
+		archive_read_free(a);
 		return NULL;
+	}
 
 	enum
 	{

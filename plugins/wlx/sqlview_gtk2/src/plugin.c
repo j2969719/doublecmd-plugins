@@ -245,7 +245,7 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	g_signal_connect(G_OBJECT(data->tables), "changed", G_CALLBACK(tables_changed_cb), data);
 
 	gtk_combo_box_set_active(GTK_COMBO_BOX(data->tables), 0);
-	g_object_set_data_full(G_OBJECT(gFix), "custom-data", data, g_free);
+	g_object_set_data_full(G_OBJECT(gFix), "custom-data", data, (GDestroyNotify)g_free);
 
 	gtk_widget_show_all(gFix);
 	gtk_widget_grab_focus(scroll);

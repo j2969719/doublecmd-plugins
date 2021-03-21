@@ -265,7 +265,7 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 
 	gtk_widget_show_all(gFix);
 	gtk_widget_grab_focus(scroll);
-	g_object_set_data_full(G_OBJECT(gFix), "store", store, g_object_unref);
+	g_object_set_data_full(G_OBJECT(gFix), "store", store, (GDestroyNotify)g_object_unref);
 
 	return gFix;
 }
