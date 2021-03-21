@@ -279,6 +279,9 @@ Getting some information from Zim files (https://zim-wiki.org/).
 - [adbplugin-x64](plugins/wfx/adbplugin-x64)<br>
 PKGBUILD file for [Android ADB](http://www.uniqtec.eu/applications/android-adb.html).
 
+- [aur_crap](plugins/wfx/aur_crap)<br>
+List of packages in [AUR](https://aur.archlinux.org/). (slow, pretty useless)
+
 - [avfs_crap](plugins/wfx/avfs_crap)<br>
 Simple wfx plugin for [AVFS](http://avf.sourceforge.net/).
 
@@ -296,6 +299,9 @@ View list of recently used files (also support: open, view or delete any entry).
 
 - [gvfs_quickmount](plugins/wfx/gvfs_quickmount)<br>
 Mounting gvfs resources with automatic password entry (stored in ini file). F7 - new connection, Alt+Enter - edit existing.
+
+- [href_crap](plugins/wfx/href_crap)<br>
+Shows href links from web page as files.
 
 - [physfs_crap](plugins/wfx/physfs_crap)<br>
 Virtual panel for [PhysicsFS](https://icculus.org/physfs/). To open the archive, copy the file to the panel.
@@ -367,6 +373,9 @@ Displays NFO, DIZ.
 
 - [scrolledimg](plugins/wlx/scrolledimg)<br>
 Displays GIF.
+
+- [sqlview_gtk2](plugins/wlx/sqlview_gtk2)<br>
+Very primitive SQL Viewer.
 
 - [vte_in_quickview](plugins/wlx/vte_in_quickview)<br>
 Embeds Virtual Terminal Emulator (VTE) widget (GTK2 version).
