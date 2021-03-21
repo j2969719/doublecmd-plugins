@@ -8,3 +8,6 @@ Shows href links from web page as files.
 - `doublecmd-gtk2`
 - `doublecmd-qt4`
 - `doublecmd-qt5`
+
+## Dependencies
+![arch](https://wiki.archlinux.org/favicon.ico) `pacman -S curl libxml2`
