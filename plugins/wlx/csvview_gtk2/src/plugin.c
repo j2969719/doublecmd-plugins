@@ -84,11 +84,8 @@ static gchar *get_value(gchar ***p, gchar *separator)
 	return result;
 }
 
-HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
+static GtkListStore *parse_file(char* FileToLoad, GtkTreeView *list)
 {
-	GtkWidget *gFix;
-	GtkWidget *scroll;
-	GtkWidget *list = NULL;
 	GtkCellRenderer *renderer;
 	GtkTreeViewColumn *column;
 	GtkListStore *store = NULL;
@@ -102,17 +99,19 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	EncaAnalyser analyser;
 	EncaEncoding encoding;
 
+	gtk_tree_view_set_model(list, NULL);
+
 	if (!g_file_get_contents(FileToLoad, &buffer, &bytes_read, NULL))
 		return NULL;
 
+	if (bytes_read == 0)
+	{
+		g_free(buffer);
+		return NULL;
+	}
+
 	if (g_enca)
 	{
-		if (bytes_read == 0)
-		{
-			g_free(buffer);
-			return NULL;
-		}
-
 		analyser = enca_analyser_alloc(g_lang);
 
 		if (analyser)
@@ -157,14 +156,15 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 
 		if (columns > 1)
 		{
+			GList *cols = gtk_tree_view_get_columns(list);
+
+			for (GList *l = cols; l != NULL; l = l->next)
+			{
+				if (GTK_IS_TREE_VIEW_COLUMN(l->data))
+					gtk_tree_view_remove_column(list, GTK_TREE_VIEW_COLUMN(l->data));
+			}
+
 			separator = *chr;
-			list = gtk_tree_view_new();
-
-			if (g_grid)
-				gtk_tree_view_set_grid_lines(GTK_TREE_VIEW(list), GTK_TREE_VIEW_GRID_LINES_BOTH);
-			else
-				gtk_tree_view_set_grid_lines(GTK_TREE_VIEW(list), GTK_TREE_VIEW_GRID_LINES_NONE);
-
 			types = (GType*)g_malloc((columns + 1) * sizeof(GType));
 
 			for (i = 0; i <= columns; i++)
@@ -175,21 +175,17 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 
 			i = 0;
 
-			GValue val = G_VALUE_INIT;
-			g_value_init(&val, G_TYPE_BOOLEAN);
-			g_value_set_boolean(&val, TRUE);
-
 			for (gchar **itm = row; *itm != NULL; itm++)
 			{
 				renderer = gtk_cell_renderer_text_new();
-				g_object_set_property(G_OBJECT(renderer), "editable", &val);
+				g_object_set(G_OBJECT(renderer), "editable", TRUE, NULL);
 
 				gchar *header = get_value(&itm, separator);
 				column = gtk_tree_view_column_new_with_attributes(header, renderer, "text", i, NULL);
 				g_free(header);
 
 				gtk_tree_view_column_set_sort_column_id(column, i);
-				gtk_tree_view_append_column(GTK_TREE_VIEW(list), column);
+				gtk_tree_view_append_column(list, column);
 				i++;
 			}
 
@@ -197,8 +193,6 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 			column = gtk_tree_view_column_new_with_attributes("", renderer, "text", i, NULL);
 			gtk_tree_view_column_set_sort_column_id(column, i);
 			gtk_tree_view_append_column(GTK_TREE_VIEW(list), column);
-
-			g_value_unset(&val);
 
 			break;
 		}
@@ -208,11 +202,8 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 
 	if (columns < 2)
 	{
-		if (store)
-			gtk_list_store_clear(store);
-
-		if (list)
-			gtk_widget_destroy(list);
+		if (G_IS_OBJECT(store))
+			g_object_unref(store);
 
 		g_strfreev(lines);
 		return NULL;
@@ -254,26 +245,66 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 
 	g_strfreev(lines);
 
+	return store;
+}
+
+HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
+{
+	GtkWidget *gFix;
+	GtkWidget *scroll;
+	GtkWidget *list;
+
+	list = gtk_tree_view_new();
+
+	GtkListStore *store = parse_file(FileToLoad, GTK_TREE_VIEW(list));
+
+	if (!store)
+	{
+		gtk_widget_destroy(list);
+		return NULL;
+	}
+
 	gFix = gtk_vbox_new(FALSE, 5);
 	gtk_container_add(GTK_CONTAINER(GTK_WIDGET(ParentWin)), gFix);
 	scroll = gtk_scrolled_window_new(NULL, NULL);
 	gtk_container_add(GTK_CONTAINER(gFix), scroll);
 
 	gtk_tree_view_set_model(GTK_TREE_VIEW(list), GTK_TREE_MODEL(store));
+	g_object_unref(store);
+
+
+	if (g_grid)
+		gtk_tree_view_set_grid_lines(GTK_TREE_VIEW(list), GTK_TREE_VIEW_GRID_LINES_BOTH);
+	else
+		gtk_tree_view_set_grid_lines(GTK_TREE_VIEW(list), GTK_TREE_VIEW_GRID_LINES_NONE);
+
+
 	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scroll), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
 	gtk_container_add(GTK_CONTAINER(scroll), list);
+	g_object_set_data(G_OBJECT(gFix), "list", list);
 
 	gtk_widget_show_all(gFix);
 	gtk_widget_grab_focus(scroll);
-	g_object_set_data_full(G_OBJECT(gFix), "store", store, (GDestroyNotify)g_object_unref);
 
 	return gFix;
 }
 
+int DCPCALL ListLoadNext(HWND ParentWin, HWND PluginWin, char* FileToLoad, int ShowFlags)
+{
+	GtkWidget *list = (GtkWidget*)g_object_get_data(G_OBJECT(PluginWin), "list");
+
+	GtkListStore *store = parse_file(FileToLoad, GTK_TREE_VIEW(list));
+
+	if (!store)
+		return LISTPLUGIN_ERROR;
+
+	gtk_tree_view_set_model(GTK_TREE_VIEW(list), GTK_TREE_MODEL(store));
+	g_object_unref(store);
+	return LISTPLUGIN_OK;
+}
+
 void DCPCALL ListCloseWindow(HWND ListWin)
 {
-	GtkListStore *store = g_object_get_data(G_OBJECT(ListWin), "store");
-	gtk_list_store_clear(store);
 	gtk_widget_destroy(GTK_WIDGET(ListWin));
 }
 

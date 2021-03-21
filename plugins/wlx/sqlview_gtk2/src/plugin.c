@@ -11,7 +11,6 @@
 
 typedef struct sCustomData
 {
-	GtkListStore *store;
 	GtkWidget *list;
 	GtkWidget *tables;
 	GtkWidget *label;
@@ -19,18 +18,23 @@ typedef struct sCustomData
 	gboolean exec;
 } CustomData;
 
+static gboolean g_init = TRUE;
+
 static const gchar g_table_query[] = "SELECT name FROM sqlite_master WHERE type='table'";
 
 
 static int query_exec_cb(void *p, int count, char **row, char **columns)
 {
 	GtkTreeIter iter;
-	CustomData *data = (CustomData*)p;
+	GtkListStore *store = (GtkListStore*)p;
 
-	gtk_list_store_append(data->store, &iter);
+	if (!store)
+		return 1;
+
+	gtk_list_store_append(store, &iter);
 
 	for (int i = 0; i < count; i++)
-		gtk_list_store_set(data->store, &iter, i, row[i] ? row[i] : "", -1);
+		gtk_list_store_set(store, &iter, i, row[i] ? row[i] : "", -1);
 
 	return 0;
 }
@@ -44,14 +48,12 @@ static int tables_cb(void *tables, int count, char **values, char **names)
 static void update_view(CustomData *data)
 {
 	char *err = NULL;
+	GtkListStore *store = NULL;
 	const gchar *query = gtk_label_get_text(GTK_LABEL(data->label));
 	sqlite3_stmt *stmt = NULL;
 
 	if (!query)
 		return;
-
-	if (GTK_IS_LIST_STORE(data->store))
-		gtk_list_store_clear(data->store);
 
 	GList *columns = gtk_tree_view_get_columns(GTK_TREE_VIEW(data->list));
 
@@ -73,14 +75,8 @@ static void update_view(CustomData *data)
 		for (int i = 0; i < count; i++)
 			types[i] = G_TYPE_STRING;
 
-		if (G_IS_OBJECT(data->store))
-			g_object_unref(data->store);
 
-		data->store = gtk_list_store_newv(count, types);
-
-		GValue val = G_VALUE_INIT;
-		g_value_init(&val, G_TYPE_BOOLEAN);
-		g_value_set_boolean(&val, TRUE);
+		store = gtk_list_store_newv(count, types);
 
 		for (int i = 0; i < count; i++)
 		{
@@ -92,12 +88,10 @@ static void update_view(CustomData *data)
 			gtk_tree_view_column_pack_start(column, renderer, TRUE);
 			gtk_tree_view_column_add_attribute(column, renderer, "text", i);
 			gtk_tree_view_column_set_sort_column_id(column, i);
-			g_object_set_property(G_OBJECT(renderer), "editable", &val);
-			g_object_set_property(G_OBJECT(renderer), "single-paragraph-mode", &val);
+			g_object_set(G_OBJECT(renderer), "editable", TRUE, "single-paragraph-mode", TRUE, NULL);
 			g_free(name);
 		}
 
-		g_value_unset(&val);
 		g_free(types);
 
 	}
@@ -106,7 +100,7 @@ static void update_view(CustomData *data)
 
 	data->exec  = TRUE;
 
-	if (sqlite3_exec(data->db, query, query_exec_cb, data, &err) != SQLITE_OK)
+	if (sqlite3_exec(data->db, query, query_exec_cb, store, &err) != SQLITE_OK)
 	{
 		GtkWidget *dialog = gtk_message_dialog_new(GTK_WINDOW(gtk_widget_get_toplevel(GTK_WIDGET(data->list))),
 		                    GTK_DIALOG_MODAL, GTK_MESSAGE_ERROR, GTK_BUTTONS_OK, err ? err : "unknown error");
@@ -117,7 +111,10 @@ static void update_view(CustomData *data)
 		return;
 	}
 
-	gtk_tree_view_set_model(GTK_TREE_VIEW(data->list), GTK_TREE_MODEL(data->store));
+	gtk_tree_view_set_model(GTK_TREE_VIEW(data->list), GTK_TREE_MODEL(store));
+
+	if (G_IS_OBJECT(store))
+		g_object_unref(store);
 
 	data->exec = FALSE;
 }
@@ -258,12 +255,6 @@ void DCPCALL ListCloseWindow(HWND ListWin)
 {
 	CustomData *data = (CustomData*)g_object_get_data(G_OBJECT(ListWin), "custom-data");
 
-	if (GTK_IS_LIST_STORE(data->store))
-	{
-		gtk_list_store_clear(data->store);
-		g_object_unref(data->store);
-	}
-
 	sqlite3_close(data->db);
 	gtk_widget_destroy(GTK_WIDGET(ListWin));
 }
@@ -288,19 +279,24 @@ int DCPCALL ListSendCommand(HWND ListWin, int Command, int Parameter)
 
 void DCPCALL ListSetDefaultParams(ListDefaultParamStruct* dps)
 {
-	Dl_info dlinfo;
-	const gchar* dir_f = "%s/langs";
-
-	memset(&dlinfo, 0, sizeof(dlinfo));
-
-	if (dladdr(dir_f, &dlinfo) != 0)
+	if (g_init)
 	{
-		setlocale(LC_ALL, "");
-		gchar *plugdir = g_path_get_dirname(dlinfo.dli_fname);
-		gchar *langdir = g_strdup_printf(dir_f, plugdir);
-		g_free(plugdir);
-		bindtextdomain(GETTEXT_PACKAGE, langdir);
-		g_free(langdir);
-		textdomain(GETTEXT_PACKAGE);
+		Dl_info dlinfo;
+		const gchar* dir_f = "%s/langs";
+
+		memset(&dlinfo, 0, sizeof(dlinfo));
+
+		if (dladdr(dir_f, &dlinfo) != 0)
+		{
+			setlocale(LC_ALL, "");
+			gchar *plugdir = g_path_get_dirname(dlinfo.dli_fname);
+			gchar *langdir = g_strdup_printf(dir_f, plugdir);
+			g_free(plugdir);
+			bindtextdomain(GETTEXT_PACKAGE, langdir);
+			g_free(langdir);
+			textdomain(GETTEXT_PACKAGE);
+		}
+
+		g_init = !g_init;
 	}
 }

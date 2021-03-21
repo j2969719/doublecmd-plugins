@@ -208,9 +208,13 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 		if (res > 1)
 			res = 0;
 		else
+		{
 			res = 1 - res;
+			//gchar *sizes = g_strdup_printf("%'ld / %'ld", buf.st_size, totalsize);
+			//gtk_progress_bar_set_text(GTK_PROGRESS_BAR(compr), sizes);
+			//g_free(sizes);
+		}
 
-		//gtk_progress_bar_set_text(GTK_PROGRESS_BAR(compr), g_strdup_printf("%d / %d", buf.st_size, totalsize));
 		gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(compr), res);
 		gtk_box_pack_start(GTK_BOX(gFix), compr, FALSE, FALSE, 1);
 	}
@@ -271,6 +275,7 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	}
 
 	gtk_tree_view_set_model(GTK_TREE_VIEW(list), GTK_TREE_MODEL(store));
+	g_object_unref(store);
 	gtk_container_add(GTK_CONTAINER(scroll), list);
 	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scroll), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
 	versions = gtk_label_new(archive_version_details());
