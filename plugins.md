@@ -187,6 +187,9 @@ Examples: search by hex value. Now Double Commander can do it itself.
 - [icalendarwdx.lua](plugins/wdx/scripts/icalendarwdx.lua) *(cross platform)*<br>
 Getting some information from iCalendar files.
 
+- [icowdx.lua](plugins/wdx/scripts/icowdx.lua)<br>
+Getting some info from Windows icons (ICO images). See details in the beginning of script.
+
 - [infilelistwdx.lua](plugins/wdx/scripts/infilelistwdx.lua)<br>
 Search file name in custom list of file names.
 
