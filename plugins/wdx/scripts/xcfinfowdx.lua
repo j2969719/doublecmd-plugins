@@ -97,7 +97,7 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
     if (at < 0) or (math.floor(at / 0x00000010) % 2 ~= 0) then return nil end
     local e = SysUtils.ExtractFileExt(FileName)
     if e ~= '.xcf' then return nil end
-    for i = 1, 11 do ar[i] = '' end
+    for i = 1, #fields do ar[i] = '' end
     if GetData(FileName) == nil then return nil end
     filename = FileName
   end
@@ -123,16 +123,14 @@ function GetData(f)
   if d == 'file' then
     ar[1] = 0
   else
-    t = string.match(d, 'v(%d+)')
-    if t == nil then ar[1] = '' else ar[1] = tonumber(t) end
+    t = string.match(d, 'v?(%d+)')
+    if t ~= nil then ar[1] = tonumber(t) end
   end
   -- Minimal GIMP version
-  if ar[1] == '' then
-    ar[2] = ''
-  else
+  if ar[1] ~= '' then
     if ar[1] < 4 then
       t = am[ar[1]]
-      if t == nil then ar[2] = '' else ar[2] = t end
+      if t ~= nil then ar[2] = t end
     else
       if ar[1] < 14 then ar[2] = am[4] else ar[2] = am[14] end
     end
