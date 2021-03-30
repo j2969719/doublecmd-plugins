@@ -1,9 +1,9 @@
 -- xcfinfowdx.lua (cross-platform)
--- 2020.10.30
+-- 2021.03.30
 --[[
 Getting some info from XCF files (GIMP native image format).
   Documentation: https://gitlab.gnome.org/GNOME/gimp/-/blob/master/devel-docs/xcf.txt
-  Last check: 2021.02.12
+  Last check: 2021.03.30 (2.10.24)
 
 See list of supported fields in table "fields".
 
@@ -127,13 +127,15 @@ function GetData(f)
     if t == nil then ar[1] = '' else ar[1] = tonumber(t) end
   end
   -- Minimal GIMP version
-  i = ar[1]
-  if i <= 14 then
-    if (i > 4) and (i < 14) then i = 4 end
-    t = am[i]
-    if t == nil then ar[2] = '' else ar[2] = t end
-  else
+  if ar[1] == '' then
     ar[2] = ''
+  else
+    if ar[1] < 4 then
+      t = am[ar[1]]
+      if t == nil then ar[2] = '' else ar[2] = t end
+    else
+      if ar[1] < 14 then ar[2] = am[4] else ar[2] = am[14] end
+    end
   end
   h:seek('cur', 1)
   -- Width, 15:18
