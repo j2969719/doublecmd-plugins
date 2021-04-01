@@ -1,5 +1,5 @@
 -- icowdx.lua (cross-platform)
--- 2021.02.22
+-- 2021.04.02
 --[[
 Getting some info from Windows icons (ICO images):
 - the number of images;
@@ -7,7 +7,7 @@ Getting some info from Windows icons (ICO images):
 - plugin can check that the specific size is available (see "aun" below).
 ]]
 
-local aun = {"16x16", "24x24", "32x32", "48x48", "64x64", "96x96", "128x128", "256x256"}
+local aun = {"16x16", "24x24", "32x32", "48x48", "64x64", "96x96", "128x128", "256x256", "512x512"}
 local ar = {}
 local filename = ''
 
@@ -56,17 +56,46 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
       local al1 = {}
       local al2 = {}
       local al3 = {}
-      local w, n
+      local nw, nh, nc, w
       while true do
         if c == 0 then break end
         -- width
         d = h:read(1)
-        n = string.byte(d)
-        if n == 0x00 then w = 256 else w = tonumber(n, 10) end
+        nw = string.byte(d)
         -- height
         d = h:read(1)
-        n = string.byte(d)
-        if n == 0x00 then t = w .. 'x256' else t = w .. 'x' .. tonumber(n, 10) end
+        nh = string.byte(d)
+        if (nw == 0x00) and (nh == 0x00) then
+          -- >= 256px
+          h:seek('cur', 10)
+          d = h:read(4)
+          nc = h:seek()
+          nw = BinToNum(d, 1, 4)
+          h:seek('set', nw)
+          d = h:read(4)
+          nw = BinToNumBE(d, 1, 4)
+          d = h:read(4)
+          nh =  BinToNumBE(d, 1, 4)
+          if (nw == 0x89504e47) and (nh == 0x0d0a1a0a) then
+            h:seek('cur', 4)
+            d = h:read(4)
+            if d == 'IHDR' then
+              -- width
+              d = h:read(4)
+              nw = BinToNumBE(d, 1, 4)
+              -- height
+              d = h:read(4)
+              nh = BinToNumBE(d, 1, 4)
+            end
+          else
+            nw, nh = 0x0100, 0x0100
+          end
+          h:seek('set', nc)
+        else
+          h:seek('cur', 14)
+        end
+        w = tonumber(nw, 10)
+        t = w .. 'x' .. tonumber(nh, 10)
         if w > 99 then
           al3[#al3 + 1] = t
         elseif w > 9 then
@@ -74,7 +103,6 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
         else
           al1[#al1 + 1] = t
         end
-        h:seek('cur', 14)
         c = c - 1
       end
       h:close()
@@ -123,6 +151,14 @@ function BinToNum(d, n1, n2)
   local r = ''
   for i = n1, n2 do
     r = string.format('%02x', string.byte(d, i)) .. r
+  end
+  return tonumber('0x' .. r)
+end
+
+function BinToNumBE(d, n1, n2)
+  local r = ''
+  for i = n1, n2 do
+    r = r .. string.format('%02x', string.byte(d, i))
   end
   return tonumber('0x' .. r)
 end
