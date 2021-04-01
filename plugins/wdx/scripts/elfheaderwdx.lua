@@ -1,5 +1,5 @@
 -- elfheaderinfo.lua (cross-platform)
--- 2020.10.30
+-- 2021.04.02
 --
 -- Some info from ELF files.
 -- Fields:
@@ -337,7 +337,7 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
   return nil
 end
 
-function BinToHex(d, n1, n2, e)
+function BinToNum(d, n1, n2, e)
   local r = ''
   if e == 0x01 then
     for j = n1, n2 do r = string.format('%02x', string.byte(d, j)) .. r end
@@ -357,20 +357,20 @@ function IsPIE(FileName, fh, ei_data)
   else
     return nil
   end
-  local e_phoff = BinToHex(fh, n1, n2, ei_data)
+  local e_phoff = BinToNum(fh, n1, n2, ei_data)
   if e_phoff == 0 then return "Shared object file" end
   if ei_class == 0x01 then
     n1, n2 = 45, 46
   else
     n1, n2 = 57, 58
   end
-  local e_phnum = BinToHex(fh, n1, n2, ei_data)
+  local e_phnum = BinToNum(fh, n1, n2, ei_data)
   if ei_class == 0x01 then
     n1, n2 = 43, 44
   else
     n1, n2 = 55, 56
   end
-  local e_phentsize = BinToHex(fh, n1, n2, ei_data)
+  local e_phentsize = BinToNum(fh, n1, n2, ei_data)
   local f, s, rd, p_type
   f = io.open(FileName, 'rb')
   s = f:seek('set', e_phoff)
@@ -380,7 +380,7 @@ function IsPIE(FileName, fh, ei_data)
   end
   for i = 1, e_phnum do
     rd = f:read(e_phentsize)
-    p_type = BinToHex(rd, 1, 4, ei_data)
+    p_type = BinToNum(rd, 1, 4, ei_data)
     if p_type == 2 then break end
   end
   if p_type ~= 2 then
@@ -393,13 +393,13 @@ function IsPIE(FileName, fh, ei_data)
     else
       n1, n2 = 9, 16
     end
-    local p_offset = BinToHex(rd, n1, n2, ei_data)
+    local p_offset = BinToNum(rd, n1, n2, ei_data)
     if ei_class == 0x01 then
       n1, n2 = 17, 20
     else
       n1, n2 = 33, 40
     end
-    local p_filesz = BinToHex(rd, n1, n2, ei_data)
+    local p_filesz = BinToNum(rd, n1, n2, ei_data)
     s = f:seek('set', p_offset)
     if s == nil then
       f:close()
@@ -410,10 +410,10 @@ function IsPIE(FileName, fh, ei_data)
     local l, t
     if ei_class == 0x01 then l = 8 else l = 16 end
     for i = 1, p_filesz - l, l do
-      t = BinToHex(rd, i, i + (l / 2) - 1, ei_data)
+      t = BinToNum(rd, i, i + (l / 2) - 1, ei_data)
       -- DT_FLAGS_1 == 0x6ffffffb
       if t == 0x6ffffffb then
-        t = BinToHex(rd, i + (l / 2), i + l - 1, ei_data)
+        t = BinToNum(rd, i + (l / 2), i + l - 1, ei_data)
         -- DF_1_PIE = 0x08000000
         if math.floor(t / 134217728) % 2 ~= 0 then return true end
       end

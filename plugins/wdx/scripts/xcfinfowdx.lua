@@ -1,5 +1,5 @@
 -- xcfinfowdx.lua (cross-platform)
--- 2021.03.30
+-- 2021.04.02
 --[[
 Getting some info from XCF files (GIMP native image format).
   Documentation: https://gitlab.gnome.org/GNOME/gimp/-/blob/master/devel-docs/xcf.txt
@@ -138,13 +138,13 @@ function GetData(f)
   h:seek('cur', 1)
   -- Width, 15:18
   d = h:read(4)
-  ar[3] = BinToNum(d, 1, 4)
+  ar[3] = BinToNumBE(d, 1, 4)
   -- Height, 19:22
   d = h:read(4)
-  ar[4] = BinToNum(d, 1, 4)
+  ar[4] = BinToNumBE(d, 1, 4)
   -- Color mode, 23:26
   d = h:read(4)
-  i = BinToNum(d, 1, 4)
+  i = BinToNumBE(d, 1, 4)
   if i == 0 then
     ar[7] = 'RGB color'
   elseif i == 1 then
@@ -159,7 +159,7 @@ function GetData(f)
     ar[8] = '8-bit gamma integer'
   else
     d = h:read(4)
-    i = BinToNum(d, 1, 4)
+    i = BinToNumBE(d, 1, 4)
     if ar[1] == 4 then
       t = ap4[i]
     elseif (ar[1] == 5) or (ar[1] == 6) then
@@ -174,11 +174,11 @@ function GetData(f)
   while true do
     d = h:read(4)
     if d == nil then break end
-    i = BinToNum(d, 1, 4)
+    i = BinToNumBE(d, 1, 4)
     -- PROP_END
     if i == 0 then break end
     d = h:read(4)
-    l = BinToNum(d, 1, 4)
+    l = BinToNumBE(d, 1, 4)
     if i == 17 then
       -- PROP_COMPRESSION
       d = h:read(1)
@@ -209,7 +209,7 @@ function GetFromParasites(d)
   else
     if string.byte(d, n2 + 1) == 0 then
       t = string.sub(d, n2 + 6, n2 + 9)
-      c = BinToNum(t, 1, 4)
+      c = BinToNumBE(t, 1, 4)
       t = string.sub(d, n2 + 10, n2 + c + 8)
       GetICCName(t)
     end
@@ -219,32 +219,32 @@ function GetFromParasites(d)
     ar[11] = ''
   else
     t = string.sub(d, n2 + 6, n2 + 9)
-    c = BinToNum(t, 1, 4)
+    c = BinToNumBE(t, 1, 4)
     ar[11] = string.sub(d, n2 + 10, n2 + c + 8)
   end
 end
 
 function GetICCName(d)
   local t = string.sub(d, 129, 132)
-  local tc = BinToNum(t, 1, 4)
+  local tc = BinToNumBE(t, 1, 4)
   local nb = 132
   local i, l, di, dl
   while true do
     t = string.sub(d, nb + 1, nb + 12)
-    i = BinToNum(t, 1, 4)
+    i = BinToNumBE(t, 1, 4)
     if i == 0x64657363 then
       -- desc
-      i = BinToNum(t, 5, 8)
-      l = BinToNum(t, 9, 12)
+      i = BinToNumBE(t, 5, 8)
+      l = BinToNumBE(t, 9, 12)
       t = string.sub(d, i + 1, i + 4)
       if t == 'mluc' then
-        di = BinToNum(d, i + 25, i + 28)
-        dl = BinToNum(d, i + 21, i + 24)
+        di = BinToNumBE(d, i + 25, i + 28)
+        dl = BinToNumBE(d, i + 21, i + 24)
         t = string.sub(d, i + di + 1, i + di + dl + 1)
         if math.mod(string.len(t), 2) ~= 0 then t = string.sub(t, 1, -2) end
         ar[9] = LazUtf8.ConvertEncoding(t, 'ucs2be', 'utf8')
       elseif t == 'desc' then
-        dl = BinToNum(d, i + 9, i + 12)
+        dl = BinToNumBE(d, i + 9, i + 12)
         ar[9] = string.sub(d, i + 13, i + dl + 11)
       end
       break
@@ -255,7 +255,7 @@ function GetICCName(d)
   end
 end
 
-function BinToNum(d, n1, n2)
+function BinToNumBE(d, n1, n2)
   local r = ''
   for i = n1, n2 do
     r = r .. string.format('%02x', string.byte(d, i))

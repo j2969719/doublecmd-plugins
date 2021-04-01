@@ -44,13 +44,13 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
     local h = io.open(FileName, 'rb')
     if h == nil then return nil end
     local d = h:read(4)
-    if BinToNum(d, 1, 4) ~= 0x00010000 then
+    if BinToNumLE(d, 1, 4) ~= 0x00010000 then
       h:close()
       return nil
     end
     ar = {0, ''}
     d = h:read(2)
-    ar[1] = BinToNum(d, 1, 2)
+    ar[1] = BinToNumLE(d, 1, 2)
     if ar[1] > 0 then
       local c = ar[1]
       local al1 = {}
@@ -70,7 +70,7 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
           h:seek('cur', 10)
           d = h:read(4)
           nc = h:seek()
-          nw = BinToNum(d, 1, 4)
+          nw = BinToNumLE(d, 1, 4)
           h:seek('set', nw)
           d = h:read(4)
           nw = BinToNumBE(d, 1, 4)
@@ -147,7 +147,7 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
   return nil
 end
 
-function BinToNum(d, n1, n2)
+function BinToNumLE(d, n1, n2)
   local r = ''
   for i = n1, n2 do
     r = string.format('%02x', string.byte(d, i)) .. r

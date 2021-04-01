@@ -1,5 +1,5 @@
 -- checkfileextwdx.lua (cross-platform)
--- 2020.10.30
+-- 2021.04.02
 --[[
 Checking that the file extension matches the file type (by the file signatures ("magic numbers"))
 and returns some additional info.
@@ -68,8 +68,8 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
     local d = h:read(32)
     h:close()
     local e = string.lower(SysUtils.ExtractFileExt(FileName))
-    local d14h = BinToNum(d, 1, 4)
-    local d58h = BinToNum(d, 5, 8)
+    local d14h = BinToNumBE(d, 1, 4)
+    local d58h = BinToNumBE(d, 5, 8)
     -- BMP
     if IsBMP(d) == true then
       ar[1] = 'BMP image'
@@ -109,7 +109,7 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
       ar[4] = 'jpg'
       if (e ~= '.jpg') and (e ~= '.jpeg') and (e ~= '.jpe') and (e ~= '.jfif') then ar[5] = true end
     -- MP3 and MP3 with ID3v2
-    elseif (string.sub(d, 1, 3) == 'ID3') or (BinToNum(d, 1, 2) == 0xfffb) then
+    elseif (string.sub(d, 1, 3) == 'ID3') or (BinToNumBE(d, 1, 2) == 0xfffb) then
       ar[1] = 'MP3 audio'
       ar[2] = 'audio/mpeg'
       ar[3] = 'audio/x-mp3, audio/x-mpg, audio/x-mpeg, audio/mp3'
@@ -136,7 +136,7 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
       ar[4] = 'rtf'
       if e ~= '.rtf' then ar[5] = true end
     -- ASF, WMA, WMV
-    elseif (d14h == 0x3026b275) and (d58h == 0x8e66cf11) and (BinToNum(d, 9, 12) == 0xa6d900aa) and (BinToNum(d, 13, 16) == 0x0062ce6c) then
+    elseif (d14h == 0x3026b275) and (d58h == 0x8e66cf11) and (BinToNumBE(d, 9, 12) == 0xa6d900aa) and (BinToNumBE(d, 13, 16) == 0x0062ce6c) then
       ar[1] = 'ASF video, Windows Media audio or Windows Media video'
       if e == '.asf' then
         ar[1] = 'ASF video'
@@ -172,7 +172,7 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
   return nil
 end
 
-function BinToNum(d, n1, n2)
+function BinToNumBE(d, n1, n2)
   local r = ''
   for i = n1, n2 do
     r = r .. string.format('%02x', string.byte(d, i))
@@ -181,11 +181,11 @@ function BinToNum(d, n1, n2)
 end
 
 function IsBMP(d)
-  if (string.sub(d, 1, 2) == 'BM') and (BinToNum(d, 13, 14) == 0x0000) and (BinToNum(d, 16, 18) == 0x00) then
-    if (string.byte(d, 15) == 0x0c) and (BinToNum(d, 23, 24) == 0x0100) and (string.byte(d, 26) == 0x00) then
+  if (string.sub(d, 1, 2) == 'BM') and (BinToNumBE(d, 13, 14) == 0x0000) and (BinToNumBE(d, 16, 18) == 0x00) then
+    if (string.byte(d, 15) == 0x0c) and (BinToNumBE(d, 23, 24) == 0x0100) and (string.byte(d, 26) == 0x00) then
       return true
     end
-    if (BinToNum(d, 27, 28) == 0x0100) and (string.byte(d, 30) == 0x00) then
+    if (BinToNumBE(d, 27, 28) == 0x0100) and (string.byte(d, 30) == 0x00) then
       return true
     end
   end

@@ -1,5 +1,5 @@
 -- lnkinfowdx.lua
--- 2020.10.30
+-- 2021.04.02
 --[[
 Getting some information from Windows shell link (shortcut) file.
 
@@ -45,7 +45,7 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
     if h == nil then return nil end
     local d = h:read(20)
     h:close()
-    if (BinToHex(d, 1, 4, '') == 0x4c000000) and (BinToHex(d, 5, 8, '') == 0x01140200) and (BinToHex(d, 9, 12, '') == 0x00000000) and (BinToHex(d, 13, 16, '') == 0xc0000000) and (BinToHex(d, 17, 20, '') == 0x00000046) then
+    if (BinToNumBE(d, 1, 4) == 0x4c000000) and (BinToNumBE(d, 5, 8) == 0x01140200) and (BinToNumBE(d, 9, 12) == 0x00000000) and (BinToNumBE(d, 13, 16) == 0xc0000000) and (BinToNumBE(d, 17, 20) == 0x00000046) then
       h = io.popen('lnkinfo "' .. FileName:gsub('"', '\\"') .. '"')
       out = h:read('*a')
       h:close()
@@ -60,12 +60,10 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
   return nil
 end
 
-function BinToHex(d, n1, n2, e)
+function BinToNumBE(d, n1, n2)
   local r = ''
-  if e == 'le' then
-    for j = n1, n2 do r = string.format('%02x', string.byte(d, j)) .. r end
-  else
-    for j = n1, n2 do r = r .. string.format('%02x', string.byte(d, j)) end
+  for i = n1, n2 do
+    r = r .. string.format('%02x', string.byte(d, i))
   end
   return tonumber('0x' .. r)
 end

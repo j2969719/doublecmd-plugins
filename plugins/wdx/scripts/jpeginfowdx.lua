@@ -1,5 +1,5 @@
 -- jpeginfowdx.lua (cross-platform)
--- 2020.10.30
+-- 2021.04.02
 --[[
 Returns some info from JPEG.
 See list of supported fields in table "fields".
@@ -77,7 +77,7 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
   if h == nil then return nil end
   local d = h:read(2)
   -- magic: ff d8
-  if (d == nil) or (BinToNum(d, 1, 2) ~= 65496) then
+  if (d == nil) or (BinToNumBE(d, 1, 2) ~= 65496) then
     h:close()
     return nil
   end
@@ -93,7 +93,7 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
     elseif (n > 207) and (n < 216) then
       p = p - 2
     else
-      p = p + BinToNum(d, 3, 4) - 2
+      p = p + BinToNumBE(d, 3, 4) - 2
       d = h:read(29)
       if n == 0xe0 then
         if string.byte(d, 5) == 0x00 then
@@ -141,7 +141,7 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
   return ar[FieldIndex + 1]
 end
 
-function BinToNum(d, n1, n2)
+function BinToNumBE(d, n1, n2)
   local r = ''
   for i = n1, n2 do
     r = r .. string.format('%02x', string.byte(d, i))
