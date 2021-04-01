@@ -902,7 +902,7 @@ DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="utf-8"?>
 
 ### Set custom extended attribute(s)
 [SetFAttrCustom.lua](utils/SetFAttrCustom.lua). Also can be useful wdx-plugin: [getfattrcustomwdx.lua](plugins/wdx/scripts/getfattrcustomwdx.lua).
-```
+```xml
 DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
 <doublecmd>
   <Command>
@@ -919,7 +919,7 @@ DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
 
 ### >Save clipboard contents to text file *(cross platform)*
 [SaveClipboardToFile.lua](utils/SaveClipboardToFile.lua). Also you can open this new file in viewer or editor immediately, see details in the beginning of script.
-```
+```xml
 DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
 <doublecmd>
   <Command>
@@ -934,9 +934,25 @@ DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
 ```
 
 
+### >Quick filter with a predefined list of masks *(cross platform)*
+[QuickFilter.lua](utils/QuickFilter.lua).
+```xml
+DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
+<doublecmd>
+  <Command>
+    <ID>{98AEAAD0-1111-4238-92BB-BE807411BF48}</ID>
+    <Icon>cm_executescript</Icon>
+    <Hint>Save clipboard contents to text file</Hint>
+    <Command>cm_ExecuteScript</Command>
+    <Param>%COMMANDER_PATH%/utils/QuickFilter.lua</Param>
+  </Command>
+</doublecmd>
+```
+
+
 ### cm_FlatView/cm_FlatViewSel: copy files with keeping directory structure
 [CopyTree.py](utils/CopyTree.py). Use with cm_FlatView/cm_FlatViewSel: copy selected files to target directory with keeping source directory structure.
-```
+```xml
 DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
 <doublecmd>
   <Program>
