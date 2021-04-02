@@ -1,5 +1,5 @@
 -- poheaderwdx.lua (cross-platform)
--- 2020.08.23
+-- 2021.04.02
 --[[
 Getting some information from PO-files (gettext):
   PO Translation Files and POT Translation Templates.
@@ -27,7 +27,7 @@ local fields = {
 {"X-Crowdin-Project",       "X%-Crowdin%-Project"},
 {"X-Crowdin-Language",      "X%-Crowdin%-Language"}
 }
-local all = {}
+local ar = {}
 local filename = ''
 
 function ContentGetSupportedField(FieldIndex)
@@ -91,31 +91,27 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
     end
     h:close()
     if b == false then return nil end
-    for i = 1, #all do all[i] = nil end
+    for i = 1, #fields do ar[i] = '' end
     t = string.sub(s, nb, ne)
     for i = 1, #fields do
       nb, ne = string.find(t, '[\r\n]"' .. fields[i][2] .. ': *', 1, false)
-      if nb == nil then
-        all[i] = ''
-      else
+      if nb ~= nil then
         nb = string.find(t, '\\n"', ne, true)
-        if nb == nil then
-          all[i] = ''
-        else
+        if nb ~= nil then
           s = string.sub(t, ne + 1, nb - 1)
           if string.find(s, '"[\r\n]+"', 1, false) ~= nil then
-            all[i] = string.gsub(s, '"[\r\n]+"', '')
+            ar[i] = string.gsub(s, '"[\r\n]+"', '')
           else
-            all[i] = s
+            ar[i] = s
           end
         end
       end
     end
     filename = FileName
   end
-  if all[FieldIndex + 1] == '' then
+  if ar[FieldIndex + 1] == '' then
     return nil
   else
-    return all[FieldIndex + 1]
+    return ar[FieldIndex + 1]
   end
 end
