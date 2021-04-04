@@ -217,6 +217,9 @@ Getting some information from Microsoft Office 97-2003 files: *.doc, *.xls, *.pp
 - [pkginfowdx.lua](plugins/wdx/scripts/pkginfowdx.lua)<br>
 Returns some information from Arch Linux packages.
 
+- [pngwdx.lua](plugins/wdx/scripts/pngwdx.lua) *(cross platform)*<br>
+Getting some information from PNG files.
+
 - [poheaderwdx.lua](plugins/wdx/scripts/poheaderwdx.lua) *(cross platform)*<br>
 Getting some information from PO-files (gettext).
 
