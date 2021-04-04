@@ -188,7 +188,7 @@ Examples: search by hex value. Now Double Commander can do it itself.
 Getting some information from iCalendar files.
 
 - [icowdx.lua](plugins/wdx/scripts/icowdx.lua) *(cross platform)*<br>
-Getting some info from Windows icons (ICO images). See details in the beginning of script.
+Getting some information from Windows icons (ICO images). See details in the beginning of script.
 
 - [infilelistwdx.lua](plugins/wdx/scripts/infilelistwdx.lua)<br>
 Search file name in custom list of file names.
@@ -209,7 +209,10 @@ List local system locks.
 Returns full text of saved email messages. For Find files with plugins only! See details in the beginning of script.
 
 - [msginfowdx.lua](plugins/wdx/scripts/msginfowdx.lua) *(cross platform)*<br>
-Getting info from headers of saved email messages. Supported formats: *.eml, *.msg and MH mailfile format (Sylpheed and other).
+Getting some information from headers of saved email messages. Supported formats: *.eml, *.msg and MH mailfile format (Sylpheed and other).
+
+- [msofficeoldwdx.lua](plugins/wdx/scripts/msofficeoldwdx.lua)<br>
+Getting some information from Microsoft Office 97-2003 files: *.doc, *.xls, *.ppt. Requires `gsf`.
 
 - [pkginfowdx.lua](plugins/wdx/scripts/pkginfowdx.lua)<br>
 Returns some information from Arch Linux packages.
