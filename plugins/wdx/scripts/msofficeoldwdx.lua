@@ -121,7 +121,8 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
           ar[i] = tonumber(t)
         elseif fields[i][3] == 8 then
           -- Replace octal \nnn on characters
-          ar[i] = string.gsub(t, '(\\%d%d%d)', function (x) return octal2char(x) end)
+          e = string.gsub(t, '(\\%d%d%d)', function (x) return octal2char(x) end)
+          ar[i] = string.gsub(e, '\\\\', '\\')
         end
       end
     end
