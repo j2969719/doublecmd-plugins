@@ -1,5 +1,5 @@
 -- icowdx.lua (cross-platform)
--- 2021.04.02
+-- 2021.04.04
 --[[
 Getting some info from Windows icons (ICO images):
 - the number of images;
@@ -60,11 +60,10 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
       while true do
         if c == 0 then break end
         -- width
-        d = h:read(1)
-        nw = string.byte(d)
+        d = h:read(2)
+        nw = string.byte(d, 1)
         -- height
-        d = h:read(1)
-        nh = string.byte(d)
+        nh = string.byte(d, 2)
         if (nw == 0x00) and (nh == 0x00) then
           -- >= 256px
           h:seek('cur', 10)
@@ -72,20 +71,18 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
           nc = h:seek()
           nw = BinToNumLE(d, 1, 4)
           h:seek('set', nw)
-          d = h:read(4)
+          d = h:read(8)
           nw = BinToNumBE(d, 1, 4)
-          d = h:read(4)
-          nh =  BinToNumBE(d, 1, 4)
+          nh =  BinToNumBE(d, 5, 8)
           if (nw == 0x89504e47) and (nh == 0x0d0a1a0a) then
             h:seek('cur', 4)
             d = h:read(4)
             if d == 'IHDR' then
+              d = h:read(8)
               -- width
-              d = h:read(4)
               nw = BinToNumBE(d, 1, 4)
               -- height
-              d = h:read(4)
-              nh = BinToNumBE(d, 1, 4)
+              nh = BinToNumBE(d, 5, 8)
             end
           else
             nw, nh = 0x0100, 0x0100
