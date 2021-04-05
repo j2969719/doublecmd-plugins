@@ -1,5 +1,5 @@
 -- pngwdx.lua (cross-platform)
--- 2021.04.02
+-- 2021.04.05
 --[[
 Getting some information from PNG files.
 Supported fields: see table "fields".
@@ -77,34 +77,33 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
       n = BinToNumBE(d, 5, 8)
       ar[2] = tonumber(n, 10)
       -- Bit depth
-      n = string.byte(d, 9)
-      ar[3] = n
+      ar[3] = string.byte(d, 9)
       -- Color type
-      at = string.byte(d, 10)
-      e = ac[at]
+      n = string.byte(d, 10)
+      e = ac[n]
       if e == nil then ar[5] = '' else ar[5] = e end
       -- Bit per pixel
       ar[4] = ''
-      if at == 0 then
-          ar[4] = n
-      elseif at == 2 then
-        if n == 8 then
+      if n == 0 then
+          ar[4] = ar[3]
+      elseif n == 2 then
+        if ar[3] == 8 then
           ar[4] = 24
-        elseif n == 16 then
+        elseif ar[3] == 16 then
           ar[4] = 48
         end
-      elseif at == 3 then
-        ar[4] = n
-      elseif at == 4 then
-        if n == 8 then
+      elseif n == 3 then
+        ar[4] = ar[3]
+      elseif n == 4 then
+        if ar[3] == 8 then
           ar[4] = 16
-        elseif n == 16 then
+        elseif ar[3] == 16 then
           ar[4] = 32
         end
-      elseif at == 6 then
-        if n == 8 then
+      elseif n == 6 then
+        if ar[3] == 8 then
           ar[4] = 32
-        elseif n == 16 then
+        elseif ar[3] == 16 then
           ar[4] = 64
         end
       end
