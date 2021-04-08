@@ -144,6 +144,45 @@ static void LoadPreview(uintptr_t pDlg, gchar *file)
 	g_free(src_file);
 }
 
+static void InitializeScript(void)
+{
+	gchar *output = NULL;
+	ExecuteScript(VERB_INIT, NULL, NULL, &output);
+
+	if (output)
+	{
+		gchar **split = g_strsplit(output, "\n", -1);
+		g_free(output);
+		gchar **p = split;
+
+		while (*p)
+		{
+			char value[MAX_PATH] = "";
+			gchar *prev = g_key_file_get_string(g_cfg, g_script, *p, NULL);
+
+			if (prev)
+			{
+				g_strlcpy(value, prev, MAX_PATH);
+				g_free(prev);
+			}
+
+
+			if (*p[0] != 0)
+			{
+				if (gRequestProc && gRequestProc(gPluginNr, RT_Other, g_script, *p, value, MAX_PATH))
+				{
+					ExecuteScript(VERB_SETOPT, *p, value, &output);
+					g_key_file_set_string(g_cfg, g_script, *p, value);
+				}
+			}
+
+			*p++;
+		}
+
+		g_strfreev(split);
+	}
+}
+
 intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr_t wParam, intptr_t lParam)
 {
 	DIR *dir;
@@ -201,6 +240,8 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 			g_noise = (gboolean)gDialogApi->SendDlgMsg(pDlg, "ckNoise", DM_GETCHECK, 0, 0);
 			g_key_file_set_boolean(g_cfg, "wfx_scripts", "noise_on_stdout", g_noise);
 
+			InitializeScript();
+
 			gDialogApi->SendDlgMsg(pDlg, DlgItemName, DM_CLOSE, ID_OK, 0);
 		}
 		else if (strcmp(DlgItemName, "btnCancel") == 0)
@@ -238,42 +279,8 @@ static void ShowCfgDlg(void)
 			g_strlcpy(g_script, last_script, PATH_MAX);
 			g_free(last_script);
 		}
-	}
 
-	gchar *output = NULL;
-	ExecuteScript(VERB_INIT, NULL, NULL, &output);
-
-	if (output)
-	{
-		gchar **split = g_strsplit(output, "\n", -1);
-		g_free(output);
-		gchar **p = split;
-
-		while (*p)
-		{
-			char value[MAX_PATH] = "";
-			gchar *prev = g_key_file_get_string(g_cfg, g_script, *p, NULL);
-
-			if (prev)
-			{
-				g_strlcpy(value, prev, MAX_PATH);
-				g_free(prev);
-			}
-
-
-			if (*p[0] != 0)
-			{
-				if (gRequestProc && gRequestProc(gPluginNr, RT_Other, g_script, *p, value, MAX_PATH))
-				{
-					ExecuteScript(VERB_SETOPT, *p, value, &output);
-					g_key_file_set_string(g_cfg, g_script, *p, value);
-				}
-			}
-
-			*p++;
-		}
-
-		g_strfreev(split);
+		InitializeScript();
 	}
 }
 
@@ -438,7 +445,6 @@ HANDLE DCPCALL FsFindFirst(char* Path, WIN32_FIND_DATAA *FindData)
 	}
 
 	return dirdata;
-
 }
 
 BOOL DCPCALL FsFindNext(HANDLE Hdl, WIN32_FIND_DATAA *FindData)
