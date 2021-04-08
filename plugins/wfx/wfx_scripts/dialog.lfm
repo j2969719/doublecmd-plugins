@@ -34,7 +34,7 @@ object DialogBox: TDialogBox
     ModalResult = 2
     OnClick = ButtonClick
     ParentFont = False
-    TabOrder = 1
+    TabOrder = 3
   end
   object btnOK: TBitBtn
     AnchorSideTop.Control = mPreview
@@ -56,7 +56,7 @@ object DialogBox: TDialogBox
     ModalResult = 1
     OnClick = ButtonClick
     ParentFont = False
-    TabOrder = 2
+    TabOrder = 4
   end
   object lScript: TLabel
     AnchorSideLeft.Control = cbScript
@@ -103,7 +103,8 @@ object DialogBox: TDialogBox
     ParentFont = False
     ReadOnly = True
     ScrollBars = ssAutoHorizontal
-    TabOrder = 3
+    TabOrder = 1
+    TabStop = False
   end
   object ckNoise: TCheckBox
     AnchorSideLeft.Control = cbScript
@@ -112,8 +113,8 @@ object DialogBox: TDialogBox
     Left = 16
     Height = 23
     Top = 248
-    Width = 63
-    Caption = 'Noise'
-    TabOrder = 4
+    Width = 109
+    Caption = 'Debug mode'
+    TabOrder = 2
   end
 end
