@@ -1,0 +1,119 @@
+object DialogBox: TDialogBox
+  Left = 122
+  Height = 286
+  Top = 199
+  Width = 529
+  AutoSize = True
+  BorderStyle = bsDialog
+  Caption = 'Double Commander'
+  ChildSizing.LeftRightSpacing = 10
+  ChildSizing.TopBottomSpacing = 10
+  ClientHeight = 286
+  ClientWidth = 529
+  DesignTimePPI = 95
+  OnCreate = DialogBoxShow
+  Position = poScreenCenter
+  LCLVersion = '2.0.13.0'
+  object btnCancel: TBitBtn
+    AnchorSideTop.Control = btnOK
+    AnchorSideRight.Control = btnOK
+    AnchorSideBottom.Control = btnOK
+    AnchorSideBottom.Side = asrBottom
+    Left = 312
+    Height = 30
+    Top = 244
+    Width = 95
+    Anchors = [akTop, akRight, akBottom]
+    AutoSize = True
+    BorderSpacing.Right = 10
+    Cancel = True
+    Constraints.MinHeight = 30
+    Constraints.MinWidth = 95
+    DefaultCaption = True
+    Kind = bkCancel
+    ModalResult = 2
+    OnClick = ButtonClick
+    ParentFont = False
+    TabOrder = 1
+  end
+  object btnOK: TBitBtn
+    AnchorSideTop.Control = mPreview
+    AnchorSideTop.Side = asrBottom
+    AnchorSideRight.Control = cbScript
+    AnchorSideRight.Side = asrBottom
+    Left = 417
+    Height = 30
+    Top = 244
+    Width = 95
+    Anchors = [akTop, akRight]
+    AutoSize = True
+    BorderSpacing.Top = 20
+    Constraints.MinHeight = 30
+    Constraints.MinWidth = 95
+    Default = True
+    DefaultCaption = True
+    Kind = bkOK
+    ModalResult = 1
+    OnClick = ButtonClick
+    ParentFont = False
+    TabOrder = 2
+  end
+  object lScript: TLabel
+    AnchorSideLeft.Control = cbScript
+    AnchorSideTop.Control = Owner
+    AnchorSideRight.Control = cbScript
+    AnchorSideRight.Side = asrBottom
+    Left = 16
+    Height = 15
+    Top = 15
+    Width = 496
+    Anchors = [akTop, akLeft, akRight]
+    BorderSpacing.Top = 15
+    Caption = 'Execute script:'
+    ParentColor = False
+    ParentFont = False
+  end
+  object cbScript: TComboBox
+    AnchorSideTop.Control = lScript
+    AnchorSideTop.Side = asrBottom
+    Left = 16
+    Height = 28
+    Top = 35
+    Width = 496
+    BorderSpacing.Top = 5
+    ItemHeight = 0
+    OnChange = ComboBoxChange
+    ParentFont = False
+    Style = csDropDownList
+    TabOrder = 0
+  end
+  object mPreview: TMemo
+    AnchorSideLeft.Control = cbScript
+    AnchorSideTop.Control = cbScript
+    AnchorSideTop.Side = asrBottom
+    AnchorSideRight.Control = cbScript
+    AnchorSideRight.Side = asrBottom
+    Left = 16
+    Height = 151
+    Top = 73
+    Width = 496
+    Anchors = [akTop, akLeft, akRight]
+    BorderSpacing.Top = 10
+    Font.Name = 'Monospace'
+    ParentFont = False
+    ReadOnly = True
+    ScrollBars = ssAutoHorizontal
+    TabOrder = 3
+  end
+  object ckNoise: TCheckBox
+    AnchorSideLeft.Control = cbScript
+    AnchorSideTop.Control = btnOK
+    AnchorSideTop.Side = asrCenter
+    Left = 16
+    Height = 23
+    Top = 248
+    Width = 63
+    Caption = 'Noise'
+    TabOrder = 4
+  end
+end
