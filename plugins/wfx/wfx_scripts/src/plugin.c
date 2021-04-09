@@ -7,9 +7,17 @@
 #include "extension.h"
 
 #define MAX_LINES 10
+
+#ifdef  TEMP_PANEL
+#define EXEC_DIR "scripts/temppanel"
+#define CFG_NAME "wfx_scripts_temppanel.ini"
+#else
 #define EXEC_DIR "scripts"
+#define CFG_NAME "wfx_scripts.ini"
+#endif
+
 #define Int32x32To64(a,b) ((gint64)(a)*(gint64)(b))
-#define LIST_REGEXP "([drwx\\-]{10})\\s+(\\d{4}\\-?\\d{2}\\-?\\d{2}[\\stT]\\d{2}:?\\d{2}:?\\d{2}Z)\\s+([0-9\\-]+)\\s+([^\\n]+)"
+#define LIST_REGEXP "([cbdflrswxST\\-]{10})\\s+(\\d{4}\\-?\\d{2}\\-?\\d{2}[\\stT]\\d{2}:?\\d{2}:?\\d{2}Z)\\s+([0-9\\-]+)\\s+([^\\n]+)"
 
 #define VERB_INIT     "init"
 #define VERB_DEINIT   "deinit"
@@ -25,6 +33,15 @@
 #define VERB_MKDIR    "mkdir"
 #define VERB_CHMOD    "chmod"
 #define VERB_QUOTE    "quote"
+#define VERB_EXEC     "run"
+#define VERB_PROPS    "properties"
+#define VERB_A_TIME   "actime"
+#define VERB_C_TIME   "cretime"
+#define VERB_M_TIME   "modtime"
+#define VERB_STATUS   "statusinfo"
+#define VERB_REALNAME "localname"
+#define VERB_FIELDS   "getfields"
+#define VERB_GETVALUE "getvalue"
 
 
 typedef struct sVFSDirData
@@ -41,14 +58,23 @@ tRequestProc gRequestProc = NULL;
 tExtensionStartupInfo* gDialogApi = NULL;
 
 static GKeyFile *g_cfg = NULL;
+static gchar **g_fields = NULL;
 static gboolean g_noise = FALSE;
 static gboolean g_no_dialog = FALSE;
-static char g_script[PATH_MAX] = "default.run";
+static char g_script[PATH_MAX];
+static char g_exec_start[PATH_MAX];
 static char g_scripts_dir[PATH_MAX];
 static char g_lfm_path[PATH_MAX];
 static char g_history_file[PATH_MAX];
 
 
+unsigned long FileTimeToUnixTime(LPFILETIME ft)
+{
+	int64_t ll = ft->dwHighDateTime;
+	ll = (ll << 32) | ft->dwLowDateTime;
+	ll = (ll - 116444736000000000) / 10000000;
+	return (unsigned long)ll;
+}
 
 static gboolean UnixTimeToFileTime(unsigned long mtime, LPFILETIME ft)
 {
@@ -181,6 +207,16 @@ static void InitializeScript(void)
 
 		g_strfreev(split);
 	}
+
+	g_strfreev(g_fields);
+	g_fields = NULL;
+	ExecuteScript(VERB_FIELDS, NULL, NULL, &output);
+
+	if (output)
+	{
+		g_fields = g_strsplit(output, "\n", -1);
+		g_free(output);
+	}
 }
 
 intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr_t wParam, intptr_t lParam)
@@ -272,6 +308,9 @@ static void ShowCfgDlg(void)
 	}
 	else
 	{
+		if (g_script[0] != '\0')
+			ExecuteScript(VERB_DEINIT, NULL, NULL, NULL);
+
 		gchar *last_script = g_key_file_get_string(g_cfg, "wfx_scripts", "last_script", NULL);
 
 		if (last_script)
@@ -302,12 +341,25 @@ static gboolean SetFindData(tVFSDirData *dirdata, WIN32_FIND_DATAA *FindData)
 		if (g_noise)
 			g_print("mode: %s\n", word);
 
-		int i = 0;
+		int i = 1;
 		mode_t mode = S_IFREG;
 		FindData->dwFileAttributes = FILE_ATTRIBUTE_UNIX_MODE;
 
-		if (word[i++] == 'd')
-			mode = S_IFDIR;
+		if (word[0] != '-')
+		{
+			if (word[0] == 'd')
+				mode = S_IFDIR;
+			else if (word[0] == 'b')
+				mode = S_IFBLK;
+			else if (word[0] == 'c')
+				mode = S_IFCHR;
+			else if (word[0] == 'f')
+				mode = S_IFIFO;
+			else if (word[0] == 'l')
+				mode = S_IFLNK;
+			else if (word[0] == 's')
+				mode = S_IFSOCK;
+		}
 
 		if (word[i++] == 'r')
 			mode |= S_IRUSR;
@@ -315,8 +367,12 @@ static gboolean SetFindData(tVFSDirData *dirdata, WIN32_FIND_DATAA *FindData)
 		if (word[i++] == 'w')
 			mode |= S_IWUSR;
 
-		if (word[i++] == 'x')
+		if (word[i] == 'x')
 			mode |= S_IXUSR;
+		else if (word[i] == 'S')
+			mode |= S_ISUID;
+
+		i++;
 
 		if (word[i++] == 'r')
 			mode |= S_IRGRP;
@@ -324,8 +380,12 @@ static gboolean SetFindData(tVFSDirData *dirdata, WIN32_FIND_DATAA *FindData)
 		if (word[i++] == 'w')
 			mode |= S_IWGRP;
 
-		if (word[i++] == 'x')
+		if (word[i] == 'x')
 			mode |= S_IXGRP;
+		else if (word[i] == 'S')
+			mode |= S_ISGID;
+
+		i++;
 
 		if (word[i++] == 'r')
 			mode |= S_IROTH;
@@ -333,8 +393,10 @@ static gboolean SetFindData(tVFSDirData *dirdata, WIN32_FIND_DATAA *FindData)
 		if (word[i++] == 'w')
 			mode |= S_IWOTH;
 
-		if (word[i++] == 'x')
+		if (word[i] == 'x')
 			mode |= S_IXOTH;
+		else if (word[i] == 'T')
+			mode |= S_ISVTX;
 
 		FindData->dwReserved0 = mode;
 		g_free(word);
@@ -537,9 +599,17 @@ int DCPCALL FsExecuteFile(HWND MainWin, char* RemoteName, char* Verb)
 	int result = FS_EXEC_ERROR;
 
 	if (strcmp(Verb, "open") == 0)
-		result = FS_EXEC_YOURSELF;
+	{
+		if (!ExecuteScript(VERB_EXEC, RemoteName, NULL, NULL))
+			result = FS_EXEC_YOURSELF;
+		else
+			result = FS_EXEC_OK;
+	}
 	else if (strcmp(Verb, "properties") == 0)
 	{
+		if (RemoteName[1] != '\0' && ExecuteScript(VERB_PROPS, RemoteName, NULL, NULL))
+			return FS_EXEC_OK;
+
 		ShowCfgDlg();
 		result = FS_EXEC_OK;
 	}
@@ -557,9 +627,198 @@ int DCPCALL FsExecuteFile(HWND MainWin, char* RemoteName, char* Verb)
 	return result;
 }
 
+BOOL DCPCALL FsSetTime(char* RemoteName, FILETIME *CreationTime, FILETIME *LastAccessTime, FILETIME *LastWriteTime)
+{
+	char *verb;
+	gint64 time = -1;
+	gchar *date = NULL;
+
+	if (LastWriteTime)
+	{
+		time = (gint64)FileTimeToUnixTime(LastWriteTime);
+		verb = VERB_M_TIME;
+	}
+	else if (LastAccessTime)
+	{
+		time = (gint64)FileTimeToUnixTime(LastAccessTime);
+		verb = VERB_A_TIME;
+	}
+	else if (CreationTime)
+	{
+		time = (gint64)FileTimeToUnixTime(CreationTime);
+		verb = VERB_C_TIME;
+	}
+
+	if (time > 0)
+	{
+		GDateTime *dt = g_date_time_new_from_unix_local(time);
+		GDateTime *utc_dt = g_date_time_to_utc(dt);
+
+		if (utc_dt)
+			date = g_date_time_format_iso8601(utc_dt);
+
+		g_date_time_unref(utc_dt);
+		g_date_time_unref(dt);
+
+		if (date)
+		{
+			gboolean result = ExecuteScript(verb, RemoteName, date, NULL);
+			g_free(date);
+			return result;
+		}
+	}
+
+	return FALSE;
+}
+
 void DCPCALL FsGetDefRootName(char* DefRootName, int maxlen)
 {
+#ifdef  TEMP_PANEL
+	g_strlcpy(DefRootName, "Scripts (Temporary Panels)", maxlen - 1);
+#else
 	g_strlcpy(DefRootName, "Scripts", maxlen - 1);
+#endif
+}
+
+int DCPCALL FsContentGetSupportedField(int FieldIndex, char* FieldName, char* Units, int maxlen)
+{
+	if (!g_fields || !g_fields[FieldIndex] || g_fields[FieldIndex][0] == '\0')
+		return ft_nomorefields;
+
+	Units[0] = '\0';
+	g_strlcpy(FieldName, g_fields[FieldIndex], maxlen - 1);
+	return ft_string;
+}
+
+int DCPCALL FsContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void* FieldValue, int maxlen, int flags)
+{
+	gchar *output = NULL;
+	ExecuteScript(VERB_GETVALUE, g_fields[FieldIndex], FileName, &output);
+
+	if (output)
+	{
+		size_t len = strlen(output);
+
+		if (len > 0)
+			output[len - 1] = '\0';
+
+		g_strlcpy((char*)FieldValue, output, maxlen - 1);
+		g_free(output);
+
+		return ft_string;
+	}
+
+	return ft_fieldempty;
+}
+
+#ifdef  TEMP_PANEL
+BOOL DCPCALL FsLinksToLocalFiles(void)
+{
+	return TRUE;
+}
+
+BOOL DCPCALL FsGetLocalName(char* RemoteName, int maxlen)
+{
+	gchar *output = NULL;
+	ExecuteScript(VERB_REALNAME, RemoteName, NULL, &output);
+
+	if (output)
+	{
+		size_t len = strlen(output);
+
+		if (len > 0)
+			output[len - 1] = '\0';
+
+		g_strlcpy(RemoteName, output, maxlen - 1);
+		g_free(output);
+		return TRUE;
+	}
+
+	return FALSE;
+}
+#endif
+
+void DCPCALL FsStatusInfo(char* RemoteDir, int InfoStartEnd, int InfoOperation)
+{
+	switch (InfoOperation)
+	{
+	case FS_STATUS_OP_LIST:
+		ExecuteScript(VERB_STATUS, (InfoStartEnd == FS_STATUS_START) ? "list start" : "list end", RemoteDir, NULL);
+		break;
+
+	case FS_STATUS_OP_GET_SINGLE:
+		ExecuteScript(VERB_STATUS, (InfoStartEnd == FS_STATUS_START) ? "get_single start" : "get_single end", RemoteDir, NULL);
+		break;
+
+	case FS_STATUS_OP_GET_MULTI:
+		ExecuteScript(VERB_STATUS, (InfoStartEnd == FS_STATUS_START) ? "get_multi start" : "get_multi end", RemoteDir, NULL);
+		break;
+
+	case FS_STATUS_OP_PUT_SINGLE:
+		ExecuteScript(VERB_STATUS, (InfoStartEnd == FS_STATUS_START) ? "put_single start" : "put_single end", RemoteDir, NULL);
+		break;
+
+	case FS_STATUS_OP_PUT_MULTI:
+		ExecuteScript(VERB_STATUS, (InfoStartEnd == FS_STATUS_START) ? "put_multi start" : "put_multi end", RemoteDir, NULL);
+		break;
+
+	case FS_STATUS_OP_RENMOV_SINGLE:
+		ExecuteScript(VERB_STATUS, (InfoStartEnd == FS_STATUS_START) ? "renmov_single start" : "renmov_single end", RemoteDir, NULL);
+		break;
+
+	case FS_STATUS_OP_RENMOV_MULTI:
+		ExecuteScript(VERB_STATUS, (InfoStartEnd == FS_STATUS_START) ? "renmov_multi start" : "renmov_multi end", RemoteDir, NULL);
+		break;
+
+	case FS_STATUS_OP_DELETE:
+		ExecuteScript(VERB_STATUS, (InfoStartEnd == FS_STATUS_START) ? "delete start" : "delete end", RemoteDir, NULL);
+		break;
+
+	case FS_STATUS_OP_ATTRIB:
+		ExecuteScript(VERB_STATUS, (InfoStartEnd == FS_STATUS_START) ? "attrib start" : "attrib end", RemoteDir, NULL);
+		break;
+
+	case FS_STATUS_OP_MKDIR:
+		ExecuteScript(VERB_STATUS, (InfoStartEnd == FS_STATUS_START) ? "mkdir start" : "mkdir end", RemoteDir, NULL);
+		break;
+
+	case FS_STATUS_OP_EXEC:
+		if (InfoStartEnd == FS_STATUS_START)
+			g_strlcpy(g_exec_start, g_script, PATH_MAX);
+		else if (g_strcmp0(g_exec_start, g_script) != 0)
+			return;
+
+		ExecuteScript(VERB_STATUS, (InfoStartEnd == FS_STATUS_START) ? "exec start" : "exec end", RemoteDir, NULL);
+		break;
+
+	case FS_STATUS_OP_CALCSIZE:
+		ExecuteScript(VERB_STATUS, (InfoStartEnd == FS_STATUS_START) ? "calcsize start" : "calcsize end", RemoteDir, NULL);
+		break;
+
+	case FS_STATUS_OP_SEARCH:
+		ExecuteScript(VERB_STATUS, (InfoStartEnd == FS_STATUS_START) ? "search start" : "search end", RemoteDir, NULL);
+		break;
+
+	case FS_STATUS_OP_SEARCH_TEXT:
+		ExecuteScript(VERB_STATUS, (InfoStartEnd == FS_STATUS_START) ? "search_text start" : "search_text end", RemoteDir, NULL);
+		break;
+
+	case FS_STATUS_OP_SYNC_SEARCH:
+		ExecuteScript(VERB_STATUS, (InfoStartEnd == FS_STATUS_START) ? "sync_search start" : "sync_search end", RemoteDir, NULL);
+		break;
+
+	case FS_STATUS_OP_SYNC_GET:
+		ExecuteScript(VERB_STATUS, (InfoStartEnd == FS_STATUS_START) ? "sync_get start" : "sync_get end", RemoteDir, NULL);
+		break;
+
+	case FS_STATUS_OP_SYNC_PUT:
+		ExecuteScript(VERB_STATUS, (InfoStartEnd == FS_STATUS_START) ? "sync_put start" : "sync_put end", RemoteDir, NULL);
+		break;
+
+	case FS_STATUS_OP_SYNC_DELETE:
+		ExecuteScript(VERB_STATUS, (InfoStartEnd == FS_STATUS_START) ? "sync_delete start" : "sync_delete end", RemoteDir, NULL);
+		break;
+	}
 }
 
 void DCPCALL FsSetDefaultParams(FsDefaultParamStruct* dps)
@@ -569,7 +828,7 @@ void DCPCALL FsSetDefaultParams(FsDefaultParamStruct* dps)
 	char *pos = strrchr(g_history_file, '/');
 
 	if (pos)
-		strcpy(pos + 1, "wfx_scripts.ini");
+		strcpy(pos + 1, CFG_NAME);
 
 	if (g_cfg == NULL)
 	{
@@ -604,6 +863,7 @@ void DCPCALL ExtensionInitialize(tExtensionStartupInfo* StartupInfo)
 void DCPCALL ExtensionFinalize(void* Reserved)
 {
 	ExecuteScript(VERB_DEINIT, NULL, NULL, NULL);
+	g_strfreev(g_fields);
 
 	g_key_file_save_to_file(g_cfg, g_history_file, NULL);
 

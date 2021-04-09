@@ -55,12 +55,22 @@ function fs_getfile(file, target)
     os.exit(1)
 end
 
+function fs_properties(file)
+    if not file:find("%.tar%.gz$") then
+        os.exit(1)
+    end
+    os.execute("xdg-open https://aur.archlinux.org/pkgbase" .. file:match("(/[^/]+)%.tar%.gz$"))
+    os.exit()
+end
+
 if args[1] == "init" then
     fs_init()
 elseif args[1] == "list" then
     fs_getlist(args[2])
 elseif args[1] == "copyout" then
     fs_getfile(args[2], args[3])
+elseif args[1] == "properties" then
+    fs_properties(args[2])
 end
 
 os.exit(1)

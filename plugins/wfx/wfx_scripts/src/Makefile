@@ -3,8 +3,14 @@ CFLAGS = -shared -fPIC -Wl,--no-as-needed
 INCLUDES = `pkg-config --cflags --libs glib-2.0` -I../../../sdk
 PLUGNAME = $(shell basename $(realpath ..)).$(shell basename $(realpath ../..))
 
-all:
+all: default tmppanel
+
+default:
 		$(CC) $(CFLAGS) $(INCLUDES) plugin.c -o ../$(PLUGNAME)
+
+tmppanel:
+		$(CC) $(CFLAGS) $(INCLUDES) plugin.c -o ../tp_$(PLUGNAME) -D TEMP_PANEL
 
 clean:
 		$(RM) ../$(PLUGNAME)
+		$(RM) ../tp_$(PLUGNAME)
