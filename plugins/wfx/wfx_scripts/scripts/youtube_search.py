@@ -10,15 +10,16 @@ from pytube import YouTube, helpers
 from youtubesearchpython import VideosSearch
 
 verb = sys.argv[1]
-tempfile = '/tmp/caramelldansen.json'
-max_results = 10
+tempfile = '/tmp/doublecmd_youtube.json'
+video_res = '360p'
+video_fps = 60
 
 def vfs_init():
 	print("Search video:")
 	sys.exit()
 
 def vfs_setopt(option, value):
-	videosSearch = VideosSearch(value, limit=max_results)
+	videosSearch = VideosSearch(value)
 	res_array = videosSearch.result()['result']
 	with open(tempfile, 'w') as f:
 		json.dump(res_array, f)
@@ -54,7 +55,11 @@ def vfs_getfile(src, dst):
 	for element in res_array:
 		if element['filename'] == src[1:]:
 			yt = YouTube(element['link'])
-			yt.streams.first().download(output_path=os.path.dirname(dst))
+			stream = yt.streams.filter(fps=video_fps, res=video_res, mime_type="video/mp4").first()
+			if stream is None:
+				stream = yt.streams.first()
+			print(stream)
+			stream.download(output_path=os.path.dirname(dst))
 			sys.exit()
 	sys.exit(1)
 
