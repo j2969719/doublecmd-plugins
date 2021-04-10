@@ -22,7 +22,10 @@ def vfs_filelist(path):
 	sys.exit()
 
 def vfs_exists(path):
-	f = open(filelist, 'r')
+	try:
+		f = open(filelist, 'r')
+	except FileNotFoundError:
+		return False;
 	for line in f:
 		if line.strip("\n") == path:
 			f.close()

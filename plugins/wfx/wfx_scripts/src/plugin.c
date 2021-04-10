@@ -1,5 +1,7 @@
+#define _GNU_SOURCE
 #include <stdio.h>
 #include <glib.h>
+#include <time.h>
 #include <sys/stat.h>
 #include <dirent.h>
 #include <string.h>
@@ -17,7 +19,7 @@
 #endif
 
 #define Int32x32To64(a,b) ((gint64)(a)*(gint64)(b))
-#define LIST_REGEXP "([cbdflrswxST\\-]{10})\\s+(\\d{4}\\-?\\d{2}\\-?\\d{2}[\\stT]\\d{2}:?\\d{2}:?\\d{2}Z)\\s+([0-9\\-]+)\\s+([^\\n]+)"
+#define LIST_REGEXP "([cbdflrstwxST\\-]{10})\\s+(\\d{4}\\-?\\d{2}\\-?\\d{2}[\\stT]\\d{2}:?\\d{2}:?\\d?\\d?Z?)\\s+([0-9\\-]+)\\s+([^\\n]+)"
 
 #define VERB_INIT     "init"
 #define VERB_DEINIT   "deinit"
@@ -35,9 +37,7 @@
 #define VERB_QUOTE    "quote"
 #define VERB_EXEC     "run"
 #define VERB_PROPS    "properties"
-#define VERB_A_TIME   "actime"
-#define VERB_C_TIME   "cretime"
-#define VERB_M_TIME   "modtime"
+#define VERB_MODTIME  "modtime"
 #define VERB_STATUS   "statusinfo"
 #define VERB_REALNAME "localname"
 #define VERB_FIELDS   "getfields"
@@ -371,6 +371,8 @@ static gboolean SetFindData(tVFSDirData *dirdata, WIN32_FIND_DATAA *FindData)
 			mode |= S_IXUSR;
 		else if (word[i] == 'S')
 			mode |= S_ISUID;
+		else if (word[i] == 's')
+			mode |= S_ISUID | S_IXUSR;
 
 		i++;
 
@@ -384,6 +386,8 @@ static gboolean SetFindData(tVFSDirData *dirdata, WIN32_FIND_DATAA *FindData)
 			mode |= S_IXGRP;
 		else if (word[i] == 'S')
 			mode |= S_ISGID;
+		else if (word[i] == 's')
+			mode |= S_ISGID | S_IXGRP;
 
 		i++;
 
@@ -397,6 +401,8 @@ static gboolean SetFindData(tVFSDirData *dirdata, WIN32_FIND_DATAA *FindData)
 			mode |= S_IXOTH;
 		else if (word[i] == 'T')
 			mode |= S_ISVTX;
+		else if (word[i] == 't')
+			mode |= S_ISVTX | S_IXOTH;
 
 		FindData->dwReserved0 = mode;
 		g_free(word);
@@ -414,18 +420,49 @@ static gboolean SetFindData(tVFSDirData *dirdata, WIN32_FIND_DATAA *FindData)
 			filetime = g_date_time_to_unix(dt);
 			g_date_time_unref(dt);
 		}
+		else if (g_noise)
+			g_print("\"%s\" is not a valid ISO 8601 formatted string.\n", word);
+
+		if (filetime == 0)
+		{
+			struct tm tm = {0};
+
+			gchar *formats[] =
+			{
+				"%Y-%m-%d %R",
+				"%Y-%m-%dT%R",
+				"%Y-%m-%dt%R",
+				"%Y%m%d %R",
+				NULL
+			};
+
+			for (char **p = formats; *p != NULL; p++)
+			{
+				if (strptime(word, *p, &tm))
+				{
+					filetime = (gint64)mktime(&tm);
+
+					if (g_noise)
+						g_print("Used %s to parse the date.\n", *p);
+
+					break;
+				}
+			}
+		}
+
+		FindData->ftCreationTime.dwHighDateTime = 0xFFFFFFFF;
+		FindData->ftCreationTime.dwLowDateTime = 0xFFFFFFFE;
+		FindData->ftLastAccessTime.dwHighDateTime = 0xFFFFFFFF;
+		FindData->ftLastAccessTime.dwLowDateTime = 0xFFFFFFFE;
 
 		if (filetime > 0)
-		{
-			UnixTimeToFileTime((time_t)filetime, &FindData->ftCreationTime);
-			UnixTimeToFileTime((time_t)filetime, &FindData->ftLastAccessTime);
 			UnixTimeToFileTime((time_t)filetime, &FindData->ftLastWriteTime);
-		}
 		else
 		{
-			SetCurrentFileTime(&FindData->ftCreationTime);
-			SetCurrentFileTime(&FindData->ftLastAccessTime);
 			SetCurrentFileTime(&FindData->ftLastWriteTime);
+
+			if (g_noise)
+				g_print("The current datetime has been set.\n");
 		}
 
 		g_free(word);
@@ -629,42 +666,30 @@ int DCPCALL FsExecuteFile(HWND MainWin, char* RemoteName, char* Verb)
 
 BOOL DCPCALL FsSetTime(char* RemoteName, FILETIME *CreationTime, FILETIME *LastAccessTime, FILETIME *LastWriteTime)
 {
-	char *verb;
 	gint64 time = -1;
 	gchar *date = NULL;
 
 	if (LastWriteTime)
 	{
 		time = (gint64)FileTimeToUnixTime(LastWriteTime);
-		verb = VERB_M_TIME;
-	}
-	else if (LastAccessTime)
-	{
-		time = (gint64)FileTimeToUnixTime(LastAccessTime);
-		verb = VERB_A_TIME;
-	}
-	else if (CreationTime)
-	{
-		time = (gint64)FileTimeToUnixTime(CreationTime);
-		verb = VERB_C_TIME;
-	}
 
-	if (time > 0)
-	{
-		GDateTime *dt = g_date_time_new_from_unix_local(time);
-		GDateTime *utc_dt = g_date_time_to_utc(dt);
-
-		if (utc_dt)
-			date = g_date_time_format_iso8601(utc_dt);
-
-		g_date_time_unref(utc_dt);
-		g_date_time_unref(dt);
-
-		if (date)
+		if (time > 0)
 		{
-			gboolean result = ExecuteScript(verb, RemoteName, date, NULL);
-			g_free(date);
-			return result;
+			GDateTime *dt = g_date_time_new_from_unix_local(time);
+			GDateTime *utc_dt = g_date_time_to_utc(dt);
+
+			if (utc_dt)
+				date = g_date_time_format_iso8601(utc_dt);
+
+			g_date_time_unref(utc_dt);
+			g_date_time_unref(dt);
+
+			if (date)
+			{
+				gboolean result = ExecuteScript(VERB_MODTIME, RemoteName, date, NULL);
+				g_free(date);
+				return result;
+			}
 		}
 	}
 
