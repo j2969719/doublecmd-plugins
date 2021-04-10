@@ -66,7 +66,7 @@ static char g_exec_start[PATH_MAX];
 static char g_scripts_dir[PATH_MAX];
 static char g_lfm_path[PATH_MAX];
 static char g_history_file[PATH_MAX];
-
+static gboolean g_no_statusinfo = FALSE;
 
 unsigned long FileTimeToUnixTime(LPFILETIME ft)
 {
@@ -170,11 +170,8 @@ static void LoadPreview(uintptr_t pDlg, gchar *file)
 	g_free(src_file);
 }
 
-static void InitializeScript(void)
+static void RequestValues(gchar *output)
 {
-	gchar *output = NULL;
-	ExecuteScript(VERB_INIT, NULL, NULL, &output);
-
 	if (output)
 	{
 		gchar **split = g_strsplit(output, "\n", -1);
@@ -207,6 +204,14 @@ static void InitializeScript(void)
 
 		g_strfreev(split);
 	}
+}
+
+static void InitializeScript(void)
+{
+	gchar *output = NULL;
+	g_no_statusinfo = g_key_file_get_boolean(g_cfg, g_script, "Disable_FsStatusInfo", NULL);
+	ExecuteScript(VERB_INIT, NULL, NULL, &output);
+	RequestValues(output);
 
 	g_strfreev(g_fields);
 	g_fields = NULL;
@@ -421,7 +426,7 @@ static gboolean SetFindData(tVFSDirData *dirdata, WIN32_FIND_DATAA *FindData)
 			g_date_time_unref(dt);
 		}
 		else if (g_noise)
-			g_print("\"%s\" is not a valid ISO 8601 formatted string.\n", word);
+			g_print("\"%s\" is not a valid ISO 8601 UTC formatted string.\n", word);
 
 		if (filetime == 0)
 		{
@@ -644,8 +649,13 @@ int DCPCALL FsExecuteFile(HWND MainWin, char* RemoteName, char* Verb)
 	}
 	else if (strcmp(Verb, "properties") == 0)
 	{
-		if (RemoteName[1] != '\0' && ExecuteScript(VERB_PROPS, RemoteName, NULL, NULL))
+		gchar *output = NULL;
+
+		if (RemoteName[1] != '\0' && g_strcmp0(RemoteName, "/..") != 0 && ExecuteScript(VERB_PROPS, RemoteName, NULL, &output))
+		{
+			RequestValues(output);
 			return FS_EXEC_OK;
+		}
 
 		ShowCfgDlg();
 		result = FS_EXEC_OK;
@@ -765,6 +775,9 @@ BOOL DCPCALL FsGetLocalName(char* RemoteName, int maxlen)
 
 void DCPCALL FsStatusInfo(char* RemoteDir, int InfoStartEnd, int InfoOperation)
 {
+	if (g_no_statusinfo)
+		return;
+
 	switch (InfoOperation)
 	{
 	case FS_STATUS_OP_LIST:
