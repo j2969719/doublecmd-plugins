@@ -2,7 +2,7 @@
   <Info>
     <General Name="Makefiles*" Extensions="MAK MK"/>
     <Author Name="Skif_off" Email="" Web="" Copyright="" Company="" Remark="Based on '_makefile.coder' for AkelPad"/>
-    <Version Version="0" Revision="3" Date="43978,9144110417"/>
+    <Version Version="0" Revision="4" Date="44297,7027423843"/>
     <History>
     </History>
     <Sample>
@@ -139,6 +139,7 @@
       <word value="CXX"/>
       <word value="CXXFLAGS"/>
       <word value="DEFFLAGS"/>
+      <word value="DEFINES"/>
       <word value="F77"/>
       <word value="FC"/>
       <word value="FFLAGS"/>
@@ -152,6 +153,7 @@
       <word value="LDLIBS"/>
       <word value="LEX"/>
       <word value="LFLAGS"/>
+      <word value="LIBFLAGS"/>
       <word value="LIBTOOL"/>
       <word value="LINT"/>
       <word value="LINTFLAGS"/>
