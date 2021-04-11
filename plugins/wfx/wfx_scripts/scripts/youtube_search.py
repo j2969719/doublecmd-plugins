@@ -15,6 +15,7 @@ video_res = '360p'
 video_fps = 60
 
 def vfs_init():
+	print("Disable_FsStatusInfo")
 	print("Search video:")
 	sys.exit()
 

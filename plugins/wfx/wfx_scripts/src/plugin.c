@@ -66,7 +66,7 @@ static char g_exec_start[PATH_MAX];
 static char g_scripts_dir[PATH_MAX];
 static char g_lfm_path[PATH_MAX];
 static char g_history_file[PATH_MAX];
-static gboolean g_no_statusinfo = FALSE;
+static gboolean g_statusinfo = FALSE;
 
 unsigned long FileTimeToUnixTime(LPFILETIME ft)
 {
@@ -176,9 +176,8 @@ static void RequestValues(gchar *output)
 	{
 		gchar **split = g_strsplit(output, "\n", -1);
 		g_free(output);
-		gchar **p = split;
 
-		while (*p)
+		for (gchar **p = split; *p != NULL; p++)
 		{
 			char value[MAX_PATH] = "";
 			gchar *prev = g_key_file_get_string(g_cfg, g_script, *p, NULL);
@@ -192,14 +191,16 @@ static void RequestValues(gchar *output)
 
 			if (*p[0] != 0)
 			{
-				if (gRequestProc && gRequestProc(gPluginNr, RT_Other, g_script, *p, value, MAX_PATH))
+				if (g_strcmp0(*p, "Disable_FsStatusInfo") == 0)
+				{
+					g_statusinfo = FALSE;
+				}
+				else if (gRequestProc && gRequestProc(gPluginNr, RT_Other, g_script, *p, value, MAX_PATH))
 				{
 					ExecuteScript(VERB_SETOPT, *p, value, &output);
 					g_key_file_set_string(g_cfg, g_script, *p, value);
 				}
 			}
-
-			*p++;
 		}
 
 		g_strfreev(split);
@@ -208,8 +209,8 @@ static void RequestValues(gchar *output)
 
 static void InitializeScript(void)
 {
+	g_statusinfo = TRUE;
 	gchar *output = NULL;
-	g_no_statusinfo = g_key_file_get_boolean(g_cfg, g_script, "Disable_FsStatusInfo", NULL);
 	ExecuteScript(VERB_INIT, NULL, NULL, &output);
 	RequestValues(output);
 
@@ -242,7 +243,7 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 				{
 					src_file = g_strdup_printf("%s/%s", g_scripts_dir, ent->d_name);
 
-					if (g_file_test(src_file, G_FILE_TEST_EXISTS))
+					if (g_file_test(src_file, G_FILE_TEST_IS_EXECUTABLE))
 						gDialogApi->SendDlgMsg(pDlg, "cbScript", DM_LISTADD, (intptr_t)ent->d_name, 0);
 
 					g_free(src_file);
@@ -638,25 +639,37 @@ BOOL DCPCALL FsRemoveDir(char* RemoteName)
 
 int DCPCALL FsExecuteFile(HWND MainWin, char* RemoteName, char* Verb)
 {
+	gchar *output = NULL;
 	int result = FS_EXEC_ERROR;
 
 	if (strcmp(Verb, "open") == 0)
 	{
-		if (!ExecuteScript(VERB_EXEC, RemoteName, NULL, NULL))
+		if (!ExecuteScript(VERB_EXEC, RemoteName, NULL, &output))
 			result = FS_EXEC_YOURSELF;
+		else if (output && output[0] != '\0')
+		{
+			size_t len = strlen(output);
+
+			if (len > 0)
+				output[len - 1] = '\0';
+
+			g_strlcpy(RemoteName, output, MAX_PATH - 1);
+			result = FS_EXEC_SYMLINK;
+		}
 		else
 			result = FS_EXEC_OK;
+
+		g_free(output);
 	}
 	else if (strcmp(Verb, "properties") == 0)
 	{
-		gchar *output = NULL;
-
 		if (RemoteName[1] != '\0' && g_strcmp0(RemoteName, "/..") != 0 && ExecuteScript(VERB_PROPS, RemoteName, NULL, &output))
 		{
 			RequestValues(output);
 			return FS_EXEC_OK;
 		}
 
+		g_free(output);
 		ShowCfgDlg();
 		result = FS_EXEC_OK;
 	}
@@ -775,7 +788,7 @@ BOOL DCPCALL FsGetLocalName(char* RemoteName, int maxlen)
 
 void DCPCALL FsStatusInfo(char* RemoteDir, int InfoStartEnd, int InfoOperation)
 {
-	if (g_no_statusinfo)
+	if (!g_statusinfo)
 		return;
 
 	switch (InfoOperation)
