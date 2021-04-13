@@ -14,20 +14,26 @@ args = {...}
 temp_file = "/tmp/doublecmd-aur.lst"
 
 function fs_init()
-    os.execute("curl https://aur.archlinux.org/pkgbase.gz | gzip -cd > " .. temp_file)
-    print("Disable_FsStatusInfo")
+    os.execute("curl -sS https://aur.archlinux.org/pkgbase.gz | gzip -cd > " .. temp_file)
     os.exit()
 end
 
 function fs_getlist(path)
     if path == "/" then
-        local f = io.popen("stat -c %Y ".. temp_file)
-        local stat_output = f:read()
-        f:close()
-        if stat_output == nil then
+        local output = io.popen("stat -c '%Y %s' " .. temp_file)
+        if not output then
             os.exit(1)
         end
-        local temp_file_date = os.date("!%Y-%m-%dT%TZ", stat_output)
+        local stat_string = output:read()
+        output:close()
+        if stat_string == nil then
+            os.exit(1)
+        end
+        local stat_mtime, stat_size = stat_string:match("(%d+) (%d+)")
+        if stat_mtime == nil or tonumber(stat_size) == 0 then
+            os.exit(1)
+        end
+        local temp_file_date = os.date("!%Y-%m-%dT%TZ", tonumber(stat_mtime))
         for i = 65, 90 do
             print("drwxr-xr-x " .. temp_file_date .. " - " .. string.char(i))
         end
@@ -57,7 +63,7 @@ end
 
 function fs_getfile(file, target)
     if file ~= nil and target ~= nil then
-        os.execute("curl https://aur.archlinux.org/cgit/aur.git/snapshot" .. file:match("/[^/]+$") .. " > " .. target)
+        os.execute("curl -sS https://aur.archlinux.org/cgit/aur.git/snapshot" .. file:match("/[^/]+$") .. " > " .. target)
         os.exit()
     end
     os.exit(1)
@@ -65,9 +71,10 @@ end
 
 function fs_properties(file)
     if not file:find("%.tar%.gz$") then
-        fs_init()
+        print("FileType\tPackages")
+    else
+        os.execute("xdg-open https://aur.archlinux.org/pkgbase" .. file:match("(/[^/]+)%.tar%.gz$"))
     end
-    os.execute("xdg-open https://aur.archlinux.org/pkgbase" .. file:match("(/[^/]+)%.tar%.gz$"))
     os.exit()
 end
 

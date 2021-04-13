@@ -1,8 +1,8 @@
 Virtual file system scripts
-===========================
+=======
 The plugin looks for executable files in this folder. The plugin compiled with the Temporary Panel API looks for executables in `temppanel` subfolder.
 
-If the `no_dialog` value is `true` in the plugin configuration file or the `dialog.lfm` file is missing, the last used script will always be executed (`last_script` value).
+If a file like `SCRIPTFILENAME_readme.txt` exists in this folder, its contents will be displayed in the properties dialog instead of the first ten lines of the script.
 
 # commands
 - Each command is a separate script call with various arguments.
@@ -17,7 +17,12 @@ If the `no_dialog` value is `true` in the plugin configuration file or the `dial
 
 Initial initialization.
 
-The script can output to stdout a line-by-line list of options to be requested. Outputting the `Disable_FsStatusInfo` line to stdout suppresses calls to the script with the **statusinfo** command.
+The script can output to stdout a line-by-line list of options to be requested. Custom options should not start with `Fs_`.
+
+Outputting the reserved line `Fs_StatusInfo_Needed` activates the script calls with the **statusinfo** command.
+Outputting a line starting with `Fs_Set_DC_WFX_SCRIPT_DATA ` signals that the subsequent part of the line should be set as a value for the `DC_WFX_SCRIPT_DATA` environment variable, which should be passed to the script between calls.
+For plugin compiled with the Temporary Panel API, these are `Fs_Set_DC_WFX_TP_SCRIPT_DATA ` and `DC_WFX_TP_SCRIPT_DATA`, respectively.
+
 
 ## deinit
 `SCRIPT deinit`
@@ -49,6 +54,8 @@ Called to get a file from the virtual file system.
 
 Copies a virtual file `SOURCE` to a local file `DESTINATION`
 
+To update the progress bar, the script must print the integer percentage value line by line.
+
 ## copyin
 `SCRIPT copyin SOURCE DESTINATION`
 
@@ -56,14 +63,20 @@ Called to put a file in the virtual file system.
 
 Copies a local file `SOURCE` to a virtual file `DESTINATION`
 
+To update the progress bar, the script must print the integer percentage value line by line.
+
 ## cp
 `SCRIPT cp SOURCE DESTINATION`
 
 Copies a virtual file `SOURCE` to `DESTINATION` inside the virtual file system.
 
+To update the progress bar, the script must print the integer percentage value line by line.
+
 ## mv
 `SCRIPT mv SOURCE DESTINATION`
 Moves/Renames a virtual file `SOURCE` to `DESTINATION` inside the virtual file system.
+
+To update the progress bar, the script must print the integer percentage value line by line.
 
 ## exists
 `SCRIPT exists FILE`
@@ -76,6 +89,8 @@ The script should return exit status 0 **only** if `FILE` exists.
 `SCRIPT rm FILE`
 
 Deletes the virtual file.
+
+To update the progress bar, the script must print the integer percentage value line by line.
 
 ## mkdir
 `SCRIPT mkdir PATH`
@@ -117,10 +132,17 @@ In addition, if the script prints a string to standard output, it will be interp
 
 Called when the user invokes file properties on a virtual file.
 
-The script can output to stdout a line-by-line list of options to be requested. Outputting the `Disable_FsStatusInfo` line to stdout suppresses calls to the script with the **statusinfo** command.
+The script can print to stdout a line-by-line list of up to ten properties to display. Each line must contain the property name and value for the current `FILE`, separated by a tab.
+
+Example:
+```
+Duration\t8:10
+```
+
+If the script did not output anything to stdout, but returned exit status 0, it is assumed that the properties dialog is in some form implemented by the script.
 
 ## quote
-`SCRIPT quote STRING`
+`SCRIPT quote STRING PATH`
 
 Called when the user enters some `STRING` at the command line below the panel.
 
@@ -128,8 +150,7 @@ Called when the user enters some `STRING` at the command line below the panel.
 `SCRIPT statusinfo OPERATION PATH`
 
 A WFX-specific call to inform the script about the start or end of an operation.
-To reduce the number of script calls, it can be suppressed by printing `Disable_FsStatusInfo` to stdout when invoking the **init** or **properties** commands.
-
+To reduce the number of script calls, it is suppressed by default. To activate script calls with this command, the script must print `Fs_StatusInfo_Needed` line at the **init** stage.
 
 List of possible (not all of them are currently supported by Double Commander) `OPERATION` values
 - `list start`
@@ -181,6 +202,8 @@ Called to get the real location of the virtual file. The script should print the
 
 Call to get a list of string fields to use in `Options -> Files views -> Columns -> Custom Columns`.
 The script should print a line-by-line list of supported fields to stdout.
+
+Attention, the plugin calls all available scripts with this command at the initialization stage, before calling the script with the **init** command.
 
 ## getvalue
 `SCRIPT getvalue FIELD FILE`
