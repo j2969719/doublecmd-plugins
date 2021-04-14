@@ -142,6 +142,10 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 		gtk_container_add(GTK_CONTAINER(gFix), mpv);
 		gtk_widget_realize(mpv);
 		id = GDK_WINDOW_XID(gtk_widget_get_window(mpv));
+
+		GdkColor color;
+		gdk_color_parse("black", &color);
+		gtk_widget_modify_bg(mpv, GTK_STATE_NORMAL, &color);
 	}
 
 	gchar *command = g_strdup_printf("%s %s --wid=%d %s", cmdstr, params, id, g_shell_quote(FileToLoad));
@@ -155,7 +159,7 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 
 	g_free(command);
 
-	if ((id == 0) || (!g_spawn_async(NULL, argv, NULL, G_SPAWN_SEARCH_PATH, NULL, NULL, &mpv_pid, NULL)))
+	if ((id == 0) || (!g_spawn_async(NULL, argv, NULL, G_SPAWN_SEARCH_PATH | G_SPAWN_DO_NOT_REAP_CHILD, NULL, NULL, &mpv_pid, NULL)))
 	{
 		gtk_widget_destroy(gFix);
 		return NULL;
@@ -173,7 +177,7 @@ void DCPCALL ListCloseWindow(HWND ListWin)
 	int status;
 	pid_t mpv_pid = (pid_t)GPOINTER_TO_INT(g_object_get_data(G_OBJECT(ListWin), "pid"));
 	kill(mpv_pid, SIGTERM);
-	g_print("ListCloseWindow: waitpid=%d\n", waitpid(mpv_pid, &status, 0));
+	g_print("ListCloseWindow: mpv_pid=%d, waitpid=%d, exit_status=%d\n", mpv_pid, waitpid(mpv_pid, &status, 0), WEXITSTATUS(status));
 	gtk_widget_destroy(GTK_WIDGET(ListWin));
 }
 
