@@ -82,7 +82,6 @@ def vfs_getfile(src, dst):
 						f.write(response.content)
 					else:
 						downloaded = 0
-						total = int(total)
 						for data in response.iter_content(chunk_size=4096):
 							downloaded += len(data)
 							f.write(data)
