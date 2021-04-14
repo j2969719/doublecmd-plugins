@@ -28,10 +28,17 @@
 
 #define Int32x32To64(a,b) ((gint64)(a)*(gint64)(b))
 #define LIST_REGEXP "([cbdflrstwxST\\-]{10})\\s+(\\d{4}\\-?\\d{2}\\-?\\d{2}[\\stT]\\d{2}:?\\d{2}:?\\d?\\d?Z?)\\s+([0-9\\-]+)\\s+([^\\n]+)"
+
+#define CHECKFIELDS_OPT "Fs_GetSupportedField_Needed"
 #define STATUSINFO_OPT "Fs_StatusInfo_Needed"
+#define REQUEST_OPT "Fs_Request_Options"
 #define ENVVAR_OPT "Fs_Set_" ENVVAR_NAME
+#define YESNOMSG_OPT "Fs_YesNo_Message"
+#define INFORM_OPT "Fs_Info_Message"
 #define NOISE_OPT "Fs_DebugMode"
+
 #define IN_USE_MARK "Fs_InUse"
+
 
 #define VERB_INIT     "init"
 #define VERB_DEINIT   "deinit"
@@ -112,8 +119,8 @@ static void LogMessage(int PluginNr, int MsgType, char* LogString)
 
 	if (gLogProc && LogString)
 		gLogProc(PluginNr, MsgType, LogString);
-	else
-	{
+	//else
+	//{
 #endif
 
 		if (LogString)
@@ -122,10 +129,8 @@ static void LogMessage(int PluginNr, int MsgType, char* LogString)
 			g_print(message);
 			g_free(message);
 		}
-
 #ifndef  TEMP_PANEL
-	}
-
+	//}
 #endif
 }
 
@@ -343,6 +348,8 @@ static void LoadPreview(uintptr_t pDlg, gchar *file)
 
 	if ((fp = fopen(src_file, "r")) != NULL)
 	{
+		gDialogApi->SendDlgMsg(pDlg, "mPreview", DM_ENABLE, 1, 0);
+
 		while ((read = getline(&line, &len, fp)) != -1)
 		{
 			if (!readme && count > MAX_LINES)
@@ -361,6 +368,32 @@ static void LoadPreview(uintptr_t pDlg, gchar *file)
 
 		g_free(line);
 		fclose(fp);
+	}
+
+	if (readme)
+	{
+		g_free(src_file);
+		src_file = g_strdup_printf("%s/%s", g_scripts_dir, file);
+	}
+
+
+	GFile *gfile = g_file_new_for_path(src_file);
+
+	if (gfile)
+	{
+		GFileInfo *fileinfo = g_file_query_info(gfile, G_FILE_ATTRIBUTE_STANDARD_CONTENT_TYPE, 0, NULL, NULL);
+
+		if (fileinfo)
+		{
+			const gchar *content_type = g_file_info_get_content_type(fileinfo);
+			gchar *description = g_content_type_get_description(content_type);
+			gDialogApi->SendDlgMsg(pDlg, "lScriptType", DM_SHOWITEM, 1, 0);
+			gDialogApi->SendDlgMsg(pDlg, "lScriptType", DM_SETTEXT, (intptr_t)description, 0);
+			g_free(description);
+			g_object_unref(fileinfo);
+		}
+
+		g_object_unref(gfile);
 	}
 
 	g_free(src_file);
@@ -409,28 +442,25 @@ static void FillProps(uintptr_t pDlg)
 	}
 }
 
-static void RequestValues(gchar *script, gchar *output)
+static void ParseOpts(gchar *script, gchar *text)
 {
-	if (output)
+	gchar *output = NULL;
+	gboolean request_values = FALSE;
+
+	if (text)
 	{
-		gchar **split = g_strsplit(output, "\n", -1);
+		gchar **split = g_strsplit(text, "\n", -1);
 
 		for (gchar **p = split; *p != NULL; p++)
 		{
-			char value[MAX_PATH] = "";
-			gchar *prev = g_key_file_get_string(g_cfg, script, *p, NULL);
-
-			if (prev)
-			{
-				g_strlcpy(value, prev, MAX_PATH);
-				g_free(prev);
-			}
-
-
 			if (*p[0] != 0)
 			{
-				if (g_strcmp0(*p, STATUSINFO_OPT) == 0)
+				if (g_strcmp0(*p, REQUEST_OPT) == 0)
+					request_values = TRUE;
+				else if (g_strcmp0(*p, STATUSINFO_OPT) == 0)
 					g_key_file_set_boolean(g_cfg, script, STATUSINFO_OPT, TRUE);
+				else if (g_strcmp0(*p, CHECKFIELDS_OPT) == 0)
+					g_key_file_set_boolean(g_cfg, script, CHECKFIELDS_OPT, TRUE);
 				else if (strncmp(*p, ENVVAR_OPT, strlen(ENVVAR_OPT)) == 0 && strlen(*p) > strlen(ENVVAR_OPT))
 				{
 					g_key_file_set_string(g_cfg, script, ENVVAR_OPT, *p + strlen(ENVVAR_OPT) + 1);
@@ -442,12 +472,50 @@ static void RequestValues(gchar *script, gchar *output)
 						g_free(message);
 					}
 				}
+				else if (strncmp(*p, INFORM_OPT, strlen(INFORM_OPT)) == 0 && gRequestProc && strlen(*p) > (strlen(INFORM_OPT) + 2))
+					gRequestProc(gPluginNr, RT_MsgOK, script, *p + strlen(INFORM_OPT) + 1, NULL, 0);
+				else if (strncmp(*p, YESNOMSG_OPT, strlen(YESNOMSG_OPT)) == 0 && gRequestProc && strlen(*p) > (strlen(YESNOMSG_OPT) + 2))
+				{
+					gboolean is_yes = gRequestProc(gPluginNr, RT_MsgYesNo, script, *p + strlen(YESNOMSG_OPT) + 1, NULL, 0);
+
+					ExecuteScript(script, VERB_SETOPT, *p + strlen(YESNOMSG_OPT) + 1, is_yes ? "Yes" : "No", &output);
+
+					if (output && output[0] != '\0')
+						ParseOpts(script, output);
+
+					g_free(output);
+					output = NULL;
+				}
 				else if (strncmp(*p, NOISE_OPT, 3) == 0)
 					LogMessage(gPluginNr, MSGTYPE_IMPORTANTERROR, "Options starting with \"Fs_\" are reserved, ignored");
-				else if (gRequestProc && gRequestProc(gPluginNr, RT_Other, script, *p, value, MAX_PATH))
+				else if (request_values == TRUE)
 				{
-					ExecuteScript(script, VERB_SETOPT, *p, value, &output);
-					g_key_file_set_string(g_cfg, script, *p, value);
+					char value[MAX_PATH] = "";
+					gchar *prev = g_key_file_get_string(g_cfg, script, *p, NULL);
+
+					if (prev)
+					{
+						g_strlcpy(value, prev, MAX_PATH);
+						g_free(prev);
+					}
+
+					if (gRequestProc && gRequestProc(gPluginNr, RT_Other, script, *p, value, MAX_PATH))
+					{
+						ExecuteScript(script, VERB_SETOPT, *p, value, &output);
+						g_key_file_set_string(g_cfg, script, *p, value);
+
+						if (output && output[0] != '\0')
+							ParseOpts(script, output);
+
+						g_free(output);
+						output = NULL;
+					}
+				}
+				else
+				{
+					gchar *message = g_strdup_printf("%s directive not received, Line \"%s\" will be omitted.", REQUEST_OPT, *p);
+					LogMessage(gPluginNr, MSGTYPE_IMPORTANTERROR, message);
+					g_free(message);
 				}
 			}
 		}
@@ -481,7 +549,7 @@ static void InitializeScript(gchar *script)
 
 	ExecuteScript(script, VERB_INIT, NULL, NULL, &output);
 	g_key_file_set_boolean(g_cfg, script, IN_USE_MARK, TRUE);
-	RequestValues(script, output);
+	ParseOpts(script, output);
 	g_free(output);
 }
 
@@ -492,22 +560,18 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 	case DN_INITDIALOG:
 		g_noise = g_key_file_get_boolean(g_cfg, g_script, NOISE_OPT, NULL);
 		gDialogApi->SendDlgMsg(pDlg, "ckNoise", DM_SETCHECK, (intptr_t)g_noise, 0);
-		gchar *content_type = g_content_type_guess(g_script, NULL, 0, NULL);
-		gchar *descr = g_content_type_get_description(content_type);
 		gDialogApi->SendDlgMsg(pDlg, "lScriptName", DM_SETTEXT, (intptr_t)g_script, 0);
-		gDialogApi->SendDlgMsg(pDlg, "lScriptType", DM_SETTEXT, (intptr_t)descr, 0);
-		g_free(content_type);
-		g_free(descr);
 		LoadPreview(pDlg, g_script);
 
 		if (g_caller && g_props)
 		{
-			content_type = g_content_type_guess(g_caller, NULL, 0, NULL);
-			descr = g_content_type_get_description(content_type);
+			gchar *content_type = g_content_type_guess(g_caller, NULL, 0, NULL);
+			gchar *descr = g_content_type_get_description(content_type);
 			gDialogApi->SendDlgMsg(pDlg, "lFileName", DM_SETTEXT, (intptr_t)g_caller, 0);
 			gDialogApi->SendDlgMsg(pDlg, "lType", DM_SETTEXT, (intptr_t)descr, 0);
 			g_free(content_type);
 			g_free(descr);
+			gDialogApi->SendDlgMsg(pDlg, "pProperties", DM_SHOWITEM, 1, 0);
 			gDialogApi->SendDlgMsg(pDlg, "lFileName", DM_SHOWITEM, 1, 0);
 			gDialogApi->SendDlgMsg(pDlg, "lTypeLabel", DM_SHOWITEM, 1, 0);
 			gDialogApi->SendDlgMsg(pDlg, "lType", DM_SHOWITEM, 1, 0);
@@ -1130,13 +1194,21 @@ int DCPCALL FsExecuteFile(HWND MainWin, char* RemoteName, char* Verb)
 				result = FS_EXEC_YOURSELF;
 			else if (output && output[0] != '\0')
 			{
-				size_t len = strlen(output);
+				if (strncmp(output, NOISE_OPT, 3) == 0)
+				{
+					ParseOpts(script, output);
+					result = FS_EXEC_OK;
+				}
+				else
+				{
+					size_t len = strlen(output);
 
-				if (len > 0)
-					output[len - 1] = '\0';
+					if (len > 0)
+						output[len - 1] = '\0';
 
-				g_strlcpy(RemoteName, output, MAX_PATH - 1);
-				result = FS_EXEC_SYMLINK;
+					g_strlcpy(RemoteName, output, MAX_PATH - 1);
+					result = FS_EXEC_SYMLINK;
+				}
 			}
 			else
 				result = FS_EXEC_OK;
@@ -1154,14 +1226,20 @@ int DCPCALL FsExecuteFile(HWND MainWin, char* RemoteName, char* Verb)
 
 				if (!is_ok || (g_props && g_props[0] != '\0'))
 				{
-					g_caller = g_path_get_basename(path);
-					ShowPropertiesDlg();
+
+					if (strncmp(g_props, NOISE_OPT, 3) == 0)
+						ParseOpts(script, g_props);
+					else
+					{
+						g_caller = g_path_get_basename(path);
+						ShowPropertiesDlg();
+						g_free(g_caller);
+						g_caller = NULL;
+					}
 				}
 
 				g_free(g_props);
 				g_props = NULL;
-				g_free(g_caller);
-				g_caller = NULL;
 
 			}
 			else
@@ -1275,7 +1353,7 @@ int DCPCALL FsContentGetSupportedField(int FieldIndex, char* FieldName, char* Un
 				{
 					gchar *src_file = g_strdup_printf("%s/%s", g_scripts_dir, ent->d_name);
 
-					if (g_file_test(src_file, G_FILE_TEST_IS_EXECUTABLE))
+					if (g_file_test(src_file, G_FILE_TEST_IS_EXECUTABLE) && g_key_file_get_boolean(g_cfg, ent->d_name, CHECKFIELDS_OPT, NULL))
 					{
 						ExecuteScript(ent->d_name, VERB_FIELDS, NULL, NULL, &output);
 

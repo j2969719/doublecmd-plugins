@@ -17,12 +17,35 @@ If a file like `SCRIPTFILENAME_readme.txt` exists in this folder, its contents w
 
 Initial initialization.
 
-The script can output to stdout a line-by-line list of options to be requested. Custom options should not start with `Fs_`.
+The script can output to stdout a line-by-line list of options. Custom options should not start with `Fs_`.
+
+### List of reserved options
+
+#### Fs_Request_Options
+
+Line `Fs_Request_Options` signals that subsequent lines that do not start with `Fs_` are custom options and must be requested from the user.
+
+#### Fs_StatusInfo_Needed
 
 Outputting the reserved line `Fs_StatusInfo_Needed` activates the script calls with the **statusinfo** command.
-Outputting a line starting with `Fs_Set_DC_WFX_SCRIPT_DATA ` signals that the subsequent part of the line should be set as a value for the `DC_WFX_SCRIPT_DATA` environment variable, which should be passed to the script between calls.
+
+#### Fs_GetSupportedField_Needed
+
+Outputting the line `Fs_GetSupportedField_Needed` activates the script call with the getfields command the _next time the WFX plugin is initialized._ It is only needed if the script has fields to use in `Options -> Files views -> Columns -> Custom Columns`
+
+#### Fs_Set_DC_WFX_SCRIPT_DATA/Fs_Set_DC_WFX_TP_SCRIPT_DATA
+
+Outputting a line starting with `Fs_Set_DC_WFX_SCRIPT_DATA ` signals that the next part of the line should be set as a value for the `DC_WFX_SCRIPT_DATA` environment variable, which should be passed to the script between calls.
 For plugin compiled with the Temporary Panel API, these are `Fs_Set_DC_WFX_TP_SCRIPT_DATA ` and `DC_WFX_TP_SCRIPT_DATA`, respectively.
 
+#### Fs_YesNo_Message
+
+Outputting a line starting with `Fs_YesNo_Message ` signals that the next part of the line should be shown in a dialog box with Yes/No buttons.
+After closing the dialog box, the script will be called with the `setopt TEXT_DISPLAYED_IN_DIALOGBOX Yes` (ог `setopt TEXT_DISPLAYED_IN_DIALOGBOX No`) arguments.
+
+#### Fs_Info_Message
+
+Outputting a line starting with `Fs_Info_Message ` signals that the next part of the line should be shown in the info dialog box.
 
 ## deinit
 `SCRIPT deinit`
@@ -32,7 +55,9 @@ Called when the script is changed or when Double Commaner is exited.
 ## setopt
 `SCRIPT setopt OPTION VALUE`
 
-Passes the user-supplied `VALUE` for one of the options requested by **init** or **properties** to the script.
+Passes the user-supplied `VALUE` for one of the options requested for `Fs_Request_Options` to the script.
+
+The output to stduot will be processed in the same way as for the **init** command.
 
 ## list
 `SCRIPT list PATH`
@@ -127,6 +152,8 @@ Called when the user double-clicks or presses Enter on a virtual file. Allows yo
 
 In addition, if the script prints a string to standard output, it will be interpreted as the path to the directory to change to.
 
+If the output to stduot starts with `Fs_`, it will be processed in the same way as for the **init** command.
+
 ## properties
 `SCRIPT properties FILE`
 
@@ -140,6 +167,8 @@ Duration\t8:10
 ```
 
 If the script did not output anything to stdout, but returned exit status 0, it is assumed that the properties dialog is in some form implemented by the script.
+
+If the output to stduot starts with `Fs_`, it will be processed in the same way as for the **init** command.
 
 ## quote
 `SCRIPT quote STRING PATH`
@@ -203,7 +232,7 @@ Called to get the real location of the virtual file. The script should print the
 Call to get a list of string fields to use in `Options -> Files views -> Columns -> Custom Columns`.
 The script should print a line-by-line list of supported fields to stdout.
 
-Attention, the plugin calls all available scripts with this command at the initialization stage, before calling the script with the **init** command.
+Attention, the plugin calls all available scripts that set `Fs_GetSupportedField_Needed` option previously, with this command _at the stage of its own initialization_, before calling the script with the **init** command.
 
 ## getvalue
 `SCRIPT getvalue FIELD FILE`

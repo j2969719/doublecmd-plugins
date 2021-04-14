@@ -12,9 +12,17 @@
 
 args = {...}
 temp_file = "/tmp/doublecmd-aur.lst"
+update_msg = "Update package list?"
 
 function fs_init()
     os.execute("curl -sS https://aur.archlinux.org/pkgbase.gz | gzip -cd > " .. temp_file)
+    os.exit()
+end
+
+function fs_setopt(option, value)
+    if option == update_msg and value == "Yes" then
+        fs_init()
+    end
     os.exit()
 end
 
@@ -71,7 +79,7 @@ end
 
 function fs_properties(file)
     if not file:find("%.tar%.gz$") then
-        print("FileType\tPackages")
+        print("Fs_YesNo_Message " .. update_msg)
     else
         os.execute("xdg-open https://aur.archlinux.org/pkgbase" .. file:match("(/[^/]+)%.tar%.gz$"))
     end
@@ -80,6 +88,8 @@ end
 
 if args[1] == "init" then
     fs_init()
+elseif args[1] == "setopt" then
+    fs_setopt(args[2], args[3])
 elseif args[1] == "list" then
     fs_getlist(args[2])
 elseif args[1] == "copyout" then

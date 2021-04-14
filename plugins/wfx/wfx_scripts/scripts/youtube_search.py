@@ -6,11 +6,12 @@
 import os
 import sys
 import json
+import tempfile
 from pytube import YouTube, helpers
 from youtubesearchpython import VideosSearch
 
 verb = sys.argv[1]
-tempfile = '/tmp/doublecmd_youtube.json'
+envvar = 'DC_WFX_SCRIPT_DATA'
 video_res = '360p'
 video_fps = 60
 
@@ -20,20 +21,26 @@ def print_progress(stream = None, chunk = None, remaining = None):
 	print(percent)
 
 def vfs_init():
+	# print('Fs_GetSupportedField_Needed') # nah, its slow anyway
+	tf = tempfile.NamedTemporaryFile(suffix='_youtube.json', delete=False)
+	filename = tf.name
+	tf.close()
+	print('Fs_Set_'+ envvar +' ' + filename)
+	print('Fs_Request_Options')
 	print('Search video')
 	sys.exit()
 
 def vfs_setopt(option, value):
 	videosSearch = VideosSearch(value)
 	res_array = videosSearch.result()['result']
-	with open(tempfile, 'w') as f:
+	with open(os.environ[envvar], 'w') as f:
 		json.dump(res_array, f)
 		f.close()
 	sys.exit()
 
 def vfs_list(path):
 	try:
-		with open(tempfile) as f:
+		with open(os.environ[envvar]) as f:
 			res_array = json.loads(f.read())
 			f.close()
 	except FileNotFoundError:
@@ -43,7 +50,7 @@ def vfs_list(path):
 			element['filename'] = helpers.safe_filename(element['title']) + '.mp4'
 		print('-r--r--r--\t0000-00-00 00:00:00 \t404\t' + element['filename'])
 	try:
-		with open(tempfile, 'w') as f:
+		with open(os.environ[envvar], 'w') as f:
 			json.dump(res_array, f)
 			f.close()
 	except FileNotFoundError:
@@ -52,7 +59,7 @@ def vfs_list(path):
 
 def vfs_getfile(src, dst):
 	try:
-		with open(tempfile) as f:
+		with open(os.environ[envvar]) as f:
 			res_array = json.loads(f.read())
 			f.close()
 	except FileNotFoundError:
@@ -69,7 +76,7 @@ def vfs_getfile(src, dst):
 
 def vfs_execute(filename):
 	try:
-		with open(tempfile) as f:
+		with open(os.environ[envvar]) as f:
 			res_array = json.loads(f.read())
 			f.close()
 	except FileNotFoundError:
@@ -82,7 +89,7 @@ def vfs_execute(filename):
 
 def vfs_properties(filename):
 	try:
-		with open(tempfile) as f:
+		with open(os.environ[envvar]) as f:
 			res_array = json.loads(f.read())
 			f.close()
 	except FileNotFoundError:
@@ -111,8 +118,10 @@ def vfs_getfields():
 	sys.exit()
 
 def vfs_getvalue(field, filename):
+	if os.environ[envvar] is None:
+		sys.exit(1)
 	try:
-		with open(tempfile) as f:
+		with open(os.environ[envvar]) as f:
 			res_array = json.loads(f.read())
 			f.close()
 	except FileNotFoundError:
@@ -125,7 +134,7 @@ def vfs_getvalue(field, filename):
 	sys.exit(1)
 
 def vfs_deinit():
-	os.remove(tempfile)
+	os.remove(os.environ[envvar])
 	sys.exit()
 
 

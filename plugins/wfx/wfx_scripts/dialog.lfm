@@ -25,6 +25,7 @@ object DialogBox: TDialogBox
     Caption = 'Type'
     ParentColor = False
     ParentFont = False
+    Visible = False
   end
   object mPreview: TMemo
     AnchorSideLeft.Control = Owner
@@ -37,6 +38,7 @@ object DialogBox: TDialogBox
     Top = 333
     Width = 515
     BorderSpacing.Top = 5
+    Enabled = False
     Font.Name = 'Monospace'
     ParentFont = False
     ReadOnly = True
@@ -57,7 +59,7 @@ object DialogBox: TDialogBox
     Width = 109
     Anchors = [akTop, akRight]
     BorderSpacing.Top = 10
-    Caption = 'Debug mode'
+    Caption = 'De&bug mode'
     OnChange = CheckBoxChange
     ParentFont = False
     TabOrder = 1
@@ -85,6 +87,7 @@ object DialogBox: TDialogBox
     ClientHeight = 215
     ClientWidth = 515
     TabOrder = 2
+    Visible = False
     object lTypeLabel: TLabel
       Left = 0
       Height = 15
