@@ -11,6 +11,19 @@ verb = sys.argv[1]
 envvar = 'DC_WFX_SCRIPT_DATA'
 
 
+def get_dir_contents(obj, path):
+	try:
+		response = requests.get('https://api.github.com/repos/' + obj['repo'] + '/contents' + path)
+	except Exception as e:
+		print(str(e), file=sys.stderr)
+		sys.exit(1)
+	if response.status_code == 200:
+		obj['contents'][path] = response.json()
+		return obj
+	else:
+		print(str(response.status_code) + ": " + response.reason,file=sys.stderr)
+		sys.exit(1)
+
 def vfs_init():
 	tf = tempfile.NamedTemporaryFile(suffix='_github.json', delete=False)
 	filename = tf.name
@@ -22,7 +35,11 @@ def vfs_init():
 
 def vfs_setopt(option, value):
 	if option == 'user/repo':
-		response = requests.get('https://api.github.com/repos/' + value + '/contents/')
+		try:
+			response = requests.get('https://api.github.com/repos/' + value + '/contents/')
+		except Exception as e:
+			print(str(e), file=sys.stderr)
+			sys.exit(1)
 		if response.status_code == 200:
 			string = '{ "repo": "'+ str(value) +'", "contents" : {}}'
 			obj = json.loads(string)
@@ -30,24 +47,26 @@ def vfs_setopt(option, value):
 			with open(os.environ[envvar], 'w') as f:
 				json.dump(obj, f)
 				f.close()
+			sys.exit()
 		else:
+			print(str(response.status_code) + ": " + response.reason, file=sys.stderr)
+			print("Fs_Info_Message " + str(response.status_code) + ": " + response.reason)
 			print('Fs_Request_Options')
 			print('user/repo')
-	sys.exit()
+	sys.exit(1)
 
 def vfs_list(path):
 	try:
 		with open(os.environ[envvar]) as f:
-			obj = json.loads(f.read())
-			f.close()
+			try:
+				obj = json.loads(f.read())
+				f.close()
+			except:
+				sys.exit(1)
 	except FileNotFoundError:
 		sys.exit(1)
 	if path not in obj['contents']:
-		response = requests.get('https://api.github.com/repos/' + obj['repo'] + '/contents' + path)
-		if response.status_code == 200:
-			obj['contents'][path] = response.json()
-		else:
-			sys.exit(1)
+		obj = get_dir_contents(obj, path)
 	for element in obj['contents'][path]:
 		if 'attrstr' not in element:
 			if element['type'] == 'dir':
@@ -72,10 +91,20 @@ def vfs_getfile(src, dst):
 			f.close()
 	except FileNotFoundError:
 		sys.exit(1)
-	for element in obj['contents'][os.path.dirname(src)]:
+	dirname = os.path.dirname(src)
+	if dirname not in obj['contents']:
+		obj = get_dir_contents(obj, dirname)
+		with open(os.environ[envvar], 'w') as f:
+			json.dump(obj, f)
+			f.close()
+	for element in obj['contents'][dirname]:
 		if element['name'] == os.path.basename(src):
 			with open(dst, 'wb') as f:
-				response = requests.get(element['download_url'], stream=True)
+				try:
+					response = requests.get(element['download_url'], stream=True)
+				except Exception as e:
+					print(str(e))
+					sys.exit(1)
 				if response.status_code == 200:
 					total = response.headers.get('content-length')
 					if total is None:
@@ -87,6 +116,9 @@ def vfs_getfile(src, dst):
 							f.write(data)
 							percent = int(downloaded * 100 / int(total))
 							print(percent)
+				else:
+					print(str(response.status_code) + ": " + response.reason, file=sys.stderr)
+
 				f.close()
 				sys.exit()
 	sys.exit(1)
