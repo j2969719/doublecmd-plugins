@@ -125,9 +125,13 @@ static void LogMessage(int PluginNr, int MsgType, char* LogString)
 
 		if (LogString)
 		{
-			gchar *message = g_strdup_printf("%s\n", LogString);
+			gchar **split = g_strsplit(LogString, "%", -1);
+			gchar *escaped = g_strjoinv("%%", split);
+			g_strfreev(split);
+			gchar *message = g_strdup_printf("%s\n", escaped);
 			g_print(message);
 			g_free(message);
+			g_free(escaped);
 		}
 #ifndef  TEMP_PANEL
 	//}
@@ -961,6 +965,13 @@ HANDLE DCPCALL FsFindFirst(char* Path, WIN32_FIND_DATAA * FindData)
 
 		if (!g_regex_match(dirdata->regex, output, 0, &(dirdata->match_info)))
 		{
+			if (g_noise)
+			{
+				gchar *message = g_strdup_printf("%s: no file list received", Path);
+				LogMessage(gPluginNr, MSGTYPE_DETAILS, message);
+				g_free(message);
+			}
+
 			g_regex_unref(dirdata->regex);
 			g_free(output);
 			return (HANDLE)(-1);
