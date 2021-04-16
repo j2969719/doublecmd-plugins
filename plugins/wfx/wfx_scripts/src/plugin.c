@@ -622,6 +622,11 @@ static gchar *ExtractScriptFromPath(char *path)
 	return result;
 }
 
+static gboolean InvalidPath(char *path)
+{
+	return (g_strcmp0(path, "/.") == 0 || g_strcmp0(path, "/..") == 0 || strncmp(path, "/../", 4) == 0);
+}
+
 static gboolean RootDir(char *path)
 {
 	*path++;
@@ -941,6 +946,10 @@ HANDLE DCPCALL FsFindFirst(char* Path, WIN32_FIND_DATAA * FindData)
 		gchar *output = NULL;
 		gchar *script = ExtractScriptFromPath(Path);
 		gchar *list_path = StripScriptFromPath(Path);
+		size_t len = strlen(list_path);
+
+		if (len > 1 && list_path[len - 1] == '/')
+			list_path[len - 1] = '\0';
 
 		if (!ExecuteScript(script, VERB_LIST, list_path, NULL, &output))
 		{
@@ -1045,7 +1054,7 @@ int DCPCALL FsGetFile(char* RemoteName, char* LocalName, int CopyFlags, RemoteIn
 		gchar *script = ExtractScriptFromPath(RemoteName);
 		gchar *path = StripScriptFromPath(RemoteName);
 
-		if (!ExecuteScript(script, VERB_GET_FILE, path, LocalName, NULL))
+		if (InvalidPath(path) || !ExecuteScript(script, VERB_GET_FILE, path, LocalName, NULL))
 			result = FS_FILE_NOTSUPPORTED;
 
 #ifndef TEMP_PANEL
@@ -1079,8 +1088,15 @@ int DCPCALL FsPutFile(char* LocalName, char* RemoteName, int CopyFlags)
 		return FS_FILE_NOTSUPPORTED;
 
 	int result = FS_FILE_OK;
-	gchar *script = ExtractScriptFromPath(RemoteName);
 	gchar *path = StripScriptFromPath(RemoteName);
+
+	if (InvalidPath(path))
+	{
+		g_free(path);
+		return FS_FILE_NOTSUPPORTED;
+	}
+
+	gchar *script = ExtractScriptFromPath(RemoteName);
 
 	if (CopyFlags == 0 && ExecuteScript(script, VERB_EXISTS, path, NULL, NULL))
 		result = FS_FILE_EXISTS;
@@ -1116,10 +1132,17 @@ int DCPCALL FsRenMovFile(char* OldName, char* NewName, BOOL Move, BOOL OverWrite
 	if (RootDir(NewName))
 		return FS_FILE_NOTSUPPORTED;
 
+	gchar *newpath = StripScriptFromPath(NewName);
+
+	if (InvalidPath(newpath))
+	{
+		g_free(newpath);
+		return FS_FILE_NOTSUPPORTED;
+	}
+
 	int result = FS_FILE_OK;
 	gchar *script = ExtractScriptFromPath(OldName);
 	gchar *oldpath = StripScriptFromPath(OldName);
-	gchar *newpath = StripScriptFromPath(NewName);
 
 	if (!OverWrite && ExecuteScript(script, VERB_EXISTS, newpath, NULL, NULL))
 		return FS_FILE_EXISTS;
@@ -1142,8 +1165,15 @@ BOOL DCPCALL FsMkDir(char* Path)
 
 	if (!RootDir(Path))
 	{
-		gchar *script = ExtractScriptFromPath(Path);
 		gchar *newpath = StripScriptFromPath(Path);
+
+		if (InvalidPath(newpath))
+		{
+			g_free(newpath);
+			return FS_FILE_NOTSUPPORTED;
+		}
+
+		gchar *script = ExtractScriptFromPath(Path);
 		result = ExecuteScript(script, VERB_MKDIR, newpath, NULL, NULL);
 		g_free(script);
 		g_free(newpath);
@@ -1231,7 +1261,7 @@ int DCPCALL FsExecuteFile(HWND MainWin, char* RemoteName, char* Verb)
 		{
 			g_strlcpy(g_script, script, PATH_MAX);
 
-			if (!RootDir(RemoteName))
+			if (!RootDir(RemoteName) && !InvalidPath(path))
 			{
 				gboolean is_ok = ExecuteScript(script, VERB_PROPS, path, NULL, &g_props);
 
@@ -1260,7 +1290,7 @@ int DCPCALL FsExecuteFile(HWND MainWin, char* RemoteName, char* Verb)
 		}
 
 	}
-	else if (RootDir(RemoteName))
+	else if (!RootDir(RemoteName) && !InvalidPath(path))
 	{
 		if (strncmp(Verb, "chmod", 5) == 0)
 		{
@@ -1285,8 +1315,11 @@ BOOL DCPCALL FsSetTime(char* RemoteName, FILETIME * CreationTime, FILETIME * Las
 {
 	gint64 time = -1;
 	gchar *date = NULL;
+	gboolean result = FALSE;
 
-	if (LastWriteTime && !RootDir(RemoteName))
+	gchar *newpath = StripScriptFromPath(RemoteName);
+
+	if (LastWriteTime && !RootDir(RemoteName) && !InvalidPath(newpath))
 	{
 		time = (gint64)FileTimeToUnixTime(LastWriteTime);
 
@@ -1304,17 +1337,17 @@ BOOL DCPCALL FsSetTime(char* RemoteName, FILETIME * CreationTime, FILETIME * Las
 			if (date)
 			{
 				gchar *script = ExtractScriptFromPath(RemoteName);
-				gchar *newpath = StripScriptFromPath(RemoteName);
-				gboolean result = ExecuteScript(script, VERB_MODTIME, newpath, date, NULL);
+
+				result = ExecuteScript(script, VERB_MODTIME, newpath, date, NULL);
 				g_free(date);
 				g_free(script);
-				g_free(newpath);
-				return result;
 			}
 		}
 	}
 
-	return FALSE;
+	g_free(newpath);
+
+	return result;
 }
 
 void DCPCALL FsGetDefRootName(char* DefRootName, int maxlen)
