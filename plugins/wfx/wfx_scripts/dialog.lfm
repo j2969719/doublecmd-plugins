@@ -97,6 +97,7 @@ object DialogBox: TDialogBox
       Caption = 'Type'
       ParentColor = False
       Visible = False
+      WordWrap = True
     end
     object lType: TLabel
       Left = 259
@@ -106,6 +107,7 @@ object DialogBox: TDialogBox
       Caption = 'Value'
       ParentColor = False
       Visible = False
+      WordWrap = True
     end
     object lProp1: TLabel
       Left = 0
@@ -116,6 +118,7 @@ object DialogBox: TDialogBox
       Caption = 'Prop1'
       ParentColor = False
       Visible = False
+      WordWrap = True
     end
     object lValue1: TLabel
       Left = 259
@@ -125,6 +128,7 @@ object DialogBox: TDialogBox
       Caption = 'Value1'
       ParentColor = False
       Visible = False
+      WordWrap = True
     end
     object lProp2: TLabel
       Left = 0
@@ -135,6 +139,7 @@ object DialogBox: TDialogBox
       Caption = 'Prop2'
       ParentColor = False
       Visible = False
+      WordWrap = True
     end
     object lValue2: TLabel
       Left = 259
@@ -144,6 +149,7 @@ object DialogBox: TDialogBox
       Caption = 'Value2'
       ParentColor = False
       Visible = False
+      WordWrap = True
     end
     object lProp3: TLabel
       Left = 0
@@ -154,6 +160,7 @@ object DialogBox: TDialogBox
       Caption = 'Prop3'
       ParentColor = False
       Visible = False
+      WordWrap = True
     end
     object lValue3: TLabel
       Left = 259
@@ -163,6 +170,7 @@ object DialogBox: TDialogBox
       Caption = 'Value3'
       ParentColor = False
       Visible = False
+      WordWrap = True
     end
     object lProp4: TLabel
       Left = 0
@@ -173,6 +181,7 @@ object DialogBox: TDialogBox
       Caption = 'Prop4'
       ParentColor = False
       Visible = False
+      WordWrap = True
     end
     object lValue4: TLabel
       Left = 259
@@ -182,6 +191,7 @@ object DialogBox: TDialogBox
       Caption = 'Value4'
       ParentColor = False
       Visible = False
+      WordWrap = True
     end
     object lProp5: TLabel
       Left = 0
@@ -192,6 +202,7 @@ object DialogBox: TDialogBox
       Caption = 'Prop5'
       ParentColor = False
       Visible = False
+      WordWrap = True
     end
     object lValue5: TLabel
       Left = 259
@@ -201,6 +212,7 @@ object DialogBox: TDialogBox
       Caption = 'Value5'
       ParentColor = False
       Visible = False
+      WordWrap = True
     end
     object lProp6: TLabel
       Left = 0
@@ -211,6 +223,7 @@ object DialogBox: TDialogBox
       Caption = 'Prop6'
       ParentColor = False
       Visible = False
+      WordWrap = True
     end
     object lValue6: TLabel
       Left = 259
@@ -220,6 +233,7 @@ object DialogBox: TDialogBox
       Caption = 'Value6'
       ParentColor = False
       Visible = False
+      WordWrap = True
     end
     object lProp7: TLabel
       Left = 0
@@ -230,6 +244,7 @@ object DialogBox: TDialogBox
       Caption = 'Prop7'
       ParentColor = False
       Visible = False
+      WordWrap = True
     end
     object lValue7: TLabel
       Left = 259
@@ -239,6 +254,7 @@ object DialogBox: TDialogBox
       Caption = 'Value7'
       ParentColor = False
       Visible = False
+      WordWrap = True
     end
     object lProp8: TLabel
       Left = 0
@@ -249,6 +265,7 @@ object DialogBox: TDialogBox
       Caption = 'Prop8'
       ParentColor = False
       Visible = False
+      WordWrap = True
     end
     object lValue8: TLabel
       Left = 259
@@ -258,6 +275,7 @@ object DialogBox: TDialogBox
       Caption = 'Value8'
       ParentColor = False
       Visible = False
+      WordWrap = True
     end
     object lProp9: TLabel
       Left = 0
@@ -268,6 +286,7 @@ object DialogBox: TDialogBox
       Caption = 'Prop9'
       ParentColor = False
       Visible = False
+      WordWrap = True
     end
     object lValue9: TLabel
       Left = 259
@@ -277,6 +296,7 @@ object DialogBox: TDialogBox
       Caption = 'Value9'
       ParentColor = False
       Visible = False
+      WordWrap = True
     end
     object lProp10: TLabel
       Left = 0
@@ -287,6 +307,7 @@ object DialogBox: TDialogBox
       Caption = 'Prop10'
       ParentColor = False
       Visible = False
+      WordWrap = True
     end
     object lValue10: TLabel
       Left = 259
@@ -296,6 +317,7 @@ object DialogBox: TDialogBox
       Caption = 'Value10'
       ParentColor = False
       Visible = False
+      WordWrap = True
     end
   end
   object btnClose: TBitBtn
