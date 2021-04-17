@@ -103,7 +103,7 @@ def vfs_properties(filename):
 			if 'publishedTime' in element and not element['publishedTime'] is None:
 				print('Published Time\t' + element['publishedTime'])
 			if 'link' in element and not element['link'] is None:
-				print('Link\t' + element['link'])
+				print('URL\t' + element['link'])
 			if 'viewCount' in element and not element['viewCount'] is None:
 				if 'viewCount' in element and not element['viewCount']['short'] is None:
 					print('Views\t' + element['viewCount']['short'])

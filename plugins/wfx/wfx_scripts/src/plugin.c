@@ -421,8 +421,27 @@ static void FillProps(uintptr_t pDlg)
 			if (g_strv_length(res) == 2)
 			{
 				if (g_ascii_strcasecmp(res[0], "filetype") == 0)
-				{
 					gDialogApi->SendDlgMsg(pDlg, "lType", DM_SETTEXT, (intptr_t)g_strstrip(res[1]), 0);
+				else if (g_ascii_strcasecmp(res[0], "content_type") == 0)
+				{
+					gchar *description = g_content_type_get_description(g_strstrip(res[1]));
+
+					if (description)
+						gDialogApi->SendDlgMsg(pDlg, "lType", DM_SETTEXT, (intptr_t)description, 0);
+
+					g_free(description);
+				}
+				else if (g_ascii_strcasecmp(res[0], "path") == 0)
+				{
+					gDialogApi->SendDlgMsg(pDlg, "ePath", DM_SETTEXT, (intptr_t)g_strstrip(res[1]), 0);
+					gDialogApi->SendDlgMsg(pDlg, "lPath", DM_SHOWITEM, 1, 0);
+					gDialogApi->SendDlgMsg(pDlg, "ePath", DM_SHOWITEM, 1, 0);
+				}
+				else if (g_ascii_strcasecmp(res[0], "url") == 0)
+				{
+					gDialogApi->SendDlgMsg(pDlg, "lURL", DM_SETTEXT, (intptr_t)g_strstrip(res[1]), 0);
+					gDialogApi->SendDlgMsg(pDlg, "lURLLabel", DM_SHOWITEM, 1, 0);
+					gDialogApi->SendDlgMsg(pDlg, "lURL", DM_SHOWITEM, 1, 0);
 				}
 				else
 				{
@@ -583,7 +602,16 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 		}
 
 		break;
+	case DN_CLICK:
+		if (strcmp(DlgItemName, "lURL") == 0)
+		{
+			char *url = (char*)gDialogApi->SendDlgMsg(pDlg, DlgItemName, DM_GETTEXT, 0, 0);
+			gchar *command = g_strdup_printf("xdg-open %s", url);
+			system(command);
+			g_free(command);
+		}
 
+		break;
 	case DN_CHANGE:
 		if (strcmp(DlgItemName, "ckNoise") == 0)
 		{

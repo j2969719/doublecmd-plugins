@@ -79,6 +79,7 @@ function fs_properties(file)
     if realname ~= nil then
         os.execute('dbus-send  --dest=org.freedesktop.FileManager1 --type=method_call /org/freedesktop/FileManager1 org.freedesktop.FileManager1.ShowItemProperties array:string:"file://' .. realname:gsub('"', '\\"') .. '", string:"0"')
     else
+        print('content_type\tinode/directory')
         local fields = {
             "Description",
             "Architecture",
