@@ -20,6 +20,22 @@ def print_progress(stream = None, chunk = None, remaining = None):
 	percent = ('{0:.0f}').format(current*100)
 	print(percent)
 
+def prepare_filename(res_array, title):
+	extra = ''
+	index = 1
+	while True:
+		is_found = False
+		candidate = helpers.safe_filename(title) + extra + '.mp4'
+		for element in res_array:
+			if 'filename' in element and element['filename'] == candidate:
+				is_found = True
+		if is_found == True:
+			extra = ' (' + str(index) + ')'
+			index += 1
+		else:
+			break
+	return candidate
+
 def vfs_init():
 	# print('Fs_GetSupportedField_Needed') # nah, its slow anyway
 	tf = tempfile.NamedTemporaryFile(suffix='_youtube.json', delete=False)
@@ -43,11 +59,11 @@ def vfs_list(path):
 		with open(os.environ[envvar]) as f:
 			res_array = json.loads(f.read())
 			f.close()
-	except FileNotFoundError:
+	except:
 		sys.exit(1)
 	for element in res_array:
 		if 'filename' not in element:
-			element['filename'] = helpers.safe_filename(element['title']) + '.mp4'
+			element['filename'] = prepare_filename(res_array, element['title'])
 		print('-r--r--r--\t0000-00-00 00:00:00 \t404\t' + element['filename'])
 	try:
 		with open(os.environ[envvar], 'w') as f:
@@ -70,7 +86,7 @@ def vfs_getfile(src, dst):
 			stream = yt.streams.filter(fps=video_fps, res=video_res, mime_type='video/mp4').first()
 			if stream is None:
 				stream = yt.streams.first()
-			stream.download(output_path=os.path.dirname(dst))
+			stream.download(output_path=os.path.dirname(dst), filename=element['filename'][:-4])
 			sys.exit()
 	sys.exit(1)
 

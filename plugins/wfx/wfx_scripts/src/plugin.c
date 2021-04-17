@@ -1060,6 +1060,7 @@ int DCPCALL FsFindClose(HANDLE Hdl)
 
 int DCPCALL FsGetFile(char* RemoteName, char* LocalName, int CopyFlags, RemoteInfoStruct * ri)
 {
+	struct stat buf;
 	int result = FS_FILE_OK;
 
 	if (gProgressProc(gPluginNr, RemoteName, LocalName, 0))
@@ -1101,7 +1102,7 @@ int DCPCALL FsGetFile(char* RemoteName, char* LocalName, int CopyFlags, RemoteIn
 
 	gProgressProc(gPluginNr, RemoteName, LocalName, 100);
 
-	if (result == FS_FILE_OK && !g_file_test(LocalName, G_FILE_TEST_EXISTS))
+	if (result == FS_FILE_OK && lstat(LocalName, &buf) != 0)
 		return FS_FILE_WRITEERROR;
 
 	return result;
