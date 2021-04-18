@@ -1,5 +1,5 @@
 -- msofficeoldwdx.lua
--- 2021.04.04
+-- 2021.04.18
 --[[
 Getting some information from Microsoft Office 97-2003 files: *.doc, *.xls, *.ppt.
 
@@ -79,20 +79,20 @@ end
 function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
   if FieldIndex >= #fields then return nil end
   if filename ~= FileName then
-    local at = SysUtils.FileGetAttr(FileName)
-    if (at < 0) or (math.floor(at / 0x00000010) % 2 ~= 0) or (math.floor(at / 0x00000400) % 2 ~= 0) then return nil end
     local e = string.lower(SysUtils.ExtractFileExt(FileName))
     if (e ~= '.doc') and (e ~= '.xls') and (e ~= '.ppt') then return nil end
-    if props == '' then
+    local at = SysUtils.FileGetAttr(FileName)
+    if at < 0 then return nil end
+    if math.floor(at / 0x00000010) % 2 ~= 0 then return nil end
+   if props == '' then
       for i = 1, #fields do
         props = props .. fields[i][2] .. ' '
       end
-      props = props .. '2>&1'
     end
     if toff == nil then toff = GetTimeOffset() end
     local c = 1
     local n
-    local h = io.popen('gsf props "' .. FileName .. '" ' .. props)
+    local h = io.popen('gsf props "' .. FileName .. '" ' .. props .. '2>&1')
     if h == nil then return nil end
     for l in h:lines() do
       n = string.find(l, '=', 1, true)

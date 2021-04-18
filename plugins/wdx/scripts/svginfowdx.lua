@@ -1,5 +1,5 @@
 -- svginfowdx.lua (cross-platform)
--- 2020.11.26
+-- 2021.04.18
 --[[
 Getting some information from SVG files.
 Similar to SVGInfo by Progman13 (https://totalcmd.net/plugring/svginfo.html).
@@ -58,8 +58,6 @@ end
 function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
   if FieldIndex >= #fields then return nil end
   if filename ~= FileName then
-    local at = SysUtils.FileGetAttr(FileName)
-    if (at < 0) or (math.floor(at / 0x00000010) % 2 ~= 0) then return nil end
     local e = string.lower(SysUtils.ExtractFileExt(FileName))
     local buf
     if e == '.svg' then
@@ -69,6 +67,8 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
     else
       return nil
     end
+    local at = SysUtils.FileGetAttr(FileName)
+    if (at < 0) or (math.floor(at / 0x00000010) % 2 ~= 0) then return nil end
     local h = io.open(FileName, 'rb')
     if h == nil then return nil end
     local t = h:read(buf)

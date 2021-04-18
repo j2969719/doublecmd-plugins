@@ -1,5 +1,5 @@
 -- msginfowdx.lua (cross-platform)
--- 2020.08.23
+-- 2021.04.18
 --[[
 Getting info from headers of saved email messages.
 Supported formats: *.eml, *.msg and MH format (Sylpheed, Claws Mail and other).
@@ -71,10 +71,10 @@ end
 function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
   if FieldIndex > 21 then return nil end
   if filename ~= FileName then
-    local at = SysUtils.FileGetAttr(FileName)
-    if (at < 0) or (math.floor(at / 0x00000010) % 2 ~= 0) then return nil end
     local e = string.lower(SysUtils.ExtractFileExt(FileName))
     if (e ~= '.eml') and (e ~= '.msg') and (e ~= '') then return nil end
+    local at = SysUtils.FileGetAttr(FileName)
+    if (at < 0) or (math.floor(at / 0x00000010) % 2 ~= 0) then return nil end
     local h = io.open(FileName, 'r')
     if h == nil then return nil end
     local c = 1

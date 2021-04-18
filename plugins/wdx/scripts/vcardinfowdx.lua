@@ -1,5 +1,5 @@
 -- vcardinfowdx.lua (cross-platform)
--- 2020.11.02
+-- 2021.04.18
 --[[
 vCard Format Specification 2.1, 3.0, 4.0
 Some details: https://en.wikipedia.org/wiki/VCard
@@ -80,11 +80,10 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
   if FieldIndex > 33 then return nil end
   local n1, s
   if filename ~= FileName then
+    local e = string.lower(SysUtils.ExtractFileExt(FileName))
+    if (e ~= '.vcf') and (e ~= '.vcard') then return nil end
     local at = SysUtils.FileGetAttr(FileName)
     if (at < 0) or (math.floor(at / 0x00000010) % 2 ~= 0) then return nil end
-    local e = string.lower(SysUtils.ExtractFileExt(FileName))
-    -- e = string.lower(string.match(FileName, '^.+(%..+)$'))
-    if (e ~= '.vcf') and (e ~= '.vcard') then return nil end
     local h = io.open(FileName, 'r')
     if h == nil then return nil end
     local c, i = 1, 1

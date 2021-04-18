@@ -1,5 +1,5 @@
 -- poheaderwdx.lua (cross-platform)
--- 2021.04.02
+-- 2021.04.18
 --[[
 Getting some information from PO-files (gettext):
   PO Translation Files and POT Translation Templates.
@@ -48,10 +48,10 @@ end
 function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
   if FieldIndex >= #fields then return nil end
   if filename ~= FileName then
-    local at = SysUtils.FileGetAttr(FileName)
-    if (at < 0) or (math.floor(at / 0x00000010) % 2 ~= 0) or (math.floor(at / 0x00000400) % 2 ~= 0) then return nil end
     local e = string.lower(SysUtils.ExtractFileExt(FileName))
     if (e ~= '.po') and (e ~= '.pot') then return nil end
+    local at = SysUtils.FileGetAttr(FileName)
+    if (at < 0) or (math.floor(at / 0x00000010) % 2 ~= 0) or (math.floor(at / 0x00000400) % 2 ~= 0) then return nil end
     local h = io.open(FileName, 'r')
     if h == nil then return nil end
     local t, nb, ne

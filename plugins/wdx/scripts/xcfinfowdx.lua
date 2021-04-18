@@ -1,5 +1,5 @@
 -- xcfinfowdx.lua (cross-platform)
--- 2021.04.02
+-- 2021.04.18
 --[[
 Getting some info from XCF files (GIMP native image format).
   Documentation: https://gitlab.gnome.org/GNOME/gimp/-/blob/master/devel-docs/xcf.txt
@@ -93,10 +93,10 @@ end
 function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
   if FieldIndex >= #fields then return nil end
   if filename ~= FileName then
-    local at = SysUtils.FileGetAttr(FileName)
-    if (at < 0) or (math.floor(at / 0x00000010) % 2 ~= 0) then return nil end
     local e = SysUtils.ExtractFileExt(FileName)
     if e ~= '.xcf' then return nil end
+    local at = SysUtils.FileGetAttr(FileName)
+    if (at < 0) or (math.floor(at / 0x00000010) % 2 ~= 0) then return nil end
     for i = 1, #fields do ar[i] = '' end
     if GetData(FileName) == nil then return nil end
     filename = FileName

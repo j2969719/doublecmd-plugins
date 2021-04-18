@@ -1,5 +1,5 @@
 -- icalendarwdx.lua (cross-platform)
--- 2020.08.23
+-- 2021.04.18
 --[[
 iCalendar 2.0
 vCalendar 1.0
@@ -48,10 +48,10 @@ end
 function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
   if FieldIndex >= #fields then return nil end
   if filename ~= FileName then
-    local at = SysUtils.FileGetAttr(FileName)
-    if (at < 0) or (math.floor(at / 0x00000010) % 2 ~= 0) then return nil end
     local e = string.lower(SysUtils.ExtractFileExt(FileName))
     if (e ~= '.ics') and (e ~= '.ifb') and (e ~= '.vcs') then return nil end
+    local at = SysUtils.FileGetAttr(FileName)
+    if (at < 0) or (math.floor(at / 0x00000010) % 2 ~= 0) then return nil end
     local h = io.open(FileName, 'r')
     if h == nil then return nil end
     for j = 1, #ar do ar[j] = nil end

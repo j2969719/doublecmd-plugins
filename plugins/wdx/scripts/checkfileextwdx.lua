@@ -1,5 +1,5 @@
 -- checkfileextwdx.lua (cross-platform)
--- 2021.04.02
+-- 2021.04.18
 --[[
 Checking that the file extension matches the file type (by the file signatures ("magic numbers"))
 and returns some additional info.
@@ -61,7 +61,6 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
     if at < 0 then return nil end
     if math.floor(at / 0x00000004) % 2 ~= 0 then return nil end
     if math.floor(at / 0x00000010) % 2 ~= 0 then return nil end
-    if math.floor(at / 0x00000400) % 2 ~= 0 then return nil end
     ar = {'', '', '', '', false}
     local h = io.open(FileName, 'rb')
     if h == nil then return nil end

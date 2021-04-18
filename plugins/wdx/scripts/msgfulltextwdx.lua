@@ -1,5 +1,5 @@
 -- msgfulltextwdx.lua (cross-platform)
--- 2020.08.23
+-- 2021.04.18
 --[[
 For Find files with plugins only!
 
@@ -48,10 +48,10 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
   if FieldIndex ~= 0 then return nil end
   if UnitIndex ~= 0 then return nil end
   if filename ~= FileName then
-    local at = SysUtils.FileGetAttr(FileName)
-    if (at < 0) or (math.floor(at / 0x00000010) % 2 ~= 0) then return nil end
     local e = str_lower(SysUtils.ExtractFileExt(FileName))
     if (e ~= '.eml') and (e ~= '.msg') and (e ~= '') then return nil end
+    local at = SysUtils.FileGetAttr(FileName)
+    if (at < 0) or (math.floor(at / 0x00000010) % 2 ~= 0) then return nil end
     local h = io.open(FileName, 'r')
     if h == nil then return nil end
     local c, hd, hc, bc = 0, 0, 1, 1

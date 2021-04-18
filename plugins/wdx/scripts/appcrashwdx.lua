@@ -1,5 +1,5 @@
 -- appcrashwdx.lua (cross-platform)
--- 2020.09.11
+-- 2021.04.18
 --[[
 Getting info from CRASH-files on Debian/Ubuntu and Debian/Ubuntu-based distributions (/var/crash/*.crash).
 Only app crash files, not core dumps!
@@ -47,10 +47,10 @@ end
 function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
   if FieldIndex >= #fields then return nil end
   if filename ~= FileName then
-    local at = SysUtils.FileGetAttr(FileName)
-    if (at < 0) or (math.floor(at / 0x00000010) % 2 ~= 0) then return nil end
     local e = string.lower(SysUtils.ExtractFileExt(FileName))
     if e ~= '.crash' then return nil end
+    local at = SysUtils.FileGetAttr(FileName)
+    if (at < 0) or (math.floor(at / 0x00000010) % 2 ~= 0) then return nil end
     local h = io.open(FileName, 'r')
     if h == nil then return nil end
     local o

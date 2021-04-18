@@ -1,5 +1,5 @@
 -- icowdx.lua (cross-platform)
--- 2021.04.04
+-- 2021.04.18
 --[[
 Getting some info from Windows icons (ICO images):
 - the number of images;
@@ -38,9 +38,7 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
     if t ~= '.ico' then return nil end
     local at = SysUtils.FileGetAttr(FileName)
     if at < 0 then return nil end
-    if math.floor(at / 0x00000004) % 2 ~= 0 then return nil end
     if math.floor(at / 0x00000010) % 2 ~= 0 then return nil end
-    if math.floor(at / 0x00000400) % 2 ~= 0 then return nil end
     local h = io.open(FileName, 'rb')
     if h == nil then return nil end
     local d = h:read(4)

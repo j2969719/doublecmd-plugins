@@ -1,5 +1,5 @@
 -- elfheaderinfo.lua (cross-platform)
--- 2021.04.02
+-- 2021.04.18
 --
 -- Some info from ELF files.
 -- Fields:
@@ -263,7 +263,6 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
   if at < 0 then return nil end
   if math.floor(at / 0x00000004) % 2 ~= 0 then return nil end
   if math.floor(at / 0x00000010) % 2 ~= 0 then return nil end
-  if math.floor(at / 0x00000400) % 2 ~= 0 then return nil end
   local h = io.open(FileName, 'rb')
   if h == nil then return nil end
   local fc = h:read(62)

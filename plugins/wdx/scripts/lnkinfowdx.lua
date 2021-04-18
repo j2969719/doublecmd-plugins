@@ -1,5 +1,5 @@
 -- lnkinfowdx.lua
--- 2021.04.02
+-- 2021.04.18
 --[[
 Getting some information from Windows shell link (shortcut) file.
 
@@ -36,34 +36,20 @@ end
 function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
   if FieldIndex >= #fields then return nil end
   if filename ~= FileName then
+    local e = SysUtils.ExtractFileExt(FileName)
+    if e ~= '.lnk' then return nil end
     local at = SysUtils.FileGetAttr(FileName)
     if at < 0 then return nil end
-    if math.floor(at / 0x00000004) % 2 ~= 0 then return nil end
     if math.floor(at / 0x00000010) % 2 ~= 0 then return nil end
-    if math.floor(at / 0x00000400) % 2 ~= 0 then return nil end
-    local h = io.open(FileName, 'rb')
+    h = io.popen('lnkinfo "' .. FileName:gsub('"', '\\"') .. '"')
     if h == nil then return nil end
-    local d = h:read(20)
+    out = h:read('*a')
     h:close()
-    if (BinToNumBE(d, 1, 4) == 0x4c000000) and (BinToNumBE(d, 5, 8) == 0x01140200) and (BinToNumBE(d, 9, 12) == 0x00000000) and (BinToNumBE(d, 13, 16) == 0xc0000000) and (BinToNumBE(d, 17, 20) == 0x00000046) then
-      h = io.popen('lnkinfo "' .. FileName:gsub('"', '\\"') .. '"')
-      out = h:read('*a')
-      h:close()
-    else
-      return nil
-    end
+    if out == nil then return nil end
     filename = FileName
   end
-  if (out ~= nil) and (fields[FieldIndex + 1] ~= nil) then
+  if fields[FieldIndex + 1] ~= nil then
     return string.match(out, '[\t ]' .. fields[FieldIndex + 1] .. '[\t ]+:[\t ]+([^\r\n]+)')
   end
   return nil
-end
-
-function BinToNumBE(d, n1, n2)
-  local r = ''
-  for i = n1, n2 do
-    r = r .. string.format('%02x', string.byte(d, i))
-  end
-  return tonumber('0x' .. r)
 end

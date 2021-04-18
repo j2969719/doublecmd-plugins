@@ -1,5 +1,5 @@
 -- djvuwdx.lua
--- 2020.10.30
+-- 2021.04.18
 --[[
 Getting some information from DjVu files and searching text
 
@@ -17,34 +17,34 @@ Script uses djvused from DjVuLibre http://djvu.sourceforge.net/
 ]]
 
 local fields = {
- {"Pages",     "", 1},
- {"Chunk(s)",  "bookmarks|hidden text|page annotation", 6},
- {"Metadata",  true, 8},
- {"Search in", "hidden text|bookmarks|metadata", 9}
+{"Pages",     "", 1},
+{"Chunk(s)",  "bookmarks|hidden text|page annotation", 6},
+{"Metadata",  true, 8},
+{"Search in", "hidden text|bookmarks|metadata", 9}
 }
 local meta = {
- {"author",       "Author"},
- {"title",        "Title"},
- {"booktitle",    "BookTitle"},
- {"edition",      "Edition"},
- {"subject",      "Subject"},
- {"annote",       "Annotation"},
- {"keywords",     "Keywords"},
- {"note",         "Note"},
- {"journal",      "Journal"},
- {"number",       "Number"},
- {"volume",       "Volume"},
- {"chapter",      "Chapter"},
- {"series",       "Series"},
- {"year",         "Year"},
- {"institution",  "Institution"},
- {"organization", "Organization"},
- {"school",       "School"},
- {"publisher",    "Publisher"},
- {"creator",      "Creator"},
- {"producer",     "Producer"},
- {"creationdate", "Creation date"},
- {"moddate",      "Modification date"}
+{"author",       "Author"},
+{"title",        "Title"},
+{"booktitle",    "BookTitle"},
+{"edition",      "Edition"},
+{"subject",      "Subject"},
+{"annote",       "Annotation"},
+{"keywords",     "Keywords"},
+{"note",         "Note"},
+{"journal",      "Journal"},
+{"number",       "Number"},
+{"volume",       "Volume"},
+{"chapter",      "Chapter"},
+{"series",       "Series"},
+{"year",         "Year"},
+{"institution",  "Institution"},
+{"organization", "Organization"},
+{"school",       "School"},
+{"publisher",    "Publisher"},
+{"creator",      "Creator"},
+{"producer",     "Producer"},
+{"creationdate", "Creation date"},
+{"moddate",      "Modification date"}
 }
 local md
 local filename = ""
@@ -71,10 +71,10 @@ end
 
 function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
   if FieldIndex >= #fields then return nil end
-  local at = SysUtils.FileGetAttr(FileName)
-  if (at < 0) or (math.floor(at / 0x00000010) % 2 ~= 0) then return nil end
   local e = string.lower(SysUtils.ExtractFileExt(FileName))
   if (e ~= '.djvu') and (e ~= '.djv') then return nil end
+  local at = SysUtils.FileGetAttr(FileName)
+  if (at < 0) or (math.floor(at / 0x00000010) % 2 ~= 0) then return nil end
   local h = io.open(FileName, 'rb')
   if h == nil then return nil end
   local bs = h:read(15)
