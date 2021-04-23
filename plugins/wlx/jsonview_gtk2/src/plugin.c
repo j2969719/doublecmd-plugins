@@ -133,6 +133,15 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 		return NULL;
 	}
 
+	JsonNode *root = json_parser_get_root(parser);
+	JsonNodeType root_type = json_node_get_node_type(root);
+
+	if (root_type != JSON_NODE_OBJECT && root_type != JSON_NODE_ARRAY)
+	{
+		g_object_unref(parser);
+		return NULL;
+	}
+
 	data = g_new0(CustomData, 1);
 	data->store = gtk_tree_store_new(N_COLS, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING);
 	gtk_tree_store_append(data->store, &data->child, NULL);
@@ -146,7 +155,7 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	else
 		gtk_tree_store_set(data->store, &data->child, KEY, _("Root"), -1);
 
-	check_value(json_parser_get_root(parser), data, data->child);
+	check_value(root, data, data->child);
 
 	g_object_unref(parser);
 
