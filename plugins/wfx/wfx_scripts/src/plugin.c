@@ -1202,8 +1202,14 @@ BOOL DCPCALL FsMkDir(char* Path)
 			return FS_FILE_NOTSUPPORTED;
 		}
 
+		gchar *output = NULL;
 		gchar *script = ExtractScriptFromPath(Path);
-		result = ExecuteScript(script, VERB_MKDIR, newpath, NULL, NULL);
+		result = ExecuteScript(script, VERB_MKDIR, newpath, NULL, &output);
+
+		if (output && output[0] != '\0')
+			ParseOpts(script, output);
+
+		g_free(output);
 		g_free(script);
 		g_free(newpath);
 	}
@@ -1555,48 +1561,49 @@ void DCPCALL FsStatusInfo(char* RemoteDir, int InfoStartEnd, int InfoOperation)
 		return;
 	}
 
+	gchar *output = NULL;
 	gchar *path = StripScriptFromPath(RemoteDir);
 
 	switch (InfoOperation)
 	{
 	case FS_STATUS_OP_LIST:
-		ExecuteScript(script, VERB_STATUS, (InfoStartEnd == FS_STATUS_START) ? "list start" : "list end", path, NULL);
+		ExecuteScript(script, VERB_STATUS, (InfoStartEnd == FS_STATUS_START) ? "list start" : "list end", path, &output);
 		break;
 
 	case FS_STATUS_OP_GET_SINGLE:
-		ExecuteScript(script, VERB_STATUS, (InfoStartEnd == FS_STATUS_START) ? "get_single start" : "get_single end", path, NULL);
+		ExecuteScript(script, VERB_STATUS, (InfoStartEnd == FS_STATUS_START) ? "get_single start" : "get_single end", path, &output);
 		break;
 
 	case FS_STATUS_OP_GET_MULTI:
-		ExecuteScript(script, VERB_STATUS, (InfoStartEnd == FS_STATUS_START) ? "get_multi start" : "get_multi end", path, NULL);
+		ExecuteScript(script, VERB_STATUS, (InfoStartEnd == FS_STATUS_START) ? "get_multi start" : "get_multi end", path, &output);
 		break;
 
 	case FS_STATUS_OP_PUT_SINGLE:
-		ExecuteScript(script, VERB_STATUS, (InfoStartEnd == FS_STATUS_START) ? "put_single start" : "put_single end", path, NULL);
+		ExecuteScript(script, VERB_STATUS, (InfoStartEnd == FS_STATUS_START) ? "put_single start" : "put_single end", path, &output);
 		break;
 
 	case FS_STATUS_OP_PUT_MULTI:
-		ExecuteScript(script, VERB_STATUS, (InfoStartEnd == FS_STATUS_START) ? "put_multi start" : "put_multi end", path, NULL);
+		ExecuteScript(script, VERB_STATUS, (InfoStartEnd == FS_STATUS_START) ? "put_multi start" : "put_multi end", path, &output);
 		break;
 
 	case FS_STATUS_OP_RENMOV_SINGLE:
-		ExecuteScript(script, VERB_STATUS, (InfoStartEnd == FS_STATUS_START) ? "renmov_single start" : "renmov_single end", path, NULL);
+		ExecuteScript(script, VERB_STATUS, (InfoStartEnd == FS_STATUS_START) ? "renmov_single start" : "renmov_single end", path, &output);
 		break;
 
 	case FS_STATUS_OP_RENMOV_MULTI:
-		ExecuteScript(script, VERB_STATUS, (InfoStartEnd == FS_STATUS_START) ? "renmov_multi start" : "renmov_multi end", path, NULL);
+		ExecuteScript(script, VERB_STATUS, (InfoStartEnd == FS_STATUS_START) ? "renmov_multi start" : "renmov_multi end", path, &output);
 		break;
 
 	case FS_STATUS_OP_DELETE:
-		ExecuteScript(script, VERB_STATUS, (InfoStartEnd == FS_STATUS_START) ? "delete start" : "delete end", path, NULL);
+		ExecuteScript(script, VERB_STATUS, (InfoStartEnd == FS_STATUS_START) ? "delete start" : "delete end", path, &output);
 		break;
 
 	case FS_STATUS_OP_ATTRIB:
-		ExecuteScript(script, VERB_STATUS, (InfoStartEnd == FS_STATUS_START) ? "attrib start" : "attrib end", path, NULL);
+		ExecuteScript(script, VERB_STATUS, (InfoStartEnd == FS_STATUS_START) ? "attrib start" : "attrib end", path, &output);
 		break;
 
 	case FS_STATUS_OP_MKDIR:
-		ExecuteScript(script, VERB_STATUS, (InfoStartEnd == FS_STATUS_START) ? "mkdir start" : "mkdir end", path, NULL);
+		ExecuteScript(script, VERB_STATUS, (InfoStartEnd == FS_STATUS_START) ? "mkdir start" : "mkdir end", path, &output);
 		break;
 
 	case FS_STATUS_OP_EXEC:
@@ -1605,38 +1612,42 @@ void DCPCALL FsStatusInfo(char* RemoteDir, int InfoStartEnd, int InfoOperation)
 		else if (g_strcmp0(g_exec_start, g_script) != 0)
 			return;
 
-		ExecuteScript(script, VERB_STATUS, (InfoStartEnd == FS_STATUS_START) ? "exec start" : "exec end", path, NULL);
+		ExecuteScript(script, VERB_STATUS, (InfoStartEnd == FS_STATUS_START) ? "exec start" : "exec end", path, &output);
 		break;
 
 	case FS_STATUS_OP_CALCSIZE:
-		ExecuteScript(script, VERB_STATUS, (InfoStartEnd == FS_STATUS_START) ? "calcsize start" : "calcsize end", path, NULL);
+		ExecuteScript(script, VERB_STATUS, (InfoStartEnd == FS_STATUS_START) ? "calcsize start" : "calcsize end", path, &output);
 		break;
 
 	case FS_STATUS_OP_SEARCH:
-		ExecuteScript(script, VERB_STATUS, (InfoStartEnd == FS_STATUS_START) ? "search start" : "search end", path, NULL);
+		ExecuteScript(script, VERB_STATUS, (InfoStartEnd == FS_STATUS_START) ? "search start" : "search end", path, &output);
 		break;
 
 	case FS_STATUS_OP_SEARCH_TEXT:
-		ExecuteScript(script, VERB_STATUS, (InfoStartEnd == FS_STATUS_START) ? "search_text start" : "search_text end", path, NULL);
+		ExecuteScript(script, VERB_STATUS, (InfoStartEnd == FS_STATUS_START) ? "search_text start" : "search_text end", path, &output);
 		break;
 
 	case FS_STATUS_OP_SYNC_SEARCH:
-		ExecuteScript(script, VERB_STATUS, (InfoStartEnd == FS_STATUS_START) ? "sync_search start" : "sync_search end", path, NULL);
+		ExecuteScript(script, VERB_STATUS, (InfoStartEnd == FS_STATUS_START) ? "sync_search start" : "sync_search end", path, &output);
 		break;
 
 	case FS_STATUS_OP_SYNC_GET:
-		ExecuteScript(script, VERB_STATUS, (InfoStartEnd == FS_STATUS_START) ? "sync_get start" : "sync_get end", path, NULL);
+		ExecuteScript(script, VERB_STATUS, (InfoStartEnd == FS_STATUS_START) ? "sync_get start" : "sync_get end", path, &output);
 		break;
 
 	case FS_STATUS_OP_SYNC_PUT:
-		ExecuteScript(script, VERB_STATUS, (InfoStartEnd == FS_STATUS_START) ? "sync_put start" : "sync_put end", path, NULL);
+		ExecuteScript(script, VERB_STATUS, (InfoStartEnd == FS_STATUS_START) ? "sync_put start" : "sync_put end", path, &output);
 		break;
 
 	case FS_STATUS_OP_SYNC_DELETE:
-		ExecuteScript(script, VERB_STATUS, (InfoStartEnd == FS_STATUS_START) ? "sync_delete start" : "sync_delete end", path, NULL);
+		ExecuteScript(script, VERB_STATUS, (InfoStartEnd == FS_STATUS_START) ? "sync_delete start" : "sync_delete end", path, &output);
 		break;
 	}
 
+	if (output && output[0] != '\0')
+		ParseOpts(script, output);
+
+	g_free(output);
 	g_free(script);
 	g_free(path);
 }

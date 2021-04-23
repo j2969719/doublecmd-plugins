@@ -64,7 +64,8 @@ def vfs_list(path):
 	for element in res_array:
 		if 'filename' not in element:
 			element['filename'] = prepare_filename(res_array, element['title'])
-		print('-r--r--r--\t0000-00-00 00:00:00 \t404\t' + element['filename'])
+		if not element['duration'] is None:
+			print('-r--r--r--\t0000-00-00 00:00:00 \t404\t' + element['filename'])
 	try:
 		with open(os.environ[envvar], 'w') as f:
 			json.dump(res_array, f)

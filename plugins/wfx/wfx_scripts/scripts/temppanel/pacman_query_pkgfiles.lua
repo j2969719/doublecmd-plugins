@@ -57,7 +57,7 @@ function fs_getlist(path)
                     if attr:sub(1, 1) == 'd' then
                         size = '-'
                     end
-                    print(attr .. '\t' .. os.date("!%Y-%m-%dT%TZ", tonumber(stat_mtime)) .. '\t' .. size .. '\t' .. file)
+                    print(attr .. '\t' .. os.date("!%Y-%m-%dT%TZ", tonumber(mtime)) .. '\t' .. size .. '\t' .. file)
                 end
                 files[file] = true
             end
