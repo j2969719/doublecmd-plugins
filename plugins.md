@@ -321,6 +321,9 @@ View a list of running processes.
 - [tmppanel_crap](plugins/wfx/tmppanel_crap)<br>
 Temporary panel, see FileList description.
 
+- [wfx_scripts](plugins/wfx/wfx_scripts)<br>
+The WFX plugin allows to create some simple virtual file systems by scripting.
+
 
 ---
 <a name="wlxgtk"><h3>WLX plugins (GTK2)</h3></a>
