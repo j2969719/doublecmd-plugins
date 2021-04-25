@@ -119,10 +119,9 @@ static void LogMessage(int PluginNr, int MsgType, char* LogString)
 
 	if (gLogProc && LogString)
 		gLogProc(PluginNr, MsgType, LogString);
-	//else
-	//{
+	else
+	{
 #endif
-
 		if (LogString)
 		{
 			gchar **split = g_strsplit(LogString, "%", -1);
@@ -134,7 +133,7 @@ static void LogMessage(int PluginNr, int MsgType, char* LogString)
 			g_free(escaped);
 		}
 #ifndef  TEMP_PANEL
-	//}
+	}
 #endif
 }
 

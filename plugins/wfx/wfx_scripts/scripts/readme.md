@@ -122,6 +122,8 @@ To update the progress bar, the script must print the integer percentage value l
 
 Creates a virtual directory.
 
+The output to stduot will be processed in the same way as for the **init** command.
+
 ## rmdir
 `SCRIPT rmdir PATH`
 
@@ -218,6 +220,8 @@ List of possible (not all of them are currently supported by Double Commander) `
 - `sync_put end`
 - `sync_delete start`
 - `sync_delete end`
+
+The output to stduot will be processed in the same way as for the **init** command.
 
 ## localname
 `SCRIPT localname FILE`
