@@ -19,6 +19,30 @@ Syntax highlighting for the internal editor, compatible with dark themes.
   </Colors>
 ```
 
+## SyncDirs colors
+```xml
+  <SyncDirs>
+...
+    <Colors>
+      <Left>9097847</Left>
+      <Right>12622689</Right>
+      <Unknown>6383296</Unknown>
+    </Colors>
+  </SyncDirs>
+```
+
+## Differ colors
+```xml
+  <Differ>
+...
+    <Colors>
+      <Added>9097847</Added>
+      <Deleted>6383296</Deleted>
+      <Modified>12622689</Modified>
+    </Colors>
+  </Differ>
+```
+
 ## Native tabstop headers
 ```xml
     <ColumnsView>
