@@ -20,6 +20,10 @@ utils/atril-gtk2/*.zst
 utils/atril-gtk2/*.xz
 utils/atril-gtk2/src/
 utils/atril-gtk2/pkg/
+utils/gtksourceview2/*.bz2
+utils/gtksourceview2/*.zst
+utils/gtksourceview2/src/
+utils/gtksourceview2/pkg/
 utils/freearc/*.zst
 utils/freearc/*.xz
 utils/freearc/src/
