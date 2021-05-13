@@ -1,6 +1,4 @@
 #include <glib.h>
-#include <gio/gio.h>
-#include <gio/gdesktopappinfo.h>
 #include "wdxplugin.h"
 
 #define _detectstring "EXT=\"desktop\""
@@ -18,7 +16,7 @@ FIELD fields[] =
 {
 	{"Name",		ft_string,	  "locale|default"},
 	{"Comment",		ft_string,	  "locale|default"},
-	{"Genetic Name",	ft_string,	  "locale|default"},
+	{"GeneticName",		ft_string,	  "locale|default"},
 	{"Exec",		ft_string,			""},
 	{"TryExec",		ft_string,			""},
 	{"Path",		ft_string,			""},
@@ -27,7 +25,6 @@ FIELD fields[] =
 	{"Categories",		ft_string,			""},
 	{"Hidden",		ft_boolean,			""},
 	{"NoDisplay",		ft_boolean,			""},
-	{"Shown in menus",	ft_boolean,			""},
 	{"Terminal",		ft_boolean,			""},
 	{"StartupNotify",	ft_boolean,			""},
 	{"DBusActivatable",	ft_boolean,			""},
@@ -39,6 +36,7 @@ FIELD fields[] =
 	{"Actions",		ft_string,			""},
 	{"Keywords",		ft_string,	  "locale|default"},
 	{"Implements",		ft_string,			""},
+	{"PrefersNonDefaultGPU", ft_string,			""},
 };
 
 int DCPCALL ContentGetSupportedField(int FieldIndex, char* FieldName, char* Units, int maxlen)
@@ -53,105 +51,72 @@ int DCPCALL ContentGetSupportedField(int FieldIndex, char* FieldName, char* Unit
 
 int DCPCALL ContentGetDetectString(char* DetectString, int maxlen)
 {
-	g_strlcpy(DetectString, _detectstring, maxlen-1);
+	g_strlcpy(DetectString, _detectstring, maxlen - 1);
 	return 0;
 }
 
 int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void* FieldValue, int maxlen, int flags)
 {
-	const gchar *tmp;
-	gboolean vempty = FALSE;
-	GDesktopAppInfo *info = g_desktop_app_info_new_from_filename(FileName);
+	gboolean is_true;
+	GKeyFile *keyfile;
+	GError *err = NULL;
+	gchar *string = NULL;
+	int result = ft_fieldempty;
 
-	if (!info)
-		return ft_fileerror;
+	keyfile = g_key_file_new();
 
-	switch (FieldIndex)
+	if (g_key_file_load_from_file(keyfile, FileName, 0, NULL))
 	{
-	case 8:
-		tmp = g_desktop_app_info_get_categories(info);
+		switch (fields[FieldIndex].type)
+		{
+		case ft_string:
+			if (fields[FieldIndex].unit[0] != '\0' && UnitIndex == 0)
+			{
+				const gchar * const *lang_names = g_get_language_names();
 
-		if (tmp)
-			g_strlcpy((char*)FieldValue, tmp, maxlen - 1);
-		else
-			vempty = TRUE;
+				while (*lang_names)
+				{
+					gchar *key = g_strdup_printf("%s[%s]", fields[FieldIndex].name, *lang_names);
+					string = g_key_file_get_string(keyfile, "Desktop Entry", key, NULL);
+					g_free(key);
 
-		break;
+					if (string)
+						break;
 
-	case 9:
-		if (g_desktop_app_info_get_is_hidden(info))
-			*(int*)FieldValue = 1;
-		else
-			*(int*)FieldValue = 0;
+					*lang_names++;
+				}
 
-		break;
+				if (!string)
+					string = g_key_file_get_string(keyfile, "Desktop Entry", fields[FieldIndex].name, NULL);
+			}
+			else
+				string = g_key_file_get_string(keyfile, "Desktop Entry", fields[FieldIndex].name, NULL);
 
-	case 10:
-		if (g_desktop_app_info_get_nodisplay(info))
-			*(int*)FieldValue = 1;
-		else
-			*(int*)FieldValue = 0;
+			if (string)
+			{
+				g_strlcpy((char*)FieldValue, string, maxlen - 1);
+				result = ft_string;
+			}
 
-		break;
+			g_free(string);
 
-	case 11:
-		if (g_desktop_app_info_get_show_in(info, NULL))
-			*(int*)FieldValue = 1;
-		else
-			*(int*)FieldValue = 0;
+			break;
 
-		break;
+		case ft_boolean:
+			is_true = g_key_file_get_boolean(keyfile, "Desktop Entry", fields[FieldIndex].name, &err);
 
-	case 12:
-		if (!g_desktop_app_info_has_key(info, "Terminal"))
-			return ft_fieldempty;
+			if (err)
+				g_error_free(err);
+			else
+			{
+				*(int*)FieldValue = (int)is_true;
+				result = ft_boolean;
+			}
 
-		if (g_desktop_app_info_get_boolean(info, "Terminal"))
-			*(int*)FieldValue = 1;
-		else
-			*(int*)FieldValue = 0;
-
-		break;
-
-	case 13:
-		if (!g_desktop_app_info_has_key(info, "StartupNotify"))
-			return ft_fieldempty;
-
-		if (g_desktop_app_info_get_boolean(info, "StartupNotify"))
-			*(int*)FieldValue = 1;
-		else
-			*(int*)FieldValue = 0;
-
-		break;
-
-	case 14:
-		if (!g_desktop_app_info_has_key(info, "DBusActivatable"))
-			return ft_fieldempty;
-
-		if (g_desktop_app_info_get_boolean(info, "DBusActivatable"))
-			*(int*)FieldValue = 1;
-		else
-			*(int*)FieldValue = 0;
-
-		break;
-
-	default:
-		if ((fields[FieldIndex].unit == "") || (UnitIndex > 0))
-			tmp = g_desktop_app_info_get_string(info, fields[FieldIndex].name);
-		else
-			tmp = g_desktop_app_info_get_locale_string(info, fields[FieldIndex].name);
-
-		if (tmp)
-			g_strlcpy((char*)FieldValue, tmp, maxlen - 1);
-		else
-			vempty = TRUE;
-
-		break;
+			break;
+		}
 	}
 
-	if (vempty)
-		return ft_fieldempty;
-	else
-		return fields[FieldIndex].type;
+	g_key_file_free(keyfile);
+	return result;
 }
-
