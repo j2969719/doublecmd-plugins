@@ -36,7 +36,7 @@ FIELD fields[] =
 	{"Actions",		ft_string,			""},
 	{"Keywords",		ft_string,	  "locale|default"},
 	{"Implements",		ft_string,			""},
-	{"PrefersNonDefaultGPU", ft_string,			""},
+	{"PrefersNonDefaultGPU",ft_boolean,			""},
 };
 
 int DCPCALL ContentGetSupportedField(int FieldIndex, char* FieldName, char* Units, int maxlen)
