@@ -11,4 +11,4 @@ Displays source code files with syntax highlighting.
 Requires `gtksourceview-2.0` and `enca`.
 
 ## Dependencies
-![arch](https://wiki.archlinux.org/favicon.ico) `pacman -S gtksourceview2 enca`
+![arch](https://wiki.archlinux.org/favicon.ico) [gtksourceview2](../../../utils/gtksourceview2)
