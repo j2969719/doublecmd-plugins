@@ -1,212 +1,216 @@
 object DialogBox: TDialogBox
   Left = 248
-  Height = 281
+  Height = 247
   Top = 165
-  Width = 376
+  Width = 393
+  AutoSize = True
   BorderStyle = bsDialog
   Caption = 'Properties'
-  ClientHeight = 281
-  ClientWidth = 376
+  ChildSizing.LeftRightSpacing = 10
+  ChildSizing.TopBottomSpacing = 10
+  ChildSizing.HorizontalSpacing = 5
+  ChildSizing.VerticalSpacing = 5
+  ClientHeight = 247
+  ClientWidth = 393
   OnShow = DialogBoxShow
   Position = poScreenCenter
-  LCLVersion = '2.0.5.0'
+  LCLVersion = '2.0.13.0'
   object lblName: TLabel
-    AnchorSideLeft.Control = Owner
-    AnchorSideTop.Control = Owner
-    AnchorSideRight.Control = cbURI
-    AnchorSideBottom.Control = cbURI
-    AnchorSideBottom.Side = asrCenter
-    Left = 15
-    Height = 29
-    Top = 15
-    Width = 191
-    Anchors = [akTop, akLeft, akRight, akBottom]
-    BorderSpacing.Left = 15
-    BorderSpacing.Top = 15
-    BorderSpacing.Right = 10
-    Layout = tlCenter
-    ParentColor = False
-  end
-  object cbURI: TComboBox
     AnchorSideLeft.Control = Owner
     AnchorSideTop.Control = Owner
     AnchorSideRight.Control = Owner
     AnchorSideRight.Side = asrBottom
+    AnchorSideBottom.Side = asrCenter
+    Left = 10
+    Height = 15
+    Top = 10
+    Width = 373
+    Alignment = taCenter
+    Anchors = [akTop, akLeft, akRight]
+    BorderSpacing.Top = 10
+    Caption = 'Unnamed'
+    Font.Style = [fsBold]
+    Layout = tlCenter
+    ParentColor = False
+    ParentFont = False
+  end
+  object cbURI: TComboBox
+    AnchorSideLeft.Control = Owner
+    AnchorSideTop.Control = edURI
+    AnchorSideRight.Side = asrBottom
     AnchorSideBottom.Control = edURI
     AnchorSideBottom.Side = asrBottom
-    Left = 216
-    Height = 30
-    Top = 15
-    Width = 150
-    Anchors = [akTop, akRight]
-    AutoSize = False
-    BorderSpacing.Left = 10
-    BorderSpacing.Top = 15
-    BorderSpacing.Right = 10
+    Left = 10
+    Height = 24
+    Hint = 'Supported URI schemes'
+    Top = 45
+    Width = 70
+    Anchors = [akTop, akLeft, akBottom]
+    BorderSpacing.Right = 5
     ItemHeight = 0
     OnChange = ComboBoxChange
+    ParentShowHint = False
+    ShowHint = True
     Sorted = True
     Style = csDropDownList
     TabOrder = 0
     Visible = False
   end
   object edURI: TEdit
-    AnchorSideLeft.Control = Owner
+    AnchorSideLeft.Control = cbURI
+    AnchorSideLeft.Side = asrBottom
     AnchorSideTop.Control = lblName
     AnchorSideTop.Side = asrBottom
     AnchorSideRight.Control = Owner
     AnchorSideRight.Side = asrBottom
-    AnchorSideBottom.Control = cbURI
-    AnchorSideBottom.Side = asrBottom
-    Left = 10
-    Height = 28
-    Top = 54
-    Width = 356
+    Left = 85
+    Height = 24
+    Hint = 'schema://user@server/path'
+    Top = 45
+    Width = 300
     Anchors = [akTop, akLeft, akRight]
-    BorderSpacing.Left = 10
-    BorderSpacing.Top = 10
-    BorderSpacing.Right = 10
+    BorderSpacing.Top = 20
+    Constraints.MinWidth = 300
+    OnChange = EditChange
+    ParentShowHint = False
+    ShowHint = True
     TabOrder = 1
   end
-  object lblLogin: TLabel
-    AnchorSideLeft.Control = Owner
-    AnchorSideTop.Control = edUser
-    AnchorSideTop.Side = asrCenter
-    AnchorSideRight.Control = edUser
-    Left = 10
-    Height = 15
-    Top = 137
-    Width = 75
-    BorderSpacing.Left = 10
-    Caption = 'User name:'
-    ParentColor = False
-  end
-  object chkDomain: TCheckBox
-    AnchorSideLeft.Control = lblLogin
-    AnchorSideTop.Control = edDomain
-    AnchorSideTop.Side = asrCenter
-    Left = 10
-    Height = 23
-    Top = 90
-    Width = 81
-    Caption = 'Domain:'
-    Color = clDefault
-    ParentColor = False
-    OnChange = CheckBoxChange
-    TabOrder = 2
-  end
-  object lblPasswd: TLabel
-    AnchorSideLeft.Control = Owner
-    AnchorSideTop.Control = edPasswd
-    AnchorSideTop.Side = asrCenter
-    AnchorSideRight.Control = lblLogin
-    AnchorSideRight.Side = asrBottom
-    Left = 10
-    Height = 15
-    Top = 170
-    Width = 75
-    Anchors = [akTop, akLeft, akRight]
-    BorderSpacing.Left = 10
-    Caption = 'Password:'
-    ParentColor = False
-  end
-  object edUser: TEdit
-    AnchorSideLeft.Control = edPasswd
-    AnchorSideTop.Control = edDomain
-    AnchorSideTop.Side = asrBottom
-    AnchorSideRight.Control = edURI
-    AnchorSideRight.Side = asrBottom
-    Left = 95
-    Height = 28
-    Top = 130
-    Width = 271
-    Anchors = [akTop, akLeft, akRight]
-    BorderSpacing.Top = 15
-    TabOrder = 4
-  end
-  object edDomain: TEdit
-    AnchorSideLeft.Control = edUser
-    AnchorSideTop.Control = edURI
-    AnchorSideTop.Side = asrBottom
-    AnchorSideRight.Control = edUser
-    AnchorSideRight.Side = asrBottom
-    Left = 95
-    Height = 28
-    Top = 87
-    Width = 271
-    Anchors = [akTop, akLeft, akRight]
-    BorderSpacing.Top = 5
-    Enabled = False
-    TabOrder = 3
-    Text = 'WORKGROUP'
-  end
-  object edPasswd: TEdit
-    AnchorSideLeft.Control = lblPasswd
-    AnchorSideLeft.Side = asrBottom
-    AnchorSideTop.Control = edUser
-    AnchorSideTop.Side = asrBottom
-    AnchorSideRight.Control = edUser
-    AnchorSideRight.Side = asrBottom
-    Left = 95
-    Height = 28
-    Top = 163
-    Width = 271
-    Anchors = [akTop, akLeft, akRight]
-    BorderSpacing.Left = 10
-    BorderSpacing.Top = 5
-    EchoMode = emPassword
-    PasswordChar = '*'
-    TabOrder = 5
-  end
   object chkAnon: TCheckBox
-    AnchorSideTop.Control = edPasswd
+    AnchorSideTop.Control = pLogin
     AnchorSideTop.Side = asrBottom
-    AnchorSideRight.Control = edPasswd
+    AnchorSideRight.Control = pLogin
     AnchorSideRight.Side = asrBottom
-    Left = 182
+    Left = 199
     Height = 23
-    Top = 196
+    Top = 166
     Width = 184
     Anchors = [akTop, akRight]
-    BorderSpacing.Top = 5
     Caption = 'Anonymous (if possible)'
     OnChange = CheckBoxChange
-    TabOrder = 6
+    TabOrder = 3
   end
   object btnOK: TBitBtn
-    AnchorSideRight.Control = chkAnon
+    AnchorSideTop.Control = chkAnon
+    AnchorSideTop.Side = asrBottom
+    AnchorSideRight.Control = pLogin
     AnchorSideRight.Side = asrBottom
-    AnchorSideBottom.Control = Owner
-    AnchorSideBottom.Side = asrBottom
-    Left = 271
+    Left = 286
     Height = 30
-    Top = 236
-    Width = 95
-    Anchors = [akRight, akBottom]
-    BorderSpacing.Bottom = 15
+    Top = 209
+    Width = 97
+    Anchors = [akTop, akRight]
+    AutoSize = True
+    BorderSpacing.Top = 20
+    Constraints.MinHeight = 30
+    Constraints.MinWidth = 97
     Default = True
     DefaultCaption = True
     Kind = bkOK
     ModalResult = 1
     OnClick = ButtonClick
-    TabOrder = 7
+    TabOrder = 5
   end
   object btnCancel: TBitBtn
     AnchorSideTop.Control = btnOK
     AnchorSideRight.Control = btnOK
     AnchorSideBottom.Control = btnOK
     AnchorSideBottom.Side = asrBottom
-    Left = 166
+    Left = 179
     Height = 30
-    Top = 236
-    Width = 95
+    Top = 209
+    Width = 97
     Anchors = [akRight, akBottom]
+    AutoSize = True
     BorderSpacing.Right = 10
     Cancel = True
+    Constraints.MinHeight = 30
+    Constraints.MinWidth = 97
     DefaultCaption = True
     Kind = bkCancel
     ModalResult = 2
     OnClick = ButtonClick
-    TabOrder = 8
+    TabOrder = 4
+  end
+  object pLogin: TPanel
+    AnchorSideLeft.Control = Owner
+    AnchorSideTop.Control = edURI
+    AnchorSideTop.Side = asrBottom
+    AnchorSideRight.Control = Owner
+    AnchorSideRight.Side = asrBottom
+    Left = 10
+    Height = 87
+    Top = 74
+    Width = 373
+    Anchors = [akTop, akLeft, akRight]
+    AutoSize = True
+    BevelOuter = bvNone
+    ChildSizing.HorizontalSpacing = 5
+    ChildSizing.VerticalSpacing = 5
+    ChildSizing.EnlargeHorizontal = crsHomogenousChildResize
+    ChildSizing.Layout = cclLeftToRightThenTopToBottom
+    ChildSizing.ControlsPerLine = 2
+    ClientHeight = 87
+    ClientWidth = 373
+    TabOrder = 2
+    object chkDomain: TCheckBox
+      Left = 0
+      Height = 24
+      Top = 0
+      Width = 81
+      Caption = 'Domain:'
+      Color = clDefault
+      OnChange = CheckBoxChange
+      ParentColor = False
+      ParentBidiMode = False
+      TabOrder = 0
+    end
+    object edDomain: TEdit
+      Left = 86
+      Height = 24
+      Top = 0
+      Width = 300
+      Constraints.MinWidth = 300
+      Enabled = False
+      TabOrder = 1
+      Text = 'WORKGROUP'
+    end
+    object lblLogin: TLabel
+      Left = 0
+      Height = 24
+      Top = 34
+      Width = 81
+      Caption = 'User name:'
+      Layout = tlCenter
+      ParentColor = False
+    end
+    object edUser: TEdit
+      Left = 86
+      Height = 24
+      Top = 34
+      Width = 300
+      BorderSpacing.Top = 10
+      Constraints.MinWidth = 300
+      TabOrder = 2
+    end
+    object lblPasswd: TLabel
+      Left = 0
+      Height = 24
+      Top = 63
+      Width = 81
+      Caption = 'Password:'
+      Layout = tlCenter
+      ParentColor = False
+    end
+    object edPasswd: TEdit
+      Left = 86
+      Height = 24
+      Top = 63
+      Width = 300
+      Constraints.MinWidth = 300
+      EchoMode = emPassword
+      PasswordChar = '*'
+      TabOrder = 3
+    end
   end
 end

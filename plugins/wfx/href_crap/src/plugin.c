@@ -203,6 +203,7 @@ static gchar *parse_date(char *text, gint index)
 		"%d-%b-%Y %R",
 		"%Y-%m-%d %R",
 		"%Y.%m.%d %R",
+		"%d-%b-%Y  %R",
 		NULL
 	};
 
@@ -245,9 +246,10 @@ static void parse_fileinfo(char *text, xmlNodePtr link, xmlDocPtr doc)
 
 	gchar *regexs[] =
 	{
-		"(\\d{2}\\-\\w{3}\\-\\d{4}\\s\\d{2}:\\d{2})\\s+([\\d.]*[-kKmMgGtT]?)",
-		"(\\d{4}\\-\\d{2}\\-\\d{2}\\s\\d{2}:\\d{2})\\s+([\\d.]*[-kKmMgGtT]?)",
-		"([\\d.]*[-kKmMgGtT]?)\\s+(\\d{4}\\.\\d{2}\\.\\d{2}\\s\\d{2}:\\d{2})",
+		"(\\d{2}\\-\\w{3}\\-\\d{4}\\s\\d{2}:\\d{2})\\s+([\\d\\.]*[-kKmMgGtT]?)",
+		"(\\d{4}\\-\\d{2}\\-\\d{2}\\s\\d{2}:\\d{2})\\s+([\\d\\.]*[-kKmMgGtT]?)",
+		"([\\d\\.]*[-kKmMgGtT]?)\\s+(\\d{4}\\.\\d{2}\\.\\d{2}\\s\\d{2}:\\d{2})",
+		"(\\d\\d?\\-\\w{3}\\-\\d{4}\\s{2}\\d\\d?:\\d{2})\\s+([\\d\\.]*[-kKmMgGtT]?).+",
 		NULL
 	};
 
@@ -327,6 +329,9 @@ static gboolean is_reparse_point(char *url)
 
 static gboolean is_ext_candidate(char *text, char *dot)
 {
+	if (strcmp("..", text) == 0 || strcasecmp("Parent Directory", text) == 0)
+		return FALSE;
+
 	char *exts[] =
 	{
 		".htm",
@@ -386,6 +391,7 @@ static gchar *prepare_name(char *text, xmlDocPtr doc)
 		"/",
 		"?",
 		"→",
+		"  ",
 		NULL
 	};
 
@@ -549,7 +555,7 @@ static xmlNodePtr get_links(gchar *url)
 				continue;
 			}
 
-			if (strcmp("..", (char*)name) == 0 || strcmp("Parent Directory", (char*)name) == 0)
+			if (strcmp("..", (char*)name) == 0 || strcasecmp("Parent Directory", (char*)name) == 0)
 				xmlNewProp(link, (xmlChar*)"name", (xmlChar*)"<Parent Directory>");
 			else
 				xmlNewProp(link, (xmlChar*)"name", (xmlChar*)name);
@@ -659,7 +665,7 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 
 		gDialogApi->SendDlgMsg(pDlg, "cbURL", DM_SETTEXT, (intptr_t)g_settings.url, 0);
 
-		if (g_selected_file[0] != '\0' && g_selected_file[1] != '\0' && strcmp("..", g_selected_file) != 0)
+		if (g_selected_file[0] != '\0' && strcmp("/", g_selected_file) != 0 && strcmp("..", g_selected_file) != 0)
 		{
 			gDialogApi->SendDlgMsg(pDlg, "gbCurrent", DM_SHOWITEM, 1, 0);
 			gDialogApi->SendDlgMsg(pDlg, "edName", DM_SETTEXT, (intptr_t)g_selected_file, 0);

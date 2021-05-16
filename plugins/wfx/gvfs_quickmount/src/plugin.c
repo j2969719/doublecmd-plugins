@@ -58,17 +58,15 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 		gStartupInfo->SendDlgMsg(pDlg, "lblName", DM_SETTEXT, (intptr_t)gConnection, 0);
 		bval = g_key_file_has_group(gCfg, gConnection);
 
+		schemes = g_vfs_get_supported_uri_schemes(g_vfs_get_default());
+
+		for (; *schemes; schemes++)
+		{
+			gStartupInfo->SendDlgMsg(pDlg, "cbURI", DM_LISTADD, (intptr_t)*schemes, 0);
+		}
 
 		if (!bval)
-		{
 			gStartupInfo->SendDlgMsg(pDlg, "cbURI", DM_SHOWITEM, 1, 0);
-			schemes = g_vfs_get_supported_uri_schemes(g_vfs_get_default());
-
-			for (; *schemes; schemes++)
-			{
-				gStartupInfo->SendDlgMsg(pDlg, "cbURI", DM_LISTADD, (intptr_t)*schemes, 0);
-			}
-		}
 		else
 		{
 			value = g_key_file_get_string(gCfg, gConnection, "URI", NULL);
@@ -108,7 +106,7 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 		break;
 
 	case DN_CLICK:
-		if (strncmp(DlgItemName, "btnOK", 5) == 0)
+		if (strcmp(DlgItemName, "btnOK") == 0)
 		{
 			value = (gchar*)gStartupInfo->SendDlgMsg(pDlg, "edURI", DM_GETTEXT, 0, 0);
 			g_key_file_set_string(gCfg, gConnection, "URI", value);
@@ -137,7 +135,7 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 
 			gStartupInfo->SendDlgMsg(pDlg, DlgItemName, DM_CLOSE, 1, 0);
 		}
-		else if (strncmp(DlgItemName, "btnCancel", 9) == 0)
+		else if (strcmp(DlgItemName, "btnCancel") == 0)
 		{
 			gStartupInfo->SendDlgMsg(pDlg, DlgItemName, DM_CLOSE, 2, 0);
 		}
@@ -145,23 +143,32 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 		break;
 
 	case DN_CHANGE:
-		if (strncmp(DlgItemName, "chkAnon", 7) == 0)
+		if (strcmp(DlgItemName, "chkAnon") == 0)
 		{
 			bval = (gboolean)gStartupInfo->SendDlgMsg(pDlg, "chkAnon", DM_GETCHECK, 0, 0);
 			gStartupInfo->SendDlgMsg(pDlg, "edUser", DM_ENABLE, (intptr_t)!bval, 0);
 			gStartupInfo->SendDlgMsg(pDlg, "edPasswd", DM_ENABLE, (intptr_t)!bval, 0);
 		}
-		else if (strncmp(DlgItemName, "chkDomain", 9) == 0)
+		else if (strcmp(DlgItemName, "chkDomain") == 0)
 		{
 			bval = (gboolean)gStartupInfo->SendDlgMsg(pDlg, "chkDomain", DM_GETCHECK, 0, 0);
 			gStartupInfo->SendDlgMsg(pDlg, "edDomain", DM_ENABLE, (intptr_t)bval, 0);
 		}
-		else if (strncmp(DlgItemName, "cbURI", 5) == 0)
+		else if (strcmp(DlgItemName, "cbURI") == 0)
 		{
 			value = (gchar*)gStartupInfo->SendDlgMsg(pDlg, "cbURI", DM_GETTEXT, 0, 0);
 			gchar *uri = g_strdup_printf("%s://", value);
 			gStartupInfo->SendDlgMsg(pDlg, "edURI", DM_SETTEXT, (intptr_t)uri, 0);
 			g_free(uri);
+		}
+		else if (strcmp(DlgItemName, "edURI") == 0)
+		{
+			value = (gchar*)gStartupInfo->SendDlgMsg(pDlg, "edURI", DM_GETTEXT, 0, 0);
+
+			if (value[0] == '\0')
+				gStartupInfo->SendDlgMsg(pDlg, "cbURI", DM_SHOWITEM, 1, 0);
+			else
+				gStartupInfo->SendDlgMsg(pDlg, "cbURI", DM_SHOWITEM, 0, 0);
 		}
 
 		break;

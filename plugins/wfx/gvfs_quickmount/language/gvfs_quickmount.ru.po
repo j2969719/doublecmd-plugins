@@ -4,28 +4,28 @@ msgstr "Content-Type: text/plain; charset=UTF-8"
 #: tdialogbox.caption
 msgctxt "tdialogbox.caption"
 msgid "Properties"
-msgstr ""
+msgstr "Свойства"
 
 #: tdialogbox.lbllogin.caption
 msgid "User name:"
-msgstr ""
+msgstr "Имя пользователя:"
 
 #: tdialogbox.lblpasswd.caption
 msgid "Password:"
-msgstr ""
+msgstr "Пароль:"
 
 #: tdialogbox.chkdomain.caption
 msgid "Domain:"
-msgstr ""
+msgstr "Домен:"
 
 #: tdialogbox.chkanon.caption
 msgid "Anonymous (if possible)"
-msgstr ""
+msgstr "Анонимно (если можно)"
 
 #: tdialogbox.cburi.hint
 msgid "Supported URI schemes"
-msgstr ""
+msgstr "Поддерживаемые схемы URI"
 
 #: tdialogbox.eduri.hint
 msgid "schema://user@server/path"
-msgstr ""
+msgstr "схема://пользователь@сервер/путь"
