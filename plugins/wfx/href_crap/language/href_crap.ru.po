@@ -1,0 +1,78 @@
+msgid ""
+msgstr "Content-Type: text/plain; charset=UTF-8"
+
+#: DialogBox.Сaption
+msgid "Hypertext REFerence"
+msgstr ""
+
+#: DialogBox.gbOptions.Сaption
+msgid "Options"
+msgstr "Параметры"
+
+#: DialogBox.ckSizes.Сaption
+msgid "Request file sizes and dates from the server (freaking sloooooow)"
+msgstr "Запрашивать размер и дату файлов с сервера"
+
+#: DialogBox.ckFollow.Сaption
+msgid "Follow HTTP 3xx redirects"
+msgstr "Следовать перенаправлениям HTTP 3xx"
+
+#: DialogBox.ckVerbose.Сaption
+msgid "Spam a lot of verbose information about curl operations to stderr"
+msgstr "Спамить информацию об операциях Curl на stderr"
+
+#: DialogBox.lblMaxRedir.Сaption
+msgid "Number of redirects allowed:"
+msgstr "Число разрешенных перенаправлений:"
+
+#: DialogBox.lblUserAgent.Сaption
+msgid "User Agent:"
+msgstr ""
+
+#: DialogBox.ckFail.Сaption
+msgid "Fail on 4xx HTTP codes"
+msgstr "Ошибка на 4xx кодах HTTP"
+
+#: DialogBox.lblTimeout.Сaption
+msgid "Timeout:"
+msgstr "Время ожидания операций:"
+
+#: DialogBox.lblInfo.Сaption
+msgid "Please note that this dialog can always be invoked using the Alt + Enter keyboard shortcut."
+msgstr "Обратите внимание, что это окно всегда можно вызвать с помощью комбинации Alt + Enter."
+
+#: DialogBox.gbCurrent.Сaption
+msgid "Selected Link"
+msgstr "Выбранная ссылка"
+
+#: DialogBox.lnlInfoName.Сaption
+msgid "Name:"
+msgstr "Название:"
+
+#: DialogBox.lblExtra.Сaption
+msgid "Extra:"
+msgstr "Экстра:"
+
+#: DialogBox.btnGo.Hint
+msgid "Open in Browser"
+msgstr "Открыть в браузере"
+
+#: DialogBox.btnBrowser.Сaption
+msgid "Open in Browser"
+msgstr "Открыть в браузере"
+
+#: DialogBox.btnRemove.Сaption
+msgid "Remove from List"
+msgstr "Удалить из списка"
+
+#: DialogBox.btnSelected.Сaption
+msgid "Paste URL from Selected Link"
+msgstr "Вставить URL выбранной ссылки"
+
+#: DialogBox.lblInfoURL.Сaption
+msgid "URL:"
+msgstr ""
+
+#: DialogBox.lblURL.Сaption
+msgid "URL:"
+msgstr ""

@@ -1,0 +1,78 @@
+msgid ""
+msgstr "Content-Type: text/plain; charset=UTF-8"
+
+#: DialogBox.Сaption
+msgid "Hypertext REFerence"
+msgstr ""
+
+#: DialogBox.gbOptions.Сaption
+msgid "Options"
+msgstr ""
+
+#: DialogBox.ckSizes.Сaption
+msgid "Request file sizes and dates from the server (freaking sloooooow)"
+msgstr ""
+
+#: DialogBox.ckFollow.Сaption
+msgid "Follow HTTP 3xx redirects"
+msgstr ""
+
+#: DialogBox.ckVerbose.Сaption
+msgid "Spam a lot of verbose information about curl operations to stderr"
+msgstr ""
+
+#: DialogBox.lblMaxRedir.Сaption
+msgid "Number of redirects allowed:"
+msgstr ""
+
+#: DialogBox.lblUserAgent.Сaption
+msgid "User Agent:"
+msgstr ""
+
+#: DialogBox.ckFail.Сaption
+msgid "Fail on 4xx HTTP codes"
+msgstr ""
+
+#: DialogBox.lblTimeout.Сaption
+msgid "Timeout:"
+msgstr ""
+
+#: DialogBox.lblInfo.Сaption
+msgid "Please note that this dialog can always be invoked using the Alt + Enter keyboard shortcut."
+msgstr ""
+
+#: DialogBox.gbCurrent.Сaption
+msgid "Selected Link"
+msgstr ""
+
+#: DialogBox.lnlInfoName.Сaption
+msgid "Name:"
+msgstr ""
+
+#: DialogBox.lblExtra.Сaption
+msgid "Extra:"
+msgstr ""
+
+#: DialogBox.btnGo.Hint
+msgid "Open in Browser"
+msgstr ""
+
+#: DialogBox.btnBrowser.Сaption
+msgid "Open in Browser"
+msgstr ""
+
+#: DialogBox.btnRemove.Сaption
+msgid "Remove from List"
+msgstr ""
+
+#: DialogBox.btnSelected.Сaption
+msgid "Paste URL from Selected Link"
+msgstr ""
+
+#: DialogBox.lblInfoURL.Сaption
+msgid "URL:"
+msgstr ""
+
+#: DialogBox.lblURL.Сaption
+msgid "URL:"
+msgstr ""

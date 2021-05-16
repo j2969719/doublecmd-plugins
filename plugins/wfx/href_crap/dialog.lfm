@@ -1,18 +1,18 @@
 object DialogBox: TDialogBox
   Left = 122
-  Height = 424
+  Height = 485
   Top = 199
   Width = 719
   AutoSize = True
   BorderStyle = bsDialog
-  Caption = 'Double Commander'
+  Caption = 'Hypertext REFerence'
   ChildSizing.LeftRightSpacing = 10
   ChildSizing.TopBottomSpacing = 10
-  ClientHeight = 424
+  ClientHeight = 485
   ClientWidth = 719
   OnCreate = DialogBoxShow
   Position = poScreenCenter
-  LCLVersion = '2.0.11.0'
+  LCLVersion = '2.0.13.0'
   object btnCancel: TBitBtn
     AnchorSideTop.Control = btnOK
     AnchorSideRight.Control = btnOK
@@ -20,7 +20,7 @@ object DialogBox: TDialogBox
     AnchorSideBottom.Side = asrBottom
     Left = 502
     Height = 30
-    Top = 384
+    Top = 433
     Width = 96
     Anchors = [akTop, akRight, akBottom]
     AutoSize = True
@@ -33,7 +33,7 @@ object DialogBox: TDialogBox
     ModalResult = 2
     OnClick = ButtonClick
     ParentFont = False
-    TabOrder = 3
+    TabOrder = 7
   end
   object btnOK: TBitBtn
     AnchorSideTop.Control = lblInfo
@@ -42,7 +42,7 @@ object DialogBox: TDialogBox
     AnchorSideRight.Side = asrBottom
     Left = 608
     Height = 30
-    Top = 384
+    Top = 433
     Width = 96
     Anchors = [akTop, akRight]
     AutoSize = True
@@ -55,17 +55,17 @@ object DialogBox: TDialogBox
     ModalResult = 1
     OnClick = ButtonClick
     ParentFont = False
-    TabOrder = 4
+    TabOrder = 6
   end
   object gbOptions: TGroupBox
     AnchorSideLeft.Control = cbURL
-    AnchorSideTop.Control = cbURL
+    AnchorSideTop.Control = btnBrowser
     AnchorSideTop.Side = asrBottom
     AnchorSideRight.Control = cbURL
     AnchorSideRight.Side = asrBottom
     Left = 16
     Height = 151
-    Top = 178
+    Top = 227
     Width = 688
     Anchors = [akTop, akLeft, akRight]
     AutoSize = True
@@ -78,7 +78,7 @@ object DialogBox: TDialogBox
     ClientHeight = 132
     ClientWidth = 684
     ParentFont = False
-    TabOrder = 2
+    TabOrder = 5
     object ckSizes: TCheckBox
       AnchorSideLeft.Control = gbOptions
       AnchorSideTop.Control = edTimeout
@@ -124,6 +124,7 @@ object DialogBox: TDialogBox
       Height = 24
       Top = 39
       Width = 47
+      Alignment = taRightJustify
       Anchors = [akTop, akRight]
       MaxLength = 3
       NumbersOnly = True
@@ -190,10 +191,11 @@ object DialogBox: TDialogBox
       AnchorSideTop.Control = gbOptions
       AnchorSideRight.Control = gbOptions
       AnchorSideRight.Side = asrBottom
-      Left = 584
+      Left = 627
       Height = 24
       Top = 10
-      Width = 90
+      Width = 47
+      Alignment = taRightJustify
       Anchors = [akTop, akRight]
       MaxLength = 5
       NumbersOnly = True
@@ -203,7 +205,7 @@ object DialogBox: TDialogBox
       AnchorSideTop.Control = edTimeout
       AnchorSideTop.Side = asrCenter
       AnchorSideRight.Control = edTimeout
-      Left = 521
+      Left = 564
       Height = 15
       Top = 15
       Width = 58
@@ -220,7 +222,7 @@ object DialogBox: TDialogBox
     AnchorSideRight.Side = asrBottom
     Left = 16
     Height = 15
-    Top = 117
+    Top = 134
     Width = 688
     Anchors = [akTop, akLeft, akRight]
     BorderSpacing.Top = 15
@@ -236,7 +238,7 @@ object DialogBox: TDialogBox
     AnchorSideRight.Side = asrBottom
     Left = 16
     Height = 15
-    Top = 349
+    Top = 398
     Width = 688
     Anchors = [akTop, akLeft, akRight]
     BorderSpacing.Top = 20
@@ -248,12 +250,14 @@ object DialogBox: TDialogBox
   object cbURL: TComboBox
     AnchorSideTop.Control = lblURL
     AnchorSideTop.Side = asrBottom
+    AnchorSideRight.Control = btnBrowser
     Left = 16
     Height = 26
-    Top = 137
+    Top = 154
     Width = 688
     BorderSpacing.Top = 5
     ItemHeight = 0
+    OnChange = ComboBoxChange
     ParentFont = False
     TabOrder = 1
   end
@@ -263,7 +267,7 @@ object DialogBox: TDialogBox
     AnchorSideRight.Control = cbURL
     AnchorSideRight.Side = asrBottom
     Left = 16
-    Height = 92
+    Height = 109
     Top = 10
     Width = 688
     Anchors = [akTop, akLeft, akRight]
@@ -275,7 +279,7 @@ object DialogBox: TDialogBox
     ChildSizing.HorizontalSpacing = 5
     ChildSizing.VerticalSpacing = 5
     ChildSizing.ControlsPerLine = 2
-    ClientHeight = 73
+    ClientHeight = 90
     ClientWidth = 684
     ParentFont = False
     TabOrder = 0
@@ -285,7 +289,7 @@ object DialogBox: TDialogBox
       AnchorSideTop.Side = asrCenter
       Left = 10
       Height = 15
-      Top = 15
+      Top = 13
       Width = 43
       Caption = 'Name:'
       ParentColor = False
@@ -296,7 +300,7 @@ object DialogBox: TDialogBox
       AnchorSideTop.Side = asrCenter
       Left = 10
       Height = 15
-      Top = 44
+      Top = 38
       Width = 30
       Caption = 'URL:'
       ParentColor = False
@@ -308,11 +312,12 @@ object DialogBox: TDialogBox
       AnchorSideRight.Control = gbCurrent
       AnchorSideRight.Side = asrBottom
       Left = 63
-      Height = 24
+      Height = 20
       Top = 10
       Width = 611
       Anchors = [akTop, akLeft, akRight]
       BorderSpacing.Left = 10
+      BorderStyle = bsNone
       ParentFont = False
       ReadOnly = True
       TabStop = False
@@ -323,19 +328,148 @@ object DialogBox: TDialogBox
       AnchorSideLeft.Control = edName
       AnchorSideTop.Control = edName
       AnchorSideTop.Side = asrBottom
-      AnchorSideRight.Control = gbCurrent
-      AnchorSideRight.Side = asrBottom
+      AnchorSideRight.Control = btnGo
       Left = 63
-      Height = 24
-      Top = 39
-      Width = 611
+      Height = 20
+      Top = 35
+      Width = 580
       Anchors = [akTop, akLeft, akRight]
       BorderSpacing.Top = 5
+      BorderStyle = bsNone
       ParentFont = False
       ReadOnly = True
       TabStop = False
       TabOrder = 1
       Text = 'shitcode.net'
     end
+    object lblExtra: TLabel
+      AnchorSideLeft.Control = gbCurrent
+      AnchorSideTop.Control = edExtra
+      AnchorSideTop.Side = asrCenter
+      Left = 10
+      Height = 15
+      Top = 63
+      Width = 38
+      Caption = 'Extra:'
+      ParentColor = False
+    end
+    object edExtra: TEdit
+      AnchorSideLeft.Control = edURL
+      AnchorSideTop.Control = edURL
+      AnchorSideTop.Side = asrBottom
+      AnchorSideRight.Control = gbCurrent
+      AnchorSideRight.Side = asrBottom
+      Left = 63
+      Height = 20
+      Top = 60
+      Width = 611
+      Anchors = [akTop, akLeft, akRight]
+      BorderSpacing.Top = 5
+      BorderStyle = bsNone
+      ReadOnly = True
+      TabStop = False
+      TabOrder = 3
+    end
+    object btnGo: TBitBtn
+      AnchorSideLeft.Side = asrBottom
+      AnchorSideTop.Control = edURL
+      AnchorSideTop.Side = asrCenter
+      AnchorSideRight.Control = gbCurrent
+      AnchorSideRight.Side = asrBottom
+      Left = 648
+      Height = 26
+      Hint = 'Open in Browser'
+      Top = 32
+      Width = 26
+      Anchors = [akTop, akRight]
+      AutoSize = True
+      Glyph.Data = {
+        36040000424D3604000000000000360000002800000010000000100000000100
+        2000000000000004000064000000640000000000000000000000FFFFFF00FFFF
+        FF0055555503707372B1676B67F4604F3FBF713E1CC7713F1DF4703E1DF1713E
+        1CC26F3B198770381929FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+        FF0053535334868785FCF5F5F5FF6E726FFFBBAB9FFFD8CBC3FFBEB3ACFF7B78
+        73FFB59785FD774627FB6D3C1A7755550003FFFFFF00FFFFFF00FFFFFF006040
+        20086A3F1FD8686A67FFFCFCFCFFCBCCCBFF7C756EFF877769FF676967FF595D
+        5BFFCCB8ADFFDBD0CAFF946E55FA703D1BC380000002FFFFFF00FFFFFF006E3B
+        198E936F55F984817CFFCBCCCCFFFDFDFDFF666966FF5E5F5AFFE7E7E7FF5E62
+        5FFF735A48FFB2BCBCFFD7CFCAFF91674DF96E3B1A74FFFFFF00703A1B39774A
+        2CFBBFAC9DFF999387FF6D716FFFFEFEFEFFC7C7C7FFDADAD9FFFFFFFFFF5E61
+        5FFF796655FFABB5B5FFADB1AFFFCCB8ACFF764525FA6F3B1A27694226AA5357
+        55FF7F8180FF8F9190FF929493FFF0F0F0FFFEFEFEFFF5F5F5FFFEFEFEFF5C5F
+        5CFF8D7764FFC5CCCCFFB3BCBCFFB39C8DFFA7836DFB6F3A1983703D1AD6827A
+        70FF828481FFF9F9F9FFFCFCFCFFF5F5F5FFF7F7F7FFDCDCDCFFFFFFFFFF595C
+        5AFFB8AFA6FFDFE3E3FFCAD1D1FFA4998FFFB49786FF703D1CC1713F1DFBD6C6
+        B8FF87837CFF808281FFF9F9F9FFE8E8E8FFDCDCDCFFDEDEDEFFFFFFFFFF5B5F
+        5DFFEBEEEEFFEAEDEDFFDFE3E3FFABA7A1FFBEA89AFF713D1BF2774C2DFBDFDC
+        D6FFD2BEACFF989087FF7F827FFFF9F9F9FFEFEFEFFFE6E6E6FFFEFEFEFF5D61
+        5FFFEDEFEFFFEBEEEEFFCDC8C1FFCDD0CDFFC6B9B0FF703D1BF272401FD6DBD8
+        D4FFDCD7D1FFC7BCB4FFADACA7FF7D807EFFFAFAFAFFF5F5F5FFFDFDFDFF5F63
+        61FFE6E7E6FFD9D7D2FFD4D2CCFFDADBD9FFC8C0BAFF703D1BC06F3C1C9CC8BD
+        B4FEEEF0F0FFE0E0DEFFD1C8C0FFB2AAA0FF7A7D7AFFFAFAFAFFFDFDFDFF6063
+        60FFB39D8AFFAF9D8DFFDCD8D3FFEEF1F1FFB1A092FC6E3B1A82703A1B39855F
+        45FDEEF0F0FFECEFEFFFE7E7E5FFD5C9BEFFBAB6ADFF777978FFF3F3F3FF6264
+        62FFECECECFFEDEFEFFFEEF0F0FFEEEEEDFF7A4E2FFA6F3B1A27FFFFFF00703D
+        1B8DB7A498FCF2EFEBFFEFEEEDFFF1EDE7FFEDE7E0FFB4ADA5FF666A67FF6365
+        62FFCEC1B5FFE5E4E1FFF3F4F3FF9E816CFB6E3B1874FFFFFF00FFFFFF008040
+        20087D4C2AD4BAA89AFCECE6E0FFEFEAE5FFE7E3DEFFDCD6CFFFA89D91FF857F
+        75FFDACBBDFFE3DBD3FFA78671FA7C4B2AC280800002FFFFFF00FFFFFF00FFFF
+        FF0080555506906242889A6E51FCCFBAACFDE7DED8FFF1EFECFFE4D8CFFFCAB2
+        9EFFB6967DFC96694BFB92634277AA555503FFFFFF00FFFFFF00FFFFFF00FFFF
+        FF00FFFFFF00FFFFFF00A7765834A6785B8CA87A5CC7A87B5EF4A87B5CF1A779
+        5BC2A8795B87A8765D29FFFFFF00FFFFFF00FFFFFF00FFFFFF00
+      }
+      GlyphShowMode = gsmAlways
+      Layout = blGlyphTop
+      OnClick = ButtonClick
+      ParentShowHint = False
+      ShowHint = True
+      TabOrder = 2
+    end
+  end
+  object btnBrowser: TBitBtn
+    AnchorSideTop.Control = cbURL
+    AnchorSideTop.Side = asrBottom
+    AnchorSideRight.Control = gbOptions
+    AnchorSideRight.Side = asrBottom
+    Left = 587
+    Height = 27
+    Top = 185
+    Width = 117
+    Anchors = [akTop, akRight]
+    AutoSize = True
+    BorderSpacing.Top = 5
+    Caption = 'Open in Browser'
+    OnClick = ButtonClick
+    TabOrder = 4
+  end
+  object btnRemove: TBitBtn
+    AnchorSideTop.Control = btnBrowser
+    AnchorSideRight.Control = btnBrowser
+    Left = 451
+    Height = 27
+    Top = 185
+    Width = 126
+    Anchors = [akTop, akRight]
+    AutoSize = True
+    BorderSpacing.Right = 10
+    Caption = 'Remove from List'
+    OnClick = ButtonClick
+    TabOrder = 3
+  end
+  object btnSelected: TBitBtn
+    AnchorSideTop.Control = btnBrowser
+    AnchorSideRight.Control = btnRemove
+    Left = 240
+    Height = 27
+    Top = 185
+    Width = 201
+    Anchors = [akTop, akRight]
+    AutoSize = True
+    BorderSpacing.Right = 10
+    Caption = 'Paste URL from Selected Link'
+    Enabled = False
+    OnClick = ButtonClick
+    TabOrder = 2
   end
 end

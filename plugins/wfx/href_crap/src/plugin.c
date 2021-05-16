@@ -58,6 +58,7 @@ tRequestProc gRequestProc = NULL;
 tExtensionStartupInfo* gDialogApi = NULL;
 xmlDocPtr g_doc = NULL;
 CURL *g_curl;
+clock_t g_clock;
 
 static char g_lfm_path[PATH_MAX];
 static char g_history_file[PATH_MAX];
@@ -414,7 +415,7 @@ static gchar *prepare_name(char *text, xmlDocPtr doc)
 	{
 		xmlFree(url);
 		g_free(result);
-		result = g_strdup_printf("%s (%d).%s", name, index, ext);
+		result = g_strdup_printf("%s (%d)%c%s", name, index, ext[0] != '\0' ? '.' : '\0', ext);
 		index++;
 	}
 
@@ -480,6 +481,14 @@ static xmlNodePtr get_links(gchar *url)
 
 		for (int i = 0; i < nodeset->nodeNr; i++)
 		{
+			clock_t cur_time = (double)(clock() - g_clock) / CLOCKS_PER_SEC;
+
+			if ((long)cur_time >= g_settings.timeout)
+			{
+				errmsg("Retrieving link list aborted: timed out");
+				break;
+			}
+
 			xmlNodePtr link = xmlNewNode(NULL, BAD_CAST "link");
 
 			const xmlNode *node = nodeset->nodeTab[i]->parent;
@@ -515,6 +524,9 @@ static xmlNodePtr get_links(gchar *url)
 
 						if (dot && is_ext_candidate((char*)text, dot))
 						{
+							if (text[strlen((char*)text) - 1] == '/')
+								text[strlen((char*)text) - 1] = '\0';
+
 							gchar *concat = g_strconcat((char*)text, dot, NULL);
 							temp = prepare_name((char*)concat, tmpdoc);
 							g_free(concat);
@@ -625,17 +637,25 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 				if (line[read - 1] == '\n')
 					line[read - 1] = '\0';
 
-				gDialogApi->SendDlgMsg(pDlg, "cbURL", DM_LISTADD, (intptr_t)line, 0);
-				count++;
+				if (strlen(line) > 0)
+				{
+					gDialogApi->SendDlgMsg(pDlg, "cbURL", DM_LISTADD, (intptr_t)line, 0);
+					count++;
+				}
 			}
 
 			g_free(line);
 			fclose(fp);
 		}
 
-		if (count == 0)
+		if (count == 0 && g_settings.url[0] != '\0')
 			gDialogApi->SendDlgMsg(pDlg, "cbURL", DM_LISTADD, (intptr_t)g_settings.url, 0);
 
+		if (gDialogApi->SendDlgMsg(pDlg, "cbURL", DM_LISTGETCOUNT, 0, 0) == 0)
+				gDialogApi->SendDlgMsg(pDlg, "btnRemove", DM_ENABLE, 0, 0);
+
+		if (g_settings.url[0] == '\0')
+			gDialogApi->SendDlgMsg(pDlg, "btnBrowser", DM_ENABLE, 0, 0);
 
 		gDialogApi->SendDlgMsg(pDlg, "cbURL", DM_SETTEXT, (intptr_t)g_settings.url, 0);
 
@@ -645,7 +665,17 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 			gDialogApi->SendDlgMsg(pDlg, "edName", DM_SETTEXT, (intptr_t)g_selected_file, 0);
 			xmlChar *url = name_to_url(g_selected_file, g_doc);
 			gDialogApi->SendDlgMsg(pDlg, "edURL", DM_SETTEXT, (intptr_t)url, 0);
+			gDialogApi->SendDlgMsg(pDlg, "btnSelected", DM_ENABLE, 1, 0);
 			xmlFree(url);
+			char extra[256];
+			if (FsContentGetValue(g_selected_file, 1, 0, (void*)extra, 256, 0) == ft_string)
+				gDialogApi->SendDlgMsg(pDlg, "edExtra", DM_SETTEXT, (intptr_t)extra, 0);
+			else
+			{
+				gDialogApi->SendDlgMsg(pDlg, "edExtra", DM_SHOWITEM, 0, 0);
+				gDialogApi->SendDlgMsg(pDlg, "lblExtra", DM_SHOWITEM, 0, 0);
+			}
+
 		}
 		else
 			gDialogApi->SendDlgMsg(pDlg, "gbCurrent", DM_SHOWITEM, 0, 0);
@@ -717,7 +747,66 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 
 			gDialogApi->SendDlgMsg(pDlg, DlgItemName, DM_CLOSE, ID_CANCEL, 0);
 		}
+		else if (strcmp(DlgItemName, "btnGo") == 0)
+		{
+			line = (char*)gDialogApi->SendDlgMsg(pDlg, "edURL", DM_GETTEXT, 0, 0);
 
+			if (line && line[0] != '\0')
+			{
+				gchar *command = g_strdup_printf("xdg-open %s", line);
+				system(command);
+			}
+		}
+		else if (strcmp(DlgItemName, "btnBrowser") == 0)
+		{
+			line = (char*)gDialogApi->SendDlgMsg(pDlg, "cbURL", DM_GETTEXT, 0, 0);
+
+			if (line && line[0] != '\0')
+			{
+				gchar *command = g_strdup_printf("xdg-open %s", line);
+				system(command);
+			}
+		}
+		else if (strcmp(DlgItemName, "btnSelected") == 0)
+		{
+			line = (char*)gDialogApi->SendDlgMsg(pDlg, "edURL", DM_GETTEXT, 0, 0);
+
+			if (line && line[0] != '\0')
+			{
+				gDialogApi->SendDlgMsg(pDlg, "cbURL", DM_SETTEXT, (intptr_t)line, 0);
+			}
+		}
+		else if (strcmp(DlgItemName, "btnRemove") == 0)
+		{
+			int i = (int)gDialogApi->SendDlgMsg(pDlg, "cbURL", DM_LISTGETITEMINDEX, 0, 0);
+
+			if (i != -1)
+				gDialogApi->SendDlgMsg(pDlg, "cbURL", DM_LISTDELETE, (intptr_t)i, 0);
+
+			count = (int)gDialogApi->SendDlgMsg(pDlg, "cbURL", DM_LISTGETCOUNT, 0, 0);
+
+			if (count > 0)
+				gDialogApi->SendDlgMsg(pDlg, "cbURL", DM_LISTSETITEMINDEX, 0, 0);
+			else
+			{
+				gDialogApi->SendDlgMsg(pDlg, "btnBrowser", DM_ENABLE, 0, 0);
+				gDialogApi->SendDlgMsg(pDlg, "btnRemove", DM_ENABLE, 0, 0);
+			}
+		}
+
+		break;
+
+	case DN_CHANGE:
+		if (strcmp(DlgItemName, "cbURL") == 0)
+		{
+			line = (char*)gDialogApi->SendDlgMsg(pDlg, "cbURL", DM_GETTEXT, 0, 0);
+
+			if (strncmp(line, "http", 4) != 0)
+				gDialogApi->SendDlgMsg(pDlg, "btnBrowser", DM_ENABLE, 0, 0);
+			else
+				gDialogApi->SendDlgMsg(pDlg, "btnBrowser", DM_ENABLE, 1, 0);
+
+		}
 		break;
 	}
 
@@ -838,7 +927,10 @@ int DCPCALL FsInit(int PluginNr, tProgressProc pProgressProc, tLogProc pLogProc,
 			if (line[read - 1] == '\n')
 				line[read - 1] = '\0';
 
-			g_strlcpy(g_settings.url, line, PATH_MAX);
+			if (strlen(line) > 0)
+				g_strlcpy(g_settings.url, line, PATH_MAX);
+			else
+				g_strlcpy(g_settings.url, DEFAULT_URL, PATH_MAX);
 		}
 
 		fclose(fp);
@@ -874,6 +966,8 @@ HANDLE DCPCALL FsFindFirst(char* Path, WIN32_FIND_DATAA *FindData)
 		xmlUnlinkNode(root);
 		xmlFreeNode(root);
 	}
+
+	g_clock = clock();
 
 	root = get_links(g_settings.url);
 
@@ -1091,7 +1185,7 @@ int DCPCALL FsContentGetValue(char* FileName, int FieldIndex, int UnitIndex, voi
 
 	int result = ft_fieldempty;
 
-	gchar *xpath = g_strdup_printf("/links/link[@name=\"%s\"]", FileName + 1);
+	gchar *xpath = g_strdup_printf("/links/link[@name=\"%s\"]", FileName[0] == '/' ? FileName + 1 : FileName);
 	xmlXPathContextPtr context = xmlXPathNewContext(g_doc);
 	xmlXPathObjectPtr obj = xmlXPathEvalExpression((xmlChar*)xpath, context);
 	xmlXPathFreeContext(context);
