@@ -147,6 +147,18 @@ def vfs_mvfile(src, dst):
 	if not localname is None:
 		add_fileobj(obj, localname, dst)
 		rm_fileobj(obj, src)
+	else:
+		obj[dst] = obj[src]
+		olddirname = os.path.dirname(src)
+		oldname = os.path.basename(src)
+		dirname = os.path.dirname(dst)
+		name = os.path.basename(dst)
+		if not dirname in obj:
+			obj[dirname] = {}
+		obj[dirname][name] = {}
+		obj[dirname][name] = obj[olddirname][oldname]
+		del obj[olddirname][oldname]
+		del obj[src]
 	save_jsonobj(obj)
 	sys.exit()
 
@@ -174,10 +186,11 @@ def vfs_execute(filename):
 
 def vfs_properties(filename):
 	obj = get_jsonobj()
+	localname = get_localname(obj, filename)
+	if not localname is None:
+		print('Path\t' + localname)
 	element = get_fileobj(obj, filename)
 	if not element is None:
-		if 'localname' in element:
-			print('Link to\t' + element['localname'])
 		print('Created\t' + element['created'])
 	sys.exit()
 

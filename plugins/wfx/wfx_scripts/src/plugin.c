@@ -73,10 +73,12 @@ typedef struct sVFSDirData
 } tVFSDirData;
 
 int gPluginNr;
+int gCryptoNr;
 tProgressProc gProgressProc = NULL;
 tLogProc gLogProc = NULL;
 tRequestProc gRequestProc = NULL;
 tExtensionStartupInfo* gDialogApi = NULL;
+tCryptProc gCryptProc = NULL;
 
 static gchar *g_props = NULL;
 static gchar *g_caller = NULL;
@@ -464,6 +466,38 @@ static void FillProps(uintptr_t pDlg)
 	}
 }
 
+static void LogCryptProc(int ret)
+{
+	switch (ret)
+	{
+	case FS_FILE_OK:
+		if (g_noise)
+			LogMessage(gPluginNr, MSGTYPE_DETAILS, "CryptProc: Success");
+
+		break;
+
+	case FS_FILE_NOTSUPPORTED:
+		LogMessage(gPluginNr, MSGTYPE_IMPORTANTERROR, "CryptProc: Encrypt/Decrypt failed");
+		break;
+
+	case FS_FILE_WRITEERROR:
+		LogMessage(gPluginNr, MSGTYPE_IMPORTANTERROR, "CryptProc: Could not write password to password store");
+		break;
+
+	case FS_FILE_READERROR:
+		if (g_noise)
+			LogMessage(gPluginNr, MSGTYPE_DETAILS, "CryptProc: Password not found in password store");
+
+		break;
+
+	case FS_FILE_NOTFOUND:
+		if (g_noise)
+			LogMessage(gPluginNr, MSGTYPE_DETAILS, "CryptProc: No master password entered yet");
+
+		break;
+	}
+}
+
 static void ParseOpts(gchar *script, gchar *text)
 {
 	gchar *output = NULL;
@@ -513,18 +547,48 @@ static void ParseOpts(gchar *script, gchar *text)
 				else if (request_values == TRUE)
 				{
 					char value[MAX_PATH] = "";
-					gchar *prev = g_key_file_get_string(g_cfg, script, *p, NULL);
 
-					if (prev)
+					int type = (strncasecmp("password", *p, 8) == 0) ? RT_Password : RT_Other;
+
+					if (type == RT_Password)
 					{
-						g_strlcpy(value, prev, MAX_PATH);
-						g_free(prev);
+						if (!gCryptProc)
+							LogMessage(gPluginNr, MSGTYPE_IMPORTANTERROR, "!gCryptProc");
+						else
+						{
+							int ret = gCryptProc(gPluginNr, gCryptoNr, FS_CRYPT_LOAD_PASSWORD_NO_UI, script, value, MAX_PATH);
+
+							if (ret == FS_FILE_NOTFOUND)
+								ret = gCryptProc(gPluginNr, gCryptoNr, FS_CRYPT_LOAD_PASSWORD, script, value, MAX_PATH);
+
+							LogCryptProc(ret);
+						}
+					}
+					else
+					{
+
+						gchar *prev = g_key_file_get_string(g_cfg, script, *p, NULL);
+
+						if (prev)
+						{
+							g_strlcpy(value, prev, MAX_PATH);
+							g_free(prev);
+						}
 					}
 
-					if (gRequestProc && gRequestProc(gPluginNr, RT_Other, script, *p, value, MAX_PATH))
+					if (gRequestProc && gRequestProc(gPluginNr, type, script, (type == RT_Password) ? NULL : *p, value, MAX_PATH))
 					{
 						ExecuteScript(script, VERB_SETOPT, *p, value, &output);
-						g_key_file_set_string(g_cfg, script, *p, value);
+
+						if (type == RT_Password)
+						{
+							if (!gCryptProc)
+								LogMessage(gPluginNr, MSGTYPE_IMPORTANTERROR, "CryptProc not initialized");
+							else
+								LogCryptProc(gCryptProc(gPluginNr, gCryptoNr, FS_CRYPT_SAVE_PASSWORD, script, value, MAX_PATH));
+						}
+						else
+							g_key_file_set_string(g_cfg, script, *p, value);
 
 						if (output && output[0] != '\0')
 							ParseOpts(script, output);
@@ -546,28 +610,37 @@ static void ParseOpts(gchar *script, gchar *text)
 	}
 }
 
+static void DeInitializeScript(gchar *script)
+{
+	if (g_key_file_get_boolean(g_cfg, g_script, IN_USE_MARK, NULL))
+	{
+		if (!ExecuteScript(script, VERB_DEINIT, NULL, NULL, NULL) && g_noise)
+			LogMessage(gPluginNr, MSGTYPE_DETAILS, "Deinitialization not implemented or not completed successfully");
+
+		g_key_file_remove_key(g_cfg, script, IN_USE_MARK, NULL);
+		g_key_file_remove_key(g_cfg, script, ENVVAR_OPT, NULL);
+#ifndef  TEMP_PANEL
+		gchar *message = g_strdup_printf("DISCONNECT \\%s", script);
+
+		if (gLogProc)
+			gLogProc(gPluginNr, MSGTYPE_DISCONNECT, message);
+
+		g_free(message);
+#endif
+	}
+}
+
 static void InitializeScript(gchar *script)
 {
 	gchar *output = NULL;
-	gchar *message = NULL;
 
-	if (g_key_file_get_boolean(g_cfg, script, IN_USE_MARK, NULL))
-#ifdef  TEMP_PANEL
-		ExecuteScript(script, VERB_DEINIT, NULL, NULL, NULL);
-
-#else
-	{
-		message = g_strdup_printf("DISCONNECT \\%s", script);
-		LogMessage(gPluginNr, MSGTYPE_DISCONNECT, message);
-		g_free(message);
-		ExecuteScript(script, VERB_DEINIT, NULL, NULL, NULL);
-	}
-
-	message = g_strdup_printf("CONNECT \\%s", script);
+	DeInitializeScript(script);
+	g_noise = g_key_file_get_boolean(g_cfg, script, NOISE_OPT, NULL);
+#ifndef TEMP_PANEL
+	gchar *message = g_strdup_printf("CONNECT \\%s", script);
 	LogMessage(gPluginNr, MSGTYPE_CONNECT, message);
-#endif
 	g_free(message);
-	g_key_file_remove_key(g_cfg, script, ENVVAR_OPT, NULL);
+#endif
 
 	ExecuteScript(script, VERB_INIT, NULL, NULL, &output);
 	g_key_file_set_boolean(g_cfg, script, IN_USE_MARK, TRUE);
@@ -585,6 +658,9 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 		gDialogApi->SendDlgMsg(pDlg, "lScriptName", DM_SETTEXT, (intptr_t)g_script, 0);
 		LoadPreview(pDlg, g_script);
 
+		if (!g_key_file_get_boolean(g_cfg, g_script, IN_USE_MARK, NULL))
+			gDialogApi->SendDlgMsg(pDlg, "btnUnmount", DM_SHOWITEM, 0, 0);
+
 		if (g_caller && g_props)
 		{
 			gchar *content_type = g_content_type_guess(g_caller, NULL, 0, NULL);
@@ -601,6 +677,7 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 		}
 
 		break;
+
 	case DN_CLICK:
 		if (strcmp(DlgItemName, "lURL") == 0)
 		{
@@ -609,8 +686,13 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 			system(command);
 			g_free(command);
 		}
+		else if (strcmp(DlgItemName, "btnUnmount") == 0)
+		{
+			DeInitializeScript(g_script);
+		}
 
 		break;
+
 	case DN_CHANGE:
 		if (strcmp(DlgItemName, "ckNoise") == 0)
 		{
@@ -970,6 +1052,9 @@ HANDLE DCPCALL FsFindFirst(char* Path, WIN32_FIND_DATAA * FindData)
 	}
 	else
 	{
+		if (!g_key_file_get_boolean(g_cfg, g_script, IN_USE_MARK, NULL))
+			return (HANDLE)(-1);
+
 		gchar *output = NULL;
 		gchar *script = ExtractScriptFromPath(Path);
 		gchar *list_path = StripScriptFromPath(Path);
@@ -1391,20 +1476,11 @@ void DCPCALL FsGetDefRootName(char* DefRootName, int maxlen)
 }
 #else
 	g_strlcpy(DefRootName, "Scripts", maxlen - 1);
-
 }
 
 BOOL DCPCALL FsDisconnect(char* DisconnectRoot)
 {
-	if (!ExecuteScript(DisconnectRoot + 1, VERB_DEINIT, NULL, NULL, NULL) && g_noise)
-		LogMessage(gPluginNr, MSGTYPE_DETAILS, "Deinitialization not implemented or not completed successfully");
-
-	g_key_file_set_boolean(g_cfg, DisconnectRoot + 1, IN_USE_MARK, FALSE);
-
-	gchar *message = g_strdup_printf("DISCONNECT %s", DisconnectRoot);
-	LogMessage(gPluginNr, MSGTYPE_DISCONNECT, message);
-	g_free(message);
-
+	DeInitializeScript(DisconnectRoot + 1);
 	return TRUE;
 }
 #endif
@@ -1546,9 +1622,7 @@ void DCPCALL FsStatusInfo(char* RemoteDir, int InfoStartEnd, int InfoOperation)
 {
 
 	if (RootDir(RemoteDir))
-	{
 		return;
-	}
 
 	gchar *script = ExtractScriptFromPath(RemoteDir);
 
@@ -1583,6 +1657,14 @@ void DCPCALL FsStatusInfo(char* RemoteDir, int InfoStartEnd, int InfoOperation)
 
 	case FS_STATUS_OP_PUT_MULTI:
 		ExecuteScript(script, VERB_STATUS, (InfoStartEnd == FS_STATUS_START) ? "put_multi start" : "put_multi end", path, &output);
+		break;
+
+	case FS_STATUS_OP_GET_MULTI_THREAD:
+		ExecuteScript(script, VERB_STATUS, (InfoStartEnd == FS_STATUS_START) ? "get_multi_thread start" : "get_multi_thread end", path, &output);
+		break;
+
+	case FS_STATUS_OP_PUT_MULTI_THREAD:
+		ExecuteScript(script, VERB_STATUS, (InfoStartEnd == FS_STATUS_START) ? "put_multi_thread start" : "put_multi_thread end", path, &output);
 		break;
 
 	case FS_STATUS_OP_RENMOV_SINGLE:
@@ -1651,6 +1733,17 @@ void DCPCALL FsStatusInfo(char* RemoteDir, int InfoStartEnd, int InfoOperation)
 	g_free(path);
 }
 
+void DCPCALL FsSetCryptCallback(tCryptProc pCryptProc, int CryptoNr, int Flags)
+{
+	gCryptoNr = CryptoNr;
+	gCryptProc = pCryptProc;
+}
+
+int DCPCALL FsGetBackgroundFlags(void)
+{
+	return BG_DOWNLOAD | BG_UPLOAD;
+}
+
 void DCPCALL FsSetDefaultParams(FsDefaultParamStruct* dps)
 {
 	g_strlcpy(g_history_file, dps->DefaultIniName, PATH_MAX);
@@ -1690,16 +1783,13 @@ void DCPCALL ExtensionInitialize(tExtensionStartupInfo* StartupInfo)
 
 void DCPCALL ExtensionFinalize(void* Reserved)
 {
+	gLogProc = NULL;
 	gchar **groups = g_key_file_get_groups(g_cfg, NULL);
 
 	for (char **script = groups; *script != NULL; script++)
 	{
 		if (g_key_file_get_boolean(g_cfg, *script, IN_USE_MARK, NULL))
-		{
-			ExecuteScript(*script, VERB_DEINIT, NULL, NULL, NULL);
-			g_key_file_set_boolean(g_cfg, *script, IN_USE_MARK, FALSE);
-			g_key_file_remove_key(g_cfg, *script, ENVVAR_OPT, NULL);
-		}
+			DeInitializeScript(*script);
 	}
 
 	g_strfreev(groups);

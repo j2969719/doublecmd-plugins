@@ -114,7 +114,7 @@ def vfs_getfile(src, dst):
 						for data in response.iter_content(chunk_size=4096):
 							downloaded += len(data)
 							f.write(data)
-							percent = int(downloaded * 100 / int(total))
+							percent = int(downloaded * 100 / element['size'])
 							print(percent)
 				else:
 					print(str(response.status_code) + ": " + response.reason, file=sys.stderr)

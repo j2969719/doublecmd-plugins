@@ -194,6 +194,10 @@ List of possible (not all of them are currently supported by Double Commander) `
 - `put_single end`
 - `put_multi start`
 - `put_multi end`
+- `get_multi_thread start`
+- `get_multi_thread end`
+- `put_multi_thread start`
+- `put_multi_thread end`
 - `renmov_single start`
 - `renmov_single end`
 - `renmov_multi start`

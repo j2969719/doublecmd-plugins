@@ -658,7 +658,7 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 			gDialogApi->SendDlgMsg(pDlg, "cbURL", DM_LISTADD, (intptr_t)g_settings.url, 0);
 
 		if (gDialogApi->SendDlgMsg(pDlg, "cbURL", DM_LISTGETCOUNT, 0, 0) == 0)
-				gDialogApi->SendDlgMsg(pDlg, "btnRemove", DM_ENABLE, 0, 0);
+			gDialogApi->SendDlgMsg(pDlg, "btnRemove", DM_ENABLE, 0, 0);
 
 		if (g_settings.url[0] == '\0')
 			gDialogApi->SendDlgMsg(pDlg, "btnBrowser", DM_ENABLE, 0, 0);
@@ -674,6 +674,7 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 			gDialogApi->SendDlgMsg(pDlg, "btnSelected", DM_ENABLE, 1, 0);
 			xmlFree(url);
 			char extra[256];
+
 			if (FsContentGetValue(g_selected_file, 1, 0, (void*)extra, 256, 0) == ft_string)
 				gDialogApi->SendDlgMsg(pDlg, "edExtra", DM_SETTEXT, (intptr_t)extra, 0);
 			else
@@ -812,7 +813,12 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 			else
 				gDialogApi->SendDlgMsg(pDlg, "btnBrowser", DM_ENABLE, 1, 0);
 
+			if (gDialogApi->SendDlgMsg(pDlg, "cbURL", DM_LISTGETITEMINDEX, 0, 0) == -1)
+				gDialogApi->SendDlgMsg(pDlg, "btnRemove", DM_ENABLE, 0, 0);
+			else
+				gDialogApi->SendDlgMsg(pDlg, "btnRemove", DM_ENABLE, 1, 0);
 		}
+
 		break;
 	}
 
