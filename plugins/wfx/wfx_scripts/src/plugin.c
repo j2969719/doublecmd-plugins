@@ -553,7 +553,7 @@ static void ParseOpts(gchar *script, gchar *text)
 					if (type == RT_Password)
 					{
 						if (!gCryptProc)
-							LogMessage(gPluginNr, MSGTYPE_IMPORTANTERROR, "!gCryptProc");
+							LogMessage(gPluginNr, MSGTYPE_IMPORTANTERROR, "CryptProc not initialized");
 						else
 						{
 							int ret = gCryptProc(gPluginNr, gCryptoNr, FS_CRYPT_LOAD_PASSWORD_NO_UI, script, value, MAX_PATH);
