@@ -38,6 +38,11 @@ Outputting the line `Fs_GetSupportedField_Needed` activates the script call with
 Outputting a line starting with `Fs_Set_DC_WFX_SCRIPT_DATA ` signals that the next part of the line should be set as a value for the `DC_WFX_SCRIPT_DATA` environment variable, which should be passed to the script between calls.
 For plugin compiled with the Temporary Panel API, these are `Fs_Set_DC_WFX_TP_SCRIPT_DATA ` and `DC_WFX_TP_SCRIPT_DATA`, respectively.
 
+#### Fs_MultiChoice
+
+Outputting a line starting with `Fs_MultiChoice ` signals that the next part of the line contains custom option and multiple option values, separated by tabs to select one i.e. `Fs_MultiChoice OPTION\tVALUE1\tVALUE2\tVALUE2`.
+After closing the dialog box, the script will be called with the `setopt OPTION SELECTED_VALUE`
+
 #### Fs_YesNo_Message
 
 Outputting a line starting with `Fs_YesNo_Message ` signals that the next part of the line should be shown in a dialog box with Yes/No buttons.

@@ -208,10 +208,12 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 static void ShowAVFSPathDlg(void)
 {
 	if (gStartupInfo != NULL)
+	{
 		if (access(gLFMPath, F_OK) != 0)
 			gAbortCD = !(bool)gStartupInfo->InputBox("AVFS", "Enter AVFS path:", false, gAVFSPath, sizeof(gAVFSPath) - 1);
 		else
 			gStartupInfo->DialogBoxLFMFile(gLFMPath, DlgProc);
+	}
 }
 
 int DCPCALL FsInit(int PluginNr, tProgressProc pProgressProc, tLogProc pLogProc, tRequestProc pRequestProc)
@@ -658,6 +660,11 @@ void DCPCALL FsSetDefaultParams(FsDefaultParamStruct* dps)
 		if (pos)
 			strcpy(pos + 1, lfm_name);
 	}
+}
+
+int DCPCALL FsGetBackgroundFlags(void)
+{
+	return BG_DOWNLOAD | BG_UPLOAD;
 }
 
 void DCPCALL FsGetDefRootName(char* DefRootName, int maxlen)

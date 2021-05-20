@@ -35,6 +35,7 @@
 #define ENVVAR_OPT "Fs_Set_" ENVVAR_NAME
 #define YESNOMSG_OPT "Fs_YesNo_Message"
 #define INFORM_OPT "Fs_Info_Message"
+#define CHOICE_OPT "Fs_MultiChoice"
 #define NOISE_OPT "Fs_DebugMode"
 
 #define IN_USE_MARK "Fs_InUse"
@@ -82,6 +83,7 @@ tCryptProc gCryptProc = NULL;
 
 static gchar *g_props = NULL;
 static gchar *g_caller = NULL;
+static gchar *g_choice = NULL;
 static GKeyFile *g_cfg = NULL;
 static gchar **g_fields = NULL;
 static gboolean g_noise = FALSE;
@@ -90,6 +92,93 @@ static char g_exec_start[PATH_MAX];
 static char g_scripts_dir[PATH_MAX];
 static char g_lfm_path[PATH_MAX];
 static char g_history_file[PATH_MAX];
+static const char *g_multichoice_lfm = R"(
+object DialogBox: TDialogBox
+  Left = 295
+  Height = 105
+  Top = 84
+  Width = 374
+  AutoSize = True
+  BorderStyle = bsDialog
+  Caption = 'Confirmation of parameter'
+  ChildSizing.LeftRightSpacing = 10
+  ChildSizing.TopBottomSpacing = 10
+  ClientHeight = 105
+  ClientWidth = 374
+  OnCreate = DialogBoxShow
+  Position = poScreenCenter
+  LCLVersion = '2.0.13.0'
+  object lblText: TLabel
+    AnchorSideLeft.Control = Owner
+    AnchorSideTop.Control = Owner
+    Left = 10
+    Height = 1
+    Top = 10
+    Width = 1
+    BorderSpacing.Left = 10
+    BorderSpacing.Top = 10
+    ParentColor = False
+    WordWrap = True
+  end
+  object cbChoice: TComboBox
+    AnchorSideLeft.Control = Owner
+    AnchorSideTop.Control = lblText
+    AnchorSideTop.Side = asrBottom
+    Left = 10
+    Height = 28
+    Top = 21
+    Width = 358
+    BorderSpacing.Top = 10
+    Constraints.MinWidth = 300
+    ItemHeight = 0
+    Style = csOwnerDrawVariable
+    TabOrder = 1
+  end
+  object btnCancel: TBitBtn
+    AnchorSideTop.Control = cbChoice
+    AnchorSideTop.Side = asrBottom
+    AnchorSideRight.Control = btnOK
+    Left = 162
+    Height = 30
+    Top = 59
+    Width = 97
+    Anchors = [akTop, akRight]
+    AutoSize = True
+    BorderSpacing.Top = 10
+    BorderSpacing.Right = 10
+    Cancel = True
+    Constraints.MinHeight = 30
+    Constraints.MinWidth = 97
+    DefaultCaption = True
+    Kind = bkCancel
+    ModalResult = 2
+    OnClick = ButtonClick
+    ParentFont = False
+    TabOrder = 2
+  end
+  object btnOK: TBitBtn
+    AnchorSideTop.Control = cbChoice
+    AnchorSideTop.Side = asrBottom
+    AnchorSideRight.Side = asrBottom
+    Left = 269
+    Height = 30
+    Top = 59
+    Width = 97
+    Anchors = [akTop, akRight]
+    AutoSize = True
+    BorderSpacing.Top = 10
+    Constraints.MinHeight = 30
+    Constraints.MinWidth = 97
+    Default = True
+    DefaultCaption = True
+    Kind = bkOK
+    ModalResult = 1
+    OnClick = ButtonClick
+    ParentFont = False
+    TabOrder = 0
+  end
+end
+)";
 
 unsigned long FileTimeToUnixTime(LPFILETIME ft)
 {
@@ -498,6 +587,8 @@ static void LogCryptProc(int ret)
 	}
 }
 
+intptr_t DCPCALL MultiChoiceDlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr_t wParam, intptr_t lParam);
+
 static void ParseOpts(gchar *script, gchar *text)
 {
 	gchar *output = NULL;
@@ -541,6 +632,19 @@ static void ParseOpts(gchar *script, gchar *text)
 
 					g_free(output);
 					output = NULL;
+				}
+				else if (strncmp(*p, CHOICE_OPT, strlen(CHOICE_OPT)) == 0 && strlen(*p) > strlen(CHOICE_OPT) + 1)
+				{
+					if (gDialogApi)
+					{
+						g_strlcpy(g_script, script, PATH_MAX);
+						g_choice = g_strdup(*p + strlen(CHOICE_OPT) + 1);
+						gDialogApi->DialogBoxLFM((intptr_t)g_multichoice_lfm, (unsigned long)strlen(g_multichoice_lfm), MultiChoiceDlgProc);
+						g_free(g_choice);
+						g_choice = NULL;
+					}
+					else
+						LogMessage(gPluginNr, MSGTYPE_IMPORTANTERROR, "DialogApi not initialized");
 				}
 				else if (strncmp(*p, NOISE_OPT, 3) == 0)
 					LogMessage(gPluginNr, MSGTYPE_IMPORTANTERROR, "Options starting with \"Fs_\" are reserved, ignored");
@@ -612,7 +716,7 @@ static void ParseOpts(gchar *script, gchar *text)
 
 static void DeInitializeScript(gchar *script)
 {
-	if (g_key_file_get_boolean(g_cfg, g_script, IN_USE_MARK, NULL))
+	if (g_key_file_get_boolean(g_cfg, script, IN_USE_MARK, NULL))
 	{
 		if (!ExecuteScript(script, VERB_DEINIT, NULL, NULL, NULL) && g_noise)
 			LogMessage(gPluginNr, MSGTYPE_DETAILS, "Deinitialization not implemented or not completed successfully");
@@ -646,6 +750,70 @@ static void InitializeScript(gchar *script)
 	g_key_file_set_boolean(g_cfg, script, IN_USE_MARK, TRUE);
 	ParseOpts(script, output);
 	g_free(output);
+}
+
+intptr_t DCPCALL MultiChoiceDlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr_t wParam, intptr_t lParam)
+{
+	switch (Msg)
+	{
+	case DN_INITDIALOG:
+		if (g_choice)
+		{
+			gsize count = 0;
+			gchar **split = g_strsplit(g_choice, "\t", -1);
+			gDialogApi->SendDlgMsg(pDlg, "lblText", DM_SETTEXT, (intptr_t)split[0], 0);
+
+			if (split + 1)
+			{
+				for (gchar **p = split + 1; *p != NULL; p++)
+				{
+					if (*p[0] != '\0')
+					{
+						gDialogApi->SendDlgMsg(pDlg, "cbChoice", DM_LISTADD, (intptr_t)*p, 0);
+						count++;
+					}
+				}
+
+				if (count < 2)
+					LogMessage(gPluginNr, MSGTYPE_IMPORTANTERROR, "Fs_MultiChoice: there is no choice");
+
+				gint index = g_key_file_get_integer(g_cfg, g_script, split[0], NULL);
+				gDialogApi->SendDlgMsg(pDlg, "cbChoice", DM_LISTSETITEMINDEX, (index < 0 || index >= count) ? 0 : (intptr_t)index, 0);
+			}
+			else
+				LogMessage(gPluginNr, MSGTYPE_IMPORTANTERROR, "Fs_MultiChoice: there is no choice");
+
+			g_strfreev(split);
+		}
+
+		break;
+
+	case DN_CLICK:
+		if (strcmp(DlgItemName, "btnOK") == 0)
+		{
+			gchar *output = NULL;
+			int index = (int)gDialogApi->SendDlgMsg(pDlg, "cbChoice", DM_LISTGETITEMINDEX, 0, 0);
+			char *text = (char*)gDialogApi->SendDlgMsg(pDlg, "lblText", DM_GETTEXT, 0, 0);
+			g_key_file_set_integer(g_cfg, g_script, text, index);
+			char *res = (char*)gDialogApi->SendDlgMsg(pDlg, "cbChoice", DM_GETTEXT, 0, 0);
+
+			if (res && res[0] != '\0')
+			{
+				ExecuteScript(g_script, VERB_SETOPT, text, res, &output);
+
+				if (output && output[0] != '\0')
+					ParseOpts(g_script, output);
+
+				g_free(output);
+			}
+			else
+				LogMessage(gPluginNr, MSGTYPE_DETAILS, "empty argument selected");
+		}
+
+		break;
+	}
+
+	return 0;
 }
 
 intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr_t wParam, intptr_t lParam)

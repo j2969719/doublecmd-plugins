@@ -6,7 +6,9 @@ args = {...}
 os.setlocale("C")
 env_var = 'DC_WFX_TP_SCRIPT_DATA'
 restart_msg = "Do you want to restart the "
-system_msg = "Connect to system manager?"
+connect_txt = "Connect to"
+system_txt = "System Manager"
+user_txt = "User Service Manager"
 
 function get_output(command)
     local handle = io.popen(command, 'r')
@@ -31,7 +33,7 @@ function prepare_command(command)
 end
 
 function fs_init()
-    print("Fs_YesNo_Message " .. system_msg)
+    print("Fs_MultiChoice " .. connect_txt .."\t" .. system_txt .."\t" .. user_txt)
     os.exit()
 end
 
@@ -40,10 +42,10 @@ function fs_setopt(option, value)
         service = option:gsub(restart_msg, ''):sub(1, -2)
         command = prepare_command("systemctl restart " .. service)
         os.execute(command)
-    elseif option == system_msg then
-        if value == "No" then
+    elseif option == connect_txt then
+        if value == user_txt then
             print("Fs_Set_" .. env_var .. "  --user ")
-        elseif value == "Yes" then
+        elseif value == system_txt then
             print("Fs_Set_" .. env_var .. "  --system ")
         end
     end

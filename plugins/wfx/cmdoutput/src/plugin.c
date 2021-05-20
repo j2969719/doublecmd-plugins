@@ -252,6 +252,11 @@ void DCPCALL FsSetDefaultParams(FsDefaultParamStruct* dps)
 
 }
 
+int DCPCALL FsGetBackgroundFlags(void)
+{
+	return BG_DOWNLOAD;
+}
+
 void DCPCALL ExtensionInitialize(tExtensionStartupInfo* StartupInfo)
 {
 	return;
