@@ -1,6 +1,7 @@
 #define _GNU_SOURCE
 #include <glib.h>
 #include <signal.h>
+#include <unistd.h>
 #include "dsxplugin.h"
 
 #include <dlfcn.h>
@@ -160,6 +161,7 @@ void DCPCALL StartSearch(int PluginNr, tDsxSearchRecord* pSearchRec)
 		g_spawn_close_pid(pid);
 		g_io_channel_shutdown(stdout, TRUE, NULL);
 		g_io_channel_unref(stdout);
+		close(fp);
 	}
 
 	if (dppath)

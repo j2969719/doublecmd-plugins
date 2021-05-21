@@ -203,7 +203,7 @@ static gchar *parse_date(char *text, gint index)
 		"%d-%b-%Y %R",
 		"%Y-%m-%d %R",
 		"%Y.%m.%d %R",
-		"%d-%b-%Y  %R",
+		"%d-%b-%Y  %k:%M",
 		NULL
 	};
 
@@ -249,7 +249,7 @@ static void parse_fileinfo(char *text, xmlNodePtr link, xmlDocPtr doc)
 		"(\\d{2}\\-\\w{3}\\-\\d{4}\\s\\d{2}:\\d{2})\\s+([\\d\\.]*[-kKmMgGtT]?)",
 		"(\\d{4}\\-\\d{2}\\-\\d{2}\\s\\d{2}:\\d{2})\\s+([\\d\\.]*[-kKmMgGtT]?)",
 		"([\\d\\.]*[-kKmMgGtT]?)\\s+(\\d{4}\\.\\d{2}\\.\\d{2}\\s\\d{2}:\\d{2})",
-		"(\\d\\d?\\-\\w{3}\\-\\d{4}\\s{2}\\d\\d?:\\d{2})\\s+([\\d\\.]*[-kKmMgGtT]?).+",
+		"(\\d\\d?\\-\\w{3}\\-\\d{4}\\s{2}\\d\\d?:\\d{2})\\s+([\\d\\.]*[-kKmMgGtT]?).*",
 		NULL
 	};
 
