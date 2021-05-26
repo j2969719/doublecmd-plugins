@@ -37,6 +37,8 @@
 #define INFORM_OPT "Fs_Info_Message"
 #define CHOICE_OPT "Fs_MultiChoice"
 #define NOISE_OPT "Fs_DebugMode"
+#define PUSH_OPT "Fs_PushValue"
+#define ACT_OPT "Fs_PropsActs"
 
 #define IN_USE_MARK "Fs_InUse"
 
@@ -493,6 +495,11 @@ static void LoadPreview(uintptr_t pDlg, gchar *file)
 	g_free(src_file);
 }
 
+static gboolean ValidOpt(gchar *str, gchar *opt)
+{
+	return (strncmp(str, opt, strlen(opt)) == 0 && strlen(str) > (strlen(opt) + 2));
+}
+
 static void FillProps(uintptr_t pDlg)
 {
 	int i = 1;
@@ -506,10 +513,29 @@ static void FillProps(uintptr_t pDlg)
 			if (i > 10)
 				break;
 
-			gchar **res = g_strsplit(*p, "\t", -1);
-
-			if (g_strv_length(res) == 2)
+			if (ValidOpt(*p, ACT_OPT))
 			{
+				gchar **acts = g_strsplit(*p + strlen(ACT_OPT) + 1, "\t", -1);
+
+				if (g_strv_length(acts) > 0)
+				{
+					for (gchar **a = acts; *a != NULL; a++)
+					{
+						if (*a[0] != '\0')
+							gDialogApi->SendDlgMsg(pDlg, "cbAct", DM_LISTADD, (intptr_t)*a, 0);
+					}
+
+					gDialogApi->SendDlgMsg(pDlg, "cbAct", DM_SHOWITEM, 1, 0);
+					gDialogApi->SendDlgMsg(pDlg, "btnAct", DM_SHOWITEM, 1, 0);
+				}
+			}
+			else
+			{
+				gchar **res = g_strsplit(*p, "\t", 2);
+
+				if (!res[0] || !res[1])
+					continue;
+
 				if (g_ascii_strcasecmp(res[0], "filetype") == 0)
 					gDialogApi->SendDlgMsg(pDlg, "lType", DM_SETTEXT, (intptr_t)g_strstrip(res[1]), 0);
 				else if (g_ascii_strcasecmp(res[0], "content_type") == 0)
@@ -545,10 +571,9 @@ static void FillProps(uintptr_t pDlg)
 					g_free(item);
 					i++;
 				}
+
+				g_strfreev(res);
 			}
-
-			g_strfreev(res);
-
 		}
 
 		g_strfreev(split);
@@ -587,6 +612,20 @@ static void LogCryptProc(int ret)
 	}
 }
 
+static void ParseOpts(gchar *script, gchar *text);
+
+static void SetOpt(gchar *script, gchar *opt, gchar *value)
+{
+	gchar *output = NULL;
+	ExecuteScript(script, VERB_SETOPT, opt, value, &output);
+
+	if (output && output[0] != '\0')
+		ParseOpts(script, output);
+
+	g_free(output);
+	output = NULL;
+}
+
 intptr_t DCPCALL MultiChoiceDlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr_t wParam, intptr_t lParam);
 
 static void ParseOpts(gchar *script, gchar *text)
@@ -608,7 +647,7 @@ static void ParseOpts(gchar *script, gchar *text)
 					g_key_file_set_boolean(g_cfg, script, STATUSINFO_OPT, TRUE);
 				else if (g_strcmp0(*p, CHECKFIELDS_OPT) == 0)
 					g_key_file_set_boolean(g_cfg, script, CHECKFIELDS_OPT, TRUE);
-				else if (strncmp(*p, ENVVAR_OPT, strlen(ENVVAR_OPT)) == 0 && strlen(*p) > strlen(ENVVAR_OPT))
+				else if (ValidOpt(*p, ENVVAR_OPT))
 				{
 					g_key_file_set_string(g_cfg, script, ENVVAR_OPT, *p + strlen(ENVVAR_OPT) + 1);
 
@@ -619,21 +658,21 @@ static void ParseOpts(gchar *script, gchar *text)
 						g_free(message);
 					}
 				}
-				else if (strncmp(*p, INFORM_OPT, strlen(INFORM_OPT)) == 0 && gRequestProc && strlen(*p) > (strlen(INFORM_OPT) + 2))
+				else if (ValidOpt(*p, INFORM_OPT) && gRequestProc)
 					gRequestProc(gPluginNr, RT_MsgOK, script, *p + strlen(INFORM_OPT) + 1, NULL, 0);
-				else if (strncmp(*p, YESNOMSG_OPT, strlen(YESNOMSG_OPT)) == 0 && gRequestProc && strlen(*p) > (strlen(YESNOMSG_OPT) + 2))
+				else if (ValidOpt(*p, YESNOMSG_OPT) && gRequestProc)
 				{
 					gboolean is_yes = gRequestProc(gPluginNr, RT_MsgYesNo, script, *p + strlen(YESNOMSG_OPT) + 1, NULL, 0);
 
-					ExecuteScript(script, VERB_SETOPT, *p + strlen(YESNOMSG_OPT) + 1, is_yes ? "Yes" : "No", &output);
-
-					if (output && output[0] != '\0')
-						ParseOpts(script, output);
-
-					g_free(output);
-					output = NULL;
+					SetOpt(script, *p + strlen(YESNOMSG_OPT) + 1, is_yes ? "Yes" : "No");
 				}
-				else if (strncmp(*p, CHOICE_OPT, strlen(CHOICE_OPT)) == 0 && strlen(*p) > strlen(CHOICE_OPT) + 1)
+				else if (ValidOpt(*p, PUSH_OPT))
+				{
+					gchar **res = g_strsplit(*p + strlen(PUSH_OPT) + 1, "\t", 2);
+					SetOpt(script, res[0], res[1]);
+					g_strfreev(res);
+				}
+				else if (ValidOpt(*p, CHOICE_OPT))
 				{
 					if (gDialogApi)
 					{
@@ -774,7 +813,9 @@ intptr_t DCPCALL MultiChoiceDlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t 
 					}
 				}
 
-				if (count < 2)
+				if (g_noise && count == 1)
+					LogMessage(gPluginNr, MSGTYPE_DETAILS, "Fs_MultiChoice: there is no choice");
+				else if (count < 1)
 					LogMessage(gPluginNr, MSGTYPE_IMPORTANTERROR, "Fs_MultiChoice: there is no choice");
 
 				gint index = g_key_file_get_integer(g_cfg, g_script, split[0], NULL);
@@ -833,8 +874,10 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 		{
 			gchar *content_type = g_content_type_guess(g_caller, NULL, 0, NULL);
 			gchar *descr = g_content_type_get_description(content_type);
-			gDialogApi->SendDlgMsg(pDlg, "lFileName", DM_SETTEXT, (intptr_t)g_caller, 0);
+			gchar *filename = g_path_get_basename(g_caller);
+			gDialogApi->SendDlgMsg(pDlg, "lFileName", DM_SETTEXT, (intptr_t)filename, 0);
 			gDialogApi->SendDlgMsg(pDlg, "lType", DM_SETTEXT, (intptr_t)descr, 0);
+			g_free(filename);
 			g_free(content_type);
 			g_free(descr);
 			gDialogApi->SendDlgMsg(pDlg, "pProperties", DM_SHOWITEM, 1, 0);
@@ -858,6 +901,12 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 		{
 			DeInitializeScript(g_script);
 		}
+		else if (strcmp(DlgItemName, "btnAct") == 0)
+		{
+			char *cmd = (char*)gDialogApi->SendDlgMsg(pDlg, "cbAct", DM_GETTEXT, 0, 0);
+			SetOpt(g_script, cmd, g_caller);
+			gDialogApi->SendDlgMsg(pDlg, DlgItemName, DM_CLOSE, ID_OK, 0);
+		}
 
 		break;
 
@@ -866,6 +915,13 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 		{
 			g_noise = (gboolean)gDialogApi->SendDlgMsg(pDlg, DlgItemName, DM_GETCHECK, 0, 0);
 			g_key_file_set_boolean(g_cfg, g_script, NOISE_OPT, g_noise);
+		}
+		else if (strcmp(DlgItemName, "cbAct") == 0)
+		{
+			if (gDialogApi->SendDlgMsg(pDlg, "cbAct", DM_LISTGETITEMINDEX, 0, 0) == -1)
+				gDialogApi->SendDlgMsg(pDlg, "btnAct", DM_ENABLE, 0, 0);
+			else
+				gDialogApi->SendDlgMsg(pDlg, "btnAct", DM_ENABLE, 1, 0);
 		}
 
 		break;
@@ -1559,9 +1615,8 @@ int DCPCALL FsExecuteFile(HWND MainWin, char* RemoteName, char* Verb)
 						ParseOpts(script, g_props);
 					else
 					{
-						g_caller = g_path_get_basename(path);
+						g_caller = path;
 						ShowPropertiesDlg();
-						g_free(g_caller);
 						g_caller = NULL;
 					}
 				}

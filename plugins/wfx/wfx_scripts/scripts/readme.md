@@ -40,7 +40,7 @@ For plugin compiled with the Temporary Panel API, these are `Fs_Set_DC_WFX_TP_SC
 
 #### Fs_MultiChoice
 
-Outputting a line starting with `Fs_MultiChoice ` signals that the next part of the line contains custom option and multiple option values, separated by tabs to select one i.e. `Fs_MultiChoice OPTION\tVALUE1\tVALUE2\tVALUE3`.
+Outputting a line starting with `Fs_MultiChoice ` signals that the next part of the line contains custom option and multiple option values, separated by tabs to select one i.e. `Fs_MultiChoice OPTION\tVALUE1\tVALUE2\tVALUE2`.
 After closing the dialog box, the script will be called with the `setopt OPTION SELECTED_VALUE`
 
 #### Fs_YesNo_Message
@@ -51,6 +51,10 @@ After closing the dialog box, the script will be called with the `setopt TEXT_DI
 #### Fs_Info_Message
 
 Outputting a line starting with `Fs_Info_Message ` signals that the next part of the line should be shown in the info dialog box.
+
+#### Fs_PushValue
+
+Outputting a line starting with `Fs_Info_Message ` signals that the next part of the line already contains the option and value, separated by a tab (`Fs_PushValue OPTION\tVALUE`), and must be passed to the **setopt** command immediately.
 
 ## deinit
 `SCRIPT deinit`
@@ -172,6 +176,9 @@ Example:
 ```
 Duration\t8:10
 ```
+
+In addition, if one of these lines (but not the first one) starting with `Fs_PropsActs ` it signals that the next part of the line will contain a list of custom actions, separated by tabs (`Fs_PropsActs ACTION1\tACTION2\tACTION3`), that can be performed on the selected file.
+When you select a custom action in the properties dialog, the script will be launched with these arguments: `setopt ACTION FILE`
 
 If the script did not output anything to stdout, but returned exit status 0, it is assumed that the properties dialog is in some form implemented by the script.
 

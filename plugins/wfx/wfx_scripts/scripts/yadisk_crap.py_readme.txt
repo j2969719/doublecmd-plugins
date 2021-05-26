@@ -1,0 +1,7 @@
+pip install yadisk
+
+more info https://pypi.org/project/yadisk/
+
+this crappy script doesn't ship with client id/secret out of the box.
+how to get them: https://yandex.ru/dev/disk/api/concepts/quickstart.html#quickstart__oauth
+obtaining OAuth tokens works only with a verification code here(the client's Callback URL must be https://oauth.yandex.ru/verification_code or something).

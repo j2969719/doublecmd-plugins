@@ -1,14 +1,15 @@
 object DialogBox: TDialogBox
-  Left = 305
-  Height = 571
-  Top = 60
+  Left = 284
+  Height = 606
+  Top = 50
   Width = 518
+  ActiveControl = lFileName
   AutoSize = True
   BorderStyle = bsDialog
   Caption = 'Properties'
   ChildSizing.LeftRightSpacing = 10
   ChildSizing.TopBottomSpacing = 10
-  ClientHeight = 571
+  ClientHeight = 606
   ClientWidth = 518
   OnCreate = DialogBoxShow
   Position = poScreenCenter
@@ -20,7 +21,7 @@ object DialogBox: TDialogBox
     AnchorSideRight.Side = asrBottom
     Left = 10
     Height = 15
-    Top = 354
+    Top = 387
     Width = 30
     Caption = 'Type'
     ParentColor = False
@@ -35,7 +36,7 @@ object DialogBox: TDialogBox
     AnchorSideRight.Side = asrBottom
     Left = 10
     Height = 147
-    Top = 378
+    Top = 411
     Width = 500
     BorderSpacing.Top = 5
     Enabled = False
@@ -55,7 +56,7 @@ object DialogBox: TDialogBox
     AnchorSideRight.Side = asrBottom
     Left = 401
     Height = 23
-    Top = 350
+    Top = 383
     Width = 109
     Anchors = [akTop, akRight]
     BorderSpacing.Top = 10
@@ -425,7 +426,7 @@ object DialogBox: TDialogBox
     AnchorSideRight.Side = asrBottom
     Left = 413
     Height = 30
-    Top = 535
+    Top = 568
     Width = 97
     Anchors = [akTop, akRight]
     AutoSize = True
@@ -463,13 +464,13 @@ object DialogBox: TDialogBox
   end
   object lScriptName: TEdit
     AnchorSideLeft.Control = mPreview
-    AnchorSideTop.Control = pProperties
+    AnchorSideTop.Control = cbAct
     AnchorSideTop.Side = asrBottom
     AnchorSideRight.Control = mPreview
     AnchorSideRight.Side = asrBottom
     Left = 10
     Height = 20
-    Top = 320
+    Top = 353
     Width = 500
     Alignment = taCenter
     Anchors = [akTop, akLeft, akRight]
@@ -491,7 +492,7 @@ object DialogBox: TDialogBox
     AnchorSideBottom.Side = asrBottom
     Left = 225
     Height = 23
-    Top = 350
+    Top = 383
     Width = 70
     Anchors = [akTop, akLeft, akBottom]
     AutoSize = True
@@ -499,5 +500,77 @@ object DialogBox: TDialogBox
     ModalResult = 11
     OnClick = ButtonClick
     TabOrder = 6
+  end
+  object cbAct: TComboBox
+    AnchorSideLeft.Control = pProperties
+    AnchorSideTop.Control = pProperties
+    AnchorSideTop.Side = asrBottom
+    AnchorSideRight.Control = btnAct
+    Left = 10
+    Height = 28
+    Top = 305
+    Width = 429
+    Anchors = [akTop, akLeft, akRight]
+    BorderSpacing.Top = 5
+    BorderSpacing.Right = 10
+    ItemHeight = 0
+    OnChange = ComboBoxChange
+    Style = csDropDownList
+    TabOrder = 7
+    Visible = False
+  end
+  object btnAct: TBitBtn
+    AnchorSideTop.Control = cbAct
+    AnchorSideRight.Control = ckNoise
+    AnchorSideRight.Side = asrBottom
+    AnchorSideBottom.Control = cbAct
+    AnchorSideBottom.Side = asrBottom
+    Left = 449
+    Height = 28
+    Top = 305
+    Width = 61
+    Anchors = [akTop, akRight, akBottom]
+    AutoSize = True
+    Caption = 'Start'
+    Enabled = False
+    Glyph.Data = {
+      36040000424D3604000000000000360000002800000010000000100000000100
+      200000000000000400006400000064000000000000000000000000000000066A
+      1D8B03651A4E0060200800000000000000000000000000000000000000000000
+      0000000000000000000000000000000000000000000000000000000000000B78
+      2CC02DA25CF30E7D31B504661841006633050000000000000000000000000000
+      0000000000000000000000000000000000000000000000000000000000000C79
+      2EC05ACB8FFF50C385FF2CA15CEC0E7B30AA0560133500800002000000000000
+      0000000000000000000000000000000000000000000000000000000000000D7A
+      30C05CCE93FF3AC47EFF55CD8FFF4EC485FF289E57E50F7A319D0059122B0000
+      0001000000000000000000000000000000000000000000000000000000000F7C
+      31C05ED197FF31C57AFF32C67CFF40CB85FF52D091FF47C281FF239750DD0D78
+      2C8A005D0F21000000000000000000000000000000000000000000000000107D
+      34C05CD298FF35C980FF37CB82FF38CC83FF3ACD85FF44D08CFF4FD292FF3EBE
+      7DFF1F954CD80D752C7A005C141900000000000000000000000000000000117E
+      35C05AD598FF39CD86FF3BCF88FF3CD089FF3DD18BFF3ED28BFF3FD28CFF47D4
+      90FF4FD594FF3EBD7BFD1D9147D10C71266A00550E1200000000000000001380
+      36C059D79AFF3ED28BFF3FD38DFF41D58FFF42D691FF42D691FF43D792FF42D6
+      91FF43D691FF4DD797FF56D69AFF6DCA99FC219048CA0C6F2455000000001481
+      38C057D99CFF42D691FF44D893FF45D995FF46DA97FF47DB98FF47DB98FF47DB
+      97FF47DA97FF84E6B9FFAAECCDFF6FCD9BFB21904ACA0C6F2455000000001582
+      3AC055DB9DFF46DA96FF48DC99FF4ADE9BFF4BDF9DFF4CE09EFF4DE09EFF58E2
+      A4FFADF0D1FF82D8ADFE2F9B58D30E732B6A00550E1200000000000000001783
+      3CC05ADFA2FF4ADE9BFF4CE09EFF4EE2A1FF51E3A3FF5BE5A9FFAEF2D4FF8EE1
+      B9FF3BA769DB137A327B005C1419000000000000000000000000000000001885
+      3DC05FE2A7FF4DE19FFF50E4A3FF5CE6ABFFADF3D5FF9BE7C4FF4AB176E11880
+      398A005D0F210000000000000000000000000000000000000000000000001885
+      3EC065E5ACFF58E5A8FFA7F2D2FFA3EBCBFF59BB86E91D87439D0059122B0000
+      0001000000000000000000000000000000000000000000000000000000001986
+      3EC0B8F4DAFFA7EDCEFF62C490EF218C47AA0560183500800002000000000000
+      0000000000000000000000000000000000000000000000000000000000001986
+      40C069CA97F5238C49B608662341006633050000000000000000000000000000
+      0000000000000000000000000000000000000000000000000000000000000F74
+      2C8B0A6C244E0060200800000000000000000000000000000000000000000000
+      0000000000000000000000000000000000000000000000000000
+    }
+    OnClick = ButtonClick
+    TabOrder = 8
+    Visible = False
   end
 end
