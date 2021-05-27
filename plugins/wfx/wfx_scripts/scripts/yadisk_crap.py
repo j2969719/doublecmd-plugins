@@ -132,7 +132,7 @@ def vfs_exists(path):
 
 def vfs_putfile(src, dst):
 	if y.check_token() == True:
-		y.upload(src, dst)
+		y.upload(src, dst, overwrite=True)
 		sys.exit()
 	sys.exit(1)
 
@@ -144,13 +144,13 @@ def vfs_rmfile(path):
 
 def vfs_cpfile(src, dst):
 	if y.check_token() == True:
-		y.copy(src, dst)
+		y.copy(src, dst, overwrite=True)
 		sys.exit()
 	sys.exit(1)
 
 def vfs_mvfile(src, dst):
 	if y.check_token() == True:
-		y.move(src, dst)
+		y.move(src, dst, overwrite=True)
 		sys.exit()
 	sys.exit(1)
 
