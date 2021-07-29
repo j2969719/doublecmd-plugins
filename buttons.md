@@ -917,7 +917,7 @@ DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
 ```
 
 
-### >Save clipboard contents to text file *(cross platform)*
+### Save clipboard contents to text file *(cross platform)*
 [SaveClipboardToFile.lua](utils/SaveClipboardToFile.lua). Also you can open this new file in viewer or editor immediately, see details in the beginning of script.
 ```xml
 DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
@@ -934,15 +934,15 @@ DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
 ```
 
 
-### >Quick filter with a predefined list of masks *(cross platform)*
+### Quick filter with a predefined list of masks *(cross platform)*
 [QuickFilter.lua](utils/QuickFilter.lua).
 ```xml
 DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
 <doublecmd>
   <Command>
-    <ID>{98AEAAD0-1111-4238-92BB-BE807411BF48}</ID>
+    <ID>{98AEAAD0-1111-4238-92BB-BE807411B128}</ID>
     <Icon>cm_executescript</Icon>
-    <Hint>Save clipboard contents to text file</Hint>
+    <Hint>Quick filter with a predefined list of masks</Hint>
     <Command>cm_ExecuteScript</Command>
     <Param>%COMMANDER_PATH%/utils/QuickFilter.lua</Param>
   </Command>
