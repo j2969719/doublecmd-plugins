@@ -39,7 +39,7 @@ case "${filetype}" in
 	[Cc][Ss][Vv])
 		cat "$file" | sed -e 's/,,/, ,/g' | column -s, -t
 		;;
-	[Dd][Ee][Bb])
+	[Dd][Dd][Ee][Bb]|[Dd][Ee][Bb])
 		dpkg-deb -I "$file" && echo && dpkg-deb -c "$file"
 		;;
 	[Dd][Jj][Vv][Uu]|[Dd][Jj][Vv])
