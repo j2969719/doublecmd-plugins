@@ -848,7 +848,7 @@ DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
 
 
 ### Create new file *(cross platform)*
-[CreateNewFile.lua](utils/CreateNewFile.lua), [templates](utils/newfiles)
+[CreateNewFile.lua](utils/CreateNewFile/CreateNewFile.lua), [templates](utils/CreateNewFile/newfiles)
 ```xml
 DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
 <doublecmd>
