@@ -1,5 +1,5 @@
 -- MakeDir.lua (cross-platform)
--- 2020.04.09
+-- 2021.09.01
 --
 -- Creating directories with additional features.
 --[[
@@ -7,7 +7,7 @@
   Script will also create all directories leading up to the entered name(s) that do not exist already.
 2. If you want more one dir at once then use vertical bar:
   newdir1|newdir2|newdir3
-3. All space characters at the beginning (\r, \n and \t) or end (all usual space characters) of the name(s) will be deleted.
+3. All space characters (usual space characters) at the beginning or end of the name(s) will be deleted.
 4. Also you can use some variables:
     <dt> - current date and time: YYYYMMDDhhmmss;
     <d> or <t> - current date (YYYYMMDD) or time (hhmmss);
@@ -22,7 +22,7 @@
 Params:
   %"0%D
   %"0%p0
-  %permission_mode%
+  %permissions%
 
 where:
   %"0%D is current directory;
@@ -30,7 +30,7 @@ where:
     %"0%p0
       for getting name and last modified date/time from file under cursor
       (if not exists or empty then will use name "New" and current date/time);
-    %permission_mode%
+    %permissions%
       for Linux only, use octal mode (for example, 755 or 777).
 ]]
 
@@ -54,7 +54,9 @@ end
 
 local function MakeDir(a, m)
   local r
-  if SysUtils.PathDelim == '\\' then
+  if m ~= nil then
+    r = GetOutput('mkdir -m ' .. m .. ' -p "' .. table.concat(a, '" "') .. '" 2>&1')
+  else
     r = ''
     local c = 0
     for i = 1, #a do
@@ -64,10 +66,6 @@ local function MakeDir(a, m)
       end
     end
     if c > 0 then r = 'Error:\n' .. r end
-  else
-    local cmd = 'mkdir -p'
-    if m ~= nil then cmd = 'mkdir -m ' .. m .. ' -p' end
-    r = GetOutput(cmd .. ' "' .. table.concat(a, '" "') .. '" 2>&1')
   end
   return r
 end
@@ -77,11 +75,16 @@ local fdt, pf, fn, pm
 local cdt = os.date('%Y%m%d%H%M%S', os.time())
 
 if #params == 3 then
-  fn = params[2]
-  pm = params[3]
+  if string.find(params[2], '^%d%d+') == nil then
+    if PathIsAbsolute(params[2]) then fn = params[2] end
+    pm = params[3]
+  else
+    if PathIsAbsolute(params[3]) then fn = params[3] end
+    pm = params[2]
+  end
 elseif #params == 2 then
-  if PathIsAbsolute(params[2]) then
-    fn = params[2]
+  if string.find(params[2], '^%d%d+') == nil then
+    if PathIsAbsolute(params[2]) then fn = params[2] end
   else
     pm = params[2]
   end
@@ -125,9 +128,9 @@ local ba, dn = Dialogs.InputQuery('Make dir(s)', msgl .. '\nEnter name:', false,
 if ba == false then return end
 -- delete trailing space(s)
 dn = string.gsub(dn, '%s+$', '')
-dn = string.gsub(dn, '^[\r\n\t]+', '')
+dn = string.gsub(dn, '^%s+', '')
 dn = string.gsub(dn, '(%s+)([\\/|])', '%2')
-dn = string.gsub(dn, '([\\/|])([\r\n\t]+)', '%1')
+dn = string.gsub(dn, '([\\/|])(%s+)', '%1')
 
 local lst = {}
 local lst2 = {}
