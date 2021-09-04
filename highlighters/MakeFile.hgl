@@ -2,7 +2,7 @@
   <Info>
     <General Name="Makefiles*" Extensions="MAK MK"/>
     <Author Name="Skif_off" Email="" Web="" Copyright="" Company="" Remark="Based on '_makefile.coder' for AkelPad"/>
-    <Version Version="0" Revision="4" Date="44297,7027423843"/>
+    <Version Version="0" Revision="5" Date="44443,9267349884"/>
     <History>
     </History>
     <Sample>
@@ -228,7 +228,7 @@
     </Keywords>
     <Range Name="Comment" Attributes="32768,16777215;False:False." Style="" CaseSensitive="True"
            Delimiters="!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^`{|}~">
-      <Rule OpenSymbol="#" OpenSymbolStartLine="True" CloseOnEol="True"/>
+      <Rule OpenSymbol="#" OpenSymbolStartLine="NonSpace" CloseOnEol="True"/>
     </Range>
     <Range Name="Var1" Attributes="255,16777215;False:False." Style="" CaseSensitive="True"
            Delimiters="!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^`{|}~">
