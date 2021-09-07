@@ -1,5 +1,5 @@
 -- checkfileextwdx.lua (cross-platform)
--- 2021.04.18
+-- 2021.09.07
 --[[
 Checking that the file extension matches the file type (by the file signatures ("magic numbers"))
 and returns some additional info.
@@ -27,6 +27,7 @@ Current list:
 - PNG image (*.png)
 - RTF document (Rich Text Format) (*.rtf)
 - TIFF image (*.tif; *.tiff)
+-  WebP image (*.webp)
 ]]
 
 local fields = {
@@ -160,6 +161,16 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
       ar[2] = 'image/tiff'
       ar[4] = 'tif'
       if (e ~= '.tif') and (e ~= '.tiff') then ar[5] = true end
+    -- RIFF
+    elseif d14s == 'RIFF' then
+      local t4 = string.sub(d, 9, 12)
+      -- WebP
+      if t4 == 'WEBP' then
+        ar[1] = 'Google WebP image'
+        ar[2] = 'image/webp'
+        ar[4] = 'webp'
+        if e ~= '.webp' then ar[5] = true end
+      end
     end
     filename = FileName
   end
