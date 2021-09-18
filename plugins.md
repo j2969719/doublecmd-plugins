@@ -96,10 +96,13 @@ Returns age (the date of the last modification will be used), see description in
 Getting some information from APK files. Fields: Label, Version, Install Location, Uses Permissions, Locales, Supports Screens, Native Code.
 
 - [appcrashwdx.lua](plugins/wdx/scripts/appcrashwdx.lua) *(cross platform)*<br>
-Getting info from CRASH-files on Debian/Ubuntu and Debian/Ubuntu-based distributions (/var/crash/*.crash). Only app crash files, not core dumps!
+Getting some information from CRASH-files on Debian/Ubuntu and Debian/Ubuntu-based distributions (/var/crash/*.crash). Only app crash files, not core dumps!
 
 - [archivecommentwdx.lua](plugins/wdx/scripts/archivecommentwdx.lua)<br>
 Reading comment from ZIP and RAR files.
+
+- [attachedpicwdx.lua](plugins/wdx/scripts/attachedpicwdx.lua)<br>
+Getting some information about attached pictures: MP3 (ID3v2.3 & ID3v2.4) and FLAC.
 
 - [bintstwdx.lua](plugins/wdx/scripts/bintstwdx.lua)<br>
 Checking: binary or Unicode text file (encoding UTF-8, UTF-16 or UTF-32 and byte order, detection by BOM).
