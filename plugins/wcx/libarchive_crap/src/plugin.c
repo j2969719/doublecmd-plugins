@@ -629,7 +629,7 @@ static void checkbox_get_option(uintptr_t pDlg, char* DlgItemName, const char* o
 
 	if ((chk && !defval) || (!chk && defval))
 	{
-		if (string[strlen(string) - 1] != ':')
+		if (strlen(string) > 0 && string[strlen(string) - 1] != ':')
 			strcat(string, ",");
 
 		if (!chk && defval)
@@ -647,7 +647,7 @@ static void textfield_get_option(uintptr_t pDlg, char* DlgItemName, const char* 
 
 	if (tmpval[0] != '\0')
 	{
-		if (string[strlen(string) - 1] != ':')
+		if (strlen(string) > 0 && string[strlen(string) - 1] != ':')
 			strcat(string, ",");
 
 		snprintf(string, PATH_MAX, "%s%s=%s", strdup(string), optstr, tmpval);
@@ -751,6 +751,7 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 	int numval;
 	bool bval;
 	char string[PATH_MAX];
+	memset(string, 0, PATH_MAX);
 
 	switch (Msg)
 	{
@@ -1090,7 +1091,7 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 
 			if (numval > -1)
 			{
-				if (string[strlen(string) - 1] != ':')
+				if (strlen(string) > 0 && string[strlen(string) - 1] != ':')
 					strcat(string, ",");
 
 				snprintf(string, PATH_MAX, "%scompression-level=%d", strdup(string), numval);
@@ -1117,7 +1118,7 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 
 			if (numval > -1)
 			{
-				if (string[strlen(string) - 1] != ':')
+				if (strlen(string) > 0 && string[strlen(string) - 1] != ':')
 					strcat(string, ",");
 
 				snprintf(string, PATH_MAX, "%scompression-level=%d", strdup(string), numval);
@@ -1148,7 +1149,7 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 
 			if (numval > -1)
 			{
-				if (string[strlen(string) - 1] != ':')
+				if (strlen(string) > 0 && string[strlen(string) - 1] != ':')
 					strcat(string, ",");
 
 				snprintf(string, PATH_MAX, "%siso-level=%d", strdup(string), numval + 1);
@@ -1194,7 +1195,7 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 
 				if (numval > -1)
 				{
-					if (string[strlen(string) - 1] != ':')
+					if (strlen(string) > 0 && string[strlen(string) - 1] != ':')
 						strcat(string, ",");
 
 					snprintf(string, PATH_MAX, "%scompression-level=%d", strdup(string), numval);
@@ -1251,11 +1252,11 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 
 			if (numval > -1)
 			{
-				if (string[strlen(string) - 1] == ':')
+				if (strlen(string) > 0 && string[strlen(string) - 1] == ':')
 					snprintf(string, PATH_MAX, "compression-level=%d", numval);
 				else
 				{
-					if (string[strlen(string) - 1] != '\0')
+					if (strlen(string) > 0 && string[strlen(string) - 1] != '\0')
 						strcat(string, ",");
 
 					snprintf(string, PATH_MAX, "%scompression-level=%d", strdup(string), numval);
@@ -1266,18 +1267,18 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 
 			if (tmpval[0] != '\0')
 			{
-				if (string[strlen(string) - 1] == ':')
+				if (strlen(string) > 0 && string[strlen(string) - 1] == ':')
 					snprintf(string, PATH_MAX, "hdrcharset=%s", tmpval);
 				else
 				{
-					if (string[strlen(string) - 1] != '\0')
+					if (strlen(string) > 0 && string[strlen(string) - 1] != '\0')
 						strcat(string, ",");
 
 					snprintf(string, PATH_MAX, "%shdrcharset=%s", strdup(string), tmpval);
 				}
 			}
 
-			if (string[strlen(string) - 1] != ':')
+			if (strlen(string) > 0 && string[strlen(string) - 1] != ':')
 				gStartupInfo->SendDlgMsg(pDlg, "edOptions", DM_SETTEXT, (intptr_t)string, 0);
 			else
 				gStartupInfo->SendDlgMsg(pDlg, "edOptions", DM_SETTEXT, 0, 0);
