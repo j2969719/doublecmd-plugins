@@ -39,6 +39,9 @@ Syntax highlighting for the internal editor, compatible with dark themes.
       <Added>9097847</Added>
       <Deleted>6383296</Deleted>
       <Modified>12622689</Modified>
+      <Binary>
+        <Modified>6383296</Modified>
+      <Binary>
     </Colors>
   </Differ>
 ```
