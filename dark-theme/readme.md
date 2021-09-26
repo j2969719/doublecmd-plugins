@@ -41,7 +41,7 @@ Syntax highlighting for the internal editor, compatible with dark themes.
       <Modified>12622689</Modified>
       <Binary>
         <Modified>6383296</Modified>
-      <Binary>
+      </Binary>
     </Colors>
   </Differ>
 ```
