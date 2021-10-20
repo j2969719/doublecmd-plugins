@@ -1,9 +1,10 @@
 -- xcfinfowdx.lua (cross-platform)
--- 2021.04.18
+-- 2021.10.20
 --[[
 Getting some info from XCF files (GIMP native image format).
   Documentation: https://gitlab.gnome.org/GNOME/gimp/-/blob/master/devel-docs/xcf.txt
-  Last check: 2021.03.30 (2.10.24)
+  Last check: 2021.09.18 (2.10.28)
+  Minimal GIMP version: from gimp-devel.
 
 See list of supported fields in table "fields".
 
@@ -31,7 +32,8 @@ local am = {
 [2] = "1.3.10 (2002-11-07) or 1.3.21 (2003-10-06)",
 [3] = "2.7.1 (2010-06-29)",
 [4] = "2.10.0 (2018-04-27)",
-[14] = "2.10.20 (2020-06-07)"
+[14] = "3.0.0",
+[15] = "3.0.0"
 }
 local ap4 = {
 [0] = "8-bit gamma integer",
@@ -129,10 +131,14 @@ function GetData(f)
   -- Minimal GIMP version
   if ar[1] ~= '' then
     if ar[1] < 4 then
-      t = am[ar[1]]
-      if t ~= nil then ar[2] = t end
+      ar[2] = am[ar[1]]
     else
-      if ar[1] < 14 then ar[2] = am[4] else ar[2] = am[14] end
+      if ar[1] < 14 then
+        ar[2] = am[4]
+      else
+        t = am[ar[1]]
+        if t ~= nil then ar[2] = t end
+      end
     end
   end
   h:seek('cur', 1)
