@@ -21,7 +21,7 @@ Go to *Configuration* in main menu > *Options...* > *Configuration* > *Directori
 Don't use `/usr/share/doublecmd/highlighters`, `C:\Program Files\Double Commander\highlighters` or other system directory: this requires root/admin rights, also this would be a intervention to the packages manager's work on Linux or DC installer for Windows. DC usually suggests the following additional path (besides the *highlighters* folder near `doublecmd.exe`):
 
 - Windows XP: `C:\Documents and Settings\<UserName>\Local Settings\doublecmd\highlighters`
-- Windows Vista/7-10: `C:\Users\<UserName>\AppData\Local\doublecmd\highlighters`
+- Windows Vista/7+: `C:\Users\<UserName>\AppData\Local\doublecmd\highlighters`
 - Unix-like OS: `/home/<UserName>/.local/share/doublecmd/highlighters`
 
 If the directory doesn't exist, create it. Now restart DC.
@@ -41,7 +41,7 @@ DC uses SynUniHighlighter, so you can try to find HGL-files yourself.
 
 1. *Other* submenu
 
-Additional *Syntax highlight* menu item: if menu is too long then you can move some items to the *Other* submenu (DC 1.0.0 or alpha (i.e. version from trunk) >= r9554).
+Additional *Syntax highlight* menu item: if menu is too long then you can move some items to the *Other* submenu.
 
 Just add new attribute `Other` and value 1 to the `<General>` tag. For example, before
 ```xml
