@@ -13,7 +13,7 @@ from youtubesearchpython import VideosSearch
 verb = sys.argv[1]
 envvar = 'DC_WFX_SCRIPT_DATA'
 video_res = '360p'
-video_fps = 60
+audio_abr = '128kbps'
 
 def print_progress(stream = None, chunk = None, remaining = None):
 	current = (stream.filesize - remaining)/stream.filesize
@@ -25,7 +25,7 @@ def prepare_filename(res_array, title):
 	index = 1
 	while True:
 		is_found = False
-		candidate = helpers.safe_filename(title) + extra + '.mp4'
+		candidate = helpers.safe_filename(title) + extra
 		for element in res_array:
 			if 'filename' in element and element['filename'] == candidate:
 				is_found = True
@@ -65,7 +65,8 @@ def vfs_list(path):
 		if 'filename' not in element:
 			element['filename'] = prepare_filename(res_array, element['title'])
 		if not element['duration'] is None:
-			print('-r--r--r--\t0000-00-00 00:00:00 \t404\t' + element['filename'])
+			print('-r--r--r--\t0000-00-00 00:00:00 \t404\t' + element['filename'] + '.mp4')
+			print('-r--r--r--\t0000-00-00 00:00:00 \t404\t' + element['filename'] + '.m4a')
 	try:
 		with open(os.environ[envvar], 'w') as f:
 			json.dump(res_array, f)
@@ -82,12 +83,16 @@ def vfs_getfile(src, dst):
 	except FileNotFoundError:
 		sys.exit(1)
 	for element in res_array:
-		if element['filename'] == src[1:]:
+		if element['filename'] == src[1:-4]:
 			yt = YouTube(element['link'], on_progress_callback=print_progress)
-			stream = yt.streams.filter(fps=video_fps, res=video_res, mime_type='video/mp4').first()
+			if src[-3:] == 'm4a':
+				stream = yt.streams.filter(abr=audio_abr, mime_type='audio/mp4').first()
+			else:
+				stream = yt.streams.filter(res=video_res, mime_type='video/mp4').first()
 			if stream is None:
 				stream = yt.streams.first()
-			stream.download(output_path=os.path.dirname(dst), filename=element['filename'])
+			#print(stream, file=sys.stderr)
+			stream.download(output_path=os.path.dirname(dst), filename=os.path.basename(dst))
 			sys.exit()
 	sys.exit(1)
 
