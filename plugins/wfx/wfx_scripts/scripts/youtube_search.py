@@ -87,7 +87,7 @@ def vfs_getfile(src, dst):
 			stream = yt.streams.filter(fps=video_fps, res=video_res, mime_type='video/mp4').first()
 			if stream is None:
 				stream = yt.streams.first()
-			stream.download(output_path=os.path.dirname(dst), filename=element['filename'][:-4])
+			stream.download(output_path=os.path.dirname(dst), filename=element['filename'])
 			sys.exit()
 	sys.exit(1)
 
