@@ -24,6 +24,9 @@ utils/gtksourceview2/*.bz2
 utils/gtksourceview2/*.zst
 utils/gtksourceview2/src/
 utils/gtksourceview2/pkg/
+utils/gtkimageview/*.zst
+utils/gtkimageview/src/
+utils/gtkimageview/pkg/
 utils/freearc/*.zst
 utils/freearc/*.xz
 utils/freearc/src/
