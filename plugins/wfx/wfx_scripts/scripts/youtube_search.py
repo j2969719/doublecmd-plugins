@@ -104,7 +104,7 @@ def vfs_execute(filename):
 	except FileNotFoundError:
 		sys.exit(1)
 	for element in res_array:
-		if element['filename'] == filename[1:]:
+		if element['filename'] == filename[1:-4]:
 			os.system('xdg-open ' + element['link'])
 			sys.exit()
 	sys.exit(1)
@@ -117,7 +117,7 @@ def vfs_properties(filename):
 	except FileNotFoundError:
 		sys.exit(1)
 	for element in res_array:
-		if element['filename'] == filename[1:]:
+		if element['filename'] == filename[1:-4]:
 			if 'title' in element and not element['title'] is None:
 				print('Title\t' + element['title'])
 			if 'duration' in element and not element['duration'] is None:
@@ -149,7 +149,7 @@ def vfs_getvalue(field, filename):
 	except FileNotFoundError:
 		sys.exit(1)
 	for element in res_array:
-		if element['filename'] == filename[1:]:
+		if element['filename'] == filename[1:-4]:
 			if 'filename' in element:
 				print(element[field])
 				sys.exit()
