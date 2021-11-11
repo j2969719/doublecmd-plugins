@@ -58,10 +58,11 @@ static void FillKeyFile(gchar *text)
 	for (gchar **line = lines; *line != NULL; line++)
 	{
 		gchar *path = NULL;
+		size_t len = strlen(*line);
 
-		if (strncmp(*line, "file://", 7) == 0)
+		if (len > 7 && strncmp(*line, "file://", 7) == 0)
 			path = g_filename_from_uri(*line, NULL, NULL);
-		else if (*line[0] == '/' && (*line[1] != '/' || *line[1] != '*'))
+		else if (len > 2 && *line[0] == '/' && (strncmp(*line, "//", 2) != 0 || strncmp(*line, "/*", 2) != 0))
 			path = g_strdup(*line);
 
 		if (path)
