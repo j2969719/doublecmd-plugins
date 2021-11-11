@@ -466,6 +466,9 @@ int DCPCALL FsExecuteFile(HWND MainWin, char* RemoteName, char* Verb)
 	}
 	else if (strcmp(Verb, "properties") == 0)
 	{
+		if (RemoteName[1] == '\0' || strcmp(RemoteName, "/..") == 0)
+			return FS_EXEC_ERROR;
+
 		gchar *filename = GetLocalName(RemoteName);
 		gchar *msg = g_strdup_printf("Location: '%s'", filename);
 		g_free(filename);
