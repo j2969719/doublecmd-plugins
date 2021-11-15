@@ -327,6 +327,8 @@ static GtkWidget *create_ui (HWND ParentWin, CustomData *data) {
 
   gtk_widget_show_all (main_window);
 
+  gtk_widget_realize (video_window);
+
   return main_window;
 }
 
