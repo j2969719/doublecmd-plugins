@@ -1,21 +1,22 @@
 #include <git2.h>
 #include <unistd.h>
+#include <stdbool.h>
 #include <linux/limits.h>
 #include <string.h>
 #include "wdxplugin.h"
 
-#define _detectstring "EXT=\"*\""
+#define detectstring "EXT=\"*\""
 
-typedef struct _field
+typedef struct sfield
 {
 	char *name;
 	int type;
 	char *unit;
-} FIELD;
+} tfield;
 
-#define fieldcount (sizeof(fields)/sizeof(FIELD))
+#define fieldcount (sizeof(fields)/sizeof(tfield))
 
-FIELD fields[] =
+tfield fields[] =
 {
 	{"bare repository",			ft_boolean,			""},
 	{"empty repository",			ft_boolean,			""},
@@ -63,13 +64,14 @@ int DCPCALL ContentGetSupportedField(int FieldIndex, char* FieldName, char* Unit
 
 int DCPCALL ContentGetDetectString(char* DetectString, int maxlen)
 {
-	strlcpy(DetectString, _detectstring, maxlen);
+	strlcpy(DetectString, detectstring, maxlen);
 	return 0;
 }
 
 int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void* FieldValue, int maxlen, int flags)
 {
 	int ret;
+	bool fieldempty = false;
 	unsigned int status_flags;
 	size_t ahead, behind;
 	git_buf repo_buf = {};
@@ -79,20 +81,14 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 	git_oid upstream;
 	const git_oid *local;
 	char path_temp[PATH_MAX];
-	const char *strval = NULL;
-
-	git_libgit2_init();
+	const char *string = NULL;
 
 	if (git_repository_discover(&repo_buf, FileName, 1, NULL) != 0)
-	{
-		git_libgit2_shutdown();
 		return ft_fieldempty;
-	}
 
 	if (git_repository_open(&repo, repo_buf.ptr) != 0)
 	{
 		git_buf_free(&repo_buf);
-		git_libgit2_shutdown();
 		return ft_fieldempty;
 	}
 
@@ -101,68 +97,40 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 	switch (FieldIndex)
 	{
 	case 0:
-		if (git_repository_is_bare(repo))
-			*(int*)FieldValue = 1;
-		else
-			*(int*)FieldValue = 0;
-
+		*(int*)FieldValue = git_repository_is_bare(repo);
 		break;
 
 	case 1:
-		if (git_repository_is_empty(repo))
-			*(int*)FieldValue = 1;
-		else
-			*(int*)FieldValue = 0;
-
+		*(int*)FieldValue = git_repository_is_empty(repo);
 		break;
 
 	case 2:
-		if (git_repository_is_worktree(repo))
-			*(int*)FieldValue = 1;
-		else
-			*(int*)FieldValue = 0;
-
+		*(int*)FieldValue = git_repository_is_worktree(repo);
 		break;
 
 	case 3:
-		if (git_repository_is_shallow(repo))
-			*(int*)FieldValue = 1;
-		else
-			*(int*)FieldValue = 0;
-
+		*(int*)FieldValue = git_repository_is_shallow(repo);
 		break;
 
 	case 4:
-		if (git_repository_head_unborn(repo))
-			*(int*)FieldValue = 1;
-		else
-			*(int*)FieldValue = 0;
-
+		*(int*)FieldValue = git_repository_head_unborn(repo);
 		break;
 
 	case 5:
-		if (git_repository_head_detached(repo))
-			*(int*)FieldValue = 1;
-		else
-			*(int*)FieldValue = 0;
-
+		*(int*)FieldValue = git_repository_head_detached(repo);
 		break;
 
 	case 6:
 		if (git_repository_head(&head, repo) == 0)
 		{
-			strval = git_reference_shorthand(head);
+			string = git_reference_shorthand(head);
 			git_reference_free(head);
 		}
 
-		if (!strval)
-		{
-			git_repository_free(repo);
-			git_libgit2_shutdown();
-			return ft_fieldempty;
-		}
+		if (!string)
+			fieldempty = true;
 		else
-			strlcpy((char*)FieldValue, strval, maxlen - 1);
+			strlcpy((char*)FieldValue, string, maxlen - 1);
 
 		break;
 
@@ -174,11 +142,7 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 		}
 
 		if (!remote.strings[0])
-		{
-			git_repository_free(repo);
-			git_libgit2_shutdown();
-			return ft_fieldempty;
-		}
+			fieldempty = true;
 		else
 			strlcpy((char*)FieldValue, remote.strings[0], maxlen - 1);
 
@@ -187,7 +151,7 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 	case 8:
 		if (git_repository_head(&head, repo) == 0)
 		{
-			strval = git_reference_shorthand(head);
+			string = git_reference_shorthand(head);
 			git_remote_list(&remote, repo);
 
 			if (remote.count)
@@ -199,7 +163,7 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 					strcat(path_temp, remote.strings[0]);
 
 				strcat(path_temp, "/");
-				strcat(path_temp, strval);
+				strcat(path_temp, string);
 				ret = git_reference_name_to_id(&upstream, repo, path_temp);
 
 				if (local && !ret)
@@ -210,11 +174,7 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 		}
 
 		if (ret != 0)
-		{
-			git_repository_free(repo);
-			git_libgit2_shutdown();
-			return ft_fieldempty;
-		}
+			fieldempty = true;
 		else
 			*(int*)FieldValue = ahead;
 
@@ -224,7 +184,7 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 	case 9:
 		if (git_repository_head(&head, repo) == 0)
 		{
-			strval = git_reference_shorthand(head);
+			string = git_reference_shorthand(head);
 			git_remote_list(&remote, repo);
 
 			if (remote.count)
@@ -236,7 +196,7 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 					strcat(path_temp, remote.strings[0]);
 
 				strcat(path_temp, "/");
-				strcat(path_temp, strval);
+				strcat(path_temp, string);
 				ret = git_reference_name_to_id(&upstream, repo, path_temp);
 
 				if (local && !ret)
@@ -247,20 +207,16 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 		}
 
 		if (ret != 0)
-		{
-			git_repository_free(repo);
-			git_libgit2_shutdown();
-			return ft_fieldempty;
-		}
+			fieldempty = true;
 		else
 			*(int*)FieldValue = behind;
 
 		break;
 
 	case 10:
-		strval = git_repository_workdir(repo);
+		string = git_repository_workdir(repo);
 
-		if (strval && git_status_file(&status_flags, repo, FileName + strlen(strval)) == 0)
+		if (string && git_status_file(&status_flags, repo, FileName + strlen(string)) == 0)
 		{
 			if (status_flags & GIT_STATUS_WT_NEW)
 				*(int*)FieldValue = 1;
@@ -268,18 +224,14 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 				*(int*)FieldValue = 0;
 		}
 		else
-		{
-			git_repository_free(repo);
-			git_libgit2_shutdown();
-			return ft_fieldempty;
-		}
+			fieldempty = true;
 
 		break;
 
 	case 11:
-		strval = git_repository_workdir(repo);
+		string = git_repository_workdir(repo);
 
-		if (strval && git_status_file(&status_flags, repo, FileName + strlen(strval)) == 0)
+		if (string && git_status_file(&status_flags, repo, FileName + strlen(string)) == 0)
 		{
 			if (status_flags & GIT_STATUS_WT_MODIFIED)
 				*(int*)FieldValue = 1;
@@ -287,18 +239,14 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 				*(int*)FieldValue = 0;
 		}
 		else
-		{
-			git_repository_free(repo);
-			git_libgit2_shutdown();
-			return ft_fieldempty;
-		}
+			fieldempty = true;
 
 		break;
 
 	case 12:
-		strval = git_repository_workdir(repo);
+		string = git_repository_workdir(repo);
 
-		if (strval && git_status_file(&status_flags, repo, FileName + strlen(strval)) == 0)
+		if (string && git_status_file(&status_flags, repo, FileName + strlen(string)) == 0)
 		{
 			if (status_flags & GIT_STATUS_WT_DELETED)
 				*(int*)FieldValue = 1;
@@ -306,18 +254,14 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 				*(int*)FieldValue = 0;
 		}
 		else
-		{
-			git_repository_free(repo);
-			git_libgit2_shutdown();
-			return ft_fieldempty;
-		}
+			fieldempty = true;
 
 		break;
 
 	case 13:
-		strval = git_repository_workdir(repo);
+		string = git_repository_workdir(repo);
 
-		if (strval && git_status_file(&status_flags, repo, FileName + strlen(strval)) == 0)
+		if (string && git_status_file(&status_flags, repo, FileName + strlen(string)) == 0)
 		{
 			if (status_flags & GIT_STATUS_WT_TYPECHANGE)
 				*(int*)FieldValue = 1;
@@ -325,18 +269,14 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 				*(int*)FieldValue = 0;
 		}
 		else
-		{
-			git_repository_free(repo);
-			git_libgit2_shutdown();
-			return ft_fieldempty;
-		}
+			fieldempty = true;
 
 		break;
 
 	case 14:
-		strval = git_repository_workdir(repo);
+		string = git_repository_workdir(repo);
 
-		if (strval && git_status_file(&status_flags, repo, FileName + strlen(strval)) == 0)
+		if (string && git_status_file(&status_flags, repo, FileName + strlen(string)) == 0)
 		{
 			if (status_flags & GIT_STATUS_WT_RENAMED)
 				*(int*)FieldValue = 1;
@@ -344,18 +284,14 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 				*(int*)FieldValue = 0;
 		}
 		else
-		{
-			git_repository_free(repo);
-			git_libgit2_shutdown();
-			return ft_fieldempty;
-		}
+			fieldempty = true;
 
 		break;
 
 	case 15:
-		strval = git_repository_workdir(repo);
+		string = git_repository_workdir(repo);
 
-		if (strval && git_status_file(&status_flags, repo, FileName + strlen(strval)) == 0)
+		if (string && git_status_file(&status_flags, repo, FileName + strlen(string)) == 0)
 		{
 			if (status_flags & GIT_STATUS_WT_UNREADABLE)
 				*(int*)FieldValue = 1;
@@ -363,18 +299,14 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 				*(int*)FieldValue = 0;
 		}
 		else
-		{
-			git_repository_free(repo);
-			git_libgit2_shutdown();
-			return ft_fieldempty;
-		}
+			fieldempty = true;
 
 		break;
 
 	case 16:
-		strval = git_repository_workdir(repo);
+		string = git_repository_workdir(repo);
 
-		if (strval && git_status_file(&status_flags, repo, FileName + strlen(strval)) == 0)
+		if (string && git_status_file(&status_flags, repo, FileName + strlen(string)) == 0)
 		{
 			if (status_flags & GIT_STATUS_IGNORED)
 				*(int*)FieldValue = 1;
@@ -382,18 +314,13 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 				*(int*)FieldValue = 0;
 		}
 		else
-		{
-			git_repository_free(repo);
-			git_libgit2_shutdown();
-			return ft_fieldempty;
-		}
-
+			fieldempty = true;
 		break;
 
 	case 17:
-		strval = git_repository_workdir(repo);
+		string = git_repository_workdir(repo);
 
-		if (strval && git_status_file(&status_flags, repo, FileName + strlen(strval)) == 0)
+		if (string && git_status_file(&status_flags, repo, FileName + strlen(string)) == 0)
 		{
 			if (status_flags & GIT_STATUS_CONFLICTED)
 				*(int*)FieldValue = 1;
@@ -401,42 +328,46 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 				*(int*)FieldValue = 0;
 		}
 		else
-		{
-			git_repository_free(repo);
-			git_libgit2_shutdown();
-			return ft_fieldempty;
-		}
+			fieldempty = true;
 
 		break;
 
 	case 18:
-		strval = git_repository_workdir(repo);
+		string = git_repository_workdir(repo);
 		strcpy(path_temp, FileName);
 		strcat(path_temp, "/");
 
-		if (strval)
+		if (string)
 		{
-			if (strcmp(path_temp, strval) == 0)
+			if (strcmp(path_temp, string) == 0)
 				*(int*)FieldValue = 1;
 			else
 				*(int*)FieldValue = 0;
 		}
 		else
-		{
-			git_repository_free(repo);
-			git_libgit2_shutdown();
-			return ft_fieldempty;
-		}
+			fieldempty = true;
 
 		break;
 
 	default:
 		git_repository_free(repo);
-		git_libgit2_shutdown();
 		return ft_nosuchfield;
 	}
 
 	git_repository_free(repo);
-	git_libgit2_shutdown();
+
+	if (fieldempty)
+		return ft_fieldempty;
+
 	return fields[FieldIndex].type;
+}
+
+void DCPCALL ContentSetDefaultParams(ContentDefaultParamStruct* dps)
+{
+	git_libgit2_init();
+}
+
+void DCPCALL ContentPluginUnloading()
+{
+	git_libgit2_shutdown();
 }
