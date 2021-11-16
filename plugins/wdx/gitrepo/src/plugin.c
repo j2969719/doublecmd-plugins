@@ -27,25 +27,26 @@ typedef struct s_cache
 
 t_field fields[] =
 {
-	{"bare repository",			ft_boolean,			""},
-	{"empty repository",			ft_boolean,			""},
-	{"linked work tree",			ft_boolean,			""},
-	{"shallow clone",			ft_boolean,			""},
-	{"current branch is unborn",		ft_boolean,			""},
-	{"repository's HEAD is detached",	ft_boolean,			""},
-	{"branch",				ft_string,			""},
-	{"remote",				ft_string,			""},
-	{"commits ahead",			ft_numeric_32,			""},
-	{"commits behind",			ft_numeric_32,			""},
-	{"status: new",				ft_boolean,			""},
-	{"status: modified",			ft_boolean,			""},
-	{"status: deleted",			ft_boolean,			""},
-	{"status: typechange",			ft_boolean,			""},
-	{"status: renamed",			ft_boolean,			""},
-	{"status: unreadable",			ft_boolean,			""},
-	{"status: ignored",			ft_boolean,			""},
-	{"status: conflicted",			ft_boolean,			""},
-	{"root workdir",			ft_boolean,			""},
+	{"bare repository",			ft_boolean,	""},
+	{"empty repository",			ft_boolean,	""},
+	{"linked work tree",			ft_boolean,	""},
+	{"shallow clone",			ft_boolean,	""},
+	{"current branch is unborn",		ft_boolean,	""},
+	{"repository's HEAD is detached",	ft_boolean,	""},
+	{"branch",				ft_string,	""},
+	{"remote",				ft_string,	""},
+	{"commits ahead",			ft_numeric_32,	""},
+	{"commits behind",			ft_numeric_32,	""},
+	{"status: new",				ft_boolean,	""},
+	{"status: modified",			ft_boolean,	""},
+	{"status: deleted",			ft_boolean,	""},
+	{"status: typechange",			ft_boolean,	""},
+	{"status: renamed",			ft_boolean,	""},
+	{"status: unreadable",			ft_boolean,	""},
+	{"status: ignored",			ft_boolean,	""},
+	{"status: conflicted",			ft_boolean,	""},
+	{"workdir",				ft_string,	""},
+	{"filepath",				ft_string,	""},
 };
 
 t_cache *cachedata;
@@ -312,13 +313,18 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 		break;
 
 	case 18:
-		strcpy(path_temp, FileName);
-		strcat(path_temp, "/");
-
-		if (strcmp(path_temp, cachedata->workdir) == 0)
-			*(int*)FieldValue = 1;
+		if (cachedata->workdir != NULL)
+			strlcpy((char*)FieldValue, cachedata->workdir, maxlen - 1);
 		else
-			*(int*)FieldValue = 0;
+			return ft_fieldempty;
+
+		break;
+
+	case 19:
+		if (cachedata->workdir != NULL)
+			strlcpy((char*)FieldValue, FileName + (strlen(cachedata->workdir) - 1), maxlen - 1);
+		else
+			return ft_fieldempty;
 
 		break;
 
