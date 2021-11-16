@@ -1,22 +1,31 @@
 #include <git2.h>
 #include <unistd.h>
-#include <stdbool.h>
+#include <libgen.h>
 #include <linux/limits.h>
 #include <string.h>
 #include "wdxplugin.h"
 
-#define detectstring "EXT=\"*\""
+#define detect_string "EXT=\"*\""
 
-typedef struct sfield
+typedef struct s_field
 {
 	char *name;
 	int type;
 	char *unit;
-} tfield;
+} t_field;
 
-#define fieldcount (sizeof(fields)/sizeof(tfield))
+typedef struct s_cache
+{
+	unsigned int status_flags;
+	char lastfile[PATH_MAX];
+	char dirname[PATH_MAX];
+	git_repository *repo;
+	const char *workdir;
+} t_cache;
 
-tfield fields[] =
+#define fieldcount (sizeof(fields)/sizeof(t_field))
+
+t_field fields[] =
 {
 	{"bare repository",			ft_boolean,			""},
 	{"empty repository",			ft_boolean,			""},
@@ -38,6 +47,8 @@ tfield fields[] =
 	{"status: conflicted",			ft_boolean,			""},
 	{"root workdir",			ft_boolean,			""},
 };
+
+t_cache *cachedata;
 
 char* strlcpy(char* p, const char* p2, int maxlen)
 {
@@ -64,18 +75,14 @@ int DCPCALL ContentGetSupportedField(int FieldIndex, char* FieldName, char* Unit
 
 int DCPCALL ContentGetDetectString(char* DetectString, int maxlen)
 {
-	strlcpy(DetectString, detectstring, maxlen);
+	strlcpy(DetectString, detect_string, maxlen - 1);
 	return 0;
 }
 
 int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void* FieldValue, int maxlen, int flags)
 {
 	int ret;
-	bool fieldempty = false;
-	unsigned int status_flags;
 	size_t ahead, behind;
-	git_buf repo_buf = {};
-	git_repository *repo = NULL;
 	git_reference *head = NULL;
 	git_strarray remote;
 	git_oid upstream;
@@ -83,76 +90,103 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 	char path_temp[PATH_MAX];
 	const char *string = NULL;
 
-	if (git_repository_discover(&repo_buf, FileName, 1, NULL) != 0)
-		return ft_fieldempty;
-
-	if (git_repository_open(&repo, repo_buf.ptr) != 0)
+	if (strcmp(FileName, cachedata->lastfile) != 0)
 	{
-		git_buf_free(&repo_buf);
-		return ft_fieldempty;
+		strlcpy(path_temp, FileName, PATH_MAX);
+		char *current_dir = dirname(path_temp);
+
+		if (strcmp(current_dir, cachedata->dirname) != 0)
+		{
+			if (cachedata->repo != NULL)
+			{
+				git_repository_free(cachedata->repo);
+				cachedata->repo = NULL;
+			}
+
+			git_buf repo_buf = {};
+
+			if (git_repository_discover(&repo_buf, current_dir, 1, NULL) == 0)
+			{
+				git_repository_open(&cachedata->repo, repo_buf.ptr);
+				git_buf_free(&repo_buf);
+			}
+
+			strlcpy(cachedata->dirname, current_dir, PATH_MAX);
+		}
+
+		if (cachedata->repo != NULL)
+		{
+			cachedata->workdir = git_repository_workdir(cachedata->repo);
+
+			if (cachedata->workdir)
+				git_status_file(&cachedata->status_flags, cachedata->repo, FileName + strlen(cachedata->workdir));
+		}
+
+		strlcpy(cachedata->lastfile, FileName, PATH_MAX);
 	}
 
-	git_buf_free(&repo_buf);
+	if (cachedata->repo == NULL)
+		return ft_fileerror;
 
 	switch (FieldIndex)
 	{
 	case 0:
-		*(int*)FieldValue = git_repository_is_bare(repo);
+		*(int*)FieldValue = git_repository_is_bare(cachedata->repo);
 		break;
 
 	case 1:
-		*(int*)FieldValue = git_repository_is_empty(repo);
+		*(int*)FieldValue = git_repository_is_empty(cachedata->repo);
 		break;
 
 	case 2:
-		*(int*)FieldValue = git_repository_is_worktree(repo);
+		*(int*)FieldValue = git_repository_is_worktree(cachedata->repo);
 		break;
 
 	case 3:
-		*(int*)FieldValue = git_repository_is_shallow(repo);
+		*(int*)FieldValue = git_repository_is_shallow(cachedata->repo);
 		break;
 
 	case 4:
-		*(int*)FieldValue = git_repository_head_unborn(repo);
+		*(int*)FieldValue = git_repository_head_unborn(cachedata->repo);
 		break;
 
 	case 5:
-		*(int*)FieldValue = git_repository_head_detached(repo);
+		*(int*)FieldValue = git_repository_head_detached(cachedata->repo);
 		break;
 
 	case 6:
-		if (git_repository_head(&head, repo) == 0)
+		if (git_repository_head(&head, cachedata->repo) == 0)
 		{
 			string = git_reference_shorthand(head);
 			git_reference_free(head);
 		}
 
 		if (!string)
-			fieldempty = true;
+			return ft_fieldempty;
 		else
 			strlcpy((char*)FieldValue, string, maxlen - 1);
 
 		break;
 
 	case 7:
-		if (git_repository_head(&head, repo) == 0)
+		if (git_repository_head(&head, cachedata->repo) == 0)
 		{
-			git_remote_list(&remote, repo);
+			git_remote_list(&remote, cachedata->repo);
 			git_reference_free(head);
 		}
 
 		if (!remote.strings[0])
-			fieldempty = true;
+			return ft_fieldempty;
 		else
 			strlcpy((char*)FieldValue, remote.strings[0], maxlen - 1);
 
 		break;
 
 	case 8:
-		if (git_repository_head(&head, repo) == 0)
+		if (git_repository_head(&head, cachedata->repo) == 0)
 		{
 			string = git_reference_shorthand(head);
-			git_remote_list(&remote, repo);
+			git_remote_list(&remote, cachedata->repo);
 
 			if (remote.count)
 			{
@@ -164,17 +198,17 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 
 				strcat(path_temp, "/");
 				strcat(path_temp, string);
-				ret = git_reference_name_to_id(&upstream, repo, path_temp);
+				ret = git_reference_name_to_id(&upstream, cachedata->repo, path_temp);
 
 				if (local && !ret)
-					ret = git_graph_ahead_behind(&ahead, &behind, repo, local, &upstream);
+					ret = git_graph_ahead_behind(&ahead, &behind, cachedata->repo, local, &upstream);
 			}
 
 			git_reference_free(head);
 		}
 
 		if (ret != 0)
-			fieldempty = true;
+			return ft_fieldempty;
 		else
 			*(int*)FieldValue = ahead;
 
@@ -182,10 +216,10 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 		break;
 
 	case 9:
-		if (git_repository_head(&head, repo) == 0)
+		if (git_repository_head(&head, cachedata->repo) == 0)
 		{
 			string = git_reference_shorthand(head);
-			git_remote_list(&remote, repo);
+			git_remote_list(&remote, cachedata->repo);
 
 			if (remote.count)
 			{
@@ -197,177 +231,116 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 
 				strcat(path_temp, "/");
 				strcat(path_temp, string);
-				ret = git_reference_name_to_id(&upstream, repo, path_temp);
+				ret = git_reference_name_to_id(&upstream, cachedata->repo, path_temp);
 
 				if (local && !ret)
-					ret = git_graph_ahead_behind(&ahead, &behind, repo, local, &upstream);
+					ret = git_graph_ahead_behind(&ahead, &behind, cachedata->repo, local, &upstream);
 			}
 
 			git_reference_free(head);
 		}
 
 		if (ret != 0)
-			fieldempty = true;
+			return ft_fieldempty;
 		else
 			*(int*)FieldValue = behind;
 
 		break;
 
 	case 10:
-		string = git_repository_workdir(repo);
-
-		if (string && git_status_file(&status_flags, repo, FileName + strlen(string)) == 0)
-		{
-			if (status_flags & GIT_STATUS_WT_NEW)
-				*(int*)FieldValue = 1;
-			else
-				*(int*)FieldValue = 0;
-		}
+		if (cachedata->status_flags & GIT_STATUS_WT_NEW)
+			*(int*)FieldValue = 1;
 		else
-			fieldempty = true;
+			*(int*)FieldValue = 0;
 
 		break;
 
 	case 11:
-		string = git_repository_workdir(repo);
-
-		if (string && git_status_file(&status_flags, repo, FileName + strlen(string)) == 0)
-		{
-			if (status_flags & GIT_STATUS_WT_MODIFIED)
-				*(int*)FieldValue = 1;
-			else
-				*(int*)FieldValue = 0;
-		}
+		if (cachedata->status_flags & GIT_STATUS_WT_MODIFIED)
+			*(int*)FieldValue = 1;
 		else
-			fieldempty = true;
+			*(int*)FieldValue = 0;
 
 		break;
 
 	case 12:
-		string = git_repository_workdir(repo);
-
-		if (string && git_status_file(&status_flags, repo, FileName + strlen(string)) == 0)
-		{
-			if (status_flags & GIT_STATUS_WT_DELETED)
-				*(int*)FieldValue = 1;
-			else
-				*(int*)FieldValue = 0;
-		}
+		if (cachedata->status_flags & GIT_STATUS_WT_DELETED)
+			*(int*)FieldValue = 1;
 		else
-			fieldempty = true;
+			*(int*)FieldValue = 0;
 
 		break;
 
 	case 13:
-		string = git_repository_workdir(repo);
-
-		if (string && git_status_file(&status_flags, repo, FileName + strlen(string)) == 0)
-		{
-			if (status_flags & GIT_STATUS_WT_TYPECHANGE)
-				*(int*)FieldValue = 1;
-			else
-				*(int*)FieldValue = 0;
-		}
+		if (cachedata->status_flags & GIT_STATUS_WT_TYPECHANGE)
+			*(int*)FieldValue = 1;
 		else
-			fieldempty = true;
+			*(int*)FieldValue = 0;
 
 		break;
 
 	case 14:
-		string = git_repository_workdir(repo);
-
-		if (string && git_status_file(&status_flags, repo, FileName + strlen(string)) == 0)
-		{
-			if (status_flags & GIT_STATUS_WT_RENAMED)
-				*(int*)FieldValue = 1;
-			else
-				*(int*)FieldValue = 0;
-		}
+		if (cachedata->status_flags & GIT_STATUS_WT_RENAMED)
+			*(int*)FieldValue = 1;
 		else
-			fieldempty = true;
+			*(int*)FieldValue = 0;
 
 		break;
 
 	case 15:
-		string = git_repository_workdir(repo);
-
-		if (string && git_status_file(&status_flags, repo, FileName + strlen(string)) == 0)
-		{
-			if (status_flags & GIT_STATUS_WT_UNREADABLE)
-				*(int*)FieldValue = 1;
-			else
-				*(int*)FieldValue = 0;
-		}
+		if (cachedata->status_flags & GIT_STATUS_WT_UNREADABLE)
+			*(int*)FieldValue = 1;
 		else
-			fieldempty = true;
+			*(int*)FieldValue = 0;
 
 		break;
 
 	case 16:
-		string = git_repository_workdir(repo);
-
-		if (string && git_status_file(&status_flags, repo, FileName + strlen(string)) == 0)
-		{
-			if (status_flags & GIT_STATUS_IGNORED)
-				*(int*)FieldValue = 1;
-			else
-				*(int*)FieldValue = 0;
-		}
+		if (cachedata->status_flags & GIT_STATUS_IGNORED)
+			*(int*)FieldValue = 1;
 		else
-			fieldempty = true;
+			*(int*)FieldValue = 0;
+
 		break;
 
 	case 17:
-		string = git_repository_workdir(repo);
-
-		if (string && git_status_file(&status_flags, repo, FileName + strlen(string)) == 0)
-		{
-			if (status_flags & GIT_STATUS_CONFLICTED)
-				*(int*)FieldValue = 1;
-			else
-				*(int*)FieldValue = 0;
-		}
+		if (cachedata->status_flags & GIT_STATUS_CONFLICTED)
+			*(int*)FieldValue = 1;
 		else
-			fieldempty = true;
+			*(int*)FieldValue = 0;
 
 		break;
 
 	case 18:
-		string = git_repository_workdir(repo);
 		strcpy(path_temp, FileName);
 		strcat(path_temp, "/");
 
-		if (string)
-		{
-			if (strcmp(path_temp, string) == 0)
-				*(int*)FieldValue = 1;
-			else
-				*(int*)FieldValue = 0;
-		}
+		if (strcmp(path_temp, cachedata->workdir) == 0)
+			*(int*)FieldValue = 1;
 		else
-			fieldempty = true;
+			*(int*)FieldValue = 0;
 
 		break;
 
 	default:
-		git_repository_free(repo);
 		return ft_nosuchfield;
 	}
-
-	git_repository_free(repo);
-
-	if (fieldempty)
-		return ft_fieldempty;
 
 	return fields[FieldIndex].type;
 }
 
 void DCPCALL ContentSetDefaultParams(ContentDefaultParamStruct* dps)
 {
+	cachedata = malloc(sizeof(t_cache));
+	memset(cachedata, 0, sizeof(t_cache));
 	git_libgit2_init();
 }
 
 void DCPCALL ContentPluginUnloading()
 {
+	if (cachedata->repo != NULL)
+		git_repository_free(cachedata->repo);
+
+	free(cachedata);
 	git_libgit2_shutdown();
 }
