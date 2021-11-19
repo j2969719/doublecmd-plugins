@@ -275,8 +275,8 @@ Search text in files. List of file extensions and used converters: table `comman
 - [transmissionwdx.lua](plugins/wdx/scripts/transmissionwdx.lua)<br>
 Returns information from TORRENT files. Requires `transmission-show`.
 
-- [trashwdx.lua](plugins/wdx/scripts/trashwdx.lua)<br>
-Script for using in trash folder: getting original file name and deletion date.
+- [trashwdx.lua](plugins/wdx/scripts/trashwdx.lua) *(cross platform)*<br>
+Getting info about deleted (moved to trash) files: original filename and deletion date. Use in a trash directory.
 
 - [vcardinfowdx.lua](plugins/wdx/scripts/vcardinfowdx.lua) *(cross platform)*<br>
 Getting some information from vCard files. See details in the beginning of script.
