@@ -304,7 +304,10 @@ List of packages in [AUR](https://aur.archlinux.org/). (slow, pretty useless)
 Simple wfx plugin for [AVFS](http://avf.sourceforge.net/).
 
 - [clipboard](plugins/wfx/clipboard)<br>
-View clipboard content. (for GTK2-version of DC only)
+View clipboard content. (GTK2)
+
+- [clipboard_files](plugins/wfx/clipboard_files)<br>
+View files in the clipboard. (GTK2)
 
 - [cmdoutput](plugins/wfx/cmdoutput)<br>
 View output of command line utilities (see `settings.ini`).
@@ -329,6 +332,9 @@ View a list of running processes.
 
 - [tmppanel_crap](plugins/wfx/tmppanel_crap)<br>
 Temporary panel, see FileList description.
+
+- ~[trash_crap](plugins/wfx/trash_crap)<br>
+View trash folder.~ (kinda useless and unfinished).
 
 - [wfx_scripts](plugins/wfx/wfx_scripts)<br>
 The WFX plugin allows to create some simple virtual file systems by scripting.
