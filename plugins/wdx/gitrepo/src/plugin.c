@@ -1,7 +1,8 @@
 #include <git2.h>
+#include <stdlib.h>
 #include <unistd.h>
 #include <libgen.h>
-#include <linux/limits.h>
+#include <limits.h>
 #include <string.h>
 #include "wdxplugin.h"
 
@@ -118,9 +119,11 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 		if (cachedata->repo != NULL)
 		{
 			cachedata->workdir = git_repository_workdir(cachedata->repo);
+			memset(path_temp, 0, PATH_MAX);
+			realpath(FileName, path_temp);
 
 			if (cachedata->workdir)
-				git_status_file(&cachedata->status_flags, cachedata->repo, FileName + strlen(cachedata->workdir));
+				git_status_file(&cachedata->status_flags, cachedata->repo, path_temp + strlen(cachedata->workdir));
 		}
 
 		strlcpy(cachedata->lastfile, FileName, PATH_MAX);
@@ -322,7 +325,11 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 
 	case 19:
 		if (cachedata->workdir != NULL)
-			strlcpy((char*)FieldValue, FileName + (strlen(cachedata->workdir) - 1), maxlen - 1);
+		{
+			memset(path_temp, 0, PATH_MAX);
+			realpath(FileName, path_temp);
+			strlcpy((char*)FieldValue, path_temp + (strlen(cachedata->workdir) - 1), maxlen - 1);
+		}
 		else
 			return ft_fieldempty;
 

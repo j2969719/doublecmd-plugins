@@ -49,6 +49,7 @@ FIELD fields[] =
 	{"User access",			ft_boolean,	     "open dir|read|write|execute"},
 	{"Symlink error",		ft_boolean,		 "no access|dangling|loop"},
 	{"Inode flags (bool)",		ft_boolean,		 	       flags_units},
+	{"Real path",			ft_string,		 	       flags_units},
 };
 
 char* strlcpy(char* p, const char* p2, int maxlen)
@@ -100,8 +101,8 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 	const char *magic_full;
 	magic_t magic_cookie;
 	mode_t mode_bits;
-	char access_str[4] = "----";
-	char flags_str[14] = "--------------";
+	char access_str[5] = "----";
+	char flags_str[15] = "--------------";
 	int access_how, fd, stflags, i;
 
 	if (lstat(FileName, &buf) != 0)
@@ -163,7 +164,7 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 			return ft_fileerror;
 		else
 		{
-			i=0;
+			i = 0;
 
 			if (ioctl(fd, FS_IOC_GETFLAGS, &stflags) == 0 && stflags != 0)
 			{
@@ -542,12 +543,24 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 
 				default:
 					if (stflags & iflags)
-					*(int*)FieldValue = 1;
+						*(int*)FieldValue = 1;
 				}
 			}
 
 			close(fd);
 		}
+
+		break;
+	}
+
+	case 18:
+	{
+		char res_path[PATH_MAX];
+
+		if (realpath(FileName, res_path))
+			strncpy((char*)FieldValue, res_path, maxlen - 1);
+		else
+			return ft_fieldempty;
 
 		break;
 	}

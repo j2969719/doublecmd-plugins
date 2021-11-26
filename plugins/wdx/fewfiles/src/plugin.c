@@ -58,10 +58,8 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 			strncpy(tmp, (char*)FieldValue, maxlen - 1);
 
 			if (FieldIndex + 1 == count)
-
 				snprintf((char*)FieldValue, maxlen - 1, "%s%s...", tmp, (UnitIndex == 1) ? "\n" : ", ");
 			else
-
 				snprintf((char*)FieldValue, maxlen - 1, "%s%s%s", tmp, (UnitIndex == 1) ? "\n" : ", ", ent->d_name);
 
 		}
@@ -95,7 +93,7 @@ void DCPCALL ContentSetDefaultParams(ContentDefaultParamStruct* dps)
 		if (pos)
 			strcpy(pos + 1, loc_dir);
 
-		setlocale (LC_ALL, "");
+		setlocale(LC_ALL, "");
 		bindtextdomain(GETTEXT_PACKAGE, plg_path);
 		textdomain(GETTEXT_PACKAGE);
 	}
