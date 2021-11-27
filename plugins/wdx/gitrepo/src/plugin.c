@@ -105,7 +105,7 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 				cachedata->repo = NULL;
 			}
 
-			git_buf repo_buf = {};
+			git_buf repo_buf = GIT_BUF_INIT_CONST(NULL, 0);
 
 			if (git_repository_discover(&repo_buf, current_dir, 1, NULL) == 0)
 			{
@@ -120,10 +120,11 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 		{
 			cachedata->workdir = git_repository_workdir(cachedata->repo);
 			memset(path_temp, 0, PATH_MAX);
-			realpath(FileName, path_temp);
 
-			if (cachedata->workdir)
+			if (cachedata->workdir && realpath(FileName, path_temp))
 				git_status_file(&cachedata->status_flags, cachedata->repo, path_temp + strlen(cachedata->workdir));
+			else
+				cachedata->status_flags = 0;
 		}
 
 		strlcpy(cachedata->lastfile, FileName, PATH_MAX);
@@ -327,7 +328,10 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 		if (cachedata->workdir != NULL)
 		{
 			memset(path_temp, 0, PATH_MAX);
-			realpath(FileName, path_temp);
+
+			if (!realpath(FileName, path_temp))
+				return ft_fieldempty;
+
 			strlcpy((char*)FieldValue, path_temp + (strlen(cachedata->workdir) - 1), maxlen - 1);
 		}
 		else
