@@ -49,7 +49,7 @@ FIELD fields[] =
 	{"User access",			ft_boolean,	     "open dir|read|write|execute"},
 	{"Symlink error",		ft_boolean,		 "no access|dangling|loop"},
 	{"Inode flags (bool)",		ft_boolean,		 	       flags_units},
-	{"Real path",			ft_string,		 	       flags_units},
+	{"Real path",			ft_string,		 	       		""},
 };
 
 char* strlcpy(char* p, const char* p2, int maxlen)
