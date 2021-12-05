@@ -252,6 +252,50 @@ void DCPCALL FsSetDefaultParams(FsDefaultParamStruct* dps)
 
 }
 
+int DCPCALL FsContentGetSupportedField(int FieldIndex, char* FieldName, char* Units, int maxlen)
+{
+	if (FieldIndex > 0)
+		return ft_nomorefields;
+
+	g_strlcpy(FieldName, "Command", maxlen - 1);
+	Units[0] = '\0';
+
+	return ft_string;
+}
+
+int DCPCALL FsContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void* FieldValue, int maxlen, int flags)
+{
+	gchar **target = g_strsplit(FileName + 1, "/", 2);
+
+	if (g_strv_length(target) < 2)
+	{
+		g_strlcpy((char*)FieldValue, "<GROUP>", maxlen - 1);
+		g_strfreev(target);
+		return ft_string;
+	}
+
+	gchar *value = g_key_file_get_string(gCfg, target[0], target[1], NULL);
+	g_strfreev(target);
+
+	if (!value)
+		return ft_fieldempty;
+
+	g_strlcpy((char*)FieldValue, value, maxlen - 1);
+	g_free(value);
+
+	return ft_string;
+}
+
+BOOL DCPCALL FsContentGetDefaultView(char* ViewContents, char* ViewHeaders, char* ViewWidths, char* ViewOptions, int maxlen)
+{
+	g_strlcpy(ViewContents, "[Plugin(FS).Command{}]", maxlen - 1);
+	g_strlcpy(ViewHeaders, "Command", maxlen - 1);
+	g_strlcpy(ViewWidths, "100,30,100", maxlen - 1);
+	g_strlcpy(ViewOptions, "-1|0", maxlen - 1);
+	return TRUE;
+}
+
+
 int DCPCALL FsGetBackgroundFlags(void)
 {
 	return BG_DOWNLOAD;

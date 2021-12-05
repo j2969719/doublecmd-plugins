@@ -509,6 +509,15 @@ int DCPCALL FsContentGetValue(char* FileName, int FieldIndex, int UnitIndex, voi
 	return result;
 }
 
+BOOL DCPCALL FsContentGetDefaultView(char* ViewContents, char* ViewHeaders, char* ViewWidths, char* ViewOptions, int maxlen)
+{
+	strlcpy(ViewContents, "[Plugin(FS).State{}]\\n[DC().GETFILESIZE{}]\\n[Plugin(FS).Pid{}]\\n[Plugin(FS).Threads{}]", maxlen - 1);
+	strlcpy(ViewHeaders, "State\\nMem\\nPid\\nThreads", maxlen - 1);
+	strlcpy(ViewWidths, "100,0,55,-40,-30,-35", maxlen - 1);
+	strlcpy(ViewOptions, "-1|0", maxlen - 1);
+	return true;
+}
+
 void DCPCALL FsGetDefRootName(char* DefRootName, int maxlen)
 {
 	strlcpy(DefRootName, "Process List", maxlen - 1);
