@@ -105,7 +105,7 @@ function fs_properties(file)
     local props = {
         {"Size",                "Size:%s(%d+)"},
         {"Uid",             "Uid:%s%(([^%)]+)"},
-        {"Gid",             "Uid:%s%(([^%)]+)"},
+        {"Gid",             "Gid:%s%(([^%)]+)"},
         {"Access", "Access:%s([%d%s%-%.:]+)\n"},
         {"Modify", "Modify:%s([%d%s%-%.:]+)\n"},
         {"Change", "Change:%s([%d%s%-%.:]+)\n"},
