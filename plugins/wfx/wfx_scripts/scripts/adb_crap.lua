@@ -103,6 +103,7 @@ end
 
 function fs_properties(file)
     local props = {
+        {"Path",             "%s%->%s([^\n]+)"},
         {"Size",                "Size:%s(%d+)"},
         {"Uid",             "Uid:%s%(([^%)]+)"},
         {"Gid",             "Gid:%s%(([^%)]+)"},
@@ -124,7 +125,6 @@ function fs_properties(file)
     end
     os.exit()
 end
-
 
 function fs_quote(str, path)
     if (os.execute(adb_cmd .. " shell '" .. str:gsub("'", "\\'") .. "' 1>&2") == true) then
