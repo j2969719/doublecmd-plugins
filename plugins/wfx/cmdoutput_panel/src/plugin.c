@@ -1,8 +1,5 @@
-#define _GNU_SOURCE
 #include <glib.h>
-#include <dlfcn.h>
 #include <string.h>
-#include <errno.h>
 #include "wfxplugin.h"
 #include "extension.h"
 

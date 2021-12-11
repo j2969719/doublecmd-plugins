@@ -667,6 +667,11 @@ int DCPCALL FsGetBackgroundFlags(void)
 	return BG_DOWNLOAD | BG_UPLOAD;
 }
 
+BOOL DCPCALL FsContentGetDefaultView(char* ViewContents, char* ViewHeaders, char* ViewWidths, char* ViewOptions, int maxlen)
+{
+	return false;
+}
+
 void DCPCALL FsGetDefRootName(char* DefRootName, int maxlen)
 {
 	strlcpy(DefRootName, "AVFS", maxlen - 1);

@@ -445,6 +445,11 @@ int DCPCALL FsPutFile(char* LocalName, char* RemoteName, int CopyFlags)
 		return FS_FILE_OK;
 }
 
+BOOL DCPCALL FsContentGetDefaultView(char* ViewContents, char* ViewHeaders, char* ViewWidths, char* ViewOptions, int maxlen)
+{
+	return false;
+}
+
 void DCPCALL FsGetDefRootName(char* DefRootName, int maxlen)
 {
 	strlcpy(DefRootName, "PhysFS", maxlen - 1);

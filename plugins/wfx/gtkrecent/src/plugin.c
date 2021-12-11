@@ -464,6 +464,10 @@ int DCPCALL FsContentGetValue(char* FileName, int FieldIndex, int UnitIndex, voi
 	return result;
 }
 
+BOOL DCPCALL FsContentGetDefaultView(char* ViewContents, char* ViewHeaders, char* ViewWidths, char* ViewOptions, int maxlen)
+{
+	return FALSE;
+}
 
 void DCPCALL FsGetDefRootName(char* DefRootName, int maxlen)
 {

@@ -541,6 +541,11 @@ BOOL DCPCALL FsGetLocalName(char* RemoteName, int maxlen)
 		return FALSE;
 }
 
+BOOL DCPCALL FsContentGetDefaultView(char* ViewContents, char* ViewHeaders, char* ViewWidths, char* ViewOptions, int maxlen)
+{
+	return FALSE;
+}
+
 void DCPCALL FsGetDefRootName(char* DefRootName, int maxlen)
 {
 	g_strlcpy(DefRootName, "Files in the clipboard", maxlen - 1);

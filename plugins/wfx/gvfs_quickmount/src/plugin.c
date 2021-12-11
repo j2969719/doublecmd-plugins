@@ -608,6 +608,11 @@ void DCPCALL ExtensionFinalize(void* Reserved)
 	gStartupInfo = NULL;
 }
 
+BOOL DCPCALL FsContentGetDefaultView(char* ViewContents, char* ViewHeaders, char* ViewWidths, char* ViewOptions, int maxlen)
+{
+	return FALSE;
+}
+
 void DCPCALL FsGetDefRootName(char* DefRootName, int maxlen)
 {
 	g_strlcpy(DefRootName, "GVFS Quick Mount", maxlen - 1);

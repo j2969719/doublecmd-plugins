@@ -494,6 +494,11 @@ void DCPCALL FsSetDefaultParams(FsDefaultParamStruct* dps)
 		strlcpy(inFile, _inFile, PATH_MAX);
 }
 
+BOOL DCPCALL FsContentGetDefaultView(char* ViewContents, char* ViewHeaders, char* ViewWidths, char* ViewOptions, int maxlen)
+{
+	return false;
+}
+
 void DCPCALL FsGetDefRootName(char* DefRootName, int maxlen)
 {
 	strlcpy(DefRootName, _plugname, maxlen - 1);
