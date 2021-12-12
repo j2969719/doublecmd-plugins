@@ -230,7 +230,7 @@ static void LogMessage(int PluginNr, int MsgType, char* LogString)
 #endif
 }
 
-static gboolean ProgressNeded(gchar *verb)
+static gboolean ProgressNeeded(gchar *verb)
 {
 	gboolean result = FALSE;
 
@@ -262,7 +262,7 @@ static gboolean ExecuteScript(gchar *script_name, gchar *verb, char *arg1, char 
 		return FALSE;
 
 	gchar *script = g_strdup_printf("./%s", script_name);
-	gboolean is_progress_neded = ProgressNeded(verb);
+	gboolean is_progress_needed = ProgressNeeded(verb);
 
 	argv[0] = script;
 	argv[1] = verb;
@@ -321,7 +321,7 @@ static gboolean ExecuteScript(gchar *script_name, gchar *verb, char *arg1, char 
 				if (g_noise)
 					LogMessage(gPluginNr, MSGTYPE_DETAILS, line);
 
-				if (is_progress_neded)
+				if (is_progress_needed)
 				{
 					gint64 prcnt = g_ascii_strtoll(line, NULL, 0);
 
@@ -763,7 +763,7 @@ static void DeInitializeScript(gchar *script)
 		g_key_file_remove_key(g_cfg, script, IN_USE_MARK, NULL);
 		g_key_file_remove_key(g_cfg, script, ENVVAR_OPT, NULL);
 #ifndef  TEMP_PANEL
-		gchar *message = g_strdup_printf("DISCONNECT \\%s", script);
+		gchar *message = g_strdup_printf("DISCONNECT /%s", script);
 
 		if (gLogProc)
 			gLogProc(gPluginNr, MSGTYPE_DISCONNECT, message);
@@ -780,7 +780,7 @@ static void InitializeScript(gchar *script)
 	DeInitializeScript(script);
 	g_noise = g_key_file_get_boolean(g_cfg, script, NOISE_OPT, NULL);
 #ifndef TEMP_PANEL
-	gchar *message = g_strdup_printf("CONNECT \\%s", script);
+	gchar *message = g_strdup_printf("CONNECT /%s", script);
 	LogMessage(gPluginNr, MSGTYPE_CONNECT, message);
 	g_free(message);
 #endif
@@ -1793,6 +1793,11 @@ int DCPCALL FsContentGetValue(char* FileName, int FieldIndex, int UnitIndex, voi
 	g_free(path);
 
 	return result;
+}
+
+BOOL DCPCALL FsContentGetDefaultView(char* ViewContents, char* ViewHeaders, char* ViewWidths, char* ViewOptions, int maxlen)
+{
+	return FALSE;
 }
 
 #ifdef  TEMP_PANEL
