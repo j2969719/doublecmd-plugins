@@ -353,8 +353,22 @@ int DCPCALL FsContentGetValue(char* FileName, int FieldIndex, int UnitIndex, voi
 {
 	int result = fields[FieldIndex].type;
 	const gchar *string = NULL;
+	gchar *child = NULL;
 
-	gchar *uri = g_strdup_printf("trash://%s", FileName);
+	gchar **split = g_strsplit(FileName, "/", -1);
+
+	if (g_strv_length(split) > 2)
+	{
+		gchar **target = split;
+		target++;
+		target++;
+		gchar *temp = g_strjoinv("/", target);
+		child = g_strdup_printf("/%s", temp);
+		g_free(temp);
+	}
+
+	gchar *uri = g_strdup_printf("trash:///%s", split[1]);
+	g_strfreev(split);
 	GFile *src = g_file_new_for_uri(uri);
 	g_free(uri);
 
@@ -369,20 +383,29 @@ int DCPCALL FsContentGetValue(char* FileName, int FieldIndex, int UnitIndex, voi
 
 			if (string)
 			{
+				gchar *org = NULL;
+
+				if (child)
+					org = g_strjoin(NULL, string, child, NULL);
+				else
+					org = g_strdup(string);
+
 				if (UnitIndex == 1)
 				{
-					gchar *filename = g_path_get_basename(string);
+					gchar *filename = g_path_get_basename(org);
 					g_strlcpy((char*)FieldValue, filename, maxlen - 1);
 					g_free(filename);
 				}
 				else if (UnitIndex == 2)
 				{
-					gchar *folder = g_path_get_dirname(string);
+					gchar *folder = g_path_get_dirname(org);
 					g_strlcpy((char*)FieldValue, folder, maxlen - 1);
 					g_free(folder);
 				}
 				else
-					g_strlcpy((char*)FieldValue, string, maxlen - 1);
+					g_strlcpy((char*)FieldValue, org, maxlen - 1);
+
+				g_free(org);
 			}
 			else
 				result = ft_fieldempty;
@@ -407,6 +430,9 @@ int DCPCALL FsContentGetValue(char* FileName, int FieldIndex, int UnitIndex, voi
 	}
 	else
 		result = ft_fieldempty;
+
+	g_object_unref(src);
+	g_free(child);
 
 	return result;
 }
