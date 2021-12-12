@@ -45,7 +45,7 @@ function fs_getlist(path)
         for i = 65, 90 do
             print("drwxr-xr-x " .. temp_file_date .. " - " .. string.char(i))
         end
-        print("drwxr-xr-x " .. temp_file_date .. " - _other")
+        print("drwxr-xr-x " .. temp_file_date .. " - 0-9")
     else
         local file = io.open(temp_file, "r")
         if not file then
@@ -53,7 +53,7 @@ function fs_getlist(path)
         end
         local current_date = os.date("!%Y-%m-%dT%TZ")
         local pattern = nil
-        if path:find("_other") then
+        if path:find("/0%-9") then
             pattern = "^%A"
         else
             local letter = path:match("%a/?$")
