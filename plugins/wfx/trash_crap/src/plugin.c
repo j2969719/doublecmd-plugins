@@ -1,4 +1,3 @@
-#define _GNU_SOURCE
 #include <glib.h>
 #include <gio/gio.h>
 #include <string.h>
@@ -10,6 +9,7 @@
 
 typedef struct sVFSDirData
 {
+	GFile *gfile;
 	GFileEnumerator *enumer;
 } tVFSDirData;
 
@@ -30,8 +30,8 @@ typedef struct sField
 
 tField fields[] =
 {
-	{"original path",	ft_string,	""},
-	{"deletion date",	ft_string,	""},
+	{"original path",	ft_string,	"default|basename|dirname"},
+	{"deletion date",	ft_string,				""},
 };
 
 int gPluginNr;
@@ -39,66 +39,6 @@ tProgressProc gProgressProc = NULL;
 tLogProc gLogProc = NULL;
 tRequestProc gRequestProc = NULL;
 tExtensionStartupInfo* gDialogApi = NULL;
-static const char *gProgressForm = R"(
-object DialogBox: TDialogBox
-  Left = 320
-  Height = 240
-  Top = 250
-  Width = 320
-  AutoSize = True
-  BorderStyle = bsDialog
-  Caption = 'Processing'
-  ChildSizing.LeftRightSpacing = 10
-  ChildSizing.TopBottomSpacing = 10
-  ClientHeight = 240
-  ClientWidth = 320
-  OnCreate = DialogBoxShow
-  Position = poMainFormCenter
-  LCLVersion = '2.0.5.0'
-  object lblText: TLabel
-    AnchorSideLeft.Control = Owner
-    AnchorSideTop.Control = Owner
-    Left = 10
-    Height = 17
-    Top = 10
-    Width = 80
-    Caption = 'Sample Text'
-  end
-  object pbProgress: TProgressBar
-    AnchorSideLeft.Control = lblText
-    AnchorSideTop.Control = lblText
-    AnchorSideTop.Side = asrBottom
-    Left = 10
-    Height = 20
-    Top = 32
-    Width = 250
-    BorderSpacing.Top = 5
-    Constraints.MinWidth = 250
-    TabOrder = 1
-  end
-  object btnCancel: TBitBtn
-    AnchorSideTop.Control = pbProgress
-    AnchorSideTop.Side = asrBottom
-    AnchorSideRight.Control = Owner
-    AnchorSideRight.Side = asrBottom
-    Left = 213
-    Height = 30
-    Top = 62
-    Width = 97
-    Anchors = [akTop, akRight]
-    BorderSpacing.Top = 10
-    BorderSpacing.Right = 5
-    Cancel = True
-    Constraints.MinHeight = 30
-    Constraints.MinWidth = 97
-    DefaultCaption = True
-    Kind = bkCancel
-    ModalResult = 2
-    OnClick = ButtonClick
-    TabOrder = 0
-  end
-end
-)";
 
 
 gboolean UnixTimeToFileTime(unsigned long mtime, LPFILETIME ft)
@@ -115,15 +55,6 @@ unsigned long FileTimeToUnixTime(LPFILETIME ft)
 	ll = (ll << 32) | ft->dwLowDateTime;
 	ll = (ll - 116444736000000000) / 10000000;
 	return (unsigned long)ll;
-}
-
-
-static void SetCurrentFileTime(LPFILETIME ft)
-{
-	gint64 ll = g_get_real_time();
-	ll = ll * 10 + 116444736000000000;
-	ft->dwLowDateTime = (DWORD)ll;
-	ft->dwHighDateTime = ll >> 32;
 }
 
 static void errmsg(const char *msg)
@@ -162,20 +93,18 @@ static void restore_from_trash(const char *remote)
 		const gchar *orgpath = g_file_info_get_attribute_byte_string(info, G_FILE_ATTRIBUTE_TRASH_ORIG_PATH);
 		GFile *dest = g_file_new_for_path(orgpath);
 
-		if (g_file_test(orgpath, G_FILE_TEST_EXISTS) && !gRequestProc(gPluginNr, RT_MsgYesNo, NULL, "Overite?", NULL, 0))
+		if (!g_file_test(orgpath, G_FILE_TEST_EXISTS) || gRequestProc(gPluginNr, RT_MsgYesNo, NULL, "Overite?", NULL, 0))
 		{
+			if (!g_file_move(src, dest, G_FILE_COPY_OVERWRITE | G_FILE_COPY_NOFOLLOW_SYMLINKS | G_FILE_COPY_ALL_METADATA, NULL, NULL, NULL, &err))
+			{
+				if (err)
+				{
+					errmsg((err)->message);
+					g_error_free(err);
+				}
+			}
 
 		}
-		else if (!g_file_copy(src, dest, G_FILE_COPY_OVERWRITE | G_FILE_COPY_NOFOLLOW_SYMLINKS | G_FILE_COPY_ALL_METADATA, NULL, NULL, NULL, &err))
-		{
-			if (err)
-			{
-				errmsg((err)->message);
-				g_error_free(err);
-			}
-		}
-		else
-			g_file_delete(src, NULL, NULL);
 
 		g_object_unref(info);
 		g_object_unref(dest);
@@ -183,20 +112,6 @@ static void restore_from_trash(const char *remote)
 
 	g_object_unref(src);
 }
-
-intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr_t wParam, intptr_t lParam)
-{
-	switch (Msg)
-	{
-	case DN_INITDIALOG:
-	case DN_CLICK:
-	case DN_CHANGE:
-		break;
-	}
-
-	return 0;
-}
-
 
 gboolean SetFindData(tVFSDirData *dirdata, WIN32_FIND_DATAA *FindData)
 {
@@ -261,13 +176,25 @@ HANDLE DCPCALL FsFindFirst(char* Path, WIN32_FIND_DATAA *FindData)
 		return (HANDLE)(-1);
 
 	gchar *uri = g_strdup_printf("trash://%s", Path);
-	GFile *gfile = g_file_new_for_uri(uri);
+	dirdata->gfile = g_file_new_for_uri(uri);
 	g_free(uri);
 
-	dirdata->enumer = g_file_enumerate_children(gfile, "standard::*,unix::mode,trash::deletion-date,time::modified", G_FILE_QUERY_INFO_NOFOLLOW_SYMLINKS, NULL, NULL);
+	if (!G_IS_OBJECT(dirdata->gfile))
+	{
+		g_free(dirdata);
+		return (HANDLE)(-1);
+	}
+
+	dirdata->enumer = g_file_enumerate_children(dirdata->gfile, "standard::*,unix::mode,trash::deletion-date,time::modified", G_FILE_QUERY_INFO_NOFOLLOW_SYMLINKS, NULL, NULL);
 
 	if (dirdata->enumer && SetFindData(dirdata, FindData))
 		return (HANDLE)dirdata;
+
+	if (!G_IS_OBJECT(dirdata->enumer))
+		g_object_unref(dirdata->enumer);
+
+	if (!G_IS_OBJECT(dirdata->gfile))
+		g_object_unref(dirdata->gfile);
 
 	g_free(dirdata);
 
@@ -289,8 +216,15 @@ int DCPCALL FsFindClose(HANDLE Hdl)
 {
 	tVFSDirData *dirdata = (tVFSDirData*)Hdl;
 
-	g_file_enumerator_close(dirdata->enumer, NULL, NULL);
-	g_object_unref(dirdata->enumer);
+	if (!G_IS_OBJECT(dirdata->enumer))
+	{
+		g_file_enumerator_close(dirdata->enumer, NULL, NULL);
+		g_object_unref(dirdata->enumer);
+	}
+
+	if (!G_IS_OBJECT(dirdata->gfile))
+		g_object_unref(dirdata->gfile);
+
 	g_free(dirdata);
 
 	return 0;
@@ -383,6 +317,8 @@ int DCPCALL FsGetFile(char* RemoteName, char* LocalName, int CopyFlags, RemoteIn
 
 	g_object_unref(src);
 	g_object_unref(dest);
+	g_free(info->in_file);
+	g_free(info->out_file);
 	g_free(info);
 
 	return result;
@@ -432,7 +368,22 @@ int DCPCALL FsContentGetValue(char* FileName, int FieldIndex, int UnitIndex, voi
 			string = g_file_info_get_attribute_byte_string(info, G_FILE_ATTRIBUTE_TRASH_ORIG_PATH);
 
 			if (string)
-				g_strlcpy((char*)FieldValue, string, maxlen - 1);
+			{
+				if (UnitIndex == 1)
+				{
+					gchar *filename = g_path_get_basename(string);
+					g_strlcpy((char*)FieldValue, filename, maxlen - 1);
+					g_free(filename);
+				}
+				else if (UnitIndex == 2)
+				{
+					gchar *folder = g_path_get_dirname(string);
+					g_strlcpy((char*)FieldValue, folder, maxlen - 1);
+					g_free(folder);
+				}
+				else
+					g_strlcpy((char*)FieldValue, string, maxlen - 1);
+			}
 			else
 				result = ft_fieldempty;
 
@@ -458,6 +409,15 @@ int DCPCALL FsContentGetValue(char* FileName, int FieldIndex, int UnitIndex, voi
 		result = ft_fieldempty;
 
 	return result;
+}
+
+BOOL DCPCALL FsContentGetDefaultView(char* ViewContents, char* ViewHeaders, char* ViewWidths, char* ViewOptions, int maxlen)
+{
+	g_strlcpy(ViewContents, "[Plugin(FS).original path{}]", maxlen - 1);
+	g_strlcpy(ViewHeaders, "Path", maxlen - 1);
+	g_strlcpy(ViewWidths, "100,20,150", maxlen - 1);
+	g_strlcpy(ViewOptions, "-1|0", maxlen - 1);
+	return TRUE;
 }
 
 void DCPCALL FsGetDefRootName(char* DefRootName, int maxlen)
