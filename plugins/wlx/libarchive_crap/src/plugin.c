@@ -4,7 +4,7 @@
 #include <string.h>
 #include "wlxplugin.h"
 
-#define COMMENT_CMD "sh -c '7z l %s -y | pcregrep -M -o1 \"(?s)(?<=Comment\\s=\\s)(.*?)\n\n\\s+Date\"'"
+#define COMMENT_CMD "7z l %s -y | pcregrep -M -o1 \"(?s)(?<=Comment\\s=\\s)(.*?)\n\n\\s+Date\""
 
 static gchar *get_owner_str(struct archive_entry *entry)
 {
@@ -211,12 +211,28 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 		g_free(info);
 
 	gchar *comment = NULL;
+	gchar *comment_content[] =
+	{
+		"application/zip",
+		"application/x-7z-compressed",
+		"application/vnd.rar",
+		NULL
+	};
+	gchar *content_type = g_content_type_guess(FileToLoad, NULL, 0, NULL);
 
-	gchar *quotedpath = g_shell_quote(FileToLoad);
-	gchar *command = g_strdup_printf(COMMENT_CMD, quotedpath);
-	g_free(quotedpath);
-	g_spawn_command_line_sync(command, &comment, NULL, NULL, NULL);
-	g_free(command);
+	for (int i = 0; comment_content[i] != NULL; i++)
+	{
+
+		gchar *quotedpath = g_shell_quote(FileToLoad);
+		gchar *command = g_strdup_printf(COMMENT_CMD, quotedpath);
+		gchar *argv[] = {"sh", "-c", command, NULL};
+		g_free(quotedpath);
+		g_spawn_sync(NULL, argv, NULL, G_SPAWN_SEARCH_PATH, NULL, NULL, &comment, NULL, NULL, NULL);
+		g_free(command);
+		break;
+	}
+
+	g_free(content_type);
 
 	if (comment)
 	{
