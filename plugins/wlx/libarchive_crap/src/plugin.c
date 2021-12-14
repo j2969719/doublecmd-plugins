@@ -4,6 +4,8 @@
 #include <string.h>
 #include "wlxplugin.h"
 
+#define COMMENT_CMD "sh -c '7z l %s -y | pcregrep -M -o1 \"(?s)(?<=Comment\\s=\\s)(.*?)\n\n\\s+Date\"'"
+
 static gchar *get_owner_str(struct archive_entry *entry)
 {
 	const gchar *group = archive_entry_gname_utf8(entry);
@@ -108,6 +110,17 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 			icon_name = g_strdup("emblem-symbolic-link");
 		else if (archive_entry_is_data_encrypted(entry) == 1)
 			icon_name = g_strdup("emblem-readonly");
+		else
+		{
+			gchar *content_type = g_content_type_guess(pathname, NULL, 0, NULL);
+
+			if (!g_content_type_is_unknown(content_type))
+				icon_name = g_content_type_get_generic_icon_name(content_type);
+			else
+				icon_name = g_strdup("unknown");
+
+			g_free(content_type);
+		}
 
 		gchar *owner = get_owner_str(entry);
 
@@ -196,6 +209,29 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 
 	if (info)
 		g_free(info);
+
+	gchar *comment = NULL;
+
+	gchar *quotedpath = g_shell_quote(FileToLoad);
+	gchar *command = g_strdup_printf(COMMENT_CMD, quotedpath);
+	g_free(quotedpath);
+	g_spawn_command_line_sync(command, &comment, NULL, NULL, NULL);
+	g_free(command);
+
+	if (comment)
+	{
+		size_t len = strlen(comment);
+
+		if (len > 1)
+		{
+			comment[len - 1] = '\0';
+			GtkWidget *commentlabel = gtk_label_new(comment);
+			gtk_widget_modify_font(commentlabel, pango_font_description_from_string("mono"));
+			gtk_box_pack_start(GTK_BOX(gFix), commentlabel, FALSE, FALSE, 1);
+		}
+
+		g_free(comment);
+	}
 
 	struct stat buf;
 
