@@ -20,7 +20,7 @@ static gchar *get_owner_str(struct archive_entry *entry)
 static gchar *get_datetime_str(struct archive_entry *entry)
 {
 	time_t e_mtime = archive_entry_mtime(entry);
-	return g_date_time_format(g_date_time_new_from_unix_local(e_mtime), "%d.%m.%Y %k:%M");
+	return g_date_time_format(g_date_time_new_from_unix_local(e_mtime), "%Y-%m-%d %k:%M");
 }
 
 HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
@@ -298,6 +298,7 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 
 	renderer = gtk_cell_renderer_text_new();
 	column = gtk_tree_view_column_new_with_attributes("date", renderer, "text", LIST_DATE, NULL);
+	gtk_tree_view_column_set_sort_column_id(column, LIST_DATE);
 	gtk_tree_view_append_column(GTK_TREE_VIEW(list), column);
 
 	renderer = gtk_cell_renderer_text_new();
