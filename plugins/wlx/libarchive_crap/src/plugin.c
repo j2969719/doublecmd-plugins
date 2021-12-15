@@ -222,14 +222,16 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 
 	for (int i = 0; comment_content[i] != NULL; i++)
 	{
-
-		gchar *quotedpath = g_shell_quote(FileToLoad);
-		gchar *command = g_strdup_printf(COMMENT_CMD, quotedpath);
-		gchar *argv[] = {"sh", "-c", command, NULL};
-		g_free(quotedpath);
-		g_spawn_sync(NULL, argv, NULL, G_SPAWN_SEARCH_PATH, NULL, NULL, &comment, NULL, NULL, NULL);
-		g_free(command);
-		break;
+		if (g_strcmp0(content_type, comment_content[i]) == 0)
+		{
+			gchar *quotedpath = g_shell_quote(FileToLoad);
+			gchar *command = g_strdup_printf(COMMENT_CMD, quotedpath);
+			gchar *argv[] = {"sh", "-c", command, NULL};
+			g_free(quotedpath);
+			g_spawn_sync(NULL, argv, NULL, G_SPAWN_SEARCH_PATH, NULL, NULL, &comment, NULL, NULL, NULL);
+			g_free(command);
+			break;
+		}
 	}
 
 	g_free(content_type);
