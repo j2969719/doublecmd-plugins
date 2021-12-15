@@ -124,7 +124,7 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 
 		gchar *owner = get_owner_str(entry);
 
-		if (owner && !ownercolumn)
+		if (owner && g_strcmp0(owner, "/") != 0 && !ownercolumn)
 			ownercolumn = TRUE;
 
 		gchar *edatetime = get_datetime_str(entry);
