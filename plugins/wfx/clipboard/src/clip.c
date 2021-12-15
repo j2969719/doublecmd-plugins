@@ -380,7 +380,7 @@ void DCPCALL FsStatusInfo(char* RemoteDir, int InfoStartEnd, int InfoOperation)
 		else
 			gSetContent = gRequestProc(gPluginNr, RT_MsgYesNo, NULL, "Сopy file contents to CLIPBOARD?", NULL, 0);
 }
-
+/*
 BOOL DCPCALL FsContentGetDefaultView(char* ViewContents, char* ViewHeaders, char* ViewWidths, char* ViewOptions, int maxlen)
 {
 	g_strlcpy(ViewContents, "[Plugin(FS).Content{}]\\n[Plugin(FS).Text Preview{}]", maxlen - 1);
@@ -389,7 +389,7 @@ BOOL DCPCALL FsContentGetDefaultView(char* ViewContents, char* ViewHeaders, char
 	g_strlcpy(ViewOptions, "-1|0", maxlen - 1);
 	return TRUE;
 }
-
+*/
 void DCPCALL FsGetDefRootName(char* DefRootName, int maxlen)
 {
 	g_strlcpy(DefRootName, "Clipboard", maxlen - 1);
