@@ -312,6 +312,12 @@ View files in the clipboard. (GTK2)
 - [cmdoutput](plugins/wfx/cmdoutput)<br>
 View output of command line utilities (see `settings.ini`).
 
+- [cmdoutput_panel](plugins/wfx/cmdoutput_panel)<br>
+Like `cmdoutput` but it outputs data to a column in the file panel (DC 1.1+). Settings are stored in `$DC_CONFIG_PATH/j2969719.ini`.
+
+- [envlist](plugins/wfx/envlist)<br>
+Just a list of the current environment variables (DC 1.1+).
+
 - [filelist](plugins/wfx/filelist)<br>
 Temporary panel, virtual folder that allows keeping links to frequently used files.
 
@@ -441,6 +447,9 @@ Document viewer based on Qt5WebKit and using HTML Export from Oracle Outside In 
 
 - [jsonview_qt5](plugins/wlx/jsonview_qt5)<br>
 Very primitive JSON Viewer.
+
+- [libarchive_qt5_crap](plugins/wlx/libarchive_qt5_crap)<br>
+Displays file content with `libarchive` ([supported formats](https://github.com/libarchive/libarchive#supported-formats)).
 
 - [md4c_webkit_qt5](plugins/wlx/md4c_webkit_qt5)<br>
 This plugin allows you to view Markdown files.
