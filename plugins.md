@@ -290,6 +290,9 @@ Getting some information from XCF files (GIMP native image format).
 - [ziminfowdx.lua](plugins/wdx/scripts/ziminfowdx.lua) *(cross platform)*<br>
 Getting some information from Zim files (https://zim-wiki.org/).
 
+- [zsyncwdx.lua](plugins/wdx/scripts/zsyncwdx.lua) *(cross platform)*<br>
+Getting some information from zsync-files.
+
 
 ---
 <a name="wfx"><h3>WFX plugins</h3></a>
