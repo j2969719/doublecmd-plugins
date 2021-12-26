@@ -190,10 +190,10 @@ HANDLE DCPCALL FsFindFirst(char* Path, WIN32_FIND_DATAA *FindData)
 	if (dirdata->enumer && SetFindData(dirdata, FindData))
 		return (HANDLE)dirdata;
 
-	if (!G_IS_OBJECT(dirdata->enumer))
+	if (G_IS_OBJECT(dirdata->enumer))
 		g_object_unref(dirdata->enumer);
 
-	if (!G_IS_OBJECT(dirdata->gfile))
+	if (G_IS_OBJECT(dirdata->gfile))
 		g_object_unref(dirdata->gfile);
 
 	g_free(dirdata);
@@ -216,13 +216,13 @@ int DCPCALL FsFindClose(HANDLE Hdl)
 {
 	tVFSDirData *dirdata = (tVFSDirData*)Hdl;
 
-	if (!G_IS_OBJECT(dirdata->enumer))
+	if (G_IS_OBJECT(dirdata->enumer))
 	{
 		g_file_enumerator_close(dirdata->enumer, NULL, NULL);
 		g_object_unref(dirdata->enumer);
 	}
 
-	if (!G_IS_OBJECT(dirdata->gfile))
+	if (G_IS_OBJECT(dirdata->gfile))
 		g_object_unref(dirdata->gfile);
 
 	g_free(dirdata);
