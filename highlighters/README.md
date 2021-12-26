@@ -18,6 +18,7 @@ Copy (or move) HGL-file(s) to the *highlighters* folder near `doublecmd.exe` and
 2. Installed version
 
 Go to *Configuration* in main menu > *Options...* > *Configuration* > *Directories* > *Highlight:*, here you see list of possible directories.
+
 Don't use `/usr/share/doublecmd/highlighters`, `C:\Program Files\Double Commander\highlighters` or other system directory: this requires root/admin rights, also this would be a intervention to the packages manager's work on Linux or DC installer for Windows. DC usually suggests the following additional path (besides the *highlighters* folder near `doublecmd.exe`):
 
 - Windows XP: `C:\Documents and Settings\<UserName>\Local Settings\doublecmd\highlighters`
@@ -34,7 +35,9 @@ DC uses SynUniHighlighter, so you can try to find HGL-files yourself.
 
 ## How to create or edit
 
-[HglEditor](http://totalcmd.net/plugring/HglEditor.html): create and use the *highlighters* folder near `HglEditor.exe`. HglEditor was written for Windows, but also you can use Wine.
+Use [UniHighlighter Editor](https://totalcmd.net/plugring/synplus_highlighterspack.html) (find `highlights.exe`) or [HglEditor 2.0](http://totalcmd.net/plugring/HglEditor.html) (create and use the *highlighters* folder near `HglEditor.exe`). These programs were written for Windows, but also you can use Wine.
+
+On the first link you can find pack of various highlighters.
 
 
 ## Additional feature(s)
