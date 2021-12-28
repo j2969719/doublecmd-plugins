@@ -8,6 +8,7 @@
 #include <string.h>
 #include "wdxplugin.h"
 
+#define Int32x32To64(a,b) ((int64_t)(a)*(int64_t)(b))
 
 typedef struct sfield
 {
@@ -45,6 +46,8 @@ tfield fields[] =
 	{"symlinks_file",	ft_numeric_64,		0},
 	{"symlinks_dir",	ft_numeric_64,		0},
 	{"warnings",		ft_numeric_64,		0},
+	{"oldest date",		ft_datetime,		0},
+	{"newest date",		ft_datetime,		0},
 };
 
 enum fieldnum
@@ -73,7 +76,9 @@ enum fieldnum
 	F_SYMLINKS_UNDEF,
 	F_SYMLINKS_FILE,
 	F_SYMLINKS_DIR,
-	F_WARNCOUNT
+	F_WARNCOUNT,
+	F_OLDEST,
+	F_NEWEST
 };
 
 const char *archive_multichoice[] =
@@ -191,6 +196,12 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 
 				fields[F_TOTALSIZE].val += archive_entry_size(entry);
 				mode = archive_entry_filetype(entry);
+
+				if (fields[F_OLDEST].val == 0 || fields[F_OLDEST].val > archive_entry_mtime(entry))
+					fields[F_OLDEST].val = archive_entry_mtime(entry);
+
+				if (fields[F_NEWEST].val == 0 || fields[F_NEWEST].val < archive_entry_mtime(entry))
+					fields[F_NEWEST].val = archive_entry_mtime(entry);
 
 				switch (mode & AE_IFMT)
 				{
@@ -426,6 +437,12 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 	}
 	else if (fields[FieldIndex].type == ft_boolean)
 		*(int*)FieldValue = (int)fields[FieldIndex].val;
+	else if (fields[FieldIndex].type == ft_datetime)
+	{
+		time_t datetime = Int32x32To64(fields[FieldIndex].val, 10000000) + 116444736000000000;
+		((LPFILETIME)FieldValue)->dwLowDateTime = (DWORD)datetime;
+		((LPFILETIME)FieldValue)->dwHighDateTime = datetime >> 32;
+	}
 	else
 		return ft_nosuchfield;
 
