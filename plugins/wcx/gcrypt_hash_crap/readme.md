@@ -23,10 +23,15 @@
 |`sha256`|`GCRY_MD_SHA256`||
 |`sha384`|`GCRY_MD_SHA384`||
 |`sha512`|`GCRY_MD_SHA512`||
+|`sha512_224`|`GCRY_MD_SHA512_224`||
+|`sha512_256`|`GCRY_MD_SHA512_256`||
 |`sha3_224`|`GCRY_MD_SHA3_224`||
 |`sha3_256`|`GCRY_MD_SHA3_256`||
 |`sha3_384`|`GCRY_MD_SHA3_384`||
 |`sha3_512`|`GCRY_MD_SHA3_512`||
+|`shake128`|`GCRY_MD_SHAKE128`||
+|`shake256`|`GCRY_MD_SHAKE256`||
+|`sm3`|`GCRY_MD_SM3`||
 |`stribog256`|`GCRY_MD_STRIBOG256`|GOST R 34.11-2012, 256 bit.|
 |`stribog512`|`GCRY_MD_STRIBOG512`|GOST R 34.11-2012, 512 bit.|
 |`tiger`|`GCRY_MD_TIGER`|TIGER/192 as used by gpg <= 1.3.2|

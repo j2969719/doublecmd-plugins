@@ -237,6 +237,10 @@ static int get_algo_from_ext(const char*ext)
 		ret = 314 /* GCRY_MD_SHA3_384 */;
 	else if (strcasecmp(ext, ".sha3_512") == 0)
 		ret = 315 /* GCRY_MD_SHA3_512 */;
+	else if (strcasecmp(ext, ".shake128") == 0)
+		ret = 316 /* GCRY_MD_SHAKE128 */;
+	else if (strcasecmp(ext, ".shake256") == 0)
+		ret = 317 /* GCRY_MD_SHAKE256 */;
 	else if (strcasecmp(ext, ".blake2b_512") == 0)
 		ret = 318 /* GCRY_MD_BLAKE2B_512 */;
 	else if (strcasecmp(ext, ".blake2b_384") == 0)
@@ -253,6 +257,12 @@ static int get_algo_from_ext(const char*ext)
 		ret = 324 /* GCRY_MD_BLAKE2S_160 */;
 	else if (strcasecmp(ext, ".blake2s_128") == 0)
 		ret = 325 /* GCRY_MD_BLAKE2S_128 */;
+	else if (strcasecmp(ext, ".sm3") == 0)
+		ret = 326 /* GCRY_MD_SM3 */;
+	else if (strcasecmp(ext, ".sha512_256") == 0)
+		ret = 327 /* GCRY_MD_SHA512_256 */;
+	else if (strcasecmp(ext, ".sha512_224") == 0)
+		ret = 328 /* GCRY_MD_SHA512_224 */;
 
 	else
 		ret = -1;
