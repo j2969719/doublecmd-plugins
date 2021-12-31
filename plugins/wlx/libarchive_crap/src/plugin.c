@@ -1,4 +1,6 @@
 #include <gtk/gtk.h>
+#include <enca.h>
+#include <locale.h>
 #include <archive.h>
 #include <archive_entry.h>
 #include <string.h>
@@ -23,6 +25,17 @@ static gchar *get_datetime_str(struct archive_entry *entry)
 	return g_date_time_format(g_date_time_new_from_unix_local(e_mtime), "%Y-%m-%d %H:%M");
 }
 
+EncaAnalyser init_analyser(char *lang)
+{
+	EncaAnalyser analyser = enca_analyser_alloc(lang);
+	enca_set_threshold(analyser, 1.38);
+	enca_set_multibyte(analyser, 1);
+	enca_set_ambiguity(analyser, 1);
+	enca_set_garbage_test(analyser, 1);
+	enca_set_filtering(analyser, 0);
+	return analyser;
+}
+
 HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 {
 	GtkWidget *gFix;
@@ -43,9 +56,11 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	gboolean hardlinks = FALSE;
 	gboolean ownercolumn = FALSE;
 	size_t totalsize = 0;
+	EncaAnalyser analyser = NULL;
+	char iconvencoding[255] = "";
+	char lang[3] = "";
 
-
-
+	g_strlcpy(lang, setlocale(LC_ALL, ""), sizeof(lang));
 	a = archive_read_new();
 	archive_read_support_filter_all(a);
 	archive_read_support_format_all(a);
@@ -89,6 +104,25 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 
 		const gchar *pathname = archive_entry_pathname(entry);
 		const gchar *symlink = archive_entry_symlink_utf8(entry);
+		gchar *converted = NULL;
+
+		if (archive_format(a) == ARCHIVE_FORMAT_ZIP)
+		{
+			if (!analyser)
+				analyser = init_analyser(lang);
+
+			if (analyser)
+			{
+				size_t len = strlen(pathname);
+				EncaEncoding encoding = enca_analyse(analyser, (unsigned char*)pathname, len);
+
+				if (encoding.charset > 0)
+					g_strlcpy(iconvencoding, enca_charset_name(encoding.charset, ENCA_NAME_STYLE_ICONV), sizeof(iconvencoding));
+
+				if (iconvencoding[0] != '\0')
+					converted = g_convert_with_fallback(pathname, len, "UTF-8", iconvencoding, NULL, NULL, NULL, NULL);
+			}
+		}
 
 		if (symlink && !symlinks)
 			symlinks = TRUE;
@@ -131,7 +165,7 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 
 		gtk_list_store_set(store, &iter,
 		                   LIST_ICON, icon_name,
-		                   LIST_FILE, pathname,
+		                   LIST_FILE, converted ? converted : pathname,
 		                   LIST_SIZE, entrysize,
 		                   LIST_DATE, edatetime,
 		                   LIST_ATTR, g_strchomp((gchar*)archive_entry_strmode(entry)),
@@ -148,8 +182,12 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 
 		if (edatetime)
 			g_free(edatetime);
+
+		g_free(converted);
 	}
 
+	if (analyser)
+		enca_analyser_free(analyser);
 
 	if (archive_format(a) == ARCHIVE_FORMAT_EMPTY || archive_format(a) == ARCHIVE_FORMAT_MTREE || archive_format(a) == 0)
 	{
@@ -243,6 +281,18 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 		if (len > 1)
 		{
 			comment[len - 1] = '\0';
+			analyser = init_analyser(lang);
+			EncaEncoding encoding = enca_analyse(analyser, (unsigned char*)comment, len);
+
+			if (encoding.charset > 0)
+			{
+				gchar *orgcomment = comment;
+				comment = g_convert_with_fallback(orgcomment, len, "UTF-8", enca_charset_name(encoding.charset, ENCA_NAME_STYLE_ICONV), NULL, NULL, NULL, NULL);
+				g_free(orgcomment);
+			}
+
+			enca_analyser_free(analyser);
+
 			GtkWidget *commentlabel = gtk_label_new(comment);
 			gtk_widget_modify_font(commentlabel, pango_font_description_from_string("mono"));
 			gtk_box_pack_start(GTK_BOX(gFix), commentlabel, FALSE, FALSE, 1);
@@ -342,7 +392,6 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	gtk_misc_set_alignment(GTK_MISC(versions), 1, 0.5);
 	gtk_widget_show_all(gFix);
 	return gFix;
-
 }
 
 void DCPCALL ListCloseWindow(HWND ListWin)

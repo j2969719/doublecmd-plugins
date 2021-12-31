@@ -1,6 +1,6 @@
 CC = gcc
 CFLAGS = -shared -fPIC -Wl,--no-as-needed
-INCLUDES = `pkg-config --cflags --libs gtk+-2.0 libarchive` -I../../../sdk
+INCLUDES = `pkg-config --cflags --libs gtk+-2.0 libarchive enca` -I../../../sdk
 PLUGNAME = $(shell basename $(realpath ..)).$(shell basename $(realpath ../..))
 
 all:

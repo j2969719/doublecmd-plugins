@@ -11,4 +11,4 @@ Displays file content with `libarchive` ([supported formats](https://github.com/
 Requires `libarchive` library.
 
 ## Dependencies
-![arch](https://wiki.archlinux.org/favicon.ico) `pacman -S libarchive`
+![arch](https://wiki.archlinux.org/favicon.ico) `pacman -S libarchive enca`
