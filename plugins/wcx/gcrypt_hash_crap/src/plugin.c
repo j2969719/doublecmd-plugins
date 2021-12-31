@@ -237,10 +237,10 @@ static int get_algo_from_ext(const char*ext)
 		ret = 314 /* GCRY_MD_SHA3_384 */;
 	else if (strcasecmp(ext, ".sha3_512") == 0)
 		ret = 315 /* GCRY_MD_SHA3_512 */;
-	else if (strcasecmp(ext, ".shake128") == 0)
-		ret = 316 /* GCRY_MD_SHAKE128 */;
-	else if (strcasecmp(ext, ".shake256") == 0)
-		ret = 317 /* GCRY_MD_SHAKE256 */;
+//	else if (strcasecmp(ext, ".shake128") == 0)
+//		ret = 316 /* GCRY_MD_SHAKE128 */;
+//	else if (strcasecmp(ext, ".shake256") == 0)
+//		ret = 317 /* GCRY_MD_SHAKE256 */;
 	else if (strcasecmp(ext, ".blake2b_512") == 0)
 		ret = 318 /* GCRY_MD_BLAKE2B_512 */;
 	else if (strcasecmp(ext, ".blake2b_384") == 0)
