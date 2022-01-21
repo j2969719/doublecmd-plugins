@@ -108,7 +108,7 @@ static void set_progress_values(GtkTreeViewColumn *tree_column, GtkCellRenderer 
 	if (data->total > 0)
 		value = size * 100 / data->total;
 
-	gchar *filesize = g_format_size(size);
+	gchar *filesize = g_format_size_full(size, G_FORMAT_SIZE_IEC_UNITS);
 
 	g_object_set(cell, "text", filesize, NULL);
 	g_object_set(cell, "value", value, NULL);
@@ -136,7 +136,7 @@ static gboolean update_list(gpointer userdata)
 	gtk_tree_view_set_model(GTK_TREE_VIEW(data->list), GTK_TREE_MODEL(data->store));
 	gtk_spinner_stop(GTK_SPINNER(data->spin));
 	gtk_widget_set_visible(data->spin, FALSE);
-	gchar *filesize = g_format_size(data->total);
+	gchar *filesize = g_format_size_full(data->total, G_FORMAT_SIZE_IEC_UNITS);
 	gtk_label_set_text(GTK_LABEL(data->label), filesize);
 	g_free(filesize);
 	data->idle = 0;
@@ -228,9 +228,11 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	                                 G_TYPE_STRING,
 	                                 G_TYPE_INT64);
 
+	GtkWidget *path_label = gtk_label_new(FileToLoad);
+	gtk_misc_set_alignment(GTK_MISC(path_label), 0, 0.5);
 	GtkWidget *info_box = gtk_hbox_new(FALSE, 0);
 	gtk_box_pack_start(GTK_BOX(main_vbox), info_box, FALSE, FALSE, 0);
-	gtk_box_pack_start(GTK_BOX(info_box), gtk_label_new(FileToLoad), FALSE, FALSE, 0);
+	gtk_box_pack_start(GTK_BOX(info_box), path_label, TRUE, TRUE, 0);
 	gtk_box_pack_end(GTK_BOX(info_box), data->spin, FALSE, FALSE, 1);
 	gtk_box_pack_end(GTK_BOX(info_box), data->label, FALSE, FALSE, 5);
 	gtk_container_add(GTK_CONTAINER(main_vbox), data->scroll);
@@ -239,6 +241,7 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	gtk_container_add(GTK_CONTAINER(data->scroll), data->list);
 
 	GtkTreeViewColumn *column = gtk_tree_view_column_new();
+	gtk_tree_view_column_set_max_width(column, 256);
 	gtk_tree_view_column_set_title(column, _("Name"));
 	GtkCellRenderer *renderer = gtk_cell_renderer_pixbuf_new();
 	gtk_tree_view_column_pack_start(column, renderer, FALSE);
