@@ -19,9 +19,9 @@ end
 
 function fs_getlist(path)
     if path == "/" then
-        local output = get_output("coredumpctl list ")
+        local output = get_output("coredumpctl list")
         for line in output:gmatch("[^\n]-\n") do
-            local filedate, pid, name, size = line:match("^%w+%s(%d+%-%d%d%-%d%d%s%d%d:%d%d:%d%d)%s%+%d%d%s+(%d+)%s%d+%s%d+%s%w+%s%w+%s+(.+)%s+([naMK%d%./]+)%s*$")
+            local filedate, pid, name, size = line:match("^%w+%s(%d+%-%d%d%-%d%d%s%d%d:%d%d:%d%d)%s%+%d%d%s+(%d+)%s+%d+%s+%d+%s%w+%s%w+%s+(.+)%s+([naMK%d%./]+)%s*$")
             if filedate ~= nil and pid ~= nil and name ~= nil then
                 local filesize = nil
                 if size ~= nil then
