@@ -3,6 +3,7 @@
 -- In Poettering We Trust 2
 
 args = {...}
+terminal_cmd = "xterm -e"  -- xterm ftw
 
 function get_output(command)
     local handle = io.popen(command, 'r')
@@ -21,7 +22,7 @@ function fs_getlist(path)
     if path == "/" then
         local output = get_output("coredumpctl list")
         for line in output:gmatch("[^\n]-\n") do
-            local filedate, pid, name, size = line:match("^%w+%s(%d+%-%d%d%-%d%d%s%d%d:%d%d:%d%d)%s%+%d%d%s+(%d+)%s+%d+%s+%d+%s%w+%s%w+%s+(.+)%s+([naMK%d%./]+)%s*$")
+            local filedate, pid, name, size = line:match("^%w+%s([%-%d]+%s[:%d]+)%s[%-%+%d]+%s+(%d+)%s+%d+%s+%d+%s%w+%s%w+%s+(.+)%s+([naMKG%d%./]+)%s*$")
             if filedate ~= nil and pid ~= nil and name ~= nil then
                 local filesize = nil
                 if size ~= nil then
@@ -33,8 +34,6 @@ function fs_getlist(path)
                         filesize = math.floor(filesize * math.pow(1024, 2))
                     elseif char == 'G' then
                         filesize = math.floor(filesize * math.pow(1024, 3))
-                    elseif char == 'T' then
-                        filesize = math.floor(filesize * math.pow(1024, 4))
                     end
                 end
                 if filesize == nil then
@@ -57,7 +56,6 @@ function fs_properties(file)
         "Command Line",
         "Executable",
         "Signal",
-        "PID",
         "Storage",
         "Message",
         "Timestamp",
@@ -74,6 +72,11 @@ function fs_properties(file)
     os.exit()
 end
 
+function fs_execute(file)
+    os.execute(terminal_cmd .. ' coredumpctl debug ' .. file:match("%.(%d+)$"))
+    os.exit()
+end
+
 function fs_getlocalname(file)
     local pid = file:match("%.(%d+)$")
     os.execute('coredumpctl info ' .. file:match("%.(%d+)$") .. ' > /tmp/coredumpinfo_crap.' .. pid)
@@ -86,6 +89,8 @@ if args[1] == 'list' then
     fs_getlist(args[2])
 elseif args[1] == 'copyout' then
     fs_getfile(args[2], args[3])
+elseif args[1] == "run" then
+    fs_execute(args[2])
 elseif args[1] == 'properties' then
     fs_properties(args[2])
 elseif args[1] == 'localname' then
