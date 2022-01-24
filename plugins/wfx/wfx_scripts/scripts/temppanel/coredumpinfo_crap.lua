@@ -73,7 +73,7 @@ function fs_properties(file)
 end
 
 function fs_execute(file)
-    os.execute(terminal_cmd .. ' coredumpctl debug ' .. file:match("%.(%d+)$"))
+    os.execute(terminal_cmd .. ' "coredumpctl debug ' .. file:match("%.(%d+)$") .. '"')
     os.exit()
 end
 
