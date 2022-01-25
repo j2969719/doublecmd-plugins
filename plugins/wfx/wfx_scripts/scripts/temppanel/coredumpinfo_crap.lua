@@ -47,7 +47,7 @@ function fs_getlist(path)
 end
 
 function fs_getfile(file, target)
-    os.execute('coredumpctl info ' .. file:match("%.(%d+)$") .. ' > "' .. target:gsub('"', '\\"') .. '"')
+    os.execute('coredumpctl dump ' .. file:match("%.(%d+)$") .. ' > "' .. target:gsub('"', '\\"') .. '"')
     os.exit()
 end
 
