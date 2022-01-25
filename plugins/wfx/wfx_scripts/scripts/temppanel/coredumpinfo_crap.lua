@@ -68,7 +68,7 @@ function fs_properties(file)
             print(field..'\t'..value)
         end
     end
-    print('content_type\ttext/plain')
+    print('content_type\tapplication/x-core')
     os.exit()
 end
 
@@ -79,7 +79,7 @@ end
 
 function fs_getlocalname(file)
     local pid = file:match("%.(%d+)$")
-    os.execute('coredumpctl info ' .. file:match("%.(%d+)$") .. ' > /tmp/coredumpinfo_crap.' .. pid)
+    os.execute('coredumpctl info ' .. pid .. ' > /tmp/coredumpinfo_crap.' .. pid)
     print('/tmp/coredumpinfo_crap.' .. pid)
     os.exit()
 end
