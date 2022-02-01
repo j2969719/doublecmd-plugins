@@ -10,6 +10,7 @@
 #include "extension.h"
 
 #define Int32x32To64(a,b) ((gint64)(a)*(gint64)(b))
+#define SendDlgMsg gExtensions->SendDlgMsg
 
 typedef struct sVFSDirData
 {
@@ -21,7 +22,7 @@ int gPluginNr;
 tProgressProc gProgressProc = NULL;
 tLogProc gLogProc = NULL;
 tRequestProc gRequestProc = NULL;
-tExtensionStartupInfo* gStartupInfo = NULL;
+tExtensionStartupInfo* gExtensions = NULL;
 
 GKeyFile *gCfg;
 gchar *gCfgPath = NULL;
@@ -55,33 +56,38 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 	{
 	case DN_INITDIALOG:
 
-		gStartupInfo->SendDlgMsg(pDlg, "lblName", DM_SETTEXT, (intptr_t)gConnection, 0);
+		SendDlgMsg(pDlg, "lblName", DM_SETTEXT, (intptr_t)gConnection, 0);
 		bval = g_key_file_has_group(gCfg, gConnection);
 
 		schemes = g_vfs_get_supported_uri_schemes(g_vfs_get_default());
 
 		for (; *schemes; schemes++)
 		{
-			gStartupInfo->SendDlgMsg(pDlg, "cbURI", DM_LISTADD, (intptr_t)*schemes, 0);
+			SendDlgMsg(pDlg, "cbURI", DM_LISTADD, (intptr_t)*schemes, 0);
 		}
 
 		if (!bval)
-			gStartupInfo->SendDlgMsg(pDlg, "cbURI", DM_SHOWITEM, 1, 0);
+			SendDlgMsg(pDlg, "cbURI", DM_SHOWITEM, TRUE, 0);
 		else
 		{
 			value = g_key_file_get_string(gCfg, gConnection, "URI", NULL);
 
 			if (value)
 			{
-				gStartupInfo->SendDlgMsg(pDlg, "edURI", DM_SETTEXT, (intptr_t)value, 0);
+				if (value[0] == '\0')
+					SendDlgMsg(pDlg, "cbURI", DM_SHOWITEM, TRUE, 0);
+
+				SendDlgMsg(pDlg, "edURI", DM_SETTEXT, (intptr_t)value, 0);
 				g_free(value);
 			}
+			else
+				SendDlgMsg(pDlg, "cbURI", DM_SHOWITEM, TRUE, 0);
 
 			value = g_key_file_get_string(gCfg, gConnection, "User", NULL);
 
 			if (value)
 			{
-				gStartupInfo->SendDlgMsg(pDlg, "edUser", DM_SETTEXT, (intptr_t)value, 0);
+				SendDlgMsg(pDlg, "edUser", DM_SETTEXT, (intptr_t)value, 0);
 				g_free(value);
 			}
 
@@ -90,17 +96,17 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 			if (value)
 			{
 				gchar *dec = (gchar*)g_base64_decode(value, &len);
-				gStartupInfo->SendDlgMsg(pDlg, "edPasswd", DM_SETTEXT, (intptr_t)dec, 0);
+				SendDlgMsg(pDlg, "edPasswd", DM_SETTEXT, (intptr_t)dec, 0);
 				g_free(value);
 				g_free(dec);
 			}
 
 			bval = g_key_file_get_boolean(gCfg, gConnection, "Anonymous", NULL);
-			gStartupInfo->SendDlgMsg(pDlg, "chkAnon", DM_SETCHECK, (intptr_t)bval, 0);
+			SendDlgMsg(pDlg, "chkAnon", DM_SETCHECK, (intptr_t)bval, 0);
 
 			bval = g_key_file_has_key(gCfg, gConnection, "Domain", NULL);
-			gStartupInfo->SendDlgMsg(pDlg, "chkDomain", DM_SETCHECK, (intptr_t)bval, 0);
-			gStartupInfo->SendDlgMsg(pDlg, "edDomain", DM_ENABLE, (intptr_t)bval, 0);
+			SendDlgMsg(pDlg, "chkDomain", DM_SETCHECK, (intptr_t)bval, 0);
+			SendDlgMsg(pDlg, "edDomain", DM_ENABLE, (intptr_t)bval, 0);
 		}
 
 		break;
@@ -108,67 +114,65 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 	case DN_CLICK:
 		if (strcmp(DlgItemName, "btnOK") == 0)
 		{
-			value = (gchar*)gStartupInfo->SendDlgMsg(pDlg, "edURI", DM_GETTEXT, 0, 0);
+			value = (gchar*)SendDlgMsg(pDlg, "edURI", DM_GETTEXT, 0, 0);
 			g_key_file_set_string(gCfg, gConnection, "URI", value);
-			value = (gchar*)gStartupInfo->SendDlgMsg(pDlg, "edUser", DM_GETTEXT, 0, 0);
+			value = (gchar*)SendDlgMsg(pDlg, "edUser", DM_GETTEXT, 0, 0);
 			g_key_file_set_string(gCfg, gConnection, "User", value);
-			value = (gchar*)gStartupInfo->SendDlgMsg(pDlg, "edPasswd", DM_GETTEXT, 0, 0);
+			value = (gchar*)SendDlgMsg(pDlg, "edPasswd", DM_GETTEXT, 0, 0);
 			gchar *base64 = g_base64_encode((guchar*)value, strlen(value));
 			g_key_file_set_string(gCfg, gConnection, "Password", base64);
 			g_free(base64);
-			bval = (gboolean)gStartupInfo->SendDlgMsg(pDlg, "chkAnon", DM_GETCHECK, 0, 0);
+			bval = (gboolean)SendDlgMsg(pDlg, "chkAnon", DM_GETCHECK, 0, 0);
 
 			if (bval)
 				g_key_file_set_boolean(gCfg, gConnection, "Anonymous", bval);
 			else if (g_key_file_has_key(gCfg, gConnection, "Anonymous", NULL))
 				g_key_file_set_boolean(gCfg, gConnection, "Anonymous", bval);
 
-			bval = (gboolean)gStartupInfo->SendDlgMsg(pDlg, "chkDomain", DM_GETCHECK, 0, 0);
+			bval = (gboolean)SendDlgMsg(pDlg, "chkDomain", DM_GETCHECK, 0, 0);
 
 			if (bval)
 			{
-				value = (gchar*)gStartupInfo->SendDlgMsg(pDlg, "edDomain", DM_GETTEXT, 0, 0);
+				value = (gchar*)SendDlgMsg(pDlg, "edDomain", DM_GETTEXT, 0, 0);
 				g_key_file_set_string(gCfg, gConnection, "Domain", value);
 			}
 			else
 				g_key_file_remove_key(gCfg, gConnection, "Domain", NULL);
 
-			gStartupInfo->SendDlgMsg(pDlg, DlgItemName, DM_CLOSE, 1, 0);
+			SendDlgMsg(pDlg, DlgItemName, DM_CLOSE, ID_OK, 0);
 		}
 		else if (strcmp(DlgItemName, "btnCancel") == 0)
-		{
-			gStartupInfo->SendDlgMsg(pDlg, DlgItemName, DM_CLOSE, 2, 0);
-		}
+			SendDlgMsg(pDlg, DlgItemName, DM_CLOSE, ID_CANCEL, 0);
 
 		break;
 
 	case DN_CHANGE:
 		if (strcmp(DlgItemName, "chkAnon") == 0)
 		{
-			bval = (gboolean)gStartupInfo->SendDlgMsg(pDlg, "chkAnon", DM_GETCHECK, 0, 0);
-			gStartupInfo->SendDlgMsg(pDlg, "edUser", DM_ENABLE, (intptr_t)!bval, 0);
-			gStartupInfo->SendDlgMsg(pDlg, "edPasswd", DM_ENABLE, (intptr_t)!bval, 0);
+			bval = (gboolean)SendDlgMsg(pDlg, "chkAnon", DM_GETCHECK, 0, 0);
+			SendDlgMsg(pDlg, "edUser", DM_ENABLE, (intptr_t)!bval, 0);
+			SendDlgMsg(pDlg, "edPasswd", DM_ENABLE, (intptr_t)!bval, 0);
 		}
 		else if (strcmp(DlgItemName, "chkDomain") == 0)
 		{
-			bval = (gboolean)gStartupInfo->SendDlgMsg(pDlg, "chkDomain", DM_GETCHECK, 0, 0);
-			gStartupInfo->SendDlgMsg(pDlg, "edDomain", DM_ENABLE, (intptr_t)bval, 0);
+			bval = (gboolean)SendDlgMsg(pDlg, "chkDomain", DM_GETCHECK, 0, 0);
+			SendDlgMsg(pDlg, "edDomain", DM_ENABLE, (intptr_t)bval, 0);
 		}
 		else if (strcmp(DlgItemName, "cbURI") == 0)
 		{
-			value = (gchar*)gStartupInfo->SendDlgMsg(pDlg, "cbURI", DM_GETTEXT, 0, 0);
+			value = (gchar*)SendDlgMsg(pDlg, "cbURI", DM_GETTEXT, 0, 0);
 			gchar *uri = g_strdup_printf("%s://", value);
-			gStartupInfo->SendDlgMsg(pDlg, "edURI", DM_SETTEXT, (intptr_t)uri, 0);
+			SendDlgMsg(pDlg, "edURI", DM_SETTEXT, (intptr_t)uri, 0);
 			g_free(uri);
 		}
 		else if (strcmp(DlgItemName, "edURI") == 0)
 		{
-			value = (gchar*)gStartupInfo->SendDlgMsg(pDlg, "edURI", DM_GETTEXT, 0, 0);
+			value = (gchar*)SendDlgMsg(pDlg, "edURI", DM_GETTEXT, 0, 0);
 
 			if (value[0] == '\0')
-				gStartupInfo->SendDlgMsg(pDlg, "cbURI", DM_SHOWITEM, 1, 0);
+				SendDlgMsg(pDlg, "cbURI", DM_SHOWITEM, TRUE, 0);
 			else
-				gStartupInfo->SendDlgMsg(pDlg, "cbURI", DM_SHOWITEM, 0, 0);
+				SendDlgMsg(pDlg, "cbURI", DM_SHOWITEM, FALSE, 0);
 		}
 
 		break;
@@ -179,12 +183,12 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 
 static void ShowCFGDlg(void)
 {
-	if (gStartupInfo && gLFMPath)
+	if (gExtensions && gLFMPath)
 	{
 		if (g_file_test(gLFMPath, G_FILE_TEST_EXISTS))
-			gStartupInfo->DialogBoxLFMFile(gLFMPath, DlgProc);
+			gExtensions->DialogBoxLFMFile(gLFMPath, DlgProc);
 		else
-			gStartupInfo->MessageBox("LFM file missing!", NULL, 0x00000010);
+			gExtensions->MessageBox("LFM file missing!", NULL, 0x00000010);
 	}
 }
 
@@ -227,6 +231,7 @@ static void ask_password_cb(GMountOperation *op, const char *msg, const char *us
 			else
 			{
 				g_mount_operation_reply(op, G_MOUNT_OPERATION_ABORTED);
+				g_free(value);
 				return;
 			}
 		}
@@ -253,6 +258,7 @@ static void ask_password_cb(GMountOperation *op, const char *msg, const char *us
 			else
 			{
 				g_mount_operation_reply(op, G_MOUNT_OPERATION_ABORTED);
+				g_free(value);
 				return;
 			}
 		}
@@ -275,6 +281,7 @@ static void ask_password_cb(GMountOperation *op, const char *msg, const char *us
 			else
 			{
 				g_mount_operation_reply(op, G_MOUNT_OPERATION_ABORTED);
+				g_free(value);
 				return;
 			}
 		}
@@ -412,7 +419,7 @@ int DCPCALL FsExecuteFile(HWND MainWin, char* RemoteName, char* Verb)
 		}
 	}
 	else
-		gStartupInfo->MessageBox((char*)strerror(EOPNOTSUPP), NULL, 0x00000010);
+		gExtensions->MessageBox((char*)strerror(EOPNOTSUPP), NULL, 0x00000010);
 
 	return FS_EXEC_ERROR;
 }
@@ -583,10 +590,10 @@ void DCPCALL FsSetDefaultParams(FsDefaultParamStruct* dps)
 
 void DCPCALL ExtensionInitialize(tExtensionStartupInfo* StartupInfo)
 {
-	if (gStartupInfo == NULL)
+	if (gExtensions == NULL)
 	{
-		gStartupInfo = malloc(sizeof(tExtensionStartupInfo));
-		memcpy(gStartupInfo, StartupInfo, sizeof(tExtensionStartupInfo));
+		gExtensions = malloc(sizeof(tExtensionStartupInfo));
+		memcpy(gExtensions, StartupInfo, sizeof(tExtensionStartupInfo));
 	}
 }
 
@@ -602,10 +609,10 @@ void DCPCALL ExtensionFinalize(void* Reserved)
 	g_free(gInfoPath);
 	g_free(gLFMPath);
 
-	if (gStartupInfo != NULL)
-		free(gStartupInfo);
+	if (gExtensions != NULL)
+		free(gExtensions);
 
-	gStartupInfo = NULL;
+	gExtensions = NULL;
 }
 
 BOOL DCPCALL FsContentGetDefaultView(char* ViewContents, char* ViewHeaders, char* ViewWidths, char* ViewOptions, int maxlen)
