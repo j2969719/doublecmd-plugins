@@ -310,7 +310,7 @@ void DCPCALL ListCloseWindow(HWND ListWin)
 
 void DCPCALL ListGetDetectString(char* DetectString, int maxlen)
 {
-	g_strlcpy(DetectString, "EXT=\"CSV\"|EXT=\"TSV\"", maxlen - 1);
+	g_strlcpy(DetectString, "(EXT=\"CSV\" | EXT=\"TSV\") & SIZE<30000000", maxlen - 1);
 }
 
 int DCPCALL ListSearchDialog(HWND ListWin, int FindNext)

@@ -258,6 +258,11 @@ int DCPCALL ListSearchText(HWND ListWin, char* SearchString, int SearchParameter
 	return LISTPLUGIN_ERROR;
 }
 
+void DCPCALL ListGetDetectString(char* DetectString, int maxlen)
+{
+	snprintf(DetectString, maxlen - 1, "SIZE<30000000");
+}
+
 void DCPCALL ListSetDefaultParams(ListDefaultParamStruct* dps)
 {
 	QFileInfo defini(QString::fromStdString(dps->DefaultIniName));

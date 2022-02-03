@@ -286,6 +286,11 @@ int DCPCALL ListSendCommand(HWND ListWin, int Command, int Parameter)
 	return LISTPLUGIN_OK;
 }
 
+void DCPCALL ListGetDetectString(char* DetectString, int maxlen)
+{
+	g_strlcpy(DetectString, "SIZE<30000000", maxlen - 1);
+}
+
 void DCPCALL ListSetDefaultParams(ListDefaultParamStruct* dps)
 {
 	GKeyFile *cfg;

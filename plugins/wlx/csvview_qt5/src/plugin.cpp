@@ -316,7 +316,7 @@ int DCPCALL ListSearchText(HWND ListWin, char* SearchString, int SearchParameter
 
 void DCPCALL ListGetDetectString(char* DetectString, int maxlen)
 {
-	snprintf(DetectString, maxlen - 1, "EXT=\"CSV\"|EXT=\"TSV\"");
+	snprintf(DetectString, maxlen - 1, "(EXT=\"CSV\" | EXT=\"TSV\") & SIZE<30000000");
 }
 
 void DCPCALL ListSetDefaultParams(ListDefaultParamStruct* dps)
