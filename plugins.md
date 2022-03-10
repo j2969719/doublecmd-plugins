@@ -154,7 +154,7 @@ Validating FictionBook2 (FB2) files (first test can be used with ANY XML-based f
 
 - [filecountwdx.lua](plugins/wdx/scripts/filecountwdx.lua) *(cross platform)*<br>
 Returns file or directory count, without scanning symbolic links to folders.<br>
-For columns set only!
+Only for columns set or tooltips!
 
 - [filenamewdx.lua](plugins/wdx/scripts/filenamewdx.lua) *(cross platform)*<br>
 Returns parts of full filename: Full name, Name, Base name, Extension, Path, Parent folder.
@@ -170,7 +170,7 @@ Returns new file name after replacing total or part of file name by the list (se
 
 - [filetimeindirwdx.lua](plugins/wdx/scripts/filetimeindirwdx.lua) *(cross platform)*<br>
 Returns date and time of oldest and newest files in directory. See details in the beginning of script.<br>
-For columns set only!
+Only for columns set or tooltips!
 
 - [fixfilenamewdx.lua](plugins/wdx/scripts/fixfilenamewdx.lua)<br>
 Fixing file name encoding with `iconv`.
@@ -252,7 +252,7 @@ Checking if file(s) exists in folder by extension. List of file extensions (edit
 For "Find files" dialog.
 
 - [somefilesindirwdx.lua](plugins/wdx/scripts/somefilesindirwdx.lua) *(cross platform)*<br>
-Like script above but for columns set.
+Like script above but for columns set or tooltips.
 
 - [sqlitetxtsearchwdx.lua](plugins/wdx/scripts/sqlitetxtsearchwdx.lua) *(cross platform)*<br>
 Plugin-example: getting text from SQLite3 base. Requires `lsqlite3` module.

@@ -1,8 +1,9 @@
 -- filecountwdx.lua (cross-platform)
 -- 2019.08.09
---
--- Returns file or directory count, without scanning symbolic links to folders.
--- For columns set only!
+--[[
+Returns file or directory count, without scanning symbolic links to folders.
+Only for columns set or tooltips!
+]]
 
 local fields = {
  {"File count", "files|files and symlinks"},

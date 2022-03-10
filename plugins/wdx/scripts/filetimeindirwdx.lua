@@ -4,7 +4,7 @@
 Returns date and time of oldest and newest files in directory.
 Without scanning symbolic links to folders, symlinks to file will be ignored.
 
-For columns set only!
+Only for columns set or tooltips!
 
 "Newest file time" and "Oldest file time" returns date in your regional format.
 "As string" returns date as string YYYY.MM.DD HH:MM:SS.
