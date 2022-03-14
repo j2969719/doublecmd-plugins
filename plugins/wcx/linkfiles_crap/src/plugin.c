@@ -1,4 +1,5 @@
 #define _GNU_SOURCE
+#include <glib.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
@@ -79,30 +80,26 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 			{
 				if (rel_links)
 				{
-					FILE *fp;
-					char *cmd;
-					char *rel_path = NULL;
+					gchar *rel_path = NULL;
 					char rel_dir[PATH_MAX];
-					strncpy(rel_dir, lnk_path, PATH_MAX);
+					g_strlcpy(rel_dir, lnk_path, PATH_MAX);
 
-					asprintf(&cmd, "realpath -zm --relative-to='%s' '%s'",
-					         dirname(rel_dir), path);
-
-					if ((fp = popen(cmd, "r")) != NULL)
-					{
-						size_t len = 0;
-
-						getline(&rel_path, &len, fp);
-						pclose(fp);
-					}
-
-					free(cmd);
+					gchar *dir_quoted = g_shell_quote(dirname(rel_dir));
+					gchar *path_quoted = g_shell_quote(path);
+					gchar *command = g_strdup_printf("realpath -zm --relative-to=%s %s",
+					                                 dir_quoted, path_quoted);
+					g_free(dir_quoted);
+					g_free(path_quoted);
+					g_spawn_command_line_sync(command, &rel_path, NULL, NULL, NULL);
+					g_free(command);
 
 					if (rel_path != NULL)
 					{
-						strncpy(path, rel_path, PATH_MAX);
-						free(rel_path);
+						g_strlcpy(path, rel_path, PATH_MAX);
+						g_free(rel_path);
 					}
+					else
+						return E_EWRITE;
 				}
 
 				if (symlink(path, lnk_path) != 0)

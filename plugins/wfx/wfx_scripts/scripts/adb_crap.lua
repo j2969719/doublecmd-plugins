@@ -31,7 +31,7 @@ function fs_getlist(path)
     end
     local ls_output = get_output(adb_cmd .. ' shell ls -lA "' .. path:gsub(" ", "\\ "):gsub('"', '\\"') .. '"')
     for line in ls_output:gmatch("[^\n]+") do
-        local attr, size, datetime, name = line:match("([%-bcdflsrwx]+)%s+%d+%s+[%a%d_]+%s+[%a%d_]+%s+(%d+)%s+(%d%d%d%d%-%d%d%-%d%d%s%d%d:%d%d)%s(.+)") -- https://youtu.be/Fkk9DI-8el4
+        local attr, size, datetime, name = line:match("([%-bcdflsrwxtST]+)%s+%d+%s+[%a%d_]+%s+[%a%d_]+%s+(%d+)%s+(%d%d%d%d%-%d%d%-%d%d%s%d%d:%d%d)%s(.+)") -- https://youtu.be/Fkk9DI-8el4
         if (attr ~= nil and datetime ~= nil and size ~= nil and name ~= nil) then
             name = name:gsub("%s%->%s.+$", "")
             print(attr .. '\t' .. datetime .. '\t' .. size .. '\t' .. name)
