@@ -15,6 +15,11 @@
 #include "extension.h"
 
 #define Int32x32To64(a,b) ((int64_t)(a)*(int64_t)(b))
+#define SendDlgMsg gExtensions->SendDlgMsg
+#define MessageBox gExtensions->MessageBox
+#define InputBox gExtensions->InputBox
+#define DialogBoxLFMFile gExtensions->DialogBoxLFMFile
+#define MSG_MAX 8192
 
 typedef struct sAVFSDirData
 {
@@ -26,7 +31,7 @@ int gPluginNr;
 tProgressProc gProgressProc = NULL;
 tLogProc gLogProc = NULL;
 tRequestProc gRequestProc = NULL;
-tExtensionStartupInfo* gStartupInfo = NULL;
+tExtensionStartupInfo* gExtensions = NULL;
 
 static char gAVFSPath[PATH_MAX] = "/#avfsstat";
 static char gLFMPath[PATH_MAX];
@@ -113,8 +118,8 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 	switch (Msg)
 	{
 	case DN_INITDIALOG:
-		gStartupInfo->SendDlgMsg(pDlg, "fneLocalFile", DM_ENABLE, (intptr_t)localfile, 0);
-		gStartupInfo->SendDlgMsg(pDlg, "cmbPath", DM_ENABLE, (intptr_t)!localfile, 0);
+		SendDlgMsg(pDlg, "fneLocalFile", DM_ENABLE, (intptr_t)localfile, 0);
+		SendDlgMsg(pDlg, "cmbPath", DM_ENABLE, (intptr_t)!localfile, 0);
 		gAbortCD = false;
 		gListItems = 0;
 
@@ -125,7 +130,7 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 				if (line[read - 1] == '\n')
 					line[read - 1] = '\0';
 
-				gStartupInfo->SendDlgMsg(pDlg, "cmbPath", DM_LISTADD, (intptr_t)line, 0);
+				SendDlgMsg(pDlg, "cmbPath", DM_LISTADD, (intptr_t)line, 0);
 				gListItems++;
 			}
 
@@ -135,19 +140,19 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 
 		if (gListItems == 0)
 		{
-			gStartupInfo->SendDlgMsg(pDlg, "cmbPath", DM_LISTADD, (intptr_t)gAVFSPath, 0);
+			SendDlgMsg(pDlg, "cmbPath", DM_LISTADD, (intptr_t)gAVFSPath, 0);
 			gListItems++;
 		}
 
-		gStartupInfo->SendDlgMsg(pDlg, "cmbPath", DM_LISTSETITEMINDEX, 0, 0);
+		SendDlgMsg(pDlg, "cmbPath", DM_LISTSETITEMINDEX, 0, 0);
 
 		break;
 
 	case DN_CLICK:
 		if (strncmp(DlgItemName, "btnOK", 5) == 0)
 		{
-			localfile = (bool)gStartupInfo->SendDlgMsg(pDlg, "chkLocalFile", DM_GETCHECK, 0, 0);
-			file = (char*)gStartupInfo->SendDlgMsg(pDlg, "fneLocalFile", DM_GETTEXT, 0, 0);
+			localfile = (bool)SendDlgMsg(pDlg, "chkLocalFile", DM_GETCHECK, 0, 0);
+			file = (char*)SendDlgMsg(pDlg, "fneLocalFile", DM_GETTEXT, 0, 0);
 
 			if (localfile && file[0] != '\0')
 			{
@@ -158,7 +163,7 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 			}
 			else
 			{
-				path = (char*)gStartupInfo->SendDlgMsg(pDlg, "cmbPath", DM_GETTEXT, 0, 0);
+				path = (char*)SendDlgMsg(pDlg, "cmbPath", DM_GETTEXT, 0, 0);
 
 				if (!localfile && path[0] != '\0')
 					strlcpy(gAVFSPath, path, sizeof(gAVFSPath));
@@ -172,7 +177,7 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 
 				for (i = 0; i < gListItems; i++)
 				{
-					line = (char*)gStartupInfo->SendDlgMsg(pDlg, "cmbPath", DM_LISTGETITEM, i, 0);
+					line = (char*)SendDlgMsg(pDlg, "cmbPath", DM_LISTGETITEM, i, 0);
 
 					if (line != NULL && (strcmp(gAVFSPath, line) != 0))
 						fprintf(fp, "%s\n", line);
@@ -181,12 +186,12 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 				fclose(fp);
 			}
 
-			gStartupInfo->SendDlgMsg(pDlg, DlgItemName, DM_CLOSE, ID_OK, 0);
+			SendDlgMsg(pDlg, DlgItemName, DM_CLOSE, ID_OK, 0);
 		}
 		else if (strncmp(DlgItemName, "btnCancel", 9) == 0)
 		{
 			gAbortCD = true;
-			gStartupInfo->SendDlgMsg(pDlg, DlgItemName, DM_CLOSE, ID_CANCEL, 0);
+			SendDlgMsg(pDlg, DlgItemName, DM_CLOSE, ID_CANCEL, 0);
 		}
 
 		break;
@@ -194,9 +199,9 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 	case DN_CHANGE:
 		if (strncmp(DlgItemName, "chkLocalFile", 12) == 0)
 		{
-			localfile = (bool)gStartupInfo->SendDlgMsg(pDlg, "chkLocalFile", DM_GETCHECK, 0, 0);
-			gStartupInfo->SendDlgMsg(pDlg, "fneLocalFile", DM_ENABLE, (intptr_t)localfile, 0);
-			gStartupInfo->SendDlgMsg(pDlg, "cmbPath", DM_ENABLE, (intptr_t)!localfile, 0);
+			localfile = (bool)SendDlgMsg(pDlg, "chkLocalFile", DM_GETCHECK, 0, 0);
+			SendDlgMsg(pDlg, "fneLocalFile", DM_ENABLE, (intptr_t)localfile, 0);
+			SendDlgMsg(pDlg, "cmbPath", DM_ENABLE, (intptr_t)!localfile, 0);
 		}
 
 		break;
@@ -207,12 +212,12 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 
 static void ShowAVFSPathDlg(void)
 {
-	if (gStartupInfo != NULL)
+	if (gExtensions != NULL)
 	{
 		if (access(gLFMPath, F_OK) != 0)
-			gAbortCD = !(bool)gStartupInfo->InputBox("AVFS", "Enter AVFS path:", false, gAVFSPath, sizeof(gAVFSPath) - 1);
+			gAbortCD = !(bool)InputBox("AVFS", "Enter AVFS path:", false, gAVFSPath, sizeof(gAVFSPath) - 1);
 		else
-			gStartupInfo->DialogBoxLFMFile(gLFMPath, DlgProc);
+			DialogBoxLFMFile(gLFMPath, DlgProc);
 	}
 }
 
@@ -243,9 +248,9 @@ HANDLE DCPCALL FsFindFirst(char* Path, WIN32_FIND_DATAA *FindData)
 		if ((dirdata->cur = virt_opendir(dirdata->path)) == NULL)
 		{
 			int errsv = errno;
-			char msg[PATH_MAX];
+			char msg[MSG_MAX];
 			snprintf(msg, sizeof(msg), "%s: %s", dirdata->path, strerror(errsv));
-			gStartupInfo->MessageBox(msg, "AVFS", MB_OK | MB_ICONERROR);
+			MessageBox(msg, "AVFS", MB_OK | MB_ICONERROR);
 		}
 
 		if (dirdata->cur == NULL && Path[1] == '\0')
@@ -339,6 +344,9 @@ int DCPCALL FsGetFile(char* RemoteName, char* LocalName, int CopyFlags, RemoteIn
 			}
 		}
 
+		if (len == -1)
+			result = FS_FILE_READERROR;
+
 		close(ofd);
 
 		if (ri->Attr > 0)
@@ -365,7 +373,7 @@ int DCPCALL FsExecuteFile(HWND MainWin, char* RemoteName, char* Verb)
 	if (strncmp(Verb, "open", 4) == 0)
 		return FS_EXEC_YOURSELF;
 	else if (strncmp(Verb, "quote", 5) == 0)
-		gStartupInfo->MessageBox(strerror(EOPNOTSUPP), "AVFS", MB_OK | MB_ICONERROR);
+		MessageBox(strerror(EOPNOTSUPP), "AVFS", MB_OK | MB_ICONERROR);
 	else if (strncmp(Verb, "chmod", 5) == 0)
 	{
 		int mode = strtoll(Verb + 6, 0, 8);
@@ -375,9 +383,9 @@ int DCPCALL FsExecuteFile(HWND MainWin, char* RemoteName, char* Verb)
 		if (virt_chmod(rpath, mode) == -1)
 		{
 			int errsv = errno;
-			char msg[PATH_MAX];
+			char msg[MSG_MAX];
 			snprintf(msg, sizeof(msg), "virt_chmod (%s): %s", rpath, strerror(errsv));
-			gStartupInfo->MessageBox(msg, "AVFS", MB_OK | MB_ICONERROR);
+			MessageBox(msg, "AVFS", MB_OK | MB_ICONERROR);
 			return false;
 		}
 	}
@@ -396,9 +404,9 @@ BOOL DCPCALL FsMkDir(char* Path)
 	if (virt_mkdir(rpath, S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH) == -1)
 	{
 		int errsv = errno;
-		char msg[PATH_MAX];
+		char msg[MSG_MAX];
 		snprintf(msg, sizeof(msg), "virt_mkdir (%s): %s", rpath, strerror(errsv));
-		gStartupInfo->MessageBox(msg, "AVFS", MB_OK | MB_ICONERROR);
+		MessageBox(msg, "AVFS", MB_OK | MB_ICONERROR);
 		return false;
 	}
 
@@ -460,6 +468,11 @@ int DCPCALL FsPutFile(char* LocalName, char* RemoteName, int CopyFlags)
 			}
 		}
 
+		if (len == -1)
+			result = FS_FILE_READERROR;
+
+		virt_close(ofd);
+
 		if (result ==  FS_FILE_OK)
 		{
 			if (buf.st_mode > 0)
@@ -470,8 +483,6 @@ int DCPCALL FsPutFile(char* LocalName, char* RemoteName, int CopyFlags)
 			ubuf.modtime = buf.st_mtime;
 			virt_utime(rpath, &ubuf);
 		}
-
-		virt_close(ofd);
 	}
 	else
 		result = FS_FILE_WRITEERROR;
@@ -506,9 +517,9 @@ int DCPCALL FsRenMovFile(char* OldName, char* NewName, BOOL Move, BOOL OverWrite
 		if (virt_rename(oldpath, newpath) == -1)
 		{
 			int errsv = errno;
-			char msg[PATH_MAX];
+			char msg[MSG_MAX];
 			snprintf(msg, sizeof(msg), "virt_rename (%s): %s", newpath, strerror(errsv));
-			gStartupInfo->MessageBox(msg, "AVFS", MB_OK | MB_ICONERROR);
+			MessageBox(msg, "AVFS", MB_OK | MB_ICONERROR);
 			return FS_FILE_OK;
 		}
 
@@ -679,17 +690,17 @@ void DCPCALL FsGetDefRootName(char* DefRootName, int maxlen)
 
 void DCPCALL ExtensionInitialize(tExtensionStartupInfo* StartupInfo)
 {
-	if (gStartupInfo == NULL)
+	if (gExtensions == NULL)
 	{
-		gStartupInfo = malloc(sizeof(tExtensionStartupInfo));
-		memcpy(gStartupInfo, StartupInfo, sizeof(tExtensionStartupInfo));
+		gExtensions = malloc(sizeof(tExtensionStartupInfo));
+		memcpy(gExtensions, StartupInfo, sizeof(tExtensionStartupInfo));
 	}
 }
 
 void DCPCALL ExtensionFinalize(void* Reserved)
 {
-	if (gStartupInfo != NULL)
-		free(gStartupInfo);
+	if (gExtensions != NULL)
+		free(gExtensions);
 
-	gStartupInfo = NULL;
+	gExtensions = NULL;
 }
