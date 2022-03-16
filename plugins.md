@@ -494,8 +494,8 @@ Like [wlxwebkit_qt5](plugins/wlx/wlxwebkit_qt5) but for any files if you can con
 - [dsx_script](plugins/dsx/dsx_script)<br>
 Search/feed to listbox via random command line utilities. Add some magic to `script.sh`.
 
-- [duplicates_crap](plugins/dsx/duplicates_crap)<br>
-Find duplicates using `find` and `b2sum`. Slow, doublecmd's window may hang during search.
+- ~[duplicates_crap](plugins/dsx/duplicates_crap)<br>
+Find duplicates using `find` and `b2sum`.~ Slow, doublecmd's window may hang during search. DC v1.0 already has duplicate search in `Search...`->`Advanced`.  
 
 - [git_ignored](plugins/dsx/git_ignored)<br>
 Finds ignored files in git repository via `git ls-files -i --exclude-standard`.
@@ -509,8 +509,8 @@ Finds untracked files and other in git repository via `git ls-files -o`.
 - [gtkrecent](plugins/dsx/gtkrecent)<br>
 Feed to listbox recent files. (for GTK2-version of DC only)
 
-- [hardlinks_crap](plugins/dsx/hardlinks_crap)<br>
-Find hardlinks using `find`. Slow, doublecmd's window may hang during search.
+- ~[hardlinks_crap](plugins/dsx/hardlinks_crap)<br>
+Find hardlinks using `find`.~ Slow, doublecmd's window may hang during search.
 
 - [in_filelist](plugins/dsx/in_filelist)<br>
 Feed to listbox files from filelist.txt.
