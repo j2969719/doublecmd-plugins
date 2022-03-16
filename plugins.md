@@ -333,6 +333,9 @@ Mounting gvfs resources with automatic password entry (stored in ini file). F7 -
 - [href_crap](plugins/wfx/href_crap)<br>
 Shows href links from web page as files.
 
+- [null_crap](plugins/wfx/null_crap)<br>
+"Сopying" files to nowhere, to check if the file can still be read from some device. 
+
 - [physfs_crap](plugins/wfx/physfs_crap)<br>
 Virtual panel for [PhysicsFS](https://icculus.org/physfs/). To open the archive, copy the file to the panel.
 
