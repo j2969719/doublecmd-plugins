@@ -172,6 +172,9 @@ Returns new file name after replacing total or part of file name by the list (se
 Returns date and time of oldest and newest files in directory. See details in the beginning of script.<br>
 Only for columns set or tooltips!
 
+- [filewinattrexwdx.lua](plugins/wdx/scripts/filewinattrexwdx.lua)<br>
+Return file attributes (Windows only!). See details in the beginning of script.
+
 - [fixfilenamewdx.lua](plugins/wdx/scripts/fixfilenamewdx.lua)<br>
 Fixing file name encoding with `iconv`.
 
