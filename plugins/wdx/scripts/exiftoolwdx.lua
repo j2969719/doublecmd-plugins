@@ -52,6 +52,7 @@ local fields = {  -- exiftool field name, field type
     {"Create Date",                  ft_date},
     {"Modify Date",                  ft_date},
     {"Metadata Date",                ft_date},
+    {"Date",                         ft_date},
     {"Last Printed",                 ft_date},
     {"Revision Number",            ft_string},
     {"Total Edit Time",            ft_string},
@@ -220,7 +221,7 @@ function getval(str, fieldtype)
             result = result:match("%d+");
             return tonumber(result);
         elseif (fieldtype == ft_date) then
-            local year, month, day, dhour, dmin, dsec = result:match("^(%d+):(%d+):(%d+)%s(%d+):(%d+):(%d+)");
+            local year, month, day, dhour, dmin, dsec = result:match("^(%d+)[:/](%d+)[:/](%d+)%s(%d+):(%d+):(%d+)");
             if (month ~= nil) and (year ~= nil)  and (day ~= nil) and (dhour ~= nil) and (dmin ~= nil) and (dsec ~= nil) then
                 local unixtime = os.time{year = tonumber(year), month = tonumber(month),
                                  day = tonumber(day), hour = tonumber(dhour), min = tonumber(dmin), sec = tonumber(dsec)};
