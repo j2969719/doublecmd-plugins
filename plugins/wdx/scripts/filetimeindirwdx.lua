@@ -1,5 +1,5 @@
 -- filetimeindirwdx.lua (cross-platform)
--- 2020.04.05
+-- 2022.03.21
 --[[
 Returns date and time of oldest and newest files in directory.
 Without scanning symbolic links to folders, symlinks to file will be ignored.
@@ -44,27 +44,26 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
   t = string.sub(t, 2, -1)
   if t == SysUtils.PathDelim .. "." then return nil end
   local k = SysUtils.FileGetAttr(FileName)
-  if k > 0 then
-    if (math.floor(k / 0x00000400) % 2 ~= 0) then return nil end
-    if (math.floor(k / 0x00000010) % 2 ~= 0) then
-      tmax = 0
-      tmin = os.time() + 86400
-      k = tmin
-      ScanDirTime(FileName)
-      if FieldIndex == 0 then
-        if tmax ~= 0 then
-          return tmax * 10000000 + 116444736000000000
-        end
-      elseif FieldIndex == 1 then
-        if tmin ~= k then
-          return tmin * 10000000 + 116444736000000000
-        end
-      elseif FieldIndex == 2 then
-        if UnitIndex == 0 then
-          if tmax ~= 0 then return os.date('%Y.%m.%d %H:%M:%S', tmax) end
-        elseif UnitIndex == 1 then
-          if tmin ~= k then return os.date('%Y.%m.%d %H:%M:%S', tmin) end
-        end
+  if k < 0 then return nil end
+  if (math.floor(k / 0x00000400) % 2 ~= 0) then return nil end
+  if (math.floor(k / 0x00000010) % 2 ~= 0) then
+    tmax = 0
+    tmin = os.time() + 86400
+    k = tmin
+    ScanDirTime(FileName)
+    if FieldIndex == 0 then
+      if tmax ~= 0 then
+        return tmax * 10000000 + 116444736000000000
+      end
+    elseif FieldIndex == 1 then
+      if tmin ~= k then
+        return tmin * 10000000 + 116444736000000000
+      end
+    elseif FieldIndex == 2 then
+      if UnitIndex == 0 then
+        if tmax ~= 0 then return os.date('%Y.%m.%d %H:%M:%S', tmax) end
+      elseif UnitIndex == 1 then
+        if tmin ~= k then return os.date('%Y.%m.%d %H:%M:%S', tmin) end
       end
     end
   end

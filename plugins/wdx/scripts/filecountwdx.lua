@@ -1,5 +1,5 @@
 -- filecountwdx.lua (cross-platform)
--- 2019.08.09
+-- 2022.03.21
 --[[
 Returns file or directory count, without scanning symbolic links to folders.
 Only for columns set or tooltips!
@@ -35,21 +35,20 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
   if t == SysUtils.PathDelim .. "." then return nil end
   local k, nf, ns, nd
   k = SysUtils.FileGetAttr(FileName)
-  if k > 0 then
-    if (math.floor(k / 0x00000400) % 2 ~= 0) then return nil end
-    if (math.floor(k / 0x00000010) % 2 ~= 0) then
-      nf, ns, nd = ScanDir(FileName)
-      if FieldIndex == 0 then
-        if UnitIndex == 0 then
-          return nf
-        elseif UnitIndex == 1 then
-          return nf + ns
-        end
-      elseif FieldIndex == 1 then
-        return ns
-      elseif FieldIndex == 2 then
-        return nd
+  if k < 0 then return nil end
+  if (math.floor(k / 0x00000400) % 2 ~= 0) then return nil end
+  if (math.floor(k / 0x00000010) % 2 ~= 0) then
+    nf, ns, nd = ScanDir(FileName)
+    if FieldIndex == 0 then
+      if UnitIndex == 0 then
+        return nf
+      elseif UnitIndex == 1 then
+        return nf + ns
       end
+    elseif FieldIndex == 1 then
+      return ns
+    elseif FieldIndex == 2 then
+      return nd
     end
   end
   return nil

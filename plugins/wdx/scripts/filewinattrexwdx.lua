@@ -1,5 +1,5 @@
 -- filewinattrexwdx.lua (Windows only)
--- 2022.03.17
+-- 2022.03.21
 --[[
 Return file attributes (Windows only!)
 
@@ -66,6 +66,7 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
   if FieldIndex == 0 then
     local tmp = LazUtf8.ConvertEncoding('\\\\?\\' .. FileName, 'utf8', 'ucs2le')
     local attr = flib.GetFileAttributesW(tmp)
+    if attr < 0 then return nil end
     -- Skip directories
     --if math.floor(attr / 0x00000010) % 2 ~= 0 then return nil end
     tmp = ''
