@@ -65,6 +65,7 @@ local fields = {  -- exiftool field name, field type
     {"Internal Version Number",    ft_number},
     {"Company",                    ft_string},
     {"Software",                   ft_string},
+    {"Application",                ft_string},
     {"App Version",                ft_string},
     {"Code Page",                  ft_string},
     {"Title Of Parts",             ft_string},
