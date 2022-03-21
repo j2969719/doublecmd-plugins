@@ -64,7 +64,12 @@ end
 
 function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
   if FieldIndex == 0 then
-    local tmp = LazUtf8.ConvertEncoding('\\\\?\\' .. FileName, 'utf8', 'ucs2le')
+    local tmp
+    if string.sub(FileName, 1, 2) == '\\\\' then
+      tmp = LazUtf8.ConvertEncoding(FileName, 'utf8', 'ucs2le')
+    else
+      tmp = LazUtf8.ConvertEncoding('\\\\?\\' .. FileName, 'utf8', 'ucs2le')
+    end
     local attr = flib.GetFileAttributesW(tmp)
     if attr < 0 then return nil end
     -- Skip directories
