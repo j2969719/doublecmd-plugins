@@ -229,7 +229,7 @@ static void slider_cb (GtkRange *range, CustomData *data) {
 }
 
 /* This creates all the GTK+ widgets that compose our application, and registers the callbacks */
-static GtkWidget *create_ui (HWND ParentWin, CustomData *data) {
+static GtkWidget *create_ui (GtkWidget *ParentWin, CustomData *data) {
   GtkWidget *main_window;  /* The uppermost window, containing all other windows */
   GtkWidget *video_window; /* The drawing area where the video will be shown */
   GtkWidget *main_box;     /* VBox to hold main_hbox and the controls */
@@ -240,7 +240,7 @@ static GtkWidget *create_ui (HWND ParentWin, CustomData *data) {
   GdkColor color;
 
   main_window = gtk_vbox_new (FALSE, 0);
-  gtk_container_add(GTK_CONTAINER((GtkWidget *)(ParentWin)), main_window);
+  gtk_container_add (GTK_CONTAINER (ParentWin), main_window);
   g_signal_connect (G_OBJECT (main_window), "delete-event", G_CALLBACK (delete_event_cb), data);
 
   video_window = gtk_drawing_area_new ();
@@ -485,6 +485,8 @@ static void analyze_streams (CustomData *data) {
 
   /* Clean current contents of the widget */
   text = gtk_text_view_get_buffer (GTK_TEXT_VIEW (data->streams_list));
+  GtkTextMark *last_pos = gtk_text_buffer_get_mark (text, "last_pos");
+  if (last_pos != NULL) gtk_text_buffer_delete_mark (text, last_pos);
   gtk_text_buffer_set_text (text, "", -1);
 
   /* Read some properties */
@@ -568,7 +570,7 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
   gst_init (NULL, NULL);
 
   /* Initialize our data structure */
-  data = g_new(CustomData, 1);
+  data = g_new (CustomData, 1);
   memset (data, 0, sizeof (CustomData));
   data->duration = GST_CLOCK_TIME_NONE;
 
@@ -596,7 +598,7 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
   g_object_set (data->playbin, "flags", flags, NULL);
 
   /* Create the GUI */
-  main_window = create_ui (ParentWin, data);
+  main_window = create_ui (GTK_WIDGET (ParentWin), data);
   gtk_label_set_text (GTK_LABEL (data->lbl_info), g_path_get_basename (FileToLoad));
 
   /* Instruct the bus to emit signals for each received message, and connect to the interesting signals */
@@ -635,13 +637,13 @@ void DCPCALL ListCloseWindow(HWND ListWin)
 {
   CustomData *data;
 
-  data = (CustomData *)g_object_get_data(G_OBJECT(ListWin), "custom-data");
+  data = (CustomData *) g_object_get_data (G_OBJECT (ListWin), "custom-data");
   /* Free resources */
-  g_source_remove(data->timer);
-  gtk_widget_destroy((GtkWidget *)ListWin);
+  g_source_remove (data->timer);
   gst_element_set_state (data->playbin, GST_STATE_NULL);
   gst_object_unref (data->playbin);
-  g_free(data);
+  gtk_widget_destroy (GTK_WIDGET (ListWin));
+  g_free (data);
 }
 
 int DCPCALL ListLoadNext(HWND ParentWin, HWND PluginWin, char* FileToLoad, int ShowFlags)
@@ -650,16 +652,16 @@ int DCPCALL ListLoadNext(HWND ParentWin, HWND PluginWin, char* FileToLoad, int S
   CustomData *data;
   GstStateChangeReturn ret;
 
-  data = (CustomData *)g_object_get_data(G_OBJECT(PluginWin), "custom-data");
+  data = (CustomData *) g_object_get_data (G_OBJECT (PluginWin), "custom-data");
   gtk_range_set_value (GTK_RANGE (data->slider), 0);
   data->duration = GST_CLOCK_TIME_NONE;
   gst_element_set_state (data->playbin, GST_STATE_READY);
 
-  fileUri = g_filename_to_uri(FileToLoad, NULL, NULL);
+  fileUri = g_filename_to_uri (FileToLoad, NULL, NULL);
   g_object_set (data->playbin, "uri", fileUri, NULL);
   gtk_label_set_text (GTK_LABEL (data->lbl_info), g_path_get_basename (FileToLoad));
 
-  if (fileUri) g_free(fileUri);
+  if (fileUri) g_free (fileUri);
 
   ret = gst_element_set_state (data->playbin, GST_STATE_PLAYING);
   mute_cb (GTK_TOOL_ITEM (data->btn_mute), data);
@@ -668,7 +670,7 @@ int DCPCALL ListLoadNext(HWND ParentWin, HWND PluginWin, char* FileToLoad, int S
 
 void DCPCALL ListGetDetectString(char* DetectString, int maxlen)
 {
-  g_strlcpy(DetectString, DETECT_STRING, maxlen - 1);
+  g_strlcpy (DetectString, DETECT_STRING, maxlen - 1);
 }
 
 int DCPCALL ListSearchText(HWND ListWin, char* SearchString, int SearchParameter)
@@ -679,7 +681,7 @@ int DCPCALL ListSearchText(HWND ListWin, char* SearchString, int SearchParameter
   GtkTextIter iter, mstart, mend;
   gboolean found;
 
-  data = (CustomData *)g_object_get_data (G_OBJECT (ListWin), "custom-data");
+  data = (CustomData *) g_object_get_data (G_OBJECT (ListWin), "custom-data");
   gtk_toggle_tool_button_set_active (GTK_TOGGLE_TOOL_BUTTON (data->btn_info), TRUE);
   text = gtk_text_view_get_buffer (GTK_TEXT_VIEW (data->streams_list));
   last_pos = gtk_text_buffer_get_mark (text, "last_pos");
@@ -723,7 +725,7 @@ int DCPCALL ListSendCommand(HWND ListWin, int Command, int Parameter)
   GtkTextBuffer *text;
   GtkTextIter p;
 
-  data = (CustomData *)g_object_get_data (G_OBJECT (ListWin), "custom-data");
+  data = (CustomData *) g_object_get_data (G_OBJECT (ListWin), "custom-data");
   text = gtk_text_view_get_buffer (GTK_TEXT_VIEW (data->streams_list));
 
   switch (Command) {
