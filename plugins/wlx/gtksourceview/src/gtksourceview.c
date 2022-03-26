@@ -29,6 +29,7 @@ typedef struct tCustomData
 	GtkSourceView *sView;
 	GtkSourceBuffer *sBuf;
 	GtkLabel *lInfo;
+	GtkWidget *btnWrap;
 	GtkWidget *cEncoding;
 	gchar *filename;
 	GKeyFile *cfg;
@@ -37,6 +38,7 @@ typedef struct tCustomData
 static char gCfgPath[PATH_MAX];
 static GtkSourceStyleSchemeManager *gStyleManager = NULL;
 static GtkSourceLanguageManager *gLanguageManager = NULL;
+GtkWrapMode gWrapMode;
 
 static gboolean open_file(CustomData *data, const gchar *filename, const gchar *enc);
 
@@ -64,10 +66,9 @@ static void reload_with_enc_cb(GtkComboBoxText *combo_box, CustomData *data)
 static void wrap_line_cb(GtkToggleButton *tbutton, CustomData *data)
 {
 	gboolean value = gtk_toggle_button_get_active(tbutton);
-	g_key_file_set_boolean(data->cfg, "Flags", "Wrap", value);
 
 	if (value)
-		gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(data->sView), GTK_WRAP_WORD);
+		gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(data->sView), gWrapMode);
 	else
 		gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(data->sView), GTK_WRAP_NONE);
 }
@@ -532,12 +533,17 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	if (draw_spaces)
 		gtk_source_view_set_draw_spaces(GTK_SOURCE_VIEW(data->sView), GTK_SOURCE_DRAW_SPACES_ALL);
 
-	gboolean wrap_line = config_get_boolean(data->cfg, "Flags", "Wrap", FALSE);
+	gboolean wrap_line = ShowFlags & lcp_wraptext;
+
+
+	if (g_key_file_get_boolean(data->cfg, "Flags", "WrapWordChar", NULL))
+		gWrapMode = GTK_WRAP_WORD_CHAR;
+	else
+		gWrapMode = GTK_WRAP_WORD;
+
 
 	if (wrap_line)
-		gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(data->sView), GTK_WRAP_WORD);
-	else
-		gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(data->sView), GTK_WRAP_NONE);
+		gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(data->sView), gWrapMode);
 
 	gint p_above = config_get_integer(data->cfg, "Appearance", "PAbove", 0);
 	gtk_text_view_set_pixels_above_lines(GTK_TEXT_VIEW(data->sView), p_above);
@@ -587,20 +593,20 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 		GtkWidget *btnCursor = gtk_toggle_button_new_with_label(_("Text Cursor"));
 		GtkWidget *btnLineNum = gtk_toggle_button_new_with_label(_("Line Numbers"));
 		GtkWidget *btnHglLine = gtk_toggle_button_new_with_label(_("Highlight Line"));
-		GtkWidget *btnWrap = gtk_toggle_button_new_with_label(_("Wrap Line"));
+		data->btnWrap = gtk_toggle_button_new_with_label(_("Wrap Line"));
 
-		gtk_box_pack_end(GTK_BOX(hControlBox), btnWrap, FALSE, FALSE, 2);
+		gtk_box_pack_end(GTK_BOX(hControlBox), data->btnWrap, FALSE, FALSE, 2);
 		gtk_box_pack_end(GTK_BOX(hControlBox), btnHglLine, FALSE, FALSE, 2);
 		gtk_box_pack_end(GTK_BOX(hControlBox), btnLineNum, FALSE, FALSE, 2);
 		gtk_box_pack_end(GTK_BOX(hControlBox), btnSpaces, FALSE, FALSE, 2);
 		gtk_box_pack_end(GTK_BOX(hControlBox), btnCursor, FALSE, FALSE, 2);
 
-		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(btnWrap), wrap_line);
+		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(data->btnWrap), wrap_line);
 		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(btnHglLine), hcur_line);
 		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(btnLineNum), line_num);
 		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(btnSpaces), draw_spaces);
 		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(btnCursor), !no_cursor);
-		g_signal_connect(G_OBJECT(btnWrap), "toggled", G_CALLBACK(wrap_line_cb), (gpointer)data);
+		g_signal_connect(G_OBJECT(data->btnWrap), "toggled", G_CALLBACK(wrap_line_cb), (gpointer)data);
 		g_signal_connect(G_OBJECT(btnHglLine), "toggled", G_CALLBACK(hcur_line_cb), (gpointer)data);
 		g_signal_connect(G_OBJECT(btnLineNum), "toggled", G_CALLBACK(line_num_cb), (gpointer)data);
 		g_signal_connect(G_OBJECT(btnSpaces), "toggled", G_CALLBACK(draw_spaces_cb), (gpointer)data);
@@ -737,6 +743,10 @@ int DCPCALL ListSendCommand(HWND ListWin, int Command, int Parameter)
 		gtk_text_buffer_move_mark_by_name(GTK_TEXT_BUFFER(sBuf), "selection_bound", &p);
 		break;
 
+	case lc_newparams :
+		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(data->btnWrap), Parameter & lcp_wraptext);
+		break;
+
 	default :
 		return LISTPLUGIN_ERROR;
 	}
@@ -834,6 +844,12 @@ void DCPCALL ListSetDefaultParams(ListDefaultParamStruct* dps)
 					for (size_t i = 0; i < langscount; i++)
 						if (g_strcmp0(langs[i], lcode) == 0)
 							g_key_file_set_string(cfg, "Enca", "Lang", langs[i]);
+				}
+
+				if (g_key_file_has_key(cfg, "Flags", "Wrap", NULL))
+				{
+					g_key_file_set_boolean(cfg, "Flags", "WrapWordChar", FALSE);
+					g_key_file_remove_key(cfg, "Flags", "Wrap", NULL);
 				}
 
 				if (!g_key_file_has_group(cfg, "Override") || g_key_file_has_key(cfg, "Override", "Pascal", NULL))

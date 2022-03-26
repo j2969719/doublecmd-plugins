@@ -139,18 +139,8 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 			err = NULL;
 		}
 
-		bval = g_key_file_get_boolean(cfg, content_type, "Wrap", &err);
-
-		if (err)
-		{
-			err = NULL;
-			bval = g_key_file_get_boolean(cfg, "Flags", "Wrap", NULL);
-		}
-
-		if (bval)
-			wrap_mode = GTK_WRAP_WORD;
-		else
-			wrap_mode = GTK_WRAP_NONE;
+		if (g_key_file_has_key(cfg, "Flags", "Wrap", NULL))
+			g_key_file_remove_key(cfg, "Flags", "Wrap", NULL);
 
 		bval = g_key_file_get_boolean(cfg, "Flags", "NoCursor", &err);
 
@@ -212,7 +202,9 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 
 	gtk_text_view_set_pixels_above_lines(GTK_TEXT_VIEW(tView), p_above);
 	gtk_text_view_set_pixels_below_lines(GTK_TEXT_VIEW(tView), p_below);
-	gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(tView), wrap_mode);
+
+	if (ShowFlags & lcp_wraptext)
+		gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(tView), GTK_WRAP_WORD_CHAR);
 
 	if (style)
 	{
@@ -319,6 +311,17 @@ int DCPCALL ListSendCommand(HWND ListWin, int Command, int Parameter)
 		gtk_text_buffer_move_mark_by_name(GTK_TEXT_BUFFER(tBuf), "selection_bound", &p);
 		break;
 
+	case lc_newparams :
+	{
+		GtkTextView *textview = GTK_TEXT_VIEW(getFirstChild(getFirstChild(GTK_WIDGET(ListWin))));
+
+		if (Parameter & lcp_wraptext)
+			gtk_text_view_set_wrap_mode(textview, GTK_WRAP_WORD_CHAR);
+		else
+			gtk_text_view_set_wrap_mode(textview, GTK_WRAP_NONE);
+
+		break;
+	}
 	default :
 		return LISTPLUGIN_ERROR;
 	}

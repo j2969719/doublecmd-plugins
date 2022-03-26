@@ -88,8 +88,6 @@ void reset_textbuf(GtkWidget *widget)
 
 gboolean on_key_press(GtkWidget *widget, GdkEventKey *event, gpointer data)
 {
-	GtkTextView *textview;
-
 	switch (event->keyval)
 	{
 	case GDK_k:
@@ -102,16 +100,6 @@ gboolean on_key_press(GtkWidget *widget, GdkEventKey *event, gpointer data)
 
 	case GDK_r:
 		reset_textbuf(data);
-		return TRUE;
-
-	case GDK_w:
-		textview = GTK_TEXT_VIEW(getFirstChild(getFirstChild(GTK_WIDGET(data))));
-
-		if (gtk_text_view_get_wrap_mode(textview) == GTK_WRAP_NONE)
-			gtk_text_view_set_wrap_mode(textview, wrap_mode);
-		else
-			gtk_text_view_set_wrap_mode(textview, GTK_WRAP_NONE);
-
 		return TRUE;
 
 	default:
@@ -158,6 +146,8 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 
 		if ((tmp == NULL) || (g_strcmp0(tmp, "") == 0) || (!g_utf8_validate(tmp, -1, NULL)))
 		{
+			g_free(buf1);
+			g_free(tmp);
 			gtk_widget_destroy(GTK_WIDGET(gFix));
 			return NULL;
 		}
@@ -174,6 +164,9 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 
 	if (no_cursor)
 		gtk_text_view_set_cursor_visible(GTK_TEXT_VIEW(tView), FALSE);
+
+	if (ShowFlags & lcp_wraptext)
+		gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(tView), wrap_mode);
 
 	gtk_text_view_set_pixels_above_lines(GTK_TEXT_VIEW(tView), p_above);
 	gtk_text_view_set_pixels_below_lines(GTK_TEXT_VIEW(tView), p_below);
@@ -403,6 +396,17 @@ int DCPCALL ListSendCommand(HWND ListWin, int Command, int Parameter)
 		gtk_text_buffer_move_mark_by_name(GTK_TEXT_BUFFER(tBuf), "selection_bound", &p);
 		break;
 
+	case lc_newparams :
+	{
+		GtkTextView *textview = GTK_TEXT_VIEW(getFirstChild(getFirstChild(GTK_WIDGET(ListWin))));
+
+		if (Parameter & lcp_wraptext)
+			gtk_text_view_set_wrap_mode(textview, wrap_mode);
+		else
+			gtk_text_view_set_wrap_mode(textview, GTK_WRAP_NONE);
+
+		break;
+	}
 	default :
 		return LISTPLUGIN_ERROR;
 	}
