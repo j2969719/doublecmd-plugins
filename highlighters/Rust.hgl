@@ -2,7 +2,7 @@
   <Info>
     <General Name="Rust" Extensions="RS"/>
     <Author Name="Skif_off" Email="" Web="" Copyright="" Company="N/A" Remark="Rules for 'Chars', 'Remarks' and 'Strings' from 'C++ Source.hgl'"/>
-    <Version Version="1" Revision="1" Date="44645,83435125"/>
+    <Version Version="1" Revision="2" Date="44646,2935462037"/>
     <History>
     </History>
     <Sample>
@@ -170,6 +170,14 @@
     <Range Name="Chars '..'" Attributes="6908265,-2147483643;False:False." Style=""
            Delimiters="!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^`{|}~">
       <Rule OpenSymbol="'" OpenSymbolPartOfTerm="Right" CloseSymbol="'" CloseSymbolPartOfTerm="Right" CloseOnEol="True"/>
+    </Range>
+    <Range Name="Attributes" Attributes="150,-2147483643;False:False." Style=""
+           Delimiters="!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^`{|}~">
+      <Rule OpenSymbol="#[" OpenSymbolStartLine="NonSpace" CloseSymbol="]"/>
+    </Range>
+    <Range Name="Attributes 2" Attributes="150,-2147483643;False:False." Style=""
+           Delimiters="!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^`{|}~">
+      <Rule OpenSymbol="#![" OpenSymbolStartLine="NonSpace" CloseSymbol="]"/>
     </Range>
   </Range>
   <CopyRight>Rule file for UniHighlighter Delphi component (Copyright(C) Fantasist(walking_in_the_sky@yahoo.com), Vit(nevzorov@yahoo.com), Vitalik(vetal-x@mail.ru), 2002-2004)</CopyRight>
