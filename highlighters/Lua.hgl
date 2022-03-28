@@ -2,7 +2,7 @@
   <Info>
     <General Name="Lua*" Extensions="LUA"/>
     <Author Name="Skif_off" Email="" Web="" Copyright="" Company="" Remark="Alternative variant"/>
-    <Version Version="1" Revision="4" Date="43667,798738912"/>
+    <Version Version="1" Revision="5" Date="44648,8909244792"/>
     <History>
     </History>
     <Sample>
@@ -238,7 +238,11 @@
       <word value="SysUtils.FindClose"/>
       <word value="SysUtils.FindFirst"/>
       <word value="SysUtils.FindNext"/>
+      <word value="SysUtils.GetAbsolutePath"/>
+      <word value="SysUtils.GetRelativePath"/>
       <word value="SysUtils.GetTickCount"/>
+      <word value="SysUtils.MatchesMask"/>
+      <word value="SysUtils.MatchesMaskList"/>
       <word value="SysUtils.PathDelim"/>
       <word value="SysUtils.ReadSymbolicLink"/>
       <word value="SysUtils.Sleep"/>
