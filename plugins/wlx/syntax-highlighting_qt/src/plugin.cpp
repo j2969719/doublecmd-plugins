@@ -2,6 +2,8 @@
 #include <QFontDatabase>
 #include <QPlainTextEdit>
 
+#include <QTextCodec>
+
 #include <SyntaxHighlighter>
 #include <Repository>
 #include <Definition>
@@ -80,6 +82,7 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 	vhgl.setValue(highlighter);
 	view->setProperty("repo", vrepo);
 	view->setProperty("hgl", vhgl);
+	view->setProperty("filename", QString(FileToLoad));
 
 	return view;
 }
@@ -107,6 +110,8 @@ int DCPCALL ListLoadNext(HWND ParentWin, HWND PluginWin, char* FileToLoad, int S
 	view->setPlainText(file.readAll());
 	file.close();
 	highlighter->setDefinition(definition);
+
+	view->setProperty("filename", QString(FileToLoad));
 
 	return LISTPLUGIN_OK;
 }
@@ -163,12 +168,40 @@ int DCPCALL ListSendCommand(HWND ListWin, int Command, int Parameter)
 		break;
 
 	case lc_newparams :
+	{
 		if (Parameter & lcp_wraptext)
 			view->setLineWrapMode(QPlainTextEdit::WidgetWidth);
 		else
 			view->setLineWrapMode(QPlainTextEdit::NoWrap);
 
+		QString filename = view->property("filename").value<QString>();
+		QFile file(filename);
+
+		if (file.open(QFile::ReadOnly | QFile::Text))
+		{
+			QByteArray text = file.readAll();
+			file.close();
+			QString newtext;
+
+			if (Parameter & lcp_ansi)
+			{
+				QTextCodec *codec = QTextCodec::codecForName("Windows-1251");
+				newtext = codec->toUnicode(text);
+			}
+			else if (Parameter & lcp_ascii)
+			{
+				QTextCodec *codec = QTextCodec::codecForName("IBM 866");
+				newtext = codec->toUnicode(text);
+			}
+
+			if (newtext.isEmpty())
+				view->setPlainText(text);
+			else
+				view->setPlainText(newtext);
+		}
+
 		break;
+	}
 
 	default :
 		return LISTPLUGIN_ERROR;
