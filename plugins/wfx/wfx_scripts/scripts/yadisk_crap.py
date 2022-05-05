@@ -2,7 +2,7 @@
 
 # pip install yadisk
 
-# https://www.youtube.com/watch?v=NvS351QKFV4
+# https://www.youtube.com/watch?v=c9Yl9B5cP6U
 # tovarisch major was already here
 
 import os
@@ -35,6 +35,13 @@ def save_obj():
 	with open(conf, 'w') as f:
 		json.dump(obj, f)
 		f.close()
+
+def size_str(size):
+    for unit in ["", "K", "M", "G", "T"]:
+        if abs(size) < 1024:
+            return "{:.1f} {}".format(size, unit)
+        size /= 1024
+    return str(size)
 
 
 def vfs_init():
@@ -176,8 +183,12 @@ def vfs_properties(path):
 				if meta[field] == 'dir':
 					print('content_type\tinode/directory')
 			else:
-				print(field + '\t' + str(meta[field]))
+				print(field.replace('_', ' ').capitalize() + '\t' + str(meta[field]))
 	print('Fs_PropsActs Publish\tUnpublish')
+	info = y.get_disk_info(fields=['total_space', 'used_space'])
+	for field in info:
+		if not info[field] is None:
+			print('YaDisk ' + field.replace('_', ' ') + '\t' + size_str(info[field]))
 	sys.exit()
 
 if verb == 'init':
