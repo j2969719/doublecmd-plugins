@@ -1,4 +1,4 @@
-#!/bin/env python
+#!/bin/env python3
 
 # pip install youtube-search-python
 # pip install pytube
