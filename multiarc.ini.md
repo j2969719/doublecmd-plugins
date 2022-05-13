@@ -11,6 +11,7 @@ Also some separate files can be found [here](multiarc) (use *Options* > *Archive
 - [BALZ](#balz)
 - [Base64](#b64)
 - [CHM](#chm)
+- [cmdTotal + Wine](#cmdtotal)
 - [FreeArc](#freearc)
 - [grpar](#grpar)
 - [Inno Setup installer](#innosetup)
@@ -675,3 +676,16 @@ Extract=%PQU -x %AQU %LQU
 FormMode=10
 ```
 Script [wcxtest](scripts/wcxtest)
+
+---
+<a name="cmdtotal"><h3>cmdTotal + Wine</h3></a>
+```ini
+[cmdtotal]
+Archiver=$COMMANDER_PATH/scripts/cmdtotal
+Description=cmdTotal - http://totalcmd.net/plugring/cmdtotal.html
+Format0=$?? n+
+List=%PQU l %AQU
+Extract=%PQU x %AQU %LQU
+FormMode=2
+```
+Script [cmdtotal](scripts/cmdtotal)
