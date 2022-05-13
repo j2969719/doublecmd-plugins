@@ -27,12 +27,14 @@ Also some separate files can be found [here](multiarc) (use *Options* > *Archive
 - [PAQ8](#paq8o9)
 - [QUAD](#quad)
 - [RAR + 7Zip](#rar)
+- [TC WCX Test + Wine](#wcxtest)
 - [The Unarchiver](#unar)
 - [UNACE](#unace)
 - [UPX](#upx)
 - [UUEncode](#uue)
 - [ZPAQ](#zpaq)
 - [ZSTD](#zstd)
+
 
 ---
 <a name="7zsfx"><h3>7Zip self-extracting archive</h3></a>
@@ -659,3 +661,17 @@ List=%P -tv -I zstd -f %AQA
 Extract=%P -x -I zstd {%S} -f %AQA -T %LFQA
 Add=%P -c -I zstd {%S} -f %AQA --no-recursion -T %LQA %E512
 ```
+
+---
+<a name="wcxtest"><h3>TC WCX Test + Wine</h3></a>
+```ini
+[wcxtest]
+Archiver=$COMMANDER_PATH/scripts/wcxtest
+Description=TC WCX Test - https://totalcmd.net/plugring/WCXTest.html
+Start=^---------
+Format0=$z+$yyyy?tt?dd hh?mm?ss$aaaaaa$n+
+List=%PQU -l %AQU
+Extract=%PQU -x %AQU %LQU
+FormMode=10
+```
+Script [wcxtest](scripts/wcxtest)
