@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-03-05 12:05+0300\n"
+"POT-Creation-Date: 2022-05-16 22:32+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -37,69 +37,73 @@ msgstr ""
 msgid "hit ctrl+q or type \"exit\" to remove grab"
 msgstr ""
 
-#: ../wlx/jsonview_qt5/src/plugin.cpp:55 ../wlx/jsonview_qt5/src/plugin.cpp:141
+#: ../wlx/jsonview_qt5/src/plugin.cpp:57 ../wlx/jsonview_qt5/src/plugin.cpp:154
 #: ../wlx/jsonview_gtk2/src/plugin.c:64
 msgid "Object"
 msgstr ""
 
-#: ../wlx/jsonview_qt5/src/plugin.cpp:62 ../wlx/jsonview_qt5/src/plugin.cpp:146
+#: ../wlx/jsonview_qt5/src/plugin.cpp:64 ../wlx/jsonview_qt5/src/plugin.cpp:159
 #: ../wlx/jsonview_gtk2/src/plugin.c:70
 msgid "Array"
 msgstr ""
 
-#: ../wlx/jsonview_qt5/src/plugin.cpp:69 ../wlx/jsonview_gtk2/src/plugin.c:78
+#: ../wlx/jsonview_qt5/src/plugin.cpp:71 ../wlx/jsonview_gtk2/src/plugin.c:78
 msgid "String"
 msgstr ""
 
-#: ../wlx/jsonview_qt5/src/plugin.cpp:77 ../wlx/jsonview_gtk2/src/plugin.c:92
+#: ../wlx/jsonview_qt5/src/plugin.cpp:83 ../wlx/jsonview_gtk2/src/plugin.c:85
+msgid "Integer"
+msgstr ""
+
+#: ../wlx/jsonview_qt5/src/plugin.cpp:88 ../wlx/jsonview_gtk2/src/plugin.c:92
 msgid "Double"
 msgstr ""
 
-#: ../wlx/jsonview_qt5/src/plugin.cpp:85 ../wlx/jsonview_gtk2/src/plugin.c:99
+#: ../wlx/jsonview_qt5/src/plugin.cpp:98 ../wlx/jsonview_gtk2/src/plugin.c:99
 msgid "Boolean"
 msgstr ""
 
-#: ../wlx/jsonview_qt5/src/plugin.cpp:88 ../wlx/jsonview_gtk2/src/plugin.c:96
+#: ../wlx/jsonview_qt5/src/plugin.cpp:101 ../wlx/jsonview_gtk2/src/plugin.c:96
 msgid "True"
 msgstr ""
 
-#: ../wlx/jsonview_qt5/src/plugin.cpp:90 ../wlx/jsonview_gtk2/src/plugin.c:96
+#: ../wlx/jsonview_qt5/src/plugin.cpp:103 ../wlx/jsonview_gtk2/src/plugin.c:96
 msgid "False"
 msgstr ""
 
-#: ../wlx/jsonview_qt5/src/plugin.cpp:97 ../wlx/jsonview_gtk2/src/plugin.c:107
+#: ../wlx/jsonview_qt5/src/plugin.cpp:110 ../wlx/jsonview_gtk2/src/plugin.c:107
 msgid "Null"
 msgstr ""
 
-#: ../wlx/jsonview_qt5/src/plugin.cpp:103 ../wlx/jsonview_gtk2/src/plugin.c:102
+#: ../wlx/jsonview_qt5/src/plugin.cpp:116 ../wlx/jsonview_gtk2/src/plugin.c:102
 msgid "Undefined"
 msgstr ""
 
-#: ../wlx/jsonview_qt5/src/plugin.cpp:137 ../wlx/jsonview_gtk2/src/plugin.c:148
-#: ../wlx/jsonview_gtk2/src/plugin.c:247
+#: ../wlx/jsonview_qt5/src/plugin.cpp:150 ../wlx/jsonview_gtk2/src/plugin.c:156
+#: ../wlx/jsonview_gtk2/src/plugin.c:254
 msgid "Root"
 msgstr ""
 
-#: ../wlx/jsonview_qt5/src/plugin.cpp:164 ../wlx/jsonview_gtk2/src/plugin.c:167
+#: ../wlx/jsonview_qt5/src/plugin.cpp:177 ../wlx/jsonview_gtk2/src/plugin.c:175
 msgid "Node"
 msgstr ""
 
-#: ../wlx/jsonview_qt5/src/plugin.cpp:164 ../wlx/jsonview_gtk2/src/plugin.c:179
+#: ../wlx/jsonview_qt5/src/plugin.cpp:177 ../wlx/jsonview_gtk2/src/plugin.c:187
 msgid "Value"
 msgstr ""
 
-#: ../wlx/jsonview_qt5/src/plugin.cpp:164 ../wlx/jsonview_gtk2/src/plugin.c:191
+#: ../wlx/jsonview_qt5/src/plugin.cpp:177 ../wlx/jsonview_gtk2/src/plugin.c:199
 msgid "Type"
 msgstr ""
 
-#: ../wlx/jsonview_qt5/src/plugin.cpp:243 ../wlx/csvview_qt5/src/plugin.cpp:310
+#: ../wlx/jsonview_qt5/src/plugin.cpp:256 ../wlx/csvview_qt5/src/plugin.cpp:312
 #: ../wlx/sqlview_qt5/src/plugin.cpp:273 ../wlx/fileinfo_qt/src/plugin.cpp:97
 #: ../wlx/wlxwebkit/src/wlxwebkit.c:117
 #: ../wlx/yet_another_vte_plugin/src/plugin.c:288
-#: ../wlx/gtksourceview/src/gtksourceview.c:714
-#: ../wlx/syntax-highlighting_qt/src/plugin.cpp:146
+#: ../wlx/gtksourceview/src/gtksourceview.c:716
+#: ../wlx/syntax-highlighting_qt/src/plugin.cpp:151
 #: ../wlx/wlxwebkit_qt5_crap/src/wlxwebkit.cpp:111
-#: ../wlx/fileinfo/src/fileinfo.c:378 ../wlx/mimescript/src/mimescriptwlx.c:294
+#: ../wlx/fileinfo/src/fileinfo.c:371 ../wlx/mimescript/src/mimescriptwlx.c:286
 #: ../wlx/wlxwebkit_qt5/src/wlxwebkit.cpp:57
 #: ../wlx/md4c_webkit_qt5/src/plugin.cpp:90
 #, c-format
@@ -110,15 +114,16 @@ msgstr ""
 msgid "base not valid!"
 msgstr ""
 
-#: ../wlx/sqlview_qt5/src/plugin.cpp:89
+#: ../wlx/sqlview_qt5/src/plugin.cpp:89 ../wlx/sqlview_gtk2/src/plugin.c:227
 msgid "Table:"
 msgstr ""
 
-#: ../wlx/sqlview_qt5/src/plugin.cpp:97
+#: ../wlx/sqlview_qt5/src/plugin.cpp:97 ../wlx/sqlview_gtk2/src/plugin.c:124
+#: ../wlx/sqlview_gtk2/src/plugin.c:222
 msgid "Query"
 msgstr ""
 
-#: ../wlx/sqlview_qt5/src/plugin.cpp:131
+#: ../wlx/sqlview_qt5/src/plugin.cpp:131 ../wlx/sqlview_gtk2/src/plugin.c:132
 msgid "Please enter a new query and press OK to execute it"
 msgstr ""
 
@@ -126,71 +131,79 @@ msgstr ""
 msgid "Failed to fetch list of tables. Maybe DB is locked?"
 msgstr ""
 
-#: ../wlx/imagemagick/src/wlximagemagick.c:172
-#: ../wlx/gtkimgview_crap/src/gtkimgview.c:336
-#: ../wlx/gtkimgview/src/gtkimgview.c:199
+#: ../wlx/imagemagick/src/wlximagemagick.c:201
+#: ../wlx/gtkimgview_crap/src/gtkimgview.c:371
+#: ../wlx/gtkimgview/src/gtkimgview.c:220
 msgid "Zoom In"
 msgstr ""
 
-#: ../wlx/imagemagick/src/wlximagemagick.c:177
-#: ../wlx/gtkimgview_crap/src/gtkimgview.c:341
-#: ../wlx/gtkimgview/src/gtkimgview.c:204
+#: ../wlx/imagemagick/src/wlximagemagick.c:206
+#: ../wlx/gtkimgview_crap/src/gtkimgview.c:376
+#: ../wlx/gtkimgview/src/gtkimgview.c:225
 msgid "Zoom Out"
 msgstr ""
 
-#: ../wlx/imagemagick/src/wlximagemagick.c:182
-#: ../wlx/gtkimgview_crap/src/gtkimgview.c:346
-#: ../wlx/gtkimgview/src/gtkimgview.c:209
+#: ../wlx/imagemagick/src/wlximagemagick.c:211
+#: ../wlx/gtkimgview_crap/src/gtkimgview.c:381
+#: ../wlx/gtkimgview/src/gtkimgview.c:230
 msgid "Original Size"
 msgstr ""
 
-#: ../wlx/imagemagick/src/wlximagemagick.c:187
+#: ../wlx/imagemagick/src/wlximagemagick.c:216
 #: ../wlx/wlxpview/src/wlxPView.c:421 ../wlx/wlxpview/src/wlxPView.c:422
-#: ../wlx/gtkimgview_crap/src/gtkimgview.c:351
-#: ../wlx/gtkimgview/src/gtkimgview.c:214
+#: ../wlx/gtkimgview_crap/src/gtkimgview.c:386
+#: ../wlx/gtkimgview/src/gtkimgview.c:235
 msgid "Fit"
 msgstr ""
 
-#: ../wlx/imagemagick/src/wlximagemagick.c:195
-#: ../wlx/gtkimgview_crap/src/gtkimgview.c:359
-#: ../wlx/gtkimgview/src/gtkimgview.c:222
+#: ../wlx/imagemagick/src/wlximagemagick.c:223
+#: ../wlx/gtkimgview_crap/src/gtkimgview.c:393
+#: ../wlx/gtkimgview/src/gtkimgview.c:242
 msgid "Copy to Clipboard"
 msgstr ""
 
-#: ../wlx/imagemagick/src/wlximagemagick.c:198
-#: ../wlx/imagemagick/src/wlximagemagick.c:201
-#: ../wlx/gtkimgview_crap/src/gtkimgview.c:362
-#: ../wlx/gtkimgview_crap/src/gtkimgview.c:365
-#: ../wlx/gtkimgview/src/gtkimgview.c:225
-#: ../wlx/gtkimgview/src/gtkimgview.c:228
+#: ../wlx/imagemagick/src/wlximagemagick.c:226
+#: ../wlx/imagemagick/src/wlximagemagick.c:229
+#: ../wlx/gtkimgview_crap/src/gtkimgview.c:396
+#: ../wlx/gtkimgview_crap/src/gtkimgview.c:399
+#: ../wlx/gtkimgview/src/gtkimgview.c:245
+#: ../wlx/gtkimgview/src/gtkimgview.c:248
 msgid "Rotate"
 msgstr ""
 
-#: ../wlx/imagemagick/src/wlximagemagick.c:204
-#: ../wlx/imagemagick/src/wlximagemagick.c:207
-#: ../wlx/gtkimgview_crap/src/gtkimgview.c:368
-#: ../wlx/gtkimgview_crap/src/gtkimgview.c:371
-#: ../wlx/gtkimgview/src/gtkimgview.c:231
-#: ../wlx/gtkimgview/src/gtkimgview.c:234
+#: ../wlx/imagemagick/src/wlximagemagick.c:232
+#: ../wlx/imagemagick/src/wlximagemagick.c:235
+#: ../wlx/gtkimgview_crap/src/gtkimgview.c:402
+#: ../wlx/gtkimgview_crap/src/gtkimgview.c:405
+#: ../wlx/gtkimgview/src/gtkimgview.c:251
+#: ../wlx/gtkimgview/src/gtkimgview.c:254
 msgid "Rotate Clockwise"
 msgstr ""
 
-#: ../wlx/imagemagick/src/wlximagemagick.c:210
-#: ../wlx/imagemagick/src/wlximagemagick.c:213
-#: ../wlx/gtkimgview_crap/src/gtkimgview.c:374
-#: ../wlx/gtkimgview_crap/src/gtkimgview.c:377
-#: ../wlx/gtkimgview/src/gtkimgview.c:237
-#: ../wlx/gtkimgview/src/gtkimgview.c:240
+#: ../wlx/imagemagick/src/wlximagemagick.c:238
+#: ../wlx/imagemagick/src/wlximagemagick.c:241
+#: ../wlx/gtkimgview_crap/src/gtkimgview.c:408
+#: ../wlx/gtkimgview_crap/src/gtkimgview.c:411
+#: ../wlx/gtkimgview/src/gtkimgview.c:257
+#: ../wlx/gtkimgview/src/gtkimgview.c:260
 msgid "Flip Horizontally"
 msgstr ""
 
-#: ../wlx/imagemagick/src/wlximagemagick.c:216
-#: ../wlx/imagemagick/src/wlximagemagick.c:219
-#: ../wlx/gtkimgview_crap/src/gtkimgview.c:380
-#: ../wlx/gtkimgview_crap/src/gtkimgview.c:383
-#: ../wlx/gtkimgview/src/gtkimgview.c:243
-#: ../wlx/gtkimgview/src/gtkimgview.c:246
+#: ../wlx/imagemagick/src/wlximagemagick.c:244
+#: ../wlx/imagemagick/src/wlximagemagick.c:247
+#: ../wlx/gtkimgview_crap/src/gtkimgview.c:414
+#: ../wlx/gtkimgview_crap/src/gtkimgview.c:417
+#: ../wlx/gtkimgview/src/gtkimgview.c:263
+#: ../wlx/gtkimgview/src/gtkimgview.c:266
 msgid "Flip Vertically"
+msgstr ""
+
+#: ../wlx/dirsize_crap/src/plugin.c:245
+msgid "Name"
+msgstr ""
+
+#: ../wlx/dirsize_crap/src/plugin.c:258
+msgid "Size"
 msgstr ""
 
 #: ../wlx/wlxpview/src/wlxPView.c:139
@@ -239,96 +252,92 @@ msgstr ""
 msgid "Last page"
 msgstr ""
 
-#: ../wlx/gtksourceview/src/gtksourceview.c:48
+#: ../wlx/gtksourceview/src/gtksourceview.c:52
 msgid "Failed to load file"
 msgstr ""
 
-#: ../wlx/gtksourceview/src/gtksourceview.c:49
-#: ../wlx/gtksourceview/src/gtksourceview.c:361
-#: ../wlx/gtksourceview/src/gtksourceview.c:566
+#: ../wlx/gtksourceview/src/gtksourceview.c:53
+#: ../wlx/gtksourceview/src/gtksourceview.c:360
+#: ../wlx/gtksourceview/src/gtksourceview.c:563
 msgid "Default"
 msgstr ""
 
-#: ../wlx/gtksourceview/src/gtksourceview.c:50
-#: ../wlx/gtksourceview/src/gtksourceview.c:381
+#: ../wlx/gtksourceview/src/gtksourceview.c:54
+#: ../wlx/gtksourceview/src/gtksourceview.c:380
 msgid "Encoding:"
 msgstr ""
 
-#: ../wlx/gtksourceview/src/gtksourceview.c:197
-#: ../wlx/gtksourceview/src/gtksourceview.c:588
+#: ../wlx/gtksourceview/src/gtksourceview.c:200
+#: ../wlx/gtksourceview/src/gtksourceview.c:585
 msgid "Options"
 msgstr ""
 
-#: ../wlx/gtksourceview/src/gtksourceview.c:204
+#: ../wlx/gtksourceview/src/gtksourceview.c:207
 msgid "Font"
 msgstr ""
 
-#: ../wlx/gtksourceview/src/gtksourceview.c:212
+#: ../wlx/gtksourceview/src/gtksourceview.c:215
 msgid "Style"
 msgstr ""
 
-#: ../wlx/gtksourceview/src/gtksourceview.c:229
+#: ../wlx/gtksourceview/src/gtksourceview.c:232
 msgid "Blank space"
 msgstr ""
 
-#: ../wlx/gtksourceview/src/gtksourceview.c:235
+#: ../wlx/gtksourceview/src/gtksourceview.c:238
 msgid "Above paragraphs"
 msgstr ""
 
-#: ../wlx/gtksourceview/src/gtksourceview.c:236
+#: ../wlx/gtksourceview/src/gtksourceview.c:239
 msgid "Below paragraphs"
 msgstr ""
 
-#: ../wlx/gtksourceview/src/gtksourceview.c:237
+#: ../wlx/gtksourceview/src/gtksourceview.c:240
 msgid "Tab width"
 msgstr ""
 
-#: ../wlx/gtksourceview/src/gtksourceview.c:257
+#: ../wlx/gtksourceview/src/gtksourceview.c:260
 msgid "Enca Lang"
 msgstr ""
 
-#: ../wlx/gtksourceview/src/gtksourceview.c:337
+#: ../wlx/gtksourceview/src/gtksourceview.c:336
 msgid "Language:"
 msgstr ""
 
-#: ../wlx/gtksourceview/src/gtksourceview.c:357
+#: ../wlx/gtksourceview/src/gtksourceview.c:356
 msgid "file seems empty"
 msgstr ""
 
-#: ../wlx/gtksourceview/src/gtksourceview.c:576
+#: ../wlx/gtksourceview/src/gtksourceview.c:573
 msgid "Custom encoding"
 msgstr ""
 
-#: ../wlx/gtksourceview/src/gtksourceview.c:595
+#: ../wlx/gtksourceview/src/gtksourceview.c:592
 msgid "Draw Spaces"
 msgstr ""
 
-#: ../wlx/gtksourceview/src/gtksourceview.c:596
+#: ../wlx/gtksourceview/src/gtksourceview.c:593
 msgid "Text Cursor"
 msgstr ""
 
-#: ../wlx/gtksourceview/src/gtksourceview.c:597
+#: ../wlx/gtksourceview/src/gtksourceview.c:594
 msgid "Line Numbers"
 msgstr ""
 
-#: ../wlx/gtksourceview/src/gtksourceview.c:598
+#: ../wlx/gtksourceview/src/gtksourceview.c:595
 msgid "Highlight Line"
 msgstr ""
 
-#: ../wlx/gtksourceview/src/gtksourceview.c:599
+#: ../wlx/gtksourceview/src/gtksourceview.c:596
 msgid "Wrap Line"
 msgstr ""
 
-#: ../wlx/gtkimgview/src/gtkimgview.c:253
+#: ../wlx/gtkimgview/src/gtkimgview.c:271
 msgid "Play Animation"
 msgstr ""
 
-#: ../wlx/gtkimgview/src/gtkimgview.c:258
+#: ../wlx/gtkimgview/src/gtkimgview.c:276
 msgid "Stop Animation"
-msgstr ""
-
-#: ../wlx/jsonview_gtk2/src/plugin.c:85
-msgid "Integer"
 msgstr ""
 
 #: ../wdx/fewfiles/src/plugin.c:44
@@ -336,9 +345,34 @@ msgstr ""
 msgid "Permission denied"
 msgstr ""
 
-#: ../wdx/fewfiles/src/plugin.c:76
+#: ../wdx/fewfiles/src/plugin.c:74
 #, c-format
 msgid "Empty directory"
+msgstr ""
+
+#: ../wfx/trash_crap/src/plugin.c:109
+#, c-format
+msgid "Restore %s from trash?"
+msgstr ""
+
+#: ../wfx/trash_crap/src/plugin.c:124
+msgid "Already exists, overwrite?"
+msgstr ""
+
+#: ../wfx/trash_crap/src/plugin.c:156
+msgid "Original Path:"
+msgstr ""
+
+#: ../wfx/trash_crap/src/plugin.c:157
+msgid "Deletion Date:"
+msgstr ""
+
+#: ../wfx/trash_crap/src/plugin.c:545
+msgid "Path"
+msgstr ""
+
+#: ../wfx/trash_crap/src/plugin.c:553
+msgid "Trash"
 msgstr ""
 
 #: ../dsx/git_untracked/src/plugin.c:57 ../dsx/pacman_pkg_list/src/plugin.c:71
@@ -349,24 +383,24 @@ msgstr ""
 
 #: ../dsx/git_untracked/src/plugin.c:60
 #: ../dsx/tracker_textsearch/src/plugin.c:81 ../dsx/in_filelist/src/plugin.c:74
-#: ../dsx/duplicates_crap/src/plugin.c:77
-#: ../dsx/the_silver_searcher_crap/src/plugin.c:81
-#: ../dsx/recollq_crap/src/plugin.c:101 ../dsx/locate_crap/src/plugin.c:112
+#: ../dsx/duplicates_crap/src/plugin.c:78
+#: ../dsx/the_silver_searcher_crap/src/plugin.c:82
+#: ../dsx/recollq_crap/src/plugin.c:102 ../dsx/locate_crap/src/plugin.c:113
 #: ../dsx/pacman_pkg_list/src/plugin.c:74 ../dsx/gtkrecent/src/plugin.c:56
-#: ../dsx/hardlinks_crap/src/plugin.c:77 ../dsx/lslocks/src/plugin.c:61
+#: ../dsx/hardlinks_crap/src/plugin.c:78 ../dsx/lslocks/src/plugin.c:61
 #: ../dsx/git_ignored/src/plugin.c:60 ../dsx/git_modified/src/plugin.c:61
 msgid "not found"
 msgstr ""
 
-#: ../dsx/the_silver_searcher_crap/src/plugin.c:105
+#: ../dsx/the_silver_searcher_crap/src/plugin.c:107
 msgid "no text pattern provided"
 msgstr ""
 
-#: ../dsx/the_silver_searcher_crap/src/plugin.c:108
+#: ../dsx/the_silver_searcher_crap/src/plugin.c:110
 msgid "failed to launch ag..."
 msgstr ""
 
-#: ../dsx/recollq_crap/src/plugin.c:72
+#: ../dsx/recollq_crap/src/plugin.c:73
 msgid "the search text was not specified"
 msgstr ""
 

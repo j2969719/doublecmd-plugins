@@ -4,6 +4,10 @@
 #include "wfxplugin.h"
 #include "extension.h"
 
+#include <glib/gi18n.h>
+#include <locale.h>
+#define GETTEXT_PACKAGE "plugins"
+
 #define Int32x32To64(a,b) ((gint64)(a)*(gint64)(b))
 #define SendDlgMsg gDialogApi->SendDlgMsg
 
@@ -39,6 +43,8 @@ tProgressProc gProgressProc = NULL;
 tLogProc gLogProc = NULL;
 tRequestProc gRequestProc = NULL;
 tExtensionStartupInfo* gDialogApi = NULL;
+char gLastFile[PATH_MAX];
+char gLFMPath[PATH_MAX];
 
 
 gboolean UnixTimeToFileTime(unsigned long mtime, LPFILETIME ft)
@@ -79,21 +85,43 @@ static void copy_progress_cb(goffset current_num_bytes, goffset total_num_bytes,
 	gProgressProc(gPluginNr, info->in_file, info->out_file, res);
 }
 
-static void restore_from_trash(const char *remote)
+static gchar* get_delobject(gchar *filename)
+{
+	gchar *result = NULL;
+	gchar **split = g_strsplit(filename, "/", -1);
+	result = g_strdup_printf("trash:///%s", split[1]);
+	g_strfreev(split);
+	return result;
+}
+
+static gboolean restore_from_trash(gchar *filename)
 {
 	GError *err = NULL;
-	gchar *uri = g_strdup_printf("trash://%s", remote);
+
+	gchar *uri = get_delobject(filename);
 	GFile *src = g_file_new_for_uri(uri);
 	g_free(uri);
 
-	GFileInfo *info = g_file_query_info(src, "trash::*", G_FILE_QUERY_INFO_NOFOLLOW_SYMLINKS, NULL, NULL);
+	GFileInfo *info = g_file_query_info(src, "standard::*,trash::*", G_FILE_QUERY_INFO_NOFOLLOW_SYMLINKS, NULL, NULL);
 
 	if (info)
 	{
+		gchar *msg = g_strdup_printf(_("Restore %s from trash?"), g_file_info_get_display_name(info));
+
+		if (!gRequestProc(gPluginNr, RT_MsgYesNo, NULL, msg, NULL, 0))
+		{
+			g_object_unref(info);
+			g_object_unref(src);
+			g_free(msg);
+			return FALSE;
+		}
+
+		g_free(msg);
+
 		const gchar *orgpath = g_file_info_get_attribute_byte_string(info, G_FILE_ATTRIBUTE_TRASH_ORIG_PATH);
 		GFile *dest = g_file_new_for_path(orgpath);
 
-		if (!g_file_test(orgpath, G_FILE_TEST_EXISTS) || gRequestProc(gPluginNr, RT_MsgYesNo, NULL, "Overite?", NULL, 0))
+		if (!g_file_test(orgpath, G_FILE_TEST_EXISTS) || gRequestProc(gPluginNr, RT_MsgYesNo, NULL, _("Already exists, overwrite?"), NULL, 0))
 		{
 			if (!g_file_move(src, dest, G_FILE_COPY_OVERWRITE | G_FILE_COPY_NOFOLLOW_SYMLINKS | G_FILE_COPY_ALL_METADATA, NULL, NULL, NULL, &err))
 			{
@@ -109,8 +137,77 @@ static void restore_from_trash(const char *remote)
 		g_object_unref(info);
 		g_object_unref(dest);
 	}
+	else
+	{
+		g_object_unref(src);
+		return FALSE;
+	}
 
 	g_object_unref(src);
+	return TRUE;
+}
+
+intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr_t wParam, intptr_t lParam)
+{
+	switch (Msg)
+	{
+	case DN_INITDIALOG:
+	{
+		SendDlgMsg(pDlg, "lblDelPath", DM_SETTEXT, (intptr_t)_("Original Path:"), 0);
+		SendDlgMsg(pDlg, "lblDelDateDscr", DM_SETTEXT, (intptr_t)_("Deletion Date:"), 0);
+		gchar *uri = get_delobject(gLastFile);
+		GFile *src = g_file_new_for_uri(uri);
+		g_free(uri);
+		GFileInfo *info = g_file_query_info(src, "standard::*,time::*,trash::*", G_FILE_QUERY_INFO_NOFOLLOW_SYMLINKS, NULL, NULL);
+		const char *path = g_file_info_get_attribute_byte_string(info, G_FILE_ATTRIBUTE_TRASH_ORIG_PATH);
+		SendDlgMsg(pDlg, "edName", DM_SETTEXT, (intptr_t)g_file_info_get_display_name(info), 0);
+		SendDlgMsg(pDlg, "edPath", DM_SETTEXT, (intptr_t)path, 0);
+		const char *date = g_file_info_get_attribute_string(info, G_FILE_ATTRIBUTE_TRASH_DELETION_DATE);
+		SendDlgMsg(pDlg, "lblDelDate", DM_SETTEXT, (intptr_t)date, 0);
+		gchar *size = g_format_size(g_file_info_get_size(info));
+		SendDlgMsg(pDlg, "lblSize", DM_SETTEXT, (intptr_t)size, 0);
+		const char *content = g_file_info_get_content_type(info);
+		gchar *descr = g_content_type_get_description(content);
+		SendDlgMsg(pDlg, "lblType", DM_SETTEXT, (intptr_t)descr, 0);
+		g_free(descr);
+		const char *target = g_file_info_get_symlink_target(info);
+
+		if (target)
+		{
+			SendDlgMsg(pDlg, "lblInfo2", DM_SHOWITEM, 1, 0);
+			SendDlgMsg(pDlg, "edSymlink", DM_SHOWITEM, 1, 0);
+			SendDlgMsg(pDlg, "edSymlink", DM_SETTEXT, (intptr_t)target, 0);
+		}
+
+		guint64 unix_time = g_file_info_get_attribute_uint64(info, G_FILE_ATTRIBUTE_TIME_MODIFIED);
+		gchar *datetime = g_date_time_format(g_date_time_new_from_unix_local(unix_time), "%Y-%m-%dT%H:%M:%S");
+		SendDlgMsg(pDlg, "lblModtime", DM_SETTEXT, (intptr_t)datetime, 0);
+		g_free(datetime);
+		unix_time = g_file_info_get_attribute_uint64(info, G_FILE_ATTRIBUTE_TIME_ACCESS);
+		datetime = g_date_time_format(g_date_time_new_from_unix_local(unix_time), "%Y-%m-%dT%H:%M:%S");
+		SendDlgMsg(pDlg, "lblAccess", DM_SETTEXT, (intptr_t)datetime, 0);
+		g_free(datetime);
+		unix_time = g_file_info_get_attribute_uint64(info, G_FILE_ATTRIBUTE_TIME_CHANGED);
+		datetime = g_date_time_format(g_date_time_new_from_unix_local(unix_time), "%Y-%m-%dT%H:%M:%S");
+		SendDlgMsg(pDlg, "lblChange", DM_SETTEXT, (intptr_t)datetime, 0);
+		g_free(datetime);
+
+		g_object_unref(info);
+		g_object_unref(src);
+	}
+	break;
+
+	case DN_CLICK:
+		if (strcmp(DlgItemName, "btnRestore") == 0)
+		{
+			if (restore_from_trash(gLastFile))
+				SendDlgMsg(pDlg, DlgItemName, DM_CLOSE, ID_OK, 0);
+		}
+
+		break;
+	}
+
+	return 0;
 }
 
 gboolean SetFindData(tVFSDirData *dirdata, WIN32_FIND_DATAA *FindData)
@@ -328,9 +425,14 @@ int DCPCALL FsExecuteFile(HWND MainWin, char* RemoteName, char* Verb)
 {
 	if (strncmp(Verb, "open", 4) == 0)
 		return FS_EXEC_YOURSELF;
-	else if (RemoteName[1] != '\0' && strncmp(Verb, "properties", 10) == 0)
+	else if (RemoteName[1] != '\0' && strcmp(RemoteName, "/..") != 0 && strcmp(Verb, "properties") == 0)
 	{
-		if (gRequestProc(gPluginNr, RT_MsgYesNo, NULL, "restore?", NULL, 0))
+		if (g_file_test(gLFMPath, G_FILE_TEST_EXISTS))
+		{
+			g_strlcpy(gLastFile, RemoteName, PATH_MAX);
+			gDialogApi->DialogBoxLFMFile(gLFMPath, DlgProc);
+		}
+		else
 			restore_from_trash(RemoteName);
 
 		return FS_EXEC_OK;
@@ -440,7 +542,7 @@ int DCPCALL FsContentGetValue(char* FileName, int FieldIndex, int UnitIndex, voi
 BOOL DCPCALL FsContentGetDefaultView(char* ViewContents, char* ViewHeaders, char* ViewWidths, char* ViewOptions, int maxlen)
 {
 	g_strlcpy(ViewContents, "[Plugin(FS).original path{}]", maxlen - 1);
-	g_strlcpy(ViewHeaders, "Path", maxlen - 1);
+	g_strlcpy(ViewHeaders, _("Path"), maxlen - 1);
 	g_strlcpy(ViewWidths, "100,20,150", maxlen - 1);
 	g_strlcpy(ViewOptions, "-1|0", maxlen - 1);
 	return TRUE;
@@ -448,15 +550,23 @@ BOOL DCPCALL FsContentGetDefaultView(char* ViewContents, char* ViewHeaders, char
 
 void DCPCALL FsGetDefRootName(char* DefRootName, int maxlen)
 {
-	g_strlcpy(DefRootName, "Trash", maxlen - 1);
+	g_strlcpy(DefRootName, _("Trash"), maxlen - 1);
 }
 
 void DCPCALL ExtensionInitialize(tExtensionStartupInfo* StartupInfo)
 {
 	if (gDialogApi == NULL)
 	{
+		char langdir[PATH_MAX];
+		setlocale(LC_ALL, "");
 		gDialogApi = malloc(sizeof(tExtensionStartupInfo));
 		memcpy(gDialogApi, StartupInfo, sizeof(tExtensionStartupInfo));
+		g_strlcpy(gLFMPath, gDialogApi->PluginDir, PATH_MAX);
+		g_strlcpy(langdir, gDialogApi->PluginDir, PATH_MAX);
+		strcat(gLFMPath, "dialog.lfm");
+		strcat(langdir, "langs");
+		bindtextdomain(GETTEXT_PACKAGE, langdir);
+		textdomain(GETTEXT_PACKAGE);
 	}
 }
 

@@ -1,0 +1,243 @@
+object DialogBox: TDialogBox
+  Left = 320
+  Height = 337
+  Top = 250
+  Width = 500
+  AutoSize = True
+  BorderStyle = bsDialog
+  Caption = 'Properties'
+  ChildSizing.LeftRightSpacing = 10
+  ChildSizing.TopBottomSpacing = 10
+  ClientHeight = 337
+  ClientWidth = 500
+  OnCreate = DialogBoxShow
+  Position = poMainFormCenter
+  LCLVersion = '2.2.0.3'
+  object edName: TEdit
+    AnchorSideLeft.Control = Owner
+    AnchorSideTop.Control = Owner
+    AnchorSideRight.Control = Owner
+    AnchorSideRight.Side = asrBottom
+    Left = 10
+    Height = 20
+    Top = 10
+    Width = 480
+    Alignment = taCenter
+    Anchors = [akTop, akLeft, akRight]
+    BorderStyle = bsNone
+    Color = clForm
+    Font.Style = [fsBold]
+    ParentFont = False
+    ReadOnly = True
+    TabStop = False
+    TabOrder = 3
+    Text = 'File'
+  end
+  object lblDelPath: TLabel
+    AnchorSideLeft.Control = Owner
+    AnchorSideTop.Control = pInfo
+    AnchorSideTop.Side = asrBottom
+    Left = 10
+    Height = 16
+    Top = 191
+    Width = 79
+    BorderSpacing.Top = 10
+    Caption = 'Original Path:'
+  end
+  object edPath: TEdit
+    AnchorSideLeft.Control = Owner
+    AnchorSideTop.Control = lblDelPath
+    AnchorSideTop.Side = asrBottom
+    Left = 10
+    Height = 20
+    Top = 207
+    Width = 366
+    BorderStyle = bsNone
+    Color = clForm
+    ParentBidiMode = False
+    ReadOnly = True
+    TabStop = False
+    TabOrder = 2
+    Text = 'Path'
+  end
+  object btnRestore: TButton
+    AnchorSideTop.Control = edPath
+    AnchorSideTop.Side = asrBottom
+    AnchorSideRight.Control = Owner
+    AnchorSideRight.Side = asrBottom
+    Left = 393
+    Height = 30
+    Top = 237
+    Width = 97
+    Anchors = [akTop, akRight]
+    AutoSize = True
+    BorderSpacing.Top = 10
+    Caption = 'Restore'
+    Constraints.MinHeight = 30
+    Constraints.MinWidth = 97
+    OnClick = ButtonClick
+    TabOrder = 1
+  end
+  object btnClose: TBitBtn
+    AnchorSideTop.Control = btnRestore
+    AnchorSideTop.Side = asrBottom
+    AnchorSideRight.Control = Owner
+    AnchorSideRight.Side = asrBottom
+    Left = 393
+    Height = 30
+    Top = 287
+    Width = 97
+    Anchors = [akTop, akRight]
+    BorderSpacing.Top = 20
+    BorderSpacing.Right = 5
+    Constraints.MinHeight = 30
+    Constraints.MinWidth = 97
+    DefaultCaption = True
+    Kind = bkClose
+    ModalResult = 11
+    OnClick = ButtonClick
+    TabOrder = 0
+  end
+  object pInfo: TPanel
+    AnchorSideLeft.Control = edName
+    AnchorSideTop.Control = edName
+    AnchorSideTop.Side = asrBottom
+    AnchorSideRight.Control = edName
+    AnchorSideRight.Side = asrBottom
+    Left = 10
+    Height = 146
+    Top = 35
+    Width = 480
+    Anchors = [akTop, akLeft, akRight]
+    AutoSize = True
+    BorderSpacing.Top = 5
+    BevelOuter = bvNone
+    ChildSizing.HorizontalSpacing = 10
+    ChildSizing.VerticalSpacing = 5
+    ChildSizing.EnlargeHorizontal = crsHomogenousChildResize
+    ChildSizing.Layout = cclLeftToRightThenTopToBottom
+    ChildSizing.ControlsPerLine = 2
+    ClientHeight = 146
+    ClientWidth = 480
+    Color = clForm
+    ParentColor = False
+    TabOrder = 4
+    object lblInfo1: TLabel
+      Left = 0
+      Height = 16
+      Top = 0
+      Width = 253
+      Alignment = taRightJustify
+      Caption = 'Type:'
+      WordWrap = True
+    end
+    object lblType: TLabel
+      Left = 263
+      Height = 16
+      Top = 0
+      Width = 217
+      WordWrap = True
+    end
+    object lblInfo2: TLabel
+      Left = 0
+      Height = 20
+      Top = 21
+      Width = 253
+      Alignment = taRightJustify
+      Caption = 'Path:'
+      Layout = tlCenter
+      Visible = False
+      WordWrap = True
+    end
+    object edSymlink: TEdit
+      Left = 263
+      Height = 20
+      Top = 21
+      Width = 217
+      BorderStyle = bsNone
+      Color = clForm
+      ReadOnly = True
+      TabOrder = 0
+      Visible = False
+    end
+    object lblInfo3: TLabel
+      Left = 0
+      Height = 16
+      Top = 46
+      Width = 253
+      Alignment = taRightJustify
+      Caption = 'Size:'
+      WordWrap = True
+    end
+    object lblSize: TLabel
+      Left = 263
+      Height = 16
+      Top = 46
+      Width = 217
+      WordWrap = True
+    end
+    object lblInfo4: TLabel
+      Left = 0
+      Height = 16
+      Top = 67
+      Width = 253
+      Alignment = taRightJustify
+      Caption = 'Last access:'
+      WordWrap = True
+    end
+    object lblAccess: TLabel
+      Left = 263
+      Height = 16
+      Top = 67
+      Width = 217
+      WordWrap = True
+    end
+    object lblInfo5: TLabel
+      Left = 0
+      Height = 16
+      Top = 88
+      Width = 253
+      Alignment = taRightJustify
+      Caption = 'Last modification:'
+      WordWrap = True
+    end
+    object lblModtime: TLabel
+      Left = 263
+      Height = 16
+      Top = 88
+      Width = 217
+      WordWrap = True
+    end
+    object lblInfo6: TLabel
+      Left = 0
+      Height = 16
+      Top = 109
+      Width = 253
+      Alignment = taRightJustify
+      Caption = 'Last status change:'
+      WordWrap = True
+    end
+    object lblChange: TLabel
+      Left = 263
+      Height = 16
+      Top = 109
+      Width = 217
+      WordWrap = True
+    end
+    object lblDelDateDscr: TLabel
+      Left = 0
+      Height = 16
+      Top = 130
+      Width = 253
+      Alignment = taRightJustify
+      Caption = 'Deletion Date:'
+    end
+    object lblDelDate: TLabel
+      Left = 263
+      Height = 16
+      Top = 130
+      Width = 217
+      WordWrap = True
+    end
+  end
+end
