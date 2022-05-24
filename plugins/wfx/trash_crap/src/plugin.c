@@ -19,8 +19,8 @@ typedef struct sVFSDirData
 
 typedef struct sCopyInfo
 {
-	gchar *in_file;
-	gchar *out_file;
+	gchar in_file[PATH_MAX];
+	gchar out_file[PATH_MAX];
 } tCopyInfo;
 
 typedef struct sField
@@ -40,7 +40,6 @@ tField fields[] =
 
 int gPluginNr;
 tProgressProc gProgressProc = NULL;
-tLogProc gLogProc = NULL;
 tRequestProc gRequestProc = NULL;
 tExtensionStartupInfo* gDialogApi = NULL;
 char gLastFile[PATH_MAX];
@@ -54,15 +53,6 @@ gboolean UnixTimeToFileTime(unsigned long mtime, LPFILETIME ft)
 	ft->dwHighDateTime = ll >> 32;
 	return TRUE;
 }
-
-unsigned long FileTimeToUnixTime(LPFILETIME ft)
-{
-	gint64 ll = ft->dwHighDateTime;
-	ll = (ll << 32) | ft->dwLowDateTime;
-	ll = (ll - 116444736000000000) / 10000000;
-	return (unsigned long)ll;
-}
-
 static void errmsg(const char *msg)
 {
 	if (gDialogApi)
@@ -85,11 +75,22 @@ static void copy_progress_cb(goffset current_num_bytes, goffset total_num_bytes,
 	gProgressProc(gPluginNr, info->in_file, info->out_file, res);
 }
 
-static gchar* get_delobject(gchar *filename)
+static GFile *filename_to_gfile(char *filename)
 {
-	gchar *result = NULL;
+	GFile *result = NULL;
+	GUri *uri = g_uri_build(G_URI_FLAGS_NONE, "trash", NULL, NULL, -1, filename, NULL, NULL);
+	char *string = g_uri_to_string(uri);
+	result = g_file_new_for_uri(string);
+	g_uri_unref(uri);
+	g_free(string);
+	return result;
+}
+
+static GFile *get_delobject(gchar *filename)
+{
+	GFile *result = NULL;
 	gchar **split = g_strsplit(filename, "/", -1);
-	result = g_strdup_printf("trash:///%s", split[1]);
+	result = filename_to_gfile(split[1]);
 	g_strfreev(split);
 	return result;
 }
@@ -97,11 +98,7 @@ static gchar* get_delobject(gchar *filename)
 static gboolean restore_from_trash(gchar *filename)
 {
 	GError *err = NULL;
-
-	gchar *uri = get_delobject(filename);
-	GFile *src = g_file_new_for_uri(uri);
-	g_free(uri);
-
+	GFile *src = get_delobject(filename);
 	GFileInfo *info = g_file_query_info(src, "standard::*,trash::*", G_FILE_QUERY_INFO_NOFOLLOW_SYMLINKS, NULL, NULL);
 
 	if (info)
@@ -155,9 +152,7 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 	{
 		SendDlgMsg(pDlg, "lblDelPath", DM_SETTEXT, (intptr_t)_("Original Path:"), 0);
 		SendDlgMsg(pDlg, "lblDelDateDscr", DM_SETTEXT, (intptr_t)_("Deletion Date:"), 0);
-		gchar *uri = get_delobject(gLastFile);
-		GFile *src = g_file_new_for_uri(uri);
-		g_free(uri);
+		GFile *src = get_delobject(gLastFile);
 		GFileInfo *info = g_file_query_info(src, "standard::*,time::*,trash::*", G_FILE_QUERY_INFO_NOFOLLOW_SYMLINKS, NULL, NULL);
 		const char *path = g_file_info_get_attribute_byte_string(info, G_FILE_ATTRIBUTE_TRASH_ORIG_PATH);
 		SendDlgMsg(pDlg, "edName", DM_SETTEXT, (intptr_t)g_file_info_get_display_name(info), 0);
@@ -257,7 +252,6 @@ int DCPCALL FsInit(int PluginNr, tProgressProc pProgressProc, tLogProc pLogProc,
 {
 	gPluginNr = PluginNr;
 	gProgressProc = pProgressProc;
-	gLogProc = pLogProc;
 	gRequestProc = pRequestProc;
 
 	return 0;
@@ -272,9 +266,7 @@ HANDLE DCPCALL FsFindFirst(char* Path, WIN32_FIND_DATAA *FindData)
 	if (dirdata == NULL)
 		return (HANDLE)(-1);
 
-	gchar *uri = g_strdup_printf("trash://%s", Path);
-	dirdata->gfile = g_file_new_for_uri(uri);
-	g_free(uri);
+	dirdata->gfile = filename_to_gfile(Path);
 
 	if (!G_IS_OBJECT(dirdata->gfile))
 	{
@@ -359,9 +351,7 @@ BOOL DCPCALL FsMkDir(char* Path)
 
 BOOL DCPCALL FsRemoveDir(char* RemoteName)
 {
-	gchar *uri = g_strdup_printf("trash://%s", RemoteName);
-	GFile *gfile = g_file_new_for_uri(uri);
-	g_free(uri);
+	GFile *gfile = filename_to_gfile(RemoteName);
 	g_file_delete(gfile, NULL, NULL);
 	g_object_unref(gfile);
 
@@ -370,9 +360,7 @@ BOOL DCPCALL FsRemoveDir(char* RemoteName)
 
 BOOL DCPCALL FsDeleteFile(char* RemoteName)
 {
-	gchar *uri = g_strdup_printf("trash://%s", RemoteName);
-	GFile *gfile = g_file_new_for_uri(uri);
-	g_free(uri);
+	GFile *gfile = filename_to_gfile(RemoteName);
 	g_file_delete(gfile, NULL, NULL);
 	g_object_unref(gfile);
 
@@ -387,19 +375,16 @@ int DCPCALL FsGetFile(char* RemoteName, char* LocalName, int CopyFlags, RemoteIn
 	if (gProgressProc(gPluginNr, RemoteName, LocalName, 0))
 		return FS_FILE_USERABORT;
 
+	if (CopyFlags == 0 && g_file_test(LocalName, G_FILE_TEST_EXISTS))
+		return FS_FILE_EXISTS;
+
 	tCopyInfo *info = g_new0(tCopyInfo, 1);
 
-	info->in_file = g_strdup_printf("trash://%s", RemoteName);
-	info->out_file = g_strdup(LocalName);
+	g_strlcpy(info->in_file, RemoteName, PATH_MAX);
+	g_strlcpy(info->out_file, LocalName, PATH_MAX);
 
-	if (CopyFlags == 0 && g_file_test(info->out_file, G_FILE_TEST_EXISTS))
-	{
-		g_free(info);
-		return FS_FILE_EXISTS;
-	}
-
-	GFile *src = g_file_new_for_uri(info->in_file);
-	GFile *dest = g_file_new_for_path(info->out_file);
+	GFile *src = filename_to_gfile(RemoteName);
+	GFile *dest = g_file_new_for_path(LocalName);
 
 	if (!g_file_copy(src, dest, G_FILE_COPY_OVERWRITE | G_FILE_COPY_NOFOLLOW_SYMLINKS | G_FILE_COPY_ALL_METADATA, NULL, copy_progress_cb, (gpointer)info, &err))
 	{
@@ -414,8 +399,6 @@ int DCPCALL FsGetFile(char* RemoteName, char* LocalName, int CopyFlags, RemoteIn
 
 	g_object_unref(src);
 	g_object_unref(dest);
-	g_free(info->in_file);
-	g_free(info->out_file);
 	g_free(info);
 
 	return result;
@@ -469,10 +452,8 @@ int DCPCALL FsContentGetValue(char* FileName, int FieldIndex, int UnitIndex, voi
 		g_free(temp);
 	}
 
-	gchar *uri = g_strdup_printf("trash:///%s", split[1]);
+	GFile *src = filename_to_gfile(split[1]);
 	g_strfreev(split);
-	GFile *src = g_file_new_for_uri(uri);
-	g_free(uri);
 
 	GFileInfo *info = g_file_query_info(src, "trash::*", G_FILE_QUERY_INFO_NOFOLLOW_SYMLINKS, NULL, NULL);
 
