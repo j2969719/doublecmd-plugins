@@ -78,10 +78,21 @@ static void copy_progress_cb(goffset current_num_bytes, goffset total_num_bytes,
 static GFile *filename_to_gfile(char *filename)
 {
 	GFile *result = NULL;
+	char *string = NULL;
+
+#ifdef GLIB_VERSION_2_66
 	GUri *uri = g_uri_build(G_URI_FLAGS_NONE, "trash", NULL, NULL, -1, filename, NULL, NULL);
-	char *string = g_uri_to_string(uri);
-	result = g_file_new_for_uri(string);
+	string = g_uri_to_string(uri);
 	g_uri_unref(uri);
+#else
+
+	if (filename[0] == '/')
+		string = g_strdup_printf("trash://%s", filename);
+	else
+		string = g_strdup_printf("trash:///%s", filename);
+
+#endif
+	result = g_file_new_for_uri(string);
 	g_free(string);
 	return result;
 }
