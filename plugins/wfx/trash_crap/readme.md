@@ -2,7 +2,7 @@ trash_crap
 ========
 View trash folder.
 
-![plug-preview](https://i.imgur.com/vgFbui7.png)
+![plug-preview](https://i.imgur.com/vzhcG3q.png)
 
 ## Compatibility
 - `doublecmd-gtk2`

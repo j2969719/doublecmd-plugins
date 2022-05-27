@@ -2,7 +2,7 @@ proclst
 ========
 View a list of running processes.
 
-![plug-preview](https://i.imgur.com/ULFer1a.png)
+![plug-preview](https://i.imgur.com/V3yK9as.png)
 
 ## Compatibility
 - `doublecmd-gtk2`

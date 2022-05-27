@@ -219,7 +219,8 @@ void DCPCALL ListSetDefaultParams(ListDefaultParamStruct* dps)
 
 	if (size == 0)
 	{
-		font = QFontDatabase::systemFont(QFontDatabase::FixedFont);
+		//font = QFontDatabase::systemFont(QFontDatabase::FixedFont);
+		font.setFamily("mono");
 		size = 12;
 		settings.setValue("synthighl/fontsize", 12);
 		settings.setValue("synthighl/font", font.family());

@@ -137,7 +137,8 @@ void DCPCALL ListSetDefaultParams(ListDefaultParamStruct* dps)
 
 	if (size == 0)
 	{
-		font = QFontDatabase::systemFont(QFontDatabase::FixedFont);
+		//font = QFontDatabase::systemFont(QFontDatabase::FixedFont);
+		font.setFamily("mono");
 		size = 12;
 		settings.setValue("fileinfo/fontsize", 12);
 		settings.setValue("fileinfo/font", font.family());
