@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-05-16 22:32+0300\n"
-"PO-Revision-Date: 2022-05-16 22:36+0300\n"
+"POT-Creation-Date: 2022-05-27 22:33+0300\n"
+"PO-Revision-Date: 2022-05-27 22:35+0300\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "Language: ru\n"
@@ -359,28 +359,39 @@ msgstr "Доступ запрещен"
 msgid "Empty directory"
 msgstr "Пустой каталог"
 
-#: ../wfx/trash_crap/src/plugin.c:109
+#: ../wfx/trash_crap/src/plugin.c:120
 #, c-format
 msgid "Restore %s from trash?"
 msgstr "Восстановить %s из корзины?"
 
-#: ../wfx/trash_crap/src/plugin.c:124
+#: ../wfx/trash_crap/src/plugin.c:135
 msgid "Already exists, overwrite?"
 msgstr "Уже существует. Перезаписать?"
 
-#: ../wfx/trash_crap/src/plugin.c:156
+#: ../wfx/trash_crap/src/plugin.c:153 ../wfx/trash_crap/src/plugin.c:185
+msgid "Failed to get information about the removed object."
+msgstr "Не удалось получить информацию об удаленном объекте."
+
+#: ../wfx/trash_crap/src/plugin.c:168
 msgid "Original Path:"
 msgstr "Оригинальный путь:"
 
-#: ../wfx/trash_crap/src/plugin.c:157
+#: ../wfx/trash_crap/src/plugin.c:169
 msgid "Deletion Date:"
 msgstr "Дата удаления:"
 
-#: ../wfx/trash_crap/src/plugin.c:545
+#: ../wfx/trash_crap/src/plugin.c:177 ../wfx/trash_crap/src/plugin.c:178
+#: ../wfx/trash_crap/src/plugin.c:179 ../wfx/trash_crap/src/plugin.c:180
+#: ../wfx/trash_crap/src/plugin.c:181 ../wfx/trash_crap/src/plugin.c:182
+#: ../wfx/trash_crap/src/plugin.c:183 ../wfx/trash_crap/src/plugin.c:184
+msgid "Unknown"
+msgstr "Неизвесто"
+
+#: ../wfx/trash_crap/src/plugin.c:560
 msgid "Path"
 msgstr "Путь"
 
-#: ../wfx/trash_crap/src/plugin.c:553
+#: ../wfx/trash_crap/src/plugin.c:568
 msgid "Trash"
 msgstr "Корзина"
 

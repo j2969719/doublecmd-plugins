@@ -85,11 +85,14 @@ static GFile *filename_to_gfile(char *filename)
 	string = g_uri_to_string(uri);
 	g_uri_unref(uri);
 #else
+	char *temp = g_uri_escape_string(filename, "/", TRUE);
 
-	if (filename[0] == '/')
-		string = g_strdup_printf("trash://%s", filename);
+	if (temp[0] == '/')
+		string = g_strdup_printf("trash://%s", temp);
 	else
-		string = g_strdup_printf("trash:///%s", filename);
+		string = g_strdup_printf("trash:///%s", temp);
+
+	g_free(temp);
 
 #endif
 	result = g_file_new_for_uri(string);
@@ -147,6 +150,7 @@ static gboolean restore_from_trash(gchar *filename)
 	}
 	else
 	{
+		errmsg(_("Failed to get information about the removed object."));
 		g_object_unref(src);
 		return FALSE;
 	}
@@ -165,42 +169,61 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 		SendDlgMsg(pDlg, "lblDelDateDscr", DM_SETTEXT, (intptr_t)_("Deletion Date:"), 0);
 		GFile *src = get_delobject(gLastFile);
 		GFileInfo *info = g_file_query_info(src, "standard::*,time::*,trash::*", G_FILE_QUERY_INFO_NOFOLLOW_SYMLINKS, NULL, NULL);
-		const char *path = g_file_info_get_attribute_byte_string(info, G_FILE_ATTRIBUTE_TRASH_ORIG_PATH);
-		SendDlgMsg(pDlg, "edName", DM_SETTEXT, (intptr_t)g_file_info_get_display_name(info), 0);
-		SendDlgMsg(pDlg, "edPath", DM_SETTEXT, (intptr_t)path, 0);
-		const char *date = g_file_info_get_attribute_string(info, G_FILE_ATTRIBUTE_TRASH_DELETION_DATE);
-		SendDlgMsg(pDlg, "lblDelDate", DM_SETTEXT, (intptr_t)date, 0);
-		gchar *size = g_format_size(g_file_info_get_size(info));
-		SendDlgMsg(pDlg, "lblSize", DM_SETTEXT, (intptr_t)size, 0);
-		const char *content = g_file_info_get_content_type(info);
-		gchar *descr = g_content_type_get_description(content);
-		SendDlgMsg(pDlg, "lblType", DM_SETTEXT, (intptr_t)descr, 0);
-		g_free(descr);
-		const char *target = g_file_info_get_symlink_target(info);
 
-		if (target)
+		if (!info)
 		{
-			SendDlgMsg(pDlg, "lblInfo2", DM_SHOWITEM, 1, 0);
-			SendDlgMsg(pDlg, "edSymlink", DM_SHOWITEM, 1, 0);
-			SendDlgMsg(pDlg, "edSymlink", DM_SETTEXT, (intptr_t)target, 0);
+			SendDlgMsg(pDlg, "btnRestore", DM_ENABLE, 0, 0);
+			SendDlgMsg(pDlg, "edPath", DM_ENABLE, 0, 0);
+			SendDlgMsg(pDlg, "edName", DM_SETTEXT, (intptr_t)_("Unknown"), 0);
+			SendDlgMsg(pDlg, "edPath", DM_SETTEXT, (intptr_t)_("Unknown"), 0);
+			SendDlgMsg(pDlg, "lblDelDate", DM_SETTEXT, (intptr_t)_("Unknown"), 0);
+			SendDlgMsg(pDlg, "lblSize", DM_SETTEXT, (intptr_t)_("Unknown"), 0);
+			SendDlgMsg(pDlg, "lblType", DM_SETTEXT, (intptr_t)_("Unknown"), 0);
+			SendDlgMsg(pDlg, "lblModtime", DM_SETTEXT, (intptr_t)_("Unknown"), 0);
+			SendDlgMsg(pDlg, "lblAccess", DM_SETTEXT, (intptr_t)_("Unknown"), 0);
+			SendDlgMsg(pDlg, "lblChange", DM_SETTEXT, (intptr_t)_("Unknown"), 0);
+			errmsg(_("Failed to get information about the removed object."));
+		}
+		else
+		{
+			const char *path = g_file_info_get_attribute_byte_string(info, G_FILE_ATTRIBUTE_TRASH_ORIG_PATH);
+			SendDlgMsg(pDlg, "edName", DM_SETTEXT, (intptr_t)g_file_info_get_display_name(info), 0);
+			SendDlgMsg(pDlg, "edPath", DM_SETTEXT, (intptr_t)path, 0);
+			const char *date = g_file_info_get_attribute_string(info, G_FILE_ATTRIBUTE_TRASH_DELETION_DATE);
+			SendDlgMsg(pDlg, "lblDelDate", DM_SETTEXT, (intptr_t)date, 0);
+			gchar *size = g_format_size(g_file_info_get_size(info));
+			SendDlgMsg(pDlg, "lblSize", DM_SETTEXT, (intptr_t)size, 0);
+			const char *content = g_file_info_get_content_type(info);
+			gchar *descr = g_content_type_get_description(content);
+			SendDlgMsg(pDlg, "lblType", DM_SETTEXT, (intptr_t)descr, 0);
+			g_free(descr);
+			const char *target = g_file_info_get_symlink_target(info);
+
+			if (target)
+			{
+				SendDlgMsg(pDlg, "lblInfo2", DM_SHOWITEM, 1, 0);
+				SendDlgMsg(pDlg, "edSymlink", DM_SHOWITEM, 1, 0);
+				SendDlgMsg(pDlg, "edSymlink", DM_SETTEXT, (intptr_t)target, 0);
+			}
+
+			guint64 unix_time = g_file_info_get_attribute_uint64(info, G_FILE_ATTRIBUTE_TIME_MODIFIED);
+			gchar *datetime = g_date_time_format(g_date_time_new_from_unix_local(unix_time), "%Y-%m-%dT%H:%M:%S");
+			SendDlgMsg(pDlg, "lblModtime", DM_SETTEXT, (intptr_t)datetime, 0);
+			g_free(datetime);
+			unix_time = g_file_info_get_attribute_uint64(info, G_FILE_ATTRIBUTE_TIME_ACCESS);
+			datetime = g_date_time_format(g_date_time_new_from_unix_local(unix_time), "%Y-%m-%dT%H:%M:%S");
+			SendDlgMsg(pDlg, "lblAccess", DM_SETTEXT, (intptr_t)datetime, 0);
+			g_free(datetime);
+			unix_time = g_file_info_get_attribute_uint64(info, G_FILE_ATTRIBUTE_TIME_CHANGED);
+			datetime = g_date_time_format(g_date_time_new_from_unix_local(unix_time), "%Y-%m-%dT%H:%M:%S");
+			SendDlgMsg(pDlg, "lblChange", DM_SETTEXT, (intptr_t)datetime, 0);
+			g_free(datetime);
+			g_object_unref(info);
 		}
 
-		guint64 unix_time = g_file_info_get_attribute_uint64(info, G_FILE_ATTRIBUTE_TIME_MODIFIED);
-		gchar *datetime = g_date_time_format(g_date_time_new_from_unix_local(unix_time), "%Y-%m-%dT%H:%M:%S");
-		SendDlgMsg(pDlg, "lblModtime", DM_SETTEXT, (intptr_t)datetime, 0);
-		g_free(datetime);
-		unix_time = g_file_info_get_attribute_uint64(info, G_FILE_ATTRIBUTE_TIME_ACCESS);
-		datetime = g_date_time_format(g_date_time_new_from_unix_local(unix_time), "%Y-%m-%dT%H:%M:%S");
-		SendDlgMsg(pDlg, "lblAccess", DM_SETTEXT, (intptr_t)datetime, 0);
-		g_free(datetime);
-		unix_time = g_file_info_get_attribute_uint64(info, G_FILE_ATTRIBUTE_TIME_CHANGED);
-		datetime = g_date_time_format(g_date_time_new_from_unix_local(unix_time), "%Y-%m-%dT%H:%M:%S");
-		SendDlgMsg(pDlg, "lblChange", DM_SETTEXT, (intptr_t)datetime, 0);
-		g_free(datetime);
-
-		g_object_unref(info);
 		g_object_unref(src);
 	}
+
 	break;
 
 	case DN_CLICK:
