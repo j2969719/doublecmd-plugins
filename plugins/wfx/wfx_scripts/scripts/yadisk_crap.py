@@ -13,6 +13,7 @@ import yadisk
 from yadisk import YaDisk
 
 verb = sys.argv[1]
+scr = os.path.basename(__file__)
 auth_token = None
 try:
 	auth_token = os.environ['DC_WFX_SCRIPT_DATA']
@@ -22,14 +23,18 @@ conf = os.path.join(os.path.dirname(os.environ['COMMANDER_INI']), 'j2969719.json
 try:
 	with open(conf) as f:
 		obj = json.loads(f.read())
+		if not scr in obj:
+			obj[scr] = {}
+			obj[scr]['app_id'] = None
+			obj[scr]['secret'] = None
+			obj[scr]['connections'] = {}
 		f.close()
 except FileNotFoundError:
-	obj = json.loads('{ "yadisk_crap.py" : { "connections" : {}, "app_id" : null, "secret" : null } }')
+	obj = json.loads('{ ' + scr + ' : { "connections" : {}, "app_id" : null, "secret" : null } }')
 	with open(conf, 'w') as f:
 		json.dump(obj, f)
 		f.close()
-y = YaDisk(id=obj['yadisk_crap.py']['app_id'], secret=obj['yadisk_crap.py']['secret'], token=auth_token)
-
+y = YaDisk(id=obj[scr]['app_id'], secret=obj[scr]['secret'], token=auth_token)
 
 def save_obj():
 	with open(conf, 'w') as f:
@@ -37,23 +42,23 @@ def save_obj():
 		f.close()
 
 def size_str(size):
-    for unit in ["", "K", "M", "G", "T"]:
-        if abs(size) < 1024:
-            return "{:.1f} {}".format(size, unit)
-        size /= 1024
-    return str(size)
+	for unit in ["", "K", "M", "G", "T"]:
+		if abs(size) < 1024:
+			return "{:.1f} {}".format(size, unit)
+		size /= 1024
+	return str(size)
 
 
 def vfs_init():
 	print('Fs_Request_Options')
-	if not 'app_id' in obj['yadisk_crap.py'] or obj['yadisk_crap.py']['app_id'] is None:
+	if not 'app_id' in obj[scr] or obj[scr]['app_id'] is None:
 		print('client_id')
-	if not 'secret' in obj['yadisk_crap.py'] or obj['yadisk_crap.py']['secret'] is None:
+	if not 'secret' in obj[scr] or obj[scr]['secret'] is None:
 		print('secret')
 	
-	if 'connections' in obj['yadisk_crap.py'] and obj['yadisk_crap.py']['connections'] != {}:
+	if 'connections' in obj[scr] and obj[scr]['connections'] != {}:
 		init_str = 'Fs_MultiChoice Connection\t'
-		for element in obj['yadisk_crap.py']['connections']:
+		for element in obj[scr]['connections']:
 			init_str = init_str + str(element) + '\t'
 		init_str = init_str + '<ADD>'
 		print(init_str)
@@ -65,11 +70,11 @@ def vfs_setopt(option, value):
 	if value == '':
 		sys.exit(1)
 	elif option == 'client_id':
-		obj['yadisk_crap.py']['app_id'] = value
+		obj[scr]['app_id'] = value
 		save_obj()
 		sys.exit()
 	elif option == 'secret':
-		obj['yadisk_crap.py']['secret'] = value
+		obj[scr]['secret'] = value
 		save_obj()
 		sys.exit()
 	elif option == 'Connection':
@@ -81,30 +86,30 @@ def vfs_setopt(option, value):
 			print('Code')
 			sys.exit()
 		elif not value is None:
-			if value in obj['yadisk_crap.py']['connections']:
-				print('Fs_Set_DC_WFX_SCRIPT_DATA ' + obj['yadisk_crap.py']['connections'][value]['token'])
+			if value in obj[scr]['connections']:
+				print('Fs_Set_DC_WFX_SCRIPT_DATA ' + obj[scr]['connections'][value]['token'])
 			sys.exit()
 	elif option == 'Name':
-		obj['yadisk_crap.py']['pending'] = value
+		obj[scr]['pending'] = value
 		save_obj()
 		sys.exit()
 	elif option == 'Code':
-		if not 'pending' in obj['yadisk_crap.py']:
+		if not 'pending' in obj[scr]:
 			sys.exit(1)
 		try:
 			r = y.get_token(value)
 		except yadisk.exceptions.BadRequestError:
 			print("Fs_Info_Message Bad code")
-			del obj['yadisk_crap.py']['pending']
+			del obj[scr]['pending']
 			save_obj()
 			sys.exit(1)
 		y.token = r.access_token
 		if y.check_token() == True:
-			name = obj['yadisk_crap.py']['pending']
+			name = obj[scr]['pending']
 			if not name is None:
-				obj['yadisk_crap.py']['connections'][name] = {}
-				obj['yadisk_crap.py']['connections'][name]['token'] = r.access_token
-		del obj['yadisk_crap.py']['pending']
+				obj[scr]['connections'][name] = {}
+				obj[scr]['connections'][name]['token'] = r.access_token
+		del obj[scr]['pending']
 		save_obj()
 		print('Fs_Set_DC_WFX_SCRIPT_DATA ' + r.access_token)
 		sys.exit()
