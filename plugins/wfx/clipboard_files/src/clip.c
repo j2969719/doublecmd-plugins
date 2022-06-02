@@ -81,20 +81,16 @@ static void UpdateClipboardText(void)
 {
 	gsize length;
 	gchar **files = g_key_file_get_keys(gKeyFile, GROUP_NAME, &length, NULL);
-	GString *urilist = g_string_new(NULL);
+	GString *filelist = g_string_new(NULL);
 
 	for (gsize i = 0; i < length; i++)
 	{
 		gchar *filepath = g_key_file_get_string(gKeyFile, GROUP_NAME, files[i], NULL);
-		gchar *temp = g_filename_to_uri(filepath, NULL, NULL);
-		gchar *uri = g_uri_unescape_string(temp, NULL);
-		g_string_append_printf(urilist, "%s\n", uri);
+		g_string_append_printf(filelist, "%s\n", filepath);
 		g_free(filepath);
-		g_free(uri);
-		g_free(temp);
 	}
 
-	gchar *list = g_string_free(urilist, FALSE);
+	gchar *list = g_string_free(filelist, FALSE);
 	gtk_clipboard_set_text(gClipboard, list, -1);
 	g_free(list);
 }
