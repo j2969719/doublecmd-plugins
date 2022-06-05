@@ -565,7 +565,7 @@ BOOL DCPCALL FsContentGetDefaultView(char* ViewContents, char* ViewHeaders, char
 
 void DCPCALL FsGetDefRootName(char* DefRootName, int maxlen)
 {
-	g_strlcpy(DefRootName, _("Trash"), maxlen - 1);
+	g_strlcpy(DefRootName, _("Trash (WFX)"), maxlen - 1);
 }
 
 void DCPCALL ExtensionInitialize(tExtensionStartupInfo* StartupInfo)

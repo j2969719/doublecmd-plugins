@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-05-27 22:33+0300\n"
+"POT-Creation-Date: 2022-06-05 17:31+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -104,7 +104,7 @@ msgstr ""
 #: ../wlx/syntax-highlighting_qt/src/plugin.cpp:151
 #: ../wlx/wlxwebkit_qt5_crap/src/wlxwebkit.cpp:111
 #: ../wlx/fileinfo/src/fileinfo.c:371 ../wlx/mimescript/src/mimescriptwlx.c:286
-#: ../wlx/wlxwebkit_qt5/src/wlxwebkit.cpp:57
+#: ../wlx/wlxwebkit_qt5/src/wlxwebkit.cpp:164
 #: ../wlx/md4c_webkit_qt5/src/plugin.cpp:90
 #, c-format
 msgid "\"%s\" not found!"
@@ -383,7 +383,7 @@ msgid "Path"
 msgstr ""
 
 #: ../wfx/trash_crap/src/plugin.c:568
-msgid "Trash"
+msgid "Trash (WFX)"
 msgstr ""
 
 #: ../dsx/git_untracked/src/plugin.c:57 ../dsx/pacman_pkg_list/src/plugin.c:71
