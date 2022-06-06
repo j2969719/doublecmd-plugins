@@ -55,7 +55,7 @@ def get_report(src):
 		if 'positives' in response['results']:
 			obj[scr]['files'][name]['size'] = str(response['results']['positives'])
 		save_obj()
-	if response['response_code'] != 200:
+	if response['response_code'] != 200 or not 'scans' in response:
 		response['results']['show_msgdlg'] = True
 	return response['results']
 
@@ -92,6 +92,9 @@ def vfs_list(path):
 
 def vfs_getfile(src, dst):
 	data = get_report(src)
+	if  data['response_code'] < 0 and not data['verbose_msg'] is None:
+			print(data['verbose_msg'], file=sys.stderr)
+			sys.exit(1)
 	if not 'scans' in data:
 		sys.exit(1)
 	with open(dst, 'w') as f:
@@ -103,6 +106,8 @@ def vfs_getfile(src, dst):
 				ver = ' '
 			if not data['scans'][av]['update'] is None:
 				upd = str(data['scans'][av]['update'])
+				if len(upd) == 8:
+					upd = upd[:4] + '-' + upd[4:6] + '-' + upd[6:]
 			else:
 				upd = ' '
 			if not data['scans'][av]['result'] is None:
@@ -134,14 +139,24 @@ def vfs_putfile(src, dst):
 	if 'results' in response:
 		obj[scr]['files'][name] = {}
 		obj[scr]['files'][name]['sha1'] = sha1
-		if 'scan_date' in response['results']:
-			obj[scr]['files'][name]['date'] = response['results']['scan_date']
+		obj[scr]['files'][name]['path'] = src
+		results = response['results']
+		if 'scan_date' in results:
+			obj[scr]['files'][name]['date'] = results['scan_date']
 		else:
-			vt.scan_file(src)
-		if 'positives' in response['results']:
-			obj[scr]['files'][name]['size'] = str(response['results']['positives'])
+			if info.st_size > 32000000:
+				print('file size limit is 32MB for scan', file=sys.stderr)
+				sys.exit(1)
+			response = vt.scan_file(src)
+			if not 'response_code' in response or response['response_code'] != 200:
+				print(json.dumps(response), file=sys.stderr)
+				sys.exit(1)
+		if 'positives' in results:
+			obj[scr]['files'][name]['size'] = str(results['positives'])
 		save_obj()
 		sys.exit()
+	elif 'error' in response:
+		print(response['error'], file=sys.stderr)
 	sys.exit(1)
 
 def vfs_rmfile(path):
@@ -166,6 +181,10 @@ def vfs_properties(path):
 		print('url\t' + data['permalink'])
 	if 'sha1' in data and not data['sha1'] is None:
 		print('SHA1\t' + data['sha1'])
+	name = os.path.basename(path)
+	data = obj[scr]['files'][name]
+	if 'path' in data and not data['path'] is None:
+		print('path\t' + data['path'])
 	sys.exit()
 
 def vfs_deinit():
