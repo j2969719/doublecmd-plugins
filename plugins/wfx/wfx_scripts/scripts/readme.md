@@ -242,12 +242,14 @@ The output to stduot will be processed in the same way as for the **init** comma
 ## localname
 `SCRIPT localname FILE`
 
-Specific for Temporary Panel API.
+_Used only by a plugin compiled with the Temporary Panel API (tpmpanel_wfx_scripts.wfx)._
 
 Called to get the real location of the virtual file. The script should print the local path to stdout.
 
 ## getfields
 `SCRIPT getfields`
+
+_Available only when plugin is compiled with `-D FIELDS_API`_
 
 Call to get a list of string fields to use in `Options -> Files views -> Columns -> Custom Columns`.
 The script should print a line-by-line list of supported fields to stdout.
@@ -256,5 +258,7 @@ Attention, the plugin calls all available scripts that set `Fs_GetSupportedField
 
 ## getvalue
 `SCRIPT getvalue FIELD FILE`
+
+_Available only when plugin is compiled with `-D FIELDS_API`_
 
 Call to get the value of a `FIELD` for a virtual `FILE`. The script should print the value to stdout.

@@ -55,7 +55,7 @@ def get_report(src):
 		if 'positives' in response['results']:
 			obj[scr]['files'][name]['size'] = str(response['results']['positives'])
 		save_obj()
-	if response['response_code'] != 200 or not 'scans' in response:
+	if response['response_code'] != 200 or not 'scans' in response['results']:
 		response['results']['show_msgdlg'] = True
 	return response['results']
 
@@ -172,7 +172,7 @@ def vfs_properties(path):
 	if 'show_msgdlg' in data or data['response_code'] < 0:
 		if not data['verbose_msg'] is None:
 			print('Fs_Info_Message ' + data['verbose_msg'])
-			sys.exit()
+		sys.exit()
 	fields=['scan_date', 'total', 'positives']
 	for field in fields:
 		if field in data and not data[field] is None:

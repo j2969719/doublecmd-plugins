@@ -1707,7 +1707,7 @@ BOOL DCPCALL FsDisconnect(char* DisconnectRoot)
 	return TRUE;
 }
 #endif
-
+#ifdef  FIELDS_API
 int DCPCALL FsContentGetSupportedField(int FieldIndex, char* FieldName, char* Units, int maxlen)
 {
 	if (FieldIndex == 0)
@@ -1794,7 +1794,7 @@ int DCPCALL FsContentGetValue(char* FileName, int FieldIndex, int UnitIndex, voi
 
 	return result;
 }
-
+#endif
 BOOL DCPCALL FsContentGetDefaultView(char* ViewContents, char* ViewHeaders, char* ViewWidths, char* ViewOptions, int maxlen)
 {
 	return FALSE;
