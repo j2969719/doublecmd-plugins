@@ -1,7 +1,23 @@
 #include <QtPdf>
 #include <QPdfView>
 #include <QtWidgets>
+
+#include <dlfcn.h>
+#include <libintl.h>
+#include <locale.h>
+
 #include "wlxplugin.h"
+
+#define _(STRING) gettext(STRING)
+#define GETTEXT_PACKAGE "plugins"
+
+#define CFG_CONTROLS PLUGNAME"/controls"
+#define CFG_SINGLEPAGE PLUGNAME"/single_page"
+#define CFG_FITTOWIDTH PLUGNAME"/fit_to_width"
+
+static bool gControls = true;
+static bool gSinglePage = false;
+static bool gFitToWidth = true;
 
 static void update_pagecount(QLabel *label, QPdfView *view)
 {
@@ -31,28 +47,28 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 	main->addWidget(controls);
 	main->addWidget(pdfView);
 
-	QAction *actFirst = new QAction(QIcon::fromTheme("go-first"), "First page", view);
+	QAction *actFirst = new QAction(QIcon::fromTheme("go-first"), _("First page"), view);
 	QObject::connect(actFirst, &QAction::triggered, [pdfView]()
 	{
 		pdfView->pageNavigation()->setCurrentPage(0);
 	});
 	controls->addAction(actFirst);
 
-	QAction *actPrev = new QAction(QIcon::fromTheme("go-previous"), "Previous page", view);
+	QAction *actPrev = new QAction(QIcon::fromTheme("go-previous"), _("Previous page"), view);
 	QObject::connect(actPrev, &QAction::triggered, [pdfView]()
 	{
 		pdfView->pageNavigation()->goToPreviousPage();
 	});
 	controls->addAction(actPrev);
 
-	QAction *actNext = new QAction(QIcon::fromTheme("go-next"), "Next page", view);
+	QAction *actNext = new QAction(QIcon::fromTheme("go-next"), _("Next page"), view);
 	QObject::connect(actNext, &QAction::triggered, [pdfView]()
 	{
 		pdfView->pageNavigation()->goToNextPage();
 	});
 	controls->addAction(actNext);
 
-	QAction *actLast = new QAction(QIcon::fromTheme("go-last"), "Last page", view);
+	QAction *actLast = new QAction(QIcon::fromTheme("go-last"), _("Last page"), view);
 	QObject::connect(actLast, &QAction::triggered, [pdfView]()
 	{
 		int pages = pdfView->pageNavigation()->pageCount();
@@ -73,9 +89,23 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 		update_pagecount(lblPages, pdfView);
 	});
 	controls->addWidget(lblPages);
+	QAction *actGoTo = new QAction(QIcon::fromTheme("go-jump"), _("Go to..."), view);
+	QObject::connect(actGoTo, &QAction::triggered, [pdfView]()
+	{
+		int pages = pdfView->pageNavigation()->pageCount();
+		int cur = pdfView->pageNavigation()->currentPage() + 1;
+
+		bool ret;
+		int page = QInputDialog::getInt(pdfView, "", _("Page number to go to:"), cur, 1, pages, 1, &ret);
+
+		if (ret)
+			pdfView->pageNavigation()->setCurrentPage(page - 1);
+	});
+	controls->addAction(actGoTo);
+
 	controls->addSeparator();
 
-	QAction *actZoomIn = new QAction(QIcon::fromTheme("zoom-in"), "Zoom In", view);
+	QAction *actZoomIn = new QAction(QIcon::fromTheme("zoom-in"), _("Zoom In"), view);
 	QObject::connect(actZoomIn, &QAction::triggered, [pdfView]()
 	{
 		if (pdfView->zoomMode() != QPdfView::CustomZoom)
@@ -85,7 +115,7 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 	});
 	controls->addAction(actZoomIn);
 
-	QAction *actZoomOut = new QAction(QIcon::fromTheme("zoom-out"), "Zoom Out", view);
+	QAction *actZoomOut = new QAction(QIcon::fromTheme("zoom-out"), _("Zoom Out"), view);
 	QObject::connect(actZoomOut, &QAction::triggered, [pdfView]()
 	{
 		if (pdfView->zoomMode() != QPdfView::CustomZoom)
@@ -95,7 +125,7 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 	});
 	controls->addAction(actZoomOut);
 
-	QAction *actZoomOrg = new QAction(QIcon::fromTheme("zoom-original"), "Normal Size", view);
+	QAction *actZoomOrg = new QAction(QIcon::fromTheme("zoom-original"), _("Original Size"), view);
 	QObject::connect(actZoomOrg, &QAction::triggered, [pdfView]()
 	{
 		if (pdfView->zoomMode() != QPdfView::CustomZoom)
@@ -107,7 +137,7 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 
 	controls->addSeparator();
 
-	QAction *actFit = new QAction(QIcon::fromTheme("zoom-fit-best"), "Fit", view);
+	QAction *actFit = new QAction(QIcon::fromTheme("zoom-fit-best"), _("Fit"), view);
 	actFit->setCheckable(true);
 	QObject::connect(actFit, &QAction::triggered, [pdfView]()
 	{
@@ -118,7 +148,7 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 	});
 	controls->addAction(actFit);
 
-	QAction *actPageMode = new QAction(QIcon::fromTheme("document-page-setup"), "Page Mode", view);
+	QAction *actPageMode = new QAction(QIcon::fromTheme("document-page-setup"), _("Page Mode"), view);
 	actPageMode->setCheckable(true);
 	QObject::connect(actPageMode, &QAction::triggered, [pdfView]()
 	{
@@ -131,19 +161,19 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 
 	controls->addSeparator();
 
-	QAction *actInfo = new QAction(QIcon::fromTheme("dialog-information"), "Info", view);
+	QAction *actInfo = new QAction(QIcon::fromTheme("dialog-information"), _("Info"), view);
 	QObject::connect(actInfo, &QAction::triggered, [pdfView]()
 	{
 		QString info;
 		QMap<QString, QPdfDocument::MetaDataField> fields;
-		fields["Author"] = QPdfDocument::Author;
-		fields["Title"] = QPdfDocument::Title;
-		fields["Subject"] = QPdfDocument::Subject;
-		fields["Producer"] = QPdfDocument::Producer;
-		fields["Creator"] = QPdfDocument::Creator;
-		fields["Keywords"] = QPdfDocument::Keywords;
-		fields["Creation Date"] = QPdfDocument::CreationDate;
-		fields["Modification Date"] = QPdfDocument::ModificationDate;
+		fields[_("Author")] = QPdfDocument::Author;
+		fields[_("Title")] = QPdfDocument::Title;
+		fields[_("Subject")] = QPdfDocument::Subject;
+		fields[_("Producer")] = QPdfDocument::Producer;
+		fields[_("Creator")] = QPdfDocument::Creator;
+		fields[_("Keywords")] = QPdfDocument::Keywords;
+		fields[_("Creation Date")] = QPdfDocument::CreationDate;
+		fields[_("Modification Date")] = QPdfDocument::ModificationDate;
 		QMapIterator<QString, QPdfDocument::MetaDataField> i(fields);
 
 		while (i.hasNext())
@@ -163,14 +193,25 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 		if (!info.isEmpty())
 			QMessageBox::information(pdfView, "", info);
 		else
-			QMessageBox::information(pdfView, "", "no suitable info available");
+			QMessageBox::information(pdfView, "", _("no suitable info available"));
 	});
 	controls->addAction(actInfo);
 
 	pdfView->setDocument(document);
-	pdfView->setPageMode(QPdfView::MultiPage);
+
+	if (gSinglePage)
+		pdfView->setPageMode(QPdfView::SinglePage);
+	else
+		pdfView->setPageMode(QPdfView::MultiPage);
+
+	if (gFitToWidth)
+		pdfView->setZoomMode(QPdfView::FitToWidth);
+
 	pdfView->setObjectName("pdf_view");
 	view->show();
+
+	if (!gControls)
+		controls->hide();
 
 	return view;
 }
@@ -218,4 +259,45 @@ void DCPCALL ListGetDetectString(char* DetectString, int maxlen)
 int DCPCALL ListSearchDialog(HWND ListWin, int FindNext)
 {
 	return LISTPLUGIN_OK;
+}
+
+void DCPCALL ListSetDefaultParams(ListDefaultParamStruct* dps)
+{
+	Dl_info dlinfo;
+	static char plg_path[PATH_MAX];
+	const char* loc_dir = "langs";
+
+	memset(&dlinfo, 0, sizeof(dlinfo));
+
+	if (dladdr(plg_path, &dlinfo) != 0)
+	{
+		strncpy(plg_path, dlinfo.dli_fname, PATH_MAX);
+		char *pos = strrchr(plg_path, '/');
+
+		if (pos)
+			strcpy(pos + 1, loc_dir);
+
+		setlocale(LC_ALL, "");
+		bindtextdomain(GETTEXT_PACKAGE, plg_path);
+		textdomain(GETTEXT_PACKAGE);
+	}
+
+	QFileInfo defini(QString::fromStdString(dps->DefaultIniName));
+	QString cfgpath = defini.absolutePath() + "/j2969719.ini";
+	QSettings settings(cfgpath, QSettings::IniFormat);
+
+	if (!settings.contains(CFG_CONTROLS))
+		settings.setValue(CFG_CONTROLS, gControls);
+	else
+		gControls = settings.value(CFG_CONTROLS).toBool();
+
+	if (!settings.contains(CFG_SINGLEPAGE))
+		settings.setValue(CFG_SINGLEPAGE, gSinglePage);
+	else
+		gSinglePage = settings.value(CFG_SINGLEPAGE).toBool();
+
+	if (!settings.contains(CFG_FITTOWIDTH))
+		settings.setValue(CFG_FITTOWIDTH, gFitToWidth);
+	else
+		gFitToWidth = settings.value(CFG_FITTOWIDTH).toBool();
 }

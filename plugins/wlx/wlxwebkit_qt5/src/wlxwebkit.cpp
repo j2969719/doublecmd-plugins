@@ -27,7 +27,10 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 
 	QHBoxLayout *controls = new QHBoxLayout(frmControls);
 	QWebView *webView = new QWebView(view);
-	main->setSpacing(0)
+	main->setSpacing(0);
+	main->setContentsMargins(1, 1, 1, 1);
+	main->addWidget(webView);
+	main->addWidget(frmControls);
 
 	QPushButton *btnPrev = new QPushButton(view);
 	btnPrev->setIcon(QApplication::style()->standardIcon(QStyle::SP_ArrowBack));

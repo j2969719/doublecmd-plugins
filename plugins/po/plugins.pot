@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-06-05 17:31+0300\n"
+"POT-Creation-Date: 2022-06-07 19:05+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -104,7 +104,7 @@ msgstr ""
 #: ../wlx/syntax-highlighting_qt/src/plugin.cpp:151
 #: ../wlx/wlxwebkit_qt5_crap/src/wlxwebkit.cpp:111
 #: ../wlx/fileinfo/src/fileinfo.c:371 ../wlx/mimescript/src/mimescriptwlx.c:286
-#: ../wlx/wlxwebkit_qt5/src/wlxwebkit.cpp:164
+#: ../wlx/wlxwebkit_qt5/src/wlxwebkit.cpp:166
 #: ../wlx/md4c_webkit_qt5/src/plugin.cpp:90
 #, c-format
 msgid "\"%s\" not found!"
@@ -132,25 +132,29 @@ msgid "Failed to fetch list of tables. Maybe DB is locked?"
 msgstr ""
 
 #: ../wlx/imagemagick/src/wlximagemagick.c:201
+#: ../wlx/qtpdfview_qt5/src/plugin.cpp:108
 #: ../wlx/gtkimgview_crap/src/gtkimgview.c:371
 #: ../wlx/gtkimgview/src/gtkimgview.c:220
 msgid "Zoom In"
 msgstr ""
 
 #: ../wlx/imagemagick/src/wlximagemagick.c:206
+#: ../wlx/qtpdfview_qt5/src/plugin.cpp:118
 #: ../wlx/gtkimgview_crap/src/gtkimgview.c:376
 #: ../wlx/gtkimgview/src/gtkimgview.c:225
 msgid "Zoom Out"
 msgstr ""
 
 #: ../wlx/imagemagick/src/wlximagemagick.c:211
+#: ../wlx/qtpdfview_qt5/src/plugin.cpp:128
 #: ../wlx/gtkimgview_crap/src/gtkimgview.c:381
 #: ../wlx/gtkimgview/src/gtkimgview.c:230
 msgid "Original Size"
 msgstr ""
 
 #: ../wlx/imagemagick/src/wlximagemagick.c:216
-#: ../wlx/wlxpview/src/wlxPView.c:421 ../wlx/wlxpview/src/wlxPView.c:422
+#: ../wlx/qtpdfview_qt5/src/plugin.cpp:140 ../wlx/wlxpview/src/wlxPView.c:421
+#: ../wlx/wlxpview/src/wlxPView.c:422
 #: ../wlx/gtkimgview_crap/src/gtkimgview.c:386
 #: ../wlx/gtkimgview/src/gtkimgview.c:235
 msgid "Fit"
@@ -206,6 +210,79 @@ msgstr ""
 msgid "Size"
 msgstr ""
 
+#: ../wlx/qtpdfview_qt5/src/plugin.cpp:50 ../wlx/wlxpview/src/wlxPView.c:372
+#: ../wlx/wlxpview/src/wlxPView.c:373
+msgid "First page"
+msgstr ""
+
+#: ../wlx/qtpdfview_qt5/src/plugin.cpp:57 ../wlx/wlxpview/src/wlxPView.c:378
+#: ../wlx/wlxpview/src/wlxPView.c:379
+msgid "Previous page"
+msgstr ""
+
+#: ../wlx/qtpdfview_qt5/src/plugin.cpp:64 ../wlx/wlxpview/src/wlxPView.c:384
+#: ../wlx/wlxpview/src/wlxPView.c:385
+msgid "Next page"
+msgstr ""
+
+#: ../wlx/qtpdfview_qt5/src/plugin.cpp:71 ../wlx/wlxpview/src/wlxPView.c:390
+#: ../wlx/wlxpview/src/wlxPView.c:391
+msgid "Last page"
+msgstr ""
+
+#: ../wlx/qtpdfview_qt5/src/plugin.cpp:92
+msgid "Go to..."
+msgstr ""
+
+#: ../wlx/qtpdfview_qt5/src/plugin.cpp:99
+msgid "Page number to go to:"
+msgstr ""
+
+#: ../wlx/qtpdfview_qt5/src/plugin.cpp:151
+msgid "Page Mode"
+msgstr ""
+
+#: ../wlx/qtpdfview_qt5/src/plugin.cpp:164 ../wlx/wlxpview/src/wlxPView.c:288
+#: ../wlx/wlxpview/src/wlxPView.c:435 ../wlx/wlxpview/src/wlxPView.c:436
+msgid "Info"
+msgstr ""
+
+#: ../wlx/qtpdfview_qt5/src/plugin.cpp:169
+msgid "Author"
+msgstr ""
+
+#: ../wlx/qtpdfview_qt5/src/plugin.cpp:170
+msgid "Title"
+msgstr ""
+
+#: ../wlx/qtpdfview_qt5/src/plugin.cpp:171
+msgid "Subject"
+msgstr ""
+
+#: ../wlx/qtpdfview_qt5/src/plugin.cpp:172
+msgid "Producer"
+msgstr ""
+
+#: ../wlx/qtpdfview_qt5/src/plugin.cpp:173
+msgid "Creator"
+msgstr ""
+
+#: ../wlx/qtpdfview_qt5/src/plugin.cpp:174
+msgid "Keywords"
+msgstr ""
+
+#: ../wlx/qtpdfview_qt5/src/plugin.cpp:175
+msgid "Creation Date"
+msgstr ""
+
+#: ../wlx/qtpdfview_qt5/src/plugin.cpp:176
+msgid "Modification Date"
+msgstr ""
+
+#: ../wlx/qtpdfview_qt5/src/plugin.cpp:196
+msgid "no suitable info available"
+msgstr ""
+
 #: ../wlx/wlxpview/src/wlxPView.c:139
 msgid "Scale ~x"
 msgstr ""
@@ -213,11 +290,6 @@ msgstr ""
 #: ../wlx/wlxpview/src/wlxPView.c:260 ../wlx/wlxpview/src/wlxPView.c:429
 #: ../wlx/wlxpview/src/wlxPView.c:430
 msgid "Text"
-msgstr ""
-
-#: ../wlx/wlxpview/src/wlxPView.c:288 ../wlx/wlxpview/src/wlxPView.c:435
-#: ../wlx/wlxpview/src/wlxPView.c:436
-msgid "Info"
 msgstr ""
 
 #: ../wlx/wlxpview/src/wlxPView.c:292
@@ -234,22 +306,6 @@ msgstr ""
 
 #: ../wlx/wlxpview/src/wlxPView.c:310
 msgid "metadata not found"
-msgstr ""
-
-#: ../wlx/wlxpview/src/wlxPView.c:372 ../wlx/wlxpview/src/wlxPView.c:373
-msgid "First page"
-msgstr ""
-
-#: ../wlx/wlxpview/src/wlxPView.c:378 ../wlx/wlxpview/src/wlxPView.c:379
-msgid "Previous page"
-msgstr ""
-
-#: ../wlx/wlxpview/src/wlxPView.c:384 ../wlx/wlxpview/src/wlxPView.c:385
-msgid "Next page"
-msgstr ""
-
-#: ../wlx/wlxpview/src/wlxPView.c:390 ../wlx/wlxpview/src/wlxPView.c:391
-msgid "Last page"
 msgstr ""
 
 #: ../wlx/gtksourceview/src/gtksourceview.c:52

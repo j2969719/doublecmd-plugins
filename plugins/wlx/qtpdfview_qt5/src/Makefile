@@ -4,7 +4,7 @@ LIBS= `pkg-config --cflags --libs Qt5PdfWidgets` -I../../../sdk
 PLUGNAME = $(shell basename $(realpath ..)).$(shell basename $(realpath ../..))
 
 all:
-		$(CC) $(CFLAGS) $(LIBS) plugin.cpp -o ../$(PLUGNAME)
+		$(CC) $(CFLAGS) $(LIBS) plugin.cpp -o ../$(PLUGNAME) -D'PLUGNAME="$(shell basename $(realpath ..))"'
 
 clean:
 		$(RM) ../$(PLUGNAME)
