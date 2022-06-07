@@ -1,6 +1,7 @@
 #include <QtPdf>
 #include <QWidget>
 #include <QPdfView>
+#include <QtWidgets>
 #include "wlxplugin.h"
 
 HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
@@ -12,11 +13,54 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 		delete document;
 		return NULL;
 	}
+	QFrame *view = new QFrame((QWidget*)ParentWin);
+	QFrame *frmControls = new QFrame(view);
+	view->setFrameStyle(QFrame::NoFrame);
+	frmControls->setFrameStyle(QFrame::NoFrame);
 
-	QPdfView *view = new QPdfView((QWidget*)ParentWin);
-	view->setDocument(document);
-	view->setPageMode(QPdfView::MultiPage);
-	view->setZoomMode(QPdfView::FitToWidth);
+		
+	QVBoxLayout *main = new QVBoxLayout(view);
+	QHBoxLayout *controls = new QHBoxLayout(frmControls);
+		
+	QPdfView *pdfView = new QPdfView(view);
+	main->setSpacing(0);
+	main->setMargin(0);
+	main->setContentsMargins(1,1,1,1);
+	main->addWidget(pdfView,15);
+	main->addWidget(frmControls,1);
+	  
+	QPushButton *btnZoomIn = new QPushButton(view);
+	btnZoomIn->setIcon(QIcon::fromTheme("zoom-in"));
+	QObject::connect(btnZoomIn, &QPushButton::clicked, [pdfView]()
+	{
+	  pdfView->setZoomFactor(pdfView->zoomFactor() + 0.05);
+	});
+	btnZoomIn->setFocusPolicy(Qt::NoFocus);
+	controls->addWidget(btnZoomIn);
+
+	QPushButton *btnZoomOut = new QPushButton(view);
+	btnZoomOut->setIcon(QIcon::fromTheme("zoom-out"));
+	QObject::connect(btnZoomOut, &QPushButton::clicked, [pdfView]()
+	{
+		pdfView->setZoomFactor(pdfView->zoomFactor() - 0.05);
+	});
+	btnZoomOut->setFocusPolicy(Qt::NoFocus);
+	controls->addWidget(btnZoomOut);
+
+	QPushButton *btnZoomOrg = new QPushButton(view);
+	btnZoomOrg->setIcon(QIcon::fromTheme("zoom-original"));
+	QObject::connect(btnZoomOrg, &QPushButton::clicked, [pdfView]()
+	{
+		pdfView->setZoomFactor(1);
+	});
+	btnZoomOrg->setFocusPolicy(Qt::NoFocus);
+	controls->addWidget(btnZoomOrg);
+	controls->addSpacing(10);
+
+
+	pdfView->setDocument(document);
+	pdfView->setPageMode(QPdfView::MultiPage);
+	//pdfView->setZoomMode(QPdfView::FitToWidth);
 
 	view->show();
 
