@@ -48,6 +48,7 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 	main->addWidget(pdfView);
 
 	QAction *actFirst = new QAction(QIcon::fromTheme("go-first"), _("First page"), view);
+	actFirst->setShortcut(QKeySequence::MoveToStartOfDocument);
 	QObject::connect(actFirst, &QAction::triggered, [pdfView]()
 	{
 		pdfView->pageNavigation()->setCurrentPage(0);
@@ -55,6 +56,7 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 	controls->addAction(actFirst);
 
 	QAction *actPrev = new QAction(QIcon::fromTheme("go-previous"), _("Previous page"), view);
+	actPrev->setShortcut(QKeySequence::MoveToPreviousPage);
 	QObject::connect(actPrev, &QAction::triggered, [pdfView]()
 	{
 		pdfView->pageNavigation()->goToPreviousPage();
@@ -62,6 +64,7 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 	controls->addAction(actPrev);
 
 	QAction *actNext = new QAction(QIcon::fromTheme("go-next"), _("Next page"), view);
+	actNext->setShortcut(QKeySequence::MoveToNextPage);
 	QObject::connect(actNext, &QAction::triggered, [pdfView]()
 	{
 		pdfView->pageNavigation()->goToNextPage();
@@ -69,6 +72,7 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 	controls->addAction(actNext);
 
 	QAction *actLast = new QAction(QIcon::fromTheme("go-last"), _("Last page"), view);
+	actLast->setShortcut(QKeySequence::MoveToEndOfDocument);
 	QObject::connect(actLast, &QAction::triggered, [pdfView]()
 	{
 		int pages = pdfView->pageNavigation()->pageCount();
@@ -90,6 +94,7 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 	});
 	controls->addWidget(lblPages);
 	QAction *actGoTo = new QAction(QIcon::fromTheme("go-jump"), _("Go to..."), view);
+	actGoTo->setShortcut(QKeySequence("Ctrl+G"));
 	QObject::connect(actGoTo, &QAction::triggered, [pdfView]()
 	{
 		int pages = pdfView->pageNavigation()->pageCount();
@@ -106,6 +111,7 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 	controls->addSeparator();
 
 	QAction *actZoomIn = new QAction(QIcon::fromTheme("zoom-in"), _("Zoom In"), view);
+	actZoomIn->setShortcut(QKeySequence::ZoomIn);
 	QObject::connect(actZoomIn, &QAction::triggered, [pdfView]()
 	{
 		if (pdfView->zoomMode() != QPdfView::CustomZoom)
@@ -116,6 +122,7 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 	controls->addAction(actZoomIn);
 
 	QAction *actZoomOut = new QAction(QIcon::fromTheme("zoom-out"), _("Zoom Out"), view);
+	actZoomOut->setShortcut(QKeySequence::ZoomOut);
 	QObject::connect(actZoomOut, &QAction::triggered, [pdfView]()
 	{
 		if (pdfView->zoomMode() != QPdfView::CustomZoom)
@@ -126,6 +133,7 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 	controls->addAction(actZoomOut);
 
 	QAction *actZoomOrg = new QAction(QIcon::fromTheme("zoom-original"), _("Original Size"), view);
+	actZoomOrg->setShortcut(QKeySequence("Ctrl+0"));
 	QObject::connect(actZoomOrg, &QAction::triggered, [pdfView]()
 	{
 		if (pdfView->zoomMode() != QPdfView::CustomZoom)
@@ -138,6 +146,7 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 	controls->addSeparator();
 
 	QAction *actFit = new QAction(QIcon::fromTheme("zoom-fit-best"), _("Fit"), view);
+	actFit->setShortcut(QKeySequence("Shift+M"));
 	actFit->setCheckable(true);
 	QObject::connect(actFit, &QAction::triggered, [pdfView]()
 	{
@@ -149,6 +158,7 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 	controls->addAction(actFit);
 
 	QAction *actPageMode = new QAction(QIcon::fromTheme("document-page-setup"), _("Page Mode"), view);
+	actPageMode->setShortcut(QKeySequence("Ctrl+M"));
 	actPageMode->setCheckable(true);
 	QObject::connect(actPageMode, &QAction::triggered, [pdfView]()
 	{
@@ -162,6 +172,7 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 	controls->addSeparator();
 
 	QAction *actInfo = new QAction(QIcon::fromTheme("dialog-information"), _("Info"), view);
+	actInfo->setShortcut(QKeySequence("Shift+F1"));
 	QObject::connect(actInfo, &QAction::triggered, [pdfView]()
 	{
 		QString info;
