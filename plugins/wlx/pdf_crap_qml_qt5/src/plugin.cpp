@@ -1,0 +1,1 @@
+../../imgview_crap_qml_qt5/src/plugin.cpp
