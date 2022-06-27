@@ -4,6 +4,8 @@ import os
 import sys
 os.environ["GDK_CORE_DEVICE_EVENTS"] = "1"
 
+import zipfile
+
 import xml.etree.ElementTree as ET
 
 import gi
@@ -12,7 +14,19 @@ gi.require_version('WebKit2', '4.0')
 from gi.repository import Gtk, GLib
 from gi.repository import WebKit2
 
-html = '<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"><html><head><title>View description</title><meta content="text/html; charset='
+data = ""
+
+html = '<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"><html><head><title>View description</title><meta http-equiv="Content-Type" content="text/html; charset='
+
+def CheckFile(d):
+    s = d.decode("ascii")
+    n1 = s.find("<?xml", 0)
+    if n1 == -1:
+        return "none"
+    n2 = s.find("encoding=", n1)
+    n1 = s.find('"', n2 + 11)
+    t = s[n2 + 10:n1]
+    return t.lower()
 
 def GetType(s):
     n1 = s.find("content-type=")
@@ -107,22 +121,55 @@ plug.construct(wid)
 view = WebKit2.WebView()
 plug.add(view)
 
-hfile = open(path, "rb")
-data = hfile.read(96)
-hfile.close()
-data = data.decode("ascii")
-n1 = data.find("<?xml", 0)
-if n1 == -1:
-    sys.exit(1)
-n2 = data.find("encoding=", n1)
-n1 = data.find('"', n2 + 11)
-tmp = data[n2 + 10:n1]
-en = tmp.lower()
-if en[1:8] == "windows-":
-    tmp = en.replace("windows-", "cp")
-hfile = open(path, "r", encoding=tmp)
-data = hfile.read()
-hfile.close()
+en = ""
+l = len(path)
+tmp = path[l - 4:l]
+e = tmp.lower()
+if e == ".fb2" or e == ".fbd":
+    hfile = open(path, "rb")
+    tmp = hfile.read(96)
+    hfile.close()
+    en = CheckFile(tmp)
+    if en == "none":
+        sys.exit(1)
+    else:
+        if en[1:8] == "windows-":
+            tmp = en.replace("windows-", "cp")
+            hfile = open(path, "r", encoding=tmp)
+        else:
+            hfile = open(path, "r", encoding=en)
+        data = hfile.read()
+        hfile.close()
+else:
+    if e == ".zip":
+        tmp = path[l - 8:l - 4]
+        if tmp.lower() != ".fb2":
+            sys.exit(1)
+    elif e !=  ".fbz":
+        sys.exit(1)
+    z = zipfile.ZipFile(path, "r")
+    for finfo in z.infolist():
+        l = len(finfo.filename)
+        tmp = finfo.filename[l - 4:l]
+        e = tmp.lower()
+        if e == ".fb2" or e == "fbd":
+            hfile = z.open(finfo.filename, "r")
+            tmp = hfile.read(96)
+            hfile.close()
+            en = CheckFile(tmp)
+            if en == "none":
+                z.close()
+                sys.exit(1)
+            else:
+                hfile = z.open(finfo.filename, "r")
+                if en[1:8] == "windows-":
+                    tmp = en.replace("windows-", "cp")
+                    data = hfile.read().decode(encoding=tmp)
+                else:
+                    data = hfile.read().decode(encoding=en)
+                hfile.close()
+            break
+    z.close()
 
 html = html + en + '"></head><body><div>'
 
