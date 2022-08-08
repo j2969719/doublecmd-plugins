@@ -1,10 +1,11 @@
 -- xcfinfowdx.lua (cross-platform)
--- 2021.10.20
+-- 2022.08.08
 --[[
 Getting some info from XCF files (GIMP native image format).
-  Documentation: https://gitlab.gnome.org/GNOME/gimp/-/blob/master/devel-docs/xcf.txt
-  Last check: 2021.09.18 (2.10.28)
-  Minimal GIMP version: from gimp-devel.
+  Documentation: /devel-docs/xcf.txt from source.
+  Last check: 2022.08.08 (2.10.32)
+  Minimal GIMP version: from gimp-devel
+    https://gitlab.gnome.org/GNOME/gimp/-/blob/master/devel-docs/specifications/xcf.txt
 
 See list of supported fields in table "fields".
 
@@ -33,7 +34,9 @@ local am = {
 [3] = "2.7.1 (2010-06-29)",
 [4] = "2.10.0 (2018-04-27)",
 [14] = "3.0.0",
-[15] = "3.0.0"
+[15] = "3.0.0",
+[16] = "3.0.0",
+[17] = "3.0.0"
 }
 local ap4 = {
 [0] = "8-bit gamma integer",
