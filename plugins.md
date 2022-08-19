@@ -116,6 +116,9 @@ Checking that the file extension matches the file type (by the file signatures) 
 - [checkfilenamewdx.lua](plugins/wdx/scripts/checkfilenamewdx.lua) *(cross platform)*<br>
 Check filename limitations and recommendations, path lenght and other, see description in the beginning of script.
 
+- [checkthumbnailswdx.lua](plugins/wdx/scripts/checkthumbnailswdx.lua) *(cross platform)*<br>
+Getting some information from thumbnails files: created by Double Commander (Windows or Linux) or the system generator of thumbnails (Linux).
+
 - [crapxmlwdx.lua](plugins/wdx/scripts/crapxmlwdx.lua)<br>
 Getting some information from FB2 files ([more complete alternative](https://github.com/doublecmd/plugins/tree/master/wdx/fb2wdx)).
 
