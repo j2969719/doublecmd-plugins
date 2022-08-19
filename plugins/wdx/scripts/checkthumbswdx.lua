@@ -1,4 +1,4 @@
--- checkthumbnailswdx.lua (cross-platform)
+-- checkthumbswdx.lua (cross-platform)
 -- 2022.08.19
 --[[
 Getting some information from thumbnails files:
