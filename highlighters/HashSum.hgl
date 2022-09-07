@@ -2,14 +2,14 @@
   <Info>
     <General Name="Hashsum file*" Extensions="BLAKE2S BLAKE2SP BLAKE2 CRC32 HAVAL MD4 MD5 RIPEMD128 RIPEMD160 SFV SHA SHA1 SHA224 SHA256 SHA384 SHA512 SHA3 TIGER"/>
     <Author Name="Skif_off" Email="" Web="" Copyright="" Company="" Remark=""/>
-    <Version Version="0" Revision="3" Date="43077,7922183218"/>
+    <Version Version="0" Revision="4" Date="44811,8160981713"/>
     <History>
     </History>
     <Sample>
     </Sample>
   </Info>
   <Scheme File="" Name=""/>
-  <Range Name="Root" Attributes="0,16777215;False:False." Style="" CaseSensitive="True"
+  <Range Name="Root" Attributes="0,16777215;False:False." Style=""
          Delimiters="!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^`{|}~">
     <Rule/>
     <Keywords Name="Symbols" Attributes="255,16777215;False:False." Style="">
@@ -18,6 +18,10 @@
     <Range Name="Comment" Attributes="32768,16777215;False:False." Style="" CaseSensitive="True"
            Delimiters="!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^`{|}~">
       <Rule OpenSymbol=";" OpenSymbolStartLine="True" CloseOnEol="True"/>
+    </Range>
+    <Range Name="Comment2" Attributes="32768,16777215;False:False." Style="" CaseSensitive="True"
+           Delimiters="!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^`{|}~">
+      <Rule OpenSymbol="#" OpenSymbolStartLine="True" CloseOnEol="True"/>
     </Range>
     <Range Name="Hash0" Attributes="16711680,16777215;False:False." Style="" CaseSensitive="True"
            Delimiters="!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^`{|}~">
