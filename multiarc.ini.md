@@ -48,9 +48,9 @@ IDPos=<SeekID>
 Start=^-------------------
 End=^-------------------
 Format0=yyyy tt dd hh mm ss aaaaa zzzzzzzzzzzz pppppppppppp  n+
-List=%P -r0 l %AQA
-Extract=%P x -y {-p%W} {%S} %AQA @%LQU
-ExtractWithoutPath=%P e -y {-p%W} {%S} %AQA @%LQU
+List=%P -r0 l %AQ
+Extract=%P x -y {-p%W} {%S} %AQ @%LQU
+ExtractWithoutPath=%P e -y {-p%W} {%S} %AQ @%LQU
 PasswordQuery=Enter password
 FormMode=8
 ```
@@ -67,10 +67,10 @@ Extension=appimage2
 Start=^-------------------
 End=^-------------------
 Format0=yyyy tt dd hh mm ss aaaaa zzzzzzzzzzzz pppppppppppp  n+
-List=%P -r0 l {-p%W} %AQA
-Extract=%P x -y {-p%W} {%S} %AQA @%LQU
-ExtractWithoutPath=%P e -y {-p%W} {%S} %AQA @%LQU
-Test=%P t -y {%S} %AQA @%LQU
+List=%P -r0 l {-p%W} %AQ
+Extract=%P x -y {-p%W} {%S} %AQ @%LQU
+ExtractWithoutPath=%P e -y {-p%W} {%S} %AQ @%LQU
+Test=%P t -y {%S} %AQ @%LQU
 PasswordQuery=Enter password
 FormMode=8
 ```
@@ -115,8 +115,8 @@ IDPos=0
 Start=^-------------------
 End=^-------------------
 Format0=yyyy tt dd hh mm ss aaaaa zzzzzzzzzzzz pppppppppppp  n+
-List=%P -r0 l %AQA
-Extract=%P x -y {-p%W} {%S} %AQA @%LQU
+List=%P -r0 l %AQ
+Extract=%P x -y {-p%W} {%S} %AQ @%LQU
 FormMode=8
 ```
 
@@ -133,13 +133,13 @@ Extension=arc
 Start=^--
 End=^--
 Format0=yyyy tt dd hh mm ss aaaaaaa zzzzzzzzzzzzzzz ppppppppppppppp rrrrrrrr nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn
-List=%P v --noarcext -- %AQU
-Extract=%P x {-p%W} -y -sclUTF8 -- %AQU @%LU
-ExtractWithoutPath=%P e {-p%W} -y -sclUTF8 -- %AQU @%LU
-Test=%P t --noarcext  %AQA
-Delete=%P d --noarcext %AQA @%LU
-Add=%P a {-p%W} {-ap%RQA} --noarcext {%S} -sclUTF8 -- %AQU @%LU
-AddSelfExtract=%P a {-p%W} {-ap%RQA} -sfx --noarcext -sclANSI {%S} -- %AQA @%LA
+List=%P v --noarcext -- %AQ
+Extract=%P x {-p%W} -y -sclUTF8 -- %AQ @%LU
+ExtractWithoutPath=%P e {-p%W} -y -sclUTF8 -- %AQ @%LU
+Test=%P t --noarcext  %AQ
+Delete=%P d --noarcext %AQ @%LU
+Add=%P a {-p%W} {-ap%RQA} --noarcext {%S} -sclUTF8 -- %AQ @%LU
+AddSelfExtract=%P a {-p%W} {-ap%RQA} -sfx --noarcext -sclANSI {%S} -- %AQ @%LA
 PasswordQuery=Enter decryption password:
 FormMode=8
 ```
@@ -155,13 +155,13 @@ Extension=arc
 Start=^--
 End=^--
 Format0=yyyy tt dd hh mm ss aaaaaaa zzzzzzzzzzzzzzz ppppppppppppppp rrrrrrrr nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn
-List=%P v --noarcext -- %AQU
-Extract=%P x {-p%W} -y --noarcext -sclUTF8 -- %AQU @%LU
-ExtractWithoutPath=%P e {-p%W} -y --noarcext -sclUTF8 -- %AQU @%LU
-Test=%P t --noarcext -sclUTF8 -- %AQU
-Delete=%P d --noarcext -sclUTF8 -- %AQU @%LU
-Add=%P a {-p%W} {-ap%RQA} --noarcext -sclUTF8 {%S} -- %AQU @%LU
-AddSelfExtract=%P a {-p%W} {-ap%RQA} -sfx --noarcext -sclUTF8 {%S} -- %AQU @%LU
+List=%P v --noarcext -- %AQ
+Extract=%P x {-p%W} -y --noarcext -sclUTF8 -- %AQ @%LU
+ExtractWithoutPath=%P e {-p%W} -y --noarcext -sclUTF8 -- %AQ @%LU
+Test=%P t --noarcext -sclUTF8 -- %AQ
+Delete=%P d --noarcext -sclUTF8 -- %AQ @%LU
+Add=%P a {-p%W} {-ap%RQA} --noarcext -sclUTF8 {%S} -- %AQ @%LU
+AddSelfExtract=%P a {-p%W} {-ap%RQA} -sfx --noarcext -sclUTF8 {%S} -- %AQ @%LU
 PasswordQuery=Enter decryption password:
 FormMode=10
 ```
@@ -192,9 +192,9 @@ Description=innoextract 1.7 (GOG)
 ID=49 6E 6E 6F 20 53 65 74 75 70 20 53 65 74 75 70 20 44 61 74 61 20 28 35 2E
 IDPos=<SeekID>
 Format0=z+ n+
-List=%P --list-sizes -g -s %AQU
-Extract=%P -e -g -q  %AQU
-ExtractWithoutPath=%P -e -g -q  %AQU -I %FQU
+List=%P --list-sizes -g -s %AQ
+Extract=%P -e -g -q  %AQ
+ExtractWithoutPath=%P -e -g -q  %AQ -I %FQU
 ```
 ```ini
 [InnoSetup]
@@ -203,9 +203,9 @@ Description=innoextract 1.7
 ID=49 6E 6E 6F 20 53 65 74 75 70 20 53 65 74 75 70 20 44 61 74 61 20 28 35 2E, 49 6E 6E 6F 20 53 65 74 75 70 20 53 65 74 75 70 20 44 61 74 61 20 28 34 2E, 49 6E 6E 6F 20 53 65 74 75 70 20 53 65 74 75 70 20 44 61 74 61 20 28 33 2E, 49 6E 6E 6F 20 53 65 74 75 70 20 53 65 74 75 70 20 44 61 74 61 20 28 32 2E, 49 6E 6E 6F
 IDPos=<SeekID>
 Format0=z+ n+
-List=%P --list-sizes -s %AQU
-Extract=%P -e -q  %AQU
-ExtractWithoutPath=%P -e -q  %AQU -I %FQU
+List=%P --list-sizes -s %AQ
+Extract=%P -e -q  %AQ
+ExtractWithoutPath=%P -e -q  %AQ -I %FQU
 ```
 ```ini
 [InnoSetup (unpack_one)]
@@ -214,10 +214,10 @@ Description=innoextract 1.8 (script unpack_one)
 ID=49 6E 6E 6F 20 53 65 74 75 70 20 53 65 74 75 70 20 44 61 74 61 20 28 35 2E, 49 6E 6E 6F 20 53 65 74 75 70 20 53 65 74 75 70 20 44 61 74 61 20 28 34 2E, 49 6E 6E 6F 20 53 65 74 75 70 20 53 65 74 75 70 20 44 61 74 61 20 28 33 2E, 49 6E 6E 6F 20 53 65 74 75 70 20 53 65 74 75 70 20 44 61 74 61 20 28 32 2E, 49 6E 6E 6F
 IDPos=<SeekID>
 Format0=z+$n+
-List=innoextract --list-sizes -qsg %AQU
-Extract=%PQU %FQU 'innoextract -esqg %AQU -I%FQU'
-ExtractWithoutPath=innoextract -esqg  %AQU -I%FQU
-Test=innoextract -tqg  %AQU
+List=innoextract --list-sizes -qsg %AQ
+Extract=%PQU %FQU 'innoextract -esqg %AQ -I%FQU'
+ExtractWithoutPath=innoextract -esqg  %AQ -I%FQU
+Test=innoextract -tqg  %AQ
 FormMode=2
 ```
 Script [unpack_one](scripts/unpack_one)
@@ -234,7 +234,7 @@ IDPos=<SeekID>
 Start=^--------------------------------------
 End=^--------------------------------------
 Format0=zzzzzzzzzz  yyyy.tt.dd hh:mm  nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn
-List=%P -v -m %AQA
+List=%P -v -m %AQ
 Extract=%P -x -m %AQ
 ExtractWithoutPath=%P -e -m %AQ %FQ
 FormMode=2
@@ -253,8 +253,8 @@ IDSeekRange=0
 Start=^Cabinet
 End=^--------
 Format0=z+__n+
-List=%P l %AQA
-Extract=%P x %AQA
+List=%P l %AQ
+Extract=%P x %AQ
 FormMode=6
 ```
 Script [unshield](scripts/unshield)
@@ -329,8 +329,8 @@ IDPos=<SeekID>
 Start=^-----------
 End=All done
 Format0=$z+$? dd.tt.yyyy hh:mm:ss ? n+
-List=%PQU -l %AQU
-Extract=%PQU %AQU
+List=%PQU -l %AQ
+Extract=%PQU %AQ
 ```
 ```ini
 [CAB_2]
@@ -341,8 +341,8 @@ IDPos=<SeekID>
 Start=^-----------
 End=All done
 Format0=$z+$? dd.tt.yyyy hh:mm:ss ? n+
-List=cabextract -l %AQU
-Extract=%PQU %LQU 'cabextract %AQU'
+List=cabextract -l %AQ
+Extract=%PQU %LQU 'cabextract %AQ'
 ```
 Script [unpack_all](scripts/unpack_all)
 ```ini
@@ -354,8 +354,8 @@ IDPos=<SeekID>
 Start=^-----------
 End=All done
 Format0=$z+$? dd.tt.yyyy hh:mm:ss ? n+
-List=cabextract -l %AQU
-Extract=%PQU %FQU 'cabextract -F %FQU %AQU' 
+List=cabextract -l %AQ
+Extract=%PQU %FQU 'cabextract -F %FQU %AQ' 
 ```
 Script [unpack_one](scripts/unpack_one)
 
@@ -370,8 +370,8 @@ IDPos=0
 Start=^-------------------
 End=^-------------------
 Format0=yyyy tt dd hh mm ss aaaaa zzzzzzzzzzzz pppppppppppp  n+
-List=%P -r0 l %AQA
-Extract=%P x -y {-p%W} {%S} %AQA @%LQU
+List=%P -r0 l %AQ
+Extract=%P x -y {-p%W} {%S} %AQ @%LQU
 FormMode=8
 ```
 ```ini
@@ -381,8 +381,8 @@ Description=Microsoft Windows Installer (msiextract)
 ID=D0 CF 11 E0
 IDPos=0
 Format0=n+
-List=%PQU -l %AQU
-Extract=%PQU %AQU
+List=%PQU -l %AQ
+Extract=%PQU %AQ
 ```
 ```ini
 [MSI_3]
@@ -391,8 +391,8 @@ Description=Microsoft Windows Installer (msiextract, script unpack_all)
 ID=D0 CF 11 E0
 IDPos=0
 Format0=n+
-List=msiextract -l %AQU
-Extract=%PQU %LQU 'msiextract %AQU'
+List=msiextract -l %AQ
+Extract=%PQU %LQU 'msiextract %AQ'
 ```
 Script [unpack_all](scripts/unpack_all)
 
@@ -408,10 +408,10 @@ IDSeekRange=0
 Start=^-------------------
 End=^-------------------
 Format0=yyyy tt dd hh mm ss aaaaa zzzzzzzzzzzz pppppppppppp  n+
-List=%P -r0 l %AQA
-Extract=%P x -y {-p%W} {%S} %AQA @%LQU
-ExtractWithoutPath=%P e -y {-p%W} {%S} %AQA @%LQU
-Test=%P t -y {%S} %AQA @%LQU
+List=%P -r0 l %AQ
+Extract=%P x -y {-p%W} {%S} %AQ @%LQU
+ExtractWithoutPath=%P e -y {-p%W} {%S} %AQ @%LQU
+Test=%P t -y {%S} %AQ @%LQU
 ```
 
 ---
@@ -425,8 +425,8 @@ IDPos=4, 516, 1028, 1540, 2052, 2564, 3076, 3588, 4100, 4612, 5124, 5636, 6148, 
 Start=^-------------------
 End=^-------------------
 Format0=yyyy tt dd hh mm ss aaaaa zzzzzzzzzzzz pppppppppppp  n+
-List=%P -r0 l %AQA
-Extract=%P x -y {-p%W} {%S} %AQA @%LQU
+List=%P -r0 l %AQ
+Extract=%P x -y {-p%W} {%S} %AQ @%LQU
 FormMode=8
 ```
 ```ini
@@ -437,8 +437,8 @@ ID=00 00 00 00 EF BE AD DE 4E 75 6C 6C 73 6F 66 74 49 6E 73 74, 08 00 00 00 EF B
 Start=^-------------------
 End=^-------------------
 Format0=yyyy tt dd hh mm ss aaaaa zzzzzzzzzzzz pppppppppppp  n+
-List=%P -r0 l %AQA
-Extract=%P x -y {-p%W} {%S} %AQA @%LQU
+List=%P -r0 l %AQ
+Extract=%P x -y {-p%W} {%S} %AQ @%LQU
 FormMode=8
 ```
 
@@ -453,8 +453,8 @@ IDPos=0
 IDSeekRange=0
 Extension=sin
 Format0=n+ (z+
-List=%PQU -l %AQU
-Extract=%PQU %AQU
+List=%PQU -l %AQ
+Extract=%PQU %AQ
 ```
 ```ini
 [PAK_2]
@@ -466,7 +466,7 @@ IDSeekRange=0
 Extension=sin
 Format0=n+ (z+
 List=pakextract -l %AQ
-Extract=%PQU %LQU 'pakextract %AQU'
+Extract=%PQU %LQU 'pakextract %AQ'
 ```
 [pakextract](http://github.com/yquake2/pakextract), script [unpack_all](scripts/unpack_all)
 
@@ -510,13 +510,13 @@ Extension=rar
 Start=^-------------------
 End=^-------------------
 Format0=yyyy tt dd hh mm ss aaaaa zzzzzzzzzzzz pppppppppppp  n+
-List=7z -r0 l {-p%W} %AQA
-Extract=7z x -y {-p%W} {%S} %AQA @%LQU
-ExtractWithoutPath=7z e -y {-p%W} {%S} %AQA @%LQU
-Test=%P t -y {%S} %AQA
-Delete=%P d -y {%S} %AQA @%LQA
-Add=%P a -y {-p%W} {-v%V} {%S} %AQA @%LQA
-AddSelfExtract=%P a -y -sfx {-p%W} {-v%V} {%S} %AQA @%LQA
+List=7z -r0 l {-p%W} %AQ
+Extract=7z x -y {-p%W} {%S} %AQ @%LQU
+ExtractWithoutPath=7z e -y {-p%W} {%S} %AQ @%LQU
+Test=%P t -y {%S} %AQ
+Delete=%P d -y {%S} %AQ @%LQA
+Add=%P a -y {-p%W} {-v%V} {%S} %AQ @%LQA
+AddSelfExtract=%P a -y -sfx {-p%W} {-v%V} {%S} %AQ @%LQA
 PasswordQuery=Enter password
 FormMode=8
 ```
@@ -579,10 +579,10 @@ Extension=ace
 Start=^  Date
 End=^listed:
 Format0=dd.tt.yy hh:mm ppppppppppp zzzzzzzzz        nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn
-List=%P v -y %AQA
-Extract=%P x -y {-p%W} {%S} %AQA @%LQA
-ExtractWithoutPath=%P e -y {-p%W} {%S} %AQA @%LQA
-Test=%P t -y %AQA
+List=%P v -y %AQ
+Extract=%P x -y {-p%W} {%S} %AQ @%LQA
+ExtractWithoutPath=%P e -y {-p%W} {%S} %AQ @%LQA
+Test=%P t -y %AQ
 ```
 
 ---
@@ -597,10 +597,10 @@ Extension=upx
 Start=------
 End=
 Format0=$z+ ??$p+$??????$*$n+
-List=%P -q -l %AQW
+List=%P -q -l %AQ
 Extract=%P -d -o %RQ%FQ %AQ
 ExtractWithoutPath=
-Test=%P -t -q %AQW
+Test=%P -t -q %AQ
 Add=%P {%S} -q -o %AQ %FQ
 ```
 
@@ -629,11 +629,11 @@ Extension=zpaq
 Start=
 End=shown
 Format0=- yyyy-tt-dd hh:mm:ss$z+$aaaaa$n+
-List=%P l %AQA
-Extract=%P x %AQA {%S} {-key %W}
+List=%P l %AQ
+Extract=%P x %AQ {%S} {-key %W}
 ExtractWithoutPath=
-Test=%P l %AQA -test
-Add=%P a %AQA %FQU {%S} {-key %W}
+Test=%P l %AQ -test
+Add=%P a %AQ %FQU {%S} {-key %W}
 FormMode=1
 ```
 [ZPAQ](http://mattmahoney.net/dc/zpaq.html)
@@ -658,9 +658,9 @@ Archiver=tar
 Description=Compressed tar file (tar.zst)
 Extension=tzst
 Format0=aaaaaaaaaa zzzzzzz yyyy-tt-dd hh:mm nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn
-List=%P -tv -I zstd -f %AQA
-Extract=%P -x -I zstd {%S} -f %AQA -T %LFQA
-Add=%P -c -I zstd {%S} -f %AQA --no-recursion -T %LQA %E512
+List=%P -tv -I zstd -f %AQ
+Extract=%P -x -I zstd {%S} -f %AQ -T %LFQA
+Add=%P -c -I zstd {%S} -f %AQ --no-recursion -T %LQA %E512
 ```
 
 ---
@@ -671,8 +671,8 @@ Archiver=$COMMANDER_PATH/scripts/wcxtest
 Description=TC WCX Test - https://totalcmd.net/plugring/WCXTest.html
 Start=^---------
 Format0=$z+$yyyy?tt?dd hh?mm?ss$aaaaaa$n+
-List=%PQU -l %AQU
-Extract=%PQU -x %AQU %LQU
+List=%PQU -l %AQ
+Extract=%PQU -x %AQ %LQU
 FormMode=10
 ```
 Script [wcxtest](scripts/wcxtest)
@@ -684,8 +684,8 @@ Script [wcxtest](scripts/wcxtest)
 Archiver=$COMMANDER_PATH/scripts/cmdtotal
 Description=cmdTotal - http://totalcmd.net/plugring/cmdtotal.html
 Format0=$?? n+
-List=%PQU l %AQU
-Extract=%PQU x %AQU %LQU
+List=%PQU l %AQ
+Extract=%PQU x %AQ %LQU
 FormMode=2
 ```
 Script [cmdtotal](scripts/cmdtotal)
