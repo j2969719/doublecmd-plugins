@@ -1,0 +1,79 @@
+<UniHighlighter version="1.8.1">
+  <Info>
+    <General Name="Cue Sheet*" Extensions="CUE"/>
+    <Author Name="Skif_off" Email="" Web="" Copyright="" Company="" Remark="Based on cue.coder"/>
+    <Version Version="1" Revision="0" Date="44821,286223206"/>
+    <History>
+    </History>
+    <Sample>
+      <S>; Sample</S>
+      <S>REM GENRE Genre</S>
+      <S>REM DATE 2000</S>
+      <S>PERFORMER &quot;Artist&quot;</S>
+      <S>TITLE &quot;Album&quot;</S>
+      <S>FILE &quot;Artist - Album.flac&quot; MP3</S>
+      <S>  TRACK 01 AUDIO</S>
+      <S>    TITLE &quot;Title&quot;</S>
+      <S>    PERFORMER &quot;Artist&quot;</S>
+      <S>    INDEX 01 00:00:00</S>
+      <S>  TRACK 02 AUDIO</S>
+      <S>    TITLE &quot;Title&quot;</S>
+      <S>    PERFORMER &quot;Artist&quot;</S>
+      <S>    INDEX 01 06:42:00</S>
+    </Sample>
+  </Info>
+  <Scheme File="" Name=""/>
+  <Range Name="Root" Attributes="0,16777215;False:False." Style="" CaseSensitive="True"
+         Delimiters="!&quot;%&amp;'()*+,-.;&lt;=&gt;@[\]^|">
+    <Rule/>
+    <Keywords Name="Key Words 1" Attributes="16711680,16777215;False:False." Style="">
+      <word value="FILE"/>
+      <word value="INDEX"/>
+      <word value="POSTGAP"/>
+      <word value="PREGAP"/>
+      <word value="TRACK"/>
+    </Keywords>
+    <Keywords Name="Key Words 2" Attributes="8388608,16777215;False:False." Style="">
+      <word value="CATALOG"/>
+      <word value="CDTEXTFILE"/>
+      <word value="FLAGS"/>
+      <word value="ISRC"/>
+      <word value="PERFORMER"/>
+      <word value="SONGWRITER"/>
+      <word value="TITLE"/>
+    </Keywords>
+    <Keywords Name="Key Words 3" Attributes="128,16777215;False:False." Style="">
+      <word value="4CH"/>
+      <word value="AIFF"/>
+      <word value="AUDIO"/>
+      <word value="BINARY"/>
+      <word value="CDG"/>
+      <word value="CDI/2336"/>
+      <word value="CDI/2352"/>
+      <word value="DCP"/>
+      <word value="MODE1/2048"/>
+      <word value="MODE1/2352"/>
+      <word value="MODE2/2336"/>
+      <word value="MODE2/2352"/>
+      <word value="MOTOROLA"/>
+      <word value="MP3"/>
+      <word value="PRE"/>
+      <word value="SCMS"/>
+      <word value="WAVE"/>
+    </Keywords>
+    <Set Name="Numbers and time" Attributes="183,16777215;False:False." Style="" Symbols="0123456789:"/>
+    <Range Name="Comment" Attributes="32768,16777215;False:False.I" Style="" CaseSensitive="True"
+           Delimiters="!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^`{|}~">
+      <Rule OpenSymbol=";" OpenSymbolStartLine="True" CloseOnEol="True"/>
+    </Range>
+    <Range Name="REM" Attributes="32768,16777215;False:False." Style="" CaseSensitive="True"
+           Delimiters="!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^`{|}~">
+      <Rule OpenSymbol="REM" OpenSymbolStartLine="True" CloseOnEol="True"/>
+    </Range>
+    <Range Name="String &quot;" Attributes="3947580,16777215;False:False.B" Style="" CaseSensitive="True"
+           Delimiters="!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^`{|}~">
+      <Rule OpenSymbol="&quot;" CloseSymbol="&quot;" AllowPredClose="True"/>
+    </Range>
+  </Range>
+  <CopyRight>Rule file for UniHighlighter Delphi component (Copyright(C) Fantasist(walking_in_the_sky@yahoo.com), Vit(nevzorov@yahoo.com), Vitalik(vetal-x@mail.ru), 2002-2004)</CopyRight>
+</UniHighlighter>
