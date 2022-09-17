@@ -1,6 +1,6 @@
 <UniHighlighter version="1.8.1">
   <Info>
-    <General Name="Log File" Extensions="LOG"/>
+    <General Name="Log File*" Extensions="LOG"/>
     <Author Name="Skif_off" Email="" Web="" Copyright="" Company="" Remark="Some keywords from Infocatcher's 'log.coder' for AkelPad"/>
     <Version Version="0" Revision="1" Date="43209,8967598495"/>
     <History>

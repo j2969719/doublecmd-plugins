@@ -1,6 +1,6 @@
 <UniHighlighter version="1.8.1">
   <Info>
-    <General Name="Rust" Extensions="RS"/>
+    <General Name="Rust*" Extensions="RS"/>
     <Author Name="Skif_off" Email="" Web="" Copyright="" Company="N/A" Remark="Rules for 'Chars', 'Remarks' and 'Strings' from 'C++ Source.hgl'"/>
     <Version Version="1" Revision="2" Date="44646,2935462037"/>
     <History>
