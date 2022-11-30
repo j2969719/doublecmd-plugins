@@ -128,7 +128,7 @@ case "${filetype}" in
 		file -b "$file" && tar tvvf - < "${file}"
 		;;
 	[Tt][Oo][Rr][Rr][Ee][Nn][Tt])
-		transmission-show "$file" || ctorrent -x "$file"
+		transmission-show "$file" || ctorrent -x "$file" || aria2c -S "$file"
 		;;
 	[Xx][Ll][Ss])
 		which xlhtml >/dev/null 2>&1 && {
