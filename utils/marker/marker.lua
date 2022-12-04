@@ -1,5 +1,5 @@
 -- marker.lua (cross-platform)
--- 2020.09.20
+-- 2022.12.04
 
 local params = {...}
 
@@ -29,7 +29,7 @@ if dbne == true then
   end
   local n, k, r
   for l in h:lines() do
-    n = string.find(l, "=", 1, true)
+    n = string.find(l, '|', 1, true)
     if n ~= nil then
       k = string.sub(l, 1, n - 1)
       db[k] = string.sub(l, n + 1)
@@ -51,13 +51,13 @@ h:close()
 if #lu > 0 then
   if params[1] == '--add' then
     for i = 1, #lu do db[lu[i]] = params[3] end
-    for k, v in pairs(db) do table.insert(r, k .. '=' .. v) end
+    for k, v in pairs(db) do table.insert(r, k .. '|' .. v) end
   elseif params[1] == '--del' then
     for i = 1, #lu do
       if db[lu[i]] ~= nil then db[lu[i]] = false end
     end
     for k, v in pairs(db) do
-      if v ~= false then table.insert(r, k .. '=' .. v) end
+      if v ~= false then table.insert(r, k .. '|' .. v) end
     end
   else
     Dialogs.MessageBox('Check parameters!', 'marker.lua', 0x0030)

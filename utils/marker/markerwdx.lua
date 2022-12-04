@@ -1,5 +1,5 @@
 -- markerwdx.lua (cross-platform)
--- 2020.09.20
+-- 2022.12.04
 
 local dbn
 local ft, c = 0, 0
@@ -51,7 +51,7 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
   if c >= 1 then
     local n, s
     for i = 1, c do
-      n = string.find(fl[i], '=', 1, true)
+      n = string.find(fl[i], '|', 1, true)
       if n == nil then break end
       s = string.sub(fl[i], 1, n - 1)
       if s == FileName then return string.sub(fl[i], n + 1, -1) end
