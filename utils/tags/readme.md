@@ -1,7 +1,7 @@
 Tags (cross-platform)
 -----------------------
 
-2022.12.05
+2022.12.06
 
 Assign any tag to any file or folder (local file systems). Tags can be shown in the column view or in the tooltip.
 Also you can search by tag, select/unselect a group or use quick filter.

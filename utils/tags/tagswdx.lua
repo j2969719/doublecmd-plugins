@@ -50,7 +50,8 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
       s = string.sub(fl[i], 1, n - 1)
       if s == FileName then
         s = string.sub(fl[i], n + 1, -2)
-        return string.gsub(s, '|', ', ')
+        s = string.gsub(s, '|', ', ')
+        return s
       end
     end
   end
