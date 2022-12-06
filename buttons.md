@@ -968,3 +968,7 @@ DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
 
 ### Marker *(cross platform)*
 For file highlighting like in *Colors* > *File types*, but "on the fly": add selected color, delete or change. So you can use this scripts for file tagging. See details [here](utils/marker).
+
+
+### Tagging *(cross platform)*
+Assign any tag to any file or folder (local file systems). See details [here](utils/tags).
