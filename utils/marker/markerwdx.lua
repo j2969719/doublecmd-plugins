@@ -1,5 +1,5 @@
 -- markerwdx.lua (cross-platform)
--- 2022.12.04
+-- 2022.12.06
 
 local dbn
 local ft, c = 0, 0
@@ -28,14 +28,7 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
   if dbn == nil then
     local sn = debug.getinfo(1).source
     if string.sub(sn, 1, 1) == '@' then sn = string.sub(sn, 2, -1) end
-    local pt = ".*\\"
-    if SysUtils.PathDelim == "/" then pt = "/.*/" end
-    local i, j = string.find(sn, pt)
-    if i ~= nil then
-      dbn = string.sub(sn, i, j) .. 'marker.txt'
-    else
-      return nil
-    end
+    dbn = SysUtils.ExtractFilePath(sn) .. 'marker.txt'
   end
   if #fl == 0 then
     ReadFileList()
@@ -48,7 +41,7 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
       ft = fd.Time
     end
   end
-  if c >= 1 then
+  if c > 0 then
     local n, s
     for i = 1, c do
       n = string.find(fl[i], '|', 1, true)
@@ -71,6 +64,6 @@ function ReadFileList()
       c = c + 1
     end
     h:close()
-    if fl[c] == '' then c = c - 1 end
+    c = c - 1
   end
 end

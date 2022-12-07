@@ -16,16 +16,19 @@ end
 
 local function GetList(s, d1, d2, b1)
   local ar = {}
-  local n1, n2 = 1, 1
+  local n1, n2, c = 1, 1, 1
   local t
   while true do
     n1 = string.find(s, d1, n2, true)
     if n1 ~= nil then
       t = string.sub(s, n2, n1 - 1)
-      if t ~= '' then table.insert(ar, ClearTag(t)) end
+      if t ~= '' then
+        ar[c] = ClearTag(t)
+        c = c + 1
+      end
     else
       t = string.sub(s, n2, -1)
-      if t ~= '' then table.insert(ar, ClearTag(t)) end
+      if t ~= '' then ar[c] = ClearTag(t) end
       break
     end
     n2 = n1 + 1
@@ -33,11 +36,15 @@ local function GetList(s, d1, d2, b1)
   local arr = {}
   if #ar > 1 then
     table.sort(ar)
+    c = 1
     for i = 1, #ar do
-      if ar[i] ~= ar[i + 1] then table.insert(arr, ar[i]) end
+      if ar[i] ~= ar[i + 1] then
+        arr[c] = ar[i]
+        c = c + 1
+      end
     end
   else
-    table.insert(arr, ar[1])
+    arr[1] = ar[1]
   end
   if b1 == true then
     return arr
@@ -61,7 +68,7 @@ if SysUtils.FileExists(dbn) == true then
     Dialogs.MessageBox('Error 1: ' .. err, 'tags.lua', 0x0030)
     return
   end
-  local n, k, r
+  local n, k
   for l in h:lines() do
     n = string.find(l, '|', 1, true)
     if n ~= nil then
@@ -73,6 +80,7 @@ if SysUtils.FileExists(dbn) == true then
 end
 
 local ba, sa, t
+local c = 1
 
 if params[1] == '--filter' then
   local db2 = {}
@@ -119,7 +127,11 @@ else
     Dialogs.MessageBox('Error 2: ' .. err, 'tags.lua', 0x0030)
     return
   end
-  for l in h:lines() do table.insert(lu, l) end
+  c = 1
+  for l in h:lines() do
+    lu[c] = l
+    c = c + 1
+  end
   h:close()
   if #lu == 0 then
     Dialogs.MessageBox('Error 3', 'tags.lua', 0x0030)
@@ -181,8 +193,12 @@ else
   end
 end
 
+c = 1
 for k, v in pairs(db) do
-  if v ~= false then table.insert(r, k .. v) end
+  if v ~= false then
+    r[c] = k .. v
+    c = c + 1
+  end
 end
 
 h, err = io.open(dbn, 'w+')

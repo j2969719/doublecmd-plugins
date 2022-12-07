@@ -1,5 +1,5 @@
 -- tagswdx.lua (cross-platform)
--- 2022.12.05
+-- 2022.12.06
 --[[
 Maybe try to use "os.setenv" (but DC 1.1.0+) instead of "SysUtils.Find*" ??? This is the narrowest place.
 ]]
@@ -42,7 +42,7 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
       ft = fd.Time
     end
   end
-  if c >= 1 then
+  if c > 0 then
     local n, s
     for i = 1, c do
       n = string.find(fl[i], '|', 1, true)
