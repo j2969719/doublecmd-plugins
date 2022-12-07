@@ -1,7 +1,7 @@
 Tags (cross-platform)
 -----------------------
 
-2022.12.06
+2022.12.07
 
 Assign any tag to any file or folder (local file systems). Tags can be shown in the column view or in the tooltip.
 Also you can search by tag, select/unselect a group or use quick filter.
@@ -12,6 +12,8 @@ Two parts:
 
 - `tags.lua` - for button(s): adding, deleting tags and so on;
 - `tagswdx.lua` - WDX-plugin.
+
+**NOTE:** The scripts use `os.setenv()`, so for DC < 1.1.0, use [previous versions](https://github.com/j2969719/doublecmd-plugins/tree/6fbeb3cdac25a5f556fd34c4fa9485914fca4e09/utils/tags).
 
 The tags are stored in a file named `tags.txt` near `tags.lua` and `tagswdx.lua`. This is a plain text file (UTF-8 without BOM), so you can also edit its contents manually. Format:
 
@@ -24,7 +26,7 @@ full-(with-path)-name-of-file2|tag2|tag3|
 
 ### Step 1: Add  buttons
 
-How to use toolbar: [Toolbar](http://doublecmd.github.io/doc/en/toolbar.html). (Menu is more useful, see note below.)
+How to use toolbar: [Toolbar](http://doublecmd.github.io/doc/en/toolbar.html). (Menu is more useful.)
 
 Use internal command `cm_ExecuteScript` and the following parameters:
 

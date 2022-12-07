@@ -1,11 +1,8 @@
 -- tagswdx.lua (cross-platform)
--- 2022.12.06
---[[
-Maybe try to use "os.setenv" (but DC 1.1.0+) instead of "SysUtils.Find*" ??? This is the narrowest place.
-]]
+-- 2022.12.07
 
 local dbn
-local ft, c = 0, 0
+local c = 0
 local fl = {}
 
 function ContentGetSupportedField(FieldIndex)
@@ -34,12 +31,9 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
   if #fl == 0 then
     ReadFileList()
   else
-    local h, fd = SysUtils.FindFirst(dbn)
-    if h == nil then return nil end
-    SysUtils.FindClose(h)
-    if fd.Time > ft then
+    if os.getenv('TagsDB') == 'Read' then
       ReadFileList()
-      ft = fd.Time
+      os.setenv('TagsDB', 'Done')
     end
   end
   if c > 0 then

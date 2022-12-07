@@ -1,8 +1,8 @@
 -- markerwdx.lua (cross-platform)
--- 2022.12.06
+-- 2022.12.07
 
 local dbn
-local ft, c = 0, 0
+local c = 0
 local fl = {}
 
 function ContentGetSupportedField(FieldIndex)
@@ -33,12 +33,9 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
   if #fl == 0 then
     ReadFileList()
   else
-    local h, fd = SysUtils.FindFirst(dbn)
-    if h == nil then return nil end
-    SysUtils.FindClose(h)
-    if fd.Time > ft then
+    if os.getenv('MarkerDB') == 'Read' then
       ReadFileList()
-      ft = fd.Time
+      os.setenv('MarkerDB', 'Done')
     end
   end
   if c > 0 then

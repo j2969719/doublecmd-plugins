@@ -1,5 +1,5 @@
 -- tags.lua (cross-platform)
--- 2022.12.06
+-- 2022.12.07
 
 local params = {...}
 
@@ -212,6 +212,8 @@ else
   h:write(table.concat(r, '\n') .. '\n')
 end
 h:close()
+
+os.setenv('TagsDB', 'Read')
 
 if params[3] == '--auto' then
   DC.ExecuteCommand('cm_Refresh')

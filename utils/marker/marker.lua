@@ -1,5 +1,5 @@
 -- marker.lua (cross-platform)
--- 2022.12.06
+-- 2022.12.07
 
 local params = {...}
 
@@ -75,6 +75,7 @@ if #lu > 0 then
   end
   if #r > 0 then h:write(table.concat(r, '\n') .. '\n') end
   h:close()
+  os.setenv('MarkerDB', 'Read')
 else
   Dialogs.MessageBox('Error 2', 'marker.lua', 0x0030)
 end
