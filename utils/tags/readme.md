@@ -11,7 +11,7 @@ Written on Lua, see [Lua scripting > DLL required](http://doublecmd.github.io/do
 Two parts:
 
 - `tags.lua` - for button(s): adding, deleting tags and so on;
-- `tagswdx.lua` - WDX-plugin part.
+- `tagswdx.lua` - WDX-plugin.
 
 The tags are stored in a file named `tags.txt` near `tags.lua` and `tagswdx.lua`. This is a plain text file (UTF-8 without BOM), so you can also edit its contents manually. Format:
 
@@ -35,6 +35,7 @@ path/to/tags.lua
 --add
 %LU
 ```
+
 where `%LU` is the list of selected files, see [Variables in parameters](http://doublecmd.github.io/doc/en/variables.html).
 
 **_Delete tag_**
@@ -60,6 +61,7 @@ path/to/tags.lua
 --change
 %"0%p0
 ```
+
 where `%"0%p0` is the file under the cursor, see [Variables in parameters](http://doublecmd.github.io/doc/en/variables.html).
 
 **_Quick filter_**
@@ -71,12 +73,12 @@ path/to/tags.lua
 --filter
 %"0%D
 ```
+
 where `%"0%D` is the current directory in the active panel, see [Variables in parameters](http://doublecmd.github.io/doc/en/variables.html).
 
 **_Auto reload file list_**
 
 `--auto` is optional parameter, must be last: script will send DC the [cm_Refresh](https://doublecmd.github.io/doc/en/cmds.html#cm_Refresh) command.
-
 
 ### Step 2: Add WDX-plugin part
 
@@ -92,4 +94,4 @@ Go to `Configuration` > `Options...` > `Plugins` > `Plugins WDX` > `Add` > choos
 
 ### Step 3: Try
 
-**NOTE:** Maybe you will need to update file list (press Ctrl+R or, for exampls, go to the parent folder and return back).
+**NOTE:** Maybe you will need to update file list: use `--auto` or press Ctrl+R (or, for example, go to the parent folder and return back).

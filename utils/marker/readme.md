@@ -1,48 +1,48 @@
 Marker (cross-platform)
 -----------------------
 
-2022.12.04
+2022.12.06
 
 Marker for file highlighting like in *Colors* > *File types*, but "on the fly": add selected color, delete or change. So you can use this scripts for file tagging.
 You can use any number of colors.
 
-Written on Lua, see [DC Help > 2.10. Lua scripting > 2. DLL required](http://doublecmd.github.io/doc/en/lua.html#dllrequired).
+Written on Lua, see [Lua scripting > DLL required](http://doublecmd.github.io/doc/en/lua.html#dllrequired).
 
-This Marker is in two parts:
+Two parts:
 
 - `marker.lua` - for button(s): adding, deleting or changing color for selected files;
-- `markerwdx.lua` - WDX-plugin part, for template(s)
+- `markerwdx.lua` - WDX-plugin.
 
-List of marked files (will be used full paths!) will be save with name `marker.txt` near `marker.lua` and `markerwdx.lua`.
+List of marked files is stored in a file named `marker.txt` near `marker.lua` and `markerwdx.lua`. This is a plain text file (UTF-8 without BOM), so you can also edit its contents manually.
 
 About color format: You can use any format, but format RGB is more easy for color settings editing and I use it for example.
 Below I will use `Purple` as `128,0,128`.
-
 
 ## How to use
 
 ### Step 1: Add  buttons
 
-How to use toolbar: [DC Help > 2.6. Toolbar](http://doublecmd.github.io/doc/en/toolbar.html)
+How to use toolbar: [Toolbar](http://doublecmd.github.io/doc/en/toolbar.html). (Menu is more useful, see note below.)
 
-(Menu is more useful, see note below.)
+Use internal command `cm_ExecuteScript` and the following parameters:
 
 **_Adding or changing color for selected files_**
 
-Add button with internal command `cm_ExecuteScript` and parameters
 ```
 path/to/marker.lua
 --add
 %LU
 128,0,128
 ```
+
 where
-- `%LU` - see [DC Help > 2.7. Variables in parameters > 9. List of files](http://doublecmd.github.io/doc/en/variables.html#listoffiles)
+
+- `%LU` is the list of selected files, see [Variables in parameters](http://doublecmd.github.io/doc/en/variables.html);
+
 - `128,0,128` - color in selected format.
 
 **_Deleting color for selected files_**
 
-Add button with internal command `cm_ExecuteScript` and parameters
 ```
 path/to/marker.lua
 --del
@@ -51,7 +51,7 @@ path/to/marker.lua
 
 ### Step 2: Add WDX-plugin part
 
-Go to `Configuration` > `Options...` > `Plugins` > `Plugins WDX` > `Add` > choose `markerwdx.lua`, go to `Colors` > `File types` and add new:
+Go to `Configuration` > `Options...` > `Plugins` > `Plugins WDX` > `Add` > choose `markerwdx.lua`, go to `Colors` > [File types](http://doublecmd.github.io/doc/en/configuration.html#ConfigColorFiles) and add new:
 
 - press `Add` and write `Category name`;
 
@@ -78,8 +78,6 @@ value: `128,0,128`
 
 **NOTE:** You must add buttons and file types (step 1 and step 3) for ALL desired colors!
 
-### Step 3: Now try
+### Step 3: Try
 
-Select files and press your button :)
-
-**NOTE:** Maybe you will need to update file list (press Ctrl+R or go to parent folder and return).
+**NOTE:** Maybe you will need to update file list (press Ctrl+R or go to the parent folder and return back).
