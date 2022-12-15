@@ -1,5 +1,5 @@
 -- checkthumbswdx.lua (cross-platform)
--- 2022.08.19
+-- 2022.12.15
 --[[
 Getting some information from thumbnails files:
   created by Double Commander (Windows or Linux)
@@ -165,10 +165,7 @@ function CheckAndGetFileTime(s)
   local ft = nil
   local fr = nil
   local h, fd = SysUtils.FindFirst(s)
-  if h == nil then
-    SysUtils.FindClose(h)
-    return nil
-  else
+  if h ~= nil then
     repeat
       if fd.Name == fn then
         ft = fd.Time
