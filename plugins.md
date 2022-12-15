@@ -217,6 +217,9 @@ Getting some information from Windows shell link (shortcut) file. Requires `lnki
 - [lslockswdx.lua](plugins/wdx/scripts/lslockswdx.lua)<br>
 List local system locks.
 
+- [marker](utils/marker) *(cross platform)*<br>
+Marker for file highlighting like in *Colors* > *File types*, but "on the fly". See readme.md.
+
 - [msgfulltextwdx.lua](plugins/wdx/scripts/msgfulltextwdx.lua) *(cross platform)*<br>
 Returns full text of saved email messages. For Find files with plugins only! See details in the beginning of script.
 
@@ -271,6 +274,9 @@ Getting some information from SVG files.
 
 - [svninfowdx.lua](plugins/wdx/scripts/svninfowdx.lua)<br>
 Getting some information from local copy of SVN repository. Requires `svn`.
+
+- [tags](utils/tags) *(cross platform)*<br>
+Assign any tag to any file or folder (local file systems), see readme.md.
 
 - [tarfilescountwdx.lua](plugins/wdx/scripts/tarfilescountwdx.lua) + [tarfilescountwdx.lng](plugins/wdx/scripts/tarfilescountwdx.lng)<br>
 Returns count of files, folders and symlinks it TAR files (list of file extension by default: tar, gz, bz2, lzma, xz, tgz, tbz, tbz2, tzma, tzx, tlz).
