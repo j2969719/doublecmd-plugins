@@ -1,11 +1,13 @@
-#!/usr/bin/python2
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
 # Base64 & UUEncode: encode/decode
-# 2020.08.05
+# 2022.12.31
 #
-# If you want to use Python 3:
-#   just replace shebang on "#!/usr/bin/env python3" or "#!/usr/bin/python3"
+# For Base64 you can use base64.wcx.
+#
+# If you want to use Python 2:
+#   just replace shebang on "#!/usr/bin/python2" or "#!/usr/bin/python"
 #
 # File extension: b64 (Base64) or uue (UUEncode)
 #
