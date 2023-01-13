@@ -2,7 +2,7 @@
   <Info>
     <General Name="List*" Extensions="LIST SAVE"/>
     <Author Name="Skif_off" Email="" Web="" Copyright="" Company="" Remark="List of repositories in Debian APT system"/>
-    <Version Version="1" Revision="5" Date="44780,8643459606"/>
+    <Version Version="1" Revision="6" Date="44940,076783669"/>
     <History>
     </History>
     <Sample>
@@ -20,10 +20,12 @@
       <word value="sid"/>
       <word value="artful"/>
       <word value="artful-backports"/>
+      <word value="artful-proposed"/>
       <word value="artful-security"/>
       <word value="artful-updates"/>
       <word value="bionic"/>
       <word value="bionic-backports"/>
+      <word value="bionic-proposed"/>
       <word value="bionic-security"/>
       <word value="bionic-updates"/>
       <word value="bo"/>
@@ -52,6 +54,7 @@
       <word value="buzz-updates"/>
       <word value="cosmic"/>
       <word value="cosmic-backports"/>
+      <word value="cosmic-proposed"/>
       <word value="cosmic-security"/>
       <word value="cosmic-updates"/>
       <word value="dapper"/>
@@ -60,6 +63,7 @@
       <word value="dapper-updates"/>
       <word value="disco"/>
       <word value="disco-backports"/>
+      <word value="disco-proposed"/>
       <word value="disco-security"/>
       <word value="disco-updates"/>
       <word value="edgy"/>
@@ -68,6 +72,7 @@
       <word value="edgy-updates"/>
       <word value="eoan"/>
       <word value="eoan-backports"/>
+      <word value="eoan-proposed"/>
       <word value="eoan-security"/>
       <word value="eoan-updates"/>
       <word value="etch"/>
@@ -81,10 +86,12 @@
       <word value="feisty-updates"/>
       <word value="focal"/>
       <word value="focal-backports"/>
+      <word value="focal-proposed"/>
       <word value="focal-security"/>
       <word value="focal-updates"/>
       <word value="groovy"/>
       <word value="groovy-backports"/>
+      <word value="groovy-proposed"/>
       <word value="groovy-security"/>
       <word value="groovy-updates"/>
       <word value="gutsy"/>
@@ -97,10 +104,12 @@
       <word value="hamm-updates"/>
       <word value="hardy"/>
       <word value="hardy-backports"/>
+      <word value="hardy-proposed"/>
       <word value="hardy-security"/>
       <word value="hardy-updates"/>
       <word value="hirsute"/>
       <word value="hirsute-backports"/>
+      <word value="hirsute-proposed"/>
       <word value="hirsute-security"/>
       <word value="hirsute-updates"/>
       <word value="hoary"/>
@@ -109,18 +118,22 @@
       <word value="hoary-updates"/>
       <word value="impish"/>
       <word value="impish-backports"/>
+      <word value="impish-proposed"/>
       <word value="impish-security"/>
       <word value="impish-updates"/>
       <word value="intrepid"/>
       <word value="intrepid-backports"/>
+      <word value="intrepid-proposed"/>
       <word value="intrepid-security"/>
       <word value="intrepid-updates"/>
       <word value="jammy"/>
       <word value="jammy-backports"/>
+      <word value="jammy-proposed"/>
       <word value="jammy-security"/>
       <word value="jammy-updates"/>
       <word value="jaunty"/>
       <word value="jaunty-backports"/>
+      <word value="jaunty-proposed"/>
       <word value="jaunty-security"/>
       <word value="jaunty-updates"/>
       <word value="jessie"/>
@@ -129,10 +142,12 @@
       <word value="jessie-updates"/>
       <word value="karmic"/>
       <word value="karmic-backports"/>
+      <word value="karmic-proposed"/>
       <word value="karmic-security"/>
       <word value="karmic-updates"/>
       <word value="kinetic"/>
       <word value="kinetic-backports"/>
+      <word value="kinetic-proposed"/>
       <word value="kinetic-security"/>
       <word value="kinetic-updates"/>
       <word value="lenny"/>
@@ -141,18 +156,26 @@
       <word value="lenny-updates"/>
       <word value="lucid"/>
       <word value="lucid-backports"/>
+      <word value="lucid-proposed"/>
       <word value="lucid-security"/>
       <word value="lucid-updates"/>
+      <word value="lunar"/>
+      <word value="lunar-backports"/>
+      <word value="lunar-security"/>
+      <word value="lunar-updates"/>
       <word value="maverick"/>
       <word value="maverick-backports"/>
+      <word value="maverick-proposed"/>
       <word value="maverick-security"/>
       <word value="maverick-updates"/>
       <word value="natty"/>
       <word value="natty-backports"/>
+      <word value="natty-proposed"/>
       <word value="natty-security"/>
       <word value="natty-updates"/>
       <word value="oneiric"/>
       <word value="oneiric-backports"/>
+      <word value="oneiric-proposed"/>
       <word value="oneiric-security"/>
       <word value="oneiric-updates"/>
       <word value="potato"/>
@@ -161,14 +184,17 @@
       <word value="potato-updates"/>
       <word value="precise"/>
       <word value="precise-backports"/>
+      <word value="precise-proposed"/>
       <word value="precise-security"/>
       <word value="precise-updates"/>
       <word value="quantal"/>
       <word value="quantal-backports"/>
+      <word value="quantal-proposed"/>
       <word value="quantal-security"/>
       <word value="quantal-updates"/>
       <word value="raring"/>
       <word value="raring-backports"/>
+      <word value="raring-proposed"/>
       <word value="raring-security"/>
       <word value="raring-updates"/>
       <word value="rex"/>
@@ -181,6 +207,7 @@
       <word value="sarge-updates"/>
       <word value="saucy"/>
       <word value="saucy-backports"/>
+      <word value="saucy-proposed"/>
       <word value="saucy-security"/>
       <word value="saucy-updates"/>
       <word value="slink"/>
@@ -201,14 +228,17 @@
       <word value="trixie-updates"/>
       <word value="trusty"/>
       <word value="trusty-backports"/>
+      <word value="trusty-proposed"/>
       <word value="trusty-security"/>
       <word value="trusty-updates"/>
       <word value="utopic"/>
       <word value="utopic-backports"/>
+      <word value="utopic-proposed"/>
       <word value="utopic-security"/>
       <word value="utopic-updates"/>
       <word value="vivid"/>
       <word value="vivid-backports"/>
+      <word value="vivid-proposed"/>
       <word value="vivid-security"/>
       <word value="vivid-updates"/>
       <word value="warty"/>
@@ -221,6 +251,7 @@
       <word value="wheezy-updates"/>
       <word value="wily"/>
       <word value="wily-backports"/>
+      <word value="wily-proposed"/>
       <word value="wily-security"/>
       <word value="wily-updates"/>
       <word value="woody"/>
@@ -229,14 +260,17 @@
       <word value="woody-updates"/>
       <word value="xenial"/>
       <word value="xenial-backports"/>
+      <word value="xenial-proposed"/>
       <word value="xenial-security"/>
       <word value="xenial-updates"/>
       <word value="yakkety"/>
       <word value="yakkety-backports"/>
+      <word value="yakkety-proposed"/>
       <word value="yakkety-security"/>
       <word value="yakkety-updates"/>
       <word value="zesty"/>
       <word value="zesty-backports"/>
+      <word value="zesty-proposed"/>
       <word value="zesty-security"/>
       <word value="zesty-updates"/>
     </Keywords>
