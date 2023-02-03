@@ -238,6 +238,9 @@ Getting some information from PNG files.
 - [poheaderwdx.lua](plugins/wdx/scripts/poheaderwdx.lua) *(cross platform)*<br>
 Getting some information from PO-files (gettext).
 
+- [psdwdx.lua](plugins/wdx/scripts/psdwdx.lua) *(cross platform)*<br>
+Getting some information from PSD files.
+
 - [quasiexpanderwdx.lua](plugins/wdx/scripts/quasiexpanderwdx.lua) *(cross platform)*<br>
 Returns part of file name (by delimiter).
 
