@@ -287,6 +287,9 @@ Returns count of files, folders and symlinks it TAR files (list of file extensio
 - [textsearchwdx.lua](plugins/wdx/scripts/textsearchwdx.lua) + [textsearchwdx.lng](plugins/wdx/scripts/textsearchwdx.lng)<br>
 Search text in files. List of file extensions and used converters: table `commands` in the beginning of script.
 
+- [tiffwdx.lua](plugins/wdx/scripts/tiffwdx.lua) *(cross platform)*<br>
+Getting some information from TIFF files.
+
 - [transmissionwdx.lua](plugins/wdx/scripts/transmissionwdx.lua)<br>
 Returns information from TORRENT files. Requires `transmission-show`.
 
