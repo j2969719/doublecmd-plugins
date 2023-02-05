@@ -205,7 +205,7 @@ Getting some information from Windows icons (ICO images). See details in the beg
 - [infilelistwdx.lua](plugins/wdx/scripts/infilelistwdx.lua)<br>
 Search file name in custom list of file names.
 
-- [jpeginfowdx.lua](plugins/wdx/scripts/jpeginfowdx.lua) *(cross platform)*<br>
+- [jpegwdx.lua](plugins/wdx/scripts/jpegwdx.lua) *(cross platform)*<br>
 Getting some information from JPEG files. See details in the beginning of script.
 
 - [libextractorwdx.lua](plugins/wdx/scripts/libextractorwdx.lua)<br>
