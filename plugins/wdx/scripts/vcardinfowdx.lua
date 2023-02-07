@@ -1,5 +1,5 @@
 -- vcardinfowdx.lua (cross-platform)
--- 2021.04.18
+-- 2023.02.07
 --[[
 vCard Format Specification 2.1, 3.0, 4.0
 Some details: https://en.wikipedia.org/wiki/VCard
@@ -7,11 +7,12 @@ Some details: https://en.wikipedia.org/wiki/VCard
 NOTE: Script reads file content between BEGIN:VCARD and END:VCARD and will continue to work
       only if VERSION property is exists (all vCards must contain the VERSION property).
 NOTE: One vCard file - one person! Otherwise only the first one will be read.
+      The "Multi" field will return "true" if the file contains more than one entry.
 
 Supported fields: see table "fields".
 Lists of units: see "adru" for "Address" fields and third column for other.
 Data type:
-  6 - boolean (true or false, i.e. exists or not) for "Photograph" and "Logo";
+  6 - boolean (true or false, i.e. exists or not);
   8 - string.
 ]]
 
@@ -50,7 +51,8 @@ local fields = {
 {"URL",                             "URL",        "", 8},
 {"Access classification",           "CLASS",      "", 8},
 {"Instant messaging",               "IM",         "AIM|Facebook|Flickr|Gadu-Gadu|Google Hangouts|GroupWise|ICQ|Jabber|Linkedln|MySpace|QQ|Sina Weibo|Skype|Twitter|WhatsApp|Windows Live|Yahoo", 8},
-{"Assistant",                       "X-ASSISTANT", "", 8}
+{"Assistant",                       "X-ASSISTANT", "", 8},
+{"Multi",                           "", "", 6}
 }
 local all = {}
 local adr = {}
@@ -59,6 +61,7 @@ local tel = {}
 local em = {}
 local im = {}
 local v
+local bm = false
 local filename = ''
 
 function ContentGetSupportedField(FieldIndex)
@@ -77,7 +80,7 @@ function ContentGetDetectString()
 end
 
 function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
-  if FieldIndex > 33 then return nil end
+  if FieldIndex > 34 then return nil end
   local n1, s
   if filename ~= FileName then
     local e = string.lower(SysUtils.ExtractFileExt(FileName))
@@ -86,10 +89,14 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
     if (at < 0) or (math.floor(at / 0x00000010) % 2 ~= 0) then return nil end
     local h = io.open(FileName, 'r')
     if h == nil then return nil end
-    local c, i = 1, 1
+    local c, i, j = 1, 1, 0
     local vc = false
     all = {}
     for l in h:lines() do
+      if j == 1 then
+        if string.sub(l, 1, 11) == 'BEGIN:VCARD' then bm = true end
+        break
+      end
       if vc == false then
         if string.sub(l, 1, 11) == 'BEGIN:VCARD' then
           vc = true
@@ -97,21 +104,24 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
           if i > 1 then break end
         end
       else
-        if string.sub(l, 1, 9) == 'END:VCARD' then break end
-        l = string.gsub(l, '[\r\n]+$', '')
-        if string.match(l, '^[A-Z][A-Z%-]*[:;]') == nil then
-          while true do
-            if string.sub(l, 1, 1) == ' ' then l = string.sub(l, 2, -1) else break end
-          end
-          n1 = string.len(all[c - 1])
-          if string.sub(all[c - 1], n1, n1) == '=' then
-            all[c - 1] = string.sub(all[c - 1], 1, n1 - 1) .. l
-          else
-            all[c - 1] = all[c - 1] .. l
-          end
+        if string.sub(l, 1, 9) == 'END:VCARD' then
+          j = 1
         else
-          all[c] = l
-          c = c + 1
+          l = string.gsub(l, '[\r\n]+$', '')
+          if string.match(l, '^[A-Z][A-Z%-]*[:;]') == nil then
+            while true do
+              if string.sub(l, 1, 1) == ' ' then l = string.sub(l, 2, -1) else break end
+            end
+            n1 = string.len(all[c - 1])
+            if string.sub(all[c - 1], n1, n1) == '=' then
+              all[c - 1] = string.sub(all[c - 1], 1, n1 - 1) .. l
+            else
+              all[c - 1] = all[c - 1] .. l
+            end
+          else
+            all[c] = l
+            c = c + 1
+          end
         end
       end
       i = i + 1
@@ -277,6 +287,9 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
   -- X-ASSISTANT
   elseif FieldIndex == 33 then
     return GetValue(s, 'X-ASSISTANT', 11)
+  -- Multi
+  elseif FieldIndex == 34 then
+    return bm
   end
   return nil
 end
