@@ -575,7 +575,11 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	gtk_box_pack_start(GTK_BOX(hControlBox), GTK_WIDGET(data->lInfo), FALSE, FALSE, 5);
 	gtk_box_pack_end(GTK_BOX(hEncodingBox), data->cEncoding, FALSE, FALSE, 0);
 
-	gboolean quickview = (g_strcmp0(gtk_window_get_title(GTK_WINDOW(gtk_widget_get_toplevel(GTK_WIDGET(ParentWin)))), FileToLoad) != 0);
+	gboolean quickview = FALSE.
+
+	gchar *title = gtk_window_get_title(GTK_WINDOW(gtk_widget_get_toplevel(GTK_WIDGET(ParentWin))));
+	if (title[0] != '/' && title[0] != '~')
+		quickview = TRUE;
 
 	if (!quickview)
 	{

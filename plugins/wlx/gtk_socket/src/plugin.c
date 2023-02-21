@@ -252,8 +252,12 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 		return NULL;
 	}
 
-	if (insensitive && g_strcmp0(gtk_window_get_title(GTK_WINDOW(gtk_widget_get_toplevel(GTK_WIDGET(ParentWin)))), FileToLoad) != 0)
-		gtk_widget_set_state(socket, GTK_STATE_INSENSITIVE);
+	if (insensitive)
+	{
+		gchar *title = gtk_window_get_title(GTK_WINDOW(gtk_widget_get_toplevel(GTK_WIDGET(ParentWin))));
+		if (title[0] != '/' && title[0] != '~')
+			gtk_widget_set_state(socket, GTK_STATE_INSENSITIVE);
+	}
 
 	gtk_widget_show(gFix);
 	return gFix;

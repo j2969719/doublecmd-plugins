@@ -256,7 +256,8 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	gtk_widget_grab_focus(view);
 	gtk_widget_show_all(gFix);
 
-	if (g_strcmp0(gtk_window_get_title(GTK_WINDOW(gtk_widget_get_toplevel(GTK_WIDGET(ParentWin)))), FileToLoad) != 0)
+	gchar *title = gtk_window_get_title(GTK_WINDOW(gtk_widget_get_toplevel(GTK_WIDGET(ParentWin))));
+	if (title[0] != '/' && title[0] != '~')
 		gtk_widget_hide(mtb);
 
 	g_object_set_data(G_OBJECT(gFix), "imageview", view);
