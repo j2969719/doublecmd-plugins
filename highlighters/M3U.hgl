@@ -1,0 +1,33 @@
+<UniHighlighter version="1.8.1">
+  <Info>
+    <General Name="M3U, M3U8*" Extensions="M3U M3U8"/>
+    <Author Name="Skif_off" Email="" Web="" Copyright="" Company="" Remark=""/>
+    <Version Version="0" Revision="1" Date="44992,7676654514"/>
+    <History>
+    </History>
+    <Sample>
+    </Sample>
+  </Info>
+  <Scheme File="" Name=""/>
+  <Range Name="Root" Attributes="0,16777215;False:False." Style="" CaseSensitive="True"
+         Delimiters="!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^`{|}~">
+    <Rule/>
+    <Range Name="HLS extensions" Attributes="8388736,16777215;False:False." Style="" CaseSensitive="True"
+           Delimiters="!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^`{|}~">
+      <Rule OpenSymbol="#EXT-X-" OpenSymbolStartLine="True" CloseSymbolPartOfTerm="False" CloseOnEol="True"/>
+    </Range>
+    <Range Name="Extensions" Attributes="8388608,16777215;False:False." Style="" CaseSensitive="True"
+           Delimiters="!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^`{|}~">
+      <Rule OpenSymbol="#EXT" OpenSymbolStartLine="True" CloseSymbolPartOfTerm="False" CloseOnEol="True"/>
+    </Range>
+    <Range Name="Extensions2" Attributes="8388608,16777215;False:False." Style="" CaseSensitive="True"
+           Delimiters="!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^`{|}~">
+      <Rule OpenSymbol="#PLAYLIST" OpenSymbolStartLine="True" CloseSymbolPartOfTerm="False" CloseOnEol="True"/>
+    </Range>
+    <Range Name="Comments" Attributes="32768,16777215;False:False." Style="" CaseSensitive="True"
+           Delimiters="!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^`{|}~">
+      <Rule OpenSymbol="#" OpenSymbolStartLine="True" CloseSymbolPartOfTerm="False" CloseOnEol="True"/>
+    </Range>
+  </Range>
+  <CopyRight>Rule file for UniHighlighter Delphi component (Copyright(C) Fantasist(walking_in_the_sky@yahoo.com), Vit(nevzorov@yahoo.com), Vitalik(vetal-x@mail.ru), 2002-2004)</CopyRight>
+</UniHighlighter>
