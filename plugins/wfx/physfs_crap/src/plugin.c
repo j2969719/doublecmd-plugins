@@ -60,6 +60,9 @@ bool SetFindData(tVFSDirData *dirdata, WIN32_FIND_DATAA *FindData)
 	{
 		strlcpy(FindData->cFileName, *dirdata->cur, MAX_PATH - 1);
 
+		FindData->ftCreationTime.dwHighDateTime = 0xFFFFFFFF;
+		FindData->ftCreationTime.dwLowDateTime = 0xFFFFFFFE;
+
 		if (dirdata->path[1] != '\0')
 			asprintf(&fname, "%s/%s", dirdata->path, *dirdata->cur);
 		else
@@ -99,7 +102,15 @@ bool SetFindData(tVFSDirData *dirdata, WIN32_FIND_DATAA *FindData)
 				FindData->dwFileAttributes |= 0x00000001;
 		}
 		else
-			UnixTimeToFileTime(time(0), &FindData->ftLastWriteTime);
+		{
+			FindData->nFileSizeHigh = 0xFFFFFFFF;
+			FindData->nFileSizeLow = 0xFFFFFFFE;
+			FindData->ftLastAccessTime.dwHighDateTime = 0xFFFFFFFF;
+			FindData->ftLastAccessTime.dwLowDateTime = 0xFFFFFFFE;
+			FindData->ftLastWriteTime.dwHighDateTime = 0xFFFFFFFF;
+			FindData->ftLastWriteTime.dwLowDateTime = 0xFFFFFFFE;
+			//UnixTimeToFileTime(time(0), &FindData->ftLastWriteTime);
+		}
 
 		free(fname);
 		++dirdata->cur;

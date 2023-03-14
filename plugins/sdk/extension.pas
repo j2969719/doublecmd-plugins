@@ -43,6 +43,9 @@ const
   DM_LISTSET              = DM_FIRST+36;
   DM_SETPROGRESSVALUE     = DM_FIRST+37;
   DM_SETPROGRESSSTYLE     = DM_FIRST+38;
+  DM_SETPASSWORDCHAR      = DM_FIRST+39;
+  DM_LISTCLEAR            = DM_FIRST+40;
+  DM_TIMERSETINTERVAL     = DM_FIRST+41;
 
   // events messages
   DN_FIRST                = $1000;
@@ -52,6 +55,7 @@ const
   DN_GOTFOCUS             = DN_FIRST+4; // Sent when the dialog item gets input focus
   DN_INITDIALOG           = DN_FIRST+5; // Sent before showing the dialog
   DN_KILLFOCUS            = DN_FIRST+6; // Sent before a dialog item loses the input focus
+  DN_TIMER                = DN_FIRST+7; // Sent when a timer expires
 
   DN_KEYDOWN              = DM_KEYDOWN;
   DN_KEYUP                = DM_KEYUP;
@@ -106,6 +110,7 @@ type
   TDialogBoxLFMProc = function(LFMData: Pointer; DataSize: LongWord; DlgProc: TDlgProc): LongBool; {$IFDEF MSWINDOWS}stdcall{$ELSE}cdecl{$ENDIF};
   TDialogBoxLRSProc = function(LRSData: Pointer; DataSize: LongWord; DlgProc: TDlgProc): LongBool; {$IFDEF MSWINDOWS}stdcall{$ELSE}cdecl{$ENDIF};
   TDialogBoxLFMFileProc = function(lfmFileName: PAnsiChar; DlgProc: TDlgProc): LongBool; {$IFDEF MSWINDOWS}stdcall{$ELSE}cdecl{$ENDIF};
+  TTranslateStringProc = function(Translation: Pointer; Identifier, Original: PAnsiChar; Output: PAnsiChar; OutLen: Integer): Integer {$IFDEF MSWINDOWS}stdcall{$ELSE}cdecl{$ENDIF};
 
 type
   PExtensionStartupInfo = ^TExtensionStartupInfo;
@@ -123,8 +128,10 @@ type
     DialogBoxLRS: TDialogBoxLRSProc;
     DialogBoxLFMFile: TDialogBoxLFMFileProc;
     SendDlgMsg: TDlgProc;
+    Translation: Pointer;
+    TranslateString: TTranslateStringProc;
     // Reserved for future API extension
-    Reserved: packed array [0..Pred(4096 * SizeOf(Pointer))] of Byte;
+    Reserved: packed array [0..Pred(4094 * SizeOf(Pointer))] of Byte;
   end;
 
 type

@@ -87,9 +87,16 @@ gboolean SetFindData(tVFSDirData *dirdata, WIN32_FIND_DATAA *FindData)
 		g_strlcpy(FindData->cFileName, file, MAX_PATH - 1);
 		gchar *target = g_key_file_get_string(gCfg, dirdata->group, file, NULL);
 
+		FindData->ftCreationTime.dwHighDateTime = 0xFFFFFFFF;
+		FindData->ftCreationTime.dwLowDateTime = 0xFFFFFFFE;
+		FindData->ftLastAccessTime.dwHighDateTime = 0xFFFFFFFF;
+		FindData->ftLastAccessTime.dwLowDateTime = 0xFFFFFFFE;
+		FindData->ftLastWriteTime.dwHighDateTime = 0xFFFFFFFF;
+		FindData->ftLastWriteTime.dwLowDateTime = 0xFFFFFFFE;
+
 		if ((target) && (strncmp(target, "folder", 6) == 0))
 		{
-			SetCurrentFileTime(&FindData->ftLastWriteTime);
+			//SetCurrentFileTime(&FindData->ftLastWriteTime);
 			FindData->dwFileAttributes = FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_UNIX_MODE;
 			FindData->dwReserved0 = 16877;
 		}
@@ -99,8 +106,6 @@ gboolean SetFindData(tVFSDirData *dirdata, WIN32_FIND_DATAA *FindData)
 			{
 				FindData->nFileSizeHigh = (buf.st_size & 0xFFFFFFFF00000000) >> 32;
 				FindData->nFileSizeLow = buf.st_size & 0x00000000FFFFFFFF;
-				FindData->ftCreationTime.dwHighDateTime = 0xFFFFFFFF;
-				FindData->ftCreationTime.dwLowDateTime = 0xFFFFFFFE;
 				FindData->dwFileAttributes |= FILE_ATTRIBUTE_UNIX_MODE;
 				FindData->dwReserved0 = buf.st_mode;
 				UnixTimeToFileTime(buf.st_mtime, &FindData->ftLastWriteTime);
@@ -108,8 +113,9 @@ gboolean SetFindData(tVFSDirData *dirdata, WIN32_FIND_DATAA *FindData)
 			}
 			else
 			{
-				FindData->nFileSizeLow = 0;
-				SetCurrentFileTime(&FindData->ftLastWriteTime);
+				FindData->nFileSizeHigh = 0xFFFFFFFF;
+				FindData->nFileSizeLow = 0xFFFFFFFE;
+				//SetCurrentFileTime(&FindData->ftLastWriteTime);
 			}
 		}
 

@@ -1,0 +1,91 @@
+#, fuzzy
+msgid ""
+msgstr "Content-Type: text/plain; charset=UTF-8\n"
+
+#: TOptDialogBox.Сaption
+msgid "Options"
+msgstr ""
+
+#: TOptDialogBox.lblStartPath.Сaption
+msgid ""
+"Please select the folder you want to work with.\n"
+"\n"
+"You can re-open this dialog by clicking plugin properties or \"..\" "
+"properties in the root folder."
+msgstr ""
+
+#: TOptDialogBox.fnSelectPath.DialogTitle
+msgid "Select any audio file"
+msgstr ""
+
+#: TPropDialogBox.Сaption
+msgid "Properties"
+msgstr ""
+
+#: TPropDialogBox.lblArtist.Сaption MiscStr.Artist
+msgid "Artist"
+msgstr ""
+
+#: TPropDialogBox.lblTitle.Сaption MiscStr.Title
+msgid "Title"
+msgstr ""
+
+#: TPropDialogBox.lblAlbum.Сaption MiscStr.Album
+msgid "Album"
+msgstr ""
+
+#: TPropDialogBox.lblTrack.Сaption
+msgid "Track"
+msgstr ""
+
+#: TPropDialogBox.lblComment.Сaption
+msgid "Comment"
+msgstr ""
+
+#: TPropDialogBox.lblGenre.Сaption
+msgid "Genre"
+msgstr ""
+
+#: TPropDialogBox.lblYear.Сaption
+msgid "Year"
+msgstr ""
+
+#: TConvDialogBox.Сaption
+msgid "Convert"
+msgstr ""
+
+#: TConvDialogBox.lblExt.Сaption
+msgid "Extension"
+msgstr ""
+
+#: TConvDialogBox.lblCommand.Сaption
+msgid "Command"
+msgstr ""
+
+#: TConvDialogBox.lblTerm.Сaption
+msgid "Termminal"
+msgstr ""
+
+#: TConvDialogBox.lblErr.Сaption
+msgid "A required template is missing"
+msgstr ""
+
+#: MiscStr.No.
+msgid "No."
+msgstr ""
+
+#: MiscStr.Failed to fetch tag, possibly wrong file selected.
+msgid "Failed to fetch tag, possibly wrong file selected."
+msgstr ""
+
+#: MiscStr.Failed to write tag.
+msgid "Failed to write tag."
+msgstr ""
+
+#: MiscStr.Error executing command
+msgid "Error executing command"
+msgstr ""
+
+#: MiscStr.File %s already exists, overwrite?
+msgid "File %s already exists, overwrite?"
+msgstr ""

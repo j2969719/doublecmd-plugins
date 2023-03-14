@@ -4,6 +4,7 @@
 #include <errno.h>
 #include <string.h>
 #include "wfxplugin.h"
+#include "extension.h"
 
 typedef struct sVFSDirData
 {
@@ -31,6 +32,7 @@ tLogProc gLogProc = NULL;
 tRequestProc gRequestProc = NULL;
 
 gboolean gSetContent;
+gboolean gWOGtk = FALSE;
 GtkClipboard *gClipboard;
 
 const gchar *gEntries[] =
@@ -94,11 +96,16 @@ static gboolean SetFindData(tVFSDirData *dirdata, WIN32_FIND_DATAA *FindData)
 
 	if (found)
 	{
-		FindData->nFileSizeLow = 1024;
+		FindData->nFileSizeHigh = 0xFFFFFFFF;
+		FindData->nFileSizeLow = 0xFFFFFFFE;
 		g_strlcpy(FindData->cFileName, gEntries[dirdata->i - 1], MAX_PATH);
-		GetCurrentFileTime(&FindData->ftCreationTime);
-		GetCurrentFileTime(&FindData->ftLastAccessTime);
-		GetCurrentFileTime(&FindData->ftLastWriteTime);
+		FindData->ftCreationTime.dwHighDateTime = 0xFFFFFFFF;
+		FindData->ftCreationTime.dwLowDateTime = 0xFFFFFFFE;
+		FindData->ftLastAccessTime.dwHighDateTime = 0xFFFFFFFF;
+		FindData->ftLastAccessTime.dwLowDateTime = 0xFFFFFFFE;
+		FindData->ftLastWriteTime.dwHighDateTime = 0xFFFFFFFF;
+		FindData->ftLastWriteTime.dwLowDateTime = 0xFFFFFFFE;
+		//GetCurrentFileTime(&FindData->ftLastWriteTime);
 		FindData->dwFileAttributes = 0;
 	}
 
@@ -393,4 +400,10 @@ BOOL DCPCALL FsContentGetDefaultView(char* ViewContents, char* ViewHeaders, char
 void DCPCALL FsGetDefRootName(char* DefRootName, int maxlen)
 {
 	g_strlcpy(DefRootName, "Clipboard", maxlen - 1);
+}
+
+void DCPCALL ExtensionInitialize(tExtensionStartupInfo* StartupInfo)
+{
+	if (gtk_main_level() == 0)
+		gWOGtk = gtk_init_check(0, NULL);
 }

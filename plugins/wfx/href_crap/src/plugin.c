@@ -853,6 +853,10 @@ static gboolean SetFindData(tVFSDirData *dirdata, WIN32_FIND_DATAA *FindData)
 	const xmlNode *node = nodeset->nodeTab[dirdata->index++];
 	xmlChar *name = xmlGetProp(node, (xmlChar*)"name");
 	g_strlcpy(FindData->cFileName, (char*)name, sizeof(FindData->cFileName));
+	FindData->ftCreationTime.dwHighDateTime = 0xFFFFFFFF;
+	FindData->ftCreationTime.dwLowDateTime = 0xFFFFFFFE;
+	FindData->ftLastAccessTime.dwHighDateTime = 0xFFFFFFFF;
+	FindData->ftLastAccessTime.dwLowDateTime = 0xFFFFFFFE;
 
 	xmlChar *url = xmlNodeGetContent(node);
 
@@ -893,16 +897,12 @@ static gboolean SetFindData(tVFSDirData *dirdata, WIN32_FIND_DATAA *FindData)
 
 	if (filetime < 0)
 	{
-		SetCurrentFileTime(&FindData->ftCreationTime);
-		SetCurrentFileTime(&FindData->ftLastAccessTime);
-		SetCurrentFileTime(&FindData->ftLastWriteTime);
+		FindData->ftLastWriteTime.dwHighDateTime = 0xFFFFFFFF;
+		FindData->ftLastWriteTime.dwLowDateTime = 0xFFFFFFFE;
+		//SetCurrentFileTime(&FindData->ftLastWriteTime);
 	}
 	else
-	{
-		UnixTimeToFileTime((time_t)filetime, &FindData->ftCreationTime);
-		UnixTimeToFileTime((time_t)filetime, &FindData->ftLastAccessTime);
 		UnixTimeToFileTime((time_t)filetime, &FindData->ftLastWriteTime);
-	}
 
 	if (filesize > 0)
 	{
@@ -910,7 +910,10 @@ static gboolean SetFindData(tVFSDirData *dirdata, WIN32_FIND_DATAA *FindData)
 		FindData->nFileSizeLow = (int64_t)filesize & 0x00000000FFFFFFFF;
 	}
 	else
-		FindData->nFileSizeLow = 0;
+	{
+		FindData->nFileSizeHigh = 0xFFFFFFFF;
+		FindData->nFileSizeLow = 0xFFFFFFFE;
+	}
 
 
 	xmlFree(name);

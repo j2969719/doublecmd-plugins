@@ -47,7 +47,8 @@ gboolean SetFindData(tVFSDirData *dirdata, WIN32_FIND_DATAA *FindData)
 		else
 		{
 			FindData->dwFileAttributes |= FILE_ATTRIBUTE_UNIX_MODE;
-			FindData->nFileSizeLow = 1024;
+			FindData->nFileSizeHigh = 0xFFFFFFFF;
+			FindData->nFileSizeLow = 0xFFFFFFFE;
 			FindData->dwReserved0 = 420;
 		}
 

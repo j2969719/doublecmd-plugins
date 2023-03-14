@@ -170,10 +170,17 @@ bool SetFindData(tVFSDirData *dirdata, WIN32_FIND_DATAA *FindData)
 					fscanf(info, "%d %d ", &vmsize, &rssize);
 
 					if (rssize > 0)
+					{
 						size = (int64_t)rssize * (int64_t)sysconf(_SC_PAGESIZE);
+						FindData->nFileSizeHigh = (size & 0xFFFFFFFF00000000) >> 32;
+						FindData->nFileSizeLow = size & 0x00000000FFFFFFFF;
+					}
+					else
+					{
+						FindData->nFileSizeHigh = 0xFFFFFFFF;
+						FindData->nFileSizeLow = 0xFFFFFFFE;
+					}
 
-					FindData->nFileSizeHigh = (size & 0xFFFFFFFF00000000) >> 32;
-					FindData->nFileSizeLow = size & 0x00000000FFFFFFFF;
 					fclose(info);
 				}
 			}
@@ -454,8 +461,12 @@ int DCPCALL FsContentGetSupportedField(int FieldIndex, char* FieldName, char* Un
 	if (len < 0 || len > maxlen)
 		return ft_nomorefields;
 
-	strlcpy(FieldName, gStatusLines[FieldIndex].name, len - 1);
-	strlcpy(Units, "", maxlen - 1);
+	strlcpy(FieldName, gStatusLines[FieldIndex].name, maxlen - 1);
+
+	if (FieldName[len - 1] == ':')
+		FieldName[len - 1] = '\0';
+
+	Units[0] = '\0';
 	return gStatusLines[FieldIndex].type;
 }
 

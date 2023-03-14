@@ -131,7 +131,10 @@ gboolean SetFindData(tVFSDirData *dirdata, WIN32_FIND_DATAA *FindData)
 			UnixTimeToFileTime(atime, &FindData->ftLastAccessTime);
 
 		if (stat(filename, &buf) != 0)
-			FindData->nFileSizeLow = 0;
+		{
+			FindData->nFileSizeHigh = 0xFFFFFFFF;
+			FindData->nFileSizeLow = 0xFFFFFFFE;
+		}
 		else
 		{
 			FindData->nFileSizeHigh = (buf.st_size & 0xFFFFFFFF00000000) >> 32;

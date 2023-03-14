@@ -91,7 +91,8 @@ static gboolean SetFindData(tVFSDirData *dirdata, WIN32_FIND_DATAA *FindData)
 	if (dirdata->env[dirdata->i] != NULL)
 	{
 		g_strlcpy(FindData->cFileName, dirdata->env[dirdata->i], MAX_PATH);
-		FindData->nFileSizeLow = 0;
+		FindData->nFileSizeHigh = 0xFFFFFFFF;
+		FindData->nFileSizeLow = 0xFFFFFFFE;
 		FindData->ftCreationTime.dwHighDateTime = 0xFFFFFFFF;
 		FindData->ftCreationTime.dwLowDateTime = 0xFFFFFFFE;
 		FindData->ftLastAccessTime.dwHighDateTime = 0xFFFFFFFF;

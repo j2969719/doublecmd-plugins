@@ -1,0 +1,94 @@
+msgid ""
+msgstr "Content-Type: text/plain; charset=UTF-8\n"
+
+#: TOptDialogBox.Сaption
+msgid "Options"
+msgstr "Настройки"
+
+#: TOptDialogBox.lblStartPath.Сaption
+msgid ""
+"Please select the folder you want to work with.\n"
+"\n"
+"You can re-open this dialog by clicking plugin properties or \"..\" "
+"properties in the root folder."
+msgstr ""
+"Выберите папку, с которой вы хотите работать.\n"
+"\n"
+"Вы можете вызать этот диалог повторно вызвав свойства плагина или элемента "
+"\"..\" в корневой папке."
+
+#: TOptDialogBox.fnSelectPath.DialogTitle
+msgid "Select any audio file"
+msgstr "Выберите любой аудиофайл"
+
+#: TPropDialogBox.Сaption
+msgid "Properties"
+msgstr "Свойства"
+
+#: TPropDialogBox.lblArtist.Сaption MiscStr.Artist
+msgid "Artist"
+msgstr "Исполнитель"
+
+#: TPropDialogBox.lblTitle.Сaption MiscStr.Title
+msgid "Title"
+msgstr "Название"
+
+#: TPropDialogBox.lblAlbum.Сaption MiscStr.Album
+msgid "Album"
+msgstr "Альбом"
+
+#: TPropDialogBox.lblTrack.Сaption
+msgid "Track"
+msgstr "Дорожка"
+
+#: TPropDialogBox.lblComment.Сaption
+msgid "Comment"
+msgstr "Коментарий"
+
+#: TPropDialogBox.lblGenre.Сaption
+msgid "Genre"
+msgstr "Жанр"
+
+#: TPropDialogBox.lblYear.Сaption
+msgid "Year"
+msgstr "Год"
+
+#: TConvDialogBox.Сaption
+msgid "Convert"
+msgstr "Конвертировать"
+
+#: TConvDialogBox.lblExt.Сaption
+msgid "Extension"
+msgstr "Расширение"
+
+#: TConvDialogBox.lblCommand.Сaption
+msgid "Command"
+msgstr "Команда"
+
+#: TConvDialogBox.lblTerm.Сaption
+msgid "Termminal"
+msgstr "Терминал"
+
+#: TConvDialogBox.lblErr.Сaption
+msgid "A required template is missing"
+msgstr "Отсуствует необходимый шаблон"
+
+#: MiscStr.No.
+msgid "No."
+msgstr "№"
+
+#: MiscStr.Failed to fetch tag, possibly wrong file selected.
+msgid "Failed to fetch tag, possibly wrong file selected."
+msgstr "Не удалось получить тег, возможно выбран неверный файл."
+
+#: MiscStr.Failed to write tag.
+msgid "Failed to write tag."
+msgstr "Не удалось записать тег."
+
+#: MiscStr.Error executing command
+msgid "Error executing command"
+msgstr "Ошибка при выполнеии команды"
+
+#: MiscStr.File %s already exists, overwrite?
+msgid "File %s already exists, overwrite?"
+msgstr "Файл %s уже существует, перезаписать?"

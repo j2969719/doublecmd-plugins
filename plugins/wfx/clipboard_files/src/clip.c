@@ -25,6 +25,7 @@ tLogProc gLogProc = NULL;
 tRequestProc gRequestProc = NULL;
 GKeyFile *gKeyFile = NULL;
 GtkClipboard *gClipboard = NULL;
+gboolean gWOGtk = FALSE;
 
 static gboolean UnixTimeToFileTime(unsigned long mtime, LPFILETIME ft)
 {
@@ -205,7 +206,10 @@ static gboolean SetFindData(tVFSDirData *dirdata, WIN32_FIND_DATAA *FindData)
 		g_strlcpy(FindData->cFileName, filename, MAX_PATH);
 		FindData->ftCreationTime.dwHighDateTime = 0xFFFFFFFF;
 		FindData->ftCreationTime.dwLowDateTime = 0xFFFFFFFE;
-
+		FindData->ftLastAccessTime.dwHighDateTime = 0xFFFFFFFF;
+		FindData->ftLastAccessTime.dwLowDateTime = 0xFFFFFFFE;
+		FindData->ftLastWriteTime.dwHighDateTime = 0xFFFFFFFF;
+		FindData->ftLastWriteTime.dwLowDateTime = 0xFFFFFFFE;
 
 		if (g_stat(filepath, &buf) == 0)
 		{
@@ -221,8 +225,9 @@ static gboolean SetFindData(tVFSDirData *dirdata, WIN32_FIND_DATAA *FindData)
 		}
 		else
 		{
-			GetCurrentFileTime(&FindData->ftLastAccessTime);
-			GetCurrentFileTime(&FindData->ftLastWriteTime);
+			FindData->nFileSizeHigh = 0xFFFFFFFF;
+			FindData->nFileSizeLow = 0xFFFFFFFE;
+			//GetCurrentFileTime(&FindData->ftLastWriteTime);
 		}
 
 		g_free(filepath);
@@ -549,7 +554,8 @@ void DCPCALL FsGetDefRootName(char* DefRootName, int maxlen)
 
 void DCPCALL ExtensionInitialize(tExtensionStartupInfo* StartupInfo)
 {
-
+	if (gtk_main_level() == 0)
+		gWOGtk = gtk_init_check(0, NULL);
 }
 
 void DCPCALL ExtensionFinalize(void* Reserved)

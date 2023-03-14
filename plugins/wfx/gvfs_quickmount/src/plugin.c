@@ -354,7 +354,8 @@ BOOL DCPCALL FsFindNext(HANDLE Hdl, WIN32_FIND_DATAA *FindData)
 	{
 		g_strlcpy(FindData->cFileName, dirdata->groups[dirdata->i], MAX_PATH - 1);
 		FindData->dwFileAttributes |= FILE_ATTRIBUTE_REPARSE_POINT;
-		FindData->nFileSizeLow = 404;
+		FindData->nFileSizeHigh = 0xFFFFFFFF;
+		FindData->nFileSizeLow = 0xFFFFFFFE;
 		FindData->ftCreationTime.dwHighDateTime = 0xFFFFFFFF;
 		FindData->ftCreationTime.dwLowDateTime = 0xFFFFFFFE;
 		gint64 value = g_key_file_get_int64(gCfg, dirdata->groups[dirdata->i], "LastAccess", NULL);

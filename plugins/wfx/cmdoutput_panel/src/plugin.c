@@ -29,6 +29,8 @@ gboolean SetFindData(tVFSDirData *dirdata, WIN32_FIND_DATAA *FindData)
 		FindData->ftLastAccessTime.dwLowDateTime = 0xFFFFFFFE;
 		FindData->ftLastWriteTime.dwHighDateTime = 0xFFFFFFFF;
 		FindData->ftLastWriteTime.dwLowDateTime = 0xFFFFFFFE;
+		FindData->nFileSizeHigh = 0xFFFFFFFF;
+		FindData->nFileSizeLow = 0xFFFFFFFE;
 		dirdata->i++;
 		return TRUE;
 	}

@@ -28,7 +28,6 @@ bool getFileFromList(FILE *List, WIN32_FIND_DATAA *FindData)
 	char *line = NULL;
 	size_t len = 0;
 	ssize_t read;
-	int64_t size = 404;
 
 	memset(FindData, 0, sizeof(WIN32_FIND_DATAA));
 
@@ -40,12 +39,16 @@ bool getFileFromList(FILE *List, WIN32_FIND_DATAA *FindData)
 		if (line[read - 1] == '\n')
 			line[read - 1] = '\0';
 
-		FindData->nFileSizeHigh = (size & 0xFFFFFFFF00000000) >> 32;
-		FindData->nFileSizeLow = size & 0x00000000FFFFFFFF;
+		FindData->nFileSizeHigh = 0xFFFFFFFF;
+		FindData->nFileSizeLow = 0xFFFFFFFE;
 		snprintf(FindData->cFileName, MAX_PATH - 1, "%s.tar.gz", line);
-		UnixTimeToFileTime(time(0), &FindData->ftCreationTime);
-		UnixTimeToFileTime(time(0), &FindData->ftLastAccessTime);
-		UnixTimeToFileTime(time(0), &FindData->ftLastWriteTime);
+		FindData->ftCreationTime.dwHighDateTime = 0xFFFFFFFF;
+		FindData->ftCreationTime.dwLowDateTime = 0xFFFFFFFE;
+		FindData->ftLastAccessTime.dwHighDateTime = 0xFFFFFFFF;
+		FindData->ftLastAccessTime.dwLowDateTime = 0xFFFFFFFE;
+		FindData->ftLastWriteTime.dwHighDateTime = 0xFFFFFFFF;
+		FindData->ftLastWriteTime.dwLowDateTime = 0xFFFFFFFE;
+		//UnixTimeToFileTime(time(0), &FindData->ftLastWriteTime);
 		free(line);
 
 		return true;

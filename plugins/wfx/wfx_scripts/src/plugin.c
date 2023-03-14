@@ -162,6 +162,7 @@ object DialogBox: TDialogBox
     AnchorSideTop.Control = cbChoice
     AnchorSideTop.Side = asrBottom
     AnchorSideRight.Side = asrBottom
+    AnchorSideRight.Control = cbChoice
     Left = 269
     Height = 30
     Top = 59
@@ -252,7 +253,6 @@ static gboolean ExecuteScript(gchar *script_name, gchar *verb, char *arg1, char 
 	GPid pid;
 	gint status = 0;
 	gint stdout_fp, stderr_fp;
-	gchar *command = NULL;
 	gchar *message = NULL;
 	gboolean result = TRUE;
 	gchar **envp = NULL;
@@ -410,8 +410,6 @@ static gboolean ExecuteScript(gchar *script_name, gchar *verb, char *arg1, char 
 		LogMessage(gPluginNr, MSGTYPE_OPERATIONCOMPLETE, message);
 		g_free(message);
 	}
-
-	g_free(command);
 
 	if (err)
 		g_error_free(err);
@@ -1196,10 +1194,14 @@ static gboolean SetFindData(tVFSDirData * dirdata, WIN32_FIND_DATAA * FindData)
 			UnixTimeToFileTime((time_t)filetime, &FindData->ftLastWriteTime);
 		else
 		{
+/*
 			SetCurrentFileTime(&FindData->ftLastWriteTime);
 
 			if (g_noise)
 				LogMessage(gPluginNr, MSGTYPE_DETAILS, "The current datetime has been set");
+*/
+			FindData->ftLastWriteTime.dwHighDateTime = 0xFFFFFFFF;
+			FindData->ftLastWriteTime.dwLowDateTime = 0xFFFFFFFE;
 		}
 
 		g_free(string);
@@ -1214,8 +1216,17 @@ static gboolean SetFindData(tVFSDirData * dirdata, WIN32_FIND_DATAA * FindData)
 		}
 
 		gdouble filesize = g_ascii_strtod(string, NULL);
-		FindData->nFileSizeHigh = ((int64_t)filesize & 0xFFFFFFFF00000000) >> 32;
-		FindData->nFileSizeLow = (int64_t)filesize & 0x00000000FFFFFFFF;
+
+		if (filesize < 0)
+		{
+			FindData->nFileSizeHigh = 0xFFFFFFFF;
+			FindData->nFileSizeLow = 0xFFFFFFFE;
+		}
+		else
+		{
+			FindData->nFileSizeHigh = ((int64_t)filesize & 0xFFFFFFFF00000000) >> 32;
+			FindData->nFileSizeLow = (int64_t)filesize & 0x00000000FFFFFFFF;
+		}
 		g_free(string);
 
 		string = g_match_info_fetch(dirdata->match_info, 4);

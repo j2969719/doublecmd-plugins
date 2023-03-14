@@ -578,6 +578,7 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	gboolean quickview = FALSE;
 
 	const gchar *role = gtk_window_get_role(GTK_WINDOW(gtk_widget_get_toplevel(GTK_WIDGET(ParentWin))));
+
 	if (g_strcmp0(role, "TfrmViewer") != 0)
 		quickview = TRUE;
 

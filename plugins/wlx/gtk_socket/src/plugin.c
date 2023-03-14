@@ -255,6 +255,7 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	if (insensitive)
 	{
 		const gchar *role = gtk_window_get_role(GTK_WINDOW(gtk_widget_get_toplevel(GTK_WIDGET(ParentWin))));
+
 		if (g_strcmp0(role, "TfrmViewer") != 0)
 			gtk_widget_set_state(socket, GTK_STATE_INSENSITIVE);
 	}

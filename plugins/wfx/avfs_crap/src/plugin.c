@@ -81,6 +81,9 @@ bool SetFindData(DIR *cur, char *path, WIN32_FIND_DATAA *FindData)
 
 		snprintf(lpath, sizeof(lpath), "%s/%s", path, ent->d_name);
 
+		FindData->ftCreationTime.dwHighDateTime = 0xFFFFFFFF;
+		FindData->ftCreationTime.dwLowDateTime = 0xFFFFFFFE;
+
 		if (virt_stat(lpath, &buf) == 0)
 		{
 			if (S_ISDIR(buf.st_mode))
@@ -91,11 +94,18 @@ bool SetFindData(DIR *cur, char *path, WIN32_FIND_DATAA *FindData)
 
 			UnixTimeToFileTime(buf.st_mtime, &FindData->ftLastWriteTime);
 			UnixTimeToFileTime(buf.st_atime, &FindData->ftLastAccessTime);
-			FindData->ftCreationTime.dwHighDateTime = 0xFFFFFFFF;
-			FindData->ftCreationTime.dwLowDateTime = 0xFFFFFFFE;
 
 			FindData->dwFileAttributes |= FILE_ATTRIBUTE_UNIX_MODE;
 			FindData->dwReserved0 = buf.st_mode;
+		}
+		else
+		{
+			FindData->nFileSizeHigh = 0xFFFFFFFF;
+			FindData->nFileSizeLow = 0xFFFFFFFE;
+			FindData->ftLastAccessTime.dwHighDateTime = 0xFFFFFFFF;
+			FindData->ftLastAccessTime.dwLowDateTime = 0xFFFFFFFE;
+			FindData->ftLastWriteTime.dwHighDateTime = 0xFFFFFFFF;
+			FindData->ftLastWriteTime.dwLowDateTime = 0xFFFFFFFE;
 		}
 
 		strlcpy(FindData->cFileName, ent->d_name, MAX_PATH - 1);
