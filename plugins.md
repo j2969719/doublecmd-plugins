@@ -29,6 +29,9 @@ A horrible attempt to make a simple WCX plugin based on `libarchive` ([supported
 - [linkfiles_crap](plugins/wcx/linkfiles_crap)<br>
 Creates hard or symbolic links for multiple files (Files -> Pack Files...).
 
+- [m3u8_crap](plugins/wcx/m3u8_crap)<br>
+Creates m3u8 files (Files -> Pack Files...).
+
 
 ---
 <a name="wdx-bin"><h3>WDX: Binary (compiled) plugins</h3></a>
@@ -53,9 +56,6 @@ Shows a few files/folders located in some selected folder. Can be used to custom
 
 - [gdescription](plugins/wdx/gdescription)<br>
 Getting file's content type and human readable description of the content type, detection audio, video and image files (by content type).
-
-- ~[gfileinfo](plugins/wdx/gfileinfo)<br>
-Getting GFile attributes~ (kinda useless and unfinished).
 
 - [gimgsize](plugins/wdx/gimgsize)<br>
 Getting image format, format description, size, width and height.
@@ -119,23 +119,11 @@ Check filename limitations and recommendations, path lenght and other, see descr
 - [checkthumbswdx.lua](plugins/wdx/scripts/checkthumbswdx.lua) *(cross platform)*<br>
 Getting some information from thumbnails files: created by Double Commander (Windows or Linux) or the system generator of thumbnails (Linux).
 
-- [crapxmlwdx.lua](plugins/wdx/scripts/crapxmlwdx.lua)<br>
-Getting some information from FB2 files ([more complete alternative](https://github.com/doublecmd/plugins/tree/master/wdx/fb2wdx)).
-
 - [descriptionwdx.lua](plugins/wdx/scripts/descriptionwdx.lua)<br>
 Script reads file descriptions from `descript.ion`.
 
-- [dfwdx.lua](plugins/wdx/scripts/dfwdx.lua)<br>
-Mount points: name, FS type, all/used/available size and other.
-
-- [diffwdx.lua](plugins/wdx/scripts/diffwdx.lua)<br>
-Search in diff file with reference file or diff from Git or SVN repository.
-
 - [djvuwdx.lua](plugins/wdx/scripts/djvuwdx.lua)<br>
 Getting some information from DjVu files and searching text. Requires `djvused`.
-
-- [duwdx.lua](plugins/wdx/scripts/duwdx.lua)<br>
-Returns directory size or files on a file system.
 
 - [elfheaderwdx.lua](plugins/wdx/scripts/elfheaderwdx.lua) *(cross platform)*<br>
 Getting some ELF header information.
@@ -178,9 +166,6 @@ Only for columns set or tooltips!
 - [filewinattrexwdx.lua](plugins/wdx/scripts/filewinattrexwdx.lua)<br>
 Return file attributes (Windows only!). See details in the beginning of script.
 
-- [fixfilenamewdx.lua](plugins/wdx/scripts/fixfilenamewdx.lua)<br>
-Fixing file name encoding with `iconv`.
-
 - [getfaclwdx.lua](plugins/wdx/scripts/getfaclwdx.lua)<br>
 Returns file permissions (ACL). Requires `getfacl`.
 
@@ -201,9 +186,6 @@ Getting some information from iCalendar files.
 
 - [icowdx.lua](plugins/wdx/scripts/icowdx.lua) *(cross platform)*<br>
 Getting some information from Windows icons (ICO images). See details in the beginning of script.
-
-- [infilelistwdx.lua](plugins/wdx/scripts/infilelistwdx.lua)<br>
-Search file name in custom list of file names.
 
 - [jpegwdx.lua](plugins/wdx/scripts/jpegwdx.lua) *(cross platform)*<br>
 Getting some information from JPEG files. See details in the beginning of script.
@@ -244,18 +226,6 @@ Getting some information from PSD files.
 - [quasiexpanderwdx.lua](plugins/wdx/scripts/quasiexpanderwdx.lua) *(cross platform)*<br>
 Returns part of file name (by delimiter).
 
-- [randomcharswdx.lua](plugins/wdx/scripts/randomcharswdx.lua) *(cross platform)*<br>
-Returns random alphanumeric character(s) (case-sensitive), by default up to 10.
-
-- [ru2enutf8wdx.lua](plugins/wdx/scripts/ru2enutf8wdx.lua) *(cross platform)*<br>
-Converts keyboard layout Ru <> En. Requires `luautf8` module.
-
-- [ru2enwdx.lua](plugins/wdx/scripts/ru2enwdx.lua) *(cross platform)*<br>
-Converts keyboard layout Ru <> En.
-
-- [scrtiptfileinfowdx.lua](plugins/wdx/scripts/scrtiptfileinfowdx.lua)<br>
-Returns various information about file using command line utilities. Uses [fileinfo.sh](scripts/fileinfo.sh).
-
 - [selinuxfilelabelswdx.lua](plugins/wdx/scripts/selinuxfilelabelswdx.lua)<br>
 Getting SELinux file labels.
 
@@ -265,9 +235,6 @@ For "Find files" dialog.
 
 - [somefilesindirwdx.lua](plugins/wdx/scripts/somefilesindirwdx.lua) *(cross platform)*<br>
 Like script above but for columns set or tooltips.
-
-- [sqlitetxtsearchwdx.lua](plugins/wdx/scripts/sqlitetxtsearchwdx.lua) *(cross platform)*<br>
-Plugin-example: getting text from SQLite3 base. Requires `lsqlite3` module.
 
 - [stringmatchwdx.lua](plugins/wdx/scripts/stringmatchwdx.lua)<br>
 Plugin-example: search text in files, fields will create with patterns.
@@ -336,11 +303,14 @@ View output of command line utilities (see `settings.ini`).
 - [cmdoutput_panel](plugins/wfx/cmdoutput_panel)<br>
 Like `cmdoutput` but it outputs data to a column in the file panel (DC 1.1+). Settings are stored in `$DC_CONFIG_PATH/j2969719.ini`.
 
+- [contentfilter_crap](plugins/wfx/contentfilter_crap)<br>
+Filter files by content (DC 1.1+).
+
 - [envlist](plugins/wfx/envlist)<br>
 Just a list of the current environment variables (DC 1.1+).
 
-- [filelist](plugins/wfx/filelist)<br>
-Temporary panel, virtual folder that allows keeping links to frequently used files.
+- [fnmatch_crap](plugins/wfx/fnmatch_crap)<br>
+Filter files by Unix pattern (DC 1.1+).
 
 - [gtkrecent](plugins/wfx/gtkrecent)<br>
 View list of recently used files (also support: open, view or delete any entry). (for GTK2-version of DC only)
@@ -359,6 +329,9 @@ Virtual panel for [PhysicsFS](https://icculus.org/physfs/). To open the archive,
 
 - [proclst](plugins/wfx/proclst)<br>
 View a list of running processes.
+
+- [taglib_crap](plugins/wfx/taglib_crap)<br>
+Virtual Panel for audio tags editing. (DC 1.1+).
 
 - [tmppanel_crap](plugins/wfx/tmppanel_crap)<br>
 Temporary panel, see FileList description.
@@ -419,26 +392,14 @@ Displays file content with `libarchive` ([supported formats](https://github.com/
 - [md4c_webkit](plugins/wlx/md4c_webkit)<br>
 This plugin allows you to view Markdown files.
 
-- [mimescript](plugins/wlx/mimescript)<br>
-Displays various information about file using command line utilities. Detection by MIME type.
-
 - [mpv](plugins/wlx/mpv)<br>
 Media player plugin. Requires `mpv`.
 
 - [nfoview](plugins/wlx/nfoview)<br>
 Displays NFO, DIZ.
 
-- [scrolledimg](plugins/wlx/scrolledimg)<br>
-Displays GIF.
-
 - [sqlview_gtk2](plugins/wlx/sqlview_gtk2)<br>
 Very primitive SQL Viewer.
-
-- [vte_in_quickview](plugins/wlx/vte_in_quickview)<br>
-Embeds Virtual Terminal Emulator (VTE) widget (GTK2 version).
-
-- [vte_ncdu](plugins/wlx/vte_ncdu)<br>
-Embeds Virtual Terminal Emulator (VTE) widget (GTK2 version) and runs `ncdu`.
 
 - [wlxpview](plugins/wlx/wlxpview)<br>
 PDF Viewer ([original](https://yassernour.wordpress.com/2010/04/04/how-hard-to-build-a-pdf-viewer/)).
@@ -512,9 +473,6 @@ Like [wlxwebkit_qt5](plugins/wlx/wlxwebkit_qt5) but for any files if you can con
 - [dsx_script](plugins/dsx/dsx_script)<br>
 Search/feed to listbox via random command line utilities. Add some magic to `script.sh`.
 
-- ~[duplicates_crap](plugins/dsx/duplicates_crap)<br>
-Find duplicates using `find` and `b2sum`.~ Slow, doublecmd's window may hang during search. DC v1.0 already has duplicate search in `Search...`->`Advanced`.  
-
 - [git_ignored](plugins/dsx/git_ignored)<br>
 Finds ignored files in git repository via `git ls-files -i --exclude-standard`.
 
@@ -527,26 +485,14 @@ Finds untracked files and other in git repository via `git ls-files -o`.
 - [gtkrecent](plugins/dsx/gtkrecent)<br>
 Feed to listbox recent files. (for GTK2-version of DC only)
 
-- ~[hardlinks_crap](plugins/dsx/hardlinks_crap)<br>
-Find hardlinks using `find`.~ Slow, doublecmd's window may hang during search.
-
-- [in_filelist](plugins/dsx/in_filelist)<br>
-Feed to listbox files from filelist.txt.
-
 - [locate_crap](plugins/dsx/locate_crap)<br>
 Search via `locate` (w/o StartPath). 
 
 - [lslocks](plugins/dsx/lslocks)<br>
 List local system locks.
 
-- [pacman_pkg_list](plugins/dsx/pacman_pkg_list)<br>
-Feed to listbox local files of some installed archlinux package via `pacman`. Accepts only full pkgname in FileMask.
-
 - [recollq_crap](plugins/dsx/recollq_crap)<br>
 Full text search using [Recoll](https://www.lesbonscomptes.com/recoll/). 
-
-- [the_silver_searcher_crap](plugins/dsx/the_silver_searcher_crap)<br>
-Pattern matching using `the_silver_searcher`. FileMask also accepts only regexp(if filename pattern is specified, search for part of filename option must be disabled).
 
 - [tracker_textsearch](plugins/dsx/tracker_textsearch)<br>
 Full text search using [Tracker](https://wiki.gnome.org/Projects/Tracker) (supported only tracker2 legacy version). 
