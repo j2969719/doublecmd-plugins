@@ -57,6 +57,9 @@ Shows a few files/folders located in some selected folder. Can be used to custom
 - [gdescription](plugins/wdx/gdescription)<br>
 Getting file's content type and human readable description of the content type, detection audio, video and image files (by content type).
 
+- ~[gfileinfo](plugins/wdx/gfileinfo)<br>
+Getting GFile attributes~ (kinda useless and unfinished).
+
 - [gimgsize](plugins/wdx/gimgsize)<br>
 Getting image format, format description, size, width and height.
 
@@ -391,6 +394,9 @@ Displays file content with `libarchive` ([supported formats](https://github.com/
 
 - [md4c_webkit](plugins/wlx/md4c_webkit)<br>
 This plugin allows you to view Markdown files.
+
+- [mimescript](plugins/wlx/mimescript)<br>
+Displays various information about file using command line utilities. Detection by MIME type.
 
 - [mpv](plugins/wlx/mpv)<br>
 Media player plugin. Requires `mpv`.
