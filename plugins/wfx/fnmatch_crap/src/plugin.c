@@ -671,7 +671,10 @@ int DCPCALL FsRenMovFile(char* OldName, char* NewName, BOOL Move, BOOL OverWrite
 	snprintf(oldpath, sizeof(oldpath), "%s%s", gStartPath, OldName);
 	snprintf(newpath, sizeof(newpath), "%s%s", gStartPath, NewName);
 
-	if (!OverWrite && access(newpath, F_OK) == 0)
+	// iwanttobelive
+	gboolean wtf_overwrite = (gboolean)abs((int)OverWrite % 2);
+
+	if (!wtf_overwrite && access(newpath, F_OK) == 0)
 		return FS_FILE_EXISTS;
 
 	if (strcmp(oldpath, newpath) == 0)

@@ -118,6 +118,7 @@ int DCPCALL ReadHeaderEx(HANDLE hArcData, tHeaderDataEx *HeaderDataEx)
 				g_strlcpy(HeaderDataEx->FileName, newline, sizeof(HeaderDataEx->FileName) - 1);
 				gchar *path = g_strdup_printf("%s/%s", data->dirname, newline);
 				g_strlcpy(data->lastfile, path, sizeof(data->lastfile));
+				g_free(path);
 			}
 
 			g_free(newline);

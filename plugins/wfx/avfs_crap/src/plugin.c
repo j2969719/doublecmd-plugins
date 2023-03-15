@@ -519,7 +519,10 @@ int DCPCALL FsRenMovFile(char* OldName, char* NewName, BOOL Move, BOOL OverWrite
 	if (gProgressProc(gPluginNr, oldpath, newpath, 0) == 1)
 		return FS_FILE_USERABORT;
 
-	if (!OverWrite && (virt_access(newpath, F_OK) == 0))
+	// iwanttobelive
+	bool wtf_overwrite = (bool)abs((int)OverWrite % 2);
+
+	if (!wtf_overwrite && (virt_access(newpath, F_OK) == 0))
 		return FS_FILE_EXISTS;
 
 	if (Move)

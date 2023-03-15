@@ -95,7 +95,7 @@ static char g_scripts_dir[PATH_MAX];
 static char g_lfm_path[PATH_MAX];
 static char g_history_file[PATH_MAX];
 static const char *g_multichoice_lfm = R"(
-object DialogBox: TDialogBox
+object MultichoiceDialogBox: TMultichoiceDialogBox
   Left = 295
   Height = 105
   Top = 84
@@ -1474,6 +1474,9 @@ int DCPCALL FsPutFile(char* LocalName, char* RemoteName, int CopyFlags)
 
 int DCPCALL FsRenMovFile(char* OldName, char* NewName, BOOL Move, BOOL OverWrite, RemoteInfoStruct * ri)
 {
+	// iwanttobelive
+	gboolean wtf_overwrite = (gboolean)abs((int)OverWrite % 2);
+
 	if (gProgressProc(gPluginNr, OldName, NewName, 0))
 		return FS_FILE_USERABORT;
 
@@ -1492,7 +1495,7 @@ int DCPCALL FsRenMovFile(char* OldName, char* NewName, BOOL Move, BOOL OverWrite
 	gchar *script = ExtractScriptFromPath(OldName);
 	gchar *oldpath = StripScriptFromPath(OldName);
 
-	if (!OverWrite && ExecuteScript(script, VERB_EXISTS, newpath, NULL, NULL))
+	if (!wtf_overwrite && ExecuteScript(script, VERB_EXISTS, newpath, NULL, NULL))
 		return FS_FILE_EXISTS;
 
 	if (!ExecuteScript(script, Move ? VERB_MOVE : VERB_COPY, oldpath, newpath, NULL))

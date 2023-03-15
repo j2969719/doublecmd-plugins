@@ -357,7 +357,10 @@ int DCPCALL FsRenMovFile(char* OldName, char* NewName, BOOL Move, BOOL OverWrite
 	gchar *newgroup = g_path_get_dirname(NewName);
 	gchar *newkey = g_path_get_basename(NewName);
 
-	if ((OverWrite == FALSE) && (g_key_file_has_key(gCfg, newgroup, newkey, NULL)))
+	// iwanttobelive
+	gboolean wtf_overwrite = (gboolean)abs((int)OverWrite % 2);
+
+	if (!wtf_overwrite && g_key_file_has_key(gCfg, newgroup, newkey, NULL))
 		result = FS_FILE_EXISTS;
 	else if (value && strncmp(value, "folder", 6) == 0)
 		result = FS_FILE_WRITEERROR;
