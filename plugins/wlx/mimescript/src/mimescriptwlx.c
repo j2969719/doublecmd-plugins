@@ -25,23 +25,6 @@ static GtkWidget *getFirstChild(GtkWidget *w)
 	return result;
 }
 
-const gchar *get_mime_type(const gchar *Filename)
-{
-	GFile *gfile = g_file_new_for_path(Filename);
-
-	if (!gfile)
-		return NULL;
-
-	GFileInfo *fileinfo = g_file_query_info(gfile, G_FILE_ATTRIBUTE_STANDARD_CONTENT_TYPE, 0, NULL, NULL);
-
-	if (!fileinfo)
-		return NULL;
-
-	const gchar *content_type = g_file_info_get_content_type(fileinfo);
-
-	return content_type;
-}
-
 HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 {
 	GtkWidget *gFix;
@@ -74,26 +57,50 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 		if (pos)
 			strcpy(pos + 1, cfg_file);
 
-		setlocale (LC_ALL, "");
-		bindtextdomain(GETTEXT_PACKAGE, g_strdup_printf("%s/langs", g_path_get_dirname(dlinfo.dli_fname)));
+		setlocale(LC_ALL, "");
+		gchar *plugdir = g_path_get_dirname(dlinfo.dli_fname);
+		gchar *langdir = g_strdup_printf("%s/langs", plugdir);
+		bindtextdomain(GETTEXT_PACKAGE, langdir);
 		textdomain(GETTEXT_PACKAGE);
+		g_free(plugdir);
+		g_free(langdir);
 	}
 
 	cfg = g_key_file_new();
 
 	if (!g_key_file_load_from_file(cfg, path, G_KEY_FILE_KEEP_COMMENTS, &err))
 	{
-		g_print("%s\n", (err)->message);
+		g_print("%s: %s\n", path, (err)->message);
+		g_key_file_free(cfg);
 		g_error_free(err);
 		return NULL;
 	}
 	else
 	{
 
-		content_type = get_mime_type(FileToLoad);
+		GFile *gfile = g_file_new_for_path(FileToLoad);
+
+		if (!gfile)
+		{
+			g_key_file_free(cfg);
+			return NULL;
+		}
+
+		GFileInfo *fileinfo = g_file_query_info(gfile, G_FILE_ATTRIBUTE_STANDARD_CONTENT_TYPE, 0, NULL, NULL);
+
+		if (!fileinfo)
+		{
+			g_object_unref(gfile);
+			g_key_file_free(cfg);
+			return NULL;
+		}
+
+		const gchar *content_type = g_file_info_get_content_type(fileinfo);
 
 		if (!content_type)
 		{
+			g_object_unref(fileinfo);
+			g_object_unref(gfile);
 			g_key_file_free(cfg);
 			return NULL;
 		}
@@ -104,6 +111,8 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 
 		if (!src)
 		{
+			g_object_unref(fileinfo);
+			g_object_unref(gfile);
 			g_key_file_free(cfg);
 			return NULL;
 		}
@@ -113,6 +122,8 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 
 			if (pos)
 				strcpy(pos + 1, src);
+
+			g_free(src);
 		}
 
 		font = g_key_file_get_string(cfg, "Appearance", "Font", NULL);
@@ -158,13 +169,22 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 
 		if (!syntax)
 			syntax = g_key_file_get_string(cfg, "Appearance", "Syntax", NULL);
+
+		g_object_unref(fileinfo);
+		g_object_unref(gfile);
 	}
 
 	if (err)
 		g_error_free(err);
 
 	g_key_file_free(cfg);
-	command = g_strdup_printf("\"%s\" \"%s\"", path, FileToLoad);
+
+	gchar *script_quoted = g_shell_quote(path);
+	gchar *file_quoted = g_shell_quote(FileToLoad);
+
+	command = g_strdup_printf("%s %s", script_quoted, file_quoted);
+	g_free(script_quoted);
+	g_free(file_quoted);
 
 	if (!g_spawn_command_line_sync(command, &buf1, NULL, NULL, NULL))
 	{
@@ -195,6 +215,7 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 
 	tView = gtk_source_view_new_with_buffer(tBuf);
 	gtk_widget_modify_font(tView, pango_font_description_from_string(font));
+	g_free(font);
 	gtk_text_view_set_editable(GTK_TEXT_VIEW(tView), FALSE);
 
 	if (no_cursor)
@@ -211,6 +232,7 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 		scheme_manager = gtk_source_style_scheme_manager_get_default();
 		scheme = gtk_source_style_scheme_manager_get_scheme(scheme_manager, style);
 		gtk_source_buffer_set_style_scheme(tBuf, scheme);
+		g_free(style);
 	}
 
 	if (syntax)
@@ -218,6 +240,7 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 		lm = gtk_source_language_manager_new();
 		language = gtk_source_language_manager_get_language(lm, syntax);
 		gtk_source_buffer_set_language(tBuf, language);
+		g_free(syntax);
 	}
 
 	gtk_container_add(GTK_CONTAINER(scroll), GTK_WIDGET(tView));
@@ -237,7 +260,7 @@ void DCPCALL ListCloseWindow(HANDLE ListWin)
 
 void DCPCALL ListGetDetectString(char* DetectString, int maxlen)
 {
-	g_strlcpy(DetectString, DETECT_STRING, maxlen-1);
+	g_strlcpy(DetectString, DETECT_STRING, maxlen - 1);
 }
 
 int DCPCALL ListSearchText(HWND ListWin, char* SearchString, int SearchParameter)
@@ -322,6 +345,7 @@ int DCPCALL ListSendCommand(HWND ListWin, int Command, int Parameter)
 
 		break;
 	}
+
 	default :
 		return LISTPLUGIN_ERROR;
 	}
