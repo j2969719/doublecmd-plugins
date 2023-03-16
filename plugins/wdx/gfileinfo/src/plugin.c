@@ -1,4 +1,5 @@
 #include <glib.h>
+#include <stdio.h>
 #include <gio/gio.h>
 #include "string.h"
 #include "wdxplugin.h"
@@ -121,7 +122,16 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 
 	case ft_numeric_32:
 		if (g_file_info_get_attribute_type(fileinfo, gFields[FieldIndex].attr) == G_FILE_ATTRIBUTE_TYPE_UINT32)
-			*(gint32*)FieldValue = (gint32)g_file_info_get_attribute_uint32(fileinfo, gFields[FieldIndex].attr);
+		{
+			if (g_strcmp0(gFields[FieldIndex].attr, "unix::mode") == 0)
+			{
+				char mode[7];
+				snprintf(mode, sizeof(mode), "%o", g_file_info_get_attribute_uint32(fileinfo, gFields[FieldIndex].attr));
+				*(int*)FieldValue = atoi(mode);
+			}
+			else
+				*(gint32*)FieldValue = (gint32)g_file_info_get_attribute_uint32(fileinfo, gFields[FieldIndex].attr);
+		}
 		else
 			*(gint32*)FieldValue = g_file_info_get_attribute_int32(fileinfo, gFields[FieldIndex].attr);
 

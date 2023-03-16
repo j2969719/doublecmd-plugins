@@ -117,6 +117,10 @@ intptr_t DCPCALL PropertiesDlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t M
 						{
 							time_t tval = (time_t)val;
 							str = g_strdup_printf("%s\t%s", attr[i], ctime(&tval));
+							int len = strlen(str);
+
+							if (len > 1 && str[len - 1] == '\n')
+								str[len - 1] = '\0';
 						}
 						else
 							str = g_strdup_printf("%s\t%lu", attr[i], val);

@@ -188,10 +188,25 @@ intptr_t DCPCALL PropertiesDlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t M
 			snprintf(text, sizeof(text), "nlink\t%lu",  buf.st_nlink);
 			SendDlgMsg(pDlg, "lbProps", DM_LISTADDSTR, (intptr_t)text, 0);
 			snprintf(text, sizeof(text), "mtime\t%s",  ctime(&buf.st_mtime));
+			int len = strlen(text);
+
+			if (len > 1 && text[len - 1] == '\n')
+				text[len - 1] = '\0';
+
 			SendDlgMsg(pDlg, "lbProps", DM_LISTADDSTR, (intptr_t)text, 0);
 			snprintf(text, sizeof(text), "atime\t%s",  ctime(&buf.st_atime));
+			len = strlen(text);
+
+			if (len > 1 && text[len - 1] == '\n')
+				text[len - 1] = '\0';
+
 			SendDlgMsg(pDlg, "lbProps", DM_LISTADDSTR, (intptr_t)text, 0);
 			snprintf(text, sizeof(text), "ctime\t%s",  ctime(&buf.st_ctime));
+			len = strlen(text);
+
+			if (len > 1 && text[len - 1] == '\n')
+				text[len - 1] = '\0';
+
 			SendDlgMsg(pDlg, "lbProps", DM_LISTADDSTR, (intptr_t)text, 0);
 			snprintf(text, sizeof(text), "mode\t%o",  buf.st_mode);
 			SendDlgMsg(pDlg, "lbProps", DM_LISTADDSTR, (intptr_t)text, 0);
