@@ -245,8 +245,14 @@ intptr_t DCPCALL OptionsDlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg,
 				}
 			}
 
-			g_key_file_set_string(gCfg, ROOTNAME, "CustomTypes", types);
-			gCustomTypes = g_key_file_get_string_list(gCfg, ROOTNAME, "CustomTypes", NULL, NULL);
+			if (types)
+			{
+				g_key_file_set_string(gCfg, ROOTNAME, "CustomTypes", types);
+				g_free(types);
+				gCustomTypes = g_key_file_get_string_list(gCfg, ROOTNAME, "CustomTypes", NULL, NULL);
+			}
+			else
+				g_key_file_set_string(gCfg, ROOTNAME, "CustomTypes", "");
 
 			g_key_file_set_integer(gCfg, ROOTNAME, "Mode", gMode);
 			g_key_file_set_boolean(gCfg, ROOTNAME, "Custom", gCustom);
@@ -468,7 +474,7 @@ static BOOL SetFindData(DIR *cur, char *path, WIN32_FIND_DATAA *FindData)
 		{
 			const gchar *content_type = g_file_info_get_content_type(fileinfo);
 
-			if (gCustom &&!g_strv_contains((const gchar* const*)gCustomTypes, content_type))
+			if (gCustom && (!gCustomTypes || !g_strv_contains((const gchar* const*)gCustomTypes, content_type)))
 				skip = TRUE;
 			else if (gMode == 1 && strncmp(content_type, "image", 5) != 0)
 				skip = TRUE;
