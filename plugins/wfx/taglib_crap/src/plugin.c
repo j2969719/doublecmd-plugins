@@ -1222,10 +1222,7 @@ int DCPCALL FsRenMovFile(char* OldName, char* NewName, BOOL Move, BOOL OverWrite
 	gchar *oldlocal = g_strdup_printf("%s%s", gStartPath, OldName);
 	gchar *newlocal = g_strdup_printf("%s%s", gStartPath, NewName);
 
-	// iwanttobelive
-	gboolean wtf_overwrite = (gboolean)abs((int)OverWrite % 2);
-
-	if (!wtf_overwrite && g_file_test(newlocal, G_FILE_TEST_EXISTS))
+	if (!OverWrite && g_file_test(newlocal, G_FILE_TEST_EXISTS))
 	{
 		g_free(oldlocal);
 		g_free(newlocal);
