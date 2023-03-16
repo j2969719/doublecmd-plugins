@@ -226,20 +226,27 @@ intptr_t DCPCALL OptionsDlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg,
 				g_strfreev(gCustomTypes);
 
 			gCustomTypes = NULL;
-
-			GStrvBuilder *builder = g_strv_builder_new();
+			gchar *types = NULL;
 
 			for (gsize i = 0; i < count; i++)
 			{
 				char *type = (char*)SendDlgMsg(pDlg, "lbSelected", DM_LISTGETITEM, i, 0);
 
 				if (type && strlen(type) > 0)
-					g_strv_builder_add(builder, type);
+				{
+					if (!types)
+						types = g_strdup_printf("%s;", type);
+					else
+					{
+						gchar *tmp = g_strdup_printf("%s%s;", types, type);
+						g_free(types);
+						types = tmp;
+					}
+				}
 			}
 
-			gCustomTypes = g_strv_builder_end(builder);
-			g_strv_builder_unref(builder);
-			g_key_file_set_string_list(gCfg, ROOTNAME, "CustomTypes", (const gchar * const*)gCustomTypes, g_strv_length(gCustomTypes));
+			g_key_file_set_string(gCfg, ROOTNAME, "CustomTypes", types);
+			gCustomTypes = g_key_file_get_string_list(gCfg, ROOTNAME, "CustomTypes", NULL, NULL);
 
 			g_key_file_set_integer(gCfg, ROOTNAME, "Mode", gMode);
 			g_key_file_set_boolean(gCfg, ROOTNAME, "Custom", gCustom);

@@ -1,4 +1,4 @@
-object PropDialogBox: TPropDialogBox
+object OptsDialogBox: TOptsDialogBox
   Left = 458
   Height = 465
   Top = 307
@@ -22,7 +22,7 @@ object PropDialogBox: TPropDialogBox
     AnchorSideRight.Side = asrBottom
     Left = 284
     Height = 31
-    Top = 412
+    Top = 428
     Width = 101
     Anchors = [akTop, akRight]
     AutoSize = True
@@ -41,7 +41,7 @@ object PropDialogBox: TPropDialogBox
     AnchorSideRight.Control = btnOK
     Left = 178
     Height = 31
-    Top = 412
+    Top = 428
     Width = 101
     Anchors = [akTop, akRight]
     AutoSize = True
@@ -91,10 +91,10 @@ object PropDialogBox: TPropDialogBox
     AnchorSideRight.Side = asrBottom
     AnchorSideBottom.Side = asrBottom
     Left = 15
-    Height = 60
+    Height = 76
     Top = 293
     Width = 370
-    Anchors = [akTop, akLeft, akRight, akBottom]
+    Anchors = [akTop, akLeft, akRight]
     Enabled = False
     ItemHeight = 0
     OnClick = ListBoxClick
@@ -124,7 +124,7 @@ object PropDialogBox: TPropDialogBox
     AnchorSideRight.Side = asrBottom
     Left = 222
     Height = 29
-    Top = 363
+    Top = 379
     Width = 163
     Anchors = [akTop, akRight]
     AutoSize = True
