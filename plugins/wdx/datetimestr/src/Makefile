@@ -5,7 +5,7 @@ PLUGNAME = $(shell basename $(realpath ..)).$(shell basename $(realpath ../..))
 
 
 all:
-		$(CC) $(CFLAGS) $(INCLUDES) datetimestr.c -o ../$(PLUGNAME)
+		$(CC) $(CFLAGS) $(INCLUDES) datetimestr.c -o ../$(PLUGNAME) -D'PLUGNAME="$(PLUGNAME)"'
 
 clean:
 		$(RM) ../$(PLUGNAME)

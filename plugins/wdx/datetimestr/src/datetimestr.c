@@ -1,56 +1,56 @@
-#define _GNU_SOURCE
 #include <glib.h>
 #include <gio/gio.h>
-#include <dlfcn.h>
-#include <limits.h>
 #include <string.h>
 #include "wdxplugin.h"
 
-typedef struct _field
-{
-	char *name;
-	int type;
-	char *format;
-} FIELD;
-
-#define fieldcount (sizeof(fields)/sizeof(FIELD))
-
-FIELD fields[] =
-{
-	{"placeholder",	ft_string,	""},
-	{"placeholder",	ft_string,	""},
-	{"placeholder",	ft_string,	""},
-	{"placeholder",	ft_string,	""},
-	{"placeholder",	ft_string,	""},
-	{"placeholder",	ft_string,	""},
-};
+static GKeyFile *gCfg = NULL;
+static gchar *gCfgPath = NULL;
 
 int DCPCALL ContentGetSupportedField(int FieldIndex, char* FieldName, char* Units, int maxlen)
 {
-	if (FieldIndex < 0 || FieldIndex >= fieldcount)
+	int result = ft_string;
+
+	if (FieldIndex == 0)
+		g_key_file_load_from_file(gCfg, gCfgPath, G_KEY_FILE_KEEP_COMMENTS, NULL);
+
+	gchar *string = g_strdup_printf("FieldName%d", FieldIndex);
+	gchar *field = g_key_file_get_string(gCfg, PLUGNAME, string, NULL);
+	g_free(string);
+
+	if (!field)
 		return ft_nomorefields;
 
-	g_strlcpy(FieldName, fields[FieldIndex].name, maxlen - 1);
-	g_strlcpy(Units, "last modified|last accessed|last changed", maxlen - 1);
-	return fields[FieldIndex].type;
+	if (field[0] == '\0')
+	{
+		string = g_strdup_printf("Preset%d", FieldIndex);
+		g_strlcpy(FieldName, string, maxlen - 1);
+		g_free(string);
+	}
+	else
+		g_strlcpy(FieldName, field, maxlen - 1);
+
+	g_free(field);
+	g_strlcpy(Units, "modified|access|changed", maxlen - 1);
+	string = g_strdup_printf("IsNumeric%d", FieldIndex);
+
+	if (g_key_file_get_boolean(gCfg, PLUGNAME, string, NULL))
+		result = ft_numeric_64;
+
+	g_free(string);
+
+	return result;
 }
 
 int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void* FieldValue, int maxlen, int flags)
 {
-	GFile *ifile;
+	GFile *gfile;
 	GFileInfo *info;
-	GDateTime *date;
 	const char *attr;
-	guint64 val;
-	gchar *tmp;
+	int result = ft_string;
 
-	if (FieldIndex < 0 || FieldIndex >= fieldcount)
-		return ft_fieldempty;
+	gfile = g_file_new_for_path(FileName);
 
-	if (strncmp(FileName + strlen(FileName) - 3, "/..", 4) == 0)
-		return ft_fileerror;
-
-	if (!g_file_test(FileName, G_FILE_TEST_EXISTS))
+	if (!gfile)
 		return ft_fileerror;
 
 	switch (UnitIndex)
@@ -68,87 +68,97 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 		break;
 	}
 
-	ifile = g_file_new_for_path(FileName);
-	info = g_file_query_info(ifile, attr, G_FILE_QUERY_INFO_NOFOLLOW_SYMLINKS, NULL, NULL);
+	info = g_file_query_info(gfile, attr, G_FILE_QUERY_INFO_NOFOLLOW_SYMLINKS, NULL, NULL);
 
-	if ((!info) || (g_strcmp0(fields[FieldIndex].format, "") == 0))
-		return ft_fieldempty;
-
-	val = g_file_info_get_attribute_uint64(info, attr);
-	date = g_date_time_new_from_unix_local(val);
-	tmp = g_date_time_format(date, fields[FieldIndex].format);
-
-	if (fields[FieldIndex].type == ft_numeric_64)
+	if (!info)
 	{
-		val = g_ascii_strtoll(tmp, NULL, 0);
-		*(guint64*)FieldValue = val;
+		g_object_unref(gfile);
+		return ft_fieldempty;
+	}
+
+	guint64 unixtime = g_file_info_get_attribute_uint64(info, attr);
+
+	if (unixtime == 0)
+	{
+		g_object_unref(gfile);
+		g_object_unref(info);
+		return ft_fieldempty;
+	}
+
+	gchar *string = g_strdup_printf("Format%d", FieldIndex);
+	gchar *format = g_key_file_get_string(gCfg, PLUGNAME, string, NULL);
+	g_free(string);
+
+	if (!format || format[0] == '\0')
+	{
+		g_free(format);
+		g_object_unref(gfile);
+		g_object_unref(info);
+		return ft_fieldempty;
+	}
+
+	GDateTime *date = g_date_time_new_from_unix_local(unixtime);
+	gchar *formated = g_date_time_format(date, format);
+	g_date_time_unref(date);
+	g_free(format);
+
+	string = g_strdup_printf("IsNumeric%d", FieldIndex);
+
+	if (g_key_file_get_boolean(gCfg, PLUGNAME, string, NULL))
+	{
+		*(int64_t*)FieldValue = (int64_t)g_ascii_strtoll(formated, NULL, 0);
+		result = ft_numeric_64;
 	}
 	else
-		g_strlcpy((char*)FieldValue, tmp, maxlen - 1);
+		g_strlcpy((char*)FieldValue, formated, maxlen - 1);
 
-	g_object_unref(ifile);
+	g_free(string);
+	g_free(formated);
+	g_object_unref(gfile);
 	g_object_unref(info);
-	g_date_time_unref(date);
-	g_free(tmp);
-	return fields[FieldIndex].type;
+
+	return result;
 }
 
 void DCPCALL ContentSetDefaultParams(ContentDefaultParamStruct* dps)
 {
-	Dl_info dlinfo;
-	GKeyFile *cfg;
-	GError *err = NULL;
-	static char cfg_path[PATH_MAX];
-	const char* cfg_file = "settings.ini";
-	const gchar *prsetstr;
-	gchar *tmp;
-	gint i;
-	gboolean bval;
+	if (!gCfg)
+		gCfg = g_key_file_new();
 
-	memset(&dlinfo, 0, sizeof(dlinfo));
+	gchar *cfgdir = g_path_get_dirname(dps->DefaultIniName);
+	gCfgPath = g_strdup_printf("%s/%s", cfgdir, "j2969719.ini");
 
-	if (dladdr(cfg_path, &dlinfo) != 0)
+	if (!g_key_file_load_from_file(gCfg, gCfgPath, G_KEY_FILE_KEEP_COMMENTS, NULL) || !g_key_file_has_group(gCfg, PLUGNAME))
 	{
-		strncpy(cfg_path, dlinfo.dli_fname, PATH_MAX);
-		char *pos = strrchr(cfg_path, '/');
+		g_key_file_set_string(gCfg, PLUGNAME, "FieldName0", "Date");
+		g_key_file_set_string(gCfg, PLUGNAME, "Format0", "%a %d %b %k:%M");
+		g_key_file_set_comment(gCfg, PLUGNAME, "Format0", " https://developer-old.gnome.org/glib/stable/glib-GDateTime.html#g-date-time-format", NULL);
+		g_key_file_set_boolean(gCfg, PLUGNAME, "IsNumeric0", FALSE);
+		g_key_file_set_comment(gCfg, PLUGNAME, "IsNumeric0", " value contains digits only", NULL);
+		g_key_file_set_string(gCfg, PLUGNAME, "FieldName1", "Day");
+		g_key_file_set_string(gCfg, PLUGNAME, "Format1", "%a");
+		g_key_file_set_boolean(gCfg, PLUGNAME, "IsNumeric1", FALSE);
+		g_key_file_set_string(gCfg, PLUGNAME, "FieldName2", "Year");
+		g_key_file_set_string(gCfg, PLUGNAME, "Format2", "%Y");
+		g_key_file_set_boolean(gCfg, PLUGNAME, "IsNumeric2", TRUE);
+		g_key_file_set_string(gCfg, PLUGNAME, "FieldName3", "Time");
+		g_key_file_set_string(gCfg, PLUGNAME, "Format3", "%T");
+		g_key_file_set_boolean(gCfg, PLUGNAME, "IsNumeric3", FALSE);
+		g_key_file_save_to_file(gCfg, gCfgPath, NULL);
+	}
+}
 
-		if (pos)
-			strcpy(pos + 1, cfg_file);
+void DCPCALL ContentPluginUnloading(void)
+{
+	if (gCfgPath)
+	{
+		g_free(gCfgPath);
+		gCfgPath = NULL;
 	}
 
-	cfg = g_key_file_new();
-
-	if (!g_key_file_load_from_file(cfg, cfg_path, G_KEY_FILE_KEEP_COMMENTS, &err))
-		g_print("datetime.wdx (%s): %s\n", cfg_path, (err)->message);
-	else
+	if (gCfg)
 	{
-		for (i = 0; i < 6; i++)
-		{
-			prsetstr = g_strdup_printf("Preset%d", i + 1);
-			tmp = g_key_file_get_string(cfg, prsetstr, "Name", NULL);
-
-			if ((tmp) && (g_strcmp0(tmp, "") != 0))
-				fields[i].name = tmp;
-
-			tmp = g_key_file_get_string(cfg, prsetstr, "Format", NULL);
-
-			if ((tmp) && (g_strcmp0(tmp, "") != 0))
-			{
-				fields[i].format = tmp;
-
-				if (g_strcmp0(fields[i].name, "placeholder") == 0)
-					fields[i].name = fields[i].format;
-			}
-
-			bval = g_key_file_get_boolean(cfg, prsetstr, "Numeric", NULL);
-
-			if (bval == TRUE)
-				fields[i].type = ft_numeric_64;
-		}
+		g_key_file_free(gCfg);
+		gCfg = NULL;
 	}
-
-	g_key_file_free(cfg);
-
-	if (err)
-		g_error_free(err);
 }
