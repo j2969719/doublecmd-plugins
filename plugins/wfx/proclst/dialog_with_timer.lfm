@@ -1,0 +1,509 @@
+object DialogBox: TDialogBox
+  Left = 303
+  Height = 329
+  Top = 158
+  Width = 570
+  AutoSize = True
+  BorderStyle = bsDialog
+  Caption = 'Properties'
+  ChildSizing.LeftRightSpacing = 10
+  ChildSizing.TopBottomSpacing = 10
+  ClientHeight = 329
+  ClientWidth = 570
+  DesignTimePPI = 100
+  OnCreate = DialogBoxShow
+  Position = poScreenCenter
+  LCLVersion = '2.2.4.0'
+  object lblPid: TLabel
+    AnchorSideLeft.Control = lblState
+    AnchorSideLeft.Side = asrBottom
+    AnchorSideTop.Control = edPid
+    AnchorSideTop.Side = asrCenter
+    AnchorSideRight.Control = edPid
+    Left = 423
+    Height = 17
+    Top = 24
+    Width = 29
+    Anchors = [akTop, akRight]
+    BorderSpacing.Left = 10
+    BorderSpacing.Right = 5
+    Caption = 'PID:'
+    ParentColor = False
+  end
+  object lblName: TLabel
+    AnchorSideLeft.Control = Owner
+    AnchorSideTop.Control = edName
+    AnchorSideTop.Side = asrCenter
+    Left = 10
+    Height = 17
+    Top = 24
+    Width = 46
+    Caption = 'Name:'
+    ParentColor = False
+  end
+  object btnClose: TBitBtn
+    AnchorSideTop.Control = edPpid
+    AnchorSideTop.Side = asrBottom
+    AnchorSideRight.Control = edPid
+    AnchorSideRight.Side = asrBottom
+    AnchorSideBottom.Control = Owner
+    AnchorSideBottom.Side = asrBottom
+    Left = 433
+    Height = 29
+    Top = 276
+    Width = 130
+    Anchors = [akTop, akRight]
+    AutoSize = True
+    BorderSpacing.Top = 26
+    BorderSpacing.Bottom = 10
+    Cancel = True
+    Constraints.MinWidth = 130
+    DefaultCaption = True
+    Kind = bkClose
+    OnClick = ButtonClick
+    TabOrder = 0
+  end
+  object edPid: TEdit
+    AnchorSideLeft.Control = lblPid
+    AnchorSideLeft.Side = asrBottom
+    AnchorSideTop.Control = edName
+    AnchorSideRight.Control = edVmPeak
+    AnchorSideRight.Side = asrBottom
+    Left = 457
+    Height = 23
+    Top = 21
+    Width = 106
+    Anchors = [akTop, akRight]
+    BorderSpacing.Left = 5
+    ReadOnly = True
+    TabOrder = 2
+    Text = 'N/A'
+  end
+  object edName: TEdit
+    AnchorSideLeft.Control = lblName
+    AnchorSideLeft.Side = asrBottom
+    AnchorSideTop.Control = Owner
+    AnchorSideRight.Control = Owner
+    AnchorSideRight.Side = asrBottom
+    Left = 61
+    Height = 23
+    Top = 21
+    Width = 206
+    BorderSpacing.Left = 5
+    BorderSpacing.Top = 21
+    BorderSpacing.Right = 10
+    ReadOnly = True
+    TabOrder = 1
+    Text = 'N/A'
+  end
+  object edPpid: TEdit
+    AnchorSideLeft.Control = edPid
+    AnchorSideTop.Control = edParentName
+    AnchorSideRight.Control = edPid
+    AnchorSideRight.Side = asrBottom
+    Left = 457
+    Height = 23
+    Top = 227
+    Width = 106
+    Anchors = [akTop, akLeft, akRight]
+    OnChange = EditChange
+    ReadOnly = True
+    TabOrder = 11
+    Text = 'N/A'
+  end
+  object edParentName: TEdit
+    AnchorSideLeft.Control = edName
+    AnchorSideTop.Control = divParent
+    AnchorSideTop.Side = asrBottom
+    AnchorSideRight.Control = edName
+    AnchorSideRight.Side = asrBottom
+    Left = 61
+    Height = 23
+    Top = 227
+    Width = 206
+    Anchors = [akTop, akLeft, akRight]
+    BorderSpacing.Top = 5
+    ReadOnly = True
+    TabOrder = 10
+    Text = 'N/A'
+  end
+  object edVmSize: TEdit
+    AnchorSideLeft.Control = lblVmSize
+    AnchorSideLeft.Side = asrBottom
+    AnchorSideTop.Control = mCmdline
+    AnchorSideTop.Side = asrBottom
+    AnchorSideRight.Control = lblVmPeak
+    Left = 72
+    Height = 23
+    Hint = 'Virtual memory size'
+    Top = 116
+    Width = 208
+    Alignment = taRightJustify
+    BorderSpacing.Left = 5
+    BorderSpacing.Top = 10
+    BorderSpacing.Right = 5
+    Constraints.MinWidth = 208
+    OnChange = EditChange
+    ParentShowHint = False
+    ReadOnly = True
+    ShowHint = True
+    TabOrder = 4
+    Text = 'N/A'
+  end
+  object edVmPeak: TEdit
+    AnchorSideLeft.Control = lblVmHWM
+    AnchorSideLeft.Side = asrBottom
+    AnchorSideTop.Control = edVmSize
+    AnchorSideRight.Control = Owner
+    AnchorSideRight.Side = asrBottom
+    Left = 355
+    Height = 23
+    Hint = 'Peak virtual memory size'
+    Top = 116
+    Width = 208
+    Alignment = taRightJustify
+    BorderSpacing.Left = 5
+    Constraints.MinWidth = 208
+    OnChange = EditChange
+    ParentShowHint = False
+    ReadOnly = True
+    ShowHint = True
+    TabOrder = 5
+    Text = 'N/A'
+  end
+  object lblState: TLabel
+    AnchorSideLeft.Control = edName
+    AnchorSideLeft.Side = asrBottom
+    AnchorSideTop.Control = lblPid
+    AnchorSideRight.Control = lblPid
+    Left = 277
+    Height = 17
+    Hint = 'Current state of the  process'
+    Top = 24
+    Width = 136
+    Alignment = taCenter
+    Anchors = [akTop, akLeft, akRight]
+    BorderSpacing.Left = 5
+    BorderSpacing.Right = 5
+    Caption = 'N/A'
+    ParentBidiMode = False
+    ParentColor = False
+    ParentShowHint = False
+    ShowHint = True
+  end
+  object lblPPid: TLabel
+    AnchorSideLeft.Control = lblPid
+    AnchorSideTop.Control = edPpid
+    AnchorSideTop.Side = asrCenter
+    Left = 423
+    Height = 17
+    Top = 230
+    Width = 29
+    Caption = 'PID:'
+    ParentColor = False
+  end
+  object lblPName: TLabel
+    AnchorSideLeft.Control = Owner
+    AnchorSideTop.Control = edParentName
+    AnchorSideTop.Side = asrCenter
+    Left = 10
+    Height = 17
+    Top = 230
+    Width = 46
+    BorderSpacing.Left = 10
+    Caption = 'Name:'
+    ParentColor = False
+  end
+  object lblVmSize: TLabel
+    AnchorSideLeft.Control = lblName
+    AnchorSideTop.Control = edVmSize
+    AnchorSideTop.Side = asrCenter
+    Left = 10
+    Height = 17
+    Hint = 'Virtual memory size'
+    Top = 119
+    Width = 57
+    Caption = 'VmSize:'
+    ParentColor = False
+    ParentShowHint = False
+    ShowHint = True
+  end
+  object lblVmPeak: TLabel
+    AnchorSideLeft.Control = edVmSize
+    AnchorSideLeft.Side = asrBottom
+    AnchorSideTop.Control = edVmPeak
+    AnchorSideTop.Side = asrCenter
+    Left = 285
+    Height = 17
+    Hint = 'Peak virtual memory size'
+    Top = 119
+    Width = 62
+    Caption = 'VmPeak:'
+    ParentColor = False
+    ParentShowHint = False
+    ShowHint = True
+  end
+  object divParent: TDividerBevel
+    AnchorSideLeft.Control = Owner
+    AnchorSideTop.Control = edVmLck
+    AnchorSideTop.Side = asrBottom
+    AnchorSideRight.Control = Owner
+    AnchorSideRight.Side = asrBottom
+    Left = 10
+    Height = 17
+    Top = 205
+    Width = 550
+    Caption = 'Parent'
+    Anchors = [akTop, akLeft, akRight]
+    BevelStyle = bsRaised
+    BorderSpacing.Left = 5
+    BorderSpacing.Top = 10
+    BorderSpacing.Right = 5
+    Font.Style = [fsBold]
+    ParentFont = False
+  end
+  object mCmdline: TMemo
+    AnchorSideLeft.Control = lblName
+    AnchorSideTop.Control = edName
+    AnchorSideTop.Side = asrBottom
+    AnchorSideRight.Control = edVmPeak
+    AnchorSideRight.Side = asrBottom
+    Left = 10
+    Height = 57
+    Hint = 'Complete command line for the process'
+    Top = 49
+    Width = 553
+    Anchors = [akTop, akLeft, akRight]
+    BorderSpacing.Top = 5
+    Lines.Strings = (
+      'N/A'
+    )
+    ParentShowHint = False
+    ReadOnly = True
+    ScrollBars = ssAutoVertical
+    ShowHint = True
+    TabOrder = 3
+  end
+  object edVmRSS: TEdit
+    AnchorSideLeft.Control = lblVmSize
+    AnchorSideLeft.Side = asrBottom
+    AnchorSideTop.Control = edVmSize
+    AnchorSideTop.Side = asrBottom
+    AnchorSideRight.Control = lblVmPeak
+    Left = 72
+    Height = 23
+    Hint = 'Resident set size'#10'Note that the value here is the sum of RssAnon, RssFile, and RssShmem'
+    Top = 144
+    Width = 208
+    Alignment = taRightJustify
+    Anchors = [akTop, akLeft, akRight]
+    BorderSpacing.Left = 5
+    BorderSpacing.Top = 5
+    BorderSpacing.Right = 5
+    Constraints.MinWidth = 208
+    OnChange = EditChange
+    ParentShowHint = False
+    ReadOnly = True
+    ShowHint = True
+    TabOrder = 6
+    Text = 'N/A'
+  end
+  object edVmLck: TEdit
+    AnchorSideLeft.Control = lblVmSize
+    AnchorSideLeft.Side = asrBottom
+    AnchorSideTop.Control = edVmRSS
+    AnchorSideTop.Side = asrBottom
+    AnchorSideRight.Control = lblVmPeak
+    Left = 72
+    Height = 23
+    Hint = 'Locked memory size'
+    Top = 172
+    Width = 208
+    Alignment = taRightJustify
+    Anchors = [akTop, akLeft, akRight]
+    BorderSpacing.Left = 5
+    BorderSpacing.Top = 5
+    BorderSpacing.Right = 5
+    Constraints.MinWidth = 208
+    OnChange = EditChange
+    ParentShowHint = False
+    ReadOnly = True
+    ShowHint = True
+    TabOrder = 8
+    Text = 'N/A'
+  end
+  object edVmHWM: TEdit
+    AnchorSideLeft.Control = edVmPeak
+    AnchorSideTop.Control = edVmRSS
+    AnchorSideRight.Control = edVmPeak
+    AnchorSideRight.Side = asrBottom
+    Left = 355
+    Height = 23
+    Hint = 'Peak resident set size ("high water mark")'
+    Top = 144
+    Width = 208
+    Alignment = taRightJustify
+    Anchors = [akTop, akLeft, akRight]
+    Constraints.MinWidth = 208
+    OnChange = EditChange
+    ParentShowHint = False
+    ReadOnly = True
+    ShowHint = True
+    TabOrder = 7
+    Text = 'N/A'
+  end
+  object edVmSwap: TEdit
+    AnchorSideLeft.Control = edVmPeak
+    AnchorSideTop.Control = edVmLck
+    AnchorSideRight.Control = edVmPeak
+    AnchorSideRight.Side = asrBottom
+    Left = 355
+    Height = 23
+    Hint = 'Swapped-out virtual memory size by anonymous private pages'#10'shmem swap usage is not included'
+    Top = 172
+    Width = 208
+    Alignment = taRightJustify
+    Anchors = [akTop, akLeft, akRight]
+    Constraints.MinWidth = 208
+    OnChange = EditChange
+    ParentShowHint = False
+    ReadOnly = True
+    ShowHint = True
+    TabOrder = 9
+    Text = 'N/A'
+  end
+  object lblVmHWM: TLabel
+    AnchorSideLeft.Control = lblVmPeak
+    AnchorSideTop.Control = edVmHWM
+    AnchorSideTop.Side = asrCenter
+    AnchorSideRight.Control = edVmHWM
+    Left = 285
+    Height = 17
+    Hint = 'Peak resident set size ("high water mark")'
+    Top = 147
+    Width = 65
+    BorderSpacing.Right = 5
+    Caption = 'VmHWM:'
+    ParentColor = False
+    ParentShowHint = False
+    ShowHint = True
+  end
+  object lblVmSwap: TLabel
+    AnchorSideLeft.Control = lblVmPeak
+    AnchorSideTop.Control = edVmSwap
+    AnchorSideTop.Side = asrCenter
+    AnchorSideRight.Control = edVmSwap
+    Left = 285
+    Height = 17
+    Hint = 'Swapped-out virtual memory size by anonymous private pages'
+    Top = 175
+    Width = 66
+    BorderSpacing.Right = 5
+    Caption = 'VmSwap:'
+    ParentColor = False
+    ParentShowHint = False
+    ShowHint = True
+  end
+  object lblVmRSS: TLabel
+    AnchorSideLeft.Control = lblName
+    AnchorSideTop.Control = edVmRSS
+    AnchorSideTop.Side = asrCenter
+    Left = 10
+    Height = 17
+    Hint = 'Resident set size'
+    Top = 147
+    Width = 56
+    Caption = 'VmRSS:'
+    ParentColor = False
+    ParentShowHint = False
+    ShowHint = True
+  end
+  object lblVmLck: TLabel
+    AnchorSideLeft.Control = lblName
+    AnchorSideTop.Control = edVmLck
+    AnchorSideTop.Side = asrCenter
+    Left = 10
+    Height = 17
+    Hint = 'Locked memory size'
+    Top = 175
+    Width = 52
+    Caption = 'VmLck:'
+    ParentColor = False
+    ParentShowHint = False
+    ShowHint = True
+  end
+  object lblLink: TLabel
+    AnchorSideLeft.Control = lblName
+    AnchorSideTop.Control = cbLink
+    AnchorSideTop.Side = asrCenter
+    Left = 10
+    Height = 17
+    Top = 282
+    Width = 111
+    Caption = 'Open in Viewer:'
+    ParentColor = False
+  end
+  object cbLink: TComboBox
+    AnchorSideLeft.Control = lblLink
+    AnchorSideLeft.Side = asrBottom
+    AnchorSideTop.Control = btnClose
+    AnchorSideTop.Side = asrCenter
+    Left = 126
+    Height = 23
+    Top = 279
+    Width = 104
+    BorderSpacing.Left = 5
+    ItemHeight = 17
+    Items.Strings = (
+      'status'
+      'environ'
+      'exe'
+      'mounts'
+      'mountinfo'
+      'mountstats'
+      'maps'
+      'smaps'
+      'limits'
+      'fd/1'
+    )
+    OnChange = ComboBoxChange
+    TabOrder = 12
+  end
+  object edUpdTime: TEdit
+    AnchorSideLeft.Control = lblUpdTime
+    AnchorSideLeft.Side = asrBottom
+    AnchorSideTop.Control = cbLink
+    AnchorSideBottom.Control = cbLink
+    AnchorSideBottom.Side = asrBottom
+    Left = 311
+    Height = 23
+    Top = 279
+    Width = 54
+    Alignment = taRightJustify
+    Anchors = [akTop, akLeft, akBottom]
+    BorderSpacing.Left = 5
+    MaxLength = 6
+    NumbersOnly = True
+    OnChange = EditChange
+    TabOrder = 13
+    Text = '1000'
+  end
+  object lblUpdTime: TLabel
+    AnchorSideLeft.Control = cbLink
+    AnchorSideLeft.Side = asrBottom
+    AnchorSideTop.Control = edUpdTime
+    AnchorSideTop.Side = asrCenter
+    Left = 250
+    Height = 17
+    Top = 282
+    Width = 56
+    BorderSpacing.Left = 20
+    Caption = 'Update:'
+    ParentColor = False
+  end
+  object tmUpdate: TTimer
+    OnTimer = TimerTimer
+    Left = 336
+    Top = 224
+  end
+end

@@ -18,6 +18,7 @@
 #include "extension.h"
 
 #define Int32x32To64(a,b) ((int64_t)(a)*(int64_t)(b))
+#define SendDlgMsg gDialogApi->SendDlgMsg
 
 typedef struct sVFSDirData
 {
@@ -148,10 +149,6 @@ bool SetFindData(tVFSDirData *dirdata, WIN32_FIND_DATAA *FindData)
 				fclose(info);
 				found = true;
 
-				UnixTimeToFileTime(time(0), &FindData->ftCreationTime);
-				UnixTimeToFileTime(time(0), &FindData->ftLastAccessTime);
-				UnixTimeToFileTime(time(0), &FindData->ftLastWriteTime);
-
 				snprintf(lpath, PATH_MAX, "/proc/%s/exe", ent->d_name);
 				FindData->dwFileAttributes = FILE_ATTRIBUTE_UNIX_MODE;
 
@@ -183,11 +180,55 @@ bool SetFindData(tVFSDirData *dirdata, WIN32_FIND_DATAA *FindData)
 
 					fclose(info);
 				}
+
+				UnixTimeToFileTime(time(0), &FindData->ftCreationTime);
+				UnixTimeToFileTime(time(0), &FindData->ftLastAccessTime);
+				UnixTimeToFileTime(time(0), &FindData->ftLastWriteTime);
 			}
 		}
 	}
 
 	return found;
+}
+
+static void GetProcStatus(uintptr_t pDlg)
+{
+	char lpath[PATH_MAX];
+	FILE *info;
+	char *line = NULL;
+	size_t len = 0;
+	ssize_t lread;
+
+	snprintf(lpath, PATH_MAX, "/proc/%s/status", gLastPath);
+
+	if ((info = fopen(lpath, "r")) != NULL)
+	{
+		while ((lread = getline(&line, &len, info)) != -1)
+		{
+			if (line[lread - 1] == '\n')
+				line[lread - 1] = '\0';
+
+			for (int i = 0; i < statuslcount; i++)
+			{
+				if (gStatusLines[i].control && strncmp(line, gStatusLines[i].name, strlen(gStatusLines[i].name)) == 0)
+				{
+					SendDlgMsg(pDlg, gStatusLines[i].control, DM_SETTEXT, (intptr_t)line + strlen(gStatusLines[i].name) + 1, 0);
+					break;
+				}
+			}
+		}
+
+		free(line);
+		fclose(info);
+	}
+	else
+	{
+		for (int i = 0; i < statuslcount; i++)
+		{
+			if (gStatusLines[i].control)
+				SendDlgMsg(pDlg, gStatusLines[i].control, DM_SETTEXT, (intptr_t)"N/A", 0);
+		}
+	}
 }
 
 intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr_t wParam, intptr_t lParam)
@@ -201,29 +242,7 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 	switch (Msg)
 	{
 	case DN_INITDIALOG:
-		snprintf(lpath, PATH_MAX, "/proc/%s/status", gLastPath);
-
-		if ((info = fopen(lpath, "r")) != NULL)
-		{
-			while ((lread = getline(&line, &len, info)) != -1)
-			{
-				if (line[lread - 1] == '\n')
-					line[lread - 1] = '\0';
-
-				for (int i = 0; i < statuslcount; i++)
-				{
-					if (gStatusLines[i].control && strncmp(line, gStatusLines[i].name, strlen(gStatusLines[i].name)) == 0)
-					{
-						gDialogApi->SendDlgMsg(pDlg, gStatusLines[i].control, DM_SETTEXT, (intptr_t)line + strlen(gStatusLines[i].name) + 1, 0);
-						break;
-					}
-				}
-			}
-
-			free(line);
-			fclose(info);
-		}
-
+		GetProcStatus(pDlg);
 		snprintf(lpath, PATH_MAX, "/proc/%s/cmdline", gLastPath);
 		int fd;
 
@@ -239,20 +258,24 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 						lpath[i] = ' ';
 				}
 
-				gDialogApi->SendDlgMsg(pDlg, "mCmdline", DM_SETTEXT, (intptr_t)lpath, 0);
+				SendDlgMsg(pDlg, "mCmdline", DM_SETTEXT, (intptr_t)lpath, 0);
 			}
 
 			close(fd);
 		}
 
-		gDialogApi->SendDlgMsg(pDlg, "cbLink", DM_SETTEXT, (intptr_t)gLinkPath, 0);
+		SendDlgMsg(pDlg, "cbLink", DM_SETTEXT, (intptr_t)gLinkPath, 0);
 
 		break;
 
+	case DN_TIMER:
+		GetProcStatus(pDlg);
+
+		break;
 	case DN_CHANGE:
 		if (strcmp(DlgItemName, "edPpid") == 0)
 		{
-			line = (char*)gDialogApi->SendDlgMsg(pDlg, "edPpid", DM_GETTEXT, 0, 0);
+			line = (char*)SendDlgMsg(pDlg, "edPpid", DM_GETTEXT, 0, 0);
 
 			if (line && strcmp(line, "N/A") != 0)
 			{
@@ -262,14 +285,14 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 				{
 					char name[100];
 					fscanf(info, "Name:\t%100[^\n]s", name);
-					gDialogApi->SendDlgMsg(pDlg, "edParentName", DM_SETTEXT, (intptr_t)name, 0);
+					SendDlgMsg(pDlg, "edParentName", DM_SETTEXT, (intptr_t)name, 0);
 					fclose(info);
 				}
 			}
 		}
 		else if (strncmp(DlgItemName, "edVm", 4) == 0)
 		{
-			line = (char*)gDialogApi->SendDlgMsg(pDlg, DlgItemName, DM_GETTEXT, 0, 0);
+			line = (char*)SendDlgMsg(pDlg, DlgItemName, DM_GETTEXT, 0, 0);
 			len = strlen(line);
 
 			if (len > 7 && len + 2 < PATH_MAX)
@@ -279,20 +302,26 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 					strlcpy(lpath, line, len - 6);
 					strcat(lpath, " ");
 					strcat(lpath, line + len - 6);
-					gDialogApi->SendDlgMsg(pDlg, DlgItemName, DM_SETTEXT, (intptr_t)lpath, 0);
+					SendDlgMsg(pDlg, DlgItemName, DM_SETTEXT, (intptr_t)lpath, 0);
 				}
 				else if (len > 11 && line[len - 3] == ' ' && line[len - 11] != ' ')
 				{
 					strlcpy(lpath, line, len - 10);
 					strcat(lpath, " ");
 					strcat(lpath, line + len - 10);
-					gDialogApi->SendDlgMsg(pDlg, DlgItemName, DM_SETTEXT, (intptr_t)lpath, 0);
+					SendDlgMsg(pDlg, DlgItemName, DM_SETTEXT, (intptr_t)lpath, 0);
 				}
 			}
 		}
 		else if (strcmp(DlgItemName, "cbLink") == 0)
 		{
-			strlcpy(gLinkPath, (char*)gDialogApi->SendDlgMsg(pDlg, DlgItemName, DM_GETTEXT, 0, 0), PATH_MAX - 1);
+			strlcpy(gLinkPath, (char*)SendDlgMsg(pDlg, DlgItemName, DM_GETTEXT, 0, 0), PATH_MAX - 1);
+		}
+		else if (strcmp(DlgItemName, "edUpdTime") == 0)
+		{
+			line = (char*)SendDlgMsg(pDlg, "edUpdTime", DM_GETTEXT, 0, 0);
+			int interval = atoi(line);
+			SendDlgMsg(pDlg, "tmUpdate", DM_TIMERSETINTERVAL, interval, 0);
 		}
 
 		break;
