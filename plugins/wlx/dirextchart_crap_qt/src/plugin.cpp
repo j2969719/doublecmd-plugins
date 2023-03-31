@@ -5,11 +5,11 @@
 #include <dlfcn.h>
 #include "wlxplugin.h"
 
-static QMimeDatabase gDB;
 static char inipath[PATH_MAX];
 
 static QMap<QString, qint64> CalcContentSize(QString path)
 {
+	qDebug() << "CalcContentSize";
 	QMap<QString, qint64> result;
 
 	QSettings settings(inipath, QSettings::IniFormat);
@@ -36,17 +36,18 @@ static QMap<QString, qint64> CalcContentSize(QString path)
 		}
 
 		if (!found)
-			result["other..."]  += iter.fileInfo().size();
+			result["..."]  += iter.fileInfo().size();
 	}
 
+	qDebug() << result;
 	return result;
 }
 
 HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 {
-	QMimeType type = gDB.mimeTypeForFile(QString(FileToLoad));
+	QFileInfo fi(FileToLoad);
 
-	if (type.name() != "inode/directory")
+	if (!fi.isDir())
 		return nullptr;
 
 	QFrame *view = new QFrame((QWidget*)ParentWin);
@@ -63,24 +64,76 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 
 	QChartView *chart = new QChartView(view);
 	QPieSeries *series = new QPieSeries(view);
-	chart->chart()->legend()->setAlignment(Qt::AlignRight);
 	chart->chart()->addSeries(series);
-
+	QPalette palette = QApplication::palette();
+	chart->chart()->setBackgroundBrush(palette.brush(QPalette::Window));
+	chart->chart()->setTitleBrush(palette.brush(QPalette::WindowText));
+	chart->chart()->legend()->setAlignment(Qt::AlignRight);
+	chart->chart()->legend()->setLabelColor(palette.color(QPalette::WindowText));
 	main->addWidget(chart);
 
-	QObject::connect(lpath, &QLineEdit::textChanged, [series](const QString text)
+	QFutureWatcher<QMap<QString, qint64>> *watcher = new QFutureWatcher<QMap<QString, qint64>>(view);
+	watcher->setObjectName("watcher");
+
+	QObject::connect(watcher, &QFutureWatcher<QMap<QString, qint64>>::finished, [lpath, watcher, series, chart]()
 	{
 		QLocale locale;
-		auto rows = QtConcurrent::run(CalcContentSize, text);
-		QMapIterator<QString, qint64> i(rows);
+		auto result = watcher->result();
+		QMapIterator<QString, qint64> iter(result);
 
 		series->clear();
 
-		while (i.hasNext())
+		qint64 total = 0;
+		qint64 maxsize = 0;
+		QStringList list;
+
+		while (iter.hasNext())
 		{
-			i.next();
-			series->append(QString("%1 (%2)").arg(i.key()).arg(locale.formattedDataSize(i.value())), i.value());
+			iter.next();
+			total += iter.value();
+
+			if (iter.key() != "...")
+			{
+				if (iter.value() > maxsize)
+				{
+					maxsize = iter.value();
+					list.prepend(iter.key());
+				}
+				else
+				{
+					bool inserted = false;
+
+					for (auto i = 0; i < list.size(); i++)
+					{
+						if (result[list[i]] <= iter.value())
+						{
+							inserted = true;
+							list.insert(i, iter.key());
+							break;
+						}
+					}
+
+					if (!inserted)
+						list.append(iter.key());
+				}
+			}
 		}
+
+		list.append("...");
+
+		for (const auto& i : list)
+		{
+			series->append(QString("%1 (%2)").arg(i).arg(locale.formattedDataSize(result[i])), result[i]);
+		}
+
+		chart->chart()->setTitle(QString("%1 (%2)").arg(lpath->text()).arg(locale.formattedDataSize(total)));
+	});
+
+	QObject::connect(lpath, &QLineEdit::textChanged, [series, watcher, chart](const QString text)
+	{
+		series->clear();
+		chart->chart()->setTitle("Scaning...");
+		watcher->setFuture(QtConcurrent::run(CalcContentSize, text));
 	});
 
 	view->show();
@@ -92,9 +145,9 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 
 int DCPCALL ListLoadNext(HWND ParentWin, HWND PluginWin, char* FileToLoad, int ShowFlags)
 {
-	QMimeType type = gDB.mimeTypeForFile(QString(FileToLoad));
+	QFileInfo fi(FileToLoad);
 
-	if (type.name() != "inode/directory")
+	if (!fi.isDir())
 		return LISTPLUGIN_ERROR;
 
 	QFrame *view = (QFrame*)ParentWin;
@@ -107,6 +160,12 @@ int DCPCALL ListLoadNext(HWND ParentWin, HWND PluginWin, char* FileToLoad, int S
 void DCPCALL ListCloseWindow(HANDLE ListWin)
 {
 	QFrame *view = (QFrame*)ListWin;
+	QFutureWatcher<QMap<QString, qint64>> *watcher = view->findChild<QFutureWatcher<QMap<QString, qint64>> *>("watcher");
+
+	if (watcher->isRunning())
+		watcher->waitForFinished();
+
+	delete watcher;
 	delete view;
 }
 

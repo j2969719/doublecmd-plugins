@@ -9,13 +9,12 @@
 static QString gQmlFile;
 static QString gDefCfg;
 static QString gPlugDir;
-QMimeDatabase gDB;
 
 HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 {
-	QMimeType type = gDB.mimeTypeForFile(QString(FileToLoad));
+	QFileInfo fi(FileToLoad);
 
-	if (type.name() != "inode/directory")
+	if (!fi.isDir())
 		return nullptr;
 
 	QQuickWidget *view = new QQuickWidget((QWidget*)ParentWin);
@@ -65,9 +64,9 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 
 int DCPCALL ListLoadNext(HWND ParentWin, HWND PluginWin, char* FileToLoad, int ShowFlags)
 {
-	QMimeType type = gDB.mimeTypeForFile(QString(FileToLoad));
+	QFileInfo fi(FileToLoad);
 
-	if (type.name() != "inode/directory")
+	if (!fi.isDir())
 		return LISTPLUGIN_ERROR;
 
 	QQuickWidget *view = (QQuickWidget*)PluginWin;
