@@ -24,18 +24,36 @@ Rectangle
 		else
 			img.fillMode = Image.Pad
 	}
+	Rectangle
+	{
+		anchors.top: parent.top
+		anchors.left: parent.left
+		anchors.right: parent.right
+		anchors.bottom: path.bottom
+		color: pal.highlight
+	}
+	Text
+	{
+		id: path
+		anchors.top: parent.top
+		anchors.left: parent.left
+		color: pal.highlightedText
+	}
+	Text
+	{
+		id: sizeinfo
+		anchors.top: parent.top
+		anchors.left: path.right
+		anchors.right: parent.right
+		color: pal.highlightedText
+	}
 	AnimatedImage
 	{
-		Text
-		{
-			id: sizeinfo
-			text: "0x0"
-			font.pixelSize: 20
-			anchors.top: parent.top
-			anchors.left: parent.left
-		}
 		id: img
-		anchors.fill: parent
+		anchors.top: path.bottom
+		anchors.left: parent.left
+		anchors.right: parent.right
+		anchors.bottom: parent.bottom
 		onStatusChanged: playing = (status == AnimatedImage.Ready)
 		onSourceSizeChanged:
 		{
@@ -44,7 +62,16 @@ Rectangle
 			else
 				img.fillMode = Image.Pad
 
-			sizeinfo.text = img.sourceSize.width + "x" + img.sourceSize.height
+			sizeinfo.text = " [" + img.sourceSize.width + "x" + img.sourceSize.height + "]"
+		}
+		MouseArea
+		{
+			anchors.fill: parent
+			onWheel:
+			{
+				if (wheel.modifiers & Qt.ControlModifier)
+					img.scale += img.scale * wheel.angleDelta.y / 120 / 10
+			}
 		}
 	}
 	function myListLoad(FileToLoad, ShowFlags)
@@ -75,6 +102,7 @@ Rectangle
 		*/
 
 		img.source = FileToLoad
+		path.text =FileToLoad
 		if (img.status == Image.Error)
 			return false
 		return true

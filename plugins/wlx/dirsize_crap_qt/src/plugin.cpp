@@ -179,9 +179,9 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 		}
 
 		if (row > MAXSLICES)
-			series->append(QString("... (%1 / %2)").arg(row - MAXSLICES).arg(locale.formattedDataSize(rest)), rest);
+			series->append(QString("... (%1: %2)").arg(row - MAXSLICES).arg(locale.formattedDataSize(rest)), rest);
 
-		chart->chart()->setTitle(QString("%1 (%2 / %3)").arg(lpath->text()).arg(row).arg(locale.formattedDataSize(total)));
+		chart->chart()->setTitle(QString("%1 (%2: %3)").arg(lpath->text()).arg(row).arg(locale.formattedDataSize(total)));
 	});
 
 	QObject::connect(lpath, &QLineEdit::textChanged, [table, series, watcher, chart](const QString text)

@@ -7,10 +7,12 @@
 
 static char inipath[PATH_MAX];
 
-static QMap<QString, qint64> CalcContentSize(QString path)
+typedef QMap<QString, QPair<qint64, qint64>> calcdata;
+
+static calcdata CalcContentSize(QString path)
 {
 	qDebug() << "CalcContentSize";
-	QMap<QString, qint64> result;
+	calcdata result;
 
 	QSettings settings(inipath, QSettings::IniFormat);
 	settings.setIniCodec("UTF-8");
@@ -30,13 +32,17 @@ static QMap<QString, qint64> CalcContentSize(QString path)
 		{
 			if (settings.value(i).value<QStringList>().contains(iter.fileInfo().suffix()))
 			{
-				result[i]  += iter.fileInfo().size();
+				result[i].first  += iter.fileInfo().size();
+				result[i].second++;
 				found = true;
 			}
 		}
 
 		if (!found)
-			result["..."]  += iter.fileInfo().size();
+		{
+			result["..."].first  += iter.fileInfo().size();
+			result["..."].second++;
+		}
 	}
 
 	qDebug() << result;
@@ -72,31 +78,33 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 	chart->chart()->legend()->setLabelColor(palette.color(QPalette::WindowText));
 	main->addWidget(chart);
 
-	QFutureWatcher<QMap<QString, qint64>> *watcher = new QFutureWatcher<QMap<QString, qint64>>(view);
+	QFutureWatcher<calcdata> *watcher = new QFutureWatcher<calcdata>(view);
 	watcher->setObjectName("watcher");
 
-	QObject::connect(watcher, &QFutureWatcher<QMap<QString, qint64>>::finished, [lpath, watcher, series, chart]()
+	QObject::connect(watcher, &QFutureWatcher<calcdata>::finished, [lpath, watcher, series, chart]()
 	{
 		QLocale locale;
 		auto result = watcher->result();
-		QMapIterator<QString, qint64> iter(result);
+		QMapIterator<QString, QPair<qint64, qint64>> iter(result);
 
 		series->clear();
 
 		qint64 total = 0;
+		qint64 count = 0;
 		qint64 maxsize = 0;
 		QStringList list;
 
 		while (iter.hasNext())
 		{
 			iter.next();
-			total += iter.value();
+			total += iter.value().first;
+			count += iter.value().second;
 
 			if (iter.key() != "...")
 			{
-				if (iter.value() > maxsize)
+				if (iter.value().first > maxsize)
 				{
-					maxsize = iter.value();
+					maxsize = iter.value().first;
 					list.prepend(iter.key());
 				}
 				else
@@ -105,7 +113,7 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 
 					for (auto i = 0; i < list.size(); i++)
 					{
-						if (result[list[i]] <= iter.value())
+						if (result[list[i]].first <= iter.value().first)
 						{
 							inserted = true;
 							list.insert(i, iter.key());
@@ -119,14 +127,15 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 			}
 		}
 
-		list.append("...");
+		if (result["..."].second > 0)
+			list.append("...");
 
 		for (const auto& i : list)
 		{
-			series->append(QString("%1 (%2)").arg(i).arg(locale.formattedDataSize(result[i])), result[i]);
+			series->append(QString("%1 (%2: %3)").arg(i).arg(result[i].second).arg(locale.formattedDataSize(result[i].first)), result[i].first);
 		}
 
-		chart->chart()->setTitle(QString("%1 (%2)").arg(lpath->text()).arg(locale.formattedDataSize(total)));
+		chart->chart()->setTitle(QString("%1 (%2: %3)").arg(lpath->text()).arg(count).arg(locale.formattedDataSize(total)));
 	});
 
 	QObject::connect(lpath, &QLineEdit::textChanged, [series, watcher, chart](const QString text)
@@ -160,7 +169,7 @@ int DCPCALL ListLoadNext(HWND ParentWin, HWND PluginWin, char* FileToLoad, int S
 void DCPCALL ListCloseWindow(HANDLE ListWin)
 {
 	QFrame *view = (QFrame*)ListWin;
-	QFutureWatcher<QMap<QString, qint64>> *watcher = view->findChild<QFutureWatcher<QMap<QString, qint64>> *>("watcher");
+	QFutureWatcher<calcdata> *watcher = view->findChild<QFutureWatcher<calcdata>*>("watcher");
 
 	if (watcher->isRunning())
 		watcher->waitForFinished();

@@ -40,7 +40,6 @@ Rectangle
 		backgroundColor: pal.window
 		legend.alignment: Qt.AlignRight
 		legend.labelColor: pal.text
-		title: "Top 10 files you want to remove"
 		titleColor: pal.text
 		titleFont.pointSize: 15
 		titleFont.bold: true 
@@ -60,6 +59,7 @@ Rectangle
 				if (fmodel.status == FolderListModel.Ready)
 				{
 					pieser.clear()
+					dirchart.title = (fmodel.count == 0) ? "There are no files in this folder" : "Top 10 files you want to remove"
 					var count = (fmodel.count < 10) ? fmodel.count : 10
 
 					for (var i =0; i < count; i++)
