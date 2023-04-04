@@ -7,7 +7,7 @@ DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
     <Icon>cm_markmarkall</Icon>
     <Hint>MarkUnmark</Hint>
     <Command>cm_ExecuteScript</Command>
-    <Param>%COMMANDER_PATH%/scripts/lua/markunmark.lua</Param>
+    <Param>$DC_CONFIG_PATH/scripts/lua/markunmark.lua</Param>
     <Param>%ps2</Param>
   </Command>
 </doublecmd>

@@ -7,7 +7,7 @@ DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
     <Icon>cm_symlink</Icon>
     <Hint>Edit Symlink</Hint>
     <Command>cm_ExecuteScript</Command>
-    <Param>$COMMANDER_PATH/scripts/lua/editsymlink.lua</Param>
+    <Param>$DC_CONFIG_PATH/scripts/lua/editsymlink.lua</Param>
     <Param>"%p1"</Param>
   </Command>
 </doublecmd>

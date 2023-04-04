@@ -196,7 +196,7 @@ Modal result
 |---|---|
 |`OnClick`|`ListBoxClick`|
 |`OnDblClick`|`ListBoxDblClick`|
-|`OnChange`|`ListBoxChange`|
+|`OnSelectionChange`|`ListBoxSelectionChange`|
 |`OnEnter`|`ListBoxEnter`|
 |`OnExit`|`ListBoxExit`|
 |`OnKeyDown`|`ListBoxKeyDown`|

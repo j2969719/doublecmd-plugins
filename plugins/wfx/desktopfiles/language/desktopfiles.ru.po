@@ -1,0 +1,124 @@
+msgid ""
+msgstr "Content-Type: text/plain; charset=UTF-8\n"
+
+#: TPropDialogBox.Сaption
+msgid "Properties"
+msgstr "Свойства"
+
+#: TPropDialogBox.tsGeneral.Сaption
+msgid "General"
+msgstr "Основное"
+
+#: TPropDialogBox.tsActions.Сaption
+msgid "Actions"
+msgstr "Действия"
+
+#: TPropDialogBox.tsCategories.Сaption
+msgid "Categories"
+msgstr "Категории"
+
+#: TPropDialogBox.tsMimes.Сaption
+msgid "MimeType"
+msgstr "MimeType"
+
+#: TPropDialogBox.btnDel.Сaption TPropDialogBox.btnActDel.Сaption
+#: TPropDialogBox.btnMimeDel.Сaption
+msgid "Remove"
+msgstr "Удалить"
+
+#: TPropDialogBox.btnAdd.Сaption TPropDialogBox.btnActAdd.Сaption
+#: TPropDialogBox.btnMimeAdd.Сaption
+msgid "Add"
+msgstr "Добавить"
+
+#: TPropDialogBox.btnApply.Сaption
+msgid "Apply"
+msgstr "Применить"
+
+#: TPropDialogBox.btnActLaunch.Сaption
+msgid "Launch"
+msgstr "Запустить"
+
+#: TPropDialogBox.btnSave.Сaption
+msgid "&Save"
+msgstr "&Сохранить"
+
+#: TPropDialogBox.btnSaveAs.Сaption
+msgid "Save &As..."
+msgstr "Сохранить &как..."
+
+#: TPropDialogBox.lblName.Сaption TPropDialogBox.lblActName.Сaption
+msgid "Name"
+msgstr "Название"
+
+#: TPropDialogBox.lblIcon.Сaption TPropDialogBox.lblActIcon.Сaption
+msgid "Icon"
+msgstr "Значок"
+
+#: TPropDialogBox.lblExec.Сaption TPropDialogBox.lblActExec.Сaption
+msgid "Exec"
+msgstr "Команда"
+
+#: TPropDialogBox.chHidden.Сaption
+msgid "Hidden"
+msgstr "Скрытый"
+
+#: TPropDialogBox.chNoDisplay.Сaption
+msgid "NoDisplay"
+msgstr ""
+
+#: TPropDialogBox.lbGenName.Сaption
+msgid "Generic Name"
+msgstr "Описание"
+
+#: TPropDialogBox.lblComment.Сaption
+msgid "Comment"
+msgstr "Коментарий"
+
+#: TPropDialogBox.chStartupNotify.Сaption
+msgid "StartupNotify"
+msgstr ""
+
+#: TPropDialogBox.chTerminal.Сaption
+msgid "Terminal"
+msgstr "Запуск в терминале"
+
+#: TPropDialogBox.lblPath.Сaption
+msgid "Path"
+msgstr "Путь"
+
+#: TPropDialogBox.lblTryExec.Сaption
+msgid "TryExec"
+msgstr ""
+
+#: TPropDialogBox.lblKeywords.Сaption
+msgid "Keywords"
+msgstr "Ключевые слова"
+
+#: MiscStr.<Create New>
+msgid "<Create New>"
+msgstr "<Создать новый>"
+
+#: MiscStr.Enter filename
+msgid "Enter filename:"
+msgstr "Введите имя файла:"
+
+#: MiscStr.No data has been entered.
+msgid "No data has been entered."
+msgstr "Данные не были введены."
+
+#: MiscStr.GeneticName\\nHidden\\nNoDisplay\\nCustom
+msgid "GeneticName\\nHidden\\nNoDisplay\\nCustom"
+msgstr "Описание\\nСкрытый\\nNoDisplay\\nСвой"
+
+#: MiscStr.File %s exists, overwrite?
+msgid "File %s exists, overwrite?"
+msgstr "Файл %s существует, переписать?"
+
+#: MiscStr.New action:
+msgid "New action:"
+msgstr "Новое действие:"
+
+#: MiscStr.Desktop Files
+msgid "Desktop Files"
+msgstr "Файлы desktop"

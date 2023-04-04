@@ -7,7 +7,7 @@ DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
     <Icon>cm_newtab</Icon>
     <Hint>Move tab to opposite side</Hint>
     <Command>cm_ExecuteScript</Command>
-    <Param>$COMMANDER_PATH/scripts/lua/quasimovetab.lua</Param>
+    <Param>$DC_CONFIG_PATH/scripts/lua/quasimovetab.lua</Param>
     <Param>%D</Param>
   </Command>
 </doublecmd>

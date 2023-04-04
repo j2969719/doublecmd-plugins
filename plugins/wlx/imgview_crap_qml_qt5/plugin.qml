@@ -102,7 +102,7 @@ Rectangle
 		*/
 
 		img.source = FileToLoad
-		path.text =FileToLoad
+		path.text = FileToLoad
 		if (img.status == Image.Error)
 			return false
 		return true

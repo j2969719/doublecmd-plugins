@@ -1,0 +1,125 @@
+#, fuzzy
+msgid ""
+msgstr "Content-Type: text/plain; charset=UTF-8\n"
+
+#: TPropDialogBox.Сaption
+msgid "Properties"
+msgstr ""
+
+#: TPropDialogBox.tsGeneral.Сaption
+msgid "General"
+msgstr ""
+
+#: TPropDialogBox.tsActions.Сaption
+msgid "Actions"
+msgstr ""
+
+#: TPropDialogBox.tsCategories.Сaption
+msgid "Categories"
+msgstr ""
+
+#: TPropDialogBox.tsMimes.Сaption
+msgid "MimeType"
+msgstr ""
+
+#: TPropDialogBox.btnDel.Сaption TPropDialogBox.btnActDel.Сaption
+#: TPropDialogBox.btnMimeDel.Сaption
+msgid "Remove"
+msgstr ""
+
+#: TPropDialogBox.btnAdd.Сaption TPropDialogBox.btnActAdd.Сaption
+#: TPropDialogBox.btnMimeAdd.Сaption
+msgid "Add"
+msgstr ""
+
+#: TPropDialogBox.btnApply.Сaption
+msgid "Apply"
+msgstr ""
+
+#: TPropDialogBox.btnActLaunch.Сaption
+msgid "Launch"
+msgstr ""
+
+#: TPropDialogBox.btnSave.Сaption
+msgid "&Save"
+msgstr ""
+
+#: TPropDialogBox.btnSaveAs.Сaption
+msgid "Save &As..."
+msgstr ""
+
+#: TPropDialogBox.lblName.Сaption TPropDialogBox.lblActName.Сaption
+msgid "Name"
+msgstr ""
+
+#: TPropDialogBox.lblIcon.Сaption TPropDialogBox.lblActIcon.Сaption
+msgid "Icon"
+msgstr ""
+
+#: TPropDialogBox.lblExec.Сaption TPropDialogBox.lblActExec.Сaption
+msgid "Exec"
+msgstr ""
+
+#: TPropDialogBox.chHidden.Сaption
+msgid "Hidden"
+msgstr ""
+
+#: TPropDialogBox.chNoDisplay.Сaption
+msgid "NoDisplay"
+msgstr ""
+
+#: TPropDialogBox.lbGenName.Сaption
+msgid "Generic Name"
+msgstr ""
+
+#: TPropDialogBox.lblComment.Сaption
+msgid "Comment"
+msgstr ""
+
+#: TPropDialogBox.chStartupNotify.Сaption
+msgid "StartupNotify"
+msgstr ""
+
+#: TPropDialogBox.chTerminal.Сaption
+msgid "Terminal"
+msgstr ""
+
+#: TPropDialogBox.lblPath.Сaption
+msgid "Path"
+msgstr ""
+
+#: TPropDialogBox.lblTryExec.Сaption
+msgid "TryExec"
+msgstr ""
+
+#: TPropDialogBox.lblKeywords.Сaption
+msgid "Keywords"
+msgstr ""
+
+#: MiscStr.<Create New>
+msgid "<Create New>"
+msgstr ""
+
+#: MiscStr.Enter filename
+msgid "Enter filename:"
+msgstr ""
+
+#: MiscStr.No data has been entered.
+msgid "No data has been entered."
+msgstr ""
+
+#: MiscStr.GeneticName\\nHidden\\nNoDisplay\\nCustom
+msgid "GeneticName\\nHidden\\nNoDisplay\\nCustom"
+msgstr ""
+
+#: MiscStr.File %s exists, overwrite?
+msgid "File %s exists, overwrite?"
+msgstr ""
+
+#: MiscStr.New action:
+msgid "New action:"
+msgstr ""
+
+#: MiscStr.Desktop Files
+msgid "Desktop Files"
+msgstr ""

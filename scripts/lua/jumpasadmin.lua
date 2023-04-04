@@ -10,7 +10,7 @@ DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
     <Icon>system-run-symbolic</Icon>
     <Hint>open current dir as admin</Hint>
     <Command>cm_ExecuteScript</Command>
-    <Param>%COMMANDER_PATH%/scripts/lua/jumpasadmin.lua</Param>
+    <Param>$DC_CONFIG_PATH/scripts/lua/jumpasadmin.lua</Param>
     <Param>%D</Param>
   </Command>
 </doublecmd>

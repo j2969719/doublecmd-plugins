@@ -7,7 +7,7 @@ DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
     <Icon>cm_loadlist</Icon>
     <Hint>git ls others</Hint>
     <Command>cm_ExecuteScript</Command>
-    <Param>$COMMANDER_PATH/scripts/lua/gitlsothers.lua</Param>
+    <Param>$DC_CONFIG_PATH/scripts/lua/gitlsothers.lua</Param>
     <Param>%D</Param>
     <Param>git ls-files -o</Param>
   </Command>
