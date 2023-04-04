@@ -21,6 +21,7 @@ DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
         <Command>cm_ExecuteScript</Command>
         <Param>$DC_CONFIG_PATH/scripts/lua/filelist.lua</Param>
         <Param>store</Param>
+        <Param>%L</Param>
       </Command>
       <Command>
         <ID>{49D3038F-F0F3-4273-B094-B2D86753766B}</ID>
@@ -48,6 +49,8 @@ local Messages = {
     "Already exists, overwrite?",
     "Nothing is selected.",
     "Remove FileList:",
+    "Error reading from file",
+    "Error writing to file",
 }
 
 local MB_ICONWARNING = 0x0030
@@ -88,11 +91,25 @@ function GetFileListFile(Msg)
     return nil
 end
 
+function GetTextFromFile(TempFile)
+    local File = io.open(TempFile, 'r')
+    if (File ~= nil) then
+        Text = File:read("*all")
+        File:close()
+        return Text
+    else
+        Dialogs.MessageBox(Messages[7], '', 0x0010)
+    end
+    return nil
+end
+
 function SaveTextToFile(Text, FileName)
     local File = io.open(FileName, 'w+')
     if (File ~= nil) then
         File:write(Text)
         File:close()
+    else
+        Dialogs.MessageBox(Messages[8], '', 0x0010)
     end
 end
 
@@ -102,11 +119,10 @@ if not Args[1] then
         DC.ExecuteCommand("cm_LoadList", "filename=" .. FileList)
     end
 elseif (Args[1] == "store") then
-    DC.ExecuteCommand("cm_CopyFullNamesToClip")
-    Text = Clipbrd.GetAsText()
-    if (Text ~= nil and Text ~= nil) then
+    Text = GetTextFromFile(Args[2])
+    if (Text ~= nil and Text ~= '') then
         _, ListName = Dialogs.InputQuery('', Messages[3], false, DefaultFileListName)
-        if (ListName ~= nil and ListName ~= nil) then
+        if (ListName ~= nil and ListName ~= '') then
             FileList = FileListsDir .. ListName .. FileListExt
             if (SysUtils.FileExists(FileList)) then
                 if (Dialogs.MessageBox(Messages[4], '', QuestionFlags) == mrYes) then
