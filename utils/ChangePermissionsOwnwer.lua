@@ -1,5 +1,5 @@
 -- ChangePermissionsOwnwer.lua
--- 2023.03.27
+-- 2023.04.05
 --[[
 Set permissions or owner (will ask for root privileges if that doesn't work).
 Script uses chmod and chown.
@@ -48,7 +48,7 @@ local amod = {
 "777 (-rwxrwxrwx)",
 "600 (-rw-------)",
 "444 (-r--r--r--)",
-"444 (-r--------)"
+"400 (-r--------)"
 }
 local aown = {
 "root:root"
