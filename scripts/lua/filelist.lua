@@ -3,19 +3,31 @@
 DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
 <doublecmd>
   <Menu>
-    <ID>{9FE5D336-29D4-4345-81B4-01FD0D440006}</ID>
+    <ID>{2A0B7BD5-3B71-4B7C-AD77-8B447B707BED}</ID>
     <Icon>cm_loadlist</Icon>
     <Hint>FileLists</Hint>
     <MenuItems>
       <Command>
-        <ID>{8C3648EF-B959-480A-A201-07E96CCC41DF}</ID>
-        <Icon>cm_changedir</Icon>
+        <ID>{DC35335E-DB81-4F8D-AF1D-31D4A43D3111}</ID>
+        <Icon>cm_loadlist</Icon>
         <Hint>Load FileList</Hint>
         <Command>cm_ExecuteScript</Command>
         <Param>$DC_CONFIG_PATH/scripts/lua/filelist.lua</Param>
       </Command>
       <Command>
-        <ID>{60E4FAC3-E9FF-4627-B2FE-1E6F80EFC745}</ID>
+        <ID>{E974E3D8-E6C5-411F-A9A1-6E8D95F4C1E8}</ID>
+        <Icon>cm_loadlist</Icon>
+        <Hint>Load FileList from file under cursor</Hint>
+        <Command>cm_ExecuteScript</Command>
+        <Param>$DC_CONFIG_PATH/scripts/lua/filelist.lua</Param>
+        <Param>cursor</Param>
+        <Param>%"0%p0</Param>
+      </Command>
+      <Separator>
+        <Style>False</Style>
+      </Separator>
+      <Command>
+        <ID>{E4A17420-0A4C-461A-B642-E61F4FC327B1}</ID>
         <Icon>cm_saveselectiontofile</Icon>
         <Hint>Save Selection to FileList</Hint>
         <Command>cm_ExecuteScript</Command>
@@ -24,7 +36,67 @@ DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
         <Param>%L</Param>
       </Command>
       <Command>
-        <ID>{49D3038F-F0F3-4273-B094-B2D86753766B}</ID>
+        <ID>{199E18A7-B158-490F-AF6F-0BFEC21B5C24}</ID>
+        <Icon>cm_saveselectiontofile</Icon>
+        <Hint>Append Selection to FileList</Hint>
+        <Command>cm_ExecuteScript</Command>
+        <Param>$DC_CONFIG_PATH/scripts/lua/filelist.lua</Param>
+        <Param>append</Param>
+        <Param>%L</Param>
+      </Command>
+      <Separator>
+        <Style>False</Style>
+      </Separator>
+      <Command>
+        <ID>{8DF3F858-F39B-4E62-AF9E-3515FD4AE61F}</ID>
+        <Icon>cm_saveselectiontofile</Icon>
+        <Hint>Save Selection from both panels to FileList</Hint>
+        <Command>cm_ExecuteScript</Command>
+        <Param>$DC_CONFIG_PATH/scripts/lua/filelist.lua</Param>
+        <Param>store</Param>
+        <Param>%Lp</Param>
+      </Command>
+      <Command>
+        <ID>{7787B087-6C6C-45A7-A519-6206CF81D478}</ID>
+        <Icon>cm_saveselectiontofile</Icon>
+        <Hint>Append Selection from both panels to FileList</Hint>
+        <Command>cm_ExecuteScript</Command>
+        <Param>$DC_CONFIG_PATH/scripts/lua/filelist.lua</Param>
+        <Param>append</Param>
+        <Param>%Lp</Param>
+      </Command>
+      <Separator>
+        <Style>False</Style>
+      </Separator>
+      <Command>
+        <ID>{DB9A182A-9948-4B37-B702-A100084AF6EA}</ID>
+        <Icon>cm_open</Icon>
+        <Hint>Open FileList file</Hint>
+        <Command>cm_ExecuteScript</Command>
+        <Param>$DC_CONFIG_PATH/scripts/lua/filelist.lua</Param>
+        <Param>open</Param>
+      </Command>
+      <Command>
+        <ID>{A19A0068-EB87-498A-8550-37195C96B704}</ID>
+        <Icon>cm_sortbyname</Icon>
+        <Hint>Sort lines in FileList</Hint>
+        <Command>cm_ExecuteScript</Command>
+        <Param>$DC_CONFIG_PATH/scripts/lua/filelist.lua</Param>
+        <Param>sort</Param>
+      </Command>
+      <Command>
+        <ID>{8734074F-7F35-4D79-A478-DEAF65349B7A}</ID>
+        <Icon>cm_wipe</Icon>
+        <Hint>Remove non-existent files from FileList</Hint>
+        <Command>cm_ExecuteScript</Command>
+        <Param>$DC_CONFIG_PATH/scripts/lua/filelist.lua</Param>
+        <Param>clean</Param>
+      </Command>
+      <Separator>
+        <Style>False</Style>
+      </Separator>
+      <Command>
+        <ID>{7C2E2F4D-BD09-42DB-9F70-B2E1F2B0131C}</ID>
         <Icon>cm_delete</Icon>
         <Hint>Remove FileList</Hint>
         <Command>cm_ExecuteScript</Command>
@@ -38,10 +110,11 @@ DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
 ]]
 
 
-local Args = {...};
+local Args = {...}
 local FileListsDir = os.getenv("HOME") .. "/.cache/doublecmd-filelists/"
 local FileListExt = ".lst"
 local DefaultFileListName = "Name"
+local EditCommand = "xdg-open"
 local Messages = {
     "You don't have any saved FileList.",
     "Load FileList:",
@@ -51,6 +124,10 @@ local Messages = {
     "Remove FileList:",
     "Error reading from file",
     "Error writing to file",
+    "Append Selection to FileList:",
+    "Remove non-existent files from FileList:",
+    "Sort lines in FileList:",
+    "Open FileList:",
 }
 
 local MB_ICONWARNING = 0x0030
@@ -91,53 +168,128 @@ function GetFileListFile(Msg)
     return nil
 end
 
-function GetTextFromFile(TempFile)
-    local File = io.open(TempFile, 'r')
+function LoadFileToTable(FileName)
+    if not FileName or not SysUtils.FileExists(FileName) then
+        Dialogs.MessageBox(Messages[7], '', 0x0010)
+        return nil
+    end
+    local File = io.open(FileName, 'r')
     if (File ~= nil) then
-        Text = File:read("*all")
+        Result = {}
+        for Line in File:lines() do
+            if (Line ~= '') then
+                table.insert(Result, Line)
+            end
+        end
         File:close()
-        return Text
+        return Result
     else
         Dialogs.MessageBox(Messages[7], '', 0x0010)
     end
     return nil
 end
 
-function SaveTextToFile(Text, FileName)
+function SaveTableToFile(Table, FileName)
     local File = io.open(FileName, 'w+')
     if (File ~= nil) then
-        File:write(Text)
+        for _, Line in ipairs(Table) do
+            File:write(Line .. '\n')
+        end
         File:close()
     else
         Dialogs.MessageBox(Messages[8], '', 0x0010)
     end
 end
 
+
 if not Args[1] then
-    FileList = GetFileListFile(Messages[2])
+    local FileList = GetFileListFile(Messages[2])
     if (FileList ~= nil and SysUtils.FileExists(FileList)) then
         DC.ExecuteCommand("cm_LoadList", "filename=" .. FileList)
     end
 elseif (Args[1] == "store") then
-    Text = GetTextFromFile(Args[2])
-    if (Text ~= nil and Text ~= '') then
-        _, ListName = Dialogs.InputQuery('', Messages[3], false, DefaultFileListName)
+    local Lines = LoadFileToTable(Args[2])
+    if (Lines ~= nil and #Lines > 0) then
+        local _, ListName = Dialogs.InputQuery('', Messages[3], false, DefaultFileListName)
         if (ListName ~= nil and ListName ~= '') then
-            FileList = FileListsDir .. ListName .. FileListExt
+            local FileList = FileListsDir .. ListName .. FileListExt
             if (SysUtils.FileExists(FileList)) then
                 if (Dialogs.MessageBox(Messages[4], '', QuestionFlags) == mrYes) then
-                    SaveTextToFile(Text, FileList)
-		end
+                    SaveTableToFile(Lines, FileList)
+                end
             else
-                SaveTextToFile(Text, FileList)
+                SaveTableToFile(Lines, FileList)
             end
         end
     else
         Dialogs.MessageBox(Messages[5], '', 0x0010)
     end
 elseif (Args[1] == "remove") then
-    FileList = GetFileListFile(Messages[6])
+    local FileList = GetFileListFile(Messages[6])
     if (FileList ~= nil and SysUtils.FileExists(FileList)) then
         os.remove(FileList)
     end
+elseif (Args[1] == "append") then
+    local FileList = GetFileListFile(Messages[9])
+    if (FileList ~= nil and SysUtils.FileExists(FileList)) then
+        local OldLines = LoadFileToTable(FileList)
+        local NewLines = LoadFileToTable(Args[2])
+        if (OldLines ~= nil) and (NewLines ~= nil) then
+            if (#NewLines > 0) then
+                Result = {}
+                for _, OldLine in ipairs(OldLines) do
+                    local Found = false
+                    for _, NewLine in ipairs(NewLines) do
+                        if (OldLine == NewLine) then
+                            Found = true
+                        end
+                    end
+                    if not Found then
+                        table.insert(Result, OldLine)
+                    end
+                end
+                for _, NewLine in ipairs(NewLines) do
+                    table.insert(Result, NewLine)
+                end
+                SaveTableToFile(Result, FileList)
+            else
+                Dialogs.MessageBox(Messages[5], '', 0x0010)
+            end
+        end
+    end
+elseif (Args[1] == "clean") then
+    local FileList = Args[2]
+    if not FileList then
+        FileList = GetFileListFile(Messages[10])
+    end
+    if (FileList ~= nil and SysUtils.FileExists(FileList)) then
+        local Lines = LoadFileToTable(FileList)
+        if (Lines ~= nil) and (#Lines > 0) then
+            for Index = #Lines, 1, -1 do
+                if not SysUtils.FileExists(Lines[Index]) then
+                    table.remove(Lines, Index)
+                end
+            end
+            SaveTableToFile(Lines, FileList)
+        end
+    end
+elseif (Args[1] == "sort") then
+    local FileList = Args[2]
+    if not FileList then
+        FileList = GetFileListFile(Messages[11])
+    end
+    if (FileList ~= nil and SysUtils.FileExists(FileList)) then
+        local Lines = LoadFileToTable(FileList)
+        if (Lines ~= nil) and (#Lines > 0) then
+            table.sort(Lines)
+            SaveTableToFile(Lines, FileList)
+        end
+    end
+elseif (Args[1] == "open") then
+    local FileList = GetFileListFile(Messages[12])
+    if (FileList ~= nil and SysUtils.FileExists(FileList)) then
+        os.execute(EditCommand .. ' "' .. FileList:gsub('"', '\\"') .. '" &')
+    end
+elseif (Args[1] == "cursor") then
+    DC.ExecuteCommand("cm_LoadList", "filename=" .. Args[2])
 end
