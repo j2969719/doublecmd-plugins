@@ -26,6 +26,7 @@ Rectangle
 	}
 	Rectangle
 	{
+		id: textbg
 		anchors.top: parent.top
 		anchors.left: parent.left
 		anchors.right: parent.right
@@ -103,6 +104,12 @@ Rectangle
 
 		img.source = FileToLoad
 		path.text = FileToLoad
+		if (!quickview)
+		{
+			textbg.color = pal.window
+			path.color = pal.text
+			sizeinfo.color = pal.text
+		}
 		if (img.status == Image.Error)
 			return false
 		return true

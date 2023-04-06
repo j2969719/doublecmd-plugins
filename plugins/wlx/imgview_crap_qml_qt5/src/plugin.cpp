@@ -11,11 +11,22 @@ static QString gPlugDir;
 
 HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 {
+	QWidget *parent = (QWidget*)ParentWin;
+
+	while (parent -> parentWidget() != Q_NULLPTR)
+		parent = parent->parentWidget();
+
+	bool quickview = false;
+
+	if (parent->windowRole() != "TfrmViewer")
+		quickview = true;
+
 	QQuickWidget *view = new QQuickWidget((QWidget*)ParentWin);
 	QQmlContext *ctx = view->rootContext();
 	ctx->setContextProperty("parent", (QWidget*)ParentWin);
 	ctx->setContextProperty("default_cfg", gDefCfg);
 	ctx->setContextProperty("plugin_dir", gPlugDir);
+	ctx->setContextProperty("quickview", quickview);
 
 	ctx->setContextProperty("lc_copy", lc_copy);
 	ctx->setContextProperty("lc_newparams", lc_newparams);
