@@ -11,13 +11,15 @@
 #define _(STRING) gettext(STRING)
 #define GETTEXT_PACKAGE "plugins"
 
+#define REMOTE_NAME "org.freedesktop.Tracker3.Miner.Files"
+
 tSAddFileProc gAddFileProc;
 tSUpdateStatusProc gUpdateStatus;
 
-gboolean stop_search;
+gboolean gStopSearch = FALSE;
 
 #define notext_queryf "\
-SELECT nie:url(?s) WHERE \
+SELECT DISTINCT nie:url(?s) WHERE \
 {\
  ?s a nfo:FileDataObject .\
  ?s nie:url ?url . \
@@ -29,7 +31,7 @@ SELECT nie:url(?s) WHERE \
 }\
 "
 #define text_queryf "\
-SELECT nie:url(?s) WHERE \
+SELECT DISTINCT nie:url(?s) WHERE \
 {\
  ?s a nfo:FileDataObject .\
  ?s nie:url ?url . \
@@ -61,7 +63,7 @@ int DCPCALL Init(tDsxDefaultParamStruct* dsp, tSAddFileProc pAddFileProc, tSUpda
 		if (pos)
 			strcpy(pos + 1, loc_dir);
 
-		setlocale (LC_ALL, "");
+		setlocale(LC_ALL, "");
 		bindtextdomain(GETTEXT_PACKAGE, plg_path);
 		textdomain(GETTEXT_PACKAGE);
 	}
@@ -76,24 +78,34 @@ void DCPCALL StartSearch(int PluginNr, tDsxSearchRecord* pSearchRec)
 	TrackerSparqlCursor *cursor;
 	gsize len, term, i = 1;
 	gchar *query;
-	stop_search = FALSE;
+	gStopSearch = FALSE;
 
 	gUpdateStatus(PluginNr, _("not found"), 0);
 
-	if (pSearchRec->IsFindText)
-		query = g_strdup_printf(text_queryf, g_filename_to_uri(pSearchRec->StartPath, NULL, NULL), pSearchRec->FindText, pSearchRec->FileMask);
-	else
-		query = g_strdup_printf(notext_queryf, g_filename_to_uri(pSearchRec->StartPath, NULL, NULL), pSearchRec->FileMask);
+	gchar *start_path_uri = g_filename_to_uri(pSearchRec->StartPath, NULL, NULL);
 
-	connection = tracker_sparql_connection_get(NULL, &error);
+	if (pSearchRec->IsFindText)
+		query = g_strdup_printf(text_queryf, start_path_uri, pSearchRec->FindText, pSearchRec->FileMask);
+	else
+		query = g_strdup_printf(notext_queryf, start_path_uri, pSearchRec->FileMask);
+
+	g_free(start_path_uri);
+
+	connection = tracker_sparql_connection_bus_new(REMOTE_NAME, NULL, NULL, &error);
 
 	if (connection)
 	{
 		cursor = tracker_sparql_connection_query(connection, query, NULL, &error);
 
+		if (error)
+		{
+			gUpdateStatus(PluginNr, error->message, 0);
+			g_clear_error(&error);
+		}
+
 		if (cursor)
 		{
-			while (!stop_search && tracker_sparql_cursor_next(cursor, NULL, NULL))
+			while (!gStopSearch && tracker_sparql_cursor_next(cursor, NULL, &error))
 			{
 				const gchar *uri = tracker_sparql_cursor_get_string(cursor, 0, NULL);
 
@@ -116,20 +128,22 @@ void DCPCALL StartSearch(int PluginNr, tDsxSearchRecord* pSearchRec)
 	if (error)
 	{
 		gUpdateStatus(PluginNr, error->message, 0);
-		g_clear_error(&error);
+		g_error_free(error);
 
 	}
 
-	if (connection)
-		g_object_unref(connection);
+	if (cursor)
+		tracker_sparql_cursor_close (cursor);
 
+	if (connection)
+		tracker_sparql_connection_close (connection);
 
 	gAddFileProc(PluginNr, "");
 }
 
 void DCPCALL StopSearch(int PluginNr)
 {
-	stop_search = TRUE;
+	gStopSearch = TRUE;
 }
 
 void DCPCALL Finalize(int PluginNr)

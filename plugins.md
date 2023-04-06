@@ -501,4 +501,4 @@ List local system locks.
 Full text search using [Recoll](https://www.lesbonscomptes.com/recoll/). 
 
 - [tracker_textsearch](plugins/dsx/tracker_textsearch)<br>
-Full text search using [Tracker](https://wiki.gnome.org/Projects/Tracker) (supported only tracker2 legacy version). 
+Full text search using [Tracker](https://wiki.gnome.org/Projects/Tracker).
