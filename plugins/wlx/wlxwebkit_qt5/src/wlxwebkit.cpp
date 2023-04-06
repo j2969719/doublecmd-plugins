@@ -27,6 +27,7 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 
 	QHBoxLayout *controls = new QHBoxLayout(frmControls);
 	QWebView *webView = new QWebView(view);
+	webView->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 	main->setSpacing(0);
 	main->setContentsMargins(1, 1, 1, 1);
 	main->addWidget(webView);
