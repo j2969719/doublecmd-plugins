@@ -77,7 +77,7 @@ void DCPCALL StartSearch(int PluginNr, tDsxSearchRecord* pSearchRec)
 	TrackerSparqlConnection *connection;
 	TrackerSparqlCursor *cursor;
 	gsize len, term, i = 1;
-	gchar *query;
+	gchar *query = NULL;
 	gStopSearch = FALSE;
 
 	gUpdateStatus(PluginNr, _("not found"), 0);
@@ -124,6 +124,7 @@ void DCPCALL StartSearch(int PluginNr, tDsxSearchRecord* pSearchRec)
 		}
 	}
 
+	g_free(query);
 
 	if (error)
 	{
@@ -133,10 +134,10 @@ void DCPCALL StartSearch(int PluginNr, tDsxSearchRecord* pSearchRec)
 	}
 
 	if (cursor)
-		tracker_sparql_cursor_close (cursor);
+		tracker_sparql_cursor_close(cursor);
 
 	if (connection)
-		tracker_sparql_connection_close (connection);
+		tracker_sparql_connection_close(connection);
 
 	gAddFileProc(PluginNr, "");
 }
