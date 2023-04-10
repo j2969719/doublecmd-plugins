@@ -789,24 +789,24 @@ DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
     <Hint>Edit Symlink</Hint>
     <Command>cm_ExecuteScript</Command>
     <Param>$COMMANDER_PATH/scripts/lua/editsymlink.lua</Param>
-    <Param>"%p1"</Param>
+    <Param>%"0%p0</Param>
   </Command>
 </doublecmd>
 ```
 
 
-### Go to link path
-[gotolinkpath.lua](scripts/lua/gotolinkpath.lua)
+### Go to link target
+[gotolinktarget.lua](scripts/lua/gotolinktarget.lua)
 ```xml
 DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
 <doublecmd>
   <Command>
     <ID>{4651FC8B-CC8A-4D8B-8741-DB29D812B7E3}</ID>
     <Icon>cm_symlink</Icon>
-    <Hint>Go to link path</Hint>
+    <Hint>Go to link target</Hint>
     <Command>cm_ExecuteScript</Command>
-    <Param>$COMMANDER_PATH/scripts/lua/gotolinkpath.lua</Param>
-    <Param>"%p1"</Param>
+    <Param>$COMMANDER_PATH/scripts/lua/gotolinktarget.lua</Param>
+    <Param>%"0%p0</Param>
     <Param>onlydir</Param>
   </Command>
 </doublecmd>

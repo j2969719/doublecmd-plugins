@@ -8,42 +8,32 @@ DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
     <Hint>Edit Symlink</Hint>
     <Command>cm_ExecuteScript</Command>
     <Param>$DC_CONFIG_PATH/scripts/lua/editsymlink.lua</Param>
-    <Param>"%p1"</Param>
+    <Param>%"0%p0</Param>
   </Command>
 </doublecmd>
 
 ]]
 
-local args = {...};
-local path, ret, newpath, msg;
-local params = "-n";
+local params = {...}
 
-local function getOutput(command, stripnewline)
-    local handle = io.popen(command, 'r');
-    local output = handle:read("*a");
-    handle:close();
-    if (stripnewline == true) then
-        return output:sub(1, -2);
-    end
-    return output;
+local iattr = SysUtils.FileGetAttr(params[1])
+if iattr < 0 then return end
+if math.floor(iattr / 0x00000400) % 2 == 0 then return end
+
+local starget = SysUtils.ReadSymbolicLink(params[1], false)
+local bres, snewtarget = Dialogs.InputQuery('Edit symlink', 'New target:', false, starget)
+if bres == false then return end
+
+local stmp = params[1] .. 'bak1'
+local bren, serr, ierr = os.rename(params[1], stmp)
+if bren == nil then
+  Dialogs.MessageBox('Error: ' .. ierr .. '\n' .. serr, 'Edit symlink')
+  return
 end
-
-if (args[1] ~= nil) then
-    path = getOutput('readlink ' .. params .. ' "' .. args[1] .. '"', false);
-end
-
-if (path ~= nil) and (path ~= "") then
-    ret, newpath = Dialogs.InputQuery("Edit Symlink", "Enter new path:", false, path);
-
-    if (ret == true) then
-        if (SysUtils.DirectoryExists(newpath)) then
-            msg = getOutput('ln -sfn "' .. newpath .. '" "' .. args[1] .. '" 2>&1', true);
-        else
-            msg = getOutput('ln -sf "' .. newpath .. '" "' .. args[1] .. '" 2>&1', true);
-        end
-
-        if (msg ~= nil) and (msg ~= '') then
-            Dialogs.MessageBox(msg, "Edit Symlink", 0x0030)
-        end
-    end
+bres = SysUtils.CreateSymbolicLink(snewtarget, params[1])
+if bres == false then
+  os.rename(stmp, params[1])
+  Dialogs.MessageBox('Error: SysUtils.CreateSymbolicLink()', 'Edit symlink')
+else
+  os.remove(stmp)
 end
