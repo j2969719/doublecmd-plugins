@@ -499,3 +499,6 @@ List local system locks.
 
 - [recollq_crap](plugins/dsx/recollq_crap)<br>
 Full text search using [Recoll](https://www.lesbonscomptes.com/recoll/). 
+
+- [tracker_textsearch](plugins/dsx/tracker_textsearch)<br>
+Full text search using [Tracker](https://wiki.gnome.org/Projects/Tracker).
