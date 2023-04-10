@@ -2,7 +2,7 @@
   <Info>
     <General Name="Control file*" Extensions="BUILDINFO CHANGES DSC CONTROL CHANGELOG"/>
     <Author Name="Skif_off" Email="" Web="" Copyright="" Company="" Remark="Some config files for DEB-files building"/>
-    <Version Version="1" Revision="3" Date="43366,900731956"/>
+    <Version Version="1" Revision="4" Date="45026,9109386921"/>
     <History>
     </History>
     <Sample>
@@ -21,17 +21,22 @@
     </Keywords>
     <Keywords Name="Keywords" Attributes="16711680,-2147483643;False:True." Style="">
       <word value="Architecture:"/>
+      <word value="Auto-Built-Package:"/>
       <word value="Binary:"/>
       <word value="Breaks:"/>
+      <word value="Bugs:"/>
       <word value="Build-Architecture:"/>
+      <word value="Build-Conflicts:"/>
       <word value="Build-Conflicts-Arch:"/>
       <word value="Build-Conflicts-Indep:"/>
-      <word value="Build-Conflicts:"/>
       <word value="Build-Date:"/>
+      <word value="Build-Depends:"/>
       <word value="Build-Depends-Arch:"/>
       <word value="Build-Depends-Indep:"/>
-      <word value="Build-Depends:"/>
+      <word value="Build-Essential:"/>
+      <word value="Build-Ids:"/>
       <word value="Build-Origin:"/>
+      <word value="Built-For-Profiles:"/>
       <word value="Built-Using:"/>
       <word value="Changed-By:"/>
       <word value="Changes:"/>
@@ -51,29 +56,40 @@
       <word value="Enhances:"/>
       <word value="Environment:"/>
       <word value="Essential:"/>
+      <word value="Filename:"/>
       <word value="Files:"/>
       <word value="Format:"/>
       <word value="Homepage:"/>
       <word value="Installed-Build-Depends:"/>
       <word value="Installed-Size:"/>
+      <word value="Installer-Menu-Item:"/>
+      <word value="Kernel-Version:"/>
       <word value="Maintainer:"/>
+      <word value="MD5sum:"/>
       <word value="Multi-Arch:"/>
+      <word value="Origin:"/>
       <word value="Original-Maintainer:"/>
+      <word value="Package:"/>
       <word value="Package-List:"/>
       <word value="Package-Type:"/>
-      <word value="Package:"/>
       <word value="Pre-Depends:"/>
       <word value="Priority:"/>
+      <word value="Protected:"/>
       <word value="Provides:"/>
       <word value="Recommends:"/>
       <word value="Replaces:"/>
       <word value="Rules-Requires-Root:"/>
       <word value="Section:"/>
+      <word value="SHA1:"/>
+      <word value="SHA256:"/>
+      <word value="Size:"/>
       <word value="Source:"/>
       <word value="Standards-Version:"/>
+      <word value="Subarchitecture:"/>
       <word value="Suggests:"/>
-      <word value="Testsuite-Triggers:"/>
+      <word value="Tag:"/>
       <word value="Testsuite:"/>
+      <word value="Testsuite-Triggers:"/>
       <word value="Uploaders:"/>
       <word value="Urgency:"/>
       <word value="Vcs-Arch:"/>

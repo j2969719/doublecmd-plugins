@@ -1,8 +1,8 @@
 <UniHighlighter version="1.8.1">
   <Info>
-    <General Name="List*" Extensions="LIST SAVE"/>
+    <General Name="List*" Extensions="LIST SAVE SOURCES"/>
     <Author Name="Skif_off" Email="" Web="" Copyright="" Company="" Remark="List of repositories in Debian APT system"/>
-    <Version Version="1" Revision="6" Date="44940,076783669"/>
+    <Version Version="1" Revision="7" Date="45026,8926926157"/>
     <History>
     </History>
     <Sample>
@@ -16,7 +16,7 @@
       <word value="deb"/>
       <word value="deb-src"/>
     </Keywords>
-    <Keywords Name="Keywords2" Attributes="16711680,16777215;False:False." Style="">
+    <Keywords Name="Keywords2" Attributes="8388608,16777215;False:False." Style="">
       <word value="sid"/>
       <word value="artful"/>
       <word value="artful-backports"/>
@@ -275,13 +275,25 @@
       <word value="zesty-updates"/>
     </Keywords>
     <Keywords Name="Keywords3" Attributes="8388608,16777215;False:False." Style="">
+      <word value="amd64"/>
       <word value="contrib"/>
+      <word value="i386"/>
       <word value="main"/>
       <word value="multiverse"/>
       <word value="non-free"/>
       <word value="partner"/>
       <word value="restricted"/>
       <word value="universe"/>
+    </Keywords>
+    <Keywords Name="Keywords4" Attributes="16711680,16777215;False:False." Style="">
+      <word value="Architectures:"/>
+      <word value="Components:"/>
+      <word value="Enabled:"/>
+      <word value="Signed-By:"/>
+      <word value="Suites:"/>
+      <word value="Types:"/>
+      <word value="URIs:"/>
+      <word value="X-Repolib-Name:"/>
     </Keywords>
     <Range Name="Disable" Attributes="128,16777215;False:False." Style="" CaseSensitive="True"
            Delimiters="!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^`{|}~">
