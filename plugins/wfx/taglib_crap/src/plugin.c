@@ -2,6 +2,7 @@
 #include <glib.h>
 #include <gio/gio.h>
 #include <tag_c.h>
+#include <errno.h>
 #include "wfxplugin.h"
 #include "extension.h"
 

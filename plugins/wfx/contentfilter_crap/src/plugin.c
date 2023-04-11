@@ -4,6 +4,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <fcntl.h>
+#include <errno.h>
 #include <utime.h>
 #include "wfxplugin.h"
 #include "extension.h"
