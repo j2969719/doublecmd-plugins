@@ -74,7 +74,7 @@ if iattr == -1 then
   Dialogs.MessageBox('The target object\n"' ..  starget .. '"\nis currently unavailable.', "Go to link target", 0x0040)
   return
 else
-  if math.floor(iattr / 0x00000010) % 2 == 0) then
+  if (math.floor(iattr / 0x00000010) % 2 == 0) then
     stargetdir = SysUtils.ExtractFileDir(starget)
   else
     stargetdir = starget
@@ -102,6 +102,7 @@ if bfile == true then
     else
       DC.ExecuteCommand("cm_ChangeDir", stargetdir)
     end
+  end
   starget = SysUtils.ExtractFileName(starget)
   DC.ExecuteCommand("cm_QuickSearch", "search=on", "direction=first", "matchbeginning=off", "matchending=off", "casesensitive=" .. scase, "files=on", "directories=off", "text=" .. starget)
   DC.ExecuteCommand("cm_QuickSearch", "search=off")
