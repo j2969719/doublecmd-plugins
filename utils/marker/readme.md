@@ -13,7 +13,7 @@ Two parts:
 - `marker.lua` - for button(s): adding, deleting or changing color for selected files;
 - `markerwdx.lua` - WDX-plugin.
 
-**NOTE:** The scripts use `os.setenv()`, so for DC < 1.1.0, use [previous versions](https://github.com/j2969719/doublecmd-plugins/tree/6fbeb3cdac25a5f556fd34c4fa9485914fca4e09/utils/marker).
+**NOTE:** The scripts use `os.setenv()`, so for DC <= 1.0.10, use [previous versions](https://github.com/j2969719/doublecmd-plugins/tree/6fbeb3cdac25a5f556fd34c4fa9485914fca4e09/utils/marker).
 
 List of marked files is stored in a file named `marker.txt` near `marker.lua` and `markerwdx.lua`. This is a plain text file (UTF-8 without BOM), so you can also edit its contents manually.
 
