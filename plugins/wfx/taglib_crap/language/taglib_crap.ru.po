@@ -92,3 +92,7 @@ msgstr "Ошибка при выполнеии команды"
 #: MiscStr.File %s already exists, overwrite?
 msgid "File %s already exists, overwrite?"
 msgstr "Файл %s уже существует, перезаписать?"
+
+#: MiscStr.Fill in these fields with the following values?
+msgid "Fill in these fields with the following values?"
+msgstr "Заполнить данные поля следующими значенииями?"

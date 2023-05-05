@@ -89,3 +89,7 @@ msgstr ""
 #: MiscStr.File %s already exists, overwrite?
 msgid "File %s already exists, overwrite?"
 msgstr ""
+
+#: MiscStr.Fill in these fields with the following values?
+msgid "Fill in these fields with the following values?"
+msgstr ""
