@@ -20,6 +20,23 @@ function get_output(command)
     return output
 end
 
+function escape_string(string)
+    local repl = {
+        [' ']  = '\\ ',
+        ['"']  = '\\"',
+        ['%('] = '\\(',
+        ['%)'] = '\\)',
+        ['%['] = '\\[',
+        ['%]'] = '\\]',
+    }
+    local result = string
+    for key, value in pairs(repl) do
+        local oldstring = result
+        result = oldstring:gsub(key, value)
+    end
+    return result
+end
+
 function fs_init()
     os.execute(adb_cmd .. " start-server")
     os.exit()
@@ -48,7 +65,7 @@ function fs_getfile(src, dst)
 end
 
 function fs_exists(file)
-    if (os.execute(adb_cmd .. ' shell [[ -e "' .. file:gsub(" ", "\\ "):gsub('"', '\\"') .. '" ]]') == true) then
+    if (os.execute(adb_cmd .. ' shell [[ -e "' .. escape_string(file) .. '" ]]') == true) then
         os.exit()
     end
     os.exit(1)
@@ -62,35 +79,35 @@ function fs_putfile(src, dst)
 end
 
 function fs_copy(src, dst)
-    if (os.execute(adb_cmd .. ' shell cp "' .. src:gsub(" ", "\\ "):gsub('"', '\\"') .. '" "' .. dst:gsub(" ", "\\ "):gsub('"', '\\"') .. '"') == true) then
+    if (os.execute(adb_cmd .. ' shell cp "' .. escape_string(src) .. '" "' .. escape_string(dst) .. '"') == true) then
         os.exit()
     end
     os.exit(1)
 end
 
 function fs_move(src, dst)
-    if (os.execute(adb_cmd .. ' shell mv "' .. src:gsub(" ", "\\ "):gsub('"', '\\"') .. '" "' .. dst:gsub(" ", "\\ "):gsub('"', '\\"') .. '"') == true) then
+    if (os.execute(adb_cmd .. ' shell mv "' .. escape_string(src) .. '" "' .. escape_string(dst) .. '"') == true) then
         os.exit()
     end
     os.exit(1)
 end
 
 function fs_remove(path)
-    if (os.execute(adb_cmd .. ' shell rm -rf "' .. path:gsub(" ", "\\ "):gsub('"', '\\"') .. '"') == true) then
+    if (os.execute(adb_cmd .. ' shell rm -rf "' .. escape_string(path) .. '"') == true) then
         os.exit()
     end
     os.exit(1)
 end
 
 function fs_mkdir(path)
-    if (os.execute(adb_cmd .. ' shell mkdir "' .. path:gsub(" ", "\\ "):gsub('"', '\\"') .. '"') == true) then
+    if (os.execute(adb_cmd .. ' shell mkdir "' .. escape_string(path) .. '"') == true) then
         os.exit()
     end
     os.exit(1)
 end
 
 function fs_execute(file)
-    local output = get_output(adb_cmd .. ' shell readlink "' .. file:gsub(" ", "\\ "):gsub('"', '\\"') .. '"')
+    local output = get_output(adb_cmd .. ' shell readlink "' .. escape_string(file) .. '"')
     if (output ~= nil) then
         output = output:sub(1, -2)
         if (os.execute(adb_cmd .. ' shell [[ -d "' .. output:gsub(" ", "\\ "):gsub('"', '\\"') .. '" ]]') == true) then
