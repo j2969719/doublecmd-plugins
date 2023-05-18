@@ -42,7 +42,7 @@ local iattr = SysUtils.FileGetAttr(params[1])
 if (iattr > 0) and (math.floor(iattr / 0x00000400) % 2 == 0) then return end
 
 local scase, starget, stargetdir
-local bfile, bfull binactive = true, true, false
+local bfile, bfull, binactive = true, true, false
 local sparams = ""
 
 if #params > 1 then sparams = table.concat(params, ";", 2) end
