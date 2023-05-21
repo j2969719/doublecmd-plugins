@@ -168,11 +168,35 @@ intptr_t DCPCALL OptionsDlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg,
 	case DN_INITDIALOG:
 		g_key_file_load_from_file(gCfg, gCfgPath, 0, NULL);
 		gchar *path = g_key_file_get_string(gCfg, ROOTNAME, "StartPath", NULL);
+		gboolean history = g_key_file_has_key(gCfg, ROOTNAME, "HistoryPath0", NULL);
+		SendDlgMsg(pDlg, "lbHistory", DM_SHOWITEM, (int)history, 0);
 
 		if (path)
 		{
 			SendDlgMsg(pDlg, "deStartPath", DM_SETTEXT, (intptr_t)path, 0);
+			SendDlgMsg(pDlg, "lbHistory", DM_LISTADDSTR, (intptr_t)path, 0);
 			g_free(path);
+		}
+
+		if (history)
+		{
+			int num = 0;
+			gchar *key = NULL;
+
+			do
+			{
+				g_free(key);
+				key = g_strdup_printf("HistoryPath%d", num++);
+				gchar *path = g_key_file_get_string(gCfg, ROOTNAME, key, NULL);
+
+				if (path)
+					SendDlgMsg(pDlg, "lbHistory", DM_LISTADDSTR, (intptr_t)path, 0);
+
+				g_free(path);
+			}
+			while (g_key_file_has_key(gCfg, ROOTNAME, key, NULL));
+
+			g_free(key);
 		}
 
 		gMode = g_key_file_get_integer(gCfg, ROOTNAME, "Mode", NULL);
@@ -223,6 +247,33 @@ intptr_t DCPCALL OptionsDlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg,
 			{
 				g_strlcpy(gStartPath, path, sizeof(gStartPath));
 				g_key_file_set_string(gCfg, ROOTNAME, "StartPath", path);
+
+				int num = 0;
+				gchar *key = NULL;
+
+				gsize count = (gsize)SendDlgMsg(pDlg, "lbHistory", DM_LISTGETCOUNT, 0, 0);
+
+				for (gsize i = 0; i < count; i++)
+				{
+					if (num >= MAX_PATH)
+						break;
+
+					path = (char*)SendDlgMsg(pDlg, "lbHistory", DM_LISTGETITEM, i, 0);
+
+					if (strcmp(gStartPath, path) != 0)
+					{
+						gchar *key = g_strdup_printf("HistoryPath%d", num++);
+						g_key_file_set_string(gCfg, ROOTNAME, key, path);
+						g_free(key);
+					}
+				}
+
+				key = g_strdup_printf("HistoryPath%d", num);
+
+				if (g_key_file_has_key(gCfg, ROOTNAME, key, NULL))
+					g_key_file_remove_key(gCfg, ROOTNAME, key, NULL);
+
+				g_free(key);
 			}
 
 			gsize count = (gsize)SendDlgMsg(pDlg, "lbSelected", DM_LISTGETCOUNT, 0, 0);
@@ -300,6 +351,16 @@ intptr_t DCPCALL OptionsDlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg,
 				SendDlgMsg(pDlg, "cbAvalible", DM_LISTADDSTR, (intptr_t)content, 0);
 				SendDlgMsg(pDlg, "lbSelected", DM_LISTDELETE, i, 0);
 				g_free(content);
+			}
+		}
+		else if (strcmp(DlgItemName, "lbHistory") == 0)
+		{
+			int i = (int)SendDlgMsg(pDlg, "lbHistory", DM_LISTGETITEMINDEX, 0, 0);
+
+			if (i != -1)
+			{
+				char *path = (char*)SendDlgMsg(pDlg, "lbHistory", DM_LISTGETITEM, i, 0);
+				SendDlgMsg(pDlg, "deStartPath", DM_SETTEXT, (intptr_t)path, 0);
 			}
 		}
 
@@ -383,7 +444,7 @@ static BOOL OptionsDialog(void)
 {
 	const char lfmdata[] = ""
 
-;
+	                       ;
 	return gExtensions->DialogBoxLFMFile(gLFMPath, OptionsDlgProc);
 	//return gExtensions->DialogBoxLFM((intptr_t)lfmdata, (unsigned long)strlen(lfmdata), OptionsDlgProc);
 }
@@ -479,7 +540,7 @@ static BOOL SetFindData(DIR *cur, char *path, WIN32_FIND_DATAA *FindData)
 		{
 			const gchar *content_type = g_file_info_get_content_type(fileinfo);
 
-			if (gCustom && (!gCustomTypes || !g_strv_contains((const gchar* const*)gCustomTypes, content_type)))
+			if (gCustom && (!gCustomTypes || !g_strv_contains((const gchar * const*)gCustomTypes, content_type)))
 				skip = TRUE;
 			else if (gMode == 1 && strncmp(content_type, "image", 5) != 0)
 				skip = TRUE;
@@ -494,6 +555,7 @@ static BOOL SetFindData(DIR *cur, char *path, WIN32_FIND_DATAA *FindData)
 				g_object_unref(gfile);
 				continue;
 			}
+
 			int64_t size = (int64_t)g_file_info_get_size(fileinfo);
 			FindData->nFileSizeHigh = (size & 0xFFFFFFFF00000000) >> 32;
 			FindData->nFileSizeLow = size & 0x00000000FFFFFFFF;

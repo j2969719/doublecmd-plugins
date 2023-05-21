@@ -68,36 +68,72 @@ intptr_t DCPCALL FilterDlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, 
 	switch (Msg)
 	{
 	case DN_INITDIALOG:
-		SendDlgMsg(pDlg, "deStratPath", DM_SETTEXT, (intptr_t)gStartPath, 0);
-		SendDlgMsg(pDlg, "cbPattern", DM_SETTEXT, (intptr_t)gPattern, 0);
 		g_key_file_load_from_file(gCfg, gCfgPath, 0, NULL);
+		gchar *path = g_key_file_get_string(gCfg, ROOTNAME, "Path", NULL);
+		gboolean history = g_key_file_has_key(gCfg, ROOTNAME, "HistoryPath0", NULL);
+		SendDlgMsg(pDlg, "lbHistory", DM_SHOWITEM, (int)history, 0);
 
-		gchar **items = g_key_file_get_keys(gCfg, ROOTNAME, NULL, NULL);
+		if (path)
+		{
+			SendDlgMsg(pDlg, "deStartPath", DM_SETTEXT, (intptr_t)path, 0);
+			SendDlgMsg(pDlg, "lbHistory", DM_LISTADDSTR, (intptr_t)path, 0);
+			g_free(path);
+		}
 
-		if (items)
-			for (gsize i = 0; items[i] != NULL; i++)
+		if (history)
+		{
+			int num = 0;
+			gchar *key = NULL;
+
+			do
 			{
-				if (strncmp(items[i], "Flags", 5) == 0)
-				{
-					gMatchFlags = g_key_file_get_integer(gCfg, ROOTNAME, items[i], NULL);
-				}
-				else if (strncmp(items[i], "Pattern", 4) == 0)
-				{
-					gchar *item = g_key_file_get_string(gCfg, ROOTNAME, items[i], NULL);
+				g_free(key);
+				key = g_strdup_printf("HistoryPath%d", num++);
+				gchar *path = g_key_file_get_string(gCfg, ROOTNAME, key, NULL);
 
-					if (item && strlen(item) > 0)
-						SendDlgMsg(pDlg, "cbPattern", DM_LISTADDSTR, (intptr_t)item, 0);
+				if (path)
+					SendDlgMsg(pDlg, "lbHistory", DM_LISTADDSTR, (intptr_t)path, 0);
 
-					g_free(item);
-				}
+				g_free(path);
 			}
+			while (g_key_file_has_key(gCfg, ROOTNAME, key, NULL));
 
-		g_strfreev(items);
+			g_free(key);
+		}
 
-		if (gMatchFlags & FNM_CASEFOLD)
+		gchar *item = g_key_file_get_string(gCfg, ROOTNAME, "Pattern0", NULL);
+
+		if (item)
+		{
+			SendDlgMsg(pDlg, "cbPattern", DM_LISTADDSTR, (intptr_t)item, 0);
+			SendDlgMsg(pDlg, "cbPattern", DM_LISTSETITEMINDEX, 0, 0);
+			g_free(item);
+
+			int num = 1;
+			gchar *key = NULL;
+
+			do
+			{
+				g_free(key);
+				key = g_strdup_printf("Pattern%d", num++);
+				item = g_key_file_get_string(gCfg, ROOTNAME, key, NULL);
+
+				if (item)
+					SendDlgMsg(pDlg, "cbPattern", DM_LISTADDSTR, (intptr_t)item, 0);
+
+				g_free(item);
+			}
+			while (g_key_file_has_key(gCfg, ROOTNAME, key, NULL));
+
+			g_free(key);
+		}
+
+		int flags = g_key_file_get_integer(gCfg, ROOTNAME, "Flags", NULL);
+
+		if (flags & FNM_CASEFOLD)
 			SendDlgMsg(pDlg, "chCaseFold", DM_SETCHECK, 1, 0);
 
-		if (gMatchFlags & FNM_NOESCAPE)
+		if (flags & FNM_NOESCAPE)
 			SendDlgMsg(pDlg, "cbNoescape", DM_SETCHECK, 1, 0);
 
 		break;
@@ -105,12 +141,40 @@ intptr_t DCPCALL FilterDlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, 
 	case DN_CLICK:
 		if (strcmp(DlgItemName, "btnOK") == 0)
 		{
-			g_strlcpy(gStartPath, (char*)SendDlgMsg(pDlg, "deStratPath", DM_GETTEXT, 0, 0), sizeof(gPattern));
+			char *path = (char*)SendDlgMsg(pDlg, "deStartPath", DM_GETTEXT, 0, 0);
 
-			int len = strlen(gStartPath);
+			if (path && strlen(path) > 0)
+			{
+				g_strlcpy(gStartPath, path, sizeof(gStartPath));
+				g_key_file_set_string(gCfg, ROOTNAME, "Path", path);
 
-			if (len > 1 && gStartPath[len - 1] == '/')
-				gStartPath[len - 1] = '\0';
+				int num = 0;
+				gchar *key = NULL;
+
+				gsize count = (gsize)SendDlgMsg(pDlg, "lbHistory", DM_LISTGETCOUNT, 0, 0);
+
+				for (gsize i = 0; i < count; i++)
+				{
+					if (num >= MAX_PATH)
+						break;
+
+					path = (char*)SendDlgMsg(pDlg, "lbHistory", DM_LISTGETITEM, i, 0);
+
+					if (strcmp(gStartPath, path) != 0)
+					{
+						gchar *key = g_strdup_printf("HistoryPath%d", num++);
+						g_key_file_set_string(gCfg, ROOTNAME, key, path);
+						g_free(key);
+					}
+				}
+
+				key = g_strdup_printf("HistoryPath%d", num);
+
+				if (g_key_file_has_key(gCfg, ROOTNAME, key, NULL))
+					g_key_file_remove_key(gCfg, ROOTNAME, key, NULL);
+
+				g_free(key);
+			}
 
 			g_strlcpy(gPattern, (char*)SendDlgMsg(pDlg, "cbPattern", DM_GETTEXT, 0, 0), sizeof(gPattern));
 
@@ -122,7 +186,6 @@ intptr_t DCPCALL FilterDlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, 
 			if (SendDlgMsg(pDlg, "cbNoescape", DM_GETCHECK, 0, 0))
 				gMatchFlags |= FNM_NOESCAPE;
 
-			g_key_file_set_string(gCfg, ROOTNAME, "Path", gStartPath);
 			g_key_file_set_string(gCfg, ROOTNAME, "Pattern0", gPattern);
 			g_key_file_set_integer(gCfg, ROOTNAME, "Flags", gMatchFlags);
 
@@ -145,7 +208,16 @@ intptr_t DCPCALL FilterDlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, 
 			}
 
 			g_key_file_save_to_file(gCfg, gCfgPath, NULL);
+		}
+		else if (strcmp(DlgItemName, "lbHistory") == 0)
+		{
+			int i = (int)SendDlgMsg(pDlg, "lbHistory", DM_LISTGETITEMINDEX, 0, 0);
 
+			if (i != -1)
+			{
+				char *path = (char*)SendDlgMsg(pDlg, "lbHistory", DM_LISTGETITEM, i, 0);
+				SendDlgMsg(pDlg, "deStartPath", DM_SETTEXT, (intptr_t)path, 0);
+			}
 		}
 
 		break;
@@ -259,42 +331,58 @@ static BOOL FilterDialog(void)
 	const char lfmdata[] = ""
 	                       "object DialogBox: TDialogBox\n"
 	                       "  Left = 458\n"
-	                       "  Height = 190\n"
+	                       "  Height = 284\n"
 	                       "  Top = 307\n"
-	                       "  Width = 598\n"
+	                       "  Width = 627\n"
 	                       "  AutoSize = True\n"
 	                       "  BorderStyle = bsDialog\n"
 	                       "  Caption = 'Match Pattern'\n"
 	                       "  ChildSizing.LeftRightSpacing = 10\n"
 	                       "  ChildSizing.TopBottomSpacing = 10\n"
-	                       "  ClientHeight = 190\n"
-	                       "  ClientWidth = 598\n"
+	                       "  ClientHeight = 284\n"
+	                       "  ClientWidth = 627\n"
 	                       "  DesignTimePPI = 100\n"
 	                       "  OnShow = DialogBoxShow\n"
 	                       "  Position = poOwnerFormCenter\n"
 	                       "  LCLVersion = '2.2.4.0'\n"
+	                       "  object lbHistory: TListBox\n"
+	                       "    AnchorSideLeft.Control = Owner\n"
+	                       "    AnchorSideTop.Control = Owner\n"
+	                       "    AnchorSideRight.Control = deStartPath\n"
+	                       "    AnchorSideRight.Side = asrBottom\n"
+	                       "    Left = 10\n"
+	                       "    Height = 83\n"
+	                       "    Top = 10\n"
+	                       "    Width = 564\n"
+	                       "    Anchors = [akTop, akLeft, akRight]\n"
+	                       "    ItemHeight = 0\n"
+	                       "    OnClick = ListBoxClick\n"
+	                       "    TabOrder = 0\n"
+	                       "    Visible = False\n"
+	                       "  end\n"
 	                       "  object lblStartPath: TLabel\n"
 	                       "    AnchorSideLeft.Control = Owner\n"
-	                       "    AnchorSideTop.Control = deStratPath\n"
+	                       "    AnchorSideTop.Control = deStartPath\n"
 	                       "    AnchorSideTop.Side = asrCenter\n"
 	                       "    Left = 10\n"
 	                       "    Height = 17\n"
-	                       "    Top = 13\n"
+	                       "    Top = 108\n"
 	                       "    Width = 31\n"
 	                       "    BorderSpacing.Right = 5\n"
 	                       "    Caption = 'Path'\n"
 	                       "    ParentColor = False\n"
 	                       "  end\n"
-	                       "  object deStratPath: TDirectoryEdit\n"
+	                       "  object deStartPath: TDirectoryEdit\n"
 	                       "    AnchorSideLeft.Control = lblStartPath\n"
 	                       "    AnchorSideLeft.Side = asrBottom\n"
-	                       "    AnchorSideTop.Control = Owner\n"
+	                       "    AnchorSideTop.Control = lbHistory\n"
+	                       "    AnchorSideTop.Side = asrBottom\n"
 	                       "    AnchorSideRight.Control = cbNoescape\n"
 	                       "    AnchorSideRight.Side = asrBottom\n"
 	                       "    Left = 46\n"
-	                       "    Height = 23\n"
-	                       "    Top = 10\n"
-	                       "    Width = 516\n"
+	                       "    Height = 36\n"
+	                       "    Top = 98\n"
+	                       "    Width = 528\n"
 	                       "    Directory = '/'\n"
 	                       "    ShowHidden = False\n"
 	                       "    ButtonWidth = 24\n"
@@ -304,7 +392,7 @@ static BOOL FilterDialog(void)
 	                       "    BorderSpacing.Left = 5\n"
 	                       "    BorderSpacing.Top = 5\n"
 	                       "    MaxLength = 0\n"
-	                       "    TabOrder = 0\n"
+	                       "    TabOrder = 1\n"
 	                       "    Text = '/'\n"
 	                       "  end\n"
 	                       "  object lblPattern: TLabel\n"
@@ -313,7 +401,7 @@ static BOOL FilterDialog(void)
 	                       "    AnchorSideTop.Side = asrCenter\n"
 	                       "    Left = 10\n"
 	                       "    Height = 17\n"
-	                       "    Top = 41\n"
+	                       "    Top = 149\n"
 	                       "    Width = 87\n"
 	                       "    BorderSpacing.Right = 5\n"
 	                       "    Caption = 'Unix Pattern'\n"
@@ -322,18 +410,18 @@ static BOOL FilterDialog(void)
 	                       "  object cbPattern: TComboBox\n"
 	                       "    AnchorSideLeft.Control = lblPattern\n"
 	                       "    AnchorSideLeft.Side = asrBottom\n"
-	                       "    AnchorSideTop.Control = deStratPath\n"
+	                       "    AnchorSideTop.Control = deStartPath\n"
 	                       "    AnchorSideTop.Side = asrBottom\n"
 	                       "    AnchorSideRight.Side = asrBottom\n"
 	                       "    Left = 102\n"
-	                       "    Height = 23\n"
-	                       "    Top = 38\n"
+	                       "    Height = 36\n"
+	                       "    Top = 139\n"
 	                       "    Width = 250\n"
 	                       "    BorderSpacing.Left = 5\n"
 	                       "    BorderSpacing.Top = 5\n"
-	                       "    ItemHeight = 17\n"
+	                       "    ItemHeight = 23\n"
 	                       "    MaxLength = 256\n"
-	                       "    TabOrder = 1\n"
+	                       "    TabOrder = 2\n"
 	                       "    Text = '*'\n"
 	                       "  end\n"
 	                       "  object cbNoescape: TCheckBox\n"
@@ -341,13 +429,13 @@ static BOOL FilterDialog(void)
 	                       "    AnchorSideLeft.Side = asrBottom\n"
 	                       "    AnchorSideTop.Control = cbPattern\n"
 	                       "    AnchorSideTop.Side = asrCenter\n"
-	                       "    Left = 464\n"
-	                       "    Height = 22\n"
-	                       "    Top = 38\n"
-	                       "    Width = 98\n"
+	                       "    Left = 470\n"
+	                       "    Height = 23\n"
+	                       "    Top = 146\n"
+	                       "    Width = 104\n"
 	                       "    BorderSpacing.Left = 10\n"
 	                       "    Caption = 'No Escape'\n"
-	                       "    TabOrder = 3\n"
+	                       "    TabOrder = 4\n"
 	                       "  end\n"
 	                       "  object chCaseFold: TCheckBox\n"
 	                       "    AnchorSideLeft.Control = cbPattern\n"
@@ -355,21 +443,21 @@ static BOOL FilterDialog(void)
 	                       "    AnchorSideTop.Control = cbPattern\n"
 	                       "    AnchorSideTop.Side = asrCenter\n"
 	                       "    Left = 362\n"
-	                       "    Height = 22\n"
-	                       "    Top = 38\n"
-	                       "    Width = 92\n"
+	                       "    Height = 23\n"
+	                       "    Top = 146\n"
+	                       "    Width = 98\n"
 	                       "    BorderSpacing.Left = 10\n"
 	                       "    Caption = 'Case Fold'\n"
-	                       "    TabOrder = 2\n"
+	                       "    TabOrder = 3\n"
 	                       "  end\n"
 	                       "  object btnOK: TBitBtn\n"
 	                       "    AnchorSideTop.Control = cbPattern\n"
 	                       "    AnchorSideTop.Side = asrBottom\n"
-	                       "    AnchorSideRight.Control = deStratPath\n"
+	                       "    AnchorSideRight.Control = deStartPath\n"
 	                       "    AnchorSideRight.Side = asrBottom\n"
-	                       "    Left = 461\n"
+	                       "    Left = 473\n"
 	                       "    Height = 31\n"
-	                       "    Top = 76\n"
+	                       "    Top = 190\n"
 	                       "    Width = 101\n"
 	                       "    Anchors = [akTop, akRight]\n"
 	                       "    AutoSize = True\n"
@@ -381,15 +469,15 @@ static BOOL FilterDialog(void)
 	                       "    Kind = bkOK\n"
 	                       "    ModalResult = 1\n"
 	                       "    OnClick = ButtonClick\n"
-	                       "    TabOrder = 4\n"
+	                       "    TabOrder = 5\n"
 	                       "  end\n"
 	                       "  object btnCancel: TBitBtn\n"
 	                       "    AnchorSideTop.Control = btnOK\n"
 	                       "    AnchorSideTop.Side = asrCenter\n"
 	                       "    AnchorSideRight.Control = btnOK\n"
-	                       "    Left = 355\n"
+	                       "    Left = 367\n"
 	                       "    Height = 31\n"
-	                       "    Top = 76\n"
+	                       "    Top = 190\n"
 	                       "    Width = 101\n"
 	                       "    Anchors = [akTop, akRight]\n"
 	                       "    AutoSize = True\n"
@@ -401,7 +489,7 @@ static BOOL FilterDialog(void)
 	                       "    Kind = bkCancel\n"
 	                       "    ModalResult = 2\n"
 	                       "    OnClick = ButtonClick\n"
-	                       "    TabOrder = 5\n"
+	                       "    TabOrder = 6\n"
 	                       "  end\n"
 	                       "end\n";
 
@@ -832,25 +920,6 @@ void DCPCALL FsSetDefaultParams(FsDefaultParamStruct* dps)
 		gCfg = g_key_file_new();
 		gchar *cfgdir = g_path_get_dirname(dps->DefaultIniName);
 		gCfgPath = g_strdup_printf("%s/%s", cfgdir, ININAME);
-		g_key_file_load_from_file(gCfg, gCfgPath, 0, NULL);
-		g_free(cfgdir);
-		gchar *item = g_key_file_get_string(gCfg, ROOTNAME, "Path", NULL);
-
-		if (item)
-		{
-			g_strlcpy(gStartPath, item, sizeof(gStartPath));
-			g_free(item);
-		}
-
-		item = g_key_file_get_string(gCfg, ROOTNAME, "Pattern0", NULL);
-
-		if (item)
-		{
-			g_strlcpy(gPattern, item, sizeof(gPattern));
-			g_free(item);
-		}
-
-		gMatchFlags = g_key_file_get_integer(gCfg, ROOTNAME, "Flags", NULL);
 	}
 }
 

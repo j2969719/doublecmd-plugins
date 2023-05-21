@@ -108,6 +108,34 @@ static gchar *str_replace(gchar *text, gchar *str, gchar *repl, gboolean quote)
 	return result;
 }
 
+static void get_cmds_for_ext(uintptr_t pDlg)
+{
+	int num = 0;
+	gchar *key = NULL;
+	const char *default_cmd = "ffmpeg -y -i {infile} {outfilenoext.ext}";
+	gchar *ext = g_strdup((char*)SendDlgMsg(pDlg, "cbExt", DM_GETTEXT, 0, 0));
+
+	SendDlgMsg(pDlg, "cbCommand", DM_LISTCLEAR, 0, 0);
+	SendDlgMsg(pDlg, "cbCommand", DM_SETTEXT, (intptr_t)default_cmd, 0);
+
+	do
+	{
+		g_free(key);
+		key = g_strdup_printf("Command_%s_%d", ext, num++);
+		gchar *cmd = g_key_file_get_string(gCfg, ROOTNAME, key, NULL);
+
+		if (cmd)
+			SendDlgMsg(pDlg, "cbCommand", DM_LISTADDSTR, (intptr_t)cmd, 0);
+
+		g_free(cmd);
+	}
+	while (g_key_file_has_key(gCfg, ROOTNAME, key, NULL));
+
+	SendDlgMsg(pDlg, "cbCommand", DM_LISTSETITEMINDEX, 0, 0);
+	g_free(key);
+	g_free(ext);
+}
+
 intptr_t DCPCALL PropertiesDlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr_t wParam, intptr_t lParam)
 {
 	char *string;
@@ -280,11 +308,35 @@ intptr_t DCPCALL OptionsDlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg,
 	case DN_INITDIALOG:
 		g_key_file_load_from_file(gCfg, gCfgPath, 0, NULL);
 		gchar *path = g_key_file_get_string(gCfg, ROOTNAME, "StartPath", NULL);
+		gboolean history = g_key_file_has_key(gCfg, ROOTNAME, "HistoryPath0", NULL);
+		SendDlgMsg(pDlg, "lbHistory", DM_SHOWITEM, (int)history, 0);
 
 		if (path)
 		{
 			SendDlgMsg(pDlg, "fnSelectPath", DM_SETTEXT, (intptr_t)path, 0);
+			SendDlgMsg(pDlg, "lbHistory", DM_LISTADDSTR, (intptr_t)path, 0);
 			g_free(path);
+		}
+
+		if (history)
+		{
+			int num = 0;
+			gchar *key = NULL;
+
+			do
+			{
+				g_free(key);
+				key = g_strdup_printf("HistoryPath%d", num++);
+				gchar *path = g_key_file_get_string(gCfg, ROOTNAME, key, NULL);
+
+				if (path)
+					SendDlgMsg(pDlg, "lbHistory", DM_LISTADDSTR, (intptr_t)path, 0);
+
+				g_free(path);
+			}
+			while (g_key_file_has_key(gCfg, ROOTNAME, key, NULL));
+
+			g_free(key);
 		}
 
 		break;
@@ -296,10 +348,50 @@ intptr_t DCPCALL OptionsDlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg,
 
 			if (path && strlen(path) > 0)
 			{
+				if (strcmp(gStartPath, path) != 0)
+				{
+					g_strlcpy(gStartPath, path, sizeof(gStartPath));
+					g_key_file_set_string(gCfg, ROOTNAME, "StartPath", path);
 
-				g_strlcpy(gStartPath, path, sizeof(gStartPath));
-				g_key_file_set_string(gCfg, ROOTNAME, "StartPath", path);
-				g_key_file_save_to_file(gCfg, gCfgPath, NULL);
+					int num = 0;
+					gchar *key = NULL;
+
+					gsize count = (gsize)SendDlgMsg(pDlg, "lbHistory", DM_LISTGETCOUNT, 0, 0);
+
+					for (gsize i = 0; i < count; i++)
+					{
+						if (num >= MAX_PATH)
+							break;
+
+						path = (char*)SendDlgMsg(pDlg, "lbHistory", DM_LISTGETITEM, i, 0);
+
+						if (strcmp(gStartPath, path) != 0)
+						{
+							gchar *key = g_strdup_printf("HistoryPath%d", num++);
+							g_key_file_set_string(gCfg, ROOTNAME, key, path);
+							g_free(key);
+						}
+					}
+
+					key = g_strdup_printf("HistoryPath%d", num);
+
+					if (g_key_file_has_key(gCfg, ROOTNAME, key, NULL))
+						g_key_file_remove_key(gCfg, ROOTNAME, key, NULL);
+
+					g_free(key);
+
+					g_key_file_save_to_file(gCfg, gCfgPath, NULL);
+				}
+			}
+		}
+		else if (strcmp(DlgItemName, "lbHistory") == 0)
+		{
+			int i = (int)SendDlgMsg(pDlg, "lbHistory", DM_LISTGETITEMINDEX, 0, 0);
+
+			if (i != -1)
+			{
+				char *path = (char*)SendDlgMsg(pDlg, "lbHistory", DM_LISTGETITEM, i, 0);
+				SendDlgMsg(pDlg, "fnSelectPath", DM_SETTEXT, (intptr_t)path, 0);
 			}
 		}
 
@@ -322,16 +414,7 @@ intptr_t DCPCALL ConvertDlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg,
 		{
 			for (gsize i = 0; items[i] != NULL; i++)
 			{
-				if (strncmp(items[i], "Command", 6) == 0)
-				{
-					gchar *item = g_key_file_get_string(gCfg, ROOTNAME, items[i], NULL);
-
-					if (item && strlen(item) > 0)
-						SendDlgMsg(pDlg, "cbCommand", DM_LISTADDSTR, (intptr_t)item, 0);
-
-					g_free(item);
-				}
-				else if (strncmp(items[i], "Ext", 3) == 0)
+				if (strncmp(items[i], "Ext", 3) == 0)
 				{
 					gchar *item = g_key_file_get_string(gCfg, ROOTNAME, items[i], NULL);
 
@@ -367,7 +450,7 @@ intptr_t DCPCALL ConvertDlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg,
 		g_free(gTerm);
 		gTerm = NULL;
 		SendDlgMsg(pDlg, "cbExt", DM_LISTSETITEMINDEX, 0, 0);
-		SendDlgMsg(pDlg, "cbCommand", DM_LISTSETITEMINDEX, 0, 0);
+		get_cmds_for_ext(pDlg);
 
 		break;
 
@@ -378,7 +461,9 @@ intptr_t DCPCALL ConvertDlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg,
 			gCommand = g_strdup((char*)SendDlgMsg(pDlg, "cbCommand", DM_GETTEXT, 0, 0));
 			gTerm = g_strdup((char*)SendDlgMsg(pDlg, "edTerm", DM_GETTEXT, 0, 0));
 			g_key_file_set_string(gCfg, ROOTNAME, "Ext0", gOutExt);
-			g_key_file_set_string(gCfg, ROOTNAME, "Command0", gCommand);
+			gchar *key = g_strdup_printf("Command_%s_0", gOutExt);
+			g_key_file_set_string(gCfg, ROOTNAME, key, gCommand);
+			g_free(key);
 			g_key_file_set_string(gCfg, ROOTNAME, "Termminal", gTerm);
 
 			gsize count = (gsize)SendDlgMsg(pDlg, "cbExt", DM_LISTGETCOUNT, 0, 0);
@@ -408,7 +493,7 @@ intptr_t DCPCALL ConvertDlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg,
 
 				if (g_strcmp0(line, gCommand) != 0)
 				{
-					gchar *key = g_strdup_printf("Command%d", num++);
+					gchar *key = g_strdup_printf("Command_%s_%d", gOutExt, num++);
 					g_key_file_set_string(gCfg, ROOTNAME, key, line);
 					g_free(key);
 
@@ -423,6 +508,9 @@ intptr_t DCPCALL ConvertDlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg,
 		break;
 
 	case DN_CHANGE:
+		if (strcmp(DlgItemName, "cbExt") == 0)
+			get_cmds_for_ext(pDlg);
+
 		SendDlgMsg(pDlg, "lblErr", DM_SHOWITEM, 0, 0);
 		SendDlgMsg(pDlg, "lblTemplate", DM_SHOWITEM, 0, 0);
 		SendDlgMsg(pDlg, "lblTemplate", DM_SETTEXT, 0, 0);
@@ -752,7 +840,7 @@ static BOOL OptionsDialog(void)
 	const char lfmdata[] = ""
 	                       "object OptDialogBox: TOptDialogBox\n"
 	                       "  Left = 458\n"
-	                       "  Height = 163\n"
+	                       "  Height = 262\n"
 	                       "  Top = 307\n"
 	                       "  Width = 672\n"
 	                       "  AutoSize = True\n"
@@ -761,7 +849,7 @@ static BOOL OptionsDialog(void)
 	                       "  ChildSizing.LeftRightSpacing = 15\n"
 	                       "  ChildSizing.TopBottomSpacing = 15\n"
 	                       "  ChildSizing.VerticalSpacing = 10\n"
-	                       "  ClientHeight = 163\n"
+	                       "  ClientHeight = 262\n"
 	                       "  ClientWidth = 672\n"
 	                       "  DesignTimePPI = 100\n"
 	                       "  OnShow = DialogBoxShow\n"
@@ -778,22 +866,41 @@ static BOOL OptionsDialog(void)
 	                       "    Caption = 'Please select the folder you want to work with.'#10#10'You can re-open this dialog by clicking plugin properties or \"..\" properties in the root folder.'\n"
 	                       "    ParentColor = False\n"
 	                       "  end\n"
-	                       "  object fnSelectPath: TDirectoryEdit\n"
-	                       "    AnchorSideLeft.Control = lblStartPath\n"
+	                       "  object lbHistory: TListBox\n"
+	                       "    AnchorSideLeft.Control = fnSelectPath\n"
 	                       "    AnchorSideTop.Control = lblStartPath\n"
 	                       "    AnchorSideTop.Side = asrBottom\n"
 	                       "    AnchorSideRight.Control = lblStartPath\n"
 	                       "    AnchorSideRight.Side = asrBottom\n"
 	                       "    Left = 15\n"
-	                       "    Height = 23\n"
+	                       "    Height = 83\n"
 	                       "    Top = 74\n"
 	                       "    Width = 638\n"
+	                       "    Anchors = [akTop, akLeft, akRight]\n"
+	                       "    ItemHeight = 0\n"
+	                       "    OnClick = ListBoxClick\n"
+	                       "    TabOrder = 0\n"
+	                       "    Visible = False\n"
+	                       "  end\n"
+	                       "  object fnSelectPath: TDirectoryEdit\n"
+	                       "    AnchorSideLeft.Control = lblStartPath\n"
+	                       "    AnchorSideTop.Control = lbHistory\n"
+	                       "    AnchorSideTop.Side = asrBottom\n"
+	                       "    AnchorSideRight.Control = lblStartPath\n"
+	                       "    AnchorSideRight.Side = asrBottom\n"
+	                       "    Left = 15\n"
+	                       "    Height = 36\n"
+	                       "    Top = 167\n"
+	                       "    Width = 638\n"
+	                       "    Directory = '/'\n"
 	                       "    DialogTitle = 'Select folder'\n"
+	                       "    ShowHidden = False\n"
 	                       "    ButtonWidth = 24\n"
 	                       "    NumGlyphs = 1\n"
 	                       "    Anchors = [akTop, akLeft, akRight]\n"
+	                       "    BorderSpacing.Bottom = 1\n"
 	                       "    MaxLength = 0\n"
-	                       "    TabOrder = 0\n"
+	                       "    TabOrder = 1\n"
 	                       "    Text = '/'\n"
 	                       "  end\n"
 	                       "  object btnCancel: TBitBtn\n"
@@ -802,7 +909,7 @@ static BOOL OptionsDialog(void)
 	                       "    AnchorSideRight.Control = btnOK\n"
 	                       "    Left = 446\n"
 	                       "    Height = 31\n"
-	                       "    Top = 112\n"
+	                       "    Top = 218\n"
 	                       "    Width = 101\n"
 	                       "    Anchors = [akTop, akRight]\n"
 	                       "    AutoSize = True\n"
@@ -814,7 +921,7 @@ static BOOL OptionsDialog(void)
 	                       "    Kind = bkCancel\n"
 	                       "    ModalResult = 2\n"
 	                       "    OnClick = ButtonClick\n"
-	                       "    TabOrder = 2\n"
+	                       "    TabOrder = 3\n"
 	                       "  end\n"
 	                       "  object btnOK: TBitBtn\n"
 	                       "    AnchorSideTop.Control = fnSelectPath\n"
@@ -823,7 +930,7 @@ static BOOL OptionsDialog(void)
 	                       "    AnchorSideRight.Side = asrBottom\n"
 	                       "    Left = 552\n"
 	                       "    Height = 31\n"
-	                       "    Top = 112\n"
+	                       "    Top = 218\n"
 	                       "    Width = 101\n"
 	                       "    Anchors = [akTop, akRight]\n"
 	                       "    AutoSize = True\n"
@@ -835,7 +942,7 @@ static BOOL OptionsDialog(void)
 	                       "    Kind = bkOK\n"
 	                       "    ModalResult = 1\n"
 	                       "    OnClick = ButtonClick\n"
-	                       "    TabOrder = 1\n"
+	                       "    TabOrder = 2\n"
 	                       "  end\n"
 	                       "end\n";
 
@@ -867,7 +974,7 @@ static BOOL ConvertDialog(void)
 	                       "    Left = 10\n"
 	                       "    Height = 17\n"
 	                       "    Top = 15\n"
-	                       "    Width = 67\n"
+	                       "    Width = 69\n"
 	                       "    Caption = 'Extension'\n"
 	                       "    ParentColor = False\n"
 	                       "  end\n"
@@ -875,14 +982,12 @@ static BOOL ConvertDialog(void)
 	                       "    AnchorSideLeft.Control = Owner\n"
 	                       "    AnchorSideTop.Control = lblExt\n"
 	                       "    AnchorSideTop.Side = asrBottom\n"
-	                       "    AnchorSideRight.Control = lblExt\n"
 	                       "    AnchorSideRight.Side = asrBottom\n"
 	                       "    Left = 10\n"
-	                       "    Height = 23\n"
+	                       "    Height = 36\n"
 	                       "    Top = 32\n"
 	                       "    Width = 129\n"
-	                       "    Anchors = [akTop, akLeft, akRight]\n"
-	                       "    ItemHeight = 17\n"
+	                       "    ItemHeight = 23\n"
 	                       "    MaxLength = 5\n"
 	                       "    OnChange = ComboBoxChange\n"
 	                       "    TabOrder = 0\n"
@@ -903,14 +1008,14 @@ static BOOL ConvertDialog(void)
 	                       "    AnchorSideLeft.Side = asrBottom\n"
 	                       "    AnchorSideTop.Control = cbExt\n"
 	                       "    Left = 149\n"
-	                       "    Height = 23\n"
+	                       "    Height = 36\n"
 	                       "    Top = 32\n"
 	                       "    Width = 491\n"
 	                       "    BorderSpacing.Left = 10\n"
-	                       "    ItemHeight = 17\n"
+	                       "    ItemHeight = 23\n"
 	                       "    OnChange = ComboBoxChange\n"
 	                       "    TabOrder = 1\n"
-	                       "    Text = 'ffmpeg -i {infile} {outfilenoext.ext}'\n"
+	                       "    Text = 'ffmpeg -y -i {infile} {outfilenoext.ext}'\n"
 	                       "  end\n"
 	                       "  object lblTerm: TLabel\n"
 	                       "    AnchorSideLeft.Control = edTerm\n"
@@ -918,7 +1023,7 @@ static BOOL ConvertDialog(void)
 	                       "    AnchorSideTop.Side = asrBottom\n"
 	                       "    Left = 10\n"
 	                       "    Height = 17\n"
-	                       "    Top = 65\n"
+	                       "    Top = 78\n"
 	                       "    Width = 73\n"
 	                       "    BorderSpacing.Top = 10\n"
 	                       "    Caption = 'Termminal'\n"
@@ -931,8 +1036,8 @@ static BOOL ConvertDialog(void)
 	                       "    AnchorSideRight.Control = cbCommand\n"
 	                       "    AnchorSideRight.Side = asrBottom\n"
 	                       "    Left = 10\n"
-	                       "    Height = 23\n"
-	                       "    Top = 82\n"
+	                       "    Height = 36\n"
+	                       "    Top = 95\n"
 	                       "    Width = 630\n"
 	                       "    Anchors = [akTop, akLeft, akRight]\n"
 	                       "    OnChange = EditChange\n"
@@ -947,7 +1052,7 @@ static BOOL ConvertDialog(void)
 	                       "    AnchorSideRight.Side = asrBottom\n"
 	                       "    Left = 12\n"
 	                       "    Height = 1\n"
-	                       "    Top = 115\n"
+	                       "    Top = 141\n"
 	                       "    Width = 628\n"
 	                       "    Anchors = [akTop, akLeft, akRight]\n"
 	                       "    BorderSpacing.Left = 2\n"
@@ -960,7 +1065,7 @@ static BOOL ConvertDialog(void)
 	                       "    AnchorSideTop.Side = asrBottom\n"
 	                       "    Left = 12\n"
 	                       "    Height = 17\n"
-	                       "    Top = 116\n"
+	                       "    Top = 142\n"
 	                       "    Width = 243\n"
 	                       "    Caption = 'A required template is missing'\n"
 	                       "    Font.Style = [fsBold, fsItalic]\n"
@@ -974,7 +1079,7 @@ static BOOL ConvertDialog(void)
 	                       "    AnchorSideTop.Control = lblErr\n"
 	                       "    Left = 260\n"
 	                       "    Height = 1\n"
-	                       "    Top = 116\n"
+	                       "    Top = 142\n"
 	                       "    Width = 1\n"
 	                       "    BorderSpacing.Left = 5\n"
 	                       "    Font.Style = [fsBold]\n"
@@ -989,7 +1094,7 @@ static BOOL ConvertDialog(void)
 	                       "    AnchorSideRight.Side = asrBottom\n"
 	                       "    Left = 539\n"
 	                       "    Height = 31\n"
-	                       "    Top = 136\n"
+	                       "    Top = 162\n"
 	                       "    Width = 101\n"
 	                       "    Anchors = [akTop, akRight]\n"
 	                       "    AutoSize = True\n"
@@ -1009,7 +1114,7 @@ static BOOL ConvertDialog(void)
 	                       "    AnchorSideRight.Control = btnOK\n"
 	                       "    Left = 433\n"
 	                       "    Height = 31\n"
-	                       "    Top = 136\n"
+	                       "    Top = 162\n"
 	                       "    Width = 101\n"
 	                       "    Anchors = [akTop, akRight]\n"
 	                       "    AutoSize = True\n"
@@ -1041,8 +1146,8 @@ static BOOL SetFindData(DIR *cur, char *path, WIN32_FIND_DATAA *FindData)
 		snprintf(file, sizeof(file), "%s/%s", path, ent->d_name);
 		FindData->ftCreationTime.dwHighDateTime = 0xFFFFFFFF;
 		FindData->ftCreationTime.dwLowDateTime = 0xFFFFFFFE;
-		FindData->ftCreationTime.dwHighDateTime = 0xFFFFFFFF;
-		FindData->ftCreationTime.dwLowDateTime = 0xFFFFFFFE;
+		FindData->ftLastAccessTime.dwHighDateTime = 0xFFFFFFFF;
+		FindData->ftLastAccessTime.dwLowDateTime = 0xFFFFFFFE;
 		GFile *gfile = g_file_new_for_path(file);
 
 		if (!gfile)
@@ -1103,8 +1208,8 @@ int DCPCALL FsInit(int PluginNr, tProgressProc pProgressProc, tLogProc pLogProc,
 		g_strlcpy(gStartPath, path, sizeof(gStartPath));
 		g_free(path);
 	}
-	else
-		OptionsDialog();
+
+	OptionsDialog();
 
 	return 0;
 }
@@ -1237,7 +1342,7 @@ int DCPCALL FsGetFile(char* RemoteName, char* LocalName, int CopyFlags, RemoteIn
 	g_free(command);
 	command = temp;
 
-	if (!gTerm || gTerm[0] != '\0')
+	if (gTerm && gTerm[0] != '\0')
 	{
 		temp = str_replace(gTerm, "{command}", command, FALSE);
 		g_free(command);
@@ -1256,7 +1361,6 @@ int DCPCALL FsGetFile(char* RemoteName, char* LocalName, int CopyFlags, RemoteIn
 	}
 	else
 		result = FS_FILE_OK;
-
 
 	g_free(command);
 	gProgressProc(gPluginNr, localpath, outfile, 100);

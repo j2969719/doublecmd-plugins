@@ -1,6 +1,6 @@
 object OptsDialogBox: TOptsDialogBox
   Left = 458
-  Height = 465
+  Height = 571
   Top = 307
   Width = 485
   AutoSize = True
@@ -9,79 +9,45 @@ object OptsDialogBox: TOptsDialogBox
   ChildSizing.LeftRightSpacing = 15
   ChildSizing.TopBottomSpacing = 15
   ChildSizing.VerticalSpacing = 10
-  ClientHeight = 465
+  ClientHeight = 571
   ClientWidth = 485
   DesignTimePPI = 100
   OnShow = DialogBoxShow
   Position = poOwnerFormCenter
   LCLVersion = '2.2.4.0'
-  object btnOK: TBitBtn
-    AnchorSideTop.Control = btnDel
-    AnchorSideTop.Side = asrBottom
+  object lbHistory: TListBox
+    AnchorSideLeft.Control = Owner
+    AnchorSideTop.Control = Owner
     AnchorSideRight.Control = deStartPath
     AnchorSideRight.Side = asrBottom
-    Left = 284
-    Height = 31
-    Top = 428
-    Width = 101
-    Anchors = [akTop, akRight]
-    AutoSize = True
-    BorderSpacing.Top = 20
-    Constraints.MinHeight = 31
-    Constraints.MinWidth = 101
-    DefaultCaption = True
-    Kind = bkOK
-    ModalResult = 1
-    OnClick = ButtonClick
-    TabOrder = 4
-  end
-  object btnCancel: TBitBtn
-    AnchorSideTop.Control = btnOK
-    AnchorSideTop.Side = asrCenter
-    AnchorSideRight.Control = btnOK
-    Left = 178
-    Height = 31
-    Top = 428
-    Width = 101
-    Anchors = [akTop, akRight]
-    AutoSize = True
-    BorderSpacing.Right = 5
-    Cancel = True
-    Constraints.MinHeight = 31
-    Constraints.MinWidth = 101
-    DefaultCaption = True
-    Kind = bkCancel
-    ModalResult = 2
-    OnClick = ButtonClick
-    TabOrder = 5
+    Left = 15
+    Height = 73
+    Top = 15
+    Width = 370
+    Anchors = [akTop, akLeft, akRight]
+    ItemHeight = 0
+    OnClick = ListBoxClick
+    OnKeyDown = ListBoxKeyDown
+    OnKeyUp = ListBoxKeyUp
+    ParentBidiMode = False
+    TabOrder = 0
   end
   object deStartPath: TDirectoryEdit
-    AnchorSideLeft.Control = lblStartPath
-    AnchorSideTop.Control = lblStartPath
+    AnchorSideLeft.Control = Owner
+    AnchorSideTop.Control = lbHistory
     AnchorSideTop.Side = asrBottom
-    AnchorSideRight.Control = lbSelected
     AnchorSideRight.Side = asrBottom
     Left = 15
-    Height = 23
-    Top = 42
+    Height = 36
+    Top = 98
     Width = 370
     Directory = '/'
-    ShowHidden = False
+    ShowHidden = True
     ButtonWidth = 24
     NumGlyphs = 1
     MaxLength = 0
-    TabOrder = 0
+    TabOrder = 1
     Text = '/'
-  end
-  object lblStartPath: TLabel
-    AnchorSideLeft.Control = Owner
-    AnchorSideTop.Control = Owner
-    Left = 15
-    Height = 17
-    Top = 15
-    Width = 31
-    Caption = 'Path'
-    ParentColor = False
   end
   object lbSelected: TListBox
     AnchorSideLeft.Control = cbAvalible
@@ -92,13 +58,13 @@ object OptsDialogBox: TOptsDialogBox
     AnchorSideBottom.Side = asrBottom
     Left = 15
     Height = 76
-    Top = 293
+    Top = 376
     Width = 370
     Anchors = [akTop, akLeft, akRight]
     Enabled = False
     ItemHeight = 0
     OnClick = ListBoxClick
-    TabOrder = 1
+    TabOrder = 6
   end
   object btnAdd: TBitBtn
     AnchorSideTop.Control = cbAvalible
@@ -107,14 +73,14 @@ object OptsDialogBox: TOptsDialogBox
     AnchorSideRight.Side = asrBottom
     Left = 248
     Height = 31
-    Top = 252
+    Top = 335
     Width = 137
     Anchors = [akTop, akRight]
     Caption = 'Add content type'
     Default = True
     Enabled = False
     OnClick = ButtonClick
-    TabOrder = 2
+    TabOrder = 5
   end
   object btnDel: TBitBtn
     AnchorSideLeft.Control = lbSelected
@@ -122,16 +88,16 @@ object OptsDialogBox: TOptsDialogBox
     AnchorSideTop.Side = asrBottom
     AnchorSideRight.Control = cbAvalible
     AnchorSideRight.Side = asrBottom
-    Left = 222
-    Height = 29
-    Top = 379
-    Width = 163
+    Left = 218
+    Height = 30
+    Top = 462
+    Width = 167
     Anchors = [akTop, akRight]
     AutoSize = True
     Caption = 'Remove content type'
     Enabled = False
     OnClick = ButtonClick
-    TabOrder = 3
+    TabOrder = 7
   end
   object cbAvalible: TComboBox
     AnchorSideLeft.Control = deStartPath
@@ -140,8 +106,8 @@ object OptsDialogBox: TOptsDialogBox
     AnchorSideRight.Control = deStartPath
     AnchorSideRight.Side = asrBottom
     Left = 15
-    Height = 23
-    Top = 219
+    Height = 36
+    Top = 289
     Width = 370
     Anchors = [akTop, akLeft, akRight]
     AutoComplete = True
@@ -152,7 +118,7 @@ object OptsDialogBox: TOptsDialogBox
     OnKeyUp = ComboBoxKeyUp
     Sorted = True
     Style = csOwnerDrawEditableVariable
-    TabOrder = 6
+    TabOrder = 4
   end
   object rgMode: TRadioGroup
     AnchorSideLeft.Control = deStartPath
@@ -162,7 +128,7 @@ object OptsDialogBox: TOptsDialogBox
     AnchorSideRight.Side = asrBottom
     Left = 15
     Height = 102
-    Top = 75
+    Top = 144
     Width = 370
     Anchors = [akTop, akLeft, akRight]
     AutoFill = True
@@ -175,8 +141,8 @@ object OptsDialogBox: TOptsDialogBox
     ChildSizing.ShrinkVertical = crsScaleChilds
     ChildSizing.Layout = cclLeftToRightThenTopToBottom
     ChildSizing.ControlsPerLine = 1
-    ClientHeight = 98
-    ClientWidth = 366
+    ClientHeight = 102
+    ClientWidth = 354
     ItemIndex = 0
     Items.Strings = (
       'All files'
@@ -184,18 +150,58 @@ object OptsDialogBox: TOptsDialogBox
       'Only audio/*'
       'Only video/*'
     )
-    TabOrder = 7
+    TabOrder = 2
   end
   object chCustom: TCheckBox
     AnchorSideLeft.Control = deStartPath
     AnchorSideTop.Control = rgMode
     AnchorSideTop.Side = asrBottom
     Left = 15
-    Height = 22
-    Top = 187
-    Width = 78
+    Height = 23
+    Top = 256
+    Width = 84
     Caption = 'Custom'
     OnChange = CheckBoxChange
+    TabOrder = 3
+  end
+  object btnOK: TBitBtn
+    AnchorSideTop.Control = btnDel
+    AnchorSideTop.Side = asrBottom
+    AnchorSideRight.Control = deStartPath
+    AnchorSideRight.Side = asrBottom
+    Left = 284
+    Height = 31
+    Top = 512
+    Width = 101
+    Anchors = [akTop, akRight]
+    AutoSize = True
+    BorderSpacing.Top = 20
+    Constraints.MinHeight = 31
+    Constraints.MinWidth = 101
+    DefaultCaption = True
+    Kind = bkOK
+    ModalResult = 1
+    OnClick = ButtonClick
     TabOrder = 8
+  end
+  object btnCancel: TBitBtn
+    AnchorSideTop.Control = btnOK
+    AnchorSideTop.Side = asrCenter
+    AnchorSideRight.Control = btnOK
+    Left = 178
+    Height = 31
+    Top = 512
+    Width = 101
+    Anchors = [akTop, akRight]
+    AutoSize = True
+    BorderSpacing.Right = 5
+    Cancel = True
+    Constraints.MinHeight = 31
+    Constraints.MinWidth = 101
+    DefaultCaption = True
+    Kind = bkCancel
+    ModalResult = 2
+    OnClick = ButtonClick
+    TabOrder = 9
   end
 end

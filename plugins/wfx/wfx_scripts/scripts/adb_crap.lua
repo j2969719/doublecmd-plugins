@@ -24,17 +24,19 @@ function escape_string(string)
     local repl = {
         [' ']  = '\\ ',
         ['"']  = '\\"',
+        [';']  = '\\;',
         ['%('] = '\\(',
         ['%)'] = '\\)',
         ['%['] = '\\[',
         ['%]'] = '\\]',
+        ['%&'] = '\\&',
     }
     local result = string
     for key, value in pairs(repl) do
         local oldstring = result
         result = oldstring:gsub(key, value)
     end
-    return result
+    return '"' .. result .. '"'
 end
 
 function fs_init()
@@ -46,7 +48,7 @@ function fs_getlist(path)
     if not path:find('/$') then
         path = path .. '/'
     end
-    local ls_output = get_output(adb_cmd .. ' shell ls -lA "' .. path:gsub(" ", "\\ "):gsub('"', '\\"') .. '"')
+    local ls_output = get_output(adb_cmd .. ' shell ls -lA ' .. escape_string(path))
     for line in ls_output:gmatch("[^\n]+") do
         local attr, size, datetime, name = line:match("([%-bcdflsrwxtST]+)%s+%d+%s+[%a%d_]+%s+[%a%d_]+%s+(%d+)%s+(%d%d%d%d%-%d%d%-%d%d%s%d%d:%d%d)%s(.+)") -- https://youtu.be/Fkk9DI-8el4
         if (attr ~= nil and datetime ~= nil and size ~= nil and name ~= nil) then
@@ -65,7 +67,7 @@ function fs_getfile(src, dst)
 end
 
 function fs_exists(file)
-    if (os.execute(adb_cmd .. ' shell [[ -e "' .. escape_string(file) .. '" ]]') == true) then
+    if (os.execute(adb_cmd .. ' shell [[ -e ' .. escape_string(file) .. ' ]]') == true) then
         os.exit()
     end
     os.exit(1)
@@ -79,38 +81,38 @@ function fs_putfile(src, dst)
 end
 
 function fs_copy(src, dst)
-    if (os.execute(adb_cmd .. ' shell cp "' .. escape_string(src) .. '" "' .. escape_string(dst) .. '"') == true) then
+    if (os.execute(adb_cmd .. ' shell cp ' .. escape_string(src) .. ' ' .. escape_string(dst)) == true) then
         os.exit()
     end
     os.exit(1)
 end
 
 function fs_move(src, dst)
-    if (os.execute(adb_cmd .. ' shell mv "' .. escape_string(src) .. '" "' .. escape_string(dst) .. '"') == true) then
+    if (os.execute(adb_cmd .. ' shell mv ' .. escape_string(src) .. ' ' .. escape_string(dst)) == true) then
         os.exit()
     end
     os.exit(1)
 end
 
 function fs_remove(path)
-    if (os.execute(adb_cmd .. ' shell rm -rf "' .. escape_string(path) .. '"') == true) then
+    if (os.execute(adb_cmd .. ' shell rm -rf ' .. escape_string(path)) == true) then
         os.exit()
     end
     os.exit(1)
 end
 
 function fs_mkdir(path)
-    if (os.execute(adb_cmd .. ' shell mkdir "' .. escape_string(path) .. '"') == true) then
+    if (os.execute(adb_cmd .. ' shell mkdir ' .. escape_string(path)) == true) then
         os.exit()
     end
     os.exit(1)
 end
 
 function fs_execute(file)
-    local output = get_output(adb_cmd .. ' shell readlink "' .. escape_string(file) .. '"')
+    local output = get_output(adb_cmd .. ' shell readlink ' .. escape_string(file))
     if (output ~= nil) then
         output = output:sub(1, -2)
-        if (os.execute(adb_cmd .. ' shell [[ -d "' .. output:gsub(" ", "\\ "):gsub('"', '\\"') .. '" ]]') == true) then
+        if (os.execute(adb_cmd .. ' shell [[ -d "' .. escape_string(output) .. ' ]]') == true) then
             print(debug.getinfo(1, 'S').source:match('(/.-)$') .. output)
             os.exit()
         end
@@ -124,6 +126,7 @@ function fs_properties(file)
         {"Size",                "Size:%s(%d+)"},
         {"Uid",             "Uid:%s%(([^%)]+)"},
         {"Gid",             "Gid:%s%(([^%)]+)"},
+        {"Mode",         "Access:%s%(([^%)]+)"},
         {"Access", "Access:%s([%d%s%-%.:]+)\n"},
         {"Modify", "Modify:%s([%d%s%-%.:]+)\n"},
         {"Change", "Change:%s([%d%s%-%.:]+)\n"},
