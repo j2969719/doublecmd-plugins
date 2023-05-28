@@ -352,36 +352,36 @@ intptr_t DCPCALL OptionsDlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg,
 				{
 					g_strlcpy(gStartPath, path, sizeof(gStartPath));
 					g_key_file_set_string(gCfg, ROOTNAME, "StartPath", path);
-
-					int num = 0;
-					gchar *key = NULL;
-
-					gsize count = (gsize)SendDlgMsg(pDlg, "lbHistory", DM_LISTGETCOUNT, 0, 0);
-
-					for (gsize i = 0; i < count; i++)
-					{
-						if (num >= MAX_PATH)
-							break;
-
-						path = (char*)SendDlgMsg(pDlg, "lbHistory", DM_LISTGETITEM, i, 0);
-
-						if (strcmp(gStartPath, path) != 0)
-						{
-							gchar *key = g_strdup_printf("HistoryPath%d", num++);
-							g_key_file_set_string(gCfg, ROOTNAME, key, path);
-							g_free(key);
-						}
-					}
-
-					key = g_strdup_printf("HistoryPath%d", num);
-
-					if (g_key_file_has_key(gCfg, ROOTNAME, key, NULL))
-						g_key_file_remove_key(gCfg, ROOTNAME, key, NULL);
-
-					g_free(key);
-
-					g_key_file_save_to_file(gCfg, gCfgPath, NULL);
 				}
+
+				int num = 0;
+				gchar *key = NULL;
+
+				gsize count = (gsize)SendDlgMsg(pDlg, "lbHistory", DM_LISTGETCOUNT, 0, 0);
+
+				for (gsize i = 0; i < count; i++)
+				{
+					if (num >= MAX_PATH)
+						break;
+
+					path = (char*)SendDlgMsg(pDlg, "lbHistory", DM_LISTGETITEM, i, 0);
+
+					if (strcmp(gStartPath, path) != 0)
+					{
+						gchar *key = g_strdup_printf("HistoryPath%d", num++);
+						g_key_file_set_string(gCfg, ROOTNAME, key, path);
+						g_free(key);
+					}
+				}
+
+				key = g_strdup_printf("HistoryPath%d", num);
+
+				if (g_key_file_has_key(gCfg, ROOTNAME, key, NULL))
+					g_key_file_remove_key(gCfg, ROOTNAME, key, NULL);
+
+				g_free(key);
+
+				g_key_file_save_to_file(gCfg, gCfgPath, NULL);
 			}
 		}
 		else if (strcmp(DlgItemName, "lbHistory") == 0)
@@ -392,6 +392,22 @@ intptr_t DCPCALL OptionsDlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg,
 			{
 				char *path = (char*)SendDlgMsg(pDlg, "lbHistory", DM_LISTGETITEM, i, 0);
 				SendDlgMsg(pDlg, "fnSelectPath", DM_SETTEXT, (intptr_t)path, 0);
+			}
+		}
+
+		break;
+
+	case DN_KEYUP:
+		if (strcmp(DlgItemName, "lbHistory") == 0)
+		{
+			int16_t *key = (int16_t*)wParam;
+
+			if (lParam == 1 && *key == 46)
+			{
+				int i = (int)SendDlgMsg(pDlg, "lbHistory", DM_LISTGETITEMINDEX, 0, 0);
+
+				if (i != -1)
+					SendDlgMsg(pDlg, "lbHistory", DM_LISTDELETE, i, 0);
 			}
 		}
 
@@ -879,6 +895,7 @@ static BOOL OptionsDialog(void)
 	                       "    Anchors = [akTop, akLeft, akRight]\n"
 	                       "    ItemHeight = 0\n"
 	                       "    OnClick = ListBoxClick\n"
+	                       "    OnKeyUp = ListBoxKeyUp"
 	                       "    TabOrder = 0\n"
 	                       "    Visible = False\n"
 	                       "  end\n"

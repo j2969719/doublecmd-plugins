@@ -71,6 +71,19 @@ unsigned long FileTimeToUnixTime(LPFILETIME ft)
 	return (unsigned long)ll;
 }
 
+static void MoveStringFromList(uintptr_t pDlg, char* DlgItemNameFrom, char* DlgItemNameTo)
+{
+	int i = (int)SendDlgMsg(pDlg, DlgItemNameFrom, DM_LISTGETITEMINDEX, 0, 0);
+
+	if (i != -1)
+	{
+		gchar *content = g_strdup((char*)SendDlgMsg(pDlg, DlgItemNameFrom, DM_LISTGETITEM, i, 0));
+		SendDlgMsg(pDlg, DlgItemNameTo, DM_LISTADDSTR, (intptr_t)content, 0);
+		SendDlgMsg(pDlg, DlgItemNameFrom, DM_LISTDELETE, i, 0);
+		g_free(content);
+	}
+}
+
 intptr_t DCPCALL PropertiesDlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr_t wParam, intptr_t lParam)
 {
 	if (Msg == DN_INITDIALOG)
@@ -330,29 +343,9 @@ intptr_t DCPCALL OptionsDlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg,
 			}
 		}
 		else if (strcmp(DlgItemName, "btnAdd") == 0)
-		{
-			int i = (int)SendDlgMsg(pDlg, "cbAvalible", DM_LISTGETITEMINDEX, 0, 0);
-
-			if (i != -1)
-			{
-				gchar *content = g_strdup((char*)SendDlgMsg(pDlg, "cbAvalible", DM_LISTGETITEM, i, 0));
-				SendDlgMsg(pDlg, "lbSelected", DM_LISTADDSTR, (intptr_t)content, 0);
-				SendDlgMsg(pDlg, "cbAvalible", DM_LISTDELETE, i, 0);
-				g_free(content);
-			}
-		}
+			MoveStringFromList(pDlg, "cbAvalible", "lbSelected");
 		else if (strcmp(DlgItemName, "btnDel") == 0)
-		{
-			int i = (int)SendDlgMsg(pDlg, "lbSelected", DM_LISTGETITEMINDEX, 0, 0);
-
-			if (i != -1)
-			{
-				gchar *content = g_strdup((char*)SendDlgMsg(pDlg, "lbSelected", DM_LISTGETITEM, i, 0));
-				SendDlgMsg(pDlg, "cbAvalible", DM_LISTADDSTR, (intptr_t)content, 0);
-				SendDlgMsg(pDlg, "lbSelected", DM_LISTDELETE, i, 0);
-				g_free(content);
-			}
-		}
+			MoveStringFromList(pDlg, "lbSelected", "cbAvalible");
 		else if (strcmp(DlgItemName, "lbHistory") == 0)
 		{
 			int i = (int)SendDlgMsg(pDlg, "lbHistory", DM_LISTGETITEMINDEX, 0, 0);
@@ -376,6 +369,26 @@ intptr_t DCPCALL OptionsDlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg,
 			SendDlgMsg(pDlg, "btnAdd", DM_ENABLE, (int)state, 0);
 			SendDlgMsg(pDlg, "btnDel", DM_ENABLE, (int)state, 0);
 		}
+
+		break;
+
+	case DN_KEYUP:
+	{
+		int16_t *key = (int16_t*)wParam;
+
+		if (lParam == 1 && *key == 46)
+		{
+			if (strcmp(DlgItemName, "lbSelected") == 0)
+				MoveStringFromList(pDlg, "lbSelected", "cbAvalible");
+			else if (strcmp(DlgItemName, "lbHistory") == 0)
+			{
+				int i = (int)SendDlgMsg(pDlg, "lbHistory", DM_LISTGETITEMINDEX, 0, 0);
+
+				if (i != -1)
+					SendDlgMsg(pDlg, "lbHistory", DM_LISTDELETE, i, 0);
+			}
+		}
+	}
 
 		break;
 	}
@@ -442,9 +455,8 @@ static BOOL PropertiesDialog(void)
 
 static BOOL OptionsDialog(void)
 {
-	const char lfmdata[] = ""
+	const char lfmdata[] = "";
 
-	                       ;
 	return gExtensions->DialogBoxLFMFile(gLFMPath, OptionsDlgProc);
 	//return gExtensions->DialogBoxLFM((intptr_t)lfmdata, (unsigned long)strlen(lfmdata), OptionsDlgProc);
 }

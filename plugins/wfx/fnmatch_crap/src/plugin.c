@@ -221,6 +221,22 @@ intptr_t DCPCALL FilterDlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, 
 		}
 
 		break;
+
+	case DN_KEYUP:
+		if (strcmp(DlgItemName, "lbHistory") == 0)
+		{
+			int16_t *key = (int16_t*)wParam;
+
+			if (lParam == 1 && *key == 46)
+			{
+				int i = (int)SendDlgMsg(pDlg, "lbHistory", DM_LISTGETITEMINDEX, 0, 0);
+
+				if (i != -1)
+					SendDlgMsg(pDlg, "lbHistory", DM_LISTDELETE, i, 0);
+			}
+		}
+
+		break;
 	}
 
 	return 0;
@@ -357,6 +373,7 @@ static BOOL FilterDialog(void)
 	                       "    Anchors = [akTop, akLeft, akRight]\n"
 	                       "    ItemHeight = 0\n"
 	                       "    OnClick = ListBoxClick\n"
+	                       "    OnKeyUp = ListBoxKeyUp"
 	                       "    TabOrder = 0\n"
 	                       "    Visible = False\n"
 	                       "  end\n"
