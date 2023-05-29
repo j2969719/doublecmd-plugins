@@ -27,7 +27,7 @@
 #endif
 
 #define Int32x32To64(a,b) ((gint64)(a)*(gint64)(b))
-#define LIST_REGEXP "([cbdflrstwxST\\-]{10})\\s+(\\d{4}\\-?\\d{2}\\-?\\d{2}[\\stT]\\d{2}:?\\d{2}:?\\d?\\d?Z?)\\s+([0-9\\-]+)\\s+([^\\n]+)"
+#define LIST_REGEXP "([0-9cbdflrstwxST\\-]+)\\s+(\\d{4}\\-?\\d{2}\\-?\\d{2}[\\stT]\\d{2}:?\\d{2}:?\\d?\\d?Z?)\\s+([0-9\\-]+)\\s+([^\\n]+)"
 
 #define CHECKFIELDS_OPT "Fs_GetSupportedField_Needed"
 #define STATUSINFO_OPT "Fs_StatusInfo_Needed"
@@ -1065,6 +1065,7 @@ static gboolean SetFindData(tVFSDirData * dirdata, WIN32_FIND_DATAA * FindData)
 		}
 
 		int i = 1;
+		gboolean octalmode = FALSE;
 		mode_t mode = S_IFREG;
 		FindData->dwFileAttributes = FILE_ATTRIBUTE_UNIX_MODE;
 
@@ -1082,50 +1083,58 @@ static gboolean SetFindData(tVFSDirData * dirdata, WIN32_FIND_DATAA * FindData)
 				mode = S_IFLNK;
 			else if (string[0] == 's')
 				mode = S_IFSOCK;
+			else
+			{
+				mode = strtol(string + 1, NULL, 8);
+				octalmode = TRUE;
+			}
 		}
 
-		if (string[i++] == 'r')
-			mode |= S_IRUSR;
+		if (!octalmode)
+		{
+			if (string[i++] == 'r')
+				mode |= S_IRUSR;
 
-		if (string[i++] == 'w')
-			mode |= S_IWUSR;
+			if (string[i++] == 'w')
+				mode |= S_IWUSR;
 
-		if (string[i] == 'x')
-			mode |= S_IXUSR;
-		else if (string[i] == 'S')
-			mode |= S_ISUID;
-		else if (string[i] == 's')
-			mode |= S_ISUID | S_IXUSR;
+			if (string[i] == 'x')
+				mode |= S_IXUSR;
+			else if (string[i] == 'S')
+				mode |= S_ISUID;
+			else if (string[i] == 's')
+				mode |= S_ISUID | S_IXUSR;
 
-		i++;
+			i++;
 
-		if (string[i++] == 'r')
-			mode |= S_IRGRP;
+			if (string[i++] == 'r')
+				mode |= S_IRGRP;
 
-		if (string[i++] == 'w')
-			mode |= S_IWGRP;
+			if (string[i++] == 'w')
+				mode |= S_IWGRP;
 
-		if (string[i] == 'x')
-			mode |= S_IXGRP;
-		else if (string[i] == 'S')
-			mode |= S_ISGID;
-		else if (string[i] == 's')
-			mode |= S_ISGID | S_IXGRP;
+			if (string[i] == 'x')
+				mode |= S_IXGRP;
+			else if (string[i] == 'S')
+				mode |= S_ISGID;
+			else if (string[i] == 's')
+				mode |= S_ISGID | S_IXGRP;
 
-		i++;
+			i++;
 
-		if (string[i++] == 'r')
-			mode |= S_IROTH;
+			if (string[i++] == 'r')
+				mode |= S_IROTH;
 
-		if (string[i++] == 'w')
-			mode |= S_IWOTH;
+			if (string[i++] == 'w')
+				mode |= S_IWOTH;
 
-		if (string[i] == 'x')
-			mode |= S_IXOTH;
-		else if (string[i] == 'T')
-			mode |= S_ISVTX;
-		else if (string[i] == 't')
-			mode |= S_ISVTX | S_IXOTH;
+			if (string[i] == 'x')
+				mode |= S_IXOTH;
+			else if (string[i] == 'T')
+				mode |= S_ISVTX;
+			else if (string[i] == 't')
+				mode |= S_ISVTX | S_IXOTH;
+		}
 
 		FindData->dwReserved0 = mode;
 		g_free(string);
@@ -1194,14 +1203,14 @@ static gboolean SetFindData(tVFSDirData * dirdata, WIN32_FIND_DATAA * FindData)
 			UnixTimeToFileTime((time_t)filetime, &FindData->ftLastWriteTime);
 		else
 		{
-/*
+
 			SetCurrentFileTime(&FindData->ftLastWriteTime);
 
 			if (g_noise)
 				LogMessage(gPluginNr, MSGTYPE_DETAILS, "The current datetime has been set");
-*/
-			FindData->ftLastWriteTime.dwHighDateTime = 0xFFFFFFFF;
-			FindData->ftLastWriteTime.dwLowDateTime = 0xFFFFFFFE;
+
+			//			FindData->ftLastWriteTime.dwHighDateTime = 0xFFFFFFFF;
+			//			FindData->ftLastWriteTime.dwLowDateTime = 0xFFFFFFFE;
 		}
 
 		g_free(string);
@@ -1227,6 +1236,7 @@ static gboolean SetFindData(tVFSDirData * dirdata, WIN32_FIND_DATAA * FindData)
 			FindData->nFileSizeHigh = ((int64_t)filesize & 0xFFFFFFFF00000000) >> 32;
 			FindData->nFileSizeLow = (int64_t)filesize & 0x00000000FFFFFFFF;
 		}
+
 		g_free(string);
 
 		string = g_match_info_fetch(dirdata->match_info, 4);
