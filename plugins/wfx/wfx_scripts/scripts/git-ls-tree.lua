@@ -4,7 +4,8 @@
 
 args = {...}
 env_var = 'DC_WFX_SCRIPT_DATA'
-msg_repo = "Path to bare git repo or .git"
+msg_repo = "Path to git repo"
+msg_treeish = "Branch/Tag"
 
 function get_output(command)
     local handle = io.popen(command, 'r')
@@ -21,9 +22,15 @@ end
 
 function get_data()
     local data = os.getenv(env_var)
+    if not data then
+        os.exit(1)
+    end
     local dir = data:match("[^\t]+")
-    local branch = data:match("\t(.+)")
-    return dir, branch
+    local treeish = data:match("\t(.+)")
+    if not treeish or not dir then
+        os.exit(1)
+    end
+    return dir, treeish
 end
 
 function fs_init()
@@ -34,14 +41,28 @@ end
 
 function fs_setopt(option, value)
     if option == msg_repo then
-        print("Fs_Set_DC_WFX_SCRIPT_DATA " .. value)
-        local output = get_output('git --git-dir="' .. value .. '" branch')
-        local branches = ''
-        for line in output:gmatch("[^\n]-\n") do
-            branches = branches .. '\t' .. line:match("%s?%*?%s?(.+)\n")
+        if value == '' then
+            io.stderr:write("Path to git repo is empty")
+            os.exit(1)
         end
-        print("Fs_MultiChoice Branch" .. branches)
-    elseif option == "Branch" then
+        print("Fs_Set_DC_WFX_SCRIPT_DATA " .. value)
+        local output = get_output('cd "' .. value .. '" && git branch')
+        local treeish = ''
+        for line in output:gmatch("[^\n]-\n") do
+            treeish = treeish .. '\t' .. line:match("%s?%*?%s?(.+)\n")
+        end
+        local output = get_output('cd "' .. value .. '" && git tag')
+        for line in output:gmatch("[^\n]-\n") do
+            treeish = treeish .. '\t' .. line:match("(.+)\n")
+        end
+        if treeish ~= '' then
+            print("Fs_MultiChoice " .. msg_treeish .. treeish)
+        end
+    elseif option == msg_treeish then
+        if value == '' then
+            io.stderr:write("Treeish is empty")
+            os.exit(1)
+        end
         local data = os.getenv(env_var)
         print("Fs_Set_DC_WFX_SCRIPT_DATA " .. data .. '\t' .. value)
     end
@@ -49,12 +70,12 @@ function fs_setopt(option, value)
 end
 
 function fs_getlist(path)
-    local dir, branch = get_data()
+    local dir, treeish = get_data()
     local dirpath = ""
     if path ~= '/' then
         dirpath = path:gsub('^/', ' ') .. '/'
     end
-    local output = get_output('git --git-dir="' .. dir .. '" ls-tree -l ' ..  branch .. dirpath)
+    local output = get_output('cd "' .. dir .. '" && git ls-tree -l ' ..  treeish .. dirpath)
     for line in output:gmatch("[^\n]-\n") do
         local mode, objtype, objname, filesize, pathname = line:match('(%d+)%s+([^%s]+)%s+([^%s]+)%s+([^%s]+)%s+([^%s]+)%s+');
         print(mode .. " 0000-00-00 00:00:00 " .. filesize .. " " .. pathname:match("([^/]+)$"))
@@ -63,15 +84,16 @@ function fs_getlist(path)
 end
 
 function fs_getfile(file, target)
-    local dir, branch = get_data()
-    os.execute('git --git-dir="' .. dir .. '" show ' ..  branch .. file:gsub('^/', ':')  .. ' > ' .. target)
+    local dir, treeish = get_data()
+    os.execute('cd "' .. dir .. '" && git show ' ..  treeish .. file:gsub('^/', ':')  .. ' > ' .. target)
     os.exit()
 end
 
 function fs_properties(file)
-    local dir, branch = get_data()
-    local output = get_output('git --git-dir="' .. dir .. '" ls-tree -l ' ..  branch .. file:gsub('^/', ' '))
+    local dir, treeish = get_data()
+    local output = get_output('cd "' .. dir .. '" && git ls-tree -l ' ..  treeish .. file:gsub('^/', ' '))
     local mode, objtype, objname, filesize, pathname = output:match('(%d+)%s+([^%s]+)%s+([^%s]+)%s+([^%s]+)%s+([^%s]+)%s+');
+    print('Treeish\t'..treeish)
     print('Object\t'..objtype)
     print('Name\t'..objname)
     print('Mode\t'..mode)
