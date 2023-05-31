@@ -35,8 +35,9 @@ function get_data()
 end
 
 function fs_init()
-    print('Fs_Request_Options')
-    print(msg_repo)
+    -- print('Fs_Request_Options')
+    -- print(msg_repo)
+    print('Fs_SelectDir ' .. msg_repo)
     os.exit()
 end
 

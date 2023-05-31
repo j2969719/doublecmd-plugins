@@ -1,0 +1,14 @@
+ITS DANGEROUS TO GO ALONE! TAKE THIS:
+
+HEAD
+FETCH_HEAD
+ORIG_HEAD
+MERGE_HEAD
+a5bec062afe1348b8317651c93cf5049e6b4e55e
+a5bec	# partial hash
+HEAD^	# direct parent of HEAD
+a5bec^^	# two commits before
+HEAD~6	# 6 commits before HEAD
+master@{0}	# current master
+master@{yesterday}	# where master was yesterday
+master@{1.week.ago}	# where master was a week ago

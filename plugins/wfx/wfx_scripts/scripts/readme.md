@@ -54,7 +54,15 @@ Outputting a line starting with `Fs_Info_Message ` signals that the next part of
 
 #### Fs_PushValue
 
-Outputting a line starting with `Fs_Info_Message ` signals that the next part of the line already contains the option and value, separated by a tab (`Fs_PushValue OPTION\tVALUE`), and must be passed to the **setopt** command immediately.
+Outputting a line starting with `Fs_PushValue ` signals that the next part of the line already contains the option and value, separated by a tab (`Fs_PushValue OPTION\tVALUE`), and must be passed to the **setopt** command immediately.
+
+#### Fs_SelectFile
+
+DC 1.0.11+ `Fs_SelectFile TEXT_DISPLAYED_IN_DIALOGBOX\tFILEMASK`, the script will be called with the `setopt TEXT_DISPLAYED_IN_DIALOGBOX PATH`. Mask example: `MP3|*.mp3|All files|*.*`
+
+#### Fs_SelectDir
+
+DC 1.0.11+ `Fs_SelectDir TEXT_DISPLAYED_IN_DIALOGBOX`, the script will be called with the `setopt TEXT_DISPLAYED_IN_DIALOGBOX PATH`.
 
 ## deinit
 `SCRIPT deinit`

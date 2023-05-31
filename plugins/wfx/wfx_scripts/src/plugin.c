@@ -27,6 +27,8 @@
 #endif
 
 #define Int32x32To64(a,b) ((gint64)(a)*(gint64)(b))
+#define SendDlgMsg gDialogApi->SendDlgMsg
+
 #define LIST_REGEXP "([0-9cbdflrstwxST\\-]+)\\s+(\\d{4}\\-?\\d{2}\\-?\\d{2}[\\stT]\\d{2}:?\\d{2}:?\\d?\\d?Z?)\\s+([0-9\\-]+)\\s+([^\\n]+)"
 
 #define CHECKFIELDS_OPT "Fs_GetSupportedField_Needed"
@@ -36,6 +38,8 @@
 #define YESNOMSG_OPT "Fs_YesNo_Message"
 #define INFORM_OPT "Fs_Info_Message"
 #define CHOICE_OPT "Fs_MultiChoice"
+#define SELFILE_OPT "Fs_SelectFile"
+#define SELDIR_OPT "Fs_SelectDir"
 #define NOISE_OPT "Fs_DebugMode"
 #define PUSH_OPT "Fs_PushValue"
 #define ACT_OPT "Fs_PropsActs"
@@ -429,7 +433,7 @@ static void LoadPreview(uintptr_t pDlg, gchar *file)
 	char *line = NULL;
 	gboolean readme = TRUE;
 
-	gDialogApi->SendDlgMsg(pDlg, "mPreview", DM_SETTEXT, 0, 0);
+	SendDlgMsg(pDlg, "mPreview", DM_SETTEXT, 0, 0);
 
 	gchar *src_file = g_strdup_printf("%s/%s_readme.txt", g_scripts_dir, file);
 
@@ -442,20 +446,20 @@ static void LoadPreview(uintptr_t pDlg, gchar *file)
 
 	if ((fp = fopen(src_file, "r")) != NULL)
 	{
-		gDialogApi->SendDlgMsg(pDlg, "mPreview", DM_ENABLE, 1, 0);
+		SendDlgMsg(pDlg, "mPreview", DM_ENABLE, 1, 0);
 
 		while ((read = getline(&line, &len, fp)) != -1)
 		{
 			if (!readme && count > MAX_LINES)
 			{
-				gDialogApi->SendDlgMsg(pDlg, "mPreview", DM_LISTADD, (intptr_t)"...", 0);
+				SendDlgMsg(pDlg, "mPreview", DM_LISTADD, (intptr_t)"...", 0);
 				break;
 			}
 
 			if (line[read - 1] == '\n')
 				line[read - 1] = '\0';
 
-			gDialogApi->SendDlgMsg(pDlg, "mPreview", DM_LISTADD, (intptr_t)line, 0);
+			SendDlgMsg(pDlg, "mPreview", DM_LISTADD, (intptr_t)line, 0);
 
 			count++;
 		}
@@ -481,8 +485,8 @@ static void LoadPreview(uintptr_t pDlg, gchar *file)
 		{
 			const gchar *content_type = g_file_info_get_content_type(fileinfo);
 			gchar *description = g_content_type_get_description(content_type);
-			gDialogApi->SendDlgMsg(pDlg, "lScriptType", DM_SHOWITEM, 1, 0);
-			gDialogApi->SendDlgMsg(pDlg, "lScriptType", DM_SETTEXT, (intptr_t)description, 0);
+			SendDlgMsg(pDlg, "lScriptType", DM_SHOWITEM, 1, 0);
+			SendDlgMsg(pDlg, "lScriptType", DM_SETTEXT, (intptr_t)description, 0);
 			g_free(description);
 			g_object_unref(fileinfo);
 		}
@@ -520,11 +524,11 @@ static void FillProps(uintptr_t pDlg)
 					for (gchar **a = acts; *a != NULL; a++)
 					{
 						if (*a[0] != '\0')
-							gDialogApi->SendDlgMsg(pDlg, "cbAct", DM_LISTADD, (intptr_t)*a, 0);
+							SendDlgMsg(pDlg, "cbAct", DM_LISTADD, (intptr_t)*a, 0);
 					}
 
-					gDialogApi->SendDlgMsg(pDlg, "cbAct", DM_SHOWITEM, 1, 0);
-					gDialogApi->SendDlgMsg(pDlg, "btnAct", DM_SHOWITEM, 1, 0);
+					SendDlgMsg(pDlg, "cbAct", DM_SHOWITEM, 1, 0);
+					SendDlgMsg(pDlg, "btnAct", DM_SHOWITEM, 1, 0);
 				}
 			}
 			else
@@ -535,37 +539,37 @@ static void FillProps(uintptr_t pDlg)
 					continue;
 
 				if (g_ascii_strcasecmp(res[0], "filetype") == 0)
-					gDialogApi->SendDlgMsg(pDlg, "lType", DM_SETTEXT, (intptr_t)g_strstrip(res[1]), 0);
+					SendDlgMsg(pDlg, "lType", DM_SETTEXT, (intptr_t)g_strstrip(res[1]), 0);
 				else if (g_ascii_strcasecmp(res[0], "content_type") == 0)
 				{
 					gchar *description = g_content_type_get_description(g_strstrip(res[1]));
 
 					if (description)
-						gDialogApi->SendDlgMsg(pDlg, "lType", DM_SETTEXT, (intptr_t)description, 0);
+						SendDlgMsg(pDlg, "lType", DM_SETTEXT, (intptr_t)description, 0);
 
 					g_free(description);
 				}
 				else if (g_ascii_strcasecmp(res[0], "path") == 0)
 				{
-					gDialogApi->SendDlgMsg(pDlg, "ePath", DM_SETTEXT, (intptr_t)g_strstrip(res[1]), 0);
-					gDialogApi->SendDlgMsg(pDlg, "lPath", DM_SHOWITEM, 1, 0);
-					gDialogApi->SendDlgMsg(pDlg, "ePath", DM_SHOWITEM, 1, 0);
+					SendDlgMsg(pDlg, "ePath", DM_SETTEXT, (intptr_t)g_strstrip(res[1]), 0);
+					SendDlgMsg(pDlg, "lPath", DM_SHOWITEM, 1, 0);
+					SendDlgMsg(pDlg, "ePath", DM_SHOWITEM, 1, 0);
 				}
 				else if (g_ascii_strcasecmp(res[0], "url") == 0)
 				{
-					gDialogApi->SendDlgMsg(pDlg, "lURL", DM_SETTEXT, (intptr_t)g_strstrip(res[1]), 0);
-					gDialogApi->SendDlgMsg(pDlg, "lURLLabel", DM_SHOWITEM, 1, 0);
-					gDialogApi->SendDlgMsg(pDlg, "lURL", DM_SHOWITEM, 1, 0);
+					SendDlgMsg(pDlg, "lURL", DM_SETTEXT, (intptr_t)g_strstrip(res[1]), 0);
+					SendDlgMsg(pDlg, "lURLLabel", DM_SHOWITEM, 1, 0);
+					SendDlgMsg(pDlg, "lURL", DM_SHOWITEM, 1, 0);
 				}
 				else
 				{
 					gchar *item = g_strdup_printf("lProp%d", i);
-					gDialogApi->SendDlgMsg(pDlg, item, DM_SETTEXT, (intptr_t)g_strstrip(res[0]), 0);
-					gDialogApi->SendDlgMsg(pDlg, item, DM_SHOWITEM, 1, 0);
+					SendDlgMsg(pDlg, item, DM_SETTEXT, (intptr_t)g_strstrip(res[0]), 0);
+					SendDlgMsg(pDlg, item, DM_SHOWITEM, 1, 0);
 					g_free(item);
 					item = g_strdup_printf("lValue%d", i);
-					gDialogApi->SendDlgMsg(pDlg, item, DM_SETTEXT, (intptr_t)g_strstrip(res[1]), 0);
-					gDialogApi->SendDlgMsg(pDlg, item, DM_SHOWITEM, 1, 0);
+					SendDlgMsg(pDlg, item, DM_SETTEXT, (intptr_t)g_strstrip(res[1]), 0);
+					SendDlgMsg(pDlg, item, DM_SHOWITEM, 1, 0);
 					g_free(item);
 					i++;
 				}
@@ -622,6 +626,270 @@ static void SetOpt(gchar *script, gchar *opt, gchar *value)
 
 	g_free(output);
 	output = NULL;
+}
+
+intptr_t DCPCALL SelectFileDlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr_t wParam, intptr_t lParam)
+{
+	switch (Msg)
+	{
+	case DN_CLICK:
+		if (strcmp(DlgItemName, "btnOK") == 0)
+		{
+			gchar *output = NULL;
+			char *text = (char*)SendDlgMsg(pDlg, "lblText", DM_GETTEXT, 0, 0);
+			char *res = (char*)SendDlgMsg(pDlg, "FileName", DM_GETTEXT, 0, 0);
+
+			if (res && res[0] != '\0')
+			{
+				g_key_file_set_string(g_cfg, g_script, text, res);
+				ExecuteScript(g_script, VERB_SETOPT, text, res, &output);
+
+				if (output && output[0] != '\0')
+					ParseOpts(g_script, output);
+
+				g_free(output);
+			}
+			else
+				LogMessage(gPluginNr, MSGTYPE_DETAILS, "empty argument selected");
+		}
+
+		break;
+	}
+
+	return 0;
+}
+
+static void SelectFile(char *text)
+{
+	char lfmdata_templ[] = ""
+	                       "object SelectFileDialogBox: TSelectFileDialogBox\n"
+	                       "  Left = 210\n"
+	                       "  Height = 138\n"
+	                       "  Top = 218\n"
+	                       "  Width = 622\n"
+	                       "  AutoSize = True\n"
+	                       "  BorderStyle = bsDialog\n"
+	                       "  Caption = 'Confirmation of parameter'\n"
+	                       "  ChildSizing.LeftRightSpacing = 10\n"
+	                       "  ChildSizing.TopBottomSpacing = 10\n"
+	                       "  ClientHeight = 138\n"
+	                       "  ClientWidth = 622\n"
+	                       "  DesignTimePPI = 100\n"
+	                       "  OnCreate = DialogBoxShow\n"
+	                       "  Position = poScreenCenter\n"
+	                       "  LCLVersion = '2.2.4.0'\n"
+	                       "  object lblText: TLabel\n"
+	                       "    AnchorSideLeft.Control = Owner\n"
+	                       "    AnchorSideTop.Control = Owner\n"
+	                       "    Left = 10\n"
+	                       "    Height = 17\n"
+	                       "    Top = 10\n"
+	                       "    Width = 21\n"
+	                       "    Caption = '%s'\n"
+	                       "    ParentColor = False\n"
+	                       "    WordWrap = True\n"
+	                       "  end\n"
+	                       "  object FileName: TFileNameEdit\n"
+	                       "    AnchorSideLeft.Control = lblText\n"
+	                       "    AnchorSideTop.Control = lblText\n"
+	                       "    AnchorSideTop.Side = asrBottom\n"
+	                       "    Left = 10\n"
+	                       "    Height = 36\n"
+	                       "    Top = 37\n"
+	                       "    Width = 598\n"
+	                       "    Filter = '%s'\n"
+	                       "    FilterIndex = 0\n"
+	                       "    HideDirectories = False\n"
+	                       "    ButtonWidth = 24\n"
+	                       "    NumGlyphs = 1\n"
+	                       "    BorderSpacing.Top = 20\n"
+	                       "    MaxLength = 0\n"
+	                       "    TabOrder = 0\n"
+	                       "    Text = '%s'\n"
+	                       "  end\n"
+	                       "  object btnOK: TBitBtn\n"
+	                       "    AnchorSideTop.Control = FileName\n"
+	                       "    AnchorSideTop.Side = asrBottom\n"
+	                       "    AnchorSideRight.Control = FileName\n"
+	                       "    AnchorSideRight.Side = asrBottom\n"
+	                       "    Left = 511\n"
+	                       "    Height = 31\n"
+	                       "    Top = 83\n"
+	                       "    Width = 97\n"
+	                       "    Anchors = [akTop, akRight]\n"
+	                       "    BorderSpacing.Top = 10\n"
+	                       "    Constraints.MinHeight = 30\n"
+	                       "    Constraints.MinWidth = 97\n"
+	                       "    Default = True\n"
+	                       "    DefaultCaption = True\n"
+	                       "    Kind = bkOK\n"
+	                       "    ModalResult = 1\n"
+	                       "    OnClick = ButtonClick\n"
+	                       "    TabOrder = 1\n"
+	                       "  end\n"
+	                       "  object btnCancel: TBitBtn\n"
+	                       "    AnchorSideTop.Control = btnOK\n"
+	                       "    AnchorSideRight.Control = btnOK\n"
+	                       "    Left = 404\n"
+	                       "    Height = 31\n"
+	                       "    Top = 83\n"
+	                       "    Width = 97\n"
+	                       "    Anchors = [akTop, akRight]\n"
+	                       "    BorderSpacing.Right = 10\n"
+	                       "    Cancel = True\n"
+	                       "    Constraints.MinHeight = 30\n"
+	                       "    Constraints.MinWidth = 97\n"
+	                       "    DefaultCaption = True\n"
+	                       "    Kind = bkCancel\n"
+	                       "    ModalResult = 2\n"
+	                       "    OnClick = ButtonClick\n"
+	                       "    TabOrder = 2\n"
+	                       "  end\n"
+	                       "end\n";
+
+	gchar **split = g_strsplit(text, "\t", -1);
+	guint len = g_strv_length(split);
+
+	if (len > 0)
+	{
+		gchar *prev = g_key_file_get_string(g_cfg, g_script, split[0], NULL);
+		gchar *lfmdata = g_strdup_printf(lfmdata_templ, split[0], split[1] ? split[1] : "*.*|*.*", prev ? prev : "");
+		g_free(prev);
+
+		gDialogApi->DialogBoxLFM((intptr_t)lfmdata, (unsigned long)strlen(lfmdata), SelectFileDlgProc);
+		g_free(lfmdata);
+		g_strfreev(split);
+	}
+}
+
+intptr_t DCPCALL SelectDirDlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr_t wParam, intptr_t lParam)
+{
+	switch (Msg)
+	{
+	case DN_CLICK:
+		if (strcmp(DlgItemName, "btnOK") == 0)
+		{
+			gchar *output = NULL;
+			char *text = (char*)SendDlgMsg(pDlg, "lblText", DM_GETTEXT, 0, 0);
+			char *res = (char*)SendDlgMsg(pDlg, "Directory", DM_GETTEXT, 0, 0);
+
+			if (res && res[0] != '\0')
+			{
+				g_key_file_set_string(g_cfg, g_script, text, res);
+				ExecuteScript(g_script, VERB_SETOPT, text, res, &output);
+
+				if (output && output[0] != '\0')
+					ParseOpts(g_script, output);
+
+				g_free(output);
+			}
+			else
+				LogMessage(gPluginNr, MSGTYPE_DETAILS, "empty argument selected");
+		}
+
+		break;
+	}
+
+	return 0;
+}
+static void SelectDir(char *text)
+{
+	const char lfmdata_templ[] = ""
+	                             "object SelectFileDialogBox: TSelectFileDialogBox\n"
+	                             "  Left = 210\n"
+	                             "  Height = 138\n"
+	                             "  Top = 218\n"
+	                             "  Width = 622\n"
+	                             "  AutoSize = True\n"
+	                             "  BorderStyle = bsDialog\n"
+	                             "  Caption = 'Confirmation of parameter'\n"
+	                             "  ChildSizing.LeftRightSpacing = 10\n"
+	                             "  ChildSizing.TopBottomSpacing = 10\n"
+	                             "  ClientHeight = 138\n"
+	                             "  ClientWidth = 622\n"
+	                             "  DesignTimePPI = 100\n"
+	                             "  OnCreate = DialogBoxShow\n"
+	                             "  Position = poScreenCenter\n"
+	                             "  LCLVersion = '2.2.4.0'\n"
+	                             "  object lblText: TLabel\n"
+	                             "    AnchorSideLeft.Control = Owner\n"
+	                             "    AnchorSideTop.Control = Owner\n"
+	                             "    Left = 10\n"
+	                             "    Height = 1\n"
+	                             "    Top = 10\n"
+	                             "    Width = 1\n"
+	                             "    Caption = '%s'\n"
+	                             "    ParentColor = False\n"
+	                             "    WordWrap = True\n"
+	                             "  end\n"
+	                             "  object Directory: TDirectoryEdit\n"
+	                             "    AnchorSideLeft.Control = lblText\n"
+	                             "    AnchorSideTop.Control = lblText\n"
+	                             "    Left = 10\n"
+	                             "    Height = 36\n"
+	                             "    Top = 20\n"
+	                             "    Width = 598\n"
+	                             "    ShowHidden = False\n"
+	                             "    ButtonWidth = 24\n"
+	                             "    NumGlyphs = 1\n"
+	                             "    BorderSpacing.Top = 20\n"
+	                             "    MaxLength = 0\n"
+	                             "    TabOrder = 0\n"
+	                             "    Text = '%s'\n"
+	                             "  end\n"
+	                             "  object btnOK: TBitBtn\n"
+	                             "    AnchorSideTop.Control = Directory\n"
+	                             "    AnchorSideTop.Side = asrBottom\n"
+	                             "    AnchorSideRight.Control = Directory\n"
+	                             "    AnchorSideRight.Side = asrBottom\n"
+	                             "    Left = 511\n"
+	                             "    Height = 31\n"
+	                             "    Top = 66\n"
+	                             "    Width = 97\n"
+	                             "    Anchors = [akTop, akRight]\n"
+	                             "    BorderSpacing.Top = 10\n"
+	                             "    Constraints.MinHeight = 30\n"
+	                             "    Constraints.MinWidth = 97\n"
+	                             "    Default = True\n"
+	                             "    DefaultCaption = True\n"
+	                             "    Kind = bkOK\n"
+	                             "    ModalResult = 1\n"
+	                             "    OnClick = ButtonClick\n"
+	                             "    TabOrder = 1\n"
+	                             "  end\n"
+	                             "  object btnCancel: TBitBtn\n"
+	                             "    AnchorSideTop.Control = btnOK\n"
+	                             "    AnchorSideRight.Control = btnOK\n"
+	                             "    Left = 404\n"
+	                             "    Height = 31\n"
+	                             "    Top = 66\n"
+	                             "    Width = 97\n"
+	                             "    Anchors = [akTop, akRight]\n"
+	                             "    BorderSpacing.Right = 10\n"
+	                             "    Cancel = True\n"
+	                             "    Constraints.MinHeight = 30\n"
+	                             "    Constraints.MinWidth = 97\n"
+	                             "    DefaultCaption = True\n"
+	                             "    Kind = bkCancel\n"
+	                             "    ModalResult = 2\n"
+	                             "    OnClick = ButtonClick\n"
+	                             "    TabOrder = 2\n"
+	                             "  end\n"
+	                             "end\n";
+
+	gchar **split = g_strsplit(text, "\t", -1);
+	guint len = g_strv_length(split);
+
+	if (len > 0)
+	{
+		gchar *prev = g_key_file_get_string(g_cfg, g_script, split[0], NULL);
+		gchar *lfmdata = g_strdup_printf(lfmdata_templ, split[0], prev ? prev : "");
+		g_free(prev);
+
+		gDialogApi->DialogBoxLFM((intptr_t)lfmdata, (unsigned long)strlen(lfmdata), SelectDirDlgProc);
+		g_free(lfmdata);
+		g_strfreev(split);
+	}
 }
 
 intptr_t DCPCALL MultiChoiceDlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr_t wParam, intptr_t lParam);
@@ -682,6 +950,16 @@ static void ParseOpts(gchar *script, gchar *text)
 					}
 					else
 						LogMessage(gPluginNr, MSGTYPE_IMPORTANTERROR, "DialogApi not initialized");
+				}
+				else if (ValidOpt(*p, SELFILE_OPT))
+				{
+					g_strlcpy(g_script, script, PATH_MAX);
+					SelectFile(*p + strlen(SELFILE_OPT) + 1);
+				}
+				else if (ValidOpt(*p, SELDIR_OPT))
+				{
+					g_strlcpy(g_script, script, PATH_MAX);
+					SelectDir(*p + strlen(SELDIR_OPT) + 1);
 				}
 				else if (strncmp(*p, NOISE_OPT, 3) == 0)
 					LogMessage(gPluginNr, MSGTYPE_IMPORTANTERROR, "Options starting with \"Fs_\" are reserved, ignored");
@@ -798,15 +1076,16 @@ intptr_t DCPCALL MultiChoiceDlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t 
 		{
 			gsize count = 0;
 			gchar **split = g_strsplit(g_choice, "\t", -1);
-			gDialogApi->SendDlgMsg(pDlg, "lblText", DM_SETTEXT, (intptr_t)split[0], 0);
+			SendDlgMsg(pDlg, "lblText", DM_SETTEXT, (intptr_t)split[0], 0);
+			gchar **items = split + 1;
 
-			if (split + 1)
+			if (items)
 			{
-				for (gchar **p = split + 1; *p != NULL; p++)
+				for (gchar **p = items; *p != NULL; p++)
 				{
 					if (*p[0] != '\0')
 					{
-						gDialogApi->SendDlgMsg(pDlg, "cbChoice", DM_LISTADD, (intptr_t)*p, 0);
+						SendDlgMsg(pDlg, "cbChoice", DM_LISTADD, (intptr_t)*p, 0);
 						count++;
 					}
 				}
@@ -817,7 +1096,7 @@ intptr_t DCPCALL MultiChoiceDlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t 
 					LogMessage(gPluginNr, MSGTYPE_IMPORTANTERROR, "Fs_MultiChoice: there is no choice");
 
 				gint index = g_key_file_get_integer(g_cfg, g_script, split[0], NULL);
-				gDialogApi->SendDlgMsg(pDlg, "cbChoice", DM_LISTSETITEMINDEX, (index < 0 || index >= count) ? 0 : (intptr_t)index, 0);
+				SendDlgMsg(pDlg, "cbChoice", DM_LISTSETITEMINDEX, (index < 0 || index >= count) ? 0 : (intptr_t)index, 0);
 			}
 			else
 				LogMessage(gPluginNr, MSGTYPE_IMPORTANTERROR, "Fs_MultiChoice: there is no choice");
@@ -831,10 +1110,10 @@ intptr_t DCPCALL MultiChoiceDlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t 
 		if (strcmp(DlgItemName, "btnOK") == 0)
 		{
 			gchar *output = NULL;
-			int index = (int)gDialogApi->SendDlgMsg(pDlg, "cbChoice", DM_LISTGETITEMINDEX, 0, 0);
-			char *text = (char*)gDialogApi->SendDlgMsg(pDlg, "lblText", DM_GETTEXT, 0, 0);
+			int index = (int)SendDlgMsg(pDlg, "cbChoice", DM_LISTGETITEMINDEX, 0, 0);
+			char *text = (char*)SendDlgMsg(pDlg, "lblText", DM_GETTEXT, 0, 0);
 			g_key_file_set_integer(g_cfg, g_script, text, index);
-			char *res = (char*)gDialogApi->SendDlgMsg(pDlg, "cbChoice", DM_GETTEXT, 0, 0);
+			char *res = (char*)SendDlgMsg(pDlg, "cbChoice", DM_GETTEXT, 0, 0);
 
 			if (res && res[0] != '\0')
 			{
@@ -861,27 +1140,27 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 	{
 	case DN_INITDIALOG:
 		g_noise = g_key_file_get_boolean(g_cfg, g_script, NOISE_OPT, NULL);
-		gDialogApi->SendDlgMsg(pDlg, "ckNoise", DM_SETCHECK, (intptr_t)g_noise, 0);
-		gDialogApi->SendDlgMsg(pDlg, "lScriptName", DM_SETTEXT, (intptr_t)g_script, 0);
+		SendDlgMsg(pDlg, "ckNoise", DM_SETCHECK, (intptr_t)g_noise, 0);
+		SendDlgMsg(pDlg, "lScriptName", DM_SETTEXT, (intptr_t)g_script, 0);
 		LoadPreview(pDlg, g_script);
 
 		if (!g_key_file_get_boolean(g_cfg, g_script, IN_USE_MARK, NULL))
-			gDialogApi->SendDlgMsg(pDlg, "btnUnmount", DM_SHOWITEM, 0, 0);
+			SendDlgMsg(pDlg, "btnUnmount", DM_SHOWITEM, 0, 0);
 
 		if (g_caller && g_props)
 		{
 			gchar *content_type = g_content_type_guess(g_caller, NULL, 0, NULL);
 			gchar *descr = g_content_type_get_description(content_type);
 			gchar *filename = g_path_get_basename(g_caller);
-			gDialogApi->SendDlgMsg(pDlg, "lFileName", DM_SETTEXT, (intptr_t)filename, 0);
-			gDialogApi->SendDlgMsg(pDlg, "lType", DM_SETTEXT, (intptr_t)descr, 0);
+			SendDlgMsg(pDlg, "lFileName", DM_SETTEXT, (intptr_t)filename, 0);
+			SendDlgMsg(pDlg, "lType", DM_SETTEXT, (intptr_t)descr, 0);
 			g_free(filename);
 			g_free(content_type);
 			g_free(descr);
-			gDialogApi->SendDlgMsg(pDlg, "pProperties", DM_SHOWITEM, 1, 0);
-			gDialogApi->SendDlgMsg(pDlg, "lFileName", DM_SHOWITEM, 1, 0);
-			gDialogApi->SendDlgMsg(pDlg, "lTypeLabel", DM_SHOWITEM, 1, 0);
-			gDialogApi->SendDlgMsg(pDlg, "lType", DM_SHOWITEM, 1, 0);
+			SendDlgMsg(pDlg, "pProperties", DM_SHOWITEM, 1, 0);
+			SendDlgMsg(pDlg, "lFileName", DM_SHOWITEM, 1, 0);
+			SendDlgMsg(pDlg, "lTypeLabel", DM_SHOWITEM, 1, 0);
+			SendDlgMsg(pDlg, "lType", DM_SHOWITEM, 1, 0);
 			FillProps(pDlg);
 		}
 
@@ -890,7 +1169,7 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 	case DN_CLICK:
 		if (strcmp(DlgItemName, "lURL") == 0)
 		{
-			char *url = (char*)gDialogApi->SendDlgMsg(pDlg, DlgItemName, DM_GETTEXT, 0, 0);
+			char *url = (char*)SendDlgMsg(pDlg, DlgItemName, DM_GETTEXT, 0, 0);
 			gchar *command = g_strdup_printf("xdg-open %s", url);
 			system(command);
 			g_free(command);
@@ -901,9 +1180,9 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 		}
 		else if (strcmp(DlgItemName, "btnAct") == 0)
 		{
-			char *cmd = (char*)gDialogApi->SendDlgMsg(pDlg, "cbAct", DM_GETTEXT, 0, 0);
+			char *cmd = (char*)SendDlgMsg(pDlg, "cbAct", DM_GETTEXT, 0, 0);
 			SetOpt(g_script, cmd, g_caller);
-			gDialogApi->SendDlgMsg(pDlg, DlgItemName, DM_CLOSE, ID_OK, 0);
+			SendDlgMsg(pDlg, DlgItemName, DM_CLOSE, ID_OK, 0);
 		}
 
 		break;
@@ -911,15 +1190,15 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 	case DN_CHANGE:
 		if (strcmp(DlgItemName, "ckNoise") == 0)
 		{
-			g_noise = (gboolean)gDialogApi->SendDlgMsg(pDlg, DlgItemName, DM_GETCHECK, 0, 0);
+			g_noise = (gboolean)SendDlgMsg(pDlg, DlgItemName, DM_GETCHECK, 0, 0);
 			g_key_file_set_boolean(g_cfg, g_script, NOISE_OPT, g_noise);
 		}
 		else if (strcmp(DlgItemName, "cbAct") == 0)
 		{
-			if (gDialogApi->SendDlgMsg(pDlg, "cbAct", DM_LISTGETITEMINDEX, 0, 0) == -1)
-				gDialogApi->SendDlgMsg(pDlg, "btnAct", DM_ENABLE, 0, 0);
+			if (SendDlgMsg(pDlg, "cbAct", DM_LISTGETITEMINDEX, 0, 0) == -1)
+				SendDlgMsg(pDlg, "btnAct", DM_ENABLE, 0, 0);
 			else
-				gDialogApi->SendDlgMsg(pDlg, "btnAct", DM_ENABLE, 1, 0);
+				SendDlgMsg(pDlg, "btnAct", DM_ENABLE, 1, 0);
 		}
 
 		break;
