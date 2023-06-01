@@ -1,12 +1,15 @@
 #!/bin/env lua
 
--- all stars nico nico douga insanity
+-- show commit date in filelist (slow af)
+get_dates = false
+date_form = "%ad" -- %ad - author date, %cd - commiter date
 
 args = {...}
 env_var = 'DC_WFX_SCRIPT_DATA'
 msg_repo = "Path to git repo"
 msg_treeish = "Branch/Tag"
 msg_custom = "<Custom tree-ish>"
+
 
 function get_output(command)
     local handle = io.popen(command, 'r')
@@ -37,6 +40,8 @@ end
 function fs_init()
     -- print('Fs_Request_Options')
     -- print(msg_repo)
+
+    -- DC 1.0.11+ only
     print('Fs_SelectDir ' .. msg_repo)
     os.exit()
 end
@@ -80,12 +85,19 @@ function fs_getlist(path)
     local dir, treeish = get_data()
     local dirpath = ""
     if path ~= '/' then
-        dirpath = path:gsub('^/', ' "') .. '/"'
+        dirpath = path:gsub('"', '\\"'):gsub('^/', ' "') .. '/"'
     end
     local output = get_output('cd "' .. dir .. '" && git ls-tree -l ' ..  treeish .. dirpath)
     for line in output:gmatch("[^\n]-\n") do
-        local mode, objtype, objname, filesize, pathname = line:match('(%d+)%s+([^%s]+)%s+([^%s]+)%s+([^%s]+)%s+([^%s]+)%s+');
-        print(mode .. " 0000-00-00 00:00:00 " .. filesize .. " " .. pathname:match("([^/]+)$"))
+        local mode, objtype, objname, filesize, pathname = line:match('(%d+)%s+([^%s]+)%s+([^%s]+)%s+([^%s]+)%s+([^%s]+)%s+')
+        local datetime = nil
+        if get_dates then
+            datetime = get_output('cd "' .. dir .. '" && git log -1 --pretty=format:' .. date_form .. ' --date=format:"%Y-%m-%d %T" ' ..  treeish .. ' -- "' .. pathname:gsub('"', '\\"') .. '"')
+        end
+        if not datetime then
+            datetime = "0000-00-00 00:00:00"
+        end
+        print(mode .. ' ' .. datetime .. ' ' .. filesize .. ' ' .. pathname:match("([^/]+)$"))
     end
     os.exit()
 end
@@ -98,14 +110,27 @@ end
 
 function fs_properties(file)
     local dir, treeish = get_data()
-    local output = get_output('cd "' .. dir .. '" && git ls-tree -l ' ..  treeish .. ' "' .. file:gsub('^/', ''):gsub('"', '\\"') .. '"')
+    local output = get_output('cd "' .. dir .. '" && git ls-tree -l ' ..  treeish .. file:gsub('"', '\\"'):gsub('^/', ' -- "') .. '"')
     local mode, objtype, objname, filesize, pathname = output:match('(%d+)%s+([^%s]+)%s+([^%s]+)%s+([^%s]+)%s+([^%s]+)%s+');
-    print('Treeish\t'..treeish)
-    print('Object\t'..objtype)
-    print('Name\t'..objname)
-    print('Mode\t'..mode)
+    -- print('Object\t'..objtype)
+    if objtype == "tree" then
+        print('content_type\tinode/directory')
+    end
+    -- print('Name\t'..objname)
+    output = get_output('cd "' .. dir .. '" && git log -1 --pretty=format:"%ad\n%an (%ae)\n%s" --date=format:"%Y-%m-%d %T" ' ..  treeish .. file:gsub('"', '\\"'):gsub('^/', ' -- "') .. '"')
+    local datetime, author, subject = output:match("([^\n]-)\n([^\n]-)\n(.+)$")
+    print('Author\t'..author)
+    print('Subject\t'..subject)
+    print('Author date\t'..datetime)
     print('Size\t'..filesize)
+    print('Mode\t'..mode)
     print('Path\t'..pathname)
+    print('Tree-ish\t'..treeish)
+    output = get_output('cd "' .. dir .. '" && git log -1 --pretty=format:"%cd\n%cn (%ce)\n%s" --date=format:"%Y-%m-%d %T" ' ..  treeish)
+    local datetime, commiter, subject = output:match("([^\n]-)\n([^\n]-)\n(.+)$")
+    print('Commiter\t'..commiter)
+    print('Subject\t'..subject)
+    print('Commiter date\t'..datetime)
     os.exit()
 end
 
