@@ -78,10 +78,8 @@ function fs_setopt(option, value)
         local data = os.getenv(env_var)
         print("Fs_Set_DC_WFX_SCRIPT_DATA " .. data .. '\t' .. value)
         print("Fs_LogInfo")
-        local output = get_output('cd "' .. data .. '" && git describe --always ' ..  value .. ' --')
-        print(output)
-        output = get_output('cd "' .. data .. '" && git log -1 --pretty=format:"%an (%ae)\n%ad\n%s\n%b" --date=format:"%Y-%m-%d %T" ' ..  value .. ' --')
-        print(output)
+        os.execute('cd "' .. data .. '" && git describe --always ' ..  value .. ' --')
+        os.execute('cd "' .. data .. '" && git log -1 --pretty=format:"%an (%ae)\n%ad\n%s\n%b" --date=format:"%Y-%m-%d %T" ' ..  value .. ' --')
     end
     os.exit()
 end
