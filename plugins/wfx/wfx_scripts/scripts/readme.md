@@ -64,6 +64,10 @@ DC 1.0.11+ `Fs_SelectFile TEXT_DISPLAYED_IN_DIALOGBOX\tFILEMASK`, the script wil
 
 DC 1.0.11+ `Fs_SelectDir TEXT_DISPLAYED_IN_DIALOGBOX`, the script will be called with the `setopt TEXT_DISPLAYED_IN_DIALOGBOX PATH`.
 
+#### Fs_LogInfo
+
+Line `Fs_LogInfo` signals that subsequent lines that do not start with `Fs_` should be logged.
+
 ## deinit
 `SCRIPT deinit`
 

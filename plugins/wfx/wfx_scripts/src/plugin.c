@@ -40,6 +40,7 @@
 #define CHOICE_OPT "Fs_MultiChoice"
 #define SELFILE_OPT "Fs_SelectFile"
 #define SELDIR_OPT "Fs_SelectDir"
+#define LOGINFO_OPT "Fs_LogInfo"
 #define NOISE_OPT "Fs_DebugMode"
 #define PUSH_OPT "Fs_PushValue"
 #define ACT_OPT "Fs_PropsActs"
@@ -898,6 +899,7 @@ static void ParseOpts(gchar *script, gchar *text)
 {
 	gchar *output = NULL;
 	gboolean request_values = FALSE;
+	gboolean log_info = FALSE;
 
 	if (text)
 	{
@@ -908,7 +910,15 @@ static void ParseOpts(gchar *script, gchar *text)
 			if (*p[0] != 0)
 			{
 				if (g_strcmp0(*p, REQUEST_OPT) == 0)
+				{
+					log_info = FALSE;
 					request_values = TRUE;
+				}
+				else if (g_strcmp0(*p, LOGINFO_OPT) == 0)
+				{
+					log_info = TRUE;
+					request_values = FALSE;
+				}
 				else if (g_strcmp0(*p, STATUSINFO_OPT) == 0)
 					g_key_file_set_boolean(g_cfg, script, STATUSINFO_OPT, TRUE);
 				else if (g_strcmp0(*p, CHECKFIELDS_OPT) == 0)
@@ -963,6 +973,8 @@ static void ParseOpts(gchar *script, gchar *text)
 				}
 				else if (strncmp(*p, NOISE_OPT, 3) == 0)
 					LogMessage(gPluginNr, MSGTYPE_IMPORTANTERROR, "Options starting with \"Fs_\" are reserved, ignored");
+				else if (log_info == TRUE)
+					LogMessage(gPluginNr, MSGTYPE_DETAILS, *p);
 				else if (request_values == TRUE)
 				{
 					char value[MAX_PATH] = "";
