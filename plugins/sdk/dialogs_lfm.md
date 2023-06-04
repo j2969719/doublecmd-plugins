@@ -45,47 +45,48 @@ intptr_t SendDlgMsg(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr_t wP
 - `lParam` - pointer to additional message-specific data
 
 ### Dialog messages
-- `DM_CLOSE` - A signal that the dialog is about to close
-- `DM_ENABLE`
-- `DM_GETDLGDATA`
-- `DM_GETDLGBOUNDS`
-- `DM_GETITEMBOUNDS`
-- `DM_GETTEXT` - Retrieve the text of an edit string or the caption of an item
-- `DM_KEYDOWN`
-- `DM_KEYUP`
-- `DM_SETDLGDATA`
-- `DM_SETFOCUS` - Set the keyboard focus to the given dialog item
-- `DM_REDRAW` - Redraw the whole dialog
-- `DM_SETTEXT` - Set a new string value for an edit line or a new caption for an item
-- `DM_SETMAXTEXTLENGTH` - Set the maximum length of an edit string
-- `DM_SHOWDIALOG` - Show/hide the dialog window
-- `DM_SHOWITEM` - Show/hide a dialog item
-- `DM_GETCHECK` - Retrieve the state of TCheckBox or TRadioButton items
-- `DM_SETCHECK` - Change the state of TCheckBox and TRadioButton items
-- `DM_LISTGETITEM` - Retrieve a list item
-- `DM_LISTGETITEMINDEX` - Get current item index in a list
-- `DM_LISTSETITEMINDEX` - Set current item index in a list
-- `DM_LISTDELETE`
-- `DM_LISTADD`
-- `DM_LISTADDSTR`
-- `DM_LISTUPDATE`
-- `DM_LISTINSERT`
-- `DM_LISTINDEXOF`
-- `DM_LISTGETCOUNT`
-- `DM_LISTGETDATA`
-- `DM_LISTSETDATA`
-- `DM_SETDLGBOUNDS`
-- `DM_SETITEMBOUNDS`
-- `DM_GETDROPPEDDOWN`
-- `DM_SETDROPPEDDOWN`
-- `DM_GETITEMDATA`
-- `DM_SETITEMDATA`
-- `DM_LISTSET`
-- `DM_SETPROGRESSVALUE`
-- `DM_SETPROGRESSSTYLE`
-- `DM_SETPASSWORDCHAR`
-- `DM_LISTCLEAR`
-- `DM_TIMERSETINTERVAL`
+|Message|Component|wParam|lParam|Result|Comment|
+|---|---|---|---|---|---|
+|`DM_CLOSE`|DialogBox|`intptr_t` ModalResult|-|-|A signal that the dialog is about to close|
+|`DM_ENABLE`|*|`bool` Enabled|-|`bool` PrevEnabled||
+|`DM_GETCHECK`|`TCheckBox`, `TRadioButton`|-|-|`intptr_t` State|Retrieve the state of TCheckBox or TRadioButton items|
+|`DM_GETDLGBOUNDS`|DialogBox|-|-|`RECT *` Result||
+|`DM_GETDLGDATA`|DialogBox|-|-|`intptr_t` Tag||
+|`DM_GETDROPPEDDOWN`|`TComboBox`|-|-|`bool` DroppedDown||
+|`DM_GETITEMBOUNDS`|*|-|-|`RECT *` Result||
+|`DM_GETITEMDATA`|*|-|-|`intptr_t` Tag||
+|`DM_LISTADD`|`TComboBox`, `TListBox`, `TMemo`|`char *` Text|`char *` TObject|`intptr_t` Result||
+|`DM_LISTADDSTR`|`TComboBox`, `TListBox`, `TMemo`|`char *` Text|-|`intptr_t` Result||
+|`DM_LISTDELETE`|`TComboBox`, `TListBox`, `TMemo`|`intptr_t` Index|-|-||
+|`DM_LISTINDEXOF`|`TComboBox`, `TListBox`, `TMemo`|-|`char *` Text|`intptr_t` Result||
+|`DM_LISTINSERT`|`TComboBox`, `TListBox`, `TMemo`|`intptr_t` Index|`char *` Text|-||
+|`DM_LISTGETCOUNT`|`TComboBox`, `TListBox`, `TMemo`|-|-|`intptr_t` Count||
+|`DM_LISTGETDATA`|`TComboBox`, `TListBox`, `TMemo`|`intptr_t` Index|-|`intptr_t` TObject||
+|`DM_LISTGETITEM`|`TComboBox`, `TListBox`, `TMemo`|`intptr_t` Index|-|`char *` Text|Retrieve a list item|
+|`DM_LISTGETITEMINDEX`|`TComboBox`, `TListBox`, `TRadioGroup`|-|-|`intptr_t` Index|Get current item index in a list|
+|`DM_LISTSETITEMINDEX`|`TComboBox`, `TListBox`, `TRadioGroup`|`intptr_t` Index|-|-|Set current item index in a list|
+|`DM_LISTUPDATE`|`TComboBox`, `TListBox`, `TMemo`|`intptr_t` Index|`char *` Text|-||
+|`DM_LISTCLEAR`|`TComboBox`, `TListBox`, `TMemo`|-|-|-||
+|`DM_GETTEXT`|*|-|-|`char *` Text|Retrieve the text of an edit string or the caption of an item|
+|`DM_KEYDOWN`|*|`intptr_t` Key|-|`intptr_t` Key||
+|`DM_KEYUP`|*|`intptr_t` Key|-|`intptr_t` Key||
+|`DM_REDRAW`|DialogBox|-|-|-|Redraw the whole dialog|
+|`DM_SETCHECK`|`TCheckBox`, `TRadioButton`|`bool` State|-|`intptr_t` PrevState|Change the state of TCheckBox and TRadioButton items|
+|`DM_LISTSETDATA`|`TComboBox`, `TListBox`, `TMemo`|`intptr_t` Index|`char *` TObject|-||
+|`DM_SETDLGBOUNDS`|DialogBox|`RECT *` Rect|-|-||
+|`DM_SETDLGDATA`|DialogBox|`intptr_t` Tag|-|`intptr_t` PrevTag||
+|`DM_SETDROPPEDDOWN`|`TComboBox`|`bool` DroppedDown|-|-||
+|`DM_SETFOCUS`|*|-|-|-|Set the keyboard focus to the given dialog item|
+|`DM_SETITEMBOUNDS`|*|`RECT *` Rect|-|-||
+|`DM_SETITEMDATA`|*|`intptr_t` Tag|-|-||
+|`DM_SETMAXTEXTLENGTH`|`TComboBox`, `TEdit`|`intptr_t` MaxLength|-|`intptr_t` PrevMaxLength|Set the maximum length of an edit string|
+|`DM_SETTEXT`|*|`char *` Text|-|-|Set a new string value for an edit line or a new caption for an item|
+|`DM_SHOWDIALOG`|DialogBox|`0` - Hide, `1` - Show|-|-|Show/hide the dialog window|
+|`DM_SHOWITEM`|*|`bool` Visible|-|`bool` PrevVisible|Show/hide a dialog item|
+|`DM_SETPROGRESSVALUE`|`TProgressBar`|`intptr_t` Position|-|-||
+|`DM_SETPROGRESSSTYLE`|`TProgressBar`|`intptr_t` Style|-|-|`0` - Normal, `1` - Marquee|
+|`DM_SETPASSWORDCHAR`|`TCustomEdit`|`char` PasswordChar|-|-||
+|`DM_TIMERSETINTERVAL`|`TTimer`|`intptr_t` Interval|-|-||
 
 ## Return value:
 Pointer to message-specific result
@@ -155,59 +156,59 @@ Modal result
 # Supported events (Lazarus->Object Inspector->Events)
 
 ## Dialog events
-|Event|Value|
-|---|---|
-|`OnShow`|`DialogBoxShow`|
-|`OnClose`|`DialogBoxClose`|
+|Event|Value|Message|wParam|lParam|Comment|
+|---|---|---|---|---|---|
+|`OnShow`|`DialogBoxShow`|`DN_INITDIALOG`|-|-|Sent before showing the dialog|
+|`OnClose`|`DialogBoxClose`|`DN_CLOSE`|-|-|Sent before the dialog is closed|
 
 ## Button/BitBtn events
-|Event|Value|
-|---|---|
-|`OnClick`|`ButtonClick`|
-|`OnEnter`|`ButtonEnter`|
-|`OnExit`|`ButtonExit`|
-|`OnKeyDown`|`ButtonKeyDown`|
-|`OnKeyUp`|`ButtonKeyUp`|
+|Event|Value|Message|wParam|lParam|Comment|
+|---|---|---|---|---|---|
+|`OnClick`|`ButtonClick`|`DN_CLICK`|-|-|Sent after mouse click|
+|`OnEnter`|`ButtonEnter`|`DN_GOTFOCUS`|-|-|Sent when the dialog item gets input focus|
+|`OnExit`|`ButtonExit`|`DN_KILLFOCUS`|-|-|Sent before a dialog item loses the input focus|
+|`OnKeyDown`|`ButtonKeyDown`|`DN_KEYDOWN`|`uint16_t *` Key|`intptr_t` ShiftState|`*Key = 0;` - disable processing in subsequent elements|
+|`OnKeyUp`|`ButtonKeyUp`|`DN_KEYUP`|`uint16_t *` Key|`intptr_t` ShiftState|`*Key = 0;` - disable processing in subsequent elements|
 
 ## ComboBox events
-|Event|Value|
-|---|---|
-|`OnClick`|`ComboBoxClick`|
-|`OnDblClick`|`ComboBoxDblClick`|
-|`OnChange`|`ComboBoxChange`|
-|`OnEnter`|`ComboBoxEnter`|
-|`OnExit`|`ComboBoxExit`|
-|`OnKeyDown`|`ComboBoxKeyDown`|
-|`OnKeyUp`|`ComboBoxKeyUp`|
+|Event|Value|Message|wParam|lParam|Comment|
+|---|---|---|---|---|---|
+|`OnClick`|`ComboBoxClick`|`DN_CLICK`|`intptr_t` ItemIndex|-|Sent after mouse click|
+|`OnDblClick`|`ComboBoxDblClick`|`DN_DBLCLICK`|`intptr_t` ItemIndex|-|Sent after mouse double click|
+|`OnChange`|`ComboBoxChange`|`DN_CHANGE`|`intptr_t` ItemIndex|-|Sent after the dialog item is changed|
+|`OnEnter`|`ComboBoxEnter`|`DN_GOTFOCUS`|-|-|Sent when the dialog item gets input focus|
+|`OnExit`|`ComboBoxExit`|`DN_KILLFOCUS`|-|-|Sent before a dialog item loses the input focus|
+|`OnKeyDown`|`ComboBoxKeyDown`|`DN_KEYDOWN`|`uint16_t *` Key|`intptr_t` ShiftState|`*Key = 0;` - disable processing in subsequent elements|
+|`OnKeyUp`|`ComboBoxKeyUp`|`DN_KEYUP`|`uint16_t *` Key|`intptr_t` ShiftState|`*Key = 0;` - disable processing in subsequent elements|
 
 ## Edit events
-|Event|Value|
-|---|---|
-|`OnClick`|`EditClick`|
-|`OnDblClick`|`EditDblClick`|
-|`OnChange`|`EditChange`|
-|`OnEnter`|`EditEnter`|
-|`OnExit`|`EditExit`|
-|`OnKeyDown`|`EditKeyDown`|
-|`OnKeyUp`|`EditKeyUp`|
+|Event|Value|Message|wParam|lParam|Comment|
+|---|---|---|---|---|---|
+|`OnClick`|`EditClick`|`DN_CLICK`|-|-|Sent after mouse click|
+|`OnDblClick`|`EditDblClick`|`DN_DBLCLICK`|-|-|Sent after mouse double click|
+|`OnChange`|`EditChange`|`DN_CHANGE`|`char *` Text|-|Sent after the dialog item is changed|
+|`OnEnter`|`EditEnter`|`DN_GOTFOCUS`|-|-|Sent when the dialog item gets input focus|
+|`OnExit`|`EditExit`|`DN_KILLFOCUS`|-|-|Sent before a dialog item loses the input focus|
+|`OnKeyDown`|`EditKeyDown`|`DN_KEYDOWN`|`uint16_t *` Key|`intptr_t` ShiftState|`*Key = 0;` - disable processing in subsequent elements|
+|`OnKeyUp`|`EditKeyUp`|`DN_KEYUP`|`uint16_t *` Key|`intptr_t` ShiftState|`*Key = 0;` - disable processing in subsequent elements|
 
 ## ListBox events
-|Event|Value|
-|---|---|
-|`OnClick`|`ListBoxClick`|
-|`OnDblClick`|`ListBoxDblClick`|
-|`OnSelectionChange`|`ListBoxSelectionChange`|
-|`OnEnter`|`ListBoxEnter`|
-|`OnExit`|`ListBoxExit`|
-|`OnKeyDown`|`ListBoxKeyDown`|
-|`OnKeyUp`|`ListBoxKeyUp`|
+|Event|Value|Message|wParam|lParam|Comment|
+|---|---|---|---|---|---|
+|`OnClick`|`ListBoxClick`|`DN_CLICK`|`intptr_t` ItemIndex|-|Sent after mouse click|
+|`OnDblClick`|`ListBoxDblClick`|`DN_DBLCLICK`|`intptr_t` ItemIndex|-|Sent after mouse double click|
+|`OnSelectionChange`|`ListBoxSelectionChange`|`DN_CHANGE`|`intptr_t` ItemIndex|-|Sent after the dialog item is changed|
+|`OnEnter`|`ListBoxEnter`|`DN_GOTFOCUS`|-|-|Sent when the dialog item gets input focus|
+|`OnExit`|`ListBoxExit`|`DN_KILLFOCUS`|-|-|Sent before a dialog item loses the input focus|
+|`OnKeyDown`|`ListBoxKeyDown`|`DN_KEYDOWN`|`uint16_t *` Key|`intptr_t` ShiftState|`*Key = 0;` - disable processing in subsequent elements|
+|`OnKeyUp`|`ListBoxKeyUp`|`DN_KEYUP`|`uint16_t *` Key|`intptr_t` ShiftState|`*Key = 0;` - disable processing in subsequent elements|
 
 ## CheckBox events
-|Event|Value|
-|---|---|
-|`OnChange`|`CheckBoxChange`|
+|Event|Value|Message|wParam|lParam|Comment|
+|---|---|---|---|---|---|
+|`OnChange`|`CheckBoxChange`|`DN_CHANGE`|`bool` Checked|-|Sent after the dialog item is changed|
 
 ## Timer events
-|Event|Value|
-|---|---|
-|`OnTimer`|`TimerTimer`|
+|Event|Value|Message|wParam|lParam|Comment|
+|---|---|---|---|---|---|
+|`OnTimer`|`TimerTimer`|`DN_TIMER`|-|-|Sent when a timer expires|

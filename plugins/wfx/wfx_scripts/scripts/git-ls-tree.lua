@@ -5,7 +5,7 @@ get_dates = false
 date_form = "%ad" -- %ad - author date, %cd - commiter date
 
 args = {...}
-env_var = 'DC_WFX_SCRIPT_DATA'
+env_var = "DC_WFX_SCRIPT_DATA"
 msg_repo = "Path to git repo"
 msg_treeish = "Branch/Tag"
 msg_custom = "<Custom tree-ish>"
@@ -34,15 +34,16 @@ function get_data()
     if not treeish or not dir then
         os.exit(1)
     end
-    return dir:gsub('"', '\\"'), treeish
+    return dir, treeish
 end
 
 function fs_init()
-    -- print('Fs_Request_Options')
+    -- DC 1.0.10 or older
+    -- print("Fs_Request_Options")
     -- print(msg_repo)
 
     -- DC 1.0.11+ only
-    print('Fs_SelectDir ' .. msg_repo)
+    print("Fs_SelectDir " .. msg_repo)
     os.exit()
 end
 
@@ -52,13 +53,14 @@ function fs_setopt(option, value)
             io.stderr:write("Path to git repo is empty")
             os.exit(1)
         end
-        print("Fs_Set_DC_WFX_SCRIPT_DATA " .. value)
-        local output = get_output('cd "' .. value .. '" && git branch')
+        local dir = '"' .. value:gsub('"', '\\"') .. '"'
+        print("Fs_Set_" .. env_var .. ' ' .. dir)
+        local output = get_output('cd ' .. dir .. ' && git branch')
         local treeish = ''
         for line in output:gmatch("[^\n]-\n") do
             treeish = treeish .. '\t' .. line:match("%s?%*?%s?(.+)\n")
         end
-        local output = get_output('cd "' .. value .. '" && git tag')
+        local output = get_output('cd ' .. dir .. ' && git tag')
         for line in output:gmatch("[^\n]-\n") do
             treeish = treeish .. '\t' .. line:match("(.+)\n")
         end
@@ -67,19 +69,19 @@ function fs_setopt(option, value)
         end
     elseif option == msg_treeish or option == msg_custom then
         if value == '' then
-            io.stderr:write("Treeish is empty")
+            io.stderr:write("Tree-ish is empty")
             os.exit(1)
         end
         if value == msg_custom then
-            print('Fs_Request_Options')
+            print("Fs_Request_Options")
             print(msg_custom)
             os.exit()
         end
         local data = os.getenv(env_var)
-        print("Fs_Set_DC_WFX_SCRIPT_DATA " .. data .. '\t' .. value)
+        print("Fs_Set_" .. env_var .. ' ' .. data .. '\t' .. value)
         print("Fs_LogInfo")
-        os.execute('cd "' .. data .. '" && git describe --always ' ..  value .. ' --')
-        os.execute('cd "' .. data .. '" && git log -1 --pretty=format:"%an (%ae)\n%ad\n%s\n%b" --date=format:"%Y-%m-%d %T" ' ..  value .. ' --')
+        os.execute('cd ' .. data .. ' && git describe --always ' ..  value .. ' --')
+        os.execute('cd ' .. data .. ' && git log -1 --pretty=format:"%an (%ae)\n%ad\n%s\n%b" --date=format:"%Y-%m-%d %T" ' ..  value .. ' --')
     end
     os.exit()
 end
@@ -90,12 +92,12 @@ function fs_getlist(path)
     if path ~= '/' then
         dirpath = path:gsub('"', '\\"'):gsub('^/', ' "') .. '/"'
     end
-    local output = get_output('cd "' .. dir .. '" && git ls-tree -l ' ..  treeish .. dirpath)
+    local output = get_output('cd ' .. dir .. ' && git ls-tree -l ' ..  treeish .. dirpath)
     for line in output:gmatch("[^\n]-\n") do
         local mode, objtype, objname, filesize, pathname = line:match('(%d+)%s+([^%s]+)%s+([^%s]+)%s+([^%s]+)%s+([^%s]+)%s+')
         local datetime = nil
         if get_dates then
-            datetime = get_output('cd "' .. dir .. '" && git log -1 --pretty=format:' .. date_form .. ' --date=format:"%Y-%m-%d %T" ' ..  treeish .. ' -- "' .. pathname:gsub('"', '\\"') .. '"')
+            datetime = get_output('cd ' .. dir .. ' && git log -1 --pretty=format:' .. date_form .. ' --date=format:"%Y-%m-%d %T" ' ..  treeish .. ' -- "' .. pathname:gsub('"', '\\"') .. '"')
         end
         if not datetime then
             datetime = "0000-00-00 00:00:00"
@@ -107,33 +109,33 @@ end
 
 function fs_getfile(file, target)
     local dir, treeish = get_data()
-    os.execute('cd "' .. dir .. '" && git show "' ..  treeish .. file:gsub('^/', ':'):gsub('"', '\\"')  .. '" > "' .. target:gsub('"', '\\"') .. '"')
+    os.execute('cd ' .. dir .. ' && git show "' ..  treeish .. file:gsub('^/', ':'):gsub('"', '\\"')  .. '" > "' .. target:gsub('"', '\\"') .. '"')
     os.exit()
 end
 
 function fs_properties(file)
     local dir, treeish = get_data()
-    local output = get_output('cd "' .. dir .. '" && git ls-tree -l ' ..  treeish .. file:gsub('"', '\\"'):gsub('^/', ' -- "') .. '"')
+    local output = get_output('cd ' .. dir .. ' && git ls-tree -l ' ..  treeish .. file:gsub('"', '\\"'):gsub('^/', ' -- "') .. '"')
     local mode, objtype, objname, filesize, pathname = output:match('(%d+)%s+([^%s]+)%s+([^%s]+)%s+([^%s]+)%s+([^%s]+)%s+');
     -- print('Object\t'..objtype)
     if objtype == "tree" then
-        print('content_type\tinode/directory')
+        print("content_type\tinode/directory")
     end
     -- print('Name\t'..objname)
-    output = get_output('cd "' .. dir .. '" && git log -1 --pretty=format:"%ad\n%an (%ae)\n%s" --date=format:"%Y-%m-%d %T" ' ..  treeish .. file:gsub('"', '\\"'):gsub('^/', ' -- "') .. '"')
+    output = get_output('cd ' .. dir .. ' && git log -1 --pretty=format:"%ad\n%an (%ae)\n%s" --date=format:"%Y-%m-%d %T" ' ..  treeish .. file:gsub('"', '\\"'):gsub('^/', ' -- "') .. '"')
     local datetime, author, subject = output:match("([^\n]-)\n([^\n]-)\n(.+)$")
-    print('Author\t'..author)
-    print('Subject\t'..subject)
-    print('Author date\t'..datetime)
-    print('Size\t'..filesize)
-    print('Mode\t'..mode)
-    print('Path\t'..pathname)
-    print('Tree-ish\t'..treeish)
-    output = get_output('cd "' .. dir .. '" && git log -1 --pretty=format:"%cd\n%cn (%ce)\n%s" --date=format:"%Y-%m-%d %T" ' ..  treeish)
+    print("Author\t" .. author)
+    print("Subject\t" .. subject)
+    print("Author date\t" .. datetime)
+    print("Size\t" .. filesize)
+    print("Mode\t" .. mode)
+    print("Path\t" .. pathname)
+    print("Tree-ish\t" .. treeish)
+    output = get_output('cd ' .. dir .. ' && git log -1 --pretty=format:"%cd\n%cn (%ce)\n%s" --date=format:"%Y-%m-%d %T" ' ..  treeish)
     local datetime, commiter, subject = output:match("([^\n]-)\n([^\n]-)\n(.+)$")
-    print('Commiter\t'..commiter)
-    print('Subject\t'..subject)
-    print('Commiter date\t'..datetime)
+    print("Commiter\t" .. commiter)
+    print("Subject\t" .. subject)
+    print("Commiter date\t" .. datetime)
     os.exit()
 end
 

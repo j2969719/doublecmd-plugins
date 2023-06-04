@@ -639,6 +639,7 @@ intptr_t DCPCALL SelectFileDlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t M
 			gchar *output = NULL;
 			char *text = (char*)SendDlgMsg(pDlg, "lblText", DM_GETTEXT, 0, 0);
 			char *res = (char*)SendDlgMsg(pDlg, "FileName", DM_GETTEXT, 0, 0);
+			SendDlgMsg(pDlg, "FileName", DM_SHOWDIALOG, 0, 0);
 
 			if (res && res[0] != '\0')
 			{
@@ -773,6 +774,7 @@ intptr_t DCPCALL SelectDirDlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Ms
 			gchar *output = NULL;
 			char *text = (char*)SendDlgMsg(pDlg, "lblText", DM_GETTEXT, 0, 0);
 			char *res = (char*)SendDlgMsg(pDlg, "Directory", DM_GETTEXT, 0, 0);
+			SendDlgMsg(pDlg, "Directory", DM_SHOWDIALOG, 0, 0);
 
 			if (res && res[0] != '\0')
 			{
@@ -878,19 +880,12 @@ static void SelectDir(char *text)
 	                             "  end\n"
 	                             "end\n";
 
-	gchar **split = g_strsplit(text, "\t", -1);
-	guint len = g_strv_length(split);
+	gchar *prev = g_key_file_get_string(g_cfg, g_script, text, NULL);
+	gchar *lfmdata = g_strdup_printf(lfmdata_templ, text, prev ? prev : "");
+	g_free(prev);
 
-	if (len > 0)
-	{
-		gchar *prev = g_key_file_get_string(g_cfg, g_script, split[0], NULL);
-		gchar *lfmdata = g_strdup_printf(lfmdata_templ, split[0], prev ? prev : "");
-		g_free(prev);
-
-		gDialogApi->DialogBoxLFM((intptr_t)lfmdata, (unsigned long)strlen(lfmdata), SelectDirDlgProc);
-		g_free(lfmdata);
-		g_strfreev(split);
-	}
+	gDialogApi->DialogBoxLFM((intptr_t)lfmdata, (unsigned long)strlen(lfmdata), SelectDirDlgProc);
+	g_free(lfmdata);
 }
 
 intptr_t DCPCALL MultiChoiceDlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr_t wParam, intptr_t lParam);
@@ -1126,6 +1121,7 @@ intptr_t DCPCALL MultiChoiceDlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t 
 			char *text = (char*)SendDlgMsg(pDlg, "lblText", DM_GETTEXT, 0, 0);
 			g_key_file_set_integer(g_cfg, g_script, text, index);
 			char *res = (char*)SendDlgMsg(pDlg, "cbChoice", DM_GETTEXT, 0, 0);
+			SendDlgMsg(pDlg, "cbChoice", DM_SHOWDIALOG, 0, 0);
 
 			if (res && res[0] != '\0')
 			{
