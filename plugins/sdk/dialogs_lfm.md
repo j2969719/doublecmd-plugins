@@ -55,13 +55,13 @@ intptr_t SendDlgMsg(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr_t wP
 |`DM_GETDROPPEDDOWN`|`TComboBox`|-|-|`bool` DroppedDown||
 |`DM_GETITEMBOUNDS`|*|-|-|`RECT *` Result||
 |`DM_GETITEMDATA`|*|-|-|`intptr_t` Tag||
-|`DM_LISTADD`|`TComboBox`, `TListBox`, `TMemo`|`char *` Text|`char *` TObject|`intptr_t` Result||
+|`DM_LISTADD`|`TComboBox`, `TListBox`, `TMemo`|`char *` Text|`intptr_t` UserData|`intptr_t` Result||
 |`DM_LISTADDSTR`|`TComboBox`, `TListBox`, `TMemo`|`char *` Text|-|`intptr_t` Result||
 |`DM_LISTDELETE`|`TComboBox`, `TListBox`, `TMemo`|`intptr_t` Index|-|-||
 |`DM_LISTINDEXOF`|`TComboBox`, `TListBox`, `TMemo`|-|`char *` Text|`intptr_t` Result||
 |`DM_LISTINSERT`|`TComboBox`, `TListBox`, `TMemo`|`intptr_t` Index|`char *` Text|-||
 |`DM_LISTGETCOUNT`|`TComboBox`, `TListBox`, `TMemo`|-|-|`intptr_t` Count||
-|`DM_LISTGETDATA`|`TComboBox`, `TListBox`, `TMemo`|`intptr_t` Index|-|`intptr_t` TObject||
+|`DM_LISTGETDATA`|`TComboBox`, `TListBox`, `TMemo`|`intptr_t` Index|-|`intptr_t` UserData||
 |`DM_LISTGETITEM`|`TComboBox`, `TListBox`, `TMemo`|`intptr_t` Index|-|`char *` Text|Retrieve a list item|
 |`DM_LISTGETITEMINDEX`|`TComboBox`, `TListBox`, `TRadioGroup`|-|-|`intptr_t` Index|Get current item index in a list|
 |`DM_LISTSETITEMINDEX`|`TComboBox`, `TListBox`, `TRadioGroup`|`intptr_t` Index|-|-|Set current item index in a list|
@@ -72,7 +72,7 @@ intptr_t SendDlgMsg(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr_t wP
 |`DM_KEYUP`|*|`intptr_t` Key|-|`intptr_t` Key||
 |`DM_REDRAW`|DialogBox|-|-|-|Redraw the whole dialog|
 |`DM_SETCHECK`|`TCheckBox`, `TRadioButton`|`bool` State|-|`intptr_t` PrevState|Change the state of TCheckBox and TRadioButton items|
-|`DM_LISTSETDATA`|`TComboBox`, `TListBox`, `TMemo`|`intptr_t` Index|`char *` TObject|-||
+|`DM_LISTSETDATA`|`TComboBox`, `TListBox`, `TMemo`|`intptr_t` Index|`intptr_t` UserData|-||
 |`DM_SETDLGBOUNDS`|DialogBox|`RECT *` Rect|-|-||
 |`DM_SETDLGDATA`|DialogBox|`intptr_t` Tag|-|`intptr_t` PrevTag||
 |`DM_SETDROPPEDDOWN`|`TComboBox`|`bool` DroppedDown|-|-||

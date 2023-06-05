@@ -1952,7 +1952,11 @@ int DCPCALL FsExecuteFile(HWND MainWin, char* RemoteName, char* Verb)
 		}
 		else if (strncmp(Verb, "quote", 5) == 0)
 		{
-			ExecuteScript(script, VERB_QUOTE, Verb + 6, path, NULL);
+			ExecuteScript(script, VERB_QUOTE, Verb + 6, path, &output);
+
+			if (output && output[0] != '\0')
+				ParseOpts(script, output);
+
 			result = FS_EXEC_OK;
 		}
 	}

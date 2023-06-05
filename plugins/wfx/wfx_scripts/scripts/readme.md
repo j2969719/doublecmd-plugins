@@ -58,7 +58,7 @@ Outputting a line starting with `Fs_PushValue ` signals that the next part of th
 
 #### Fs_SelectFile
 
-DC 1.0.11+ `Fs_SelectFile TEXT_DISPLAYED_IN_DIALOGBOX\tFILEMASK`, the script will be called with the `setopt TEXT_DISPLAYED_IN_DIALOGBOX PATH`. Mask example: `MP3|*.mp3|All files|*.*`
+`Fs_SelectFile TEXT_DISPLAYED_IN_DIALOGBOX\tFILEMASK`, the script will be called with the `setopt TEXT_DISPLAYED_IN_DIALOGBOX PATH`. Mask example: `MP3|*.mp3|All files|*.*`
 
 #### Fs_SelectDir
 
@@ -200,6 +200,8 @@ If the output to stduot starts with `Fs_`, it will be processed in the same way 
 `SCRIPT quote STRING PATH`
 
 Called when the user enters some `STRING` at the command line below the panel.
+
+If the output to stduot starts with `Fs_`, it will be processed in the same way as for the **init** command.
 
 ## statusinfo
 `SCRIPT statusinfo OPERATION PATH`
