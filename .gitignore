@@ -15,6 +15,7 @@ plugins/wfx/adbplugin-x64/*.zst
 plugins/wfx/adbplugin-x64/*.xz
 plugins/wfx/adbplugin-x64/src/
 plugins/wfx/adbplugin-x64/pkg/
+plugins/wcx/bit7z/src/third_party/bit7z/
 utils/atril-gtk2/*.zip
 utils/atril-gtk2/*.zst
 utils/atril-gtk2/*.xz
