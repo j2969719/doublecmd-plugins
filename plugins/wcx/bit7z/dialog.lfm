@@ -1,0 +1,115 @@
+object OptDialogBox: TOptDialogBox
+  Left = 753
+  Height = 240
+  Top = 368
+  Width = 320
+  AutoSize = True
+  BorderStyle = bsDialog
+  Caption = 'Options'
+  ChildSizing.LeftRightSpacing = 10
+  ChildSizing.TopBottomSpacing = 10
+  ChildSizing.HorizontalSpacing = 10
+  ChildSizing.VerticalSpacing = 10
+  ClientHeight = 240
+  ClientWidth = 320
+  DesignTimePPI = 100
+  OnShow = DialogBoxShow
+  Position = poOwnerFormCenter
+  LCLVersion = '2.2.4.0'
+  object lblMethod: TLabel
+    AnchorSideLeft.Control = Owner
+    AnchorSideTop.Control = Owner
+    Left = 10
+    Height = 17
+    Top = 10
+    Width = 148
+    Caption = 'Compression Method'
+    ParentColor = False
+  end
+  object cbMethod: TComboBox
+    AnchorSideLeft.Control = lblMethod
+    AnchorSideTop.Control = lblMethod
+    AnchorSideTop.Side = asrBottom
+    Left = 10
+    Height = 36
+    Top = 37
+    Width = 300
+    ItemHeight = 17
+    Style = csDropDownList
+    TabOrder = 0
+  end
+  object lblLevel: TLabel
+    AnchorSideLeft.Control = cbMethod
+    AnchorSideTop.Control = cbMethod
+    AnchorSideTop.Side = asrBottom
+    Left = 10
+    Height = 17
+    Top = 83
+    Width = 133
+    Caption = 'Compression Level'
+    ParentColor = False
+  end
+  object cbLevel: TComboBox
+    AnchorSideLeft.Control = lblLevel
+    AnchorSideTop.Control = lblLevel
+    AnchorSideTop.Side = asrBottom
+    AnchorSideRight.Control = cbMethod
+    AnchorSideRight.Side = asrBottom
+    Left = 10
+    Height = 36
+    Top = 110
+    Width = 300
+    Anchors = [akTop, akLeft, akRight]
+    ItemHeight = 17
+    Style = csDropDownList
+    TabOrder = 1
+  end
+  object ckSolid: TCheckBox
+    AnchorSideLeft.Control = cbLevel
+    AnchorSideTop.Control = cbLevel
+    AnchorSideTop.Side = asrBottom
+    Left = 10
+    Height = 23
+    Top = 156
+    Width = 65
+    Caption = 'Solid'
+    TabOrder = 2
+  end
+  object btnCancel: TBitBtn
+    AnchorSideTop.Control = btnOK
+    AnchorSideRight.Control = btnOK
+    Left = 98
+    Height = 31
+    Top = 194
+    Width = 101
+    Anchors = [akTop, akRight]
+    Cancel = True
+    Constraints.MinHeight = 31
+    Constraints.MinWidth = 101
+    DefaultCaption = True
+    Kind = bkCancel
+    ModalResult = 2
+    OnClick = ButtonClick
+    TabOrder = 4
+  end
+  object btnOK: TBitBtn
+    AnchorSideTop.Control = ckSolid
+    AnchorSideTop.Side = asrBottom
+    AnchorSideRight.Control = Owner
+    AnchorSideRight.Side = asrBottom
+    Left = 209
+    Height = 31
+    Top = 194
+    Width = 101
+    Anchors = [akTop, akRight]
+    BorderSpacing.Top = 15
+    Constraints.MinHeight = 31
+    Constraints.MinWidth = 101
+    Default = True
+    DefaultCaption = True
+    Kind = bkOK
+    ModalResult = 1
+    OnClick = ButtonClick
+    TabOrder = 3
+  end
+end

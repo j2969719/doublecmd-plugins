@@ -11,8 +11,9 @@ msg_treeish = "Tree-ish"
 msg_custom = "<Custom tree-ish>"
 msg_commit = "<Commit>"
 act_select = "Select tree-ish"
-act_commit = "Select commit"
-act_changes = "Show changes"
+act_commit = "Select commit (tree-ish)"
+act_changes = "Show changes (tree-ish)"
+act_commit_file = "Select commit (file)"
 
 
 function get_output(command)
@@ -60,8 +61,8 @@ function where_am_i(dir, treeish)
     os.execute('cd ' .. dir .. ' && git log -1 --pretty=format:"%an (%ae)\n%ad\n%s\n%b" --date=format:"%Y-%m-%d %T" ' ..  treeish .. ' --')
 end
 
-function show_log(dir, treeish)
-    local output = get_output('cd ' .. dir .. ' && git log --oneline ' ..  treeish)
+function show_log(dir, treeish, path)
+    local output = get_output('cd ' .. dir .. ' && git log --oneline ' ..  treeish .. ' -- "' .. path:gsub('"', '\\"'):gsub('^/', '') .. '"')
     local commits = ''
     for line in output:gmatch("[^\n]-\n") do
         commits = commits .. '\t' .. line:match("(.+)\n")
@@ -107,7 +108,7 @@ function fs_setopt(option, value)
         end
         local data = os.getenv(env_var):match("[^\t]+")
         if value == msg_commit then
-            show_log(data, "HEAD")
+            show_log(data, "HEAD", '.')
             os.exit()
         end
         print("Fs_Set_" .. env_var .. ' ' .. data .. '\t' .. value)
@@ -125,7 +126,9 @@ function fs_setopt(option, value)
         elseif option == act_select then
             select_treeish(dir)
         elseif option == act_commit then
-            show_log(dir, treeish)
+            show_log(dir, treeish, '.')
+        elseif option == act_commit_file then
+            show_log(dir, treeish, value)
         end
     end
     os.exit()
@@ -181,14 +184,14 @@ function fs_properties(file)
     print("Commiter\t" .. commiter)
     print("Subject\t" .. subject)
     print("Commiter date\t" .. datetime)
-    print("Fs_PropsActs " .. act_changes .. '\t' .. act_commit .. '\t' .. act_select)
+    print("Fs_PropsActs " .. act_changes .. '\t' .. act_commit_file .. '\t' .. act_commit .. '\t' .. act_select)
     os.exit()
 end
 
 function fs_quote(str, path)
     local dir, treeish = get_data()
-    if str == "commit" then
-        show_log(dir, treeish)
+    if str == "commits" then
+        show_log(dir, treeish, '.')
     elseif str == "select" then
         select_treeish(dir)
     elseif str == "where" then
