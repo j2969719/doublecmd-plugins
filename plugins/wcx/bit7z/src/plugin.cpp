@@ -15,6 +15,7 @@ using namespace bit7z;
 #define SendDlgMsg gExtensions->SendDlgMsg
 #define MessageBox gExtensions->MessageBox
 #define InputBox gExtensions->InputBox
+#define LIST_ITEMS(L) (sizeof(L)/sizeof(tListItem))
 
 
 typedef struct sArcData
@@ -26,6 +27,12 @@ typedef struct sArcData
 	tChangeVolProc ChangeVolProc;
 	tProcessDataProc ProcessDataProc;
 } tArcData;
+
+typedef struct sListItem
+{
+	const char *text;
+	long int data;
+} tListItem;
 
 typedef tArcData* ArcData;
 typedef void *HINSTANCE;
@@ -42,8 +49,96 @@ char gPass[PATH_MAX];
 char gPassMsg[] = "Enter password:";
 
 bool gSolid = false;
-int gComppLevel = (int)BitCompressionLevel::Normal;
-int gComppMethod = (int)BitCompressionMethod::Lzma2;
+bool gCryptHeaders = false;
+int gComprLevel = (int)BitCompressionLevel::Normal;
+int gComprMethod = (int)BitCompressionMethod::Lzma2;
+int gDictSize = 0;
+int gWordSize = 0;
+uint64_t gVolumeSize = 0;
+int gThreadCount = 0;
+
+tListItem gComprLevels[] =
+{
+	{"None", (int)BitCompressionLevel::None},
+	{"Fastest",	(int)BitCompressionLevel::Fastest},
+	{"Fast", (int)BitCompressionLevel::Fast},
+	{"Normal", (int)BitCompressionLevel::Normal},
+	{"Max", (int)BitCompressionLevel::Max},
+	{"Ultra", (int)BitCompressionLevel::Ultra},
+};
+
+tListItem gComprMethods[] =
+{
+	{"Copy", (int)BitCompressionMethod::Copy},
+	{"BZip2",	(int)BitCompressionMethod::BZip2},
+	{"Lzma", (int)BitCompressionMethod::Lzma},
+	{"Lzma2",	(int)BitCompressionMethod::Lzma2},
+	{"Ppmd", (int)BitCompressionMethod::Ppmd},
+
+};
+
+tListItem gDictSizes[] =
+{
+	{"64 KB",	     65536},
+	{"1 MB",	   1048576},
+	{"2 MB",	   2097152},
+	{"3 MB",	   3145728},
+	{"4 MB",	   4194304},
+	{"6 MB",	   6291456},
+	{"8 MB",	   8388608},
+	{"12 MB",	  12582912},
+	{"16 MB",	  16777216},
+	{"24 MB",	  25165824},
+	{"32 MB",	  33554432},
+	{"48 MB",	  50331648},
+	{"64 MB",	  67108864},
+	{"96 MB",	 100663296},
+	{"128 MB",	 134217728},
+	{"192 MB",	 201326592},
+	{"256 MB",	 268435456},
+	{"384 MB",	 402653184},
+	{"512 MB",	 536870912},
+	{"768 MB",	 805306368},
+	{"1024 MB",	1073741824},
+	{"1536 MB",	1610612736},
+};
+
+tListItem gWordSizes[] =
+{
+	{"8",	  8},
+	{"12",	 12},
+	{"16",	 16},
+	{"24",	 24},
+	{"32",	 32},
+	{"48",	 48},
+	{"64",	 64},
+	{"96",	 96},
+	{"128",	128},
+	{"192",	192},
+	{"256",	256},
+	{"273",	273},
+};
+
+tListItem gVolumeSizes[] =
+{
+
+	{"360 KB",	     362496},
+	{"720 KB",	     730112},
+	{"1.2 MB",	    1213952},
+	{"10 MB",	   10485760},
+	{"1.44 MB",	    1457664},
+	{"128 MB",	  134217728},
+	{"256 MB",	  268435456},
+	{"512 MB",	  536870912},
+	{"640 MB",	  671088640},
+	{"700 MB",	  734003200},
+	{"1 GB",	 1073741824},
+	{"2 GB",	 2147483648},
+	{"4 GB",	 4294967296},
+	{"4480 MB",	 4697620480},
+	{"8128 MB",	 8522825728},
+	{"23040 MB",	24159191040},
+};
 
 static char *ask_password(void)
 {
@@ -66,72 +161,53 @@ intptr_t DCPCALL OptionsDlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg,
 	switch (Msg)
 	{
 	case DN_INITDIALOG:
-		SendDlgMsg(pDlg, (char*)"cbLevel", DM_LISTADD, (intptr_t)"None", (intptr_t)BitCompressionLevel::None);
 
-		if (gComppLevel == (int)BitCompressionLevel::None)
-			SendDlgMsg(pDlg, (char*)"cbLevel", DM_LISTSETITEMINDEX, index, 0);
+		for (index = 0; index < (int)LIST_ITEMS(gComprLevels); index++)
+		{
+			SendDlgMsg(pDlg, (char*)"cbLevel", DM_LISTADD, (intptr_t)gComprLevels[index].text, (intptr_t)gComprLevels[index].data);
 
-		index++;
-		SendDlgMsg(pDlg, (char*)"cbLevel", DM_LISTADD, (intptr_t)"Fastest", (intptr_t)BitCompressionLevel::Fastest);
+			if (gComprLevel == gComprLevels[index].data)
+				SendDlgMsg(pDlg, (char*)"cbLevel", DM_LISTSETITEMINDEX, index, 0);
+		}
 
-		if (gComppLevel == (int)BitCompressionLevel::Fastest)
-			SendDlgMsg(pDlg, (char*)"cbLevel", DM_LISTSETITEMINDEX, index, 0);
+		for (index = 0; index < (int)LIST_ITEMS(gComprMethods); index++)
+		{
+			SendDlgMsg(pDlg, (char*)"cbMethod", DM_LISTADD, (intptr_t)gComprMethods[index].text, (intptr_t)gComprMethods[index].data);
 
-		index++;
-		SendDlgMsg(pDlg, (char*)"cbLevel", DM_LISTADD, (intptr_t)"Fast", (intptr_t)BitCompressionLevel::Fast);
+			if (gComprMethod == gComprMethods[index].data)
+				SendDlgMsg(pDlg, (char*)"cbMethod", DM_LISTSETITEMINDEX, index, 0);
+		}
 
-		if (gComppLevel == (int)BitCompressionLevel::Fast)
-			SendDlgMsg(pDlg, (char*)"cbLevel", DM_LISTSETITEMINDEX, index, 0);
+		for (index = 0; index < (int)LIST_ITEMS(gDictSizes); index++)
+		{
+			SendDlgMsg(pDlg, (char*)"cbDictionarySize", DM_LISTADD, (intptr_t)gDictSizes[index].text, (intptr_t)gDictSizes[index].data);
 
-		index++;
-		SendDlgMsg(pDlg, (char*)"cbLevel", DM_LISTADD, (intptr_t)"Normal", (intptr_t)BitCompressionLevel::Normal);
+			if (gDictSize == gDictSizes[index].data)
+				SendDlgMsg(pDlg, (char*)"cbDictionarySize", DM_LISTSETITEMINDEX, index, 0);
+		}
 
-		if (gComppLevel == (int)BitCompressionLevel::Normal)
-			SendDlgMsg(pDlg, (char*)"cbLevel", DM_LISTSETITEMINDEX, index, 0);
+		for (index = 0; index < (int)LIST_ITEMS(gWordSizes); index++)
+		{
+			SendDlgMsg(pDlg, (char*)"cbWordSize", DM_LISTADD, (intptr_t)gWordSizes[index].text, (intptr_t)gWordSizes[index].data);
 
-		index++;
-		SendDlgMsg(pDlg, (char*)"cbLevel", DM_LISTADD, (intptr_t)"Max", (intptr_t)BitCompressionLevel::Max);
+			if (gWordSize == gWordSizes[index].data)
+				SendDlgMsg(pDlg, (char*)"cbWordSize", DM_LISTSETITEMINDEX, index, 0);
+		}
 
-		if (gComppLevel == (int)BitCompressionLevel::Max)
-			SendDlgMsg(pDlg, (char*)"cbLevel", DM_LISTSETITEMINDEX, index, 0);
+		for (index = 0; index < (int)LIST_ITEMS(gVolumeSizes); index++)
+			SendDlgMsg(pDlg, (char*)"cbVolumeSize", DM_LISTADD, (intptr_t)gVolumeSizes[index].text, (intptr_t)gVolumeSizes[index].data);
 
-		index++;
-		SendDlgMsg(pDlg, (char*)"cbLevel", DM_LISTADD, (intptr_t)"Ultra", (intptr_t)BitCompressionLevel::Ultra);
+		if (gVolumeSize > 0)
+			SendDlgMsg(pDlg, (char*)"cbVolumeSize", DM_SETTEXT, (intptr_t)to_string(gVolumeSize).c_str(), 0);
 
-		if (gComppLevel == (int)BitCompressionLevel::Ultra)
-			SendDlgMsg(pDlg, (char*)"cbLevel", DM_LISTSETITEMINDEX, index, 0);
+		for (index = 1; index < 5; index++)
+			SendDlgMsg(pDlg, (char*)"cbThreadsCount", DM_LISTADD, (intptr_t)to_string(index).c_str(), index);
 
-		index = 0;
-		SendDlgMsg(pDlg, (char*)"cbMethod", DM_LISTADD, (intptr_t)"Copy", (intptr_t)BitCompressionMethod::Copy);
-
-		if (gComppMethod == (int)BitCompressionMethod::Copy)
-			SendDlgMsg(pDlg, (char*)"cbMethod", DM_LISTSETITEMINDEX, index, 0);
-
-		index++;
-		SendDlgMsg(pDlg, (char*)"cbMethod", DM_LISTADD, (intptr_t)"BZip2", (intptr_t)BitCompressionMethod::BZip2);
-
-		if (gComppMethod == (int)BitCompressionMethod::BZip2)
-			SendDlgMsg(pDlg, (char*)"cbMethod", DM_LISTSETITEMINDEX, index, 0);
-
-		index++;
-		SendDlgMsg(pDlg, (char*)"cbMethod", DM_LISTADD, (intptr_t)"Lzma", (intptr_t)BitCompressionMethod::Lzma);
-
-		if (gComppMethod == (int)BitCompressionMethod::Lzma)
-			SendDlgMsg(pDlg, (char*)"cbMethod", DM_LISTSETITEMINDEX, index, 0);
-
-		index++;
-		SendDlgMsg(pDlg, (char*)"cbMethod", DM_LISTADD, (intptr_t)"Lzma2", (intptr_t)BitCompressionMethod::Lzma2);
-
-		if (gComppMethod == (int)BitCompressionMethod::Lzma2)
-			SendDlgMsg(pDlg, (char*)"cbMethod", DM_LISTSETITEMINDEX, index, 0);
-
-		index++;
-		SendDlgMsg(pDlg, (char*)"cbMethod", DM_LISTADD, (intptr_t)"Ppmd", (intptr_t)BitCompressionMethod::Ppmd);
-
-		if (gComppMethod == (int)BitCompressionMethod::Ppmd)
-			SendDlgMsg(pDlg, (char*)"cbMethod", DM_LISTSETITEMINDEX, index, 0);
+		if (gThreadCount > 0)
+			SendDlgMsg(pDlg, (char*)"cbThreadsCount", DM_LISTSETITEMINDEX, gThreadCount, 0);
 
 		SendDlgMsg(pDlg, (char*)"ckSolid", DM_SETCHECK, (intptr_t)gSolid, 0);
+		SendDlgMsg(pDlg, (char*)"ckCryptHeaders", DM_SETCHECK, (intptr_t)gCryptHeaders, 0);
 
 		break;
 
@@ -141,14 +217,58 @@ intptr_t DCPCALL OptionsDlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg,
 			index = (int)SendDlgMsg(pDlg, (char*)"cbLevel", DM_LISTGETITEMINDEX, 0, 0);
 
 			if (index != -1)
-				gComppLevel = (int)SendDlgMsg(pDlg, (char*)"cbLevel", DM_LISTGETDATA, index, 0);
+				gComprLevel = (int)SendDlgMsg(pDlg, (char*)"cbLevel", DM_LISTGETDATA, index, 0);
 
 			index = (int)SendDlgMsg(pDlg, (char*)"cbMethod", DM_LISTGETITEMINDEX, 0, 0);
 
 			if (index != -1)
-				gComppMethod = (int)SendDlgMsg(pDlg, (char*)"cbMethod", DM_LISTGETDATA, index, 0);
+				gComprMethod = (int)SendDlgMsg(pDlg, (char*)"cbMethod", DM_LISTGETDATA, index, 0);
+
+			index = (int)SendDlgMsg(pDlg, (char*)"cbDictionarySize", DM_LISTGETITEMINDEX, 0, 0);
+
+			if (index != -1)
+				gDictSize = (int)SendDlgMsg(pDlg, (char*)"cbDictionarySize", DM_LISTGETDATA, index, 0);
+
+			index = (int)SendDlgMsg(pDlg, (char*)"cbWordSize", DM_LISTGETITEMINDEX, 0, 0);
+
+			if (index != -1)
+				gWordSize = (int)SendDlgMsg(pDlg, (char*)"cbWordSize", DM_LISTGETDATA, index, 0);
+
+			char *text = (char*)SendDlgMsg(pDlg, (char*)"cbVolumeSize", DM_GETTEXT, 0, 0);
+			gVolumeSize = (int64_t)strtoll(text, nullptr, 10);
+
+			index = (int)SendDlgMsg(pDlg, (char*)"cbThreadsCount", DM_LISTGETITEMINDEX, 0, 0);
+
+			if (index != -1)
+				gThreadCount = (int)SendDlgMsg(pDlg, (char*)"cbThreadsCount", DM_LISTGETDATA, index, 0);
 
 			gSolid = (bool)SendDlgMsg(pDlg, (char*)"ckSolid", DM_GETCHECK, 0, 0);
+			gCryptHeaders = (bool)SendDlgMsg(pDlg, (char*)"ckCryptHeaders", DM_GETCHECK, 0, 0);
+		}
+
+		break;
+
+	case DN_KEYDOWN:
+		if (strcmp(DlgItemName, "cbVolumeSize") == 0)
+		{
+			int16_t *key = (int16_t*)wParam;
+
+			if ((*key < 48 || *key > 57) && *key != 8 && *key != 9 && *key != 13 && *key != 37 && *key != 38 && *key != 39 && *key != 40) // omfg
+				*key = 0;
+		}
+
+		break;
+
+	case DN_CHANGE:
+		if (strcmp(DlgItemName, "cbVolumeSize") == 0)
+		{
+			index = (int)SendDlgMsg(pDlg, (char*)"cbVolumeSize", DM_LISTGETITEMINDEX, 0, 0);
+
+			if (index != -1)
+			{
+				uint64_t data = (uint64_t)SendDlgMsg(pDlg, (char*)"cbVolumeSize", DM_LISTGETDATA, index, 0);
+				SendDlgMsg(pDlg, (char*)"cbVolumeSize", DM_SETTEXT, (intptr_t)to_string(data).c_str(), 0);
+			}
 		}
 
 		break;
@@ -209,6 +329,7 @@ int DCPCALL ReadHeaderEx(HANDLE hArcData, tHeaderDataEx *HeaderDataEx)
 		if (item.isDir())
 			HeaderDataEx->FileAttr = S_IFDIR;
 
+		HeaderDataEx->FileAttr |= item.attributes() >> 16;
 		HeaderDataEx->PackSizeHigh = (item.packSize() & 0xFFFFFFFF00000000) >> 32;
 		HeaderDataEx->PackSize = item.packSize() & 0x00000000FFFFFFFF;
 		HeaderDataEx->UnpSizeHigh = (item.size() & 0xFFFFFFFF00000000) >> 32;
@@ -267,10 +388,15 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 	{
 		BitArchiveWriter writer{ gBit7zLib, PackedFile, BitFormat::SevenZip };
 		writer.setUpdateMode(UpdateMode::Update);
-		writer.setCompressionLevel((BitCompressionLevel)gComppLevel);
-		writer.setCompressionMethod((BitCompressionMethod)gComppMethod);
+
+		writer.setCompressionLevel((BitCompressionLevel)gComprLevel);
+		writer.setCompressionMethod((BitCompressionMethod)gComprMethod);
+		writer.setDictionarySize(gDictSize);
+		writer.setWordSize(gWordSize);
 		writer.setSolidMode(gSolid);
-		writer.setUpdateMode(UpdateMode::Update);
+		writer.setVolumeSize(gVolumeSize);
+		writer.setThreadsCount(gThreadCount);
+
 		writer.setPasswordCallback(ask_password);
 		writer.setProgressCallback(show_progress);
 
@@ -279,7 +405,7 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 			char pass[PATH_MAX] = "";
 
 			if (InputBox(nullptr, gPassMsg, true, pass, PATH_MAX))
-				writer.setPassword(pass);
+				writer.setPassword(pass, gCryptHeaders);
 		}
 
 		while (*AddList)
@@ -312,7 +438,10 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 
 int DCPCALL DeleteFiles(char *PackedFile, char *DeleteList)
 {
+	BitArchiveReader reader{ gBit7zLib, PackedFile, BitFormat::SevenZip };
 	BitArchiveEditor writer{ gBit7zLib, PackedFile, BitFormat::SevenZip };
+	auto items = reader.items();
+	auto count = reader.itemsCount();
 	writer.setOverwriteMode(OverwriteMode::Overwrite);
 	writer.setPasswordCallback(ask_password);
 	writer.setProgressCallback(show_progress);
@@ -324,12 +453,21 @@ int DCPCALL DeleteFiles(char *PackedFile, char *DeleteList)
 
 		auto target = string(DeleteList);
 
-		if (target.substr(target.length() - 4) == "/*.*")
-			target.erase(target.length() - 4);
-
 		try
 		{
-			writer.deleteItem(target);
+			if (target.substr(target.length() - 4) == "/*.*")
+			{
+				target.erase(target.length() - 3);
+
+				for (uint32_t i = 0; i < count; i++)
+				{
+					if (items[i].path().compare(0, target.size(), target) == 0)
+						writer.deleteItem(i);
+				}
+
+			}
+			else
+				writer.deleteItem(target);
 		}
 		catch (const bit7z::BitException& ex)
 		{

@@ -1,5 +1,7 @@
 https://github.com/rikyoz/bit7z
 https://github.com/p7zip-project/p7zip
+https://github.com/rikyoz/bit7z/archive/refs/heads/master.zip
+https://www.7-zip.org/a/7z2201-src.tar.xz
 mkdir build
 cd build
 cmake ../ -DCMAKE_BUILD_TYPE=Release -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DBIT7Z_AUTO_FORMAT=ON
