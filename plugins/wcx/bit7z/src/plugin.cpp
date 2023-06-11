@@ -1,5 +1,4 @@
 #include <fstream>
-#include <fstream>
 #include <bit7z/bit7z.hpp>
 #include <bit7z/bitarchivewriter.hpp>
 #include <bit7z/bitarchiveeditor.hpp>
@@ -523,35 +522,6 @@ int DCPCALL DeleteFiles(char *PackedFile, char *DeleteList)
 
 
 BOOL DCPCALL CanYouHandleThisFile(char *FileName)
-/*
-{
-	bool result = false;
-	unsigned char buf[7];
-	const unsigned char header[7] = {0x37, 0x7A, 0xBC, 0xAF, 0x27, 0x1C, 0};
-	int offsets[] = {0, 0x2FE00, 0x34E00, 0x578f0, 0x763C0};
-
-	ifstream file(FileName, ifstream::binary);
-
-	if (file.is_open())
-	{
-		for (size_t i = 0; i < ARRAY_SIZE(offsets); i++)
-		{
-			if (file.seekg(offsets[i], ios_base::beg) && file.read((char*)buf, sizeof(buf)))
-			{
-				if (memcmp(buf, header, sizeof(buf)) == 0)
-				{
-					result = true;
-					break;
-				}
-			}
-		}
-
-		file.close();
-	}
-
-	return result;
-}
-*/
 {
 	try
 	{
