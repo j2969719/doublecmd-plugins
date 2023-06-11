@@ -187,54 +187,57 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	archive_read_close(a);
 	archive_read_free(a);
 
-	QStringList comment_content;
-	comment_content << "application/zip" << "application/x-7z-compressed" << "application/vnd.rar";
-	QMimeType type = db.mimeTypeForFile(FileToLoad);
-
-	for (int i = 0; i < comment_content.size(); ++i)
+	if (r == ARCHIVE_EOF)
 	{
-		if (type.name() == comment_content.at(i))
+		QStringList comment_content;
+		comment_content << "application/zip" << "application/x-7z-compressed" << "application/vnd.rar";
+		QMimeType type = db.mimeTypeForFile(FileToLoad);
+
+		for (int i = 0; i < comment_content.size(); ++i)
 		{
-			QString output = getOutput(FileToLoad);
-			qDebug() << output;
-
-			if (!output.isNull() && !output.isEmpty())
+			if (type.name() == comment_content.at(i))
 			{
-				if (output.back() == QChar('\n'))
-					output.chop(1);
+				QString output = getOutput(FileToLoad);
+				//qDebug() << output;
 
-				if (!output.isEmpty())
+				if (!output.isNull() && !output.isEmpty())
 				{
-					QHBoxLayout *hbox = new QHBoxLayout;
-					QLabel *comment = new QLabel(view);
-					comment->setText(output);
-					comment->setFont(monofont);
-					hbox->setAlignment(Qt::AlignCenter);
-					hbox->addWidget(comment);
-					main->addLayout(hbox);
+					if (output.back() == QChar('\n'))
+						output.chop(1);
+
+					if (!output.isEmpty())
+					{
+						QHBoxLayout *hbox = new QHBoxLayout;
+						QLabel *comment = new QLabel(view);
+						comment->setText(output);
+						comment->setFont(monofont);
+						hbox->setAlignment(Qt::AlignCenter);
+						hbox->addWidget(comment);
+						main->addLayout(hbox);
+					}
 				}
+
+				break;
 			}
-
-			break;
 		}
-	}
 
-	struct stat buf;
+		struct stat buf;
 
-	if (totalsize > 0 && stat(FileToLoad, &buf) == 0)
-	{
-		QProgressBar *bar = new QProgressBar(view);
-		double res = (double)buf.st_size / (double)totalsize;
+		if (totalsize > 0 && stat(FileToLoad, &buf) == 0)
+		{
+			QProgressBar *bar = new QProgressBar(view);
+			double res = (double)buf.st_size / (double)totalsize;
 
-		if (res > 1)
-			res = 0;
-		else
-			res = 1 - res;
+			if (res > 1)
+				res = 0;
+			else
+				res = 1 - res;
 
-		bar->setRange(0, 100);
-		bar->setValue((int)(res * 100));
-		bar->setTextVisible(false);
-		main->addWidget(bar);
+			bar->setRange(0, 100);
+			bar->setValue((int)(res * 100));
+			bar->setTextVisible(false);
+			main->addWidget(bar);
+		}
 	}
 
 	table->horizontalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);

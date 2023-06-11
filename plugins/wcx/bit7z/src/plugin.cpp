@@ -1,4 +1,5 @@
 #include <fstream>
+#include <fstream>
 #include <bit7z/bit7z.hpp>
 #include <bit7z/bitarchivewriter.hpp>
 #include <bit7z/bitarchiveeditor.hpp>
@@ -8,14 +9,19 @@
 #include "wcxplugin.h"
 #include "extension.h"
 
+#ifndef BIT7Z_AUTO_FORMAT
+#include <glib.h>
+#endif
+
 using namespace std;
 using namespace bit7z;
 
-#define PACKERCAPS PK_CAPS_NEW | PK_CAPS_MULTIPLE | PK_CAPS_DELETE | PK_CAPS_ENCRYPT | PK_CAPS_SEARCHTEXT | PK_CAPS_OPTIONS
+#define PACKERCAPS PK_CAPS_NEW | PK_CAPS_MULTIPLE | PK_CAPS_DELETE | PK_CAPS_ENCRYPT | PK_CAPS_SEARCHTEXT | PK_CAPS_OPTIONS | PK_CAPS_BY_CONTENT
 #define SendDlgMsg gExtensions->SendDlgMsg
 #define MessageBox gExtensions->MessageBox
 #define InputBox gExtensions->InputBox
 #define LIST_ITEMS(L) (sizeof(L)/sizeof(tListItem))
+#define ARRAY_SIZE(A) (sizeof(A)/sizeof(A[0]))
 
 
 typedef struct sArcData
@@ -56,6 +62,11 @@ int gDictSize = 0;
 int gWordSize = 0;
 uint64_t gVolumeSize = 0;
 int gThreadCount = 0;
+
+#ifndef BIT7Z_AUTO_FORMAT
+GKeyFile *gCfg = nullptr;
+gchar *gPWDPath = nullptr;
+#endif
 
 tListItem gComprLevels[] =
 {
@@ -103,21 +114,7 @@ tListItem gDictSizes[] =
 	{"1536 MB",	1610612736},
 };
 
-tListItem gWordSizes[] =
-{
-	{"8",	  8},
-	{"12",	 12},
-	{"16",	 16},
-	{"24",	 24},
-	{"32",	 32},
-	{"48",	 48},
-	{"64",	 64},
-	{"96",	 96},
-	{"128",	128},
-	{"192",	192},
-	{"256",	256},
-	{"273",	273},
-};
+int gWordSizes[] = {8, 12, 16, 24, 32, 48, 64, 96, 128, 192, 256, 273};
 
 tListItem gVolumeSizes[] =
 {
@@ -186,11 +183,11 @@ intptr_t DCPCALL OptionsDlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg,
 				SendDlgMsg(pDlg, (char*)"cbDictionarySize", DM_LISTSETITEMINDEX, index, 0);
 		}
 
-		for (index = 0; index < (int)LIST_ITEMS(gWordSizes); index++)
+		for (index = 0; index < (int)ARRAY_SIZE(gWordSizes); index++)
 		{
-			SendDlgMsg(pDlg, (char*)"cbWordSize", DM_LISTADD, (intptr_t)gWordSizes[index].text, (intptr_t)gWordSizes[index].data);
+			SendDlgMsg(pDlg, (char*)"cbWordSize", DM_LISTADD, (intptr_t)to_string(gWordSizes[index]).c_str(), (intptr_t)gWordSizes[index]);
 
-			if (gWordSize == gWordSizes[index].data)
+			if (gWordSize == gWordSizes[index])
 				SendDlgMsg(pDlg, (char*)"cbWordSize", DM_LISTSETITEMINDEX, index, 0);
 		}
 
@@ -293,9 +290,24 @@ HANDLE DCPCALL OpenArchive(tOpenArchiveData *ArchiveData)
 
 	memset(data, 0, sizeof(tArcData));
 
+#ifndef BIT7Z_AUTO_FORMAT
+	char pass[PATH_MAX];
+
+	if (ArchiveData->OpenMode == PK_OM_LIST)
+		g_key_file_load_from_file(gCfg, gPWDPath, G_KEY_FILE_NONE, NULL);
+
+	if (g_key_file_has_key(gCfg, "wcx_7z", ArchiveData->ArcName, NULL))
+		gPkCryptProc(gCryptoNr, PK_CRYPT_LOAD_PASSWORD, ArchiveData->ArcName, pass, PATH_MAX);
+
+#endif
+
 	try
 	{
-		data->reader = new BitArchiveReader{ gBit7zLib, ArchiveData->ArcName, BitFormat::SevenZip };
+#ifdef BIT7Z_AUTO_FORMAT
+		data->reader = new BitArchiveReader { gBit7zLib, ArchiveData->ArcName, BitFormat::Auto};
+#else
+		data->reader = new BitArchiveReader { gBit7zLib, ArchiveData->ArcName, BitFormat::SevenZip, pass };
+#endif
 		data->reader->setPasswordCallback(ask_password);
 		data->count = data->reader->itemsCount();
 		data->arc_items = data->reader->items();
@@ -335,6 +347,7 @@ int DCPCALL ReadHeaderEx(HANDLE hArcData, tHeaderDataEx *HeaderDataEx)
 		HeaderDataEx->UnpSizeHigh = (item.size() & 0xFFFFFFFF00000000) >> 32;
 		HeaderDataEx->UnpSize = item.size() & 0x00000000FFFFFFFF;
 		HeaderDataEx->FileTime = (int)chrono::system_clock::to_time_t(item.lastWriteTime());
+		HeaderDataEx->FileCRC = (int)item.crc();
 		return E_SUCCESS;
 	}
 
@@ -363,6 +376,17 @@ int DCPCALL ProcessFile(HANDLE hArcData, int Operation, char *DestPath, char *De
 
 		outfile.close();
 	}
+	else if (Operation == PK_TEST && data->index == 0)
+	{
+		try
+		{
+			data->reader->test();
+		}
+		catch (const bit7z::BitException& ex)
+		{
+			MessageBox((char*)ex.what(), nullptr,  MB_OK | MB_ICONERROR);
+		}
+	}
 
 	data->index++;
 
@@ -383,10 +407,14 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 {
 	struct stat buf;
 	string src(SrcPath);
+	string arc(PackedFile);
+
+	if (arc.substr(arc.length() - 4) == ".run" || Flags & PK_PACK_MOVE_FILES || !(Flags & PK_PACK_SAVE_PATHS))
+		return E_NOT_SUPPORTED;
 
 	try
 	{
-		BitArchiveWriter writer{ gBit7zLib, PackedFile, BitFormat::SevenZip };
+		BitArchiveWriter writer{ gBit7zLib, arc, BitFormat::SevenZip };
 		writer.setUpdateMode(UpdateMode::Update);
 
 		writer.setCompressionLevel((BitCompressionLevel)gComprLevel);
@@ -406,6 +434,9 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 
 			if (InputBox(nullptr, gPassMsg, true, pass, PATH_MAX))
 				writer.setPassword(pass, gCryptHeaders);
+
+			if (gCryptHeaders)
+				gPkCryptProc(gCryptoNr, PK_CRYPT_SAVE_PASSWORD, PackedFile, pass, PATH_MAX);
 		}
 
 		while (*AddList)
@@ -491,6 +522,53 @@ int DCPCALL DeleteFiles(char *PackedFile, char *DeleteList)
 }
 
 
+BOOL DCPCALL CanYouHandleThisFile(char *FileName)
+/*
+{
+	bool result = false;
+	unsigned char buf[7];
+	const unsigned char header[7] = {0x37, 0x7A, 0xBC, 0xAF, 0x27, 0x1C, 0};
+	int offsets[] = {0, 0x2FE00, 0x34E00, 0x578f0, 0x763C0};
+
+	ifstream file(FileName, ifstream::binary);
+
+	if (file.is_open())
+	{
+		for (size_t i = 0; i < ARRAY_SIZE(offsets); i++)
+		{
+			if (file.seekg(offsets[i], ios_base::beg) && file.read((char*)buf, sizeof(buf)))
+			{
+				if (memcmp(buf, header, sizeof(buf)) == 0)
+				{
+					result = true;
+					break;
+				}
+			}
+		}
+
+		file.close();
+	}
+
+	return result;
+}
+*/
+{
+	try
+	{
+#ifdef BIT7Z_AUTO_FORMAT
+		BitArchiveReader reader { gBit7zLib, FileName, BitFormat::Auto };
+#else
+		BitArchiveReader reader { gBit7zLib, FileName, BitFormat::SevenZip };
+#endif
+	}
+	catch (const bit7z::BitException& ex)
+	{
+		return false;
+	}
+
+	return true;
+}
+
 void DCPCALL SetProcessDataProc(HANDLE hArcData, tProcessDataProc pProcessDataProc)
 {
 	ArcData data = (ArcData)hArcData;
@@ -530,9 +608,19 @@ void DCPCALL ConfigurePacker(HWND Parent, HINSTANCE DllInstance)
 	gExtensions->DialogBoxLFMFile((char*)lfmpath.c_str(), OptionsDlgProc);
 }
 
+#ifndef BIT7Z_AUTO_FORMAT
+void DCPCALL PackSetDefaultParams(PackDefaultParamStruct* dps)
+{
+	gCfg = g_key_file_new();
+	gchar *cfg_dir = g_path_get_dirname(dps->DefaultIniName);
+	gPWDPath = g_strdup_printf("%s/pwd.ini", cfg_dir);
+	g_free(cfg_dir);
+}
+#endif
+
 void DCPCALL ExtensionInitialize(tExtensionStartupInfo* StartupInfo)
 {
-	if (gExtensions == NULL)
+	if (gExtensions == nullptr)
 	{
 		gExtensions = (tExtensionStartupInfo*)malloc(sizeof(tExtensionStartupInfo));
 		memcpy(gExtensions, StartupInfo, sizeof(tExtensionStartupInfo));
@@ -541,12 +629,19 @@ void DCPCALL ExtensionInitialize(tExtensionStartupInfo* StartupInfo)
 
 void DCPCALL ExtensionFinalize(void* Reserved)
 {
-	if (gExtensions != NULL)
+	if (gExtensions != nullptr)
 	{
 		free(gExtensions);
 	}
 
-	gExtensions = NULL;
+#ifndef BIT7Z_AUTO_FORMAT
+	if (gCfg != nullptr)
+	{
+		g_key_file_free(gCfg);
+		g_free(gPWDPath);
+	}
+#endif
+	gExtensions = nullptr;
 }
 
 #ifdef __cplusplus

@@ -61,6 +61,7 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	char lang[3] = "";
 
 	g_strlcpy(lang, setlocale(LC_ALL, ""), sizeof(lang));
+
 	a = archive_read_new();
 	archive_read_support_filter_all(a);
 	archive_read_support_format_all(a);
@@ -248,79 +249,82 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	if (info)
 		g_free(info);
 
-	gchar *comment = NULL;
-	gchar *comment_content[] =
+	if (r == ARCHIVE_OK)
 	{
-		"application/zip",
-		"application/x-7z-compressed",
-		"application/vnd.rar",
-		NULL
-	};
-	gchar *content_type = g_content_type_guess(FileToLoad, NULL, 0, NULL);
-
-	for (int i = 0; comment_content[i] != NULL; i++)
-	{
-		if (g_strcmp0(content_type, comment_content[i]) == 0)
+		gchar *comment = NULL;
+		gchar *comment_content[] =
 		{
-			gchar *quotedpath = g_shell_quote(FileToLoad);
-			gchar *command = g_strdup_printf(COMMENT_CMD, quotedpath);
-			gchar *argv[] = {"sh", "-c", command, NULL};
-			g_free(quotedpath);
-			g_spawn_sync(NULL, argv, NULL, G_SPAWN_SEARCH_PATH, NULL, NULL, &comment, NULL, NULL, NULL);
-			g_free(command);
-			break;
-		}
-	}
+			"application/zip",
+			"application/x-7z-compressed",
+			"application/vnd.rar",
+			NULL
+		};
+		gchar *content_type = g_content_type_guess(FileToLoad, NULL, 0, NULL);
 
-	g_free(content_type);
-
-	if (comment)
-	{
-		size_t len = strlen(comment);
-
-		if (len > 1)
+		for (int i = 0; comment_content[i] != NULL; i++)
 		{
-			comment[len - 1] = '\0';
-			analyser = init_analyser(lang);
-			EncaEncoding encoding = enca_analyse(analyser, (unsigned char*)comment, len);
-
-			if (encoding.charset > 0)
+			if (g_strcmp0(content_type, comment_content[i]) == 0)
 			{
-				gchar *orgcomment = comment;
-				comment = g_convert_with_fallback(orgcomment, len, "UTF-8", enca_charset_name(encoding.charset, ENCA_NAME_STYLE_ICONV), NULL, NULL, NULL, NULL);
-				g_free(orgcomment);
+				gchar *quotedpath = g_shell_quote(FileToLoad);
+				gchar *command = g_strdup_printf(COMMENT_CMD, quotedpath);
+				gchar *argv[] = {"sh", "-c", command, NULL};
+				g_free(quotedpath);
+				g_spawn_sync(NULL, argv, NULL, G_SPAWN_SEARCH_PATH, NULL, NULL, &comment, NULL, NULL, NULL);
+				g_free(command);
+				break;
+			}
+		}
+
+		g_free(content_type);
+
+		if (comment)
+		{
+			size_t len = strlen(comment);
+
+			if (len > 1)
+			{
+				comment[len - 1] = '\0';
+				analyser = init_analyser(lang);
+				EncaEncoding encoding = enca_analyse(analyser, (unsigned char*)comment, len);
+
+				if (encoding.charset > 0)
+				{
+					gchar *orgcomment = comment;
+					comment = g_convert_with_fallback(orgcomment, len, "UTF-8", enca_charset_name(encoding.charset, ENCA_NAME_STYLE_ICONV), NULL, NULL, NULL, NULL);
+					g_free(orgcomment);
+				}
+
+				enca_analyser_free(analyser);
+
+				GtkWidget *commentlabel = gtk_label_new(comment);
+				gtk_widget_modify_font(commentlabel, pango_font_description_from_string("mono"));
+				gtk_box_pack_start(GTK_BOX(gFix), commentlabel, FALSE, FALSE, 1);
 			}
 
-			enca_analyser_free(analyser);
-
-			GtkWidget *commentlabel = gtk_label_new(comment);
-			gtk_widget_modify_font(commentlabel, pango_font_description_from_string("mono"));
-			gtk_box_pack_start(GTK_BOX(gFix), commentlabel, FALSE, FALSE, 1);
+			g_free(comment);
 		}
 
-		g_free(comment);
-	}
+		struct stat buf;
 
-	struct stat buf;
-
-	if (totalsize > 0 && stat(FileToLoad, &buf) == 0)
-	{
-		GtkWidget *compr = gtk_progress_bar_new();
-
-		gdouble res = (gdouble)buf.st_size / (gdouble)totalsize;
-
-		if (res > 1)
-			res = 0;
-		else
+		if (totalsize > 0 && stat(FileToLoad, &buf) == 0)
 		{
-			res = 1 - res;
-			//gchar *sizes = g_strdup_printf("%'ld / %'ld", buf.st_size, totalsize);
-			//gtk_progress_bar_set_text(GTK_PROGRESS_BAR(compr), sizes);
-			//g_free(sizes);
-		}
+			GtkWidget *compr = gtk_progress_bar_new();
 
-		gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(compr), res);
-		gtk_box_pack_start(GTK_BOX(gFix), compr, FALSE, FALSE, 1);
+			gdouble res = (gdouble)buf.st_size / (gdouble)totalsize;
+
+			if (res > 1)
+				res = 0;
+			else
+			{
+				res = 1 - res;
+				//gchar *sizes = g_strdup_printf("%'ld / %'ld", buf.st_size, totalsize);
+				//gtk_progress_bar_set_text(GTK_PROGRESS_BAR(compr), sizes);
+				//g_free(sizes);
+			}
+
+			gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(compr), res);
+			gtk_box_pack_start(GTK_BOX(gFix), compr, FALSE, FALSE, 1);
+		}
 	}
 
 	scroll = gtk_scrolled_window_new(NULL, NULL);

@@ -1584,11 +1584,18 @@ HANDLE DCPCALL FsFindFirst(char* Path, WIN32_FIND_DATAA * FindData)
 	}
 	else
 	{
-		if (!g_key_file_get_boolean(g_cfg, g_script, IN_USE_MARK, NULL))
-			return (HANDLE)(-1);
+		gchar *script = ExtractScriptFromPath(Path);
+
+		if (!g_key_file_get_boolean(g_cfg, script, IN_USE_MARK, NULL))
+		{
+			g_strlcpy(g_script, script, PATH_MAX);
+			InitializeScript(script);
+
+			if (g_noise)
+				LogMessage(gPluginNr, MSGTYPE_DETAILS, "forced init");
+		}
 
 		gchar *output = NULL;
-		gchar *script = ExtractScriptFromPath(Path);
 		gchar *list_path = StripScriptFromPath(Path);
 		size_t len = strlen(list_path);
 

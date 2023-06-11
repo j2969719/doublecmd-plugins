@@ -123,8 +123,8 @@ static gboolean update_progress(gpointer userdata)
 		gtk_label_set_text(GTK_LABEL(data->label), data->name);
 
 	g_free(data->name);
-	g_free(data);
 	data->idle = 0;
+
 	return FALSE;
 }
 
@@ -166,7 +166,7 @@ static gpointer fill_list(gpointer userdata)
 			someshit *udata = g_new0(someshit, 1);
 			udata->name = g_strdup(name);
 			udata->label = data->label;
-			udata->idle = gdk_threads_add_idle(update_progress, udata);
+			udata->idle = gdk_threads_add_idle_full(G_PRIORITY_DEFAULT_IDLE, update_progress, udata, g_free);
 
 			snprintf(file, PATH_MAX, "%s/%s", data->path, name);
 

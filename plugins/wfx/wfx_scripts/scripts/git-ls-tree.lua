@@ -142,7 +142,7 @@ function fs_getlist(path)
     end
     local output = get_output('cd ' .. dir .. ' && git ls-tree -l ' ..  treeish .. dirpath)
     for line in output:gmatch("[^\n]-\n") do
-        local mode, objtype, objname, filesize, pathname = line:match('(%d+)%s+([^%s]+)%s+([^%s]+)%s+([^%s]+)%s+([^%s]+)%s+')
+        local mode, objtype, objname, filesize, pathname = line:match('(%d+)%s+([^%s]+)%s+([^%s]+)%s+([^%s]+)%s+([^\n]+)\n')
         local datetime = nil
         if get_dates then
             datetime = get_output('cd ' .. dir .. ' && git log -1 --pretty=format:' .. date_form .. ' --date=format:"%Y-%m-%d %T" ' ..  treeish .. ' -- "' .. pathname:gsub('"', '\\"') .. '"')
