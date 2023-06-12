@@ -11,6 +11,7 @@
 #include "extension.h"
 
 #define Int32x32To64(a,b) ((gint64)(a)*(gint64)(b))
+#define BUFSIZE 8192
 
 typedef struct sVFSDirData
 {
@@ -30,8 +31,8 @@ tProgressProc gProgressProc = NULL;
 tLogProc gLogProc = NULL;
 tRequestProc gRequestProc = NULL;
 
-GKeyFile *gCfg;
-gchar *gCfgPath = "";
+GKeyFile *gCfg = NULL;
+gchar *gCfgPath = NULL;
 
 
 gboolean UnixTimeToFileTime(unsigned long mtime, LPFILETIME ft)
@@ -59,16 +60,61 @@ static void SetCurrentFileTime(LPFILETIME ft)
 	ft->dwHighDateTime = ll >> 32;
 }
 
-static void copy_progress_cb(goffset current_num_bytes, goffset total_num_bytes, gpointer user_data)
+static int CopyLocalFile(char* InFileName, char* OutFileName)
 {
-	tCopyInfo *info = (tCopyInfo*)user_data;
+	int ifd, ofd, done;
+	ssize_t len, total = 0;
+	char buff[BUFSIZE];
+	struct stat buf;
+	int result = FS_FILE_OK;
 
-	gint64 res = 0;
+	if (stat(InFileName, &buf) != 0)
+		return FS_FILE_READERROR;
 
-	if (total_num_bytes > 0)
-		res = current_num_bytes * 100 / total_num_bytes;
+	ifd = open(InFileName, O_RDONLY);
 
-	gProgressProc(gPluginNr, info->in_file, info->out_file, res);
+	if (ifd == -1)
+		return FS_FILE_READERROR;
+
+	ofd = open(OutFileName, O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR);
+
+	if (ofd > -1)
+	{
+
+		while ((len = read(ifd, buff, sizeof(buff))) > 0)
+		{
+			if (write(ofd, buff, len) == -1)
+			{
+				result = FS_FILE_WRITEERROR;
+				break;
+			}
+
+			total += len;
+
+			if (buf.st_size > 0)
+				done = total * 100 / buf.st_size;
+			else
+				done = 0;
+
+			if (done > 100)
+				done = 100;
+
+			if (gProgressProc(gPluginNr, InFileName, OutFileName, done) == 1)
+			{
+				result = FS_FILE_USERABORT;
+				break;
+			}
+		}
+
+		close(ofd);
+		chmod(OutFileName, buf.st_mode);
+	}
+	else
+		result = FS_FILE_WRITEERROR;
+
+	close(ifd);
+
+	return result;
 }
 
 gboolean SetFindData(tVFSDirData *dirdata, WIN32_FIND_DATAA *FindData)
@@ -219,7 +265,7 @@ int DCPCALL FsGetFile(char* RemoteName, char* LocalName, int CopyFlags, RemoteIn
 	if (gProgressProc(gPluginNr, RemoteName, LocalName, 0))
 		return FS_FILE_USERABORT;
 
-	if ((CopyFlags == 0) && (g_file_test(LocalName, G_FILE_TEST_EXISTS)))
+	if (CopyFlags == 0 && g_file_test(LocalName, G_FILE_TEST_EXISTS))
 		return FS_FILE_EXISTS;
 
 	gchar *group = g_path_get_dirname(RemoteName);
@@ -231,32 +277,11 @@ int DCPCALL FsGetFile(char* RemoteName, char* LocalName, int CopyFlags, RemoteIn
 	if (realname)
 	{
 		if (g_strcmp0(realname, LocalName) == 0)
-		{
-			g_free(realname);
-			return FS_FILE_NOTSUPPORTED;
-		}
-
-		tCopyInfo *info = g_new0(tCopyInfo, 1);
-		info->in_file = realname;
-		info->out_file = LocalName;
-		GFile *src = g_file_new_for_path(info->in_file);
-		GFile *dest = g_file_new_for_path(info->out_file);
-
-		if (!g_file_copy(src, dest, G_FILE_COPY_OVERWRITE | G_FILE_COPY_NOFOLLOW_SYMLINKS | G_FILE_COPY_ALL_METADATA, NULL, copy_progress_cb, (gpointer)info, &err))
-		{
-			result = FS_FILE_WRITEERROR;
-
-			if (err)
-			{
-				gRequestProc(gPluginNr, RT_MsgOK, NULL, (err)->message, NULL, 0);
-				g_error_free(err);
-			}
-		}
+			result = FS_FILE_NOTSUPPORTED;
+		else
+			result = CopyLocalFile(realname, LocalName);
 
 		g_free(realname);
-		g_object_unref(src);
-		g_object_unref(dest);
-		g_free(info);
 	}
 	else
 		result = FS_FILE_READERROR;
@@ -495,7 +520,9 @@ void DCPCALL FsSetDefaultParams(FsDefaultParamStruct* dps)
 	GError *err = NULL;
 	const gchar *inifile = "tmppanel_crap.ini";
 
-	gCfgPath = g_strdup_printf("%s/%s", g_path_get_dirname(dps->DefaultIniName), inifile);
+	gchar *cfg_dir = g_path_get_dirname(dps->DefaultIniName);
+	gCfgPath = g_strdup_printf("%s/tmppanel_crap.ini", cfg_dir);
+	g_free(cfg_dir);
 
 	gCfg = g_key_file_new();
 
@@ -518,6 +545,5 @@ void DCPCALL ExtensionFinalize(void* Reserved)
 	if (gCfg)
 		g_key_file_free(gCfg);
 
-	if (gCfgPath)
-		g_free(gCfgPath);
+	g_free(gCfgPath);
 }

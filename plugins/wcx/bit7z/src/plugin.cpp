@@ -15,7 +15,12 @@
 using namespace std;
 using namespace bit7z;
 
-#define PACKERCAPS PK_CAPS_NEW | PK_CAPS_MULTIPLE | PK_CAPS_DELETE | PK_CAPS_ENCRYPT | PK_CAPS_SEARCHTEXT | PK_CAPS_OPTIONS | PK_CAPS_BY_CONTENT
+#ifdef BIT7Z_AUTO_FORMAT
+#define PACKERCAPS PK_CAPS_MULTIPLE | PK_CAPS_SEARCHTEXT | PK_CAPS_BY_CONTENT
+#else
+#define PACKERCAPS PK_CAPS_NEW | PK_CAPS_MODIFY | PK_CAPS_MULTIPLE | PK_CAPS_DELETE | PK_CAPS_ENCRYPT | PK_CAPS_SEARCHTEXT | PK_CAPS_OPTIONS | PK_CAPS_BY_CONTENT
+#endif
+
 #define SendDlgMsg gExtensions->SendDlgMsg
 #define MessageBox gExtensions->MessageBox
 #define InputBox gExtensions->InputBox
@@ -461,6 +466,7 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 	catch (const bit7z::BitException& ex)
 	{
 		MessageBox((char*)ex.what(), nullptr,  MB_OK | MB_ICONERROR);
+		return E_EABORTED;
 	}
 
 	return E_SUCCESS;
@@ -468,53 +474,54 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 
 int DCPCALL DeleteFiles(char *PackedFile, char *DeleteList)
 {
-	BitArchiveReader reader{ gBit7zLib, PackedFile, BitFormat::SevenZip };
-	BitArchiveEditor writer{ gBit7zLib, PackedFile, BitFormat::SevenZip };
-	auto items = reader.items();
-	auto count = reader.itemsCount();
-	writer.setOverwriteMode(OverwriteMode::Overwrite);
-	writer.setPasswordCallback(ask_password);
-	writer.setProgressCallback(show_progress);
-
-	while (*DeleteList)
-	{
-		if (gProcessDataProc(DeleteList, 0) == 0)
-			return E_EABORTED;
-
-		auto target = string(DeleteList);
-
-		try
-		{
-			if (target.substr(target.length() - 4) == "/*.*")
-			{
-				target.erase(target.length() - 3);
-
-				for (uint32_t i = 0; i < count; i++)
-				{
-					if (items[i].path().compare(0, target.size(), target) == 0)
-						writer.deleteItem(i);
-				}
-
-			}
-			else
-				writer.deleteItem(target);
-		}
-		catch (const bit7z::BitException& ex)
-		{
-			string msg = target + ": " + ex.what();
-			MessageBox((char*)msg.c_str(), nullptr,  MB_OK | MB_ICONERROR);
-		}
-
-		while (*DeleteList++);
-	}
-
 	try
 	{
+		BitArchiveReader reader{ gBit7zLib, PackedFile, BitFormat::SevenZip };
+		BitArchiveEditor writer{ gBit7zLib, PackedFile, BitFormat::SevenZip };
+		auto items = reader.items();
+		auto count = reader.itemsCount();
+		writer.setOverwriteMode(OverwriteMode::Overwrite);
+		writer.setPasswordCallback(ask_password);
+		writer.setProgressCallback(show_progress);
+
+		while (*DeleteList)
+		{
+			if (gProcessDataProc(DeleteList, 0) == 0)
+				return E_EABORTED;
+
+			auto target = string(DeleteList);
+
+			try
+			{
+				if (target.substr(target.length() - 4) == "/*.*")
+				{
+					target.erase(target.length() - 3);
+
+					for (uint32_t i = 0; i < count; i++)
+					{
+						if (items[i].path().compare(0, target.size(), target) == 0)
+							writer.deleteItem(i);
+					}
+
+				}
+				else
+					writer.deleteItem(target);
+			}
+			catch (const bit7z::BitException& ex)
+			{
+				string msg = target + ": " + ex.what();
+				MessageBox((char*)msg.c_str(), nullptr,  MB_OK | MB_ICONERROR);
+			}
+
+			while (*DeleteList++);
+		}
+
 		writer.applyChanges();
 	}
 	catch (const bit7z::BitException& ex)
 	{
 		MessageBox((char*)ex.what(), nullptr,  MB_OK | MB_ICONERROR);
+		return E_EABORTED;
 	}
 
 	return E_SUCCESS;
@@ -605,11 +612,13 @@ void DCPCALL ExtensionFinalize(void* Reserved)
 	}
 
 #ifndef BIT7Z_AUTO_FORMAT
+
 	if (gCfg != nullptr)
 	{
 		g_key_file_free(gCfg);
 		g_free(gPWDPath);
 	}
+
 #endif
 	gExtensions = nullptr;
 }
