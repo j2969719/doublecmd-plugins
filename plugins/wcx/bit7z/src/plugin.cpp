@@ -33,6 +33,8 @@ typedef struct sArcData
 	BitArchiveReader *reader;
 	uint32_t index;
 	uint32_t count;
+	uint64_t total;
+	char procfile[PATH_MAX];
 	vector<bit7z::BitArchiveItemInfo> arc_items;
 	tChangeVolProc ChangeVolProc;
 	tProcessDataProc ProcessDataProc;
@@ -56,6 +58,8 @@ tExtensionStartupInfo* gExtensions = nullptr;
 Bit7zLibrary gBit7zLib;
 
 char gPass[PATH_MAX];
+uint64_t gTotalSize = 0;
+char gProcFile[PATH_MAX];
 char gPassMsg[] = "Enter password:";
 
 bool gSolid = false;
@@ -152,7 +156,29 @@ static char *ask_password(void)
 
 static bool show_progress(uint64_t size)
 {
-	return (gProcessDataProc(nullptr, 0) != 0);
+	int progress = 0;
+
+	if (gTotalSize > 0)
+		progress = 0 - size * 100 / gTotalSize;
+
+	return (gProcessDataProc(gProcFile, progress) != 0);
+}
+
+static void show_ratio(uint64_t input, uint64_t output)
+{
+	if (input > 0)
+		gProcessDataProc(gProcFile, -1000 - output * 100 / input);
+}
+
+
+static void set_totalsize(uint64_t size)
+{
+	gTotalSize = size;
+}
+
+static void set_filename(string filename)
+{
+	snprintf(gProcFile, PATH_MAX, "%s", filename.c_str());
 }
 
 intptr_t DCPCALL OptionsDlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr_t wParam, intptr_t lParam)
@@ -313,6 +339,23 @@ HANDLE DCPCALL OpenArchive(tOpenArchiveData *ArchiveData)
 		data->reader = new BitArchiveReader { gBit7zLib, ArchiveData->ArcName, BitFormat::SevenZip, pass };
 #endif
 		data->reader->setPasswordCallback(ask_password);
+		data->reader->setTotalCallback([data](uint64_t size)
+		{
+			data->total = size;
+		});
+		data->reader->setFileCallback([data](string filename)
+		{
+			snprintf(data->procfile, PATH_MAX, "%s", filename.c_str());
+		});
+		data->reader->setProgressCallback([data](uint64_t size)
+		{
+			int progress = 0;
+
+			if (data->total > 0)
+				progress = -1000 - size * 100 / data->total;
+
+			return (data->ProcessDataProc(data->procfile, progress) != 0);
+		});
 		data->count = data->reader->itemsCount();
 		data->arc_items = data->reader->items();
 	}
@@ -341,6 +384,7 @@ int DCPCALL ReadHeaderEx(HANDLE hArcData, tHeaderDataEx *HeaderDataEx)
 	{
 		auto item = data->arc_items[data->index];
 		strncpy(HeaderDataEx->FileName, item.path().c_str(), sizeof(HeaderDataEx->FileName) - 1);
+		printf("%s\n", item.path().c_str());
 
 		if (item.isDir())
 			HeaderDataEx->FileAttr = S_IFDIR;
@@ -416,9 +460,23 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 	if (arc.substr(arc.length() - 4) == ".run" || Flags & PK_PACK_MOVE_FILES || !(Flags & PK_PACK_SAVE_PATHS))
 		return E_NOT_SUPPORTED;
 
+	char pass[PATH_MAX] = "";
+
+#ifndef BIT7Z_AUTO_FORMAT
+
+	if (access(PackedFile, F_OK) == 0)
+	{
+		g_key_file_load_from_file(gCfg, gPWDPath, G_KEY_FILE_NONE, NULL);
+
+		if (g_key_file_has_key(gCfg, "wcx_7z", PackedFile, NULL))
+			gPkCryptProc(gCryptoNr, PK_CRYPT_LOAD_PASSWORD, PackedFile, pass, PATH_MAX);
+	}
+
+#endif
+
 	try
 	{
-		BitArchiveWriter writer{ gBit7zLib, arc, BitFormat::SevenZip };
+		BitArchiveWriter writer{ gBit7zLib, arc, BitFormat::SevenZip, pass };
 		writer.setUpdateMode(UpdateMode::Update);
 
 		writer.setCompressionLevel((BitCompressionLevel)gComprLevel);
@@ -431,10 +489,15 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 
 		writer.setPasswordCallback(ask_password);
 		writer.setProgressCallback(show_progress);
+		gTotalSize = 0;
+		gProcFile[0] = '\0';
+		writer.setTotalCallback(set_totalsize);
+		writer.setFileCallback(set_filename);
+		writer.setRatioCallback(show_ratio);
 
 		if (Flags & PK_PACK_ENCRYPT)
 		{
-			char pass[PATH_MAX] = "";
+			pass[0] = '\0';
 
 			if (InputBox(nullptr, gPassMsg, true, pass, PATH_MAX))
 				writer.setPassword(pass, gCryptHeaders);
@@ -474,15 +537,33 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 
 int DCPCALL DeleteFiles(char *PackedFile, char *DeleteList)
 {
+	char pass[PATH_MAX] = "";
+
+#ifndef BIT7Z_AUTO_FORMAT
+
+	if (access(PackedFile, F_OK) == 0)
+	{
+		g_key_file_load_from_file(gCfg, gPWDPath, G_KEY_FILE_NONE, NULL);
+
+		if (g_key_file_has_key(gCfg, "wcx_7z", PackedFile, NULL))
+			gPkCryptProc(gCryptoNr, PK_CRYPT_LOAD_PASSWORD, PackedFile, pass, PATH_MAX);
+	}
+
+#endif
+
 	try
 	{
-		BitArchiveReader reader{ gBit7zLib, PackedFile, BitFormat::SevenZip };
-		BitArchiveEditor writer{ gBit7zLib, PackedFile, BitFormat::SevenZip };
+		BitArchiveReader reader{ gBit7zLib, PackedFile, BitFormat::SevenZip, pass };
+		BitArchiveEditor writer{ gBit7zLib, PackedFile, BitFormat::SevenZip, pass };
 		auto items = reader.items();
 		auto count = reader.itemsCount();
 		writer.setOverwriteMode(OverwriteMode::Overwrite);
 		writer.setPasswordCallback(ask_password);
 		writer.setProgressCallback(show_progress);
+		gTotalSize = 0;
+		gProcFile[0] = '\0';
+		writer.setTotalCallback(set_totalsize);
+		writer.setFileCallback(set_filename);
 
 		while (*DeleteList)
 		{
