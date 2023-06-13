@@ -384,7 +384,6 @@ int DCPCALL ReadHeaderEx(HANDLE hArcData, tHeaderDataEx *HeaderDataEx)
 	{
 		auto item = data->arc_items[data->index];
 		strncpy(HeaderDataEx->FileName, item.path().c_str(), sizeof(HeaderDataEx->FileName) - 1);
-		printf("%s\n", item.path().c_str());
 
 		if (item.isDir())
 			HeaderDataEx->FileAttr = S_IFDIR;
