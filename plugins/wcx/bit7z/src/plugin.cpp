@@ -362,6 +362,10 @@ HANDLE DCPCALL OpenArchive(tOpenArchiveData *ArchiveData)
 	catch (const bit7z::BitException& ex)
 	{
 		printf("%s: %s\n", ArchiveData->ArcName, ex.what());
+
+		delete data->reader;
+		free(data);
+
 		ArchiveData->OpenResult = E_EOPEN;
 		return E_SUCCESS;
 	}
