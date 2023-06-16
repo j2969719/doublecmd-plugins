@@ -43,6 +43,7 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 	monofont.setFamily("mono");
 	monofont.setPointSize(13);
 	view->setFont(monofont);
+	view->show();
 
 	return view;
 }
