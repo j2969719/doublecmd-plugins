@@ -1,6 +1,8 @@
 #include <QLabel>
 #include <QApplication>
 #include <QClipboard>
+#include <stdlib.h>
+#include <limits.h>
 #include <unistd.h>
 #include <sys/stat.h>
 #include <errno.h>
@@ -27,9 +29,18 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 
 	if ((len = readlink(FileToLoad, path, sizeof(path) - 1)) != -1)
 	{
+		char real_path[PATH_MAX] = "";
+
+		if (!realpath(FileToLoad, real_path))
+		{
+			int errrp = errno;
+
+			if (errrp != ENOENT)
+				real_path[0] = '\0';
+		}
+
 		path[len] = '\0';
-		text = QString::asprintf("%s -> %s\n%s", FileToLoad, path, strerror(errsv));
-		
+		text = QString::asprintf("%s -> %s\n%s%s%s", FileToLoad, path, real_path, (real_path[0] == '\0') ? "" : ": ", strerror(errsv));
 	}
 	else
 		return NULL;

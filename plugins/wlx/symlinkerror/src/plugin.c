@@ -1,4 +1,6 @@
+#include <stdlib.h>
 #include <gtk/gtk.h>
+#include <limits.h>
 #include <unistd.h>
 #include <sys/stat.h>
 #include <errno.h>
@@ -25,8 +27,18 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 
 	if ((len = readlink(FileToLoad, path, sizeof(path) - 1)) != -1)
 	{
+		char real_path[PATH_MAX] = "";
+
+		if (!realpath(FileToLoad, real_path))
+		{
+			int errrp = errno;
+
+			if (errrp != ENOENT)
+				real_path[0] = '\0';
+		}
+
 		path[len] = '\0';
-		text = g_strdup_printf("%s -> %s\n%s", FileToLoad, path, strerror(errsv));
+		text = g_strdup_printf("%s -> %s\n%s%s%s", FileToLoad, path, real_path, (real_path[0] == '\0') ? "" : ": ", strerror(errsv));
 	}
 	else
 		return NULL;
@@ -41,13 +53,13 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 	gtk_label_set_line_wrap(GTK_LABEL(label), FALSE);
 	gtk_label_set_justify(GTK_LABEL(label), GTK_JUSTIFY_CENTER);
 	gtk_widget_modify_font(label, pango_font_description_from_string("momo 13"));
-	gtk_label_set_text (GTK_LABEL(label), text);
+	gtk_label_set_text(GTK_LABEL(label), text);
 	g_free(text);
 	g_object_set_data(G_OBJECT(plug_vbox), "label", label);
 	gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(scroll_win), label);
 	gtk_widget_grab_focus(scroll_win);
 	gtk_widget_show_all(plug_vbox);
-	
+
 
 	return plug_vbox;
 }
