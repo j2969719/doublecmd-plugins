@@ -509,6 +509,8 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 				gPkCryptProc(gCryptoNr, PK_CRYPT_SAVE_PASSWORD, PackedFile, pass, PATH_MAX);
 		}
 
+		map<string, string> items;
+
 		while (*AddList)
 		{
 			if (gProcessDataProc(AddList, 0) == 0)
@@ -519,14 +521,19 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 
 			if (SubPath)
 				target.insert(0, 1, '/').insert(0,  string(SubPath));
-
+/*
 			if (stat(filename.c_str(), &buf) == 0 && !S_ISDIR(buf.st_mode))
 				writer.addFile(filename, target);
+*/
+			if (stat(filename.c_str(), &buf) == 0)
+				items[filename] = target;
+			else
+				printf("%s: SKIP -> %s\n", PLUGNAME, filename.c_str());
 
 			while (*AddList++);
 		}
 
-
+		writer.addItems(items);
 		writer.compressTo(PackedFile);
 	}
 	catch (const bit7z::BitException& ex)
