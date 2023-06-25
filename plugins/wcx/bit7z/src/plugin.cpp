@@ -456,7 +456,6 @@ int DCPCALL CloseArchive(HANDLE hArcData)
 
 int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddList, int Flags)
 {
-	struct stat buf;
 	string src(SrcPath);
 	string arc(PackedFile);
 
@@ -509,6 +508,8 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 				gPkCryptProc(gCryptoNr, PK_CRYPT_SAVE_PASSWORD, PackedFile, pass, PATH_MAX);
 		}
 
+		map<string, string> items;
+
 		while (*AddList)
 		{
 			if (gProcessDataProc(AddList, 0) == 0)
@@ -520,13 +521,25 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 			if (SubPath)
 				target.insert(0, 1, '/').insert(0,  string(SubPath));
 
-			if (stat(filename.c_str(), &buf) == 0 && !S_ISDIR(buf.st_mode))
-				writer.addFile(filename, target);
+			if (std::filesystem::exists(filename))
+			{
+				if (std::filesystem::is_symlink(filename))
+					items[filename] = target;
+				else if (std::filesystem::is_directory(filename))
+				{
+					if (std::filesystem::is_empty(filename))
+						items[filename] = target;
+				}
+				else
+					items[filename] = target;
+			}
+			else
+				printf("%s: SKIP -> %s\n", PLUGNAME, filename.c_str());
 
 			while (*AddList++);
 		}
 
-
+		writer.addItems(items);
 		writer.compressTo(PackedFile);
 	}
 	catch (const bit7z::BitException& ex)
