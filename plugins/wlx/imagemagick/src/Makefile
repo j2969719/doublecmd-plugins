@@ -4,7 +4,7 @@ INCLUDES = `pkg-config --cflags --libs MagickWand gtkimageview` -I../../../sdk
 PLUGNAME = $(shell basename $(realpath ..)).$(shell basename $(realpath ../..))
 
 all:
-		$(CC) $(CFLAGS) $(INCLUDES) wlximagemagick.c -o ../$(PLUGNAME)
+		$(CC) $(CFLAGS) $(INCLUDES) wlximagemagick.c -o ../$(PLUGNAME) -D'PLUGNAME="$(PLUGNAME)"'
 
 clean:
 		$(RM) ../$(PLUGNAME)

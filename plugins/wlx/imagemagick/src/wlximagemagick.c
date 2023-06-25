@@ -14,6 +14,8 @@
 
 #define _detectstring "(EXT=\"DDS\")|(EXT=\"TGA\")|(EXT=\"PCX\")|(EXT=\"BMP\")|(EXT=\"WEBP\")"
 
+gboolean gHideToolbar = TRUE;
+
 static void tb_zoom_in_clicked(GtkToolItem *item, GtkWidget *view)
 {
 	gtk_image_view_zoom_in(GTK_IMAGE_VIEW(view));
@@ -258,7 +260,7 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 
 	const gchar *role = gtk_window_get_role(GTK_WINDOW(gtk_widget_get_toplevel(GTK_WIDGET(ParentWin))));
 
-	if (g_strcmp0(role, "TfrmViewer") != 0)
+	if (gHideToolbar && g_strcmp0(role, "TfrmViewer") != 0)
 		gtk_widget_hide(mtb);
 
 	g_object_set_data(G_OBJECT(gFix), "imageview", view);
@@ -344,4 +346,21 @@ void DCPCALL ListSetDefaultParams(ListDefaultParamStruct* dps)
 		g_free(langdir);
 		textdomain(GETTEXT_PACKAGE);
 	}
+
+	gchar *cfgdir = g_path_get_dirname(dps->DefaultIniName);
+	gchar *cfgpath = g_strdup_printf("%s/j2969719.ini", cfgdir);
+	g_free(cfgdir);
+	GKeyFile *cfg = g_key_file_new();
+	g_key_file_load_from_file(cfg, cfgpath, G_KEY_FILE_KEEP_COMMENTS, NULL);
+
+	if (!g_key_file_has_key(cfg, PLUGNAME, "HideToolbar", NULL))
+	{
+		g_key_file_set_boolean(cfg, PLUGNAME, "HideToolbar", gHideToolbar);
+		g_key_file_save_to_file(cfg, cfgpath, NULL);
+	}
+	else
+		gHideToolbar = g_key_file_get_boolean(cfg, PLUGNAME, "HideToolbar", NULL);
+
+	g_key_file_free(cfg);
+	g_free(cfgpath);
 }

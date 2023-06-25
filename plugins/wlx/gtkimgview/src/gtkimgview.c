@@ -12,6 +12,8 @@
 #include <locale.h>
 #define GETTEXT_PACKAGE "plugins"
 
+gboolean gHideToolbar = TRUE;
+
 const gchar *anims[] =
 {
 	"image/gif",
@@ -189,7 +191,7 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	gtk_container_add(GTK_CONTAINER(gFix), scroll);
 
 	gchar *content_type = g_content_type_guess(FileToLoad, NULL, 0, NULL);
-	g_print("content_type = %s\n", content_type);
+	g_print("%s (%s): content_type = %s\n", PLUGNAME, FileToLoad, content_type);
 
 	label = gtk_label_new(NULL);
 	g_signal_connect(G_OBJECT(view), "zoom_changed", G_CALLBACK(zoom_changed_cb), (gpointer)label);
@@ -293,7 +295,7 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 
 	const gchar *role = gtk_window_get_role(GTK_WINDOW(gtk_widget_get_toplevel(GTK_WIDGET(ParentWin))));
 
-	if (g_strcmp0(role, "TfrmViewer") != 0)
+	if (gHideToolbar && g_strcmp0(role, "TfrmViewer") != 0)
 		gtk_widget_hide(mtb);
 
 	g_object_set_data(G_OBJECT(gFix), "imageview", view);
@@ -322,7 +324,7 @@ int DCPCALL ListLoadNext(HWND ParentWin, HWND PluginWin, char* FileToLoad, int S
 		return LISTPLUGIN_ERROR;
 
 	gchar *content_type = g_content_type_guess(FileToLoad, NULL, 0, NULL);
-	g_print("content_type = %s\n", content_type);
+	g_print("%s (%s): content_type = %s\n", PLUGNAME, FileToLoad, content_type);
 
 	gtk_anim_view_set_anim(GTK_ANIM_VIEW(view), NULL);
 	gtk_image_view_set_pixbuf(GTK_IMAGE_VIEW(view), NULL, FALSE);
@@ -428,4 +430,21 @@ void DCPCALL ListSetDefaultParams(ListDefaultParamStruct* dps)
 		g_free(langdir);
 		textdomain(GETTEXT_PACKAGE);
 	}
+
+	gchar *cfgdir = g_path_get_dirname(dps->DefaultIniName);
+	gchar *cfgpath = g_strdup_printf("%s/j2969719.ini", cfgdir);
+	g_free(cfgdir);
+	GKeyFile *cfg = g_key_file_new();
+	g_key_file_load_from_file(cfg, cfgpath, G_KEY_FILE_KEEP_COMMENTS, NULL);
+
+	if (!g_key_file_has_key(cfg, PLUGNAME, "HideToolbar", NULL))
+	{
+		g_key_file_set_boolean(cfg, PLUGNAME, "HideToolbar", gHideToolbar);
+		g_key_file_save_to_file(cfg, cfgpath, NULL);
+	}
+	else
+		gHideToolbar = g_key_file_get_boolean(cfg, PLUGNAME, "HideToolbar", NULL);
+
+	g_key_file_free(cfg);
+	g_free(cfgpath);
 }

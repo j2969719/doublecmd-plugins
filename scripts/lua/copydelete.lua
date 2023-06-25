@@ -21,5 +21,5 @@ if ret == 0x0006 then
     DC.ExecuteCommand("cm_SaveSelection")
     DC.ExecuteCommand("cm_CopyNoAsk")
     DC.ExecuteCommand("cm_RestoreSelection")
-    DC.ExecuteCommand("cm_Delete", "confirmation=0", "trashcan=1")
+    DC.ExecuteCommand("cm_Delete", "confirmation=1", "trashcan=0")
 end
