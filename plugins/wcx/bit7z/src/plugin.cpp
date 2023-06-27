@@ -62,7 +62,7 @@ uint64_t gTotalSize = 0;
 char gProcFile[PATH_MAX];
 char gPassMsg[] = "Enter password:";
 
-bool gSolid = false;
+bool gSolid = true;
 bool gCryptHeaders = false;
 int gComprLevel = (int)BitCompressionLevel::Normal;
 int gComprMethod = (int)BitCompressionMethod::Lzma2;
@@ -363,7 +363,6 @@ HANDLE DCPCALL OpenArchive(tOpenArchiveData *ArchiveData)
 	{
 		printf("%s (%s): %s\n", PLUGNAME, ArchiveData->ArcName, ex.what());
 
-		delete data->reader;
 		free(data);
 
 		ArchiveData->OpenResult = E_EOPEN;
