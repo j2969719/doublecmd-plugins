@@ -15,7 +15,7 @@
 tSAddFileProc gAddFileProc;
 tSUpdateStatusProc gUpdateStatus;
 
-gboolean stop_search;
+gboolean gStop;
 
 
 int DCPCALL Init(tDsxDefaultParamStruct* dsp, tSAddFileProc pAddFileProc, tSUpdateStatusProc pUpdateStatus)
@@ -37,7 +37,7 @@ int DCPCALL Init(tDsxDefaultParamStruct* dsp, tSAddFileProc pAddFileProc, tSUpda
 		if (pos)
 			strcpy(pos + 1, loc_dir);
 
-		setlocale (LC_ALL, "");
+		setlocale(LC_ALL, "");
 		bindtextdomain(GETTEXT_PACKAGE, plg_path);
 		textdomain(GETTEXT_PACKAGE);
 	}
@@ -51,14 +51,14 @@ void DCPCALL StartSearch(int PluginNr, tDsxSearchRecord* pSearchRec)
 	gsize i = 1;
 	GPatternSpec *pattern;
 	GtkRecentManager *manager;
-	stop_search = FALSE;
+	gStop = FALSE;
 
 	gUpdateStatus(PluginNr, _("not found"), 0);
 	manager = gtk_recent_manager_get_default();
 	list = gtk_recent_manager_get_items(manager);
 	pattern = g_pattern_spec_new(pSearchRec->FileMask);
 
-	while (!stop_search && list != NULL)
+	while (!gStop && list != NULL)
 	{
 		const gchar *uri = gtk_recent_info_get_uri(list->data);
 
@@ -68,7 +68,9 @@ void DCPCALL StartSearch(int PluginNr, tDsxSearchRecord* pSearchRec)
 
 			if (fname) // && strncmp(fname, pSearchRec->StartPath, strlen(pSearchRec->StartPath)) == 0)
 			{
-				if (g_pattern_match_string(pattern, g_path_get_basename(fname)))
+				gchar *bname = g_path_get_basename(fname);
+
+				if (g_pattern_spec_match_string(pattern, bname))
 				{
 					if (pSearchRec->IsFindText)
 					{
@@ -110,9 +112,9 @@ void DCPCALL StartSearch(int PluginNr, tDsxSearchRecord* pSearchRec)
 					}
 				}
 
+				g_free(bname);
 				g_free(fname);
 			}
-
 		}
 
 		gtk_recent_info_unref(list->data);
@@ -122,13 +124,12 @@ void DCPCALL StartSearch(int PluginNr, tDsxSearchRecord* pSearchRec)
 	g_list_free(list);
 	g_pattern_spec_free(pattern);
 
-
 	gAddFileProc(PluginNr, "");
 }
 
 void DCPCALL StopSearch(int PluginNr)
 {
-	stop_search = TRUE;
+	gStop = TRUE;
 }
 
 void DCPCALL Finalize(int PluginNr)

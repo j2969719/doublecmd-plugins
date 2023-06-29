@@ -17,7 +17,6 @@ tSUpdateStatusProc gUpdateStatus;
 
 gboolean gStop;
 GKeyFile *gCfg = NULL;
-static gchar gCfgPath[PATH_MAX];
 
 int DCPCALL Init(tDsxDefaultParamStruct* dsp, tSAddFileProc pAddFileProc, tSUpdateStatusProc pUpdateStatus)
 {
@@ -27,7 +26,6 @@ int DCPCALL Init(tDsxDefaultParamStruct* dsp, tSAddFileProc pAddFileProc, tSUpda
 	Dl_info dlinfo;
 	static char plg_path[PATH_MAX];
 	const char* loc_dir = "langs";
-	GError *err = NULL;
 
 	memset(&dlinfo, 0, sizeof(dlinfo));
 
@@ -42,14 +40,35 @@ int DCPCALL Init(tDsxDefaultParamStruct* dsp, tSAddFileProc pAddFileProc, tSUpda
 		setlocale(LC_ALL, "");
 		bindtextdomain(GETTEXT_PACKAGE, plg_path);
 		textdomain(GETTEXT_PACKAGE);
+	}
 
-		g_strlcpy(gCfgPath, dlinfo.dli_fname, PATH_MAX);
-		pos = strrchr(gCfgPath, '/');
+	char cfg_path[PATH_MAX];
+	g_strlcpy(cfg_path, dsp->DefaultIniName, PATH_MAX);
+	char *pos = strrchr(cfg_path, '/');
 
-		if (pos)
-			strcpy(pos + 1, "settings.ini");
+	if (pos)
+		strcpy(pos + 1, "j2969719_dsx.ini");
 
-		gCfg = g_key_file_new();
+	gCfg = g_key_file_new();
+
+	if (!g_key_file_load_from_file(gCfg, cfg_path, G_KEY_FILE_KEEP_COMMENTS, NULL) || !g_key_file_has_group(gCfg, PLUGNAME))
+	{
+		g_key_file_set_boolean(gCfg, PLUGNAME, "Basename", TRUE);
+		g_key_file_set_comment(gCfg, PLUGNAME, "Basename",
+		                       " use DBPath instead of default database\n"
+		                       "DBPath=/home/user/test.db\n"
+		                       " match only the base nameof path names", NULL);
+		g_key_file_set_boolean(gCfg, PLUGNAME, "IgnoreCase", TRUE);
+		g_key_file_set_comment(gCfg, PLUGNAME, "IgnoreCase", " ignore case distinctions when matching patterns", NULL);
+		g_key_file_set_boolean(gCfg, PLUGNAME, "Existing", TRUE);
+		g_key_file_set_comment(gCfg, PLUGNAME, "Existing", " only print entries for currently existing files", NULL);
+		g_key_file_set_boolean(gCfg, PLUGNAME, "NoFolow", FALSE);
+		g_key_file_set_comment(gCfg, PLUGNAME, "NoFolow", " don't follow trailing symbolic links when checking file existence", NULL);
+		g_key_file_set_boolean(gCfg, PLUGNAME, "StartPath", FALSE);
+		g_key_file_set_comment(gCfg, PLUGNAME, "StartPath", " display results only starting with Start Path from the Find files dialog", NULL);
+		g_key_file_set_boolean(gCfg, PLUGNAME, "RegEx", FALSE);
+		g_key_file_set_comment(gCfg, PLUGNAME, "RegEx", " patterns are extended regexps", NULL);
+		g_key_file_save_to_file(gCfg, cfg_path, NULL);
 	}
 
 	return 0;
@@ -70,23 +89,20 @@ void DCPCALL StartSearch(int PluginNr, tDsxSearchRecord* pSearchRec)
 
 	i = strlen(locate_opts);
 
-	if (!g_key_file_load_from_file(gCfg, gCfgPath, G_KEY_FILE_KEEP_COMMENTS, &err))
-		g_print("%s: %s\n", gCfgPath, (err)->message);
-
-	if (g_key_file_get_boolean(gCfg, "Search", "Basename", NULL) == TRUE)
+	if (g_key_file_get_boolean(gCfg, PLUGNAME, "Basename", NULL) == TRUE)
 		locate_opts[i++] = 'b';
 
-	if (g_key_file_get_boolean(gCfg, "Search", "IgnoreCase", NULL) == TRUE)
+	if (g_key_file_get_boolean(gCfg, PLUGNAME, "IgnoreCase", NULL) == TRUE)
 		locate_opts[i++] = 'i';
 
-	if (g_key_file_get_boolean(gCfg, "Search", "Existing", NULL) == TRUE)
+	if (g_key_file_get_boolean(gCfg, PLUGNAME, "Existing", NULL) == TRUE)
 		locate_opts[i++] = 'e';
 
-	if (g_key_file_get_boolean(gCfg, "Search", "NoFolow", NULL) == TRUE)
+	if (g_key_file_get_boolean(gCfg, PLUGNAME, "NoFolow", NULL) == TRUE)
 		locate_opts[i++] = 'P';
 
-	startpath = g_key_file_get_boolean(gCfg, "Search", "StartPath", NULL);
-	dppath = g_key_file_get_string(gCfg, "DB", "Path", NULL);
+	startpath = g_key_file_get_boolean(gCfg, PLUGNAME, "StartPath", NULL);
+	dppath = g_key_file_get_string(gCfg, PLUGNAME, "DBPath", NULL);
 
 	i = 0;
 	argv[i++] = "locate";
@@ -115,9 +131,7 @@ void DCPCALL StartSearch(int PluginNr, tDsxSearchRecord* pSearchRec)
 	i = 1;
 
 	if (!g_spawn_async_with_pipes(NULL, argv, NULL, flags, NULL, NULL, &pid, NULL, &fp, NULL, &err))
-
 		gUpdateStatus(PluginNr, err->message, 0);
-
 	else
 	{
 		GIOChannel *stdout = g_io_channel_unix_new(fp);
@@ -176,15 +190,13 @@ void DCPCALL StartSearch(int PluginNr, tDsxSearchRecord* pSearchRec)
 void DCPCALL StopSearch(int PluginNr)
 {
 	gStop = TRUE;
+}
 
+void DCPCALL Finalize(int PluginNr)
+{
 	if (gCfg != NULL)
 	{
 		g_key_file_free(gCfg);
 		gCfg = NULL;
 	}
-}
-
-void DCPCALL Finalize(int PluginNr)
-{
-
 }

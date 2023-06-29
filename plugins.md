@@ -14,6 +14,9 @@ Plugins
 ---
 <a name="wcx"><h3>WCX plugins</h3></a>
 
+- [bit7z](plugins/wcx/bit7z)<br>
+Packer plugin based on bit7z lib.
+
 - [cmdconv_crap](plugins/wcx/cmdconv_crap)<br>
 Converts multiple files via commandline utilities (Files -> Pack Files...).
 
@@ -22,6 +25,9 @@ View output of command line utilities on Ctrl+Page Down (see `settings_default.i
 
 - [gcrypt_hash_crap](plugins/wcx/gcrypt_hash_crap)<br>
 Calculates a hash (Files -> Pack Files...), test file integrity (Files -> Test Archive(s)).
+
+- [imagemagick_gif_crap](plugins/wcx/imagemagick_gif_crap)<br>
+Extract frames from GIF.
 
 - [libarchive_crap](plugins/wcx/libarchive_crap)<br>
 A horrible attempt to make a simple WCX plugin based on `libarchive` ([supported formats](https://github.com/libarchive/libarchive#supported-formats) + [lizard](https://github.com/inikep/lizard)).
@@ -35,6 +41,9 @@ Creates m3u8 files (Files -> Pack Files...).
 
 ---
 <a name="wdx-bin"><h3>WDX: Binary (compiled) plugins</h3></a>
+
+- [bit7z](plugins/wdx/bit7z)<br>
+Getting some information from archives.
 
 - [calcsize](plugins/wdx/calcsize)<br>
 Folder search by size.
@@ -358,6 +367,9 @@ Displays PDF, DjVu, TIFF, PostScipt, CBR, CBZ, XPS. Requires Atril 2 (GTK2 versi
 - [csvview_gtk2](plugins/wlx/csvview_gtk2)<br>
 Very primitive CSV viewer.
 
+- ~[dirsize_crap](plugins/wlx/dirsize_crap)<br>
+Display folder and file sizes in quick view.~ (kinda useless and unfinished).
+
 - [evince2](plugins/wlx/evince2)<br>
 Displays PDF, DjVu, TIFF, PostScipt, CBR. Requires Evince 2 (GTK2 version).
 
@@ -407,6 +419,9 @@ Displays NFO, DIZ.
 - [sqlview_gtk2](plugins/wlx/sqlview_gtk2)<br>
 Very primitive SQL Viewer.
 
+- [symlinkerror](plugins/wlx/symlinkerror)<br>
+Display simlink error..
+
 - [wlxpview](plugins/wlx/wlxpview)<br>
 PDF Viewer ([original](https://yassernour.wordpress.com/2010/04/04/how-hard-to-build-a-pdf-viewer/)).
 
@@ -427,8 +442,20 @@ Displays PDF, DjVu, PostScipt, CBR. Requires `zathura`.
 ---
 <a name="wlxqt5"><h3>WLX plugins (Qt5)</h3></a>
 
-- [csvview_qt5](plugins/wlx/csvview_qt5)<br>
+- [bit7z_qt_crap](plugins/wlx/bit7z_qt_crap)<br>
+Archive item props. (useless)
+
+- [csvview_qt](plugins/wlx/csvview_qt)<br>
 Very primitive CSV viewer.
+
+- [dirchart_qml_qt_crap](plugins/wlx/dirchart_qml_qt_crap)<br>
+Display file sizes in quick view.
+
+- [dirextchart_crap_qt](plugins/wlx/dirextchart_crap_qt)<br>
+Display file sizes by ext in `settings.ini` in quick view.
+
+- [dirsize_crap_qt](plugins/wlx/dirsize_crap_qt)<br>
+Display folder and file sizes in quick view.
 
 - [fileinfo_qt](plugins/wlx/fileinfo_qt)<br>
 Displays various information about file using command line utilities ([original](https://github.com/doublecmd/doublecmd/wiki/Plugins#fileinfo)).
@@ -436,41 +463,53 @@ Displays various information about file using command line utilities ([original]
 - [hx_webkit_qt_crap](plugins/wlx/hx_webkit_qt_crap)<br>
 Document viewer based on Qt5WebKit and using HTML Export from Oracle Outside In Technology.
 
-- [jsonview_qt5](plugins/wlx/jsonview_qt5)<br>
+- [imgview_crap_qml_qt](plugins/wlx/imgview_crap_qml_qt)<br>
+Very primitive image viewer.
+
+- [imgview_crap_qml_qt_crap](plugins/wlx/imgview_crap_qml_qt_crap)<br>
+Converts some file to image via some external tool assigned by mime or ext in `settings.ini` and displays the result.
+
+- [jsonview_qt](plugins/wlx/jsonview_qt)<br>
 Very primitive JSON Viewer.
 
-- [libarchive_qt5_crap](plugins/wlx/libarchive_qt5_crap)<br>
+- [libarchive_qt_crap](plugins/wlx/libarchive_qt_crap)<br>
 Displays file content with `libarchive` ([supported formats](https://github.com/libarchive/libarchive#supported-formats)).
 
-- [md4c_webkit_qt5](plugins/wlx/md4c_webkit_qt5)<br>
+- [md4c_webkit_qt](plugins/wlx/md4c_webkit_qt)<br>
 This plugin allows you to view Markdown files.
 
-- [qmediaplayer_qt5](plugins/wlx/qmediaplayer_qt5)<br>
-Very primitive media player.
-
-- [qtermwidget_qt5_crap](plugins/wlx/qtermwidget_qt5_crap)<br>
-Embeds `qtermwidget` and runs command line utilities (see `settings.ini`).
-
-- [qtpdfview_qt5](plugins/wlx/qtpdfview_qt5)<br>
+- [pdf_crap_qml_qt](plugins/wlx/pdf_crap_qml_qt)<br>
 PDF Viewer.
 
-- [qtpdfview_qt5_crap](plugins/wlx/qtpdfview_qt5_crap)<br>
+- [qmediaplayer_qt](plugins/wlx/qmediaplayer_qt)<br>
+Very primitive media player.
+
+- [qtermwidget_qt_crap](plugins/wlx/qtermwidget_qt_crap)<br>
+Embeds `qtermwidget` and runs command line utilities (see `settings.ini`).
+
+- [qtpdfview_qt](plugins/wlx/qtpdfview_qt)<br>
+PDF Viewer.
+
+- [qtpdfview_qt_crap](plugins/wlx/qtpdfview_qt_crap)<br>
 Converts some file to PDF via some external tool assigned by mime or ext in `settings.ini` and displays the result.
 
-- [sqlview_qt5](plugins/wlx/sqlview_qt5)<br>
+- [sqlview_qt](plugins/wlx/sqlview_qt)<br>
 Very primitive SQL Viewer.
+
+- [symlinkerror_qt](plugins/wlx/symlinkerror_qt)<br>
+Display simlink error.
 
 - [syntax-highlighting_qt](plugins/wlx/syntax-highlighting_qt)<br>
 Displays source code files with syntax highlighting. Requires `syntax-highlighting` from KF5 framework.
 
-- [webengine_qt5](plugins/wlx/webengine_qt5)<br>
+- [webengine_qt](plugins/wlx/webengine_qt)<br>
 This plugin allows you to view HTML/XHTML files. It is based on Blink engine.
 
-- [wlxwebkit_qt5](plugins/wlx/wlxwebkit_qt5)<br>
+- [wlxwebkit_qt](plugins/wlx/wlxwebkit_qt)<br>
 This plugin allows you to view HTML/XHTML files. It is based on Qt5WebKit engine.
 
-- [wlxwebkit_qt5_crap](plugins/wlx/wlxwebkit_qt5_crap)<br>
-Like [wlxwebkit_qt5](plugins/wlx/wlxwebkit_qt5) but for any files if you can convert it to HTML file (see `settings.ini`).
+- [wlxwebkit_qt_crap](plugins/wlx/wlxwebkit_qt_crap)<br>
+Like [wlxwebkit_qt](plugins/wlx/wlxwebkit_qt) but for any files if you can convert it to HTML file (see `settings.ini`).
 
 
 ---

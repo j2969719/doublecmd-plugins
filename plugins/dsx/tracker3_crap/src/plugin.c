@@ -65,8 +65,7 @@ int DCPCALL Init(tDsxDefaultParamStruct* dsp, tSAddFileProc pAddFileProc, tSUpda
 
 void DCPCALL StartSearch(int PluginNr, tDsxSearchRecord* pSearchRec)
 {
-	gchar **argv;
-	gchar *line, *command;
+	gchar *line;
 	gsize len, term, i = 1;
 	GPid pid;
 	gint fp;
@@ -82,18 +81,15 @@ void DCPCALL StartSearch(int PluginNr, tDsxSearchRecord* pSearchRec)
 	}
 
 	gStop = FALSE;
-	command = g_strdup_printf("recollq -b '%s'", pSearchRec->FindText);
-	gUpdateStatus(PluginNr, command, 0);
 
-	if (!g_shell_parse_argv(command, NULL, &argv, &err))
+	gchar *argv[] =
 	{
-		gUpdateStatus(PluginNr, err->message, 0);
-		gAddFileProc(PluginNr, "");
-		g_error_free(err);
-		return;
-	}
-
-	g_clear_error(&err);
+		"tracker3",
+		"search",
+		"--disable-color",
+		pSearchRec->FindText,
+		NULL
+	};
 
 	if (!g_spawn_async_with_pipes(NULL, argv, NULL, flags, NULL, NULL, &pid, NULL, &fp, NULL, &err))
 	{

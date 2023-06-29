@@ -40,7 +40,8 @@ void DCPCALL StartSearch(int PluginNr, tDsxSearchRecord* pSearchRec)
 	GSpawnFlags flags = G_SPAWN_SEARCH_PATH;
 	GError *err = NULL;
 
-	gchar *argv[] = {
+	gchar *argv[] =
+	{
 		gScript,
 		pSearchRec->StartPath,
 		pSearchRec->FileMask,

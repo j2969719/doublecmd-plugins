@@ -25,3 +25,5 @@ Not all but most of additions for Linux only.
 - [AnyELF (by Serge Lamikhov-Center) for Double Commander users (GTK2/Qt5)](https://github.com/Pasha-From-Russia/AnyELF-for-Double-Commander)<br>
 - [ISO Plugin by S. Oblomov - builds for Linux](https://doublecmd.sourceforge.io/forum/viewtopic.php?f=5&t=3226)<br>
 - wlxmpv: [GitHub](https://github.com/bayarookie/wlxmpv) or [GitLab](https://gitlab.com/bayarookie/wlxmpv) (try to check both link and use latest version).
+- [A WCX plugin (Total Commander, Double Commander etc) that aims to handle all Atari ST (etc) floppy and hard disk ](https://github.com/ggnkua/Jacknife)<br>
+- [Double/Total Commander plugin to access kubernetes resources ](https://github.com/calinrc/k8s_wfx)<br>

@@ -4,7 +4,7 @@ INCLUDES = `pkg-config --cflags --libs glib-2.0` -I../../../sdk
 PLUGNAME = $(shell basename $(realpath ..)).$(shell basename $(realpath ../..))
 
 all:
-		$(CC) $(CFLAGS) $(INCLUDES) plugin.c -o ../$(PLUGNAME)
+		$(CC) $(CFLAGS) $(INCLUDES) plugin.c -o ../$(PLUGNAME) -D'PLUGNAME="$(PLUGNAME)"'
 
 clean:
 		$(RM) ../$(PLUGNAME)
