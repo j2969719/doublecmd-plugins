@@ -147,6 +147,9 @@ int DCPCALL ProcessFile(HANDLE hArcData, int Operation, char *DestPath, char *De
 	int result = E_SUCCESS;
 	ArcData data = (ArcData)hArcData;
 
+	if (data->ProcessDataProc(DestName, -1000) == 0)
+		return E_EABORTED;
+
 	if (Operation != PK_SKIP && !DestPath)
 	{
 
