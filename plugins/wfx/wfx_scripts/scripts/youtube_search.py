@@ -19,6 +19,7 @@ def print_progress(stream = None, chunk = None, remaining = None):
 	current = (stream.filesize - remaining)/stream.filesize
 	percent = ('{0:.0f}').format(current*100)
 	print(percent)
+	sys.stdout.flush()
 
 def prepare_filename(res_array, title):
 	extra = ''
@@ -65,8 +66,8 @@ def vfs_list(path):
 		if 'filename' not in element:
 			element['filename'] = prepare_filename(res_array, element['title'])
 		if not element['duration'] is None:
-			print('-r--r--r--\t0000-00-00 00:00:00 \t404\t' + element['filename'] + '.mp4')
-			print('-r--r--r--\t0000-00-00 00:00:00 \t404\t' + element['filename'] + '.m4a')
+			print('-r--r--r--\t0000-00-00 00:00:00 \t-\t' + element['filename'] + '.mp4')
+			print('-r--r--r--\t0000-00-00 00:00:00 \t-\t' + element['filename'] + '.m4a')
 	try:
 		with open(os.environ[envvar], 'w') as f:
 			json.dump(res_array, f)

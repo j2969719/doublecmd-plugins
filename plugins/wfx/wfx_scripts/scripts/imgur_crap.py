@@ -111,6 +111,7 @@ def vfs_getfile(src, dst):
 					f.write(data)
 					percent = int(downloaded * 100 / size)
 					print(percent)
+					sys.stdout.flush()
 		else:
 			print(str(response.status_code) + ": " + response.reason, file=sys.stderr)
 		f.close()

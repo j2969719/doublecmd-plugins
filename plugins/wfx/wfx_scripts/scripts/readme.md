@@ -100,7 +100,7 @@ Called to get a file from the virtual file system.
 
 Copies a virtual file `SOURCE` to a local file `DESTINATION`
 
-~To update the progress bar, the script must print the integer percentage value line by line.~
+To update the progress bar, the script must print the integer percentage value line by line.
 
 ## copyin
 `SCRIPT copyin SOURCE DESTINATION`
@@ -109,20 +109,20 @@ Called to put a file in the virtual file system.
 
 Copies a local file `SOURCE` to a virtual file `DESTINATION`
 
-~To update the progress bar, the script must print the integer percentage value line by line.~
+To update the progress bar, the script must print the integer percentage value line by line.
 
 ## cp
 `SCRIPT cp SOURCE DESTINATION`
 
 Copies a virtual file `SOURCE` to `DESTINATION` inside the virtual file system.
 
-~To update the progress bar, the script must print the integer percentage value line by line.~
+To update the progress bar, the script must print the integer percentage value line by line.
 
 ## mv
 `SCRIPT mv SOURCE DESTINATION`
 Moves/Renames a virtual file `SOURCE` to `DESTINATION` inside the virtual file system.
 
-~To update the progress bar, the script must print the integer percentage value line by line.~
+To update the progress bar, the script must print the integer percentage value line by line.
 
 ## exists
 `SCRIPT exists FILE`
@@ -136,7 +136,7 @@ The script should return exit status 0 **only** if `FILE` exists.
 
 Deletes the virtual file.
 
-~To update the progress bar, the script must print the integer percentage value line by line.~
+To update the progress bar, the script must print the integer percentage value line by line.
 
 ## mkdir
 `SCRIPT mkdir PATH`
