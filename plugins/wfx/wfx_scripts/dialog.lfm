@@ -13,7 +13,7 @@ object DialogBox: TDialogBox
   ClientWidth = 540
   DesignTimePPI = 100
   OnCreate = DialogBoxShow
-  Position = poScreenCenter
+  Position = poOwnerFormCenter
   LCLVersion = '2.2.4.0'
   object lScriptType: TLabel
     AnchorSideLeft.Control = mPreview

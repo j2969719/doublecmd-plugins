@@ -733,7 +733,7 @@ static void ShowSelectFileDlg(char *text)
 	                       "  ClientWidth = 622\n"
 	                       "  DesignTimePPI = 100\n"
 	                       "  OnCreate = DialogBoxShow\n"
-	                       "  Position = poScreenCenter\n"
+	                       "  Position = poOwnerFormCenter\n"
 	                       "  LCLVersion = '2.2.4.0'\n"
 	                       "  object lblText: TLabel\n"
 	                       "    AnchorSideLeft.Control = Owner\n"
@@ -869,7 +869,7 @@ static void ShowSelectDirDlg(char *text)
 	                             "  ClientWidth = 622\n"
 	                             "  DesignTimePPI = 100\n"
 	                             "  OnCreate = DialogBoxShow\n"
-	                             "  Position = poScreenCenter\n"
+	                             "  Position = poOwnerFormCenter\n"
 	                             "  LCLVersion = '2.2.4.0'\n"
 	                             "  object lblText: TLabel\n"
 	                             "    AnchorSideLeft.Control = Owner\n"
@@ -1070,7 +1070,7 @@ object MultichoiceDialogBox: TMultichoiceDialogBox
   ClientHeight = 105
   ClientWidth = 374
   OnCreate = DialogBoxShow
-  Position = poScreenCenter
+  Position = poOwnerFormCenter
   LCLVersion = '2.0.13.0'
   object lblText: TLabel
     AnchorSideLeft.Control = Owner
