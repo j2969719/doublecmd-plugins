@@ -1418,7 +1418,7 @@ intptr_t DCPCALL DlgPropertiesProc(uintptr_t pDlg, char* DlgItemName, intptr_t M
 
 		break;
 
-	case DN_KEYDOWN:
+	case DN_KEYUP:
 		if (strcmp(DlgItemName, "cbAct") == 0)
 		{
 			int16_t *key = (int16_t*)wParam;

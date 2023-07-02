@@ -519,7 +519,7 @@ object DialogBox: TDialogBox
     BorderSpacing.Right = 10
     ItemHeight = 17
     OnChange = ComboBoxChange
-    OnKeyDown = ComboBoxKeyDown
+    OnKeyUp = ComboBoxKeyUp
     Style = csDropDownList
     TabOrder = 3
     Visible = False
