@@ -1,0 +1,5 @@
+[Default]
+WFX_SCRIPT_STR_UPDPKG=Update package list?
+
+[ru_RU]
+WFX_SCRIPT_STR_UPDPKG=Обновить список пакетов?

@@ -18,6 +18,18 @@ function get_output(command)
     return output
 end
 
+function fs_init()
+    print("Fs_PushValue WFX_SCRIPT_STR_TERM\t" .. terminal_cmd)
+    os.exit()
+end
+
+function fs_setopt(option, value)
+    if option == "WFX_SCRIPT_STR_TERM" and value ~= '' then
+        print("Fs_Set_DC_WFX_TP_SCRIPT_DATA " .. value)
+    end
+    os.exit()
+end
+
 function fs_getlist(path)
     if path == "/" then
         local output = get_output("coredumpctl list")
@@ -53,19 +65,28 @@ end
 
 function fs_properties(file)
     local fields = {
-        "Command Line",
-        "Executable",
-        "Signal",
-        "Storage",
-        "Message",
-        "Timestamp",
-        "Disk Size",
+        "WFX_SCRIPT_STR_CMD",
+        "WFX_SCRIPT_STR_EXE",
+        "WFX_SCRIPT_STR_SIG",
+        "WFX_SCRIPT_STR_PATH",
+        "WFX_SCRIPT_STR_MSG",
+        "WFX_SCRIPT_STR_TIME",
+        "WFX_SCRIPT_STR_SIZE",
+    }
+    local patterns = {
+        "Command Line:%s([^\n]-)\n",
+        "Executable:%s([^\n]-)\n",
+        "Signal:%s([^\n]-)\n",
+        "Storage:%s([^\n]-)\n",
+        "Message:%s([^\n]-)\n",
+        "Timestamp:%s([^\n]-)\n",
+        "Disk Size:%s([^\n]-)\n",
     }
     local output = get_output('coredumpctl info ' .. file:match('%.(%d+)$'))
-    for _, field in pairs(fields) do
-        value = output:match('\n%s+' .. field .. ':%s([^\n]-)\n')
+    for i = 1, #fields do
+        value = output:match(patterns[i])
         if value ~= nil then
-            print(field..'\t'..value)
+            print(fields[i]..'\t'..value)
         end
     end
     print('content_type\tapplication/x-core')
@@ -73,6 +94,11 @@ function fs_properties(file)
 end
 
 function fs_execute(file)
+
+    local data = os.getenv("DC_WFX_TP_SCRIPT_DATA")
+    if data ~= nil and data ~= '' then
+        terminal_cmd = data
+    end
     os.execute(terminal_cmd .. ' "coredumpctl debug ' .. file:match("%.(%d+)$") .. '"')
     os.exit()
 end
@@ -85,7 +111,11 @@ function fs_getlocalname(file)
 end
 
 
-if args[1] == 'list' then
+if args[1] == 'init' then
+    fs_init()
+elseif args[1] == 'setopt' then
+    fs_setopt(args[2], args[3])
+elseif args[1] == 'list' then
     fs_getlist(args[2])
 elseif args[1] == 'copyout' then
     fs_getfile(args[2], args[3])

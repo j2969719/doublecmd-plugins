@@ -30,11 +30,11 @@ def vfs_init():
 	tf.close()
 	print('Fs_Set_'+ envvar +' ' + filename)
 	print('Fs_Request_Options')
-	print('user/repo')
+	print('WFX_SCRIPT_STR_REPO')
 	sys.exit()
 
 def vfs_setopt(option, value):
-	if option == 'user/repo':
+	if option == 'WFX_SCRIPT_STR_REPO':
 		try:
 			response = requests.get('https://api.github.com/repos/' + value + '/contents/')
 		except Exception as e:
@@ -52,7 +52,7 @@ def vfs_setopt(option, value):
 			print(str(response.status_code) + ": " + response.reason, file=sys.stderr)
 			print("Fs_Info_Message " + str(response.status_code) + ": " + response.reason)
 			print('Fs_Request_Options')
-			print('user/repo')
+			print('WFX_SCRIPT_STR_REPO')
 	sys.exit(1)
 
 def vfs_list(path):

@@ -41,6 +41,8 @@ end
 
 function fs_init()
     os.execute(adb_cmd .. " start-server")
+    print("Fs_LogInfo")
+    os.execute(adb_cmd .. " devices -l")
     os.exit()
 end
 
@@ -122,14 +124,14 @@ end
 
 function fs_properties(file)
     local props = {
-        {"Path",             "%s%->%s([^\n]+)"},
-        {"Size",                "Size:%s(%d+)"},
-        {"Uid",             "Uid:%s%(([^%)]+)"},
-        {"Gid",             "Gid:%s%(([^%)]+)"},
-        {"Mode",         "Access:%s%(([^%)]+)"},
-        {"Access", "Access:%s([%d%s%-%.:]+)\n"},
-        {"Modify", "Modify:%s([%d%s%-%.:]+)\n"},
-        {"Change", "Change:%s([%d%s%-%.:]+)\n"},
+        {"Path",                            "%s%->%s([^\n]+)"},
+        {"WFX_SCRIPT_STR_SIZE",                "Size:%s(%d+)"},
+        {"WFX_SCRIPT_STR_UID",             "Uid:%s%(([^%)]+)"},
+        {"WFX_SCRIPT_STR_GID",             "Gid:%s%(([^%)]+)"},
+        {"WFX_SCRIPT_STR_MODE",         "Access:%s%(([^%)]+)"},
+        {"WFX_SCRIPT_STR_ACCESS", "Access:%s([%d%s%-%.:]+)\n"},
+        {"WFX_SCRIPT_STR_MODIFY", "Modify:%s([%d%s%-%.:]+)\n"},
+        {"WFX_SCRIPT_STR_CHANGE", "Change:%s([%d%s%-%.:]+)\n"},
     }
     if (os.execute(adb_cmd .. ' shell [[ -d "' .. file:gsub(" ", "\\ "):gsub('"', '\\"') .. '" ]]') == true) then
         print('content_type\tinode/directory')

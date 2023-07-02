@@ -597,4 +597,18 @@ object DialogBox: TDialogBox
     TabStop = False
     Visible = False
   end
+  object lbDataStore: TListBox
+    AnchorSideLeft.Control = Owner
+    AnchorSideRight.Control = Owner
+    AnchorSideBottom.Control = Owner
+    AnchorSideBottom.Side = asrBottom
+    Left = 10
+    Height = 83
+    Top = 123
+    Width = 164
+    Anchors = [akLeft, akBottom]
+    ItemHeight = 0
+    TabStop = False
+    Visible = False
+  end
 end

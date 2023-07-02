@@ -27,26 +27,33 @@
 #endif
 
 #define Int32x32To64(a,b) ((gint64)(a)*(gint64)(b))
+#define MessageBox gDialogApi->MessageBox
 #define SendDlgMsg gDialogApi->SendDlgMsg
 
-#define LIST_REGEXP "([0-9cbdflrstwxST\\-]+)\\s+(\\d{4}\\-?\\d{2}\\-?\\d{2}[\\stT]\\d{2}:?\\d{2}:?\\d?\\d?Z?)\\s+([0-9\\-]+)\\s+([^\\n]+)"
+#define REGEXP_LIST "([0-9cbdflrstwxST\\-]+)\\s+(\\d{4}\\-?\\d{2}\\-?\\d{2}[\\stT]\\d{2}:?\\d{2}:?\\d?\\d?Z?)\\s+([0-9\\-]+)\\s+([^\\n]+)"
+#define REGEXP_STRING "WFX_SCRIPT_STR_[A-Z0-9_]+"
 
-#define CHECKFIELDS_OPT "Fs_GetSupportedField_Needed"
-#define STATUSINFO_OPT "Fs_StatusInfo_Needed"
-#define REQUEST_OPT "Fs_Request_Options"
-#define ENVVAR_OPT "Fs_Set_" ENVVAR_NAME
-#define YESNOMSG_OPT "Fs_YesNo_Message"
-#define INFORM_OPT "Fs_Info_Message"
-#define CHOICE_OPT "Fs_MultiChoice"
-#define SELFILE_OPT "Fs_SelectFile"
-#define SELDIR_OPT "Fs_SelectDir"
-#define LOGINFO_OPT "Fs_LogInfo"
-#define NOISE_OPT "Fs_DebugMode"
-#define PUSH_OPT "Fs_PushValue"
-#define ACT_OPT "Fs_PropsActs"
+#define STRIP_OPT(S, O) S + strlen(O) + 1
 
-#define PREVPATH_MARK "Fs_OldPath"
-#define IN_USE_MARK "Fs_InUse"
+#define OPT_CHECKFIELDS "Fs_GetSupportedField_Needed"
+#define OPT_STATUSINFO "Fs_StatusInfo_Needed"
+#define OPT_REQUEST "Fs_Request_Options"
+#define OPT_ENVVAR "Fs_Set_" ENVVAR_NAME
+#define OPT_YESNOMSG "Fs_YesNo_Message"
+#define OPT_INFORM "Fs_Info_Message"
+#define OPT_CHOICE "Fs_MultiChoice"
+#define OPT_SELFILE "Fs_SelectFile"
+#define OPT_SELDIR "Fs_SelectDir"
+#define OPT_LOGINFO "Fs_LogInfo"
+#define OPT_ACTS "Fs_PropsActs"
+#define OPT_PUSH "Fs_PushValue"
+#define OPT_ASK "Fs_PushYesNo"
+
+
+#define MARK_NOISE "Fs_DebugMode"
+#define MARK_INUSE "Fs_InUse"
+#define MARK_BOOL "Fs_Bool"
+#define MARK_PREV "Fs_Old"
 
 
 #define VERB_INIT     "init"
@@ -99,7 +106,7 @@ tCryptProc gCryptProc = NULL;
 
 static gchar *gProps = NULL;
 static gchar *gCaller = NULL;
-static gchar *gChoice = NULL;
+static gchar **gChoice = NULL;
 static GKeyFile *gCfg = NULL;
 static gchar **gFields = NULL;
 static gboolean gNoise = FALSE;
@@ -108,6 +115,7 @@ static char gExecStart[PATH_MAX];
 static char gScriptDir[PATH_MAX];
 static char gLFMPath[PATH_MAX];
 static char gHistoryFile[PATH_MAX];
+static char gLang[10];
 
 
 unsigned long FileTimeToUnixTime(LPFILETIME ft)
@@ -175,7 +183,96 @@ static void LogMessage(int PluginNr, int MsgType, char* LogString)
 #endif
 }
 
-static gboolean ExecuteScript(gchar *script_name, gchar *verb, char *arg1, char *arg2, gchar **output, gboolean is_progress_needed)
+static GKeyFile *OpenTranslations(char *Script)
+{
+	GKeyFile *result = g_key_file_new();
+	gchar *lang_file = g_strdup_printf("%s/%s.langs", gScriptDir, Script);
+
+	if (!g_key_file_load_from_file(result, lang_file, G_KEY_FILE_KEEP_COMMENTS, NULL))
+	{
+		g_key_file_free(result);
+		result = NULL;
+	}
+
+	g_free(lang_file);
+
+	return result;
+}
+
+static void CloseTranslations(GKeyFile *KeyFile)
+{
+	if (KeyFile)
+		g_key_file_free(KeyFile);
+}
+
+static gchar *ReplaceString(gchar *Text, gchar *Old, gchar *New)
+{
+	gchar *result = NULL;
+
+	if (!Text || !Old || !New)
+		return result;
+
+	gchar **split = g_strsplit(Text, Old, -1);
+	result = g_strjoinv(New, split);
+	g_strfreev(split);
+	g_free(Text);
+
+	return result;
+}
+static gchar *TranslateString(GKeyFile *KeyFile, char *String)
+{
+	gchar *result = g_strdup(String);
+
+	if (!KeyFile)
+		return result;
+
+	GMatchInfo *match_info;
+	GRegex *regex = g_regex_new(REGEXP_STRING, 0, 0, NULL);
+
+	if (g_regex_match(regex, String, 0, &match_info))
+	{
+		while (g_match_info_matches(match_info))
+		{
+			gchar *template = g_match_info_fetch(match_info, 0);
+
+			gchar *string = g_key_file_get_string(KeyFile, gLang, template, NULL);
+
+			if (!string)
+				string = g_key_file_get_string(KeyFile, "Default", template, NULL);
+
+			if (!string && gNoise)
+			{
+				gchar *message = g_strdup_printf("Translation for %s not found!", template);
+				LogMessage(gPluginNr, MSGTYPE_IMPORTANTERROR, message);
+				g_free(message);
+			}
+			else
+			{
+				if (gNoise && result[0] == '\0')
+				{
+					gchar *message = g_strdup_printf("Translation for %s is empty!", template);
+					LogMessage(gPluginNr, MSGTYPE_DETAILS, message);
+					g_free(message);
+				}
+
+				result = ReplaceString(result, template, string);
+			}
+
+			g_free(template);
+			g_match_info_next(match_info, NULL);
+		}
+	}
+
+	if (match_info)
+		g_match_info_free(match_info);
+
+	if (regex)
+		g_regex_unref(regex);
+
+	return result;
+}
+
+static gboolean ExecuteScript(gchar * script_name, gchar * verb, char *arg1, char *arg2, gchar **output, gboolean is_progress_needed)
 {
 	gchar *argv[4];
 	gsize len, term;
@@ -199,7 +296,7 @@ static gboolean ExecuteScript(gchar *script_name, gchar *verb, char *arg1, char 
 	argv[3] = arg2;
 	argv[4] = NULL;
 
-	gchar *env_data = g_key_file_get_string(gCfg, script_name, ENVVAR_OPT, NULL);
+	gchar *env_data = g_key_file_get_string(gCfg, script_name, OPT_ENVVAR, NULL);
 
 	if (env_data)
 	{
@@ -370,7 +467,7 @@ static gboolean ExecuteScript(gchar *script_name, gchar *verb, char *arg1, char 
 	return result;
 }
 
-static void LoadPreview(uintptr_t pDlg, gchar *file)
+static void LoadPreview(uintptr_t pDlg, gchar * file)
 {
 	FILE *fp;
 	int count = 0;
@@ -443,7 +540,7 @@ static void LoadPreview(uintptr_t pDlg, gchar *file)
 	g_free(src_file);
 }
 
-static gboolean IsValidOpt(gchar *str, gchar *opt)
+static gboolean IsValidOpt(gchar * str, gchar * opt)
 {
 	return (strncmp(str, opt, strlen(opt)) == 0 && strlen(str) > (strlen(opt) + 2));
 }
@@ -454,31 +551,31 @@ static void FillProps(uintptr_t pDlg)
 
 	if (gProps && gProps[0] != '\0')
 	{
+		GKeyFile *langs = OpenTranslations(gScript);
 		gchar **split = g_strsplit(gProps, "\n", -1);
 
 		for (gchar **p = split; *p != NULL; p++)
 		{
-			if (IsValidOpt(*p, ACT_OPT))
+			if (IsValidOpt(*p, OPT_ACTS))
 			{
-				gchar **acts = g_strsplit(*p + strlen(ACT_OPT) + 1, "\t", -1);
+				gchar **acts = g_strsplit(STRIP_OPT(*p, OPT_ACTS), "\t", -1);
 
 				if (g_strv_length(acts) > 0)
 				{
 					for (gchar **a = acts; *a != NULL; a++)
 					{
 						if (*a[0] != '\0')
-							SendDlgMsg(pDlg, "cbAct", DM_LISTADD, (intptr_t)*a, 0);
+						{
+							gchar *string = TranslateString(langs, *a);
+							SendDlgMsg(pDlg, "cbAct", DM_LISTADDSTR, (intptr_t)string, 0);
+							SendDlgMsg(pDlg, "lbDataStore", DM_LISTADDSTR, (intptr_t)*a, 0);
+							g_free(string);
+						}
 					}
 
 					SendDlgMsg(pDlg, "cbAct", DM_SHOWITEM, 1, 0);
 					SendDlgMsg(pDlg, "btnAct", DM_SHOWITEM, 1, 0);
 				}
-			}
-			else if (i > 10)
-			{
-				SendDlgMsg(pDlg, "lbExtraProps", DM_SHOWITEM, 1, 0);
-				SendDlgMsg(pDlg, "lbExtraProps", DM_LISTADDSTR, (intptr_t)*p, 0);
-
 			}
 			else
 			{
@@ -486,6 +583,19 @@ static void FillProps(uintptr_t pDlg)
 
 				if (!res[0] || !res[1])
 					continue;
+
+				if (i > 10)
+				{
+					gchar *prop = TranslateString(langs, g_strstrip(res[0]));
+					gchar *value = TranslateString(langs, g_strstrip(res[1]));
+					gchar *string = g_strdup_printf("%s\t%s", prop, value);
+					SendDlgMsg(pDlg, "lbExtraProps", DM_SHOWITEM, 1, 0);
+					SendDlgMsg(pDlg, "lbExtraProps", DM_LISTADDSTR, (intptr_t)string, 0);
+					g_free(prop);
+					g_free(value);
+					g_free(string);
+					continue;
+				}
 
 				if (g_ascii_strcasecmp(res[0], "filetype") == 0)
 					SendDlgMsg(pDlg, "lType", DM_SETTEXT, (intptr_t)g_strstrip(res[1]), 0);
@@ -512,14 +622,18 @@ static void FillProps(uintptr_t pDlg)
 				}
 				else
 				{
+					gchar *prop = TranslateString(langs, g_strstrip(res[0]));
+					gchar *value = TranslateString(langs, g_strstrip(res[1]));
 					gchar *item = g_strdup_printf("lProp%d", i);
-					SendDlgMsg(pDlg, item, DM_SETTEXT, (intptr_t)g_strstrip(res[0]), 0);
+					SendDlgMsg(pDlg, item, DM_SETTEXT, (intptr_t)prop, 0);
 					SendDlgMsg(pDlg, item, DM_SHOWITEM, 1, 0);
 					g_free(item);
 					item = g_strdup_printf("lValue%d", i);
-					SendDlgMsg(pDlg, item, DM_SETTEXT, (intptr_t)g_strstrip(res[1]), 0);
+					SendDlgMsg(pDlg, item, DM_SETTEXT, (intptr_t)value, 0);
 					SendDlgMsg(pDlg, item, DM_SHOWITEM, 1, 0);
 					g_free(item);
+					g_free(prop);
+					g_free(value);
 					i++;
 				}
 
@@ -528,6 +642,7 @@ static void FillProps(uintptr_t pDlg)
 		}
 
 		g_strfreev(split);
+		CloseTranslations(langs);
 	}
 }
 
@@ -563,9 +678,9 @@ static void LogCryptProc(int ret)
 	}
 }
 
-static void ParseOpts(gchar *script, gchar *text);
+static void ParseOpts(gchar * script, gchar * text);
 
-static void SetOpt(gchar *script, gchar *opt, gchar *value)
+static void SetOpt(gchar * script, gchar * opt, gchar * value)
 {
 	gchar *output = NULL;
 	ExecuteScript(script, VERB_SETOPT, opt, value, &output, FALSE);
@@ -577,33 +692,34 @@ static void SetOpt(gchar *script, gchar *opt, gchar *value)
 	output = NULL;
 }
 
-static void SaveHistory(uintptr_t pDlg, char *text, char *path)
+static void SaveHistory(uintptr_t pDlg, char *text, char *value)
 {
+	int count = (int)SendDlgMsg(pDlg, "lbHistory", DM_LISTGETCOUNT, 0, 0);
 
-	if (path)
-		g_key_file_set_string(gCfg, gScript, text, path);
+	if (count > 0 && value && value[0] != '\0')
+		g_key_file_set_string(gCfg, gScript, text, value);
+	else
+		g_key_file_remove_key(gCfg, gScript, text, NULL);
 
 	int num = 0;
 	gchar *key = NULL;
-
-	int count = (int)SendDlgMsg(pDlg, "lbHistory", DM_LISTGETCOUNT, 0, 0);
 
 	for (gsize i = 0; i < count; i++)
 	{
 		if (num >= MAX_PATH)
 			break;
 
-		char *oldpath = (char*)SendDlgMsg(pDlg, "lbHistory", DM_LISTGETITEM, i, 0);
+		char *oldvalue = (char*)SendDlgMsg(pDlg, "lbHistory", DM_LISTGETITEM, i, 0);
 
-		if (!path || strcmp(oldpath, path) != 0)
+		if (!value || strcmp(oldvalue, value) != 0)
 		{
-			gchar *key = g_strdup_printf("%s_%s_%d", PREVPATH_MARK, text, num++);
-			g_key_file_set_string(gCfg, gScript, key, oldpath);
+			gchar *key = g_strdup_printf("%s_%s_%d", MARK_PREV, text, num++);
+			g_key_file_set_string(gCfg, gScript, key, oldvalue);
 			g_free(key);
 		}
 	}
 
-	key = g_strdup_printf("%s_%s_%d", PREVPATH_MARK, text, num);
+	key = g_strdup_printf("%s_%s_%d", MARK_PREV, text, num);
 
 	if (g_key_file_has_key(gCfg, gScript, key, NULL))
 		g_key_file_remove_key(gCfg, gScript, key, NULL);
@@ -611,22 +727,22 @@ static void SaveHistory(uintptr_t pDlg, char *text, char *path)
 	g_free(key);
 }
 
-intptr_t DCPCALL DlgSelectPathProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr_t wParam, intptr_t lParam)
+intptr_t DCPCALL DlgRequestValueProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr_t wParam, intptr_t lParam)
 {
 	switch (Msg)
 	{
 	case DN_INITDIALOG:
 	{
-		char *text = (char*)SendDlgMsg(pDlg, "lblText", DM_GETTEXT, 0, 0);
-		gchar *key = g_strdup_printf("%s_%s_0", PREVPATH_MARK, text);
+		char *text = (char*)SendDlgMsg(pDlg, "lblOption", DM_GETTEXT, 0, 0);
+		gchar *key = g_strdup_printf("%s_%s_0", MARK_PREV, text);
 		gboolean history = g_key_file_has_key(gCfg, gScript, key, NULL);
 		g_free(key);
-		SendDlgMsg(pDlg, "lbHistory", DM_SHOWITEM, (int)history, 0);
-		char *path = g_strdup((char*)SendDlgMsg(pDlg, "edPath", DM_GETTEXT, 0, 0));
+		char *value = g_strdup((char*)SendDlgMsg(pDlg, "edValue", DM_GETTEXT, 0, 0));
 
-		if (path && path[0] != '\0')
+		if (value && value[0] != '\0')
 		{
-			SendDlgMsg(pDlg, "lbHistory", DM_LISTADDSTR, (intptr_t)path, 0);
+			SendDlgMsg(pDlg, "lbHistory", DM_SHOWITEM, (int)history, 0);
+			SendDlgMsg(pDlg, "lbHistory", DM_LISTADDSTR, (intptr_t)value, 0);
 
 
 			if (history)
@@ -637,13 +753,14 @@ intptr_t DCPCALL DlgSelectPathProc(uintptr_t pDlg, char* DlgItemName, intptr_t M
 				do
 				{
 					g_free(key);
-					key = g_strdup_printf("%s_%s_%d", PREVPATH_MARK, text, num++);
-					gchar *oldpath = g_key_file_get_string(gCfg, gScript, key, NULL);
+					key = g_strdup_printf("%s_%s_%d", MARK_PREV, text, num++);
+					gchar *oldvalue = g_key_file_get_string(gCfg, gScript, key, NULL);
+					g_print("!!! %s %s", value, oldvalue);
 
-					if (oldpath && strcmp(oldpath, path) != 0)
-						SendDlgMsg(pDlg, "lbHistory", DM_LISTADDSTR, (intptr_t)oldpath, 0);
+					if (oldvalue && strcmp(oldvalue, value) != 0)
+						SendDlgMsg(pDlg, "lbHistory", DM_LISTADDSTR, (intptr_t)oldvalue, 0);
 
-					g_free(oldpath);
+					g_free(oldvalue);
 				}
 				while (g_key_file_has_key(gCfg, gScript, key, NULL));
 
@@ -651,7 +768,7 @@ intptr_t DCPCALL DlgSelectPathProc(uintptr_t pDlg, char* DlgItemName, intptr_t M
 			}
 		}
 
-		g_free(path);
+		g_free(value);
 	}
 
 	break;
@@ -660,9 +777,9 @@ intptr_t DCPCALL DlgSelectPathProc(uintptr_t pDlg, char* DlgItemName, intptr_t M
 		if (strcmp(DlgItemName, "btnOK") == 0)
 		{
 			gchar *output = NULL;
-			char *text = g_strdup((char*)SendDlgMsg(pDlg, "lblText", DM_GETTEXT, 0, 0));
-			char *res = g_strdup((char*)SendDlgMsg(pDlg, "edPath", DM_GETTEXT, 0, 0));
-			SendDlgMsg(pDlg, "edPath", DM_SHOWDIALOG, 0, 0);
+			char *text = g_strdup((char*)SendDlgMsg(pDlg, "lblOption", DM_GETTEXT, 0, 0));
+			char *res = g_strdup((char*)SendDlgMsg(pDlg, "edValue", DM_GETTEXT, 0, 0));
+			SendDlgMsg(pDlg, "edValue", DM_SHOWDIALOG, 0, 0);
 
 			if (res && res[0] != '\0')
 			{
@@ -686,8 +803,9 @@ intptr_t DCPCALL DlgSelectPathProc(uintptr_t pDlg, char* DlgItemName, intptr_t M
 
 			if (i != -1)
 			{
-				char *path = (char*)SendDlgMsg(pDlg, "lbHistory", DM_LISTGETITEM, i, 0);
-				SendDlgMsg(pDlg, "edPath", DM_SETTEXT, (intptr_t)path, 0);
+				char *value = g_strdup((char*)SendDlgMsg(pDlg, "lbHistory", DM_LISTGETITEM, i, 0));
+				SendDlgMsg(pDlg, "edValue", DM_SETTEXT, (intptr_t)value, 0);
+				g_free(value);
 			}
 		}
 
@@ -700,13 +818,25 @@ intptr_t DCPCALL DlgSelectPathProc(uintptr_t pDlg, char* DlgItemName, intptr_t M
 
 			if (lParam == 1 && *key == 46)
 			{
+				gchar *value = g_strdup((char*)SendDlgMsg(pDlg, "edValue", DM_GETTEXT, 0, 0));
 				int i = (int)SendDlgMsg(pDlg, "lbHistory", DM_LISTGETITEMINDEX, 0, 0);
 
 				if (i != -1)
+				{
+					gchar *oldvalue = g_strdup((char*)SendDlgMsg(pDlg, "lbHistory", DM_LISTGETITEM, i, 0));
 					SendDlgMsg(pDlg, "lbHistory", DM_LISTDELETE, i, 0);
 
-				char *text = (char*)SendDlgMsg(pDlg, "lblText", DM_GETTEXT, 0, 0);
-				SaveHistory(pDlg, text, NULL);
+					if (g_strcmp0(oldvalue, value) == 0 && SendDlgMsg(pDlg, "lbHistory", DM_LISTGETCOUNT, 0, 0) > 0)
+					{
+						value = g_strdup((char*)SendDlgMsg(pDlg, "lbHistory", DM_LISTGETITEM, 0, 0));
+						SendDlgMsg(pDlg, "edValue", DM_SETTEXT, (intptr_t)value, 0);
+					}
+				}
+
+				gchar *text = g_strdup((char*)SendDlgMsg(pDlg, "lblOption", DM_GETTEXT, 0, 0));
+				SaveHistory(pDlg, text, value);
+				g_free(value);
+				g_free(text);
 			}
 		}
 
@@ -715,6 +845,37 @@ intptr_t DCPCALL DlgSelectPathProc(uintptr_t pDlg, char* DlgItemName, intptr_t M
 
 	return 0;
 }
+
+static gboolean IsCanShowDlg(char *text)
+{
+	if (strncmp(text, MARK_NOISE, 3) == 0)
+	{
+		LogMessage(gPluginNr, MSGTYPE_IMPORTANTERROR, "Options starting with \"Fs_\" are reserved, ignored");
+		return FALSE;
+	}
+
+	if (!gDialogApi)
+	{
+		LogMessage(gPluginNr, MSGTYPE_IMPORTANTERROR, "DialogApi not initialized");
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
+static gchar *BuildRequestLFMData(const char *lfmdata_templ, char *text)
+{
+	GKeyFile *langs = OpenTranslations(gScript);
+	gchar *string = TranslateString(langs, text);
+	CloseTranslations(langs);
+	gchar *prev = g_key_file_get_string(gCfg, gScript, text, NULL);
+	gchar *lfmdata = g_strdup_printf(lfmdata_templ, text, string, prev ? prev : "");
+	g_free(prev);
+	g_free(string);
+
+	return lfmdata;
+}
+
 
 static void ShowSelectFileDlg(char *text)
 {
@@ -735,10 +896,23 @@ static void ShowSelectFileDlg(char *text)
 	                       "  OnCreate = DialogBoxShow\n"
 	                       "  Position = poOwnerFormCenter\n"
 	                       "  LCLVersion = '2.2.4.0'\n"
+	                       "  object lblOption: TLabel\n"
+	                       "    AnchorSideLeft.Control = Owner\n"
+	                       "    AnchorSideBottom.Control = Owner\n"
+	                       "    AnchorSideBottom.Side = asrBottom\n"
+	                       "    Left = 10\n"
+	                       "    Height = 17\n"
+	                       "    Top = 189\n"
+	                       "    Width = 21\n"
+	                       "    Anchors = [akLeft, akBottom]\n"
+	                       "    Caption = '%s'\n"
+	                       "    ParentColor = False\n"
+	                       "    Visible = False\n"
+	                       "  end\n"
 	                       "  object lblText: TLabel\n"
 	                       "    AnchorSideLeft.Control = Owner\n"
 	                       "    AnchorSideTop.Control = Owner\n"
-	                       "    AnchorSideRight.Control = edPath\n"
+	                       "    AnchorSideRight.Control = edValue\n"
 	                       "    AnchorSideRight.Side = asrBottom\n"
 	                       "    Left = 10\n"
 	                       "    Height = 17\n"
@@ -750,10 +924,10 @@ static void ShowSelectFileDlg(char *text)
 	                       "    WordWrap = True\n"
 	                       "  end\n"
 	                       "  object lbHistory: TListBox\n"
-	                       "    AnchorSideLeft.Control = edPath\n"
+	                       "    AnchorSideLeft.Control = edValue\n"
 	                       "    AnchorSideTop.Control = lblText\n"
 	                       "    AnchorSideTop.Side = asrBottom\n"
-	                       "    AnchorSideRight.Control = edPath\n"
+	                       "    AnchorSideRight.Control = edValue\n"
 	                       "    AnchorSideRight.Side = asrBottom\n"
 	                       "    Left = 10\n"
 	                       "    Height = 83\n"
@@ -767,7 +941,7 @@ static void ShowSelectFileDlg(char *text)
 	                       "    TabOrder = 0\n"
 	                       "    Visible = False\n"
 	                       "  end\n"
-	                       "  object edPath: TFileNameEdit\n"
+	                       "  object edValue: TFileNameEdit\n"
 	                       "    AnchorSideLeft.Control = Owner\n"
 	                       "    AnchorSideTop.Control = lbHistory\n"
 	                       "    AnchorSideTop.Side = asrBottom\n"
@@ -786,9 +960,9 @@ static void ShowSelectFileDlg(char *text)
 	                       "    Text = '%s'\n"
 	                       "  end\n"
 	                       "  object btnOK: TBitBtn\n"
-	                       "    AnchorSideTop.Control = edPath\n"
+	                       "    AnchorSideTop.Control = edValue\n"
 	                       "    AnchorSideTop.Side = asrBottom\n"
-	                       "    AnchorSideRight.Control = edPath\n"
+	                       "    AnchorSideRight.Control = edValue\n"
 	                       "    AnchorSideRight.Side = asrBottom\n"
 	                       "    Left = 511\n"
 	                       "    Height = 31\n"
@@ -825,28 +999,23 @@ static void ShowSelectFileDlg(char *text)
 	                       "  end\n"
 	                       "end\n";
 
-	if (strncmp(text, NOISE_OPT, 3) == 0)
-	{
-		LogMessage(gPluginNr, MSGTYPE_IMPORTANTERROR, "Options starting with \"Fs_\" are reserved, ignored");
+	if (!IsCanShowDlg(text))
 		return;
-	}
-
-	if (!gDialogApi)
-	{
-		LogMessage(gPluginNr, MSGTYPE_IMPORTANTERROR, "DialogApi not initialized");
-		return;
-	}
 
 	gchar **split = g_strsplit(text, "\t", -1);
 	guint len = g_strv_length(split);
 
 	if (len > 0)
 	{
+		GKeyFile *langs = OpenTranslations(gScript);
+		gchar *string = TranslateString(langs, split[0]);
+		CloseTranslations(langs);
 		gchar *prev = g_key_file_get_string(gCfg, gScript, split[0], NULL);
-		gchar *lfmdata = g_strdup_printf(lfmdata_templ, split[0], split[1] ? split[1] : "*.*|*.*", prev ? prev : "");
+		gchar *lfmdata = g_strdup_printf(lfmdata_templ, split[0], string, split[1] ? split[1] : "*.*|*.*", prev ? prev : "");
 		g_free(prev);
+		g_free(string);
 
-		gDialogApi->DialogBoxLFM((intptr_t)lfmdata, (unsigned long)strlen(lfmdata), DlgSelectPathProc);
+		gDialogApi->DialogBoxLFM((intptr_t)lfmdata, (unsigned long)strlen(lfmdata), DlgRequestValueProc);
 		g_free(lfmdata);
 		g_strfreev(split);
 	}
@@ -871,10 +1040,23 @@ static void ShowSelectDirDlg(char *text)
 	                             "  OnCreate = DialogBoxShow\n"
 	                             "  Position = poOwnerFormCenter\n"
 	                             "  LCLVersion = '2.2.4.0'\n"
+	                             "  object lblOption: TLabel\n"
+	                             "    AnchorSideLeft.Control = Owner\n"
+	                             "    AnchorSideBottom.Control = Owner\n"
+	                             "    AnchorSideBottom.Side = asrBottom\n"
+	                             "    Left = 10\n"
+	                             "    Height = 17\n"
+	                             "    Top = 189\n"
+	                             "    Width = 21\n"
+	                             "    Anchors = [akLeft, akBottom]\n"
+	                             "    Caption = '%s'\n"
+	                             "    ParentColor = False\n"
+	                             "    Visible = False\n"
+	                             "  end\n"
 	                             "  object lblText: TLabel\n"
 	                             "    AnchorSideLeft.Control = Owner\n"
 	                             "    AnchorSideTop.Control = Owner\n"
-	                             "    AnchorSideRight.Control = edPath\n"
+	                             "    AnchorSideRight.Control = edValue\n"
 	                             "    AnchorSideRight.Side = asrBottom\n"
 	                             "    Left = 10\n"
 	                             "    Height = 17\n"
@@ -886,10 +1068,10 @@ static void ShowSelectDirDlg(char *text)
 	                             "    WordWrap = True\n"
 	                             "  end\n"
 	                             "  object lbHistory: TListBox\n"
-	                             "    AnchorSideLeft.Control = edPath\n"
+	                             "    AnchorSideLeft.Control = edValue\n"
 	                             "    AnchorSideTop.Control = lblText\n"
 	                             "    AnchorSideTop.Side = asrBottom\n"
-	                             "    AnchorSideRight.Control = edPath\n"
+	                             "    AnchorSideRight.Control = edValue\n"
 	                             "    AnchorSideRight.Side = asrBottom\n"
 	                             "    Left = 10\n"
 	                             "    Height = 83\n"
@@ -903,7 +1085,7 @@ static void ShowSelectDirDlg(char *text)
 	                             "    TabOrder = 0\n"
 	                             "    Visible = False\n"
 	                             "  end\n"
-	                             "  object edPath: TDirectoryEdit\n"
+	                             "  object edValue: TDirectoryEdit\n"
 	                             "    AnchorSideLeft.Control = Owner\n"
 	                             "    AnchorSideTop.Control = lbHistory\n"
 	                             "    AnchorSideTop.Side = asrBottom\n"
@@ -920,9 +1102,9 @@ static void ShowSelectDirDlg(char *text)
 	                             "    Text = '%s'\n"
 	                             "  end\n"
 	                             "  object btnOK: TBitBtn\n"
-	                             "    AnchorSideTop.Control = edPath\n"
+	                             "    AnchorSideTop.Control = edValue\n"
 	                             "    AnchorSideTop.Side = asrBottom\n"
-	                             "    AnchorSideRight.Control = edPath\n"
+	                             "    AnchorSideRight.Control = edValue\n"
 	                             "    AnchorSideRight.Side = asrBottom\n"
 	                             "    Left = 511\n"
 	                             "    Height = 31\n"
@@ -959,23 +1141,137 @@ static void ShowSelectDirDlg(char *text)
 	                             "  end\n"
 	                             "end\n";
 
-	if (strncmp(text, NOISE_OPT, 3) == 0)
-	{
-		LogMessage(gPluginNr, MSGTYPE_IMPORTANTERROR, "Options starting with \"Fs_\" are reserved, ignored");
+	if (!IsCanShowDlg(text))
 		return;
-	}
 
-	if (!gDialogApi)
-	{
-		LogMessage(gPluginNr, MSGTYPE_IMPORTANTERROR, "DialogApi not initialized");
+	gchar *lfmdata = BuildRequestLFMData(lfmdata_templ, text);
+
+	gDialogApi->DialogBoxLFM((intptr_t)lfmdata, (unsigned long)strlen(lfmdata), DlgRequestValueProc);
+	g_free(lfmdata);
+}
+
+static void ShowRequestValueDlg(char *text)
+{
+	const char lfmdata_templ[] = ""
+	                             "object SelectDirDialogBox: TSelectDirDialogBox\n"
+	                             "  Left = 210\n"
+	                             "  Height = 216\n"
+	                             "  Top = 218\n"
+	                             "  Width = 622\n"
+	                             "  AutoSize = True\n"
+	                             "  BorderStyle = bsDialog\n"
+	                             "  Caption = 'Confirmation of parameter'\n"
+	                             "  ChildSizing.LeftRightSpacing = 10\n"
+	                             "  ChildSizing.TopBottomSpacing = 10\n"
+	                             "  ClientHeight = 216\n"
+	                             "  ClientWidth = 622\n"
+	                             "  DesignTimePPI = 100\n"
+	                             "  OnCreate = DialogBoxShow\n"
+	                             "  Position = poOwnerFormCenter\n"
+	                             "  LCLVersion = '2.2.4.0'\n"
+	                             "  object lblOption: TLabel\n"
+	                             "    AnchorSideLeft.Control = Owner\n"
+	                             "    AnchorSideBottom.Control = Owner\n"
+	                             "    AnchorSideBottom.Side = asrBottom\n"
+	                             "    Left = 10\n"
+	                             "    Height = 17\n"
+	                             "    Top = 189\n"
+	                             "    Width = 21\n"
+	                             "    Anchors = [akLeft, akBottom]\n"
+	                             "    Caption = '%s'\n"
+	                             "    ParentColor = False\n"
+	                             "    Visible = False\n"
+	                             "  end\n"
+	                             "  object lblText: TLabel\n"
+	                             "    AnchorSideLeft.Control = Owner\n"
+	                             "    AnchorSideTop.Control = Owner\n"
+	                             "    AnchorSideRight.Control = edValue\n"
+	                             "    AnchorSideRight.Side = asrBottom\n"
+	                             "    Left = 10\n"
+	                             "    Height = 17\n"
+	                             "    Top = 10\n"
+	                             "    Width = 21\n"
+	                             "    Anchors = [akTop, akLeft, akRight]\n"
+	                             "    Caption = '%s'\n"
+	                             "    ParentColor = False\n"
+	                             "    WordWrap = True\n"
+	                             "  end\n"
+	                             "  object lbHistory: TListBox\n"
+	                             "    AnchorSideLeft.Control = edValue\n"
+	                             "    AnchorSideTop.Control = lblText\n"
+	                             "    AnchorSideTop.Side = asrBottom\n"
+	                             "    AnchorSideRight.Control = edValue\n"
+	                             "    AnchorSideRight.Side = asrBottom\n"
+	                             "    Left = 10\n"
+	                             "    Height = 83\n"
+	                             "    Top = 37\n"
+	                             "    Width = 598\n"
+	                             "    Anchors = [akTop, akLeft, akRight]\n"
+	                             "    BorderSpacing.Top = 10\n"
+	                             "    ItemHeight = 0\n"
+	                             "    OnClick = ListBoxClick\n"
+	                             "    OnKeyUp = ListBoxKeyUp\n"
+	                             "    TabOrder = 0\n"
+	                             "    Visible = False\n"
+	                             "  end\n"
+	                             "  object edValue: TEdit\n"
+	                             "    AnchorSideLeft.Control = Owner\n"
+	                             "    AnchorSideTop.Control = lbHistory\n"
+	                             "    AnchorSideTop.Side = asrBottom\n"
+	                             "    Left = 10\n"
+	                             "    Height = 36\n"
+	                             "    Top = 130\n"
+	                             "    Width = 598\n"
+	                             "    BorderSpacing.Top = 10\n"
+	                             "    TabOrder = 1\n"
+	                             "    Text = '%s'\n"
+	                             "  end\n"
+	                             "  object btnOK: TBitBtn\n"
+	                             "    AnchorSideTop.Control = edValue\n"
+	                             "    AnchorSideTop.Side = asrBottom\n"
+	                             "    AnchorSideRight.Control = edValue\n"
+	                             "    AnchorSideRight.Side = asrBottom\n"
+	                             "    Left = 511\n"
+	                             "    Height = 31\n"
+	                             "    Top = 176\n"
+	                             "    Width = 97\n"
+	                             "    Anchors = [akTop, akRight]\n"
+	                             "    BorderSpacing.Top = 10\n"
+	                             "    Constraints.MinHeight = 30\n"
+	                             "    Constraints.MinWidth = 97\n"
+	                             "    Default = True\n"
+	                             "    DefaultCaption = True\n"
+	                             "    Kind = bkOK\n"
+	                             "    ModalResult = 1\n"
+	                             "    OnClick = ButtonClick\n"
+	                             "    TabOrder = 2\n"
+	                             "  end\n"
+	                             "  object btnCancel: TBitBtn\n"
+	                             "    AnchorSideTop.Control = btnOK\n"
+	                             "    AnchorSideRight.Control = btnOK\n"
+	                             "    Left = 404\n"
+	                             "    Height = 31\n"
+	                             "    Top = 176\n"
+	                             "    Width = 97\n"
+	                             "    Anchors = [akTop, akRight]\n"
+	                             "    BorderSpacing.Right = 10\n"
+	                             "    Cancel = True\n"
+	                             "    Constraints.MinHeight = 30\n"
+	                             "    Constraints.MinWidth = 97\n"
+	                             "    DefaultCaption = True\n"
+	                             "    Kind = bkCancel\n"
+	                             "    ModalResult = 2\n"
+	                             "    OnClick = ButtonClick\n"
+	                             "    TabOrder = 3\n"
+	                             "  end\n"
+	                             "end\n";
+
+	if (!IsCanShowDlg(text))
 		return;
-	}
 
-	gchar *prev = g_key_file_get_string(gCfg, gScript, text, NULL);
-	gchar *lfmdata = g_strdup_printf(lfmdata_templ, text, prev ? prev : "");
-	g_free(prev);
+	gchar *lfmdata = BuildRequestLFMData(lfmdata_templ, text);
 
-	gDialogApi->DialogBoxLFM((intptr_t)lfmdata, (unsigned long)strlen(lfmdata), DlgSelectPathProc);
+	gDialogApi->DialogBoxLFM((intptr_t)lfmdata, (unsigned long)strlen(lfmdata), DlgRequestValueProc);
 	g_free(lfmdata);
 }
 
@@ -987,10 +1283,14 @@ intptr_t DCPCALL DlgMultiChoiceProc(uintptr_t pDlg, char* DlgItemName, intptr_t 
 		if (gChoice)
 		{
 			gsize count = 0;
-			gchar **split = g_strsplit(gChoice, "\t", -1);
-			SendDlgMsg(pDlg, "lblText", DM_SETTEXT, (intptr_t)split[0], 0);
-			gchar **items = split + 1;
-			gchar *prev_choice = g_key_file_get_string(gCfg, gScript, split[0], NULL);
+			GKeyFile *langs = OpenTranslations(gScript);
+			gchar *string = TranslateString(langs, gChoice[0]);
+			SendDlgMsg(pDlg, "MultichoiceDialogBox", DM_SETTEXT, (intptr_t)gScript, 0);
+			SendDlgMsg(pDlg, "lblText", DM_SETTEXT, (intptr_t)string, 0);
+			SendDlgMsg(pDlg, "lbDataStore", DM_LISTADDSTR, (intptr_t)gChoice[0], 0);
+			g_free(string);
+			gchar **items = gChoice + 1;
+			gchar *prev_choice = g_key_file_get_string(gCfg, gScript, gChoice[0], NULL);
 
 			if (items)
 			{
@@ -998,10 +1298,13 @@ intptr_t DCPCALL DlgMultiChoiceProc(uintptr_t pDlg, char* DlgItemName, intptr_t 
 				{
 					if (*p[0] != '\0')
 					{
-						SendDlgMsg(pDlg, "cbChoice", DM_LISTADDSTR, (intptr_t)*p, 0);
+						string = TranslateString(langs, *p);
+						SendDlgMsg(pDlg, "cbChoice", DM_LISTADDSTR, (intptr_t)string, 0);
+						SendDlgMsg(pDlg, "lbDataStore", DM_LISTADDSTR, (intptr_t)*p, 0);
+						g_free(string);
 
 						if (prev_choice && g_strcmp0(*p, prev_choice) == 0)
-							SendDlgMsg(pDlg, "cbChoice", DM_SETTEXT, (intptr_t)*p, 0);
+							SendDlgMsg(pDlg, "cbChoice", DM_LISTSETITEMINDEX, (intptr_t)count, 0);
 
 						count++;
 					}
@@ -1021,7 +1324,7 @@ intptr_t DCPCALL DlgMultiChoiceProc(uintptr_t pDlg, char* DlgItemName, intptr_t 
 				LogMessage(gPluginNr, MSGTYPE_IMPORTANTERROR, "Fs_MultiChoice: there is no choice");
 
 			g_free(prev_choice);
-			g_strfreev(split);
+			CloseTranslations(langs);
 		}
 
 		break;
@@ -1030,8 +1333,9 @@ intptr_t DCPCALL DlgMultiChoiceProc(uintptr_t pDlg, char* DlgItemName, intptr_t 
 		if (strcmp(DlgItemName, "btnOK") == 0)
 		{
 			gchar *output = NULL;
-			char *text = (char*)SendDlgMsg(pDlg, "lblText", DM_GETTEXT, 0, 0);
-			char *res = (char*)SendDlgMsg(pDlg, "cbChoice", DM_GETTEXT, 0, 0);
+			char *text = g_strdup((char*)SendDlgMsg(pDlg, "lbDataStore", DM_LISTGETITEM, 0, 0));
+			int i = SendDlgMsg(pDlg, "cbChoice", DM_LISTGETITEMINDEX, 0, 0);
+			char *res = g_strdup((char*)SendDlgMsg(pDlg, "lbDataStore", DM_LISTGETITEM, ++i, 0));
 			g_key_file_set_string(gCfg, gScript, text, res);
 			SendDlgMsg(pDlg, "cbChoice", DM_SHOWDIALOG, 0, 0);
 
@@ -1046,6 +1350,9 @@ intptr_t DCPCALL DlgMultiChoiceProc(uintptr_t pDlg, char* DlgItemName, intptr_t 
 			}
 			else
 				LogMessage(gPluginNr, MSGTYPE_DETAILS, "empty argument selected");
+
+			g_free(text);
+			g_free(res);
 		}
 
 		break;
@@ -1145,24 +1452,29 @@ object MultichoiceDialogBox: TMultichoiceDialogBox
     ParentFont = False
     TabOrder = 0
   end
+  object lbDataStore: TListBox
+    AnchorSideLeft.Control = Owner
+    AnchorSideRight.Control = Owner
+    AnchorSideBottom.Control = Owner
+    AnchorSideBottom.Side = asrBottom
+    Left = 10
+    Height = 83
+    Top = 123
+    Width = 164
+    Anchors = [akLeft, akBottom]
+    ItemHeight = 0
+    TabStop = False
+    Visible = False
+  end
 end
 )";
 
-	if (strncmp(text, NOISE_OPT, 3) == 0)
-	{
-		LogMessage(gPluginNr, MSGTYPE_IMPORTANTERROR, "Options starting with \"Fs_\" are reserved, ignored");
+	if (!IsCanShowDlg(text))
 		return;
-	}
 
-	if (!gDialogApi)
-	{
-		LogMessage(gPluginNr, MSGTYPE_IMPORTANTERROR, "DialogApi not initialized");
-		return;
-	}
-
-	gChoice = g_strdup(text);
+	gChoice = g_strsplit(text, "\t", -1);
 	gDialogApi->DialogBoxLFM((intptr_t)multichoice_lfm, (unsigned long)strlen(multichoice_lfm), DlgMultiChoiceProc);
-	g_free(gChoice);
+	g_strfreev(gChoice);
 	gChoice = NULL;
 
 }
@@ -1175,80 +1487,138 @@ static void ParseOpts(gchar *script, gchar *text)
 
 	if (text)
 	{
+		GKeyFile *langs = OpenTranslations(script);
 		gchar **split = g_strsplit(text, "\n", -1);
 
 		for (gchar **p = split; *p != NULL; p++)
 		{
+			gchar *string = NULL;
+
 			if (*p[0] != 0)
 			{
-				if (g_strcmp0(*p, REQUEST_OPT) == 0)
+				if (g_strcmp0(*p, OPT_REQUEST) == 0)
 				{
 					log_info = FALSE;
 					request_values = TRUE;
 				}
-				else if (g_strcmp0(*p, LOGINFO_OPT) == 0)
+				else if (g_strcmp0(*p, OPT_LOGINFO) == 0)
 				{
 					log_info = TRUE;
 					request_values = FALSE;
 				}
-				else if (g_strcmp0(*p, STATUSINFO_OPT) == 0)
-					g_key_file_set_boolean(gCfg, script, STATUSINFO_OPT, TRUE);
-				else if (g_strcmp0(*p, CHECKFIELDS_OPT) == 0)
-					g_key_file_set_boolean(gCfg, script, CHECKFIELDS_OPT, TRUE);
-				else if (IsValidOpt(*p, ENVVAR_OPT))
+				else if (g_strcmp0(*p, OPT_STATUSINFO) == 0)
+					g_key_file_set_boolean(gCfg, script, OPT_STATUSINFO, TRUE);
+				else if (g_strcmp0(*p, OPT_CHECKFIELDS) == 0)
+					g_key_file_set_boolean(gCfg, script, OPT_CHECKFIELDS, TRUE);
+				else if (IsValidOpt(*p, OPT_ENVVAR))
 				{
-					g_key_file_set_string(gCfg, script, ENVVAR_OPT, *p + strlen(ENVVAR_OPT) + 1);
+					g_key_file_set_string(gCfg, script, OPT_ENVVAR, STRIP_OPT(*p, OPT_ENVVAR));
 
 					if (gNoise)
 					{
-						gchar *message = g_strdup_printf("%s value will be set to \"%s\"", ENVVAR_NAME, *p + strlen(ENVVAR_OPT) + 1);
+						gchar *message = g_strdup_printf("%s value will be set to %s", ENVVAR_NAME, *p + strlen(OPT_ENVVAR) + 1);
 						LogMessage(gPluginNr, MSGTYPE_DETAILS, message);
 						g_free(message);
 					}
 				}
-				else if (IsValidOpt(*p, INFORM_OPT) && gRequestProc)
-					gRequestProc(gPluginNr, RT_MsgOK, script, *p + strlen(INFORM_OPT) + 1, NULL, 0);
-				else if (IsValidOpt(*p, YESNOMSG_OPT) && gRequestProc)
+				else if (IsValidOpt(*p, OPT_INFORM) && gRequestProc)
 				{
-					gboolean is_yes = gRequestProc(gPluginNr, RT_MsgYesNo, script, *p + strlen(YESNOMSG_OPT) + 1, NULL, 0);
+					string = TranslateString(langs, STRIP_OPT(*p, OPT_INFORM));
 
-					SetOpt(script, *p + strlen(YESNOMSG_OPT) + 1, is_yes ? "Yes" : "No");
+					if (gDialogApi)
+						MessageBox(string, script, MB_OK | MB_ICONINFORMATION);
+					else
+						gRequestProc(gPluginNr, RT_MsgOK, script, string, NULL, 0);
 				}
-				else if (IsValidOpt(*p, PUSH_OPT))
+				else if (IsValidOpt(*p, OPT_YESNOMSG) && gRequestProc)
 				{
-					gchar **res = g_strsplit(*p + strlen(PUSH_OPT) + 1, "\t", 2);
-					SetOpt(script, res[0], res[1]);
+					string = TranslateString(langs, STRIP_OPT(*p, OPT_YESNOMSG));
+					gboolean is_yes = FALSE;
+
+					if (gDialogApi)
+						is_yes = (MessageBox(string, script, MB_YESNO | MB_ICONQUESTION) == ID_YES);
+					else
+						is_yes = gRequestProc(gPluginNr, RT_MsgYesNo, script, string, NULL, 0);
+
+					SetOpt(script, STRIP_OPT(*p, OPT_YESNOMSG), is_yes ? "Yes" : "No");
+				}
+				else if (IsValidOpt(*p, OPT_ASK) && gRequestProc)
+				{
+					string = TranslateString(langs, STRIP_OPT(*p, OPT_ASK));
+					gboolean is_yes = FALSE;
+					gchar *key = g_strdup_printf("%s_%s", MARK_BOOL, STRIP_OPT(*p, OPT_ASK));
+
+					if (!g_key_file_has_key(gCfg, script, key, NULL))
+					{
+						if (gDialogApi)
+							is_yes = (MessageBox(string, script, MB_YESNO | MB_ICONQUESTION) == ID_YES);
+						else
+							is_yes = gRequestProc(gPluginNr, RT_MsgYesNo, script, string, NULL, 0);
+
+						g_key_file_set_boolean(gCfg, script, key, is_yes);
+					}
+					else
+						is_yes = g_key_file_get_boolean(gCfg, script, string, NULL);
+
+					g_free(key);
+					SetOpt(script, STRIP_OPT(*p, OPT_ASK), is_yes ? "Yes" : "No");
+				}
+				else if (IsValidOpt(*p, OPT_PUSH))
+				{
+					gchar **res = g_strsplit(STRIP_OPT(*p, OPT_PUSH), "\t", 2);
+
+					if (strncmp(res[0], MARK_NOISE, 3) == 0)
+						LogMessage(gPluginNr, MSGTYPE_IMPORTANTERROR, "Options starting with \"Fs_\" are reserved, ignored");
+					else
+					{
+						if (!g_key_file_has_key(gCfg, script, res[0], NULL))
+						{
+							g_key_file_set_string(gCfg, script, res[0], res[1]);
+							g_strlcpy(gScript, script, PATH_MAX);
+							ShowRequestValueDlg(res[0]);
+						}
+						else
+						{
+							gchar *value = g_key_file_get_string(gCfg, script, res[0], NULL);
+							SetOpt(script, res[0], value);
+							g_free(value);
+						}
+					}
+
 					g_strfreev(res);
 				}
-				else if (IsValidOpt(*p, CHOICE_OPT))
+				else if (IsValidOpt(*p, OPT_CHOICE))
 				{
 					g_strlcpy(gScript, script, PATH_MAX);
-					ShowMultiChoiceDlg(*p + strlen(CHOICE_OPT) + 1);
+					ShowMultiChoiceDlg(STRIP_OPT(*p, OPT_CHOICE));
 				}
-				else if (IsValidOpt(*p, SELFILE_OPT))
+				else if (IsValidOpt(*p, OPT_SELFILE))
 				{
 					g_strlcpy(gScript, script, PATH_MAX);
-					ShowSelectFileDlg(*p + strlen(SELFILE_OPT) + 1);
+					ShowSelectFileDlg(STRIP_OPT(*p, OPT_SELFILE));
 				}
-				else if (IsValidOpt(*p, SELDIR_OPT))
+				else if (IsValidOpt(*p, OPT_SELDIR))
 				{
 					g_strlcpy(gScript, script, PATH_MAX);
-					ShowSelectDirDlg(*p + strlen(SELDIR_OPT) + 1);
+					ShowSelectDirDlg(STRIP_OPT(*p, OPT_SELDIR));
 				}
-				else if (strncmp(*p, NOISE_OPT, 3) == 0)
+				else if (strncmp(*p, MARK_NOISE, 3) == 0)
 					LogMessage(gPluginNr, MSGTYPE_IMPORTANTERROR, "Options starting with \"Fs_\" are reserved, ignored");
 				else if (log_info == TRUE)
-					LogMessage(gPluginNr, MSGTYPE_DETAILS, *p);
+				{
+					string = TranslateString(langs, *p);
+					LogMessage(gPluginNr, MSGTYPE_DETAILS, string);
+				}
 				else if (request_values == TRUE)
 				{
-					char value[MAX_PATH] = "";
-
-					int type = (strncasecmp("password", *p, 8) == 0) ? RT_Password : RT_Other;
-
-					if (type == RT_Password)
+					if (strncasecmp("password", *p, 8) == 0)
 					{
+						char value[MAX_PATH] = "";
+
 						if (!gCryptProc)
+						{
 							LogMessage(gPluginNr, MSGTYPE_IMPORTANTERROR, "CryptProc not initialized");
+						}
 						else
 						{
 							int ret = gCryptProc(gPluginNr, gCryptoNr, FS_CRYPT_LOAD_PASSWORD_NO_UI, script, value, MAX_PATH);
@@ -1257,63 +1627,57 @@ static void ParseOpts(gchar *script, gchar *text)
 								ret = gCryptProc(gPluginNr, gCryptoNr, FS_CRYPT_LOAD_PASSWORD, script, value, MAX_PATH);
 
 							LogCryptProc(ret);
+
+							if (gRequestProc && gRequestProc(gPluginNr, RT_Password, script, NULL, value, MAX_PATH))
+							{
+								ExecuteScript(script, VERB_SETOPT, *p, value, &output, FALSE);
+
+
+								if (!gCryptProc)
+									LogMessage(gPluginNr, MSGTYPE_IMPORTANTERROR, "CryptProc not initialized");
+								else
+									LogCryptProc(gCryptProc(gPluginNr, gCryptoNr, FS_CRYPT_SAVE_PASSWORD, script, value, MAX_PATH));
+
+								if (output && output[0] != '\0')
+									ParseOpts(script, output);
+
+								g_free(output);
+								output = NULL;
+
+							}
 						}
 					}
 					else
 					{
-
-						gchar *prev = g_key_file_get_string(gCfg, script, *p, NULL);
-
-						if (prev)
-						{
-							g_strlcpy(value, prev, MAX_PATH);
-							g_free(prev);
-						}
-					}
-
-					if (gRequestProc && gRequestProc(gPluginNr, type, script, (type == RT_Password) ? NULL : *p, value, MAX_PATH))
-					{
-						ExecuteScript(script, VERB_SETOPT, *p, value, &output, FALSE);
-
-						if (type == RT_Password)
-						{
-							if (!gCryptProc)
-								LogMessage(gPluginNr, MSGTYPE_IMPORTANTERROR, "CryptProc not initialized");
-							else
-								LogCryptProc(gCryptProc(gPluginNr, gCryptoNr, FS_CRYPT_SAVE_PASSWORD, script, value, MAX_PATH));
-						}
-						else
-							g_key_file_set_string(gCfg, script, *p, value);
-
-						if (output && output[0] != '\0')
-							ParseOpts(script, output);
-
-						g_free(output);
-						output = NULL;
+						g_strlcpy(gScript, script, PATH_MAX);
+						ShowRequestValueDlg(*p);
 					}
 				}
 				else
 				{
-					gchar *message = g_strdup_printf("%s directive not received, Line \"%s\" will be omitted.", REQUEST_OPT, *p);
+					gchar *message = g_strdup_printf("%s directive not received, Line \"%s\" will be omitted.", OPT_REQUEST, *p);
 					LogMessage(gPluginNr, MSGTYPE_IMPORTANTERROR, message);
 					g_free(message);
 				}
 			}
+
+			g_free(string);
 		}
 
 		g_strfreev(split);
+		CloseTranslations(langs);
 	}
 }
 
 static void DeInitializeScript(gchar *script)
 {
-	if (g_key_file_get_boolean(gCfg, script, IN_USE_MARK, NULL))
+	if (g_key_file_get_boolean(gCfg, script, MARK_INUSE, NULL))
 	{
 		if (!ExecuteScript(script, VERB_DEINIT, NULL, NULL, NULL, FALSE) && gNoise)
 			LogMessage(gPluginNr, MSGTYPE_DETAILS, "Deinitialization not implemented or not completed successfully");
 
-		g_key_file_remove_key(gCfg, script, IN_USE_MARK, NULL);
-		g_key_file_remove_key(gCfg, script, ENVVAR_OPT, NULL);
+		g_key_file_remove_key(gCfg, script, MARK_INUSE, NULL);
+		g_key_file_remove_key(gCfg, script, OPT_ENVVAR, NULL);
 #ifndef  TEMP_PANEL
 		gchar *message = g_strdup_printf("DISCONNECT /%s", script);
 
@@ -1330,7 +1694,7 @@ static void InitializeScript(gchar *script)
 	gchar *output = NULL;
 
 	DeInitializeScript(script);
-	gNoise = g_key_file_get_boolean(gCfg, script, NOISE_OPT, NULL);
+	gNoise = g_key_file_get_boolean(gCfg, script, MARK_NOISE, NULL);
 #ifndef TEMP_PANEL
 	gchar *message = g_strdup_printf("CONNECT /%s", script);
 	LogMessage(gPluginNr, MSGTYPE_CONNECT, message);
@@ -1338,7 +1702,7 @@ static void InitializeScript(gchar *script)
 #endif
 
 	ExecuteScript(script, VERB_INIT, NULL, NULL, &output, FALSE);
-	g_key_file_set_boolean(gCfg, script, IN_USE_MARK, TRUE);
+	g_key_file_set_boolean(gCfg, script, MARK_INUSE, TRUE);
 	ParseOpts(script, output);
 	g_free(output);
 }
@@ -1350,12 +1714,12 @@ intptr_t DCPCALL DlgPropertiesProc(uintptr_t pDlg, char* DlgItemName, intptr_t M
 	switch (Msg)
 	{
 	case DN_INITDIALOG:
-		gNoise = g_key_file_get_boolean(gCfg, gScript, NOISE_OPT, NULL);
+		gNoise = g_key_file_get_boolean(gCfg, gScript, MARK_NOISE, NULL);
 		SendDlgMsg(pDlg, "ckNoise", DM_SETCHECK, (intptr_t)gNoise, 0);
 		SendDlgMsg(pDlg, "lScriptName", DM_SETTEXT, (intptr_t)gScript, 0);
 		LoadPreview(pDlg, gScript);
 
-		if (!g_key_file_get_boolean(gCfg, gScript, IN_USE_MARK, NULL))
+		if (!g_key_file_get_boolean(gCfg, gScript, MARK_INUSE, NULL))
 			SendDlgMsg(pDlg, "btnUnmount", DM_SHOWITEM, 0, 0);
 
 		if (gCaller && gProps)
@@ -1391,13 +1755,19 @@ intptr_t DCPCALL DlgPropertiesProc(uintptr_t pDlg, char* DlgItemName, intptr_t M
 		}
 		else if (strcmp(DlgItemName, "btnAct") == 0)
 		{
-			char *cmd = (char*)SendDlgMsg(pDlg, "cbAct", DM_GETTEXT, 0, 0);
+			int i = SendDlgMsg(pDlg, "cbAct", DM_LISTGETITEMINDEX, 0, 0);
+			if (i > -1)
+			{
+			char *cmd = g_strdup((char*)SendDlgMsg(pDlg, "lbDataStore", DM_LISTGETITEM, i, 0));
 
 			if (cmd && cmd[0] != '\0')
 			{
 				SetOpt(gScript, cmd, gCaller);
 				SendDlgMsg(pDlg, DlgItemName, DM_CLOSE, ID_OK, 0);
 			}
+
+			g_free(cmd);
+		}
 		}
 
 		break;
@@ -1406,7 +1776,7 @@ intptr_t DCPCALL DlgPropertiesProc(uintptr_t pDlg, char* DlgItemName, intptr_t M
 		if (strcmp(DlgItemName, "ckNoise") == 0)
 		{
 			gNoise = (gboolean)SendDlgMsg(pDlg, DlgItemName, DM_GETCHECK, 0, 0);
-			g_key_file_set_boolean(gCfg, gScript, NOISE_OPT, gNoise);
+			g_key_file_set_boolean(gCfg, gScript, MARK_NOISE, gNoise);
 		}
 		else if (strcmp(DlgItemName, "cbAct") == 0)
 		{
@@ -1425,13 +1795,19 @@ intptr_t DCPCALL DlgPropertiesProc(uintptr_t pDlg, char* DlgItemName, intptr_t M
 
 			if ( *key == 13)
 			{
-				char *cmd = (char*)SendDlgMsg(pDlg, "cbAct", DM_GETTEXT, 0, 0);
+				int i = SendDlgMsg(pDlg, "cbAct", DM_LISTGETITEMINDEX, 0, 0);
+				if (i > -1)
+				{
+				char *cmd = g_strdup((char*)SendDlgMsg(pDlg, "lbDataStore", DM_LISTGETITEM, i, 0));
 
 				if (cmd && cmd[0] != '\0')
 				{
 					SetOpt(gScript, cmd, gCaller);
 					SendDlgMsg(pDlg, DlgItemName, DM_CLOSE, ID_OK, 0);
 				}
+
+				g_free(cmd);
+			}
 			}
 		}
 
@@ -1810,7 +2186,7 @@ HANDLE DCPCALL FsFindFirst(char* Path, WIN32_FIND_DATAA * FindData)
 	{
 		gchar *script = ExtractScriptFromPath(Path);
 
-		if (!g_key_file_get_boolean(gCfg, script, IN_USE_MARK, NULL))
+		if (!g_key_file_get_boolean(gCfg, script, MARK_INUSE, NULL))
 		{
 			g_strlcpy(gScript, script, PATH_MAX);
 			InitializeScript(script);
@@ -1845,7 +2221,7 @@ HANDLE DCPCALL FsFindFirst(char* Path, WIN32_FIND_DATAA * FindData)
 			return (HANDLE)(-1);
 		}
 
-		dirdata->regex = g_regex_new(LIST_REGEXP, G_REGEX_MULTILINE, G_REGEX_MATCH_NEWLINE_ANY, NULL);
+		dirdata->regex = g_regex_new(REGEXP_LIST, G_REGEX_MULTILINE, G_REGEX_MATCH_NEWLINE_ANY, NULL);
 
 		if (!g_regex_match(dirdata->regex, output, 0, &(dirdata->match_info)))
 		{
@@ -2120,7 +2496,7 @@ int DCPCALL FsExecuteFile(HWND MainWin, char* RemoteName, char* Verb)
 				result = FS_EXEC_YOURSELF;
 			else if (output && output[0] != '\0')
 			{
-				if (strncmp(output, NOISE_OPT, 3) == 0)
+				if (strncmp(output, MARK_NOISE, 3) == 0)
 				{
 					ParseOpts(script, output);
 					result = FS_EXEC_OK;
@@ -2153,7 +2529,7 @@ int DCPCALL FsExecuteFile(HWND MainWin, char* RemoteName, char* Verb)
 				if (!is_ok || (gProps && gProps[0] != '\0'))
 				{
 
-					if (strncmp(gProps, NOISE_OPT, 3) == 0)
+					if (strncmp(gProps, MARK_NOISE, 3) == 0)
 						ParseOpts(script, gProps);
 					else
 					{
@@ -2277,7 +2653,7 @@ int DCPCALL FsContentGetSupportedField(int FieldIndex, char* FieldName, char* Un
 				{
 					gchar *src_file = g_strdup_printf("%s/%s", gScriptDir, ent->d_name);
 
-					if (g_file_test(src_file, G_FILE_TEST_IS_EXECUTABLE) && g_key_file_get_boolean(gCfg, ent->d_name, CHECKFIELDS_OPT, NULL))
+					if (g_file_test(src_file, G_FILE_TEST_IS_EXECUTABLE) && g_key_file_get_boolean(gCfg, ent->d_name, OPT_CHECKFIELDS, NULL))
 					{
 						ExecuteScript(ent->d_name, VERB_FIELDS, NULL, NULL, &output);
 
@@ -2401,9 +2777,9 @@ void DCPCALL FsStatusInfo(char* RemoteDir, int InfoStartEnd, int InfoOperation)
 
 	gchar *script = ExtractScriptFromPath(RemoteDir);
 
-	gNoise = g_key_file_get_boolean(gCfg, script, NOISE_OPT, NULL);
+	gNoise = g_key_file_get_boolean(gCfg, script, MARK_NOISE, NULL);
 
-	if (!g_key_file_get_boolean(gCfg, script, STATUSINFO_OPT, NULL))
+	if (!g_key_file_get_boolean(gCfg, script, OPT_STATUSINFO, NULL))
 	{
 		g_free(script);
 		return;
@@ -2519,7 +2895,7 @@ int DCPCALL FsGetBackgroundFlags(void)
 	return BG_DOWNLOAD | BG_UPLOAD;
 }
 
-void DCPCALL FsSetDefaultParams(FsDefaultParamStruct* dps)
+void DCPCALL FsSetDefaultParams(FsDefaultParamStruct * dps)
 {
 	char def_ini[MAX_PATH];
 	g_strlcpy(def_ini, dps->DefaultIniName, PATH_MAX);
@@ -2539,14 +2915,21 @@ void DCPCALL FsSetDefaultParams(FsDefaultParamStruct* dps)
 
 		for (char **script = groups; *script != NULL; script++)
 		{
-			if (g_key_file_get_boolean(gCfg, *script, IN_USE_MARK, NULL))
-				g_key_file_set_boolean(gCfg, *script, IN_USE_MARK, FALSE);
+			if (g_key_file_get_boolean(gCfg, *script, MARK_INUSE, NULL))
+				g_key_file_set_boolean(gCfg, *script, MARK_INUSE, FALSE);
 		}
 	}
 }
 
-void DCPCALL ExtensionInitialize(tExtensionStartupInfo* StartupInfo)
+void DCPCALL ExtensionInitialize(tExtensionStartupInfo * StartupInfo)
 {
+	const gchar* value = g_getenv("LANG");
+	g_strlcpy(gLang, value, sizeof(gLang));
+	char *pos = strrchr(gLang, '.');
+
+	if (pos)
+		*pos = '\0';
+
 	if (gDialogApi == NULL)
 	{
 		gDialogApi = malloc(sizeof(tExtensionStartupInfo));
@@ -2565,7 +2948,7 @@ void DCPCALL ExtensionFinalize(void* Reserved)
 
 	for (char **script = groups; *script != NULL; script++)
 	{
-		if (g_key_file_get_boolean(gCfg, *script, IN_USE_MARK, NULL))
+		if (g_key_file_get_boolean(gCfg, *script, MARK_INUSE, NULL))
 			DeInitializeScript(*script);
 	}
 

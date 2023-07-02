@@ -6,14 +6,14 @@ date_form = "%ad" -- %ad - author date, %cd - commiter date
 
 args = {...}
 env_var = "DC_WFX_SCRIPT_DATA"
-msg_repo = "Path to git repo"
-msg_treeish = "Tree-ish"
-msg_custom = "<Custom tree-ish>"
-msg_commit = "<Commit>"
-act_select = "Select tree-ish"
-act_commit = "Select commit (tree-ish)"
-act_changes = "Show changes (tree-ish)"
-act_commit_file = "Select commit (file)"
+msg_repo = "WFX_SCRIPT_STR_REPO"
+msg_treeish = "WFX_SCRIPT_STR_TREEISH"
+msg_custom = "WFX_SCRIPT_STR_CUSTOM"
+msg_commit = "WFX_SCRIPT_STR_COMMIT"
+act_select = "WFX_SCRIPT_STR_SEL_TREEISH"
+act_commit = "WFX_SCRIPT_STR_SEL_COMMIT"
+act_changes = "WFX_SCRIPT_STR_CHANGES"
+act_commit_file = "WFX_SCRIPT_STR_SEL_COMMITFILE"
 
 
 function get_output(command)
@@ -43,7 +43,8 @@ function get_data()
 end
 
 function select_treeish(dir)
-    local treeish = '\t' .. msg_commit .. '\t' .. msg_custom
+    local extra = '\t' .. msg_commit .. '\t' .. msg_custom
+    local treeish = extra
     local output = get_output('cd ' .. dir .. ' && git branch')
     for line in output:gmatch("[^\n]-\n") do
         treeish = treeish .. '\t' .. line:match("%s?%*?%s?(.+)\n")
@@ -51,6 +52,9 @@ function select_treeish(dir)
     local output = get_output('cd ' .. dir .. ' && git tag')
     for line in output:gmatch("[^\n]-\n") do
         treeish = treeish .. '\t' .. line:match("(.+)\n")
+    end
+    if treeish == extra then
+        fs_init()
     end
     print("Fs_MultiChoice " .. msg_treeish .. treeish)
 end
@@ -66,6 +70,9 @@ function show_log(dir, treeish, path)
     local commits = ''
     for line in output:gmatch("[^\n]-\n") do
         commits = commits .. '\t' .. line:match("(.+)\n")
+    end
+    if commits == '' then
+        os.exit(1)
     end
     print("Fs_MultiChoice " .. msg_commit .. '\t' .. commits)
     os.exit()
@@ -172,18 +179,18 @@ function fs_properties(file)
     -- print('Name\t'..objname)
     output = get_output('cd ' .. dir .. ' && git log -1 --pretty=format:"%ad\n%an (%ae)\n%s" --date=format:"%Y-%m-%d %T" ' ..  treeish .. file:gsub('"', '\\"'):gsub('^/', ' -- "') .. '"')
     local datetime, author, subject = output:match("([^\n]-)\n([^\n]-)\n(.+)$")
-    print("Author\t" .. author)
-    print("Subject\t" .. subject)
-    print("Author date\t" .. datetime)
-    print("Size\t" .. filesize)
-    print("Mode\t" .. mode)
+    print("WFX_SCRIPT_STR_AUTHOR\t" .. author)
+    print("WFX_SCRIPT_STR_SUBJECT\t" .. subject)
+    print("WFX_SCRIPT_STR_ADATE\t" .. datetime)
+    print("WFX_SCRIPT_STR_SIZE\t" .. filesize)
+    print("WFX_SCRIPT_STR_MODE\t" .. mode)
     print("Path\t" .. pathname)
-    print("Tree-ish\t" .. treeish)
+    print("WFX_SCRIPT_STR_PROPTREEISH\t" .. treeish)
     output = get_output('cd ' .. dir .. ' && git log -1 --pretty=format:"%cd\n%cn (%ce)\n%s" --date=format:"%Y-%m-%d %T" ' ..  treeish)
     local datetime, commiter, subject = output:match("([^\n]-)\n([^\n]-)\n(.+)$")
-    print("Commiter\t" .. commiter)
-    print("Subject\t" .. subject)
-    print("Commiter date\t" .. datetime)
+    print("WFX_SCRIPT_STR_COMMITER\t" .. commiter)
+    print("WFX_SCRIPT_STR_SUBJECT\t" .. subject)
+    print("WFX_SCRIPT_STR_CDATE\t" .. datetime)
     print("Fs_PropsActs " .. act_changes .. '\t' .. act_commit_file .. '\t' .. act_commit .. '\t' .. act_select)
     os.exit()
 end

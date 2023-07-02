@@ -1,0 +1,19 @@
+[Default]
+WFX_SCRIPT_STR_TERM=Terminal command
+WFX_SCRIPT_STR_CMD=Command Line
+WFX_SCRIPT_STR_EXE=Executable
+WFX_SCRIPT_STR_SIG=Signal
+WFX_SCRIPT_STR_PATH=Storage
+WFX_SCRIPT_STR_MSG=Message
+WFX_SCRIPT_STR_TIME=Timestamp
+WFX_SCRIPT_STR_SIZE=Disk Size
+
+[ru_RU]
+WFX_SCRIPT_STR_TERM=Команда терминала
+WFX_SCRIPT_STR_CMD=Командная строка
+WFX_SCRIPT_STR_EXE=Исполняемый файл
+WFX_SCRIPT_STR_SIG=Сигнал
+WFX_SCRIPT_STR_PATH=Размещение
+WFX_SCRIPT_STR_MSG=Сообщение
+WFX_SCRIPT_STR_TIME=Время
+WFX_SCRIPT_STR_SIZE=Место на диске

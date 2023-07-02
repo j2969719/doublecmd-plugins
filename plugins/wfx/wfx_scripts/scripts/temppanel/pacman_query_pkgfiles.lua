@@ -81,24 +81,24 @@ function fs_properties(file)
     else
         print('content_type\tinode/directory')
         local fields = {
-            "Description",
-            "Architecture",
-            "URL",
-            "Licenses",
-            "Depends On",
-            "Required By",
-            "Optional Deps",
-            "Installed Size",
-            "Build Date",
-            "Install Date",
-            "Install Reason",
+            {"WFX_SCRIPT_STR_DESCR",     "Description%s+:%s+([^\n]-)\n"},
+            {"WFX_SCRIPT_STR_ARCH_BTW", "Architecture%s+:%s+([^\n]-)\n"},
+            {"URL",                              "URL%s+:%s+([^\n]-)\n"},
+            {"WFX_SCRIPT_STR_LICENSE",      "Licenses%s+:%s+([^\n]-)\n"},
+            {"WFX_SCRIPT_STR_DEPENDS",    "Depends On%s+:%s+([^\n]-)\n"},
+            {"WFX_SCRIPT_STR_REQUIRED",  "Required By%s+:%s+([^\n]-)\n"},
+            {"WFX_SCRIPT_STR_OPT",     "Optional Deps%s+:%s+([^\n]-)\n"},
+            {"WFX_SCRIPT_STR_SIZE",   "Installed Size%s+:%s+([^\n]-)\n"},
+            {"WFX_SCRIPT_STR_BUILD",      "Build Date%s+:%s+([^\n]-)\n"},
+            {"WFX_SCRIPT_STR_INSTALL",  "Install Date%s+:%s+([^\n]-)\n"},
+            {"WFX_SCRIPT_STR_REASON", "Install Reason%s+:%s+([^\n]-)\n"},
         }
         local pkgname = get_pkgname(file .. '/')
         local output = get_output("LANG= pacman -Qiq " .. pkgname)
-        for _, field in pairs(fields) do
-            value = output:match(field .. '%s+:%s+([^\n]-)\n')
+        for i=1, #fields do
+            value = output:match(fields[i][2])
             if value ~= nil then
-                print(field..'\t'..value)
+                print(fields[i][1]..'\t'..value)
             end
         end
     end

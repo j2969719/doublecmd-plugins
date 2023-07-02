@@ -12,7 +12,7 @@
 
 args = {...}
 temp_file = "/tmp/doublecmd-aur.lst"
-update_msg = "Update package list?"
+update_msg = "WFX_SCRIPT_STR_UPDPKG"
 
 function fs_init()
     os.execute("curl -sS https://aur.archlinux.org/pkgbase.gz | gzip -cd > " .. temp_file)
@@ -61,7 +61,7 @@ function fs_getlist(path)
         end
         for line in file:lines() do
             if line:find(pattern) and not line:find("# AUR package base list") then
-                print("-r--r--r-- " .. current_date .. " 404 " .. line .. ".tar.gz")
+                print("-r--r--r-- " .. current_date .. " - " .. line .. ".tar.gz")
             end
         end
         file:close()
