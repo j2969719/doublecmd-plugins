@@ -1,7 +1,13 @@
 #include <stdio.h>
 #include <glib.h>
 #include <gio/gio.h>
+#include <unistd.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <fcntl.h>
+#include <sys/wait.h>
 #include <tag_c.h>
+#include <utime.h>
 #include <errno.h>
 #include "wfxplugin.h"
 #include "extension.h"
@@ -13,6 +19,7 @@
 #define ROOTNAME "Taglib"
 #define ININAME "j2969719_wfx.ini"
 #define MAXINIITEMS 256
+#define BUFSIZE 8192
 
 
 typedef struct sVFSDirData
@@ -45,6 +52,7 @@ static char gStartPath[PATH_MAX] = "/";
 static char gOutExt[6];
 gchar *gTerm = NULL;
 gchar *gCommand = NULL;
+gboolean gExecuteConverter = FALSE;
 
 
 tField gFields[] =
@@ -85,7 +93,7 @@ BOOL Translate(const char *string, char *output, int maxlen)
 	return FALSE;
 }
 
-static gchar *str_replace(gchar *text, gchar *str, gchar *repl, gboolean quote)
+static gchar *ReplaceString(gchar *text, gchar *str, gchar *repl, gboolean quote)
 {
 	gchar *result = NULL;
 
@@ -108,7 +116,175 @@ static gchar *str_replace(gchar *text, gchar *str, gchar *repl, gboolean quote)
 	return result;
 }
 
-static void get_cmds_for_ext(uintptr_t pDlg)
+static int ConvertFile(char *InputFileName, char *TargetPath, gboolean OverwriteCheck)
+{
+	int status = 0;
+	GPid pid;
+	gchar **argv;
+	GSpawnFlags flags = G_SPAWN_SEARCH_PATH;
+	GError *err = NULL;
+	char str[MAX_PATH];
+	int result = FS_FILE_OK;
+
+	if (gProgressProc(gPluginNr, InputFileName, TargetPath, 0))
+		return FS_FILE_USERABORT;
+
+	if (!gCommand || gCommand[0] == '\0' || gOutExt[0] == '\0')
+		return FS_FILE_USERABORT;
+
+	gchar *outdir = g_path_get_dirname(TargetPath);
+	gchar *file = g_path_get_basename(TargetPath);
+	char *pos = strrchr(file, '.');
+
+	if (pos)
+		*pos = '\0';
+
+	gchar *outfile = g_strdup_printf("%s/%s.%s", outdir, file, gOutExt);
+	g_free(outdir);
+	g_free(file);
+
+	if (g_strcmp0(InputFileName, outfile) == 0)
+	{
+		g_free(outfile);
+		return FS_FILE_NOTSUPPORTED;
+	}
+
+	gProgressProc(gPluginNr, InputFileName, outfile, 0);
+
+	if (OverwriteCheck && g_file_test(outfile, G_FILE_TEST_EXISTS))
+	{
+		Translate("File %s already exists, overwrite?", str, MAX_PATH);
+		gchar *msg = g_strdup_printf(str, outfile);
+		int ret = MessageBox((char*)msg, ROOTNAME, MB_YESNOCANCEL | MB_ICONQUESTION);
+		g_free(msg);
+
+		if (ret != ID_YES)
+		{
+			g_free(outfile);
+
+			if (ret == ID_NO)
+				return FS_FILE_OK;
+			else
+				return FS_FILE_USERABORT;
+		}
+	}
+
+	gchar *temp = ReplaceString(gCommand, "{infile}", InputFileName, TRUE);
+	gchar *command = temp;
+	temp = ReplaceString(command, "{outfilenoext.ext}", outfile, TRUE);
+	g_free(command);
+	command = temp;
+	temp = ReplaceString(command, "\"", "\\\"", FALSE);
+	g_free(command);
+	command = temp;
+
+	if (gTerm && gTerm[0] != '\0')
+	{
+		temp = ReplaceString(gTerm, "{command}", command, FALSE);
+		g_free(command);
+		command = temp;
+	}
+
+	if (!g_shell_parse_argv(command, NULL, &argv, &err))
+	{
+		MessageBox((char*)err->message, ROOTNAME, MB_OK | MB_ICONERROR);
+		g_error_free(err);
+		g_free(command);
+		g_free(outfile);
+		return FS_FILE_USERABORT;
+	}
+
+	g_free(command);
+
+	if (!g_spawn_async(NULL, argv, NULL, flags, NULL, NULL, &pid, &err))
+	{
+		MessageBox((char*)err->message, ROOTNAME, MB_OK | MB_ICONERROR);
+		g_error_free(err);
+		g_free(outfile);
+		return FS_FILE_USERABORT;
+	}
+	else
+	{
+		while (gProgressProc(gPluginNr, InputFileName, outfile, 50) == 0 && kill(pid, 0) == 0)
+			sleep(0.5);
+
+		if (gProgressProc(gPluginNr, InputFileName, outfile, 50) != 0 && kill(pid, 0) == 0)
+		{
+			kill(pid, SIGTERM);
+			result = FS_FILE_USERABORT;
+		}
+
+		waitpid(pid, &status, 0);
+		g_spawn_close_pid(pid);
+	}
+
+	gProgressProc(gPluginNr, InputFileName, outfile, 100);
+	g_free(outfile);
+
+	return result;
+}
+
+static int CopyLocalFile(char* InFileName, char* OutFileName, gboolean OverwriteCheck)
+{
+	int ifd, ofd, done;
+	ssize_t len, total = 0;
+	char buff[BUFSIZE];
+	struct stat buf;
+	int result = FS_FILE_OK;
+
+	if (OverwriteCheck && access(OutFileName, F_OK) == 0)
+		return FS_FILE_EXISTS;
+
+	if (stat(InFileName, &buf) != 0)
+		return FS_FILE_READERROR;
+
+	ifd = open(InFileName, O_RDONLY);
+
+	if (ifd == -1)
+		return FS_FILE_READERROR;
+
+	ofd = open(OutFileName, O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR);
+
+	if (ofd > -1)
+	{
+
+		while ((len = read(ifd, buff, sizeof(buff))) > 0)
+		{
+			if (write(ofd, buff, len) == -1)
+			{
+				result = FS_FILE_WRITEERROR;
+				break;
+			}
+
+			total += len;
+
+			if (buf.st_size > 0)
+				done = total * 100 / buf.st_size;
+			else
+				done = 0;
+
+			if (done > 100)
+				done = 100;
+
+			if (gProgressProc(gPluginNr, InFileName, OutFileName, done) == 1)
+			{
+				result = FS_FILE_USERABORT;
+				break;
+			}
+		}
+
+		close(ofd);
+		chmod(OutFileName, buf.st_mode);
+	}
+	else
+		result = FS_FILE_WRITEERROR;
+
+	close(ifd);
+
+	return result;
+}
+
+static void GetCommandsForExt(uintptr_t pDlg)
 {
 	int num = 0;
 	gchar *key = NULL;
@@ -277,7 +453,7 @@ intptr_t DCPCALL PropertiesDlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t M
 			else
 				message = g_strdup_printf("%s\n\t%s: %s", question, title_str, split[0]);
 
-			int ret = MessageBox((char*)message, NULL, MB_YESNO | MB_ICONQUESTION);
+			int ret = MessageBox((char*)message, ROOTNAME, MB_YESNO | MB_ICONQUESTION);
 			g_free(message);
 
 			if (ret == ID_YES)
@@ -422,7 +598,11 @@ intptr_t DCPCALL ConvertDlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg,
 	switch (Msg)
 	{
 	case DN_INITDIALOG:
+	{
 		g_key_file_load_from_file(gCfg, gCfgPath, 0, NULL);
+
+		if (g_key_file_has_key(gCfg, ROOTNAME, "Ext0", NULL))
+			SendDlgMsg(pDlg, "cbExt", DM_LISTCLEAR, 0, 0);
 
 		gchar **items = g_key_file_get_keys(gCfg, ROOTNAME, NULL, NULL);
 
@@ -465,22 +645,34 @@ intptr_t DCPCALL ConvertDlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg,
 
 		g_free(gTerm);
 		gTerm = NULL;
+
+		gboolean term_enabled = g_key_file_get_boolean(gCfg, ROOTNAME, "TermminalEnabled", NULL);
+		SendDlgMsg(pDlg, "ckTerm", DM_SETCHECK, (int)term_enabled, 0);
+		SendDlgMsg(pDlg, "edTerm", DM_ENABLE, (int)term_enabled, 0);
 		SendDlgMsg(pDlg, "cbExt", DM_LISTSETITEMINDEX, 0, 0);
-		get_cmds_for_ext(pDlg);
+		GetCommandsForExt(pDlg);
 
 		break;
+	}
 
 	case DN_CLICK:
 		if (strcmp(DlgItemName, "btnOK") == 0)
 		{
 			g_strlcpy(gOutExt, (char*)SendDlgMsg(pDlg, "cbExt", DM_GETTEXT, 0, 0), sizeof(gOutExt));
 			gCommand = g_strdup((char*)SendDlgMsg(pDlg, "cbCommand", DM_GETTEXT, 0, 0));
-			gTerm = g_strdup((char*)SendDlgMsg(pDlg, "edTerm", DM_GETTEXT, 0, 0));
+
+			gboolean term_enabled = (gboolean)SendDlgMsg(pDlg, "ckTerm", DM_GETCHECK, 0, 0);
+			g_key_file_set_boolean(gCfg, ROOTNAME, "TermminalEnabled", term_enabled);
+			char *term = (char*)SendDlgMsg(pDlg, "edTerm", DM_GETTEXT, 0, 0);
+			g_key_file_set_string(gCfg, ROOTNAME, "Termminal", term);
+
+			if (term_enabled)
+				gTerm = g_strdup(term);
+
 			g_key_file_set_string(gCfg, ROOTNAME, "Ext0", gOutExt);
 			gchar *key = g_strdup_printf("Command_%s_0", gOutExt);
 			g_key_file_set_string(gCfg, ROOTNAME, key, gCommand);
 			g_free(key);
-			g_key_file_set_string(gCfg, ROOTNAME, "Termminal", gTerm);
 
 			gsize count = (gsize)SendDlgMsg(pDlg, "cbExt", DM_LISTGETCOUNT, 0, 0);
 			int num = 1;
@@ -524,8 +716,12 @@ intptr_t DCPCALL ConvertDlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg,
 		break;
 
 	case DN_CHANGE:
+	{
+		if (strcmp(DlgItemName, "ckTerm") == 0)
+			SendDlgMsg(pDlg, "edTerm", DM_ENABLE, wParam, 0);
+
 		if (strcmp(DlgItemName, "cbExt") == 0)
-			get_cmds_for_ext(pDlg);
+			GetCommandsForExt(pDlg);
 
 		SendDlgMsg(pDlg, "lblErr", DM_SHOWITEM, 0, 0);
 		SendDlgMsg(pDlg, "lblTemplate", DM_SHOWITEM, 0, 0);
@@ -551,14 +747,19 @@ intptr_t DCPCALL ConvertDlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg,
 			return 0;
 		}
 
-		gchar *term = g_strdup((char*)SendDlgMsg(pDlg, "edTerm", DM_GETTEXT, 0, 0));
+		gchar *term = NULL;
+		gboolean term_enabled = (gboolean)SendDlgMsg(pDlg, "ckTerm", DM_GETCHECK, 0, 0);
+
+		if (term_enabled)
+			term = g_strdup((char*)SendDlgMsg(pDlg, "edTerm", DM_GETTEXT, 0, 0));
+
 		gchar *ext = g_strdup((char*)SendDlgMsg(pDlg, "cbExt", DM_GETTEXT, 0, 0));
 
-		gchar *temp = str_replace(cmd, "{infile}", "/home/user/test.mp3", TRUE);
+		gchar *temp = ReplaceString(cmd, "{infile}", "/home/user/test.mp3", TRUE);
 		g_free(cmd);
 		cmd = temp;
 		gchar *newname = g_strdup_printf("/home/user/test.%s", ext);
-		temp = str_replace(cmd, "{outfilenoext.ext}", newname, TRUE);
+		temp = ReplaceString(cmd, "{outfilenoext.ext}", newname, TRUE);
 		g_free(newname);
 		g_free(cmd);
 
@@ -567,7 +768,7 @@ intptr_t DCPCALL ConvertDlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg,
 			if (g_strrstr(term, "{command}"))
 			{
 				cmd = temp;
-				temp = str_replace(term, "{command}", cmd, FALSE);
+				temp = ReplaceString(term, "{command}", cmd, FALSE);
 				g_free(cmd);
 			}
 			else
@@ -584,6 +785,7 @@ intptr_t DCPCALL ConvertDlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg,
 		g_free(term);
 
 		break;
+	}
 	}
 
 	return 0;
@@ -895,7 +1097,7 @@ static BOOL OptionsDialog(void)
 	                       "    Anchors = [akTop, akLeft, akRight]\n"
 	                       "    ItemHeight = 0\n"
 	                       "    OnClick = ListBoxClick\n"
-	                       "    OnKeyUp = ListBoxKeyUp"
+	                       "    OnKeyUp = ListBoxKeyUp\n"
 	                       "    TabOrder = 0\n"
 	                       "    Visible = False\n"
 	                       "  end\n"
@@ -970,16 +1172,16 @@ static BOOL ConvertDialog(void)
 {
 	const char lfmdata[] = ""
 	                       "object ConvDialogBox: TConvDialogBox\n"
-	                       "  Left = 458\n"
-	                       "  Height = 188\n"
-	                       "  Top = 307\n"
+	                       "  Left = 444\n"
+	                       "  Height = 210\n"
+	                       "  Top = 143\n"
 	                       "  Width = 652\n"
 	                       "  AutoSize = True\n"
 	                       "  BorderStyle = bsDialog\n"
 	                       "  Caption = 'Convert'\n"
 	                       "  ChildSizing.LeftRightSpacing = 10\n"
 	                       "  ChildSizing.TopBottomSpacing = 15\n"
-	                       "  ClientHeight = 188\n"
+	                       "  ClientHeight = 210\n"
 	                       "  ClientWidth = 652\n"
 	                       "  DesignTimePPI = 100\n"
 	                       "  OnShow = DialogBoxShow\n"
@@ -1005,6 +1207,12 @@ static BOOL ConvertDialog(void)
 	                       "    Top = 32\n"
 	                       "    Width = 129\n"
 	                       "    ItemHeight = 23\n"
+	                       "    ItemIndex = 0\n"
+	                       "    Items.Strings = (\n"
+	                       "      'ogg'\n"
+	                       "      'flac'\n"
+	                       "      'mp3'\n"
+	                       "    )\n"
 	                       "    MaxLength = 5\n"
 	                       "    OnChange = ComboBoxChange\n"
 	                       "    TabOrder = 0\n"
@@ -1034,31 +1242,33 @@ static BOOL ConvertDialog(void)
 	                       "    TabOrder = 1\n"
 	                       "    Text = 'ffmpeg -y -i {infile} {outfilenoext.ext}'\n"
 	                       "  end\n"
-	                       "  object lblTerm: TLabel\n"
+	                       "  object ckTerm: TCheckBox\n"
 	                       "    AnchorSideLeft.Control = edTerm\n"
 	                       "    AnchorSideTop.Control = cbExt\n"
 	                       "    AnchorSideTop.Side = asrBottom\n"
 	                       "    Left = 10\n"
-	                       "    Height = 17\n"
+	                       "    Height = 23\n"
 	                       "    Top = 78\n"
-	                       "    Width = 73\n"
+	                       "    Width = 162\n"
 	                       "    BorderSpacing.Top = 10\n"
-	                       "    Caption = 'Termminal'\n"
-	                       "    ParentColor = False\n"
+	                       "    Caption = 'Launch in Terminal'\n"
+	                       "    OnChange = CheckBoxChange\n"
+	                       "    TabOrder = 2\n"
 	                       "  end\n"
 	                       "  object edTerm: TEdit\n"
 	                       "    AnchorSideLeft.Control = Owner\n"
-	                       "    AnchorSideTop.Control = lblTerm\n"
+	                       "    AnchorSideTop.Control = ckTerm\n"
 	                       "    AnchorSideTop.Side = asrBottom\n"
 	                       "    AnchorSideRight.Control = cbCommand\n"
 	                       "    AnchorSideRight.Side = asrBottom\n"
 	                       "    Left = 10\n"
 	                       "    Height = 36\n"
-	                       "    Top = 95\n"
+	                       "    Top = 101\n"
 	                       "    Width = 630\n"
 	                       "    Anchors = [akTop, akLeft, akRight]\n"
+	                       "    Enabled = False\n"
 	                       "    OnChange = EditChange\n"
-	                       "    TabOrder = 2\n"
+	                       "    TabOrder = 3\n"
 	                       "    Text = 'xterm -e sh -c \"{command}\"'\n"
 	                       "  end\n"
 	                       "  object lblPreview: TLabel\n"
@@ -1069,7 +1279,7 @@ static BOOL ConvertDialog(void)
 	                       "    AnchorSideRight.Side = asrBottom\n"
 	                       "    Left = 12\n"
 	                       "    Height = 1\n"
-	                       "    Top = 141\n"
+	                       "    Top = 147\n"
 	                       "    Width = 628\n"
 	                       "    Anchors = [akTop, akLeft, akRight]\n"
 	                       "    BorderSpacing.Left = 2\n"
@@ -1082,7 +1292,7 @@ static BOOL ConvertDialog(void)
 	                       "    AnchorSideTop.Side = asrBottom\n"
 	                       "    Left = 12\n"
 	                       "    Height = 17\n"
-	                       "    Top = 142\n"
+	                       "    Top = 148\n"
 	                       "    Width = 243\n"
 	                       "    Caption = 'A required template is missing'\n"
 	                       "    Font.Style = [fsBold, fsItalic]\n"
@@ -1096,13 +1306,14 @@ static BOOL ConvertDialog(void)
 	                       "    AnchorSideTop.Control = lblErr\n"
 	                       "    Left = 260\n"
 	                       "    Height = 1\n"
-	                       "    Top = 142\n"
+	                       "    Top = 148\n"
 	                       "    Width = 1\n"
 	                       "    BorderSpacing.Left = 5\n"
 	                       "    Font.Style = [fsBold]\n"
 	                       "    ParentColor = False\n"
 	                       "    ParentFont = False\n"
 	                       "    Visible = False\n"
+	                       "    WordWrap = True\n"
 	                       "  end\n"
 	                       "  object btnOK: TBitBtn\n"
 	                       "    AnchorSideTop.Control = lblPreview\n"
@@ -1111,7 +1322,7 @@ static BOOL ConvertDialog(void)
 	                       "    AnchorSideRight.Side = asrBottom\n"
 	                       "    Left = 539\n"
 	                       "    Height = 31\n"
-	                       "    Top = 162\n"
+	                       "    Top = 168\n"
 	                       "    Width = 101\n"
 	                       "    Anchors = [akTop, akRight]\n"
 	                       "    AutoSize = True\n"
@@ -1123,7 +1334,7 @@ static BOOL ConvertDialog(void)
 	                       "    Kind = bkOK\n"
 	                       "    ModalResult = 1\n"
 	                       "    OnClick = ButtonClick\n"
-	                       "    TabOrder = 3\n"
+	                       "    TabOrder = 4\n"
 	                       "  end\n"
 	                       "  object btnCancel: TBitBtn\n"
 	                       "    AnchorSideTop.Control = btnOK\n"
@@ -1131,7 +1342,7 @@ static BOOL ConvertDialog(void)
 	                       "    AnchorSideRight.Control = btnOK\n"
 	                       "    Left = 433\n"
 	                       "    Height = 31\n"
-	                       "    Top = 162\n"
+	                       "    Top = 168\n"
 	                       "    Width = 101\n"
 	                       "    Anchors = [akTop, akRight]\n"
 	                       "    AutoSize = True\n"
@@ -1143,7 +1354,7 @@ static BOOL ConvertDialog(void)
 	                       "    Kind = bkCancel\n"
 	                       "    ModalResult = 2\n"
 	                       "    OnClick = ButtonClick\n"
-	                       "    TabOrder = 4\n"
+	                       "    TabOrder = 5\n"
 	                       "  end\n"
 	                       "end\n";
 
@@ -1300,119 +1511,39 @@ BOOL DCPCALL FsGetLocalName(char* RemoteName, int maxlen)
 
 int DCPCALL FsGetFile(char* RemoteName, char* LocalName, int CopyFlags, RemoteInfoStruct* ri)
 {
-	int status;
-	char str[MAX_PATH];
-	int result = FS_FILE_WRITEERROR;
+	char filename[PATH_MAX];
+	snprintf(filename, sizeof(filename), "%s%s", gStartPath, RemoteName);
 
-	if (gProgressProc(gPluginNr, RemoteName, LocalName, 0))
-		return FS_FILE_USERABORT;
-
-	if (!gCommand || gCommand[0] == '\0' || gOutExt[0] == '\0')
-		return FS_FILE_USERABORT;
-
-	gchar *localpath = g_strdup_printf("%s%s", gStartPath, RemoteName);
-	gchar *outdir = g_path_get_dirname(LocalName);
-	gchar *file = g_path_get_basename(LocalName);
-	char *pos = strrchr(file, '.');
-
-	if (pos)
-		*pos = '\0';
-
-	gchar *outfile = g_strdup_printf("%s/%s.%s", outdir, file, gOutExt);
-	g_free(outdir);
-	g_free(file);
-
-	if (g_strcmp0(localpath, outfile) == 0)
-	{
-		g_free(localpath);
-		g_free(outfile);
-		return FS_FILE_NOTSUPPORTED;
-	}
-
-	gProgressProc(gPluginNr, localpath, outfile, 0);
-
-	if (CopyFlags == 0 && g_file_test(outfile, G_FILE_TEST_EXISTS))
-	{
-		Translate("File %s already exists, overwrite?", str, MAX_PATH);
-		gchar *msg = g_strdup_printf(str, outfile);
-		int ret = MessageBox((char*)msg, NULL, MB_YESNOCANCEL | MB_ICONQUESTION);
-		g_free(msg);
-
-		if (ret != ID_YES)
-		{
-			g_free(localpath);
-			g_free(outfile);
-
-			if (ret == ID_NO)
-				return FS_FILE_OK;
-			else
-				return FS_FILE_USERABORT;
-		}
-	}
-
-	gchar *temp = str_replace(gCommand, "{infile}", localpath, TRUE);
-	gchar *command = temp;
-	temp = str_replace(command, "{outfilenoext.ext}", outfile, TRUE);
-	g_free(command);
-	command = temp;
-	temp = str_replace(command, "\"", "\\\"", FALSE);
-	g_free(command);
-	command = temp;
-
-	if (gTerm && gTerm[0] != '\0')
-	{
-		temp = str_replace(gTerm, "{command}", command, FALSE);
-		g_free(command);
-		command = temp;
-	}
-
-	if ((status = system(command)) != 0)
-	{
-		Translate("Error executing command", str, MAX_PATH);
-		gchar *msg = g_strdup_printf("%s \"%s\" (%d)", str, command, status);
-
-		if (MessageBox((char*)msg, NULL, MB_OKCANCEL | MB_ICONERROR) == ID_CANCEL)
-			result = FS_FILE_USERABORT;
-
-		g_free(msg);
-	}
+	if (gExecuteConverter)
+		return ConvertFile(filename, LocalName, CopyFlags == 0);
 	else
-		result = FS_FILE_OK;
-
-	g_free(command);
-	gProgressProc(gPluginNr, localpath, outfile, 100);
-	g_free(localpath);
-	g_free(outfile);
-
-	return result;
+		return CopyLocalFile(filename, LocalName, CopyFlags == 0);
 }
 
 int DCPCALL FsRenMovFile(char* OldName, char* NewName, BOOL Move, BOOL OverWrite, RemoteInfoStruct * ri)
 {
 	int result = FS_FILE_WRITEERROR;
+	char infile[PATH_MAX], outfile[PATH_MAX];
 
-	if (gProgressProc(gPluginNr, OldName, NewName, 0))
+	snprintf(infile, sizeof(infile), "%s%s", gStartPath, OldName);
+	snprintf(outfile, sizeof(outfile), "%s%s", gStartPath, NewName);
+
+	if (gProgressProc(gPluginNr, infile, outfile, 0))
 		return FS_FILE_USERABORT;
 
 	if (!Move)
-		return FS_FILE_NOTSUPPORTED;
+		return CopyLocalFile(infile, outfile, OverWrite == FALSE);
+//		return FS_FILE_NOTSUPPORTED;
 
-	gchar *oldlocal = g_strdup_printf("%s%s", gStartPath, OldName);
-	gchar *newlocal = g_strdup_printf("%s%s", gStartPath, NewName);
-
-	if (!OverWrite && g_file_test(newlocal, G_FILE_TEST_EXISTS))
+	if (OverWrite == FALSE && g_file_test(outfile, G_FILE_TEST_EXISTS))
 	{
-		g_free(oldlocal);
-		g_free(newlocal);
 		return FS_FILE_EXISTS;
 	}
 
-	if (rename(oldlocal, newlocal) == 0)
+	if (rename(infile, outfile) == 0)
 		result = FS_FILE_OK;
 
-	gProgressProc(gPluginNr, oldlocal, newlocal, 100);
-	g_free(oldlocal);
-	g_free(newlocal);
+	gProgressProc(gPluginNr, infile, outfile, 100);
 
 	return result;
 }
@@ -1448,7 +1579,14 @@ void DCPCALL FsStatusInfo(char* RemoteDir, int InfoStartEnd, int InfoOperation)
 	if (InfoOperation == FS_STATUS_OP_GET_SINGLE || InfoOperation == FS_STATUS_OP_GET_MULTI)
 	{
 		if (InfoStartEnd == FS_STATUS_START)
-			ConvertDialog();
+		{
+			char msg[MAX_PATH];
+			Translate("Start converting selected files? Otherwise files will be copied.", msg, MAX_PATH);
+			gExecuteConverter = (MessageBox((char*)msg, ROOTNAME, MB_YESNO | MB_ICONQUESTION) == ID_YES);
+
+			if (gExecuteConverter)
+				ConvertDialog();
+		}
 	}
 }
 

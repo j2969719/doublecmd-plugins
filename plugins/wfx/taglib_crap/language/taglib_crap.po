@@ -62,8 +62,8 @@ msgstr ""
 msgid "Command"
 msgstr ""
 
-#: TConvDialogBox.lblTerm.Сaption
-msgid "Termminal"
+#: TConvDialogBox.ckTerm.Сaption
+msgid "Launch in Terminal"
 msgstr ""
 
 #: TConvDialogBox.lblErr.Сaption
@@ -82,14 +82,14 @@ msgstr ""
 msgid "Failed to write tag."
 msgstr ""
 
-#: MiscStr.Error executing command
-msgid "Error executing command"
-msgstr ""
-
 #: MiscStr.File %s already exists, overwrite?
 msgid "File %s already exists, overwrite?"
 msgstr ""
 
 #: MiscStr.Fill in these fields with the following values?
 msgid "Fill in these fields with the following values?"
+msgstr ""
+
+#: MiscStr.Start converting selected files? Otherwise files will be copied.
+msgid "Start converting selected files? Otherwise files will be copied."
 msgstr ""

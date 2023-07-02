@@ -420,7 +420,7 @@ Displays NFO, DIZ.
 Very primitive SQL Viewer.
 
 - [symlinkerror](plugins/wlx/symlinkerror)<br>
-Display simlink error..
+Display symlink error.
 
 - [wlxpview](plugins/wlx/wlxpview)<br>
 PDF Viewer ([original](https://yassernour.wordpress.com/2010/04/04/how-hard-to-build-a-pdf-viewer/)).
@@ -497,7 +497,7 @@ Converts some file to PDF via some external tool assigned by mime or ext in `set
 Very primitive SQL Viewer.
 
 - [symlinkerror_qt](plugins/wlx/symlinkerror_qt)<br>
-Display simlink error.
+Display symlink error.
 
 - [syntax-highlighting_qt](plugins/wlx/syntax-highlighting_qt)<br>
 Displays source code files with syntax highlighting. Requires `syntax-highlighting` from KF5 framework.

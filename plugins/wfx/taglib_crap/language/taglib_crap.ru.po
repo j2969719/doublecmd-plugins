@@ -65,9 +65,9 @@ msgstr "Расширение"
 msgid "Command"
 msgstr "Команда"
 
-#: TConvDialogBox.lblTerm.Сaption
-msgid "Termminal"
-msgstr "Терминал"
+#: TConvDialogBox.ckTerm.Сaption
+msgid "Launch in Terminal"
+msgstr "Запустить в Терминале"
 
 #: TConvDialogBox.lblErr.Сaption
 msgid "A required template is missing"
@@ -85,10 +85,6 @@ msgstr "Не удалось получить тег, возможно выбра
 msgid "Failed to write tag."
 msgstr "Не удалось записать тег."
 
-#: MiscStr.Error executing command
-msgid "Error executing command"
-msgstr "Ошибка при выполнеии команды"
-
 #: MiscStr.File %s already exists, overwrite?
 msgid "File %s already exists, overwrite?"
 msgstr "Файл %s уже существует, перезаписать?"
@@ -96,3 +92,7 @@ msgstr "Файл %s уже существует, перезаписать?"
 #: MiscStr.Fill in these fields with the following values?
 msgid "Fill in these fields with the following values?"
 msgstr "Заполнить данные поля следующими значенииями?"
+
+#: MiscStr.Start converting selected files? Otherwise files will be copied.
+msgid "Start converting selected files? Otherwise files will be copied."
+msgstr "Начать ковертирование выбранных файлов? В противном случае файлы будут скопированы."
