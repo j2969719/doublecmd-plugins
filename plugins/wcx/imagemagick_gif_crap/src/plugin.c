@@ -1,4 +1,5 @@
 #include <glib.h>
+#include <unistd.h>
 #include <MagickWand/MagickWand.h>
 #include "wcxplugin.h"
 #include "extension.h"
@@ -126,6 +127,10 @@ int DCPCALL GetPackerCaps(void)
 int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddList, int Flags)
 {
 	int result = E_SUCCESS;
+
+	if (access(PackedFile, F_OK) == 0)
+		return E_ECREATE;
+
 	MagickWand *magick_wand = NewMagickWand();
 
 	MagickResetIterator(magick_wand);
