@@ -35,8 +35,10 @@
 
 #define STRIP_OPT(S, O) S + strlen(O) + 1
 
-#define OPT_CHECKFIELDS "Fs_GetSupportedField_Needed"
+
 #define OPT_STATUSINFO "Fs_StatusInfo_Needed"
+#define OPT_GETVALUE "Fs_GetValue_Needed"
+
 #define OPT_REQUEST "Fs_Request_Options"
 #define OPT_ENVVAR "Fs_Set_" ENVVAR_NAME
 #define OPT_YESNOMSG "Fs_YesNo_Message"
@@ -75,9 +77,10 @@
 #define VERB_MODTIME  "modtime"
 #define VERB_STATUS   "statusinfo"
 #define VERB_REALNAME "localname"
-#define VERB_FIELDS   "getfields"
 #define VERB_GETVALUE "getvalue"
+#define VERB_RESET    "reset"
 
+#define FIELD_EXTRA "customfield"
 
 typedef struct sVFSDirData
 {
@@ -108,7 +111,6 @@ static gchar *gProps = NULL;
 static gchar *gCaller = NULL;
 static gchar **gChoice = NULL;
 static GKeyFile *gCfg = NULL;
-static gchar **gFields = NULL;
 static gboolean gNoise = FALSE;
 static char gScript[PATH_MAX];
 static char gExecStart[PATH_MAX];
@@ -304,17 +306,7 @@ static gboolean ExecuteScript(gchar * script_name, gchar * verb, char *arg1, cha
 		g_free(env_data);
 	}
 
-
-#ifdef  TEMP_PANEL
-
 	if (gNoise)
-#else
-	if (!gNoise && g_strcmp0(verb, VERB_FIELDS) == 0)
-	{
-
-	}
-	else
-#endif
 	{
 		message = g_strdup_printf("%s %s %s %s", script, verb, arg1 ? arg1 : "", arg2 ? arg2 : "");
 		LogMessage(gPluginNr, MSGTYPE_DETAILS, message);
@@ -442,16 +434,7 @@ static gboolean ExecuteScript(gchar * script_name, gchar * verb, char *arg1, cha
 			g_source_remove(timer_id);
 	}
 
-#ifdef  TEMP_PANEL
-
 	if (gNoise)
-#else
-	if (!gNoise && g_strcmp0(verb, VERB_FIELDS) == 0)
-	{
-
-	}
-	else
-#endif
 	{
 		message = g_strdup_printf("exit status %d", WEXITSTATUS(status));
 		LogMessage(gPluginNr, MSGTYPE_OPERATIONCOMPLETE, message);
@@ -696,7 +679,13 @@ static void SaveHistory(uintptr_t pDlg, char *text, char *value)
 {
 	int count = (int)SendDlgMsg(pDlg, "lbHistory", DM_LISTGETCOUNT, 0, 0);
 
-	if (count > 0 && value && value[0] != '\0')
+	gboolean is_cleared = FALSE;
+
+	if (count == 0)
+		is_cleared = (gboolean)SendDlgMsg(pDlg, "lbHistory", DM_SHOWITEM, 0, 0);
+
+	if (!is_cleared && value && value[0] != '\0')
+
 		g_key_file_set_string(gCfg, gScript, text, value);
 	else
 		g_key_file_remove_key(gCfg, gScript, text, NULL);
@@ -1508,8 +1497,8 @@ static void ParseOpts(gchar *script, gchar *text)
 				}
 				else if (g_strcmp0(*p, OPT_STATUSINFO) == 0)
 					g_key_file_set_boolean(gCfg, script, OPT_STATUSINFO, TRUE);
-				else if (g_strcmp0(*p, OPT_CHECKFIELDS) == 0)
-					g_key_file_set_boolean(gCfg, script, OPT_CHECKFIELDS, TRUE);
+				else if (g_strcmp0(*p, OPT_GETVALUE) == 0)
+					g_key_file_set_boolean(gCfg, script, OPT_GETVALUE, TRUE);
 				else if (IsValidOpt(*p, OPT_ENVVAR))
 				{
 					g_key_file_set_string(gCfg, script, OPT_ENVVAR, STRIP_OPT(*p, OPT_ENVVAR));
@@ -1719,8 +1708,9 @@ intptr_t DCPCALL DlgPropertiesProc(uintptr_t pDlg, char* DlgItemName, intptr_t M
 		SendDlgMsg(pDlg, "lScriptName", DM_SETTEXT, (intptr_t)gScript, 0);
 		LoadPreview(pDlg, gScript);
 
-		if (!g_key_file_get_boolean(gCfg, gScript, MARK_INUSE, NULL))
-			SendDlgMsg(pDlg, "btnUnmount", DM_SHOWITEM, 0, 0);
+		gboolean inuse = g_key_file_get_boolean(gCfg, gScript, MARK_INUSE, NULL);
+		SendDlgMsg(pDlg, "btnUnmount", DM_SHOWITEM, (int)inuse, 0);
+		SendDlgMsg(pDlg, "btnReset", DM_SHOWITEM, (int)!inuse, 0);
 
 		if (gCaller && gProps)
 		{
@@ -1752,6 +1742,11 @@ intptr_t DCPCALL DlgPropertiesProc(uintptr_t pDlg, char* DlgItemName, intptr_t M
 		else if (strcmp(DlgItemName, "btnUnmount") == 0)
 		{
 			DeInitializeScript(gScript);
+		}
+		else if (strcmp(DlgItemName, "btnReset") == 0)
+		{
+			g_key_file_remove_group(gCfg, gScript, NULL);
+			ExecuteScript(gScript, VERB_RESET, NULL, NULL, NULL, FALSE);
 		}
 		else if (strcmp(DlgItemName, "btnAct") == 0)
 		{
@@ -2630,64 +2625,17 @@ BOOL DCPCALL FsDisconnect(char* DisconnectRoot)
 	return TRUE;
 }
 #endif
-#ifdef  FIELDS_API
+
 int DCPCALL FsContentGetSupportedField(int FieldIndex, char* FieldName, char* Units, int maxlen)
 {
 	if (FieldIndex == 0)
 	{
-		DIR *dir;
-		struct dirent *ent;
-		gchar *fields = NULL;
-		gchar *output = NULL;
-
-		g_strfreev(gFields);
-		gFields = NULL;
-
-		GString *buffer = g_string_new(NULL);
-
-		if ((dir = opendir(gScriptDir)) != NULL)
-		{
-			while ((ent = readdir(dir)) != NULL)
-			{
-				if (ent->d_type == DT_REG)
-				{
-					gchar *src_file = g_strdup_printf("%s/%s", gScriptDir, ent->d_name);
-
-					if (g_file_test(src_file, G_FILE_TEST_IS_EXECUTABLE) && g_key_file_get_boolean(gCfg, ent->d_name, OPT_CHECKFIELDS, NULL))
-					{
-						ExecuteScript(ent->d_name, VERB_FIELDS, NULL, NULL, &output);
-
-						if (output)
-						{
-							buffer = g_string_append(buffer, output);
-							g_free(output);
-						}
-
-					}
-
-					g_free(src_file);
-				}
-			}
-
-			closedir(dir);
-		}
-
-		fields = g_string_free(buffer, FALSE);
-
-		if (fields)
-		{
-			gFields = g_strsplit(fields, "\n", -1);
-			g_free(fields);
-		}
+		g_strlcpy(FieldName, FIELD_EXTRA, maxlen - 1);
+		Units[0] = '\0';
+		return ft_string;
 	}
 
-	if (!gFields || !gFields[FieldIndex] || gFields[FieldIndex][0] == '\0')
-		return ft_nomorefields;
-
-	Units[0] = '\0';
-	g_print(gFields[FieldIndex]);
-	g_strlcpy(FieldName, gFields[FieldIndex], maxlen - 1);
-	return ft_string;
+	return ft_nomorefields;
 }
 
 int DCPCALL FsContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void* FieldValue, int maxlen, int flags)
@@ -2695,20 +2643,41 @@ int DCPCALL FsContentGetValue(char* FileName, int FieldIndex, int UnitIndex, voi
 	int result = ft_fieldempty;
 	gchar *output = NULL;
 	gchar *script = ExtractScriptFromPath(FileName);
+
+	if (IsRootDir(FileName))
+	{
+		if (g_key_file_get_boolean(gCfg, script, MARK_INUSE, NULL))
+		{
+			g_strlcpy((char*)FieldValue, "*", maxlen - 1);
+			g_free(script);
+			return ft_string;
+		}
+	}
+
+	if (!g_key_file_get_boolean(gCfg, script, OPT_GETVALUE, NULL))
+	{
+		g_free(script);
+		return ft_fieldempty;
+	}
+
 	gchar *path = StripScriptFromPath(FileName);
 
-	ExecuteScript(script, VERB_GETVALUE, gFields[FieldIndex], path, &output);
+	ExecuteScript(script, VERB_GETVALUE, path, NULL, &output, FALSE);
 
 	if (output)
 	{
 		size_t len = strlen(output);
 
 		if (len > 0)
+		{
 			output[len - 1] = '\0';
-
-		g_strlcpy((char*)FieldValue, output, maxlen - 1);
-
-		result = ft_string;
+			GKeyFile *langs = OpenTranslations(gScript);
+			gchar *string = TranslateString(langs, output);
+			CloseTranslations(langs);
+			g_strlcpy((char*)FieldValue, string, maxlen - 1);
+			g_free(string);
+			result = ft_string;
+		}
 	}
 
 	g_free(output);
@@ -2717,10 +2686,14 @@ int DCPCALL FsContentGetValue(char* FileName, int FieldIndex, int UnitIndex, voi
 
 	return result;
 }
-#endif
+
 BOOL DCPCALL FsContentGetDefaultView(char* ViewContents, char* ViewHeaders, char* ViewWidths, char* ViewOptions, int maxlen)
 {
-	return FALSE;
+	g_strlcpy(ViewContents, "[DC().GETFILESIZE{}]\\n[DC().GETFILETIME{}]\\n[DC().GETFILEATTR{OCTAL}]     [Plugin(FS)." FIELD_EXTRA "{}] ", maxlen - 1);
+	g_strlcpy(ViewHeaders, "Size\\nDate\\nInfo", maxlen - 1);
+	g_strlcpy(ViewWidths, "100,15,-25,30,30", maxlen - 1);
+	g_strlcpy(ViewOptions, "-1|0", maxlen - 1);
+	return TRUE;
 }
 
 #ifdef  TEMP_PANEL
@@ -2955,8 +2928,6 @@ void DCPCALL ExtensionFinalize(void* Reserved)
 	g_strfreev(groups);
 
 	g_key_file_save_to_file(gCfg, gHistoryFile, NULL);
-
-	g_strfreev(gFields);
 
 	if (gCaller != NULL)
 		g_free(gCaller);

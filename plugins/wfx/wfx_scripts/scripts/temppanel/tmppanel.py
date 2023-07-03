@@ -83,7 +83,7 @@ def vfs_init():
 			pass
 	print('Fs_Set_'+ env_var +' ' + filename)
 	#print('Fs_StatusInfo_Needed')
-	#print('Fs_GetSupportedField_Needed')
+	#print('Fs_GetValue_Needed')
 	sys.exit()
 
 def vfs_setopt(option, value):
@@ -222,13 +222,8 @@ def vfs_localname(filename):
 		sys.exit()
 	sys.exit(1)
 
-def vfs_getfields():
-	print('Link to')
-	sys.exit()
-
-def vfs_getvalue(field, filename):
-	if field == 'Link to':
-		vfs_localname(filename)
+def vfs_getvalue(filename):
+	vfs_localname(filename)
 	sys.exit()
 
 def vfs_deinit():
@@ -236,6 +231,12 @@ def vfs_deinit():
 
 def vfs_statusinfo(operation, path):
 	sys.exit(1)
+
+def vfs_reset():
+	dc_ini = os.environ['COMMANDER_INI']
+	filename = os.path.join(os.path.dirname(dc_ini), 'tmppanel.json')
+	os.remove(filename)
+	sys.exit()
 
 
 if verb == 'init':
@@ -274,11 +275,11 @@ elif verb == 'localname':
 	vfs_localname(sys.argv[2])
 elif verb == 'statusinfo':
 	vfs_statusinfo(sys.argv[2], sys.argv[3])
-elif verb == 'getfields':
-	vfs_getfields()
 elif verb == 'getvalue':
-	vfs_getvalue(sys.argv[2], sys.argv[3])
+	vfs_getvalue(sys.argv[2])
 elif verb == 'deinit':
 	vfs_deinit()
+elif verb == 'reset':
+	vfs_reset()
 
 sys.exit(1)

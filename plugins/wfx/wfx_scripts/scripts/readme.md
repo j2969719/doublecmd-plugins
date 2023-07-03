@@ -29,9 +29,9 @@ Line `Fs_Request_Options` signals that subsequent lines that do not start with `
 
 Outputting the reserved line `Fs_StatusInfo_Needed` activates the script calls with the **statusinfo** command.
 
-#### Fs_GetSupportedField_Needed
+#### Fs_GetValue_Needed
 
-Outputting the line `Fs_GetSupportedField_Needed` activates the script call with the getfields command the _next time the WFX plugin is initialized._ It is only needed if the script has fields to use in `Options -> Files views -> Columns -> Custom Columns`
+Outputting the line `Fs_GetSupportedField_Needed` activates the script call with the **getvalue** command. It is only needed if the script has fields to use in `Options -> Files views -> Columns -> Custom Columns`
 
 #### Fs_Set_DC_WFX_SCRIPT_DATA/Fs_Set_DC_WFX_TP_SCRIPT_DATA
 
@@ -55,6 +55,10 @@ Outputting a line starting with `Fs_Info_Message ` signals that the next part of
 #### Fs_PushValue
 
 Outputting a line starting with `Fs_PushValue ` signals that the next part of the line already contains the option and value, separated by a tab (`Fs_PushValue OPTION\tVALUE`), and must be passed to the **setopt** command immediately.
+
+#### Fs_PushYesNo
+
+Same as `Fs_YesNo_Message` but like `Fs_PushValue`, the value will be requested only the first time? the next time value will be passed to the **setopt** command immediately.
 
 #### Fs_SelectFile
 
@@ -260,19 +264,12 @@ _Used only by a plugin compiled with the Temporary Panel API (tpmpanel_wfx_scrip
 
 Called to get the real location of the virtual file. The script should print the local path to stdout.
 
-## getfields
-`SCRIPT getfields`
-
-_Available only when plugin is compiled with `-D FIELDS_API`_
-
-Call to get a list of string fields to use in `Options -> Files views -> Columns -> Custom Columns`.
-The script should print a line-by-line list of supported fields to stdout.
-
-Attention, the plugin calls all available scripts that set `Fs_GetSupportedField_Needed` option previously, with this command _at the stage of its own initialization_, before calling the script with the **init** command.
-
 ## getvalue
-`SCRIPT getvalue FIELD FILE`
+`SCRIPT getvalue FILE`
 
-_Available only when plugin is compiled with `-D FIELDS_API`_
+Call to get the value of a extra field for a virtual `FILE`. The script should print the value to stdout.
 
-Call to get the value of a `FIELD` for a virtual `FILE`. The script should print the value to stdout.
+## reset
+`SCRIPT reset
+
+Called to reset setting to defaults.

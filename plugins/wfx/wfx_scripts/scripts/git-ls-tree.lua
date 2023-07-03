@@ -90,6 +90,7 @@ function fs_init()
     -- print(msg_repo)
 
     -- DC 1.0.11+ only
+    print("Fs_GetValue_Needed")
     print("Fs_SelectDir " .. msg_repo)
     os.exit()
 end
@@ -211,6 +212,24 @@ function fs_quote(str, path)
     os.exit()
 end
 
+function fs_getvalue(file)
+    if file:find('/$') then
+        os.exit(1)
+    end
+    local dir, treeish = get_data()
+    local output = get_output('cd ' .. dir .. ' && git diff --name-status "' ..  treeish .. '..HEAD" -- "' .. file:gsub('^/', ''):gsub('"', '\\"') .. '" ":|*/"')
+    if not output then
+        os.exit(1)
+    end
+    local line, count = output:gsub("\n", '')
+    if count == 1 then
+        print(line:match("."))
+    elseif count > 0 then
+        print(count .. ' WFX_SCRIPT_STR_COUNT')
+    end
+    os.exit()
+end
+
 
 if args[1] == "init" then
     fs_init()
@@ -224,6 +243,8 @@ elseif args[1] == "properties" then
     fs_properties(args[2])
 elseif args[1] == "quote" then
     fs_quote(args[2], args[3])
+elseif args[1] == "getvalue" then
+    fs_getvalue(args[2])
 end
 
 os.exit(1)

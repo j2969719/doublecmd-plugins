@@ -43,8 +43,9 @@ def vfs_init():
 	filename = tf.name
 	tf.close()
 	print('Fs_Set_'+ envvar +' ' + filename)
+	print('Fs_GetValue_Needed')
 	print('Fs_Request_Options')
-	print('Search video')
+	print('WFX_SCRIPT_STR_SEARCH')
 	sys.exit()
 
 def vfs_setopt(option, value):
@@ -120,27 +121,19 @@ def vfs_properties(filename):
 	for element in res_array:
 		if element['filename'] == filename[1:-4]:
 			if 'title' in element and not element['title'] is None:
-				print('Title\t' + element['title'])
+				print('WFX_SCRIPT_STR_TITLE\t' + element['title'])
 			if 'duration' in element and not element['duration'] is None:
-				print('Duration\t' + element['duration'])
+				print('WFX_SCRIPT_STR_DURATION\t' + element['duration'])
 			if 'publishedTime' in element and not element['publishedTime'] is None:
-				print('Published Time\t' + element['publishedTime'])
+				print('WFX_SCRIPT_STR_PUBLTIME\t' + element['publishedTime'])
 			if 'link' in element and not element['link'] is None:
 				print('URL\t' + element['link'])
 			if 'viewCount' in element and not element['viewCount'] is None:
 				if 'viewCount' in element and not element['viewCount']['short'] is None:
-					print('Views\t' + element['viewCount']['short'])
+					print('WFX_SCRIPT_STR_VIEWS\t' + element['viewCount']['short'])
 	sys.exit()
 
-def vfs_getfields():
-	print('title')
-	print('duration')
-	print('publishedTime')
-	print('link')
-	print('type')
-	sys.exit()
-
-def vfs_getvalue(field, filename):
+def vfs_getvalue(filename):
 	if os.environ[envvar] is None:
 		sys.exit(1)
 	try:
@@ -152,7 +145,7 @@ def vfs_getvalue(field, filename):
 	for element in res_array:
 		if element['filename'] == filename[1:-4]:
 			if 'filename' in element:
-				print(element[field])
+				print(element['duration'])
 				sys.exit()
 	sys.exit(1)
 
@@ -177,7 +170,7 @@ elif verb == 'properties':
 elif verb == 'getfields':
 	vfs_getfields()
 elif verb == 'getvalue':
-	vfs_getvalue(sys.argv[2], sys.argv[3])
+	vfs_getvalue(sys.argv[2])
 elif verb == 'deinit':
 	vfs_deinit()
 
