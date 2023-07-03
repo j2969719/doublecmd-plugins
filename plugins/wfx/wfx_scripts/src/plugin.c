@@ -2652,6 +2652,8 @@ int DCPCALL FsContentGetValue(char* FileName, int FieldIndex, int UnitIndex, voi
 			g_free(script);
 			return ft_string;
 		}
+		else
+			return ft_fieldempty;
 	}
 
 	if (!g_key_file_get_boolean(gCfg, script, OPT_GETVALUE, NULL))

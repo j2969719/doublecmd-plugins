@@ -6,6 +6,7 @@ WFX_SCRIPT_STR_COMMIT=<Commit>
 WFX_SCRIPT_STR_SEL_TREEISH=Select tree-ish
 WFX_SCRIPT_STR_SEL_COMMIT=Select commit (tree-ish)
 WFX_SCRIPT_STR_SEL_COMMITFILE=Select commit (file)
+WFX_SCRIPT_STR_SEL_DIFFFILE=Show changes tree-ish vs HEAD (file)
 WFX_SCRIPT_STR_CHANGES=Show changes (tree-ish)
 WFX_SCRIPT_STR_AUTHOR=Author
 WFX_SCRIPT_STR_COMMITER=Commiter

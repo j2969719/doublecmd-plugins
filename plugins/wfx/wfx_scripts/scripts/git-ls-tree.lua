@@ -1,7 +1,7 @@
 #!/bin/env lua
 
 -- show commit date in filelist (slow af)
-get_dates = false
+get_dates = true
 date_form = "%ad" -- %ad - author date, %cd - commiter date
 
 args = {...}
@@ -13,6 +13,7 @@ msg_commit = "WFX_SCRIPT_STR_COMMIT"
 act_select = "WFX_SCRIPT_STR_SEL_TREEISH"
 act_commit = "WFX_SCRIPT_STR_SEL_COMMIT"
 act_changes = "WFX_SCRIPT_STR_CHANGES"
+act_diff_file = "WFX_SCRIPT_STR_SEL_DIFFFILE"
 act_commit_file = "WFX_SCRIPT_STR_SEL_COMMITFILE"
 
 
@@ -137,6 +138,9 @@ function fs_setopt(option, value)
             show_log(dir, treeish, '.')
         elseif option == act_commit_file then
             show_log(dir, treeish, value)
+        elseif option == act_diff_file then
+            print("Fs_LogInfo")
+            os.execute('cd ' .. dir .. ' && git diff "' ..  treeish .. '..HEAD" -- "' .. value:gsub('^/', ''):gsub('"', '\\"') .. '" ":|*/"')
         end
     end
     os.exit()
@@ -192,7 +196,7 @@ function fs_properties(file)
     print("WFX_SCRIPT_STR_COMMITER\t" .. commiter)
     print("WFX_SCRIPT_STR_SUBJECT\t" .. subject)
     print("WFX_SCRIPT_STR_CDATE\t" .. datetime)
-    print("Fs_PropsActs " .. act_changes .. '\t' .. act_commit_file .. '\t' .. act_commit .. '\t' .. act_select)
+    print("Fs_PropsActs " .. act_diff_file .. '\t' .. act_changes .. '\t' .. act_commit_file .. '\t' .. act_commit .. '\t' .. act_select)
     os.exit()
 end
 
