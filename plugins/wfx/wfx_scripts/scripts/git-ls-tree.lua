@@ -1,7 +1,7 @@
 #!/bin/env lua
 
 -- show commit date in filelist (slow af)
-get_dates = true
+get_dates = false
 date_form = "%ad" -- %ad - author date, %cd - commiter date
 
 args = {...}
