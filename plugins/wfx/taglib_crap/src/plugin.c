@@ -1508,8 +1508,18 @@ intptr_t DCPCALL ConvertDlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg,
 
 intptr_t DCPCALL ActionsDlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr_t wParam, intptr_t lParam)
 {
-	if (Msg == DN_CLICK && strcmp(DlgItemName, "btnOK") == 0)
+	if (Msg == DN_INITDIALOG)
+	{
+		g_key_file_load_from_file(gCfg, gCfgPath, 0, NULL);
+		gint i = g_key_file_get_integer(gCfg, ROOTNAME, "LastAction", NULL);
+		SendDlgMsg(pDlg, "rgActions", DM_LISTSETITEMINDEX, i, 0);
+	}
+	else if (Msg == DN_CLICK && strcmp(DlgItemName, "btnOK") == 0)
+	{
 		gAction = (int)SendDlgMsg(pDlg, "rgActions", DM_LISTGETITEMINDEX, 0, 0);
+		g_key_file_set_integer(gCfg, ROOTNAME, "LastAction", gAction);
+		g_key_file_save_to_file(gCfg, gCfgPath, NULL);
+	}
 
 	return 0;
 }
