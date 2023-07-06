@@ -578,6 +578,9 @@ static int CopyLocalFile(char* InFileName, char* OutFileName)
 	struct stat buf;
 	int result = FS_FILE_OK;
 
+	if (strcmp(InFileName, OutFileName) == 0)
+		return FS_FILE_NOTSUPPORTED;
+
 	if (stat(InFileName, &buf) != 0)
 		return FS_FILE_READERROR;
 
@@ -612,6 +615,7 @@ static int CopyLocalFile(char* InFileName, char* OutFileName)
 			if (gProgressProc(gPluginNr, InFileName, OutFileName, done) == 1)
 			{
 				result = FS_FILE_USERABORT;
+				remove(OutFileName);
 				break;
 			}
 		}

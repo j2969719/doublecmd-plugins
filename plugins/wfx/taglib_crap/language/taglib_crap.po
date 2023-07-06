@@ -14,10 +14,6 @@ msgid ""
 "properties in the root folder."
 msgstr ""
 
-#: TOptDialogBox.fnSelectPath.DialogTitle
-msgid "Select any audio file"
-msgstr ""
-
 #: TPropDialogBox.Сaption
 msgid "Properties"
 msgstr ""
@@ -70,6 +66,34 @@ msgstr ""
 msgid "A required template is missing"
 msgstr ""
 
+#: TRegExDialog.Сaption
+msgid "RegEx"
+msgstr ""
+
+#: TConvDialogBox.lblReplace.Сaption
+msgid "Replace"
+msgstr ""
+
+#: TConvDialogBox.lblCurrent.Сaption
+msgid "Current"
+msgstr ""
+
+#: TConvDialogBox.lblMatch.Сaption
+msgid "Result"
+msgstr ""
+
+#: TConvDialogBox.btnDel.Сaption
+msgid "&Remove filename from list"
+msgstr ""
+
+#: TConvDialogBox.btnTest.Сaption
+msgid "&Test all filenames"
+msgstr ""
+
+#: TActionDialog.Сaption TActionDialog.rgActions.Сaption
+msgid "Select Action"
+msgstr ""
+
 #: MiscStr.No.
 msgid "No."
 msgstr ""
@@ -90,6 +114,18 @@ msgstr ""
 msgid "Fill in these fields with the following values?"
 msgstr ""
 
-#: MiscStr.Start converting selected files? Otherwise files will be copied.
-msgid "Start converting selected files? Otherwise files will be copied."
+#: MiscStr.Run an external program to convert files
+msgid "Run an external program to convert files"
+msgstr ""
+
+#: MiscStr.Fill tags with data from filenames
+msgid "Fill tags with data from filenames"
+msgstr ""
+
+#: MiscStr.Copy audio files
+msgid "Copy audio files"
+msgstr ""
+
+#: MiscStr.not a valid file
+msgid "not a valid file"
 msgstr ""

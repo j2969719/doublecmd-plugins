@@ -20,7 +20,13 @@
 #define ININAME "j2969719_wfx.ini"
 #define MAXINIITEMS 256
 #define BUFSIZE 8192
+#define TEMPLATEDIR "wfx_"ROOTNAME "_XXXXXX"
+#define TMPLSTNAME "filelist.lst"
 
+
+#define RE_FLAGS_COMPILE G_REGEX_DUPNAMES
+#define RE_FLAGS_MATCH   0
+#define CHECK_NAMED(N) (strstr(expr, "(?'" N "'") != NULL || strstr(expr, "(?<" N ">") || strstr(expr, "(?P<" N ">"))
 
 typedef struct sVFSDirData
 {
@@ -33,6 +39,14 @@ typedef struct sField
 	char *name;
 	int type;
 } tField;
+
+enum
+{
+	WFX_ACT_FILL,
+	WFX_ACT_CONV,
+	WFX_ACT_COPY,
+	WFX_ACTS
+};
 
 #define fieldcount (sizeof(gFields)/sizeof(tField))
 
@@ -52,7 +66,9 @@ static char gStartPath[PATH_MAX] = "/";
 static char gOutExt[6];
 gchar *gTerm = NULL;
 gchar *gCommand = NULL;
-gboolean gExecuteConverter = FALSE;
+gchar *gTempDir = NULL;
+FILE *gTempFile = NULL;
+int gAction = -1;
 
 
 tField gFields[] =
@@ -101,6 +117,7 @@ static gchar *ReplaceString(gchar *text, gchar *str, gchar *repl, gboolean quote
 		return result;
 
 	gchar **split = g_strsplit(text, str, -1);
+	g_free(text);
 
 	if (quote)
 	{
@@ -112,6 +129,35 @@ static gchar *ReplaceString(gchar *text, gchar *str, gchar *repl, gboolean quote
 		result = g_strjoinv(repl, split);
 
 	g_strfreev(split);
+
+	return result;
+}
+
+static int AddToFileList(char *FileName)
+{
+	if (gTempFile)
+	{
+		fprintf(gTempFile, "%s\n", FileName);
+		return FS_FILE_OK;
+	}
+
+	return FS_FILE_WRITEERROR;
+}
+
+static gchar *BuildCommand(gchar *Template, char *InputFileName, char *OutputFileName, gchar *Term)
+{
+	if (!Template)
+		return NULL;
+
+	gchar *result = ReplaceString(g_strdup(Template), "{infile}", InputFileName, TRUE);
+	result = ReplaceString(result, "{outfilenoext.ext}", OutputFileName, TRUE);
+
+	if (Term && g_strrstr(Term, "\"{command}\""))
+	{
+		gchar *command = ReplaceString(result, "\"", "\\\"", FALSE);
+		result = ReplaceString(g_strdup(Term), "{command}", command, FALSE);
+		g_free(command);
+	}
 
 	return result;
 }
@@ -169,21 +215,7 @@ static int ConvertFile(char *InputFileName, char *TargetPath, gboolean Overwrite
 		}
 	}
 
-	gchar *temp = ReplaceString(gCommand, "{infile}", InputFileName, TRUE);
-	gchar *command = temp;
-	temp = ReplaceString(command, "{outfilenoext.ext}", outfile, TRUE);
-	g_free(command);
-	command = temp;
-	temp = ReplaceString(command, "\"", "\\\"", FALSE);
-	g_free(command);
-	command = temp;
-
-	if (gTerm && gTerm[0] != '\0')
-	{
-		temp = ReplaceString(gTerm, "{command}", command, FALSE);
-		g_free(command);
-		command = temp;
-	}
+	gchar *command = BuildCommand(gCommand, InputFileName, outfile, gTerm);
 
 	if (!g_shell_parse_argv(command, NULL, &argv, &err))
 	{
@@ -211,6 +243,7 @@ static int ConvertFile(char *InputFileName, char *TargetPath, gboolean Overwrite
 		if (gProgressProc(gPluginNr, InputFileName, outfile, 50) != 0 && kill(pid, 0) == 0)
 		{
 			kill(pid, SIGTERM);
+			remove(outfile);
 			result = FS_FILE_USERABORT;
 		}
 
@@ -231,6 +264,9 @@ static int CopyLocalFile(char* InFileName, char* OutFileName, gboolean Overwrite
 	char buff[BUFSIZE];
 	struct stat buf;
 	int result = FS_FILE_OK;
+
+	if (strcmp(InFileName, OutFileName) == 0)
+		return FS_FILE_NOTSUPPORTED;
 
 	if (OverwriteCheck && access(OutFileName, F_OK) == 0)
 		return FS_FILE_EXISTS;
@@ -269,6 +305,7 @@ static int CopyLocalFile(char* InFileName, char* OutFileName, gboolean Overwrite
 			if (gProgressProc(gPluginNr, InFileName, OutFileName, done) == 1)
 			{
 				result = FS_FILE_USERABORT;
+				remove(OutFileName);
 				break;
 			}
 		}
@@ -282,6 +319,409 @@ static int CopyLocalFile(char* InFileName, char* OutFileName, gboolean Overwrite
 	close(ifd);
 
 	return result;
+}
+
+static void ClearTagLabels(uintptr_t pDlg)
+{
+	SendDlgMsg(pDlg, "lblArtist", DM_SETTEXT, 0, 0);
+	SendDlgMsg(pDlg, "lblTitle", DM_SETTEXT, 0, 0);
+	SendDlgMsg(pDlg, "lblAlbum", DM_SETTEXT, 0, 0);
+	SendDlgMsg(pDlg, "lblTrack", DM_SETTEXT, 0, 0);
+	SendDlgMsg(pDlg, "lblYear", DM_SETTEXT, 0, 0);
+	SendDlgMsg(pDlg, "lblGenre", DM_SETTEXT, 0, 0);
+
+	SendDlgMsg(pDlg, "lblArtistOld", DM_SETTEXT, 0, 0);
+	SendDlgMsg(pDlg, "lblTitleOld", DM_SETTEXT, 0, 0);
+	SendDlgMsg(pDlg, "lblAlbumOld", DM_SETTEXT, 0, 0);
+	SendDlgMsg(pDlg, "lblTrackOld", DM_SETTEXT, 0, 0);
+	SendDlgMsg(pDlg, "lblYearOld", DM_SETTEXT, 0, 0);
+	SendDlgMsg(pDlg, "lblGenreOld", DM_SETTEXT, 0, 0);
+}
+
+static gboolean FillTags(uintptr_t pDlg, gchar *FileName, GRegex *re, gboolean Save)
+{
+	gboolean result = FALSE;
+
+	TagLib_Tag *tag;
+	GMatchInfo *match_info;
+
+	ClearTagLabels(pDlg);
+	TagLib_File *tagfile = taglib_file_new(FileName);
+
+	if (tagfile != NULL && taglib_file_is_valid(tagfile))
+	{
+		tag = taglib_file_tag(tagfile);
+		char *string = taglib_tag_title(tag);
+
+		if (string)
+			SendDlgMsg(pDlg, "lblTitleOld", DM_SETTEXT, (intptr_t)string, 0);
+
+		string = taglib_tag_artist(tag);
+
+		if (string)
+			SendDlgMsg(pDlg, "lblArtistOld", DM_SETTEXT, (intptr_t)string, 0);
+
+		string = taglib_tag_album(tag);
+
+		if (string)
+			SendDlgMsg(pDlg, "lblAlbumOld", DM_SETTEXT, (intptr_t)string, 0);
+
+		string = taglib_tag_genre(tag);
+
+		if (string)
+			SendDlgMsg(pDlg, "lblGenreOld", DM_SETTEXT, (intptr_t)string, 0);
+
+		unsigned int value = taglib_tag_year(tag);
+
+		if (value != 0)
+		{
+			char year[5];
+			snprintf(year, sizeof(year), "%d", value);
+			SendDlgMsg(pDlg, "lblYearOld", DM_SETTEXT, (intptr_t)year, 0);
+		}
+
+		value = taglib_tag_track(tag);
+
+		if (value != 0)
+		{
+			char track[5];
+			snprintf(track, sizeof(track), "%d", value);
+			SendDlgMsg(pDlg, "lblTrackOld", DM_SETTEXT, (intptr_t)track, 0);
+		}
+	}
+	else
+	{
+		char string[MAX_PATH];
+		Translate("not a valid file.", string, MAX_PATH);
+		gchar *msg = g_strdup_printf("(!!!) %s: %s", FileName, string);
+		SendDlgMsg(pDlg, "mLog", DM_LISTADDSTR, (intptr_t)msg, 0);
+		g_free(msg);
+		return result;
+	}
+
+	gboolean is_artist = (gboolean)SendDlgMsg(pDlg, "chArtist", DM_GETCHECK, 0, 0);
+	gboolean is_title = (gboolean)SendDlgMsg(pDlg, "chTitle", DM_GETCHECK, 0, 0);
+	gboolean is_album = (gboolean)SendDlgMsg(pDlg, "chAlbum", DM_GETCHECK, 0, 0);
+	gboolean is_track = (gboolean)SendDlgMsg(pDlg, "chTrack", DM_GETCHECK, 0, 0);
+	gboolean is_year = (gboolean)SendDlgMsg(pDlg, "chYear", DM_GETCHECK, 0, 0);
+	gboolean is_genre = (gboolean)SendDlgMsg(pDlg, "chGenre", DM_GETCHECK, 0, 0);
+
+	if (is_artist || is_title || is_album || is_track || is_year || is_genre)
+		SendDlgMsg(pDlg, "mLog", DM_LISTADDSTR, (intptr_t)FileName, 0);
+
+	if (g_regex_match(re, FileName, 0, &match_info))
+	{
+		while (g_match_info_matches(match_info))
+		{
+			gchar *string = g_match_info_fetch_named(match_info, "artist");
+
+			if (string)
+			{
+				SendDlgMsg(pDlg, "lblArtist", DM_SETTEXT, (intptr_t)string, 0);
+
+				if (is_artist)
+				{
+					result = TRUE;
+					gchar *caption = g_strdup((char*)SendDlgMsg(pDlg, "chArtist", DM_GETTEXT, 0, 0));
+					gchar *old = g_strdup((char*)SendDlgMsg(pDlg, "lblArtistOld", DM_GETTEXT, 0, 0));
+					gchar *line = g_strdup_printf("\t%s '%s' -> '%s'", caption, old, string);
+					SendDlgMsg(pDlg, "mLog", DM_LISTADDSTR, (intptr_t)line, 0);
+					g_free(caption);
+					g_free(old);
+					g_free(line);
+
+					if (Save)
+						taglib_tag_set_artist(tag, string);
+				}
+
+				g_free(string);
+			}
+
+			string = g_match_info_fetch_named(match_info, "title");
+
+			if (string)
+			{
+				SendDlgMsg(pDlg, "lblTitle", DM_SETTEXT, (intptr_t)string, 0);
+
+				if (is_title)
+				{
+					result = TRUE;
+					gchar *caption = g_strdup((char*)SendDlgMsg(pDlg, "chTitle", DM_GETTEXT, 0, 0));
+					gchar *old = g_strdup((char*)SendDlgMsg(pDlg, "lblTitleOld", DM_GETTEXT, 0, 0));
+					gchar *line = g_strdup_printf("\t%s '%s' -> '%s'", caption, old, string);
+					SendDlgMsg(pDlg, "mLog", DM_LISTADDSTR, (intptr_t)line, 0);
+					g_free(caption);
+					g_free(old);
+					g_free(line);
+
+					if (Save)
+						taglib_tag_set_title(tag, string);
+
+				}
+
+				g_free(string);
+			}
+
+			string = g_match_info_fetch_named(match_info, "album");
+
+			if (string)
+			{
+				SendDlgMsg(pDlg, "lblAlbum", DM_SETTEXT, (intptr_t)string, 0);
+
+				if (is_album)
+				{
+					result = TRUE;
+					gchar *caption = g_strdup((char*)SendDlgMsg(pDlg, "chAlbum", DM_GETTEXT, 0, 0));
+					gchar *old = g_strdup((char*)SendDlgMsg(pDlg, "lblAlbumOld", DM_GETTEXT, 0, 0));
+					gchar *line = g_strdup_printf("\t%s '%s' -> '%s'", caption, old, string);
+					SendDlgMsg(pDlg, "mLog", DM_LISTADDSTR, (intptr_t)line, 0);
+					g_free(caption);
+					g_free(old);
+					g_free(line);
+
+					if (Save)
+						taglib_tag_set_album(tag, string);
+
+				}
+
+				g_free(string);
+			}
+
+			string = g_match_info_fetch_named(match_info, "track");
+
+			if (string)
+			{
+				SendDlgMsg(pDlg, "lblTrack", DM_SETTEXT, (intptr_t)string, 0);
+
+				if (is_track)
+				{
+					result = TRUE;
+					gchar *caption = g_strdup((char*)SendDlgMsg(pDlg, "chTrack", DM_GETTEXT, 0, 0));
+					gchar *old = g_strdup((char*)SendDlgMsg(pDlg, "lblTrackOld", DM_GETTEXT, 0, 0));
+					gchar *line = g_strdup_printf("\t%s '%s' -> '%s'", caption, old, string);
+					SendDlgMsg(pDlg, "mLog", DM_LISTADDSTR, (intptr_t)line, 0);
+					g_free(caption);
+					g_free(old);
+					g_free(line);
+
+					if (Save)
+						taglib_tag_set_track(tag, (unsigned int)atoi(string));
+
+				}
+
+				g_free(string);
+			}
+
+			string = g_match_info_fetch_named(match_info, "year");
+
+			if (string)
+			{
+				SendDlgMsg(pDlg, "lblYear", DM_SETTEXT, (intptr_t)string, 0);
+
+				if (is_year)
+				{
+					result = TRUE;
+					gchar *caption = g_strdup((char*)SendDlgMsg(pDlg, "chYear", DM_GETTEXT, 0, 0));
+					gchar *old = g_strdup((char*)SendDlgMsg(pDlg, "lblYearOld", DM_GETTEXT, 0, 0));
+					gchar *line = g_strdup_printf("\t%s '%s' -> '%s'", caption, old, string);
+					SendDlgMsg(pDlg, "mLog", DM_LISTADDSTR, (intptr_t)line, 0);
+					g_free(caption);
+					g_free(old);
+					g_free(line);
+
+					if (Save)
+						taglib_tag_set_year(tag, (unsigned int)atoi(string));
+
+				}
+
+				g_free(string);
+			}
+
+			string = g_match_info_fetch_named(match_info, "genre");
+
+			if (string)
+			{
+				SendDlgMsg(pDlg, "lblGenre", DM_SETTEXT, (intptr_t)string, 0);
+
+				if (is_genre)
+				{
+					result = TRUE;
+					gchar *caption = g_strdup((char*)SendDlgMsg(pDlg, "chGenre", DM_GETTEXT, 0, 0));
+					gchar *old = g_strdup((char*)SendDlgMsg(pDlg, "lblGenreOld", DM_GETTEXT, 0, 0));
+					gchar *line = g_strdup_printf("\t%s '%s' -> '%s'", caption, old, string);
+					SendDlgMsg(pDlg, "mLog", DM_LISTADDSTR, (intptr_t)line, 0);
+					g_free(caption);
+					g_free(old);
+					g_free(line);
+
+					if (Save)
+						taglib_tag_set_genre(tag, string);
+
+				}
+
+				g_free(string);
+			}
+
+			g_match_info_next(match_info, NULL);
+		}
+	}
+
+	if (match_info)
+		g_match_info_free(match_info);
+
+	if (Save && !taglib_file_save(tagfile))
+	{
+		char msg[MAX_PATH];
+		Translate("Failed to write tag.", msg, MAX_PATH);
+		gchar *message = g_strdup_printf("%s: %s", FileName, msg);
+		MessageBox(msg, ROOTNAME, MB_OK | MB_ICONERROR);
+		g_free(message);
+		result = FALSE;
+	}
+
+	taglib_tag_free_strings();
+	taglib_file_free(tagfile);
+
+	return result;
+}
+
+static void UpdateTagPreview(uintptr_t pDlg)
+{
+	SendDlgMsg(pDlg, "lblError", DM_SHOWITEM, 0, 0);
+
+	int i = (int)SendDlgMsg(pDlg, "lbFileList", DM_LISTGETITEMINDEX, 0, 0);
+
+	if (i == -1)
+	{
+		ClearTagLabels(pDlg);
+		return;
+	}
+
+	gchar *filename = g_strdup((char*)SendDlgMsg(pDlg, "lbFileList", DM_LISTGETITEM, i, 0));
+
+	if (!filename || filename[0] == '\0')
+	{
+		g_free(filename);
+		return;
+	}
+
+	SendDlgMsg(pDlg, "chError", DM_SETCHECK, 0, 0);
+
+	GError *err = NULL;
+	gchar *expr = g_strdup((char*)SendDlgMsg(pDlg, "cbRegEx", DM_GETTEXT, 0, 0));
+	GRegex *regex = g_regex_new(expr, RE_FLAGS_COMPILE, RE_FLAGS_MATCH, &err);
+
+	if (err)
+	{
+		SendDlgMsg(pDlg, "lblError", DM_SHOWITEM, 1, 0);
+		SendDlgMsg(pDlg, "chError", DM_SETCHECK, 1, 0);
+		SendDlgMsg(pDlg, "lblError", DM_SETTEXT, (intptr_t)err->message, 0);
+		g_error_free(err);
+	}
+	else
+		FillTags(pDlg, filename, regex, FALSE);
+
+	g_free(expr);
+
+	if (regex)
+		g_regex_unref(regex);
+
+	g_free(filename);
+}
+
+static void FillRegExMemo(uintptr_t pDlg)
+{
+	gchar *contents = NULL;
+	gchar *readme = g_strdup_printf("%s/regex_readme.txt", gExtensions->PluginDir);
+
+	if (g_file_get_contents(readme, &contents, NULL, NULL))
+		SendDlgMsg(pDlg, "mRegEx", DM_SETTEXT, (intptr_t)contents, 0);
+	else
+		SendDlgMsg(pDlg, "mRegEx", DM_SHOWITEM, 0, 0);
+
+	g_free(contents);
+	g_free(readme);
+}
+
+static void FillFileList(uintptr_t pDlg)
+{
+	size_t len = 0;
+	ssize_t read = 0;
+	char *line = NULL;
+
+	SendDlgMsg(pDlg, "lbFileList", DM_LISTCLEAR, 0, 0);
+
+	if (gTempFile)
+	{
+		gchar *filename = g_strdup_printf("%s/%s", gTempDir, TMPLSTNAME);
+		SendDlgMsg(pDlg, "edFileName", DM_SETTEXT, (intptr_t)filename, 0);
+		fseek(gTempFile, 0, SEEK_SET);
+
+		while ((read = getline(&line, &len, gTempFile)) != -1)
+		{
+			if (line[read - 1] == '\n')
+				line[read - 1] = '\0';
+
+			SendDlgMsg(pDlg, "lbFileList", DM_LISTADDSTR, (intptr_t)line, 0);
+
+		}
+
+		fclose(gTempFile);
+		remove(filename);
+		g_free(filename);
+		gTempFile = NULL;
+	}
+	else
+		SendDlgMsg(pDlg, "lbFileList", DM_LISTADDSTR, (intptr_t)gLastFile, 0);
+}
+
+static void ProcessFilelist(uintptr_t pDlg, char *RegEx, gboolean Save)
+{
+	GError *err = NULL;
+
+	gsize count = (gsize)SendDlgMsg(pDlg, "lbFileList", DM_LISTGETCOUNT, 0, 0);
+	GRegex *regex = g_regex_new(RegEx, RE_FLAGS_COMPILE, RE_FLAGS_MATCH, &err);
+
+	if (err)
+	{
+		MessageBox(err->message, ROOTNAME, MB_OK | MB_ICONERROR);
+		g_error_free(err);
+	}
+	else
+	{
+		SendDlgMsg(pDlg, "mLog", DM_SETTEXT, 0, 0);
+		SendDlgMsg(pDlg, "ProgressBar", DM_SHOWITEM, 1, 0);
+		gsize replaces = 0;
+
+		for (gsize i = 0; i < count; i++)
+		{
+			gchar *filename = g_strdup((char*)SendDlgMsg(pDlg, "lbFileList", DM_LISTGETITEM, i, 0));
+			SendDlgMsg(pDlg, "ProgressBar", DM_SETPROGRESSVALUE, (int)i * 100 / count, 0);
+
+			if (FillTags(pDlg, filename, regex, Save))
+				replaces++;
+
+			g_free(filename);
+		}
+
+		gchar *line = g_strdup_printf("(%ld/%ld)", replaces, count);
+		SendDlgMsg(pDlg, "mLog", DM_LISTADDSTR, (intptr_t)line, 0);
+		g_free(line);
+	}
+
+	if (regex)
+		g_regex_unref(regex);
+
+	SendDlgMsg(pDlg, "ProgressBar", DM_SHOWITEM, 0, 0);
+}
+
+static void DeleteFromList(uintptr_t pDlg, char* DlgItemName)
+{
+	int i = (int)SendDlgMsg(pDlg, DlgItemName, DM_LISTGETITEMINDEX, 0, 0);
+	g_print("1!! %d\n", i);
+
+	if (i != -1)
+		SendDlgMsg(pDlg, DlgItemName, DM_LISTDELETE, i, 0);
 }
 
 static void GetCommandsForExt(uintptr_t pDlg)
@@ -310,6 +750,174 @@ static void GetCommandsForExt(uintptr_t pDlg)
 	SendDlgMsg(pDlg, "cbCommand", DM_LISTSETITEMINDEX, 0, 0);
 	g_free(key);
 	g_free(ext);
+}
+
+intptr_t DCPCALL RegExDlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr_t wParam, intptr_t lParam)
+{
+	switch (Msg)
+	{
+	case DN_INITDIALOG:
+		FillRegExMemo(pDlg);
+		FillFileList(pDlg);
+		g_key_file_load_from_file(gCfg, gCfgPath, 0, NULL);
+
+		if (g_key_file_has_key(gCfg, ROOTNAME, "RegEx_0", NULL))
+			SendDlgMsg(pDlg, "cbRegEx", DM_LISTCLEAR, 0, 0);
+
+		gchar **items = g_key_file_get_keys(gCfg, ROOTNAME, NULL, NULL);
+
+		if (items)
+		{
+			for (gsize i = 0; items[i] != NULL; i++)
+			{
+				if (strncmp(items[i], "RegEx_", 6) == 0)
+				{
+					gchar *item = g_key_file_get_string(gCfg, ROOTNAME, items[i], NULL);
+
+					if (item && strlen(item) > 0)
+						SendDlgMsg(pDlg, "cbRegEx", DM_LISTADDSTR, (intptr_t)item, 0);
+
+					g_free(item);
+				}
+			}
+		}
+
+		g_strfreev(items);
+		break;
+
+
+	case DN_CLICK:
+		if (strcmp(DlgItemName, "btnDel") == 0)
+		{
+			DeleteFromList(pDlg, "lbFileList");
+		}
+		else if (strcmp(DlgItemName, "lbFileList") == 0)
+		{
+			UpdateTagPreview(pDlg);
+
+		}
+		else if (strcmp(DlgItemName, "btnTest") == 0)
+		{
+			gchar *expr = g_strdup((char*)SendDlgMsg(pDlg, "cbRegEx", DM_GETTEXT, 0, 0));
+			ProcessFilelist(pDlg, expr, FALSE);
+			g_free(expr);
+		}
+		else if (strcmp(DlgItemName, "btnOK") == 0)
+		{
+			gchar *expr = g_strdup((char*)SendDlgMsg(pDlg, "cbRegEx", DM_GETTEXT, 0, 0));
+			g_key_file_set_string(gCfg, ROOTNAME, "RegEx_0", expr);
+			gsize count = (gsize)SendDlgMsg(pDlg, "cbRegEx", DM_LISTGETCOUNT, 0, 0);
+			int num = 1;
+
+			for (gsize i = 0; i < count; i++)
+			{
+				char *line = (char*)SendDlgMsg(pDlg, "cbRegEx", DM_LISTGETITEM, i, 0);
+
+				if (g_strcmp0(line, expr) != 0)
+				{
+					gchar *key = g_strdup_printf("RegEx_%d", num++);
+					g_key_file_set_string(gCfg, ROOTNAME, key, line);
+					g_free(key);
+
+					if (num == MAXINIITEMS)
+						break;
+				}
+			}
+
+			g_key_file_save_to_file(gCfg, gCfgPath, NULL);
+			ProcessFilelist(pDlg, expr, TRUE);
+			g_free(expr);
+		}
+
+		break;
+
+	case DN_CHANGE:
+		if (strncmp(DlgItemName, "ch", 2) == 0)
+		{
+			gchar *item = g_strdup_printf("lbl%s", DlgItemName + 2);
+			SendDlgMsg(pDlg, item, DM_ENABLE, (int)wParam, 0);
+			g_free(item);
+			item = g_strdup_printf("lbl%sOld", DlgItemName + 2);
+			SendDlgMsg(pDlg, item, DM_ENABLE, (int)wParam, 0);
+			g_free(item);
+
+			if (wParam)
+			{
+				gboolean is_error = (gboolean)SendDlgMsg(pDlg, "chError", DM_GETCHECK, 0, 0);
+				SendDlgMsg(pDlg, "btnOK", DM_ENABLE, (int)(wParam && !is_error), 0);
+				SendDlgMsg(pDlg, "btnTest", DM_ENABLE, (int)(wParam && !is_error), 0);
+			}
+		}
+		else if (strcmp(DlgItemName, "cbRegEx") == 0)
+		{
+			gchar *expr = g_strdup((char*)SendDlgMsg(pDlg, "cbRegEx", DM_GETTEXT, 0, 0));
+			gboolean is_artist = CHECK_NAMED("artist");
+			SendDlgMsg(pDlg, "chArtist", DM_ENABLE, (int)is_artist, 0);
+
+			if (!is_artist)
+				SendDlgMsg(pDlg, "chArtist", DM_SETCHECK, (int)is_artist, 0);
+
+			gboolean is_title = CHECK_NAMED("title");
+			SendDlgMsg(pDlg, "chTitle", DM_ENABLE, (int)is_title, 0);
+
+			if (!is_title)
+				SendDlgMsg(pDlg, "chTitle", DM_SETCHECK, (int)is_title, 0);
+
+			gboolean is_album = CHECK_NAMED("album");
+			SendDlgMsg(pDlg, "chAlbum", DM_ENABLE, (int)is_album, 0);
+
+			if (!is_album)
+				SendDlgMsg(pDlg, "chAlbum", DM_SETCHECK, (int)is_album, 0);
+
+			gboolean is_track = CHECK_NAMED("track");
+			SendDlgMsg(pDlg, "chTrack", DM_ENABLE, (int)is_track, 0);
+
+			if (!is_track)
+				SendDlgMsg(pDlg, "chTrack", DM_SETCHECK, (int)is_track, 0);
+
+			gboolean is_year = CHECK_NAMED("year");
+			SendDlgMsg(pDlg, "chYear", DM_ENABLE, (int)is_year, 0);
+
+			if (!is_year)
+				SendDlgMsg(pDlg, "chYear", DM_SETCHECK, (int)is_year, 0);
+
+			gboolean is_genre = CHECK_NAMED("genre");
+			SendDlgMsg(pDlg, "chGenre", DM_ENABLE, (int)is_genre, 0);
+
+			if (!is_genre)
+				SendDlgMsg(pDlg, "chGenre", DM_SETCHECK, (int)is_genre, 0);
+
+			g_free(expr);
+
+			UpdateTagPreview(pDlg);
+
+			is_artist = (gboolean)SendDlgMsg(pDlg, "chArtist", DM_GETCHECK, 0, 0);
+			is_title = (gboolean)SendDlgMsg(pDlg, "chTitle", DM_GETCHECK, 0, 0);
+			is_album = (gboolean)SendDlgMsg(pDlg, "chAlbum", DM_GETCHECK, 0, 0);
+			is_track = (gboolean)SendDlgMsg(pDlg, "chTrack", DM_GETCHECK, 0, 0);
+			is_year = (gboolean)SendDlgMsg(pDlg, "chYear", DM_GETCHECK, 0, 0);
+			is_genre = (gboolean)SendDlgMsg(pDlg, "chGenre", DM_GETCHECK, 0, 0);
+			gboolean is_error = (gboolean)SendDlgMsg(pDlg, "chError", DM_GETCHECK, 0, 0);
+
+			SendDlgMsg(pDlg, "btnOK", DM_ENABLE, (int)((is_artist || is_title || is_album || is_track || is_year || is_genre) && !is_error), 0);
+			SendDlgMsg(pDlg, "btnTest", DM_ENABLE, (int)((is_artist || is_title || is_album || is_track || is_year || is_genre) && !is_error), 0);
+		}
+
+		break;
+
+	case DN_KEYUP:
+		if (lParam == 1 && *(int16_t*)wParam == 46)
+		{
+			if (strcmp(DlgItemName, "lbFileList") == 0)
+				DeleteFromList(pDlg, "lbFileList");
+			else if (strcmp(DlgItemName, "cbRegEx") == 0)
+				DeleteFromList(pDlg, "cbRegEx");
+		}
+
+		break;
+	}
+
+	return 0;
 }
 
 intptr_t DCPCALL PropertiesDlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr_t wParam, intptr_t lParam)
@@ -579,12 +1187,7 @@ intptr_t DCPCALL OptionsDlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg,
 			int16_t *key = (int16_t*)wParam;
 
 			if (lParam == 1 && *key == 46)
-			{
-				int i = (int)SendDlgMsg(pDlg, "lbHistory", DM_LISTGETITEMINDEX, 0, 0);
-
-				if (i != -1)
-					SendDlgMsg(pDlg, "lbHistory", DM_LISTDELETE, i, 0);
-			}
+				DeleteFromList(pDlg, "lbHistory");
 		}
 
 		break;
@@ -595,10 +1198,11 @@ intptr_t DCPCALL OptionsDlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg,
 
 intptr_t DCPCALL ConvertDlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr_t wParam, intptr_t lParam)
 {
+	gboolean term_enabled;
+
 	switch (Msg)
 	{
 	case DN_INITDIALOG:
-	{
 		g_key_file_load_from_file(gCfg, gCfgPath, 0, NULL);
 
 		if (g_key_file_has_key(gCfg, ROOTNAME, "Ext0", NULL))
@@ -646,14 +1250,13 @@ intptr_t DCPCALL ConvertDlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg,
 		g_free(gTerm);
 		gTerm = NULL;
 
-		gboolean term_enabled = g_key_file_get_boolean(gCfg, ROOTNAME, "TermminalEnabled", NULL);
+		term_enabled = g_key_file_get_boolean(gCfg, ROOTNAME, "TermminalEnabled", NULL);
 		SendDlgMsg(pDlg, "ckTerm", DM_SETCHECK, (int)term_enabled, 0);
 		SendDlgMsg(pDlg, "edTerm", DM_ENABLE, (int)term_enabled, 0);
 		SendDlgMsg(pDlg, "cbExt", DM_LISTSETITEMINDEX, 0, 0);
 		GetCommandsForExt(pDlg);
 
 		break;
-	}
 
 	case DN_CLICK:
 		if (strcmp(DlgItemName, "btnOK") == 0)
@@ -716,7 +1319,6 @@ intptr_t DCPCALL ConvertDlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg,
 		break;
 
 	case DN_CHANGE:
-	{
 		if (strcmp(DlgItemName, "ckTerm") == 0)
 			SendDlgMsg(pDlg, "edTerm", DM_ENABLE, wParam, 0);
 
@@ -748,45 +1350,43 @@ intptr_t DCPCALL ConvertDlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg,
 		}
 
 		gchar *term = NULL;
-		gboolean term_enabled = (gboolean)SendDlgMsg(pDlg, "ckTerm", DM_GETCHECK, 0, 0);
+		term_enabled = (gboolean)SendDlgMsg(pDlg, "ckTerm", DM_GETCHECK, 0, 0);
 
 		if (term_enabled)
+		{
 			term = g_strdup((char*)SendDlgMsg(pDlg, "edTerm", DM_GETTEXT, 0, 0));
 
-		gchar *ext = g_strdup((char*)SendDlgMsg(pDlg, "cbExt", DM_GETTEXT, 0, 0));
-
-		gchar *temp = ReplaceString(cmd, "{infile}", "/home/user/test.mp3", TRUE);
-		g_free(cmd);
-		cmd = temp;
-		gchar *newname = g_strdup_printf("/home/user/test.%s", ext);
-		temp = ReplaceString(cmd, "{outfilenoext.ext}", newname, TRUE);
-		g_free(newname);
-		g_free(cmd);
-
-		if (term && strlen(term) > 0)
-		{
-			if (g_strrstr(term, "{command}"))
+			if (!g_strrstr(term, "{command}"))
 			{
-				cmd = temp;
-				temp = ReplaceString(term, "{command}", cmd, FALSE);
+				g_free(term);
 				g_free(cmd);
-			}
-			else
-			{
 				SendDlgMsg(pDlg, "lblErr", DM_SHOWITEM, 1, 0);
 				SendDlgMsg(pDlg, "lblTemplate", DM_SHOWITEM, 1, 0);
 				SendDlgMsg(pDlg, "lblTemplate", DM_SETTEXT, (intptr_t)"{command}", 0);
+				return 0;
 			}
 		}
 
+		gchar *ext = g_strdup((char*)SendDlgMsg(pDlg, "cbExt", DM_GETTEXT, 0, 0));
+		gchar *outfile = g_strdup_printf("/home/user/test.%s", ext);
+		gchar *temp = BuildCommand(cmd, "/home/user/test.mp3", outfile, term);
 		SendDlgMsg(pDlg, "lblPreview", DM_SETTEXT, (intptr_t)temp, 0);
 		g_free(temp);
+		g_free(outfile);
 		g_free(ext);
 		g_free(term);
+		g_free(cmd);
 
 		break;
 	}
-	}
+
+	return 0;
+}
+
+intptr_t DCPCALL ActionsDlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr_t wParam, intptr_t lParam)
+{
+	if (Msg == DN_CLICK && strcmp(DlgItemName, "btnOK") == 0)
+		gAction = (int)SendDlgMsg(pDlg, "rgActions", DM_LISTGETITEMINDEX, 0, 0);
 
 	return 0;
 }
@@ -895,6 +1495,7 @@ static BOOL PropertiesDialog(char* FileName)
 	                       "      Top = 10\n"
 	                       "      Width = 70\n"
 	                       "      Caption = 'Artist'\n"
+	                       "      Layout = tlCenter\n"
 	                       "      ParentColor = False\n"
 	                       "    end\n"
 	                       "    object edArtist: TEdit\n"
@@ -910,6 +1511,7 @@ static BOOL PropertiesDialog(char* FileName)
 	                       "      Top = 51\n"
 	                       "      Width = 70\n"
 	                       "      Caption = 'Title'\n"
+	                       "      Layout = tlCenter\n"
 	                       "      ParentColor = False\n"
 	                       "    end\n"
 	                       "    object edTitle: TEdit\n"
@@ -926,6 +1528,7 @@ static BOOL PropertiesDialog(char* FileName)
 	                       "      Top = 92\n"
 	                       "      Width = 70\n"
 	                       "      Caption = 'Album'\n"
+	                       "      Layout = tlCenter\n"
 	                       "      ParentColor = False\n"
 	                       "    end\n"
 	                       "    object edAlbum: TEdit\n"
@@ -941,6 +1544,7 @@ static BOOL PropertiesDialog(char* FileName)
 	                       "      Top = 133\n"
 	                       "      Width = 70\n"
 	                       "      Caption = 'Track'\n"
+	                       "      Layout = tlCenter\n"
 	                       "      ParentColor = False\n"
 	                       "    end\n"
 	                       "    object edTrack: TEdit\n"
@@ -959,6 +1563,7 @@ static BOOL PropertiesDialog(char* FileName)
 	                       "      Top = 174\n"
 	                       "      Width = 70\n"
 	                       "      Caption = 'Year'\n"
+	                       "      Layout = tlCenter\n"
 	                       "      ParentColor = False\n"
 	                       "    end\n"
 	                       "    object edYear: TEdit\n"
@@ -977,6 +1582,7 @@ static BOOL PropertiesDialog(char* FileName)
 	                       "      Top = 215\n"
 	                       "      Width = 70\n"
 	                       "      Caption = 'Genre'\n"
+	                       "      Layout = tlCenter\n"
 	                       "      ParentColor = False\n"
 	                       "    end\n"
 	                       "    object edGenre: TEdit\n"
@@ -992,6 +1598,7 @@ static BOOL PropertiesDialog(char* FileName)
 	                       "      Top = 256\n"
 	                       "      Width = 70\n"
 	                       "      Caption = 'Comment'\n"
+	                       "      Layout = tlCenter\n"
 	                       "      ParentColor = False\n"
 	                       "    end\n"
 	                       "    object edComment: TEdit\n"
@@ -1361,6 +1968,603 @@ static BOOL ConvertDialog(void)
 	return gExtensions->DialogBoxLFM((intptr_t)lfmdata, (unsigned long)strlen(lfmdata), ConvertDlgProc);
 }
 
+
+static BOOL RegExDialog()
+{
+	const char *lfmdata = R"(
+object RegExDialog: TRegExDialog
+  Left = 591
+  Height = 726
+  Top = 223
+  Width = 566
+  AutoSize = True
+  BorderStyle = bsDialog
+  Caption = 'RegEx'
+  ChildSizing.LeftRightSpacing = 10
+  ChildSizing.TopBottomSpacing = 15
+  ClientHeight = 726
+  ClientWidth = 566
+  DesignTimePPI = 100
+  OnShow = DialogBoxShow
+  Position = poOwnerFormCenter
+  LCLVersion = '2.2.4.0'
+  object mRegEx: TMemo
+    AnchorSideLeft.Control = Owner
+    AnchorSideTop.Control = Owner
+    AnchorSideRight.Control = cbRegEx
+    AnchorSideRight.Side = asrBottom
+    Left = 10
+    Height = 176
+    Top = 15
+    Width = 546
+    Anchors = [akTop, akLeft, akRight]
+    Font.Name = 'Monospace'
+    ParentFont = False
+    ReadOnly = True
+    ScrollBars = ssAutoBoth
+    TabOrder = 0
+    WordWrap = False
+  end
+  object cbRegEx: TComboBox
+    AnchorSideLeft.Control = Owner
+    AnchorSideTop.Control = mRegEx
+    AnchorSideTop.Side = asrBottom
+    Left = 10
+    Height = 36
+    Top = 191
+    Width = 546
+    ItemHeight = 23
+    Items.Strings = (
+      '(?''artist''[^/]+)\s+-\s+(?''title''[^/]+)\..+$|(?''title''[^/]+)\..+$'
+      '(?''artist''[^/]+)/(?''album''[^/]+)/(?''track''\d{0,2})[\.:]\s+(?''title''[^/]+)\..+$'
+    )
+    OnChange = ComboBoxChange
+    OnKeyUp = ComboBoxKeyUp
+    TabOrder = 1
+  end
+  object lblError: TLabel
+    AnchorSideLeft.Control = Owner
+    AnchorSideTop.Control = cbRegEx
+    AnchorSideTop.Side = asrBottom
+    AnchorSideRight.Control = Owner
+    AnchorSideRight.Side = asrBottom
+    Left = 10
+    Height = 1
+    Top = 232
+    Width = 546
+    Anchors = [akTop, akLeft, akRight]
+    BorderSpacing.Top = 5
+    Font.Style = [fsBold, fsItalic]
+    ParentColor = False
+    ParentFont = False
+    Visible = False
+    WordWrap = True
+  end
+  object gbPreview: TGroupBox
+    AnchorSideLeft.Control = Owner
+    AnchorSideTop.Control = lblError
+    AnchorSideTop.Side = asrBottom
+    AnchorSideRight.Control = cbRegEx
+    AnchorSideRight.Side = asrBottom
+    Left = 10
+    Height = 429
+    Top = 243
+    Width = 546
+    Anchors = [akTop, akLeft, akRight]
+    AutoSize = True
+    BorderSpacing.Top = 10
+    ChildSizing.VerticalSpacing = 5
+    ClientHeight = 429
+    ClientWidth = 530
+    TabOrder = 2
+    object Panel: TPanel
+      AnchorSideLeft.Control = gbPreview
+      AnchorSideTop.Control = gbPreview
+      AnchorSideRight.Control = gbPreview
+      AnchorSideRight.Side = asrBottom
+      Left = 0
+      Height = 155
+      Top = 0
+      Width = 530
+      Anchors = [akTop, akLeft, akRight]
+      AutoSize = True
+      BevelOuter = bvNone
+      ChildSizing.EnlargeHorizontal = crsHomogenousChildResize
+      ChildSizing.Layout = cclLeftToRightThenTopToBottom
+      ChildSizing.ControlsPerLine = 3
+      ClientHeight = 155
+      ClientWidth = 530
+      TabOrder = 0
+      object lblReplace: TLabel
+        Left = 0
+        Height = 17
+        Top = 0
+        Width = 190
+        Alignment = taCenter
+        Caption = 'Replace'
+        Font.Style = [fsBold]
+        Layout = tlCenter
+        ParentColor = False
+        ParentFont = False
+      end
+      object lblCurrent: TLabel
+        Left = 190
+        Height = 17
+        Top = 0
+        Width = 176
+        Alignment = taCenter
+        Caption = 'Current'
+        Font.Style = [fsBold]
+        Layout = tlCenter
+        ParentColor = False
+        ParentFont = False
+      end
+      object lblMatch: TLabel
+        Left = 366
+        Height = 17
+        Top = 0
+        Width = 164
+        Alignment = taCenter
+        Caption = 'Result'
+        Font.Style = [fsBold]
+        Layout = tlCenter
+        ParentColor = False
+        ParentFont = False
+      end
+      object chArtist: TCheckBox
+        Left = 0
+        Height = 23
+        Top = 17
+        Width = 190
+        Caption = 'Artist'
+        Enabled = False
+        OnChange = CheckBoxChange
+        TabOrder = 1
+      end
+      object lblArtistOld: TLabel
+        Left = 190
+        Height = 23
+        Top = 17
+        Width = 176
+        Enabled = False
+        Layout = tlCenter
+        ParentColor = False
+        WordWrap = True
+      end
+      object lblArtist: TLabel
+        Left = 366
+        Height = 23
+        Top = 17
+        Width = 164
+        Enabled = False
+        Layout = tlCenter
+        ParentColor = False
+        WordWrap = True
+      end
+      object chTitle: TCheckBox
+        Left = 0
+        Height = 23
+        Top = 40
+        Width = 190
+        Caption = 'Title'
+        Enabled = False
+        OnChange = CheckBoxChange
+        TabOrder = 2
+      end
+      object lblTitleOld: TLabel
+        Left = 190
+        Height = 23
+        Top = 40
+        Width = 176
+        Enabled = False
+        Layout = tlCenter
+        ParentColor = False
+        WordWrap = True
+      end
+      object lblTitle: TLabel
+        Left = 366
+        Height = 23
+        Top = 40
+        Width = 164
+        Enabled = False
+        Layout = tlCenter
+        ParentColor = False
+        WordWrap = True
+      end
+      object chAlbum: TCheckBox
+        Left = 0
+        Height = 23
+        Top = 63
+        Width = 190
+        Caption = 'Album'
+        Enabled = False
+        OnChange = CheckBoxChange
+        TabOrder = 3
+      end
+      object lblAlbumOld: TLabel
+        Left = 190
+        Height = 23
+        Top = 63
+        Width = 176
+        Enabled = False
+        Layout = tlCenter
+        ParentColor = False
+        WordWrap = True
+      end
+      object lblAlbum: TLabel
+        Left = 366
+        Height = 23
+        Top = 63
+        Width = 164
+        Enabled = False
+        Layout = tlCenter
+        ParentColor = False
+        WordWrap = True
+      end
+      object chTrack: TCheckBox
+        Left = 0
+        Height = 23
+        Top = 86
+        Width = 190
+        Caption = 'Track'
+        Enabled = False
+        OnChange = CheckBoxChange
+        TabOrder = 4
+      end
+      object lblTrackOld: TLabel
+        Left = 190
+        Height = 23
+        Top = 86
+        Width = 176
+        Enabled = False
+        Layout = tlCenter
+        ParentColor = False
+        WordWrap = True
+      end
+      object lblTrack: TLabel
+        Left = 366
+        Height = 23
+        Top = 86
+        Width = 164
+        Enabled = False
+        Layout = tlCenter
+        ParentColor = False
+        WordWrap = True
+      end
+      object chYear: TCheckBox
+        Left = 0
+        Height = 23
+        Top = 109
+        Width = 190
+        Caption = 'Year'
+        Enabled = False
+        OnChange = CheckBoxChange
+        TabOrder = 5
+      end
+      object lblYearOld: TLabel
+        Left = 190
+        Height = 23
+        Top = 109
+        Width = 176
+        Enabled = False
+        Layout = tlCenter
+        ParentColor = False
+        WordWrap = True
+      end
+      object lblYear: TLabel
+        Left = 366
+        Height = 23
+        Top = 109
+        Width = 164
+        Enabled = False
+        Layout = tlCenter
+        ParentColor = False
+        WordWrap = True
+      end
+      object chGenre: TCheckBox
+        Left = 0
+        Height = 23
+        Top = 132
+        Width = 190
+        Caption = 'Genre'
+        Enabled = False
+        OnChange = CheckBoxChange
+        TabOrder = 6
+      end
+      object lblGenreOld: TLabel
+        Left = 190
+        Height = 23
+        Top = 132
+        Width = 176
+        Enabled = False
+        Layout = tlCenter
+        ParentColor = False
+        WordWrap = True
+      end
+      object lblGenre: TLabel
+        Left = 366
+        Height = 23
+        Top = 132
+        Width = 164
+        Enabled = False
+        Layout = tlCenter
+        ParentColor = False
+        WordWrap = True
+      end
+      object chError: TCheckBox
+        AnchorSideLeft.Side = asrBottom
+        AnchorSideTop.Control = Panel
+        AnchorSideRight.Control = Panel
+        AnchorSideRight.Side = asrBottom
+        Left = 449
+        Height = 23
+        Top = 0
+        Width = 81
+        Anchors = [akTop, akRight]
+        Caption = 'chError'
+        TabOrder = 0
+        Visible = False
+      end
+    end
+    object ProgressBar: TProgressBar
+      AnchorSideLeft.Control = Panel
+      AnchorSideTop.Control = mLog
+      AnchorSideTop.Side = asrBottom
+      AnchorSideRight.Control = Panel
+      AnchorSideRight.Side = asrBottom
+      Left = 0
+      Height = 25
+      Top = 404
+      Width = 530
+      Anchors = [akTop, akLeft, akRight]
+      BorderSpacing.Top = 5
+      TabOrder = 5
+      Visible = False
+    end
+    object lbFileList: TListBox
+      AnchorSideLeft.Control = Panel
+      AnchorSideTop.Control = Panel
+      AnchorSideTop.Side = asrBottom
+      AnchorSideRight.Control = Panel
+      AnchorSideRight.Side = asrBottom
+      Left = 0
+      Height = 106
+      Top = 160
+      Width = 530
+      Anchors = [akTop, akLeft, akRight]
+      BorderSpacing.Top = 5
+      ItemHeight = 0
+      OnClick = ListBoxClick
+      OnKeyUp = ListBoxKeyUp
+      TabOrder = 1
+    end
+    object btnDel: TButton
+      AnchorSideLeft.Control = Panel
+      AnchorSideTop.Control = lbFileList
+      AnchorSideTop.Side = asrBottom
+      Left = 0
+      Height = 29
+      Top = 271
+      Width = 217
+      AutoSize = True
+      Caption = '&Remove filename from list'
+      OnClick = ButtonClick
+      TabOrder = 2
+    end
+    object mLog: TMemo
+      AnchorSideLeft.Control = Panel
+      AnchorSideTop.Control = btnDel
+      AnchorSideTop.Side = asrBottom
+      AnchorSideRight.Control = Panel
+      AnchorSideRight.Side = asrBottom
+      Left = 0
+      Height = 94
+      Top = 305
+      Width = 530
+      Anchors = [akTop, akLeft, akRight]
+      ReadOnly = True
+      ScrollBars = ssAutoBoth
+      TabOrder = 4
+      WantTabs = True
+      WordWrap = False
+    end
+    object btnTest: TButton
+      AnchorSideTop.Control = btnDel
+      AnchorSideRight.Control = Panel
+      AnchorSideRight.Side = asrBottom
+      Left = 379
+      Height = 29
+      Top = 271
+      Width = 151
+      Anchors = [akTop, akRight]
+      AutoSize = True
+      Caption = '&Test all filenames'
+      Enabled = False
+      OnClick = ButtonClick
+      TabOrder = 3
+    end
+  end
+  object btnCancel: TBitBtn
+    AnchorSideTop.Control = btnOK
+    AnchorSideTop.Side = asrCenter
+    AnchorSideRight.Control = btnOK
+    Left = 349
+    Height = 31
+    Top = 692
+    Width = 101
+    Anchors = [akTop, akRight]
+    AutoSize = True
+    BorderSpacing.Right = 5
+    Cancel = True
+    Constraints.MinHeight = 31
+    Constraints.MinWidth = 101
+    DefaultCaption = True
+    Kind = bkCancel
+    ModalResult = 2
+    OnClick = ButtonClick
+    TabOrder = 4
+  end
+  object btnOK: TBitBtn
+    AnchorSideTop.Control = gbPreview
+    AnchorSideTop.Side = asrBottom
+    AnchorSideRight.Control = cbRegEx
+    AnchorSideRight.Side = asrBottom
+    Left = 455
+    Height = 31
+    Top = 692
+    Width = 101
+    Anchors = [akTop, akRight]
+    AutoSize = True
+    BorderSpacing.Top = 20
+    Constraints.MinHeight = 31
+    Constraints.MinWidth = 101
+    Default = True
+    DefaultCaption = True
+    Enabled = False
+    Kind = bkOK
+    ModalResult = 1
+    OnClick = ButtonClick
+    TabOrder = 3
+  end
+end
+)";
+
+	return gExtensions->DialogBoxLFM((intptr_t)lfmdata, (unsigned long)strlen(lfmdata), RegExDlgProc);
+}
+
+static void ActionsDialog(void)
+{
+	const char lfmdata_tmpl[] = ""
+	                            "object ActionDialog: TActionDialog\n"
+	                            "  Left = 591\n"
+	                            "  Height = 171\n"
+	                            "  Top = 223\n"
+	                            "  Width = 423\n"
+	                            "  AutoSize = True\n"
+	                            "  BorderStyle = bsDialog\n"
+	                            "  Caption = 'Select Action'\n"
+	                            "  ChildSizing.LeftRightSpacing = 10\n"
+	                            "  ChildSizing.TopBottomSpacing = 15\n"
+	                            "  ClientHeight = 171\n"
+	                            "  ClientWidth = 423\n"
+	                            "  DesignTimePPI = 100\n"
+	                            "  OnShow = DialogBoxShow\n"
+	                            "  Position = poOwnerFormCenter\n"
+	                            "  LCLVersion = '2.2.4.0'\n"
+	                            "  object rgActions: TRadioGroup\n"
+	                            "    AnchorSideLeft.Control = Owner\n"
+	                            "    AnchorSideTop.Control = Owner\n"
+	                            "    Left = 10\n"
+	                            "    Height = 94\n"
+	                            "    Top = 15\n"
+	                            "    Width = 400\n"
+	                            "    AutoFill = True\n"
+	                            "    AutoSize = True\n"
+	                            "    Caption = 'Select Action'\n"
+	                            "    ChildSizing.LeftRightSpacing = 10\n"
+	                            "    ChildSizing.EnlargeHorizontal = crsHomogenousChildResize\n"
+	                            "    ChildSizing.EnlargeVertical = crsHomogenousChildResize\n"
+	                            "    ChildSizing.ShrinkHorizontal = crsScaleChilds\n"
+	                            "    ChildSizing.ShrinkVertical = crsScaleChilds\n"
+	                            "    ChildSizing.Layout = cclLeftToRightThenTopToBottom\n"
+	                            "    ChildSizing.ControlsPerLine = 1\n"
+	                            "    ClientHeight = 69\n"
+	                            "    ClientWidth = 384\n"
+	                            "    Constraints.MinWidth = 400\n"
+	                            "    ItemIndex = 0\n"
+	                            "    Items.Strings = (\n%s"
+	                            "    )\n"
+	                            "    TabOrder = 0\n"
+	                            "  end\n"
+	                            "  object btnOK: TBitBtn\n"
+	                            "    AnchorSideTop.Control = rgActions\n"
+	                            "    AnchorSideTop.Side = asrBottom\n"
+	                            "    AnchorSideRight.Control = rgActions\n"
+	                            "    AnchorSideRight.Side = asrBottom\n"
+	                            "    Left = 309\n"
+	                            "    Height = 31\n"
+	                            "    Top = 129\n"
+	                            "    Width = 101\n"
+	                            "    Anchors = [akTop, akRight]\n"
+	                            "    AutoSize = True\n"
+	                            "    BorderSpacing.Top = 20\n"
+	                            "    Constraints.MinHeight = 31\n"
+	                            "    Constraints.MinWidth = 101\n"
+	                            "    Default = True\n"
+	                            "    DefaultCaption = True\n"
+	                            "    Kind = bkOK\n"
+	                            "    ModalResult = 1\n"
+	                            "    OnClick = ButtonClick\n"
+	                            "    TabOrder = 1\n"
+	                            "  end\n"
+	                            "  object btnCancel: TBitBtn\n"
+	                            "    AnchorSideTop.Control = btnOK\n"
+	                            "    AnchorSideTop.Side = asrCenter\n"
+	                            "    AnchorSideRight.Control = btnOK\n"
+	                            "    Left = 203\n"
+	                            "    Height = 31\n"
+	                            "    Top = 129\n"
+	                            "    Width = 101\n"
+	                            "    Anchors = [akTop, akRight]\n"
+	                            "    AutoSize = True\n"
+	                            "    BorderSpacing.Right = 5\n"
+	                            "    Cancel = True\n"
+	                            "    Constraints.MinHeight = 31\n"
+	                            "    Constraints.MinWidth = 101\n"
+	                            "    DefaultCaption = True\n"
+	                            "    Kind = bkCancel\n"
+	                            "    ModalResult = 2\n"
+	                            "    OnClick = ButtonClick\n"
+	                            "    TabOrder = 2\n"
+	                            "  end\n"
+	                            "end\n"
+	                            ;
+
+	GString *items = g_string_new(NULL);
+
+	for (int i = 0; i < WFX_ACTS; i++)
+	{
+		char buff[MAX_PATH] = "";
+
+		switch (i)
+		{
+		case WFX_ACT_CONV:
+			Translate("Run an external program to convert files", buff, MAX_PATH);
+			break;
+		case WFX_ACT_FILL:
+			Translate("Fill tags with data from filenames", buff, MAX_PATH);
+			break;
+		case WFX_ACT_COPY:
+			Translate("Copy audio files", buff, MAX_PATH);
+			break;
+		}
+
+		if (buff[0] != '\0')
+		{
+			g_string_append(items, "      '");
+			g_string_append(items, buff);
+			g_string_append(items, "'\n");
+		}
+	}
+
+	gchar *lfmdata = g_strdup_printf(lfmdata_tmpl, items->str);
+	gExtensions->DialogBoxLFM((intptr_t)lfmdata, (unsigned long)strlen(lfmdata), ActionsDlgProc);
+	g_free(lfmdata);
+	g_string_free(items, TRUE);
+}
+
+static int ExecuteAction(char *InputFileName, char *TargetPath, gboolean OverwriteCheck)
+{
+	if (gAction == WFX_ACT_FILL)
+		return AddToFileList(InputFileName);
+	else  if (gAction == WFX_ACT_CONV)
+		return ConvertFile(InputFileName, TargetPath, OverwriteCheck);
+	else  if (gAction == WFX_ACT_COPY)
+		return CopyLocalFile(InputFileName, TargetPath, OverwriteCheck);
+
+	return FS_FILE_USERABORT;
+}
+
 static BOOL SetFindData(DIR *cur, char *path, WIN32_FIND_DATAA *FindData)
 {
 	struct dirent *ent;
@@ -1511,13 +2715,34 @@ BOOL DCPCALL FsGetLocalName(char* RemoteName, int maxlen)
 
 int DCPCALL FsGetFile(char* RemoteName, char* LocalName, int CopyFlags, RemoteInfoStruct* ri)
 {
+	if (gAction == -1)
+		return FS_FILE_USERABORT;
+
 	char filename[PATH_MAX];
 	snprintf(filename, sizeof(filename), "%s%s", gStartPath, RemoteName);
 
-	if (gExecuteConverter)
-		return ConvertFile(filename, LocalName, CopyFlags == 0);
+	return ExecuteAction(filename, LocalName, CopyFlags == 0);
+}
+
+int DCPCALL FsPutFile(char* LocalName, char* RemoteName, int CopyFlags)
+{
+	if (gAction == -1)
+		return FS_FILE_USERABORT;
+
+	TagLib_File *tagfile = taglib_file_new(LocalName);
+
+	if (tagfile != NULL && taglib_file_is_valid(tagfile))
+	{
+		taglib_tag_free_strings();
+		taglib_file_free(tagfile);
+	}
 	else
-		return CopyLocalFile(filename, LocalName, CopyFlags == 0);
+		return FS_FILE_OK;
+
+	char filename[PATH_MAX];
+	snprintf(filename, sizeof(filename), "%s%s", gStartPath, RemoteName);
+
+	return ExecuteAction(LocalName, filename, CopyFlags == 0);
 }
 
 int DCPCALL FsRenMovFile(char* OldName, char* NewName, BOOL Move, BOOL OverWrite, RemoteInfoStruct * ri)
@@ -1533,7 +2758,6 @@ int DCPCALL FsRenMovFile(char* OldName, char* NewName, BOOL Move, BOOL OverWrite
 
 	if (!Move)
 		return CopyLocalFile(infile, outfile, OverWrite == FALSE);
-//		return FS_FILE_NOTSUPPORTED;
 
 	if (OverWrite == FALSE && g_file_test(outfile, G_FILE_TEST_EXISTS))
 	{
@@ -1546,6 +2770,27 @@ int DCPCALL FsRenMovFile(char* OldName, char* NewName, BOOL Move, BOOL OverWrite
 	gProgressProc(gPluginNr, infile, outfile, 100);
 
 	return result;
+}
+
+BOOL DCPCALL FsMkDir(char* Path)
+{
+	char filename[PATH_MAX];
+	snprintf(filename, sizeof(filename), "%s%s", gStartPath, Path);
+
+	return (mkdir(filename, S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH) == 0);
+}
+
+BOOL DCPCALL FsDeleteFile(char* RemoteName)
+{
+	char filename[PATH_MAX];
+	snprintf(filename, sizeof(filename), "%s%s", gStartPath, RemoteName);
+
+	return (remove(filename) == 0);
+}
+
+BOOL DCPCALL FsRemoveDir(char* RemoteName)
+{
+	return FsDeleteFile(RemoteName);
 }
 
 int DCPCALL FsExecuteFile(HWND MainWin, char* RemoteName, char* Verb)
@@ -1576,16 +2821,31 @@ int DCPCALL FsExecuteFile(HWND MainWin, char* RemoteName, char* Verb)
 
 void DCPCALL FsStatusInfo(char* RemoteDir, int InfoStartEnd, int InfoOperation)
 {
-	if (InfoOperation == FS_STATUS_OP_GET_SINGLE || InfoOperation == FS_STATUS_OP_GET_MULTI)
+	if (InfoOperation > FS_STATUS_OP_LIST && InfoOperation < FS_STATUS_OP_RENMOV_SINGLE)
 	{
 		if (InfoStartEnd == FS_STATUS_START)
 		{
-			char msg[MAX_PATH];
-			Translate("Start converting selected files? Otherwise files will be copied.", msg, MAX_PATH);
-			gExecuteConverter = (MessageBox((char*)msg, ROOTNAME, MB_YESNO | MB_ICONQUESTION) == ID_YES);
+			gAction = -1;
+			ActionsDialog();
 
-			if (gExecuteConverter)
+			if (gAction == WFX_ACT_CONV)
 				ConvertDialog();
+			else if (gAction == WFX_ACT_FILL)
+			{
+				if (!gTempDir)
+					gTempDir = g_dir_make_tmp(TEMPLATEDIR, NULL);
+
+				gchar *filename = g_strdup_printf("%s/%s", gTempDir, TMPLSTNAME);
+				gTempFile = fopen(filename, "w+");
+				g_free(filename);
+			}
+		}
+		else
+		{
+			if (gAction == WFX_ACT_FILL && gTempFile)
+				RegExDialog();
+
+			gAction = -1;
 		}
 	}
 }
@@ -1835,5 +3095,11 @@ void DCPCALL ExtensionFinalize(void* Reserved)
 	}
 
 	gLastTagFile = NULL;
+
+	if (gTempDir)
+	{
+		remove(gTempDir);
+		g_free(gTempDir);
+	}
 
 }

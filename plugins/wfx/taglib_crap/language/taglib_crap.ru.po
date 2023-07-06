@@ -17,10 +17,6 @@ msgstr ""
 "Вы можете вызать этот диалог повторно вызвав свойства плагина или элемента "
 "\"..\" в корневой папке."
 
-#: TOptDialogBox.fnSelectPath.DialogTitle
-msgid "Select any audio file"
-msgstr "Выберите любой аудиофайл"
-
 #: TPropDialogBox.Сaption
 msgid "Properties"
 msgstr "Свойства"
@@ -73,6 +69,34 @@ msgstr "Запустить в Терминале"
 msgid "A required template is missing"
 msgstr "Отсуствует необходимый шаблон"
 
+#: TRegExDialog.Сaption
+msgid "RegEx"
+msgstr "Регулярное выражение"
+
+#: TConvDialogBox.lblReplace.Сaption
+msgid "Replace"
+msgstr "Заменить"
+
+#: TConvDialogBox.lblCurrent.Сaption
+msgid "Current"
+msgstr "Текущее"
+
+#: TConvDialogBox.lblMatch.Сaption
+msgid "Result"
+msgstr "Результат"
+
+#: TConvDialogBox.btnDel.Сaption
+msgid "&Remove filename from list"
+msgstr "&Удалить имя файла из списка"
+
+#: TConvDialogBox.btnTest.Сaption
+msgid "&Test all filenames"
+msgstr "&Проверить все имена файлов"
+
+#: TActionDialog.Сaption TActionDialog.rgActions.Сaption
+msgid "Select Action"
+msgstr "Выберите действие"
+
 #: MiscStr.No.
 msgid "No."
 msgstr "№"
@@ -93,6 +117,18 @@ msgstr "Файл %s уже существует, перезаписать?"
 msgid "Fill in these fields with the following values?"
 msgstr "Заполнить данные поля следующими значенииями?"
 
-#: MiscStr.Start converting selected files? Otherwise files will be copied.
-msgid "Start converting selected files? Otherwise files will be copied."
-msgstr "Начать ковертирование выбранных файлов? В противном случае файлы будут скопированы."
+#: MiscStr.Run an external program to convert files
+msgid "Run an external program to convert files"
+msgstr "Выполнить внешнюю программу для конвертирования файлов"
+
+#: MiscStr.Fill tags with data from filenames
+msgid "Fill tags with data from filenames"
+msgstr "Заполить теги данными из имени файла"
+
+#: MiscStr.Copy audio files
+msgid "Copy audio files"
+msgstr "Копировать аудиофайлы"
+
+#: MiscStr.not a valid file
+msgid "not a valid file"
+msgstr "неверный файл"
