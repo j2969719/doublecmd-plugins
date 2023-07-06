@@ -42,6 +42,7 @@ typedef struct sField
 
 enum
 {
+	WFX_ACT_SET,
 	WFX_ACT_FILL,
 	WFX_ACT_CONV,
 	WFX_ACT_COPY,
@@ -654,7 +655,6 @@ static void FillFileList(uintptr_t pDlg)
 	if (gTempFile)
 	{
 		gchar *filename = g_strdup_printf("%s/%s", gTempDir, TMPLSTNAME);
-		SendDlgMsg(pDlg, "edFileName", DM_SETTEXT, (intptr_t)filename, 0);
 		fseek(gTempFile, 0, SEEK_SET);
 
 		while ((read = getline(&line, &len, gTempFile)) != -1)
@@ -928,7 +928,7 @@ intptr_t DCPCALL PropertiesDlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t M
 	switch (Msg)
 	{
 	case DN_INITDIALOG:
-		if (gLastTag)
+		if (gAction != WFX_ACT_SET && gLastTag)
 		{
 			char *pos = strrchr(gLastFile, '/');
 
@@ -978,66 +978,176 @@ intptr_t DCPCALL PropertiesDlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t M
 				SendDlgMsg(pDlg, "edTrack", DM_SETTEXT, (intptr_t)track, 0);
 			}
 		}
+		else if (gAction == WFX_ACT_SET)
+		{
+			FillFileList(pDlg);
+			gsize count = (gsize)SendDlgMsg(pDlg, "lbFileList", DM_LISTGETCOUNT, 0, 0);
+			char buff[MAX_PATH];
+			Translate("file(s)", buff, MAX_PATH);
+			gchar *string = g_strdup_printf("%ld %s", count, buff);
+			SendDlgMsg(pDlg, "edFileName", DM_SETTEXT, (intptr_t)string, 0);
+			g_free(string);
+		}
 
 		break;
 
 	case DN_CLICK:
 		if (strcmp(DlgItemName, "btnOK") == 0)
 		{
-			string = (char*)SendDlgMsg(pDlg, "edTitle", DM_GETTEXT, 0, 0);
-
-			if (string)
-				taglib_tag_set_title(gLastTag, string);
-
-			string = (char*)SendDlgMsg(pDlg, "edArtist", DM_GETTEXT, 0, 0);
-
-			if (string)
-				taglib_tag_set_artist(gLastTag, string);
-
-			string = (char*)SendDlgMsg(pDlg, "edAlbum", DM_GETTEXT, 0, 0);
-
-			if (string)
-				taglib_tag_set_album(gLastTag, string);
-
-			string = (char*)SendDlgMsg(pDlg, "edComment", DM_GETTEXT, 0, 0);
-
-			if (string)
-				taglib_tag_set_comment(gLastTag, string);
-
-			string = (char*)SendDlgMsg(pDlg, "edGenre", DM_GETTEXT, 0, 0);
-
-			if (string)
-				taglib_tag_set_genre(gLastTag, string);
-
-			string = (char*)SendDlgMsg(pDlg, "edYear", DM_GETTEXT, 0, 0);
-
-			if (string)
+			if (gAction != WFX_ACT_SET)
 			{
-				if (string[0] == '\0')
-					value = 0;
-				else
-					value = (unsigned int)atoi(string);
+				string = (char*)SendDlgMsg(pDlg, "edTitle", DM_GETTEXT, 0, 0);
 
-				taglib_tag_set_year(gLastTag, value);
+				if (string)
+					taglib_tag_set_title(gLastTag, string);
+
+				string = (char*)SendDlgMsg(pDlg, "edArtist", DM_GETTEXT, 0, 0);
+
+				if (string)
+					taglib_tag_set_artist(gLastTag, string);
+
+				string = (char*)SendDlgMsg(pDlg, "edAlbum", DM_GETTEXT, 0, 0);
+
+				if (string)
+					taglib_tag_set_album(gLastTag, string);
+
+				string = (char*)SendDlgMsg(pDlg, "edComment", DM_GETTEXT, 0, 0);
+
+				if (string)
+					taglib_tag_set_comment(gLastTag, string);
+
+				string = (char*)SendDlgMsg(pDlg, "edGenre", DM_GETTEXT, 0, 0);
+
+				if (string)
+					taglib_tag_set_genre(gLastTag, string);
+
+				string = (char*)SendDlgMsg(pDlg, "edYear", DM_GETTEXT, 0, 0);
+
+				if (string)
+				{
+					if (string[0] == '\0')
+						value = 0;
+					else
+						value = (unsigned int)atoi(string);
+
+					taglib_tag_set_year(gLastTag, value);
+				}
+
+				string = (char*)SendDlgMsg(pDlg, "edTrack", DM_GETTEXT, 0, 0);
+
+				if (string)
+				{
+					if (string[0] == '\0')
+						value = 0;
+					else
+						value = (unsigned int)atoi(string);
+
+					taglib_tag_set_track(gLastTag, value);
+				}
+
+				if (!taglib_file_save(gLastTagFile))
+				{
+					char msg[MAX_PATH];
+					Translate("Failed to write tag.", msg, MAX_PATH);
+					MessageBox(msg, ROOTNAME, MB_OK | MB_ICONERROR);
+				}
 			}
-
-			string = (char*)SendDlgMsg(pDlg, "edTrack", DM_GETTEXT, 0, 0);
-
-			if (string)
+			else
 			{
-				if (string[0] == '\0')
-					value = 0;
-				else
-					value = (unsigned int)atoi(string);
+				gsize count = (gsize)SendDlgMsg(pDlg, "lbFileList", DM_LISTGETCOUNT, 0, 0);
+				SendDlgMsg(pDlg, "ProgressBar", DM_SHOWITEM, 1, 0);
 
-				taglib_tag_set_track(gLastTag, value);
-			}
+				for (gsize i = 0; i < count; i++)
+				{
+					gchar *filename = g_strdup((char*)SendDlgMsg(pDlg, "lbFileList", DM_LISTGETITEM, i, 0));
+					SendDlgMsg(pDlg, "ProgressBar", DM_SETPROGRESSVALUE, (int)i * 100 / count, 0);
 
-			if (!taglib_file_save(gLastTagFile))
-			{
-				char msg[MAX_PATH];
-				Translate("Failed to write tag.", msg, MAX_PATH);
-				MessageBox(msg, ROOTNAME, MB_OK | MB_ICONERROR);
+					TagLib_Tag *tag;
+					TagLib_File *tagfile = taglib_file_new(filename);
+
+					if (tagfile != NULL && taglib_file_is_valid(tagfile))
+					{
+						tag = taglib_file_tag(tagfile);
+
+						if (SendDlgMsg(pDlg, "chArtist", DM_GETCHECK, 0, 0))
+						{
+							string = (char*)SendDlgMsg(pDlg, "edArtist", DM_GETTEXT, 0, 0);
+
+							if (string)
+								taglib_tag_set_artist(tag, string);
+						}
+
+						if (SendDlgMsg(pDlg, "chTitle", DM_GETCHECK, 0, 0))
+						{
+							string = (char*)SendDlgMsg(pDlg, "edTitle", DM_GETTEXT, 0, 0);
+
+							if (string)
+								taglib_tag_set_title(tag, string);
+						}
+
+						if (SendDlgMsg(pDlg, "chAlbum", DM_GETCHECK, 0, 0))
+						{
+							string = (char*)SendDlgMsg(pDlg, "edAlbum", DM_GETTEXT, 0, 0);
+
+							if (string)
+								taglib_tag_set_album(tag, string);
+						}
+
+						if (SendDlgMsg(pDlg, "chTrack", DM_GETCHECK, 0, 0))
+						{
+							string = (char*)SendDlgMsg(pDlg, "edTrack", DM_GETTEXT, 0, 0);
+
+							if (string)
+								taglib_tag_set_track(tag, (unsigned int)atoi(string));
+						}
+
+						if (SendDlgMsg(pDlg, "chYear", DM_GETCHECK, 0, 0))
+						{
+							string = (char*)SendDlgMsg(pDlg, "edYear", DM_GETTEXT, 0, 0);
+
+							if (string)
+								taglib_tag_set_year(tag, (unsigned int)atoi(string));
+						}
+
+						if (SendDlgMsg(pDlg, "chGenre", DM_GETCHECK, 0, 0))
+						{
+							string = (char*)SendDlgMsg(pDlg, "edGenre", DM_GETTEXT, 0, 0);
+
+							if (string)
+								taglib_tag_set_genre(tag, string);
+						}
+
+						if (SendDlgMsg(pDlg, "chComment", DM_GETCHECK, 0, 0))
+						{
+							string = (char*)SendDlgMsg(pDlg, "edComment", DM_GETTEXT, 0, 0);
+
+							if (string)
+								taglib_tag_set_comment(tag, string);
+						}
+
+						if (!taglib_file_save(tagfile))
+						{
+							char buff[MAX_PATH];
+							Translate("Failed to write tag.", buff, MAX_PATH);
+							gchar *msg = g_strdup_printf("%s (%s)", buff, filename);
+							MessageBox(msg, ROOTNAME, MB_OK | MB_ICONERROR);
+							g_free(msg);
+						}
+
+						taglib_tag_free_strings();
+						taglib_file_free(tagfile);
+					}
+					else
+					{
+						char buff[MAX_PATH];
+						Translate("not a valid file.", buff, MAX_PATH);
+						gchar *msg = g_strdup_printf("%s: %s", filename, buff);
+						MessageBox(msg, ROOTNAME, MB_OK | MB_ICONERROR);
+						g_free(msg);
+					}
+
+					g_free(filename);
+				}
 			}
 		}
 		else if (strcmp(DlgItemName, "btnAutoPaste") == 0)
@@ -1077,6 +1187,19 @@ intptr_t DCPCALL PropertiesDlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t M
 
 			g_strfreev(split);
 			g_free(filename);
+		}
+
+		break;
+
+	case DN_CHANGE:
+		if (strncmp(DlgItemName, "ch", 2) == 0)
+		{
+			gchar *item = g_strdup_printf("lbl%s", DlgItemName + 2);
+			SendDlgMsg(pDlg, item, DM_ENABLE, (int)wParam, 0);
+			g_free(item);
+			item = g_strdup_printf("ed%s", DlgItemName + 2);
+			SendDlgMsg(pDlg, item, DM_ENABLE, (int)wParam, 0);
+			g_free(item);
 		}
 
 		break;
@@ -1656,6 +1779,328 @@ static BOOL PropertiesDialog(char* FileName)
 
 		return FALSE;
 	}
+
+	return gExtensions->DialogBoxLFM((intptr_t)lfmdata, (unsigned long)strlen(lfmdata), PropertiesDlgProc);
+}
+
+
+static BOOL SetTagDialog(void)
+{
+	const char lfmdata[] = ""
+	                       "object PropDialogBox: TPropDialogBox\n"
+	                       "  Left = 412\n"
+	                       "  Height = 466\n"
+	                       "  Top = 125\n"
+	                       "  Width = 450\n"
+	                       "  AutoSize = True\n"
+	                       "  BorderStyle = bsDialog\n"
+	                       "  Caption = 'Properties'\n"
+	                       "  ChildSizing.LeftRightSpacing = 15\n"
+	                       "  ChildSizing.TopBottomSpacing = 15\n"
+	                       "  ChildSizing.VerticalSpacing = 10\n"
+	                       "  ClientHeight = 466\n"
+	                       "  ClientWidth = 450\n"
+	                       "  DesignTimePPI = 100\n"
+	                       "  OnShow = DialogBoxShow\n"
+	                       "  Position = poOwnerFormCenter\n"
+	                       "  LCLVersion = '2.2.4.0'\n"
+	                       "  object edFileName: TEdit\n"
+	                       "    AnchorSideLeft.Control = Owner\n"
+	                       "    AnchorSideTop.Control = Owner\n"
+	                       "    AnchorSideRight.Control = btnOK\n"
+	                       "    AnchorSideRight.Side = asrBottom\n"
+	                       "    Left = 15\n"
+	                       "    Height = 36\n"
+	                       "    Top = 15\n"
+	                       "    Width = 412\n"
+	                       "    Alignment = taCenter\n"
+	                       "    Anchors = [akTop, akLeft, akRight]\n"
+	                       "    BorderStyle = bsNone\n"
+	                       "    Color = clForm\n"
+	                       "    Font.Style = [fsBold]\n"
+	                       "    ParentFont = False\n"
+	                       "    ReadOnly = True\n"
+	                       "    TabStop = False\n"
+	                       "    TabOrder = 0\n"
+	                       "  end\n"
+	                       "  object gbTag: TGroupBox\n"
+	                       "    AnchorSideLeft.Control = Owner\n"
+	                       "    AnchorSideTop.Control = ProgressBar\n"
+	                       "    AnchorSideTop.Side = asrBottom\n"
+	                       "    Left = 15\n"
+	                       "    Height = 302\n"
+	                       "    Top = 96\n"
+	                       "    Width = 412\n"
+	                       "    AutoSize = True\n"
+	                       "    ChildSizing.LeftRightSpacing = 10\n"
+	                       "    ChildSizing.TopBottomSpacing = 10\n"
+	                       "    ChildSizing.HorizontalSpacing = 10\n"
+	                       "    ChildSizing.VerticalSpacing = 5\n"
+	                       "    ChildSizing.EnlargeHorizontal = crsHomogenousChildResize\n"
+	                       "    ChildSizing.Layout = cclLeftToRightThenTopToBottom\n"
+	                       "    ChildSizing.ControlsPerLine = 3\n"
+	                       "    ClientHeight = 302\n"
+	                       "    ClientWidth = 396\n"
+	                       "    TabOrder = 2\n"
+	                       "    object chArtist: TCheckBox\n"
+	                       "      Left = 10\n"
+	                       "      Height = 36\n"
+	                       "      Top = 10\n"
+	                       "      Width = 30\n"
+	                       "      OnChange = CheckBoxChange\n"
+	                       "      TabOrder = 0\n"
+	                       "    end\n"
+	                       "    object lblArtist: TLabel\n"
+	                       "      Left = 50\n"
+	                       "      Height = 36\n"
+	                       "      Top = 10\n"
+	                       "      Width = 70\n"
+	                       "      Caption = 'Artist'\n"
+	                       "      Enabled = False\n"
+	                       "      Layout = tlCenter\n"
+	                       "      ParentColor = False\n"
+	                       "    end\n"
+	                       "    object edArtist: TEdit\n"
+	                       "      Left = 130\n"
+	                       "      Height = 36\n"
+	                       "      Top = 10\n"
+	                       "      Width = 256\n"
+	                       "      Enabled = False\n"
+	                       "      TabOrder = 1\n"
+	                       "    end\n"
+	                       "    object chTitle: TCheckBox\n"
+	                       "      Left = 10\n"
+	                       "      Height = 36\n"
+	                       "      Top = 51\n"
+	                       "      Width = 30\n"
+	                       "      OnChange = CheckBoxChange\n"
+	                       "      TabOrder = 2\n"
+	                       "    end\n"
+	                       "    object lblTitle: TLabel\n"
+	                       "      Left = 50\n"
+	                       "      Height = 36\n"
+	                       "      Top = 51\n"
+	                       "      Width = 70\n"
+	                       "      Caption = 'Title'\n"
+	                       "      Enabled = False\n"
+	                       "      Layout = tlCenter\n"
+	                       "      ParentColor = False\n"
+	                       "    end\n"
+	                       "    object edTitle: TEdit\n"
+	                       "      Left = 130\n"
+	                       "      Height = 36\n"
+	                       "      Top = 51\n"
+	                       "      Width = 256\n"
+	                       "      Constraints.MinWidth = 256\n"
+	                       "      Enabled = False\n"
+	                       "      TabOrder = 3\n"
+	                       "    end\n"
+	                       "    object chAlbum: TCheckBox\n"
+	                       "      Left = 10\n"
+	                       "      Height = 36\n"
+	                       "      Top = 92\n"
+	                       "      Width = 30\n"
+	                       "      OnChange = CheckBoxChange\n"
+	                       "      TabOrder = 4\n"
+	                       "    end\n"
+	                       "    object lblAlbum: TLabel\n"
+	                       "      Left = 50\n"
+	                       "      Height = 36\n"
+	                       "      Top = 92\n"
+	                       "      Width = 70\n"
+	                       "      Caption = 'Album'\n"
+	                       "      Enabled = False\n"
+	                       "      Layout = tlCenter\n"
+	                       "      ParentColor = False\n"
+	                       "    end\n"
+	                       "    object edAlbum: TEdit\n"
+	                       "      Left = 130\n"
+	                       "      Height = 36\n"
+	                       "      Top = 92\n"
+	                       "      Width = 256\n"
+	                       "      Enabled = False\n"
+	                       "      TabOrder = 5\n"
+	                       "    end\n"
+	                       "    object chTrack: TCheckBox\n"
+	                       "      Left = 10\n"
+	                       "      Height = 36\n"
+	                       "      Top = 133\n"
+	                       "      Width = 30\n"
+	                       "      OnChange = CheckBoxChange\n"
+	                       "      TabOrder = 6\n"
+	                       "    end\n"
+	                       "    object lblTrack: TLabel\n"
+	                       "      Left = 50\n"
+	                       "      Height = 36\n"
+	                       "      Top = 133\n"
+	                       "      Width = 70\n"
+	                       "      Caption = 'Track'\n"
+	                       "      Enabled = False\n"
+	                       "      Layout = tlCenter\n"
+	                       "      ParentColor = False\n"
+	                       "    end\n"
+	                       "    object edTrack: TEdit\n"
+	                       "      Left = 130\n"
+	                       "      Height = 36\n"
+	                       "      Top = 133\n"
+	                       "      Width = 256\n"
+	                       "      Enabled = False\n"
+	                       "      MaxLength = 4\n"
+	                       "      NumbersOnly = True\n"
+	                       "      OnChange = EditChange\n"
+	                       "      TabOrder = 7\n"
+	                       "    end\n"
+	                       "    object chYear: TCheckBox\n"
+	                       "      Left = 10\n"
+	                       "      Height = 36\n"
+	                       "      Top = 174\n"
+	                       "      Width = 30\n"
+	                       "      OnChange = CheckBoxChange\n"
+	                       "      TabOrder = 8\n"
+	                       "    end\n"
+	                       "    object lblYear: TLabel\n"
+	                       "      Left = 50\n"
+	                       "      Height = 36\n"
+	                       "      Top = 174\n"
+	                       "      Width = 70\n"
+	                       "      Caption = 'Year'\n"
+	                       "      Enabled = False\n"
+	                       "      Layout = tlCenter\n"
+	                       "      ParentColor = False\n"
+	                       "    end\n"
+	                       "    object edYear: TEdit\n"
+	                       "      Left = 130\n"
+	                       "      Height = 36\n"
+	                       "      Top = 174\n"
+	                       "      Width = 256\n"
+	                       "      Enabled = False\n"
+	                       "      MaxLength = 4\n"
+	                       "      NumbersOnly = True\n"
+	                       "      OnChange = EditChange\n"
+	                       "      TabOrder = 9\n"
+	                       "    end\n"
+	                       "    object chGenre: TCheckBox\n"
+	                       "      Left = 10\n"
+	                       "      Height = 36\n"
+	                       "      Top = 215\n"
+	                       "      Width = 30\n"
+	                       "      OnChange = CheckBoxChange\n"
+	                       "      TabOrder = 10\n"
+	                       "    end\n"
+	                       "    object lblGenre: TLabel\n"
+	                       "      Left = 50\n"
+	                       "      Height = 36\n"
+	                       "      Top = 215\n"
+	                       "      Width = 70\n"
+	                       "      Caption = 'Genre'\n"
+	                       "      Enabled = False\n"
+	                       "      Layout = tlCenter\n"
+	                       "      ParentColor = False\n"
+	                       "    end\n"
+	                       "    object edGenre: TEdit\n"
+	                       "      Left = 130\n"
+	                       "      Height = 36\n"
+	                       "      Top = 215\n"
+	                       "      Width = 256\n"
+	                       "      Enabled = False\n"
+	                       "      TabOrder = 11\n"
+	                       "    end\n"
+	                       "    object chComment: TCheckBox\n"
+	                       "      Left = 10\n"
+	                       "      Height = 36\n"
+	                       "      Top = 256\n"
+	                       "      Width = 30\n"
+	                       "      OnChange = CheckBoxChange\n"
+	                       "      TabOrder = 12\n"
+	                       "    end\n"
+	                       "    object lblComment: TLabel\n"
+	                       "      Left = 50\n"
+	                       "      Height = 36\n"
+	                       "      Top = 256\n"
+	                       "      Width = 70\n"
+	                       "      Caption = 'Comment'\n"
+	                       "      Enabled = False\n"
+	                       "      Layout = tlCenter\n"
+	                       "      ParentColor = False\n"
+	                       "    end\n"
+	                       "    object edComment: TEdit\n"
+	                       "      Left = 130\n"
+	                       "      Height = 36\n"
+	                       "      Top = 256\n"
+	                       "      Width = 256\n"
+	                       "      Enabled = False\n"
+	                       "      TabOrder = 13\n"
+	                       "    end\n"
+	                       "  end\n"
+	                       "  object lbFileList: TListBox\n"
+	                       "    AnchorSideLeft.Control = Owner\n"
+	                       "    AnchorSideBottom.Control = Owner\n"
+	                       "    AnchorSideBottom.Side = asrBottom\n"
+	                       "    Left = 15\n"
+	                       "    Height = 83\n"
+	                       "    Top = 368\n"
+	                       "    Width = 104\n"
+	                       "    Anchors = [akLeft, akBottom]\n"
+	                       "    ItemHeight = 0\n"
+	                       "    TabOrder = 3\n"
+	                       "    Visible = False\n"
+	                       "  end\n"
+	                       "  object ProgressBar: TProgressBar\n"
+	                       "    AnchorSideLeft.Control = gbTag\n"
+	                       "    AnchorSideTop.Control = edFileName\n"
+	                       "    AnchorSideTop.Side = asrBottom\n"
+	                       "    AnchorSideRight.Control = gbTag\n"
+	                       "    AnchorSideRight.Side = asrBottom\n"
+	                       "    Left = 15\n"
+	                       "    Height = 25\n"
+	                       "    Top = 61\n"
+	                       "    Width = 412\n"
+	                       "    Anchors = [akTop, akLeft, akRight]\n"
+	                       "    TabOrder = 1\n"
+	                       "    Visible = False\n"
+	                       "  end\n"
+	                       "  object btnCancel: TBitBtn\n"
+	                       "    AnchorSideTop.Control = btnOK\n"
+	                       "    AnchorSideTop.Side = asrCenter\n"
+	                       "    AnchorSideRight.Control = btnOK\n"
+	                       "    Left = 220\n"
+	                       "    Height = 31\n"
+	                       "    Top = 418\n"
+	                       "    Width = 101\n"
+	                       "    Anchors = [akTop, akRight]\n"
+	                       "    AutoSize = True\n"
+	                       "    BorderSpacing.Right = 5\n"
+	                       "    Cancel = True\n"
+	                       "    Constraints.MinHeight = 31\n"
+	                       "    Constraints.MinWidth = 101\n"
+	                       "    DefaultCaption = True\n"
+	                       "    Kind = bkCancel\n"
+	                       "    ModalResult = 2\n"
+	                       "    OnClick = ButtonClick\n"
+	                       "    TabOrder = 5\n"
+	                       "  end\n"
+	                       "  object btnOK: TBitBtn\n"
+	                       "    AnchorSideTop.Control = gbTag\n"
+	                       "    AnchorSideTop.Side = asrBottom\n"
+	                       "    AnchorSideRight.Control = gbTag\n"
+	                       "    AnchorSideRight.Side = asrBottom\n"
+	                       "    Left = 326\n"
+	                       "    Height = 31\n"
+	                       "    Top = 418\n"
+	                       "    Width = 101\n"
+	                       "    Anchors = [akTop, akRight]\n"
+	                       "    AutoSize = True\n"
+	                       "    BorderSpacing.Top = 20\n"
+	                       "    Constraints.MinHeight = 31\n"
+	                       "    Constraints.MinWidth = 101\n"
+	                       "    Default = True\n"
+	                       "    DefaultCaption = True\n"
+	                       "    Kind = bkOK\n"
+	                       "    ModalResult = 1\n"
+	                       "    OnClick = ButtonClick\n"
+	                       "    TabOrder = 4\n"
+	                       "  end\n"
+	                       "end\n";
 
 	return gExtensions->DialogBoxLFM((intptr_t)lfmdata, (unsigned long)strlen(lfmdata), PropertiesDlgProc);
 }
@@ -2537,6 +2982,9 @@ static void ActionsDialog(void)
 		case WFX_ACT_COPY:
 			Translate("Copy audio files", buff, MAX_PATH);
 			break;
+		case WFX_ACT_SET:
+			Translate("Set tag values for selected files", buff, MAX_PATH);
+			break;
 		}
 
 		if (buff[0] != '\0')
@@ -2555,7 +3003,7 @@ static void ActionsDialog(void)
 
 static int ExecuteAction(char *InputFileName, char *TargetPath, gboolean OverwriteCheck)
 {
-	if (gAction == WFX_ACT_FILL)
+	if (gAction == WFX_ACT_FILL || gAction == WFX_ACT_SET)
 		return AddToFileList(InputFileName);
 	else  if (gAction == WFX_ACT_CONV)
 		return ConvertFile(InputFileName, TargetPath, OverwriteCheck);
@@ -2830,7 +3278,7 @@ void DCPCALL FsStatusInfo(char* RemoteDir, int InfoStartEnd, int InfoOperation)
 
 			if (gAction == WFX_ACT_CONV)
 				ConvertDialog();
-			else if (gAction == WFX_ACT_FILL)
+			else if (gAction == WFX_ACT_FILL || gAction == WFX_ACT_SET)
 			{
 				if (!gTempDir)
 					gTempDir = g_dir_make_tmp(TEMPLATEDIR, NULL);
@@ -2842,8 +3290,13 @@ void DCPCALL FsStatusInfo(char* RemoteDir, int InfoStartEnd, int InfoOperation)
 		}
 		else
 		{
-			if (gAction == WFX_ACT_FILL && gTempFile)
-				RegExDialog();
+			if (gTempFile)
+			{
+				if (gAction == WFX_ACT_FILL)
+					RegExDialog();
+				else if (gAction == WFX_ACT_SET)
+					SetTagDialog();
+			}
 
 			gAction = -1;
 		}

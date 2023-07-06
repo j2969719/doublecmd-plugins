@@ -113,6 +113,10 @@ msgstr "Не удалось записать тег."
 msgid "File %s already exists, overwrite?"
 msgstr "Файл %s уже существует, перезаписать?"
 
+#: MiscStr.Set tag values for selected files
+msgid "Set tag values for selected files"
+msgstr "Установить значения тегов для выбранных файлов"
+
 #: MiscStr.Fill in these fields with the following values?
 msgid "Fill in these fields with the following values?"
 msgstr "Заполнить данные поля следующими значенииями?"
@@ -132,3 +136,7 @@ msgstr "Копировать аудиофайлы"
 #: MiscStr.not a valid file
 msgid "not a valid file"
 msgstr "неверный файл"
+
+#: MiscStr.file(s)
+msgid "file(s)"
+msgstr "файл(ов)"

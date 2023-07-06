@@ -110,6 +110,10 @@ msgstr ""
 msgid "File %s already exists, overwrite?"
 msgstr ""
 
+#: MiscStr.Set tag values for selected files
+msgid "Set tag values for selected files"
+msgstr ""
+
 #: MiscStr.Fill in these fields with the following values?
 msgid "Fill in these fields with the following values?"
 msgstr ""
@@ -128,4 +132,8 @@ msgstr ""
 
 #: MiscStr.not a valid file
 msgid "not a valid file"
+msgstr ""
+
+#: MiscStr.file(s)
+msgid "file(s)"
 msgstr ""
