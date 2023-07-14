@@ -526,8 +526,15 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 					items[filename] = target;
 				else if (std::filesystem::is_directory(filename))
 				{
-					if (std::filesystem::is_empty(filename))
-						items[filename] = target;
+					try
+					{
+						if (std::filesystem::is_empty(filename))
+							items[filename] = target;
+					}
+					catch (...)
+					{
+						printf("%s: SKIP -> %s\n", PLUGNAME, filename.c_str());
+					}
 				}
 				else
 					items[filename] = target;
