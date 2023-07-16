@@ -2,7 +2,7 @@
   <Info>
     <General Name="Lua*" Extensions="LUA"/>
     <Author Name="Skif_off" Email="" Web="" Copyright="" Company="" Remark="Alternative variant"/>
-    <Version Version="1" Revision="5" Date="44648,8909244792"/>
+    <Version Version="1" Revision="6" Date="45123,1849225463"/>
     <History>
     </History>
     <Sample>
@@ -208,6 +208,12 @@
       <word value="xpcall"/>
     </Keywords>
     <Keywords Name="DC" Attributes="8388608,16777215;False:False.U" Style="">
+      <word value="Char.GetUnicodeCategory"/>
+      <word value="Char.IsDigit"/>
+      <word value="Char.IsLetter"/>
+      <word value="Char.IsLetterOrDigit"/>
+      <word value="Char.IsLower"/>
+      <word value="Char.IsUpper"/>
       <word value="Clipbrd.Clear"/>
       <word value="Clipbrd.GetAsText"/>
       <word value="Clipbrd.SetAsHtml"/>
@@ -218,12 +224,17 @@
       <word value="Dialogs.InputListBox"/>
       <word value="Dialogs.InputQuery"/>
       <word value="Dialogs.MessageBox"/>
+      <word value="LazUtf8.CanonicalOrder"/>
       <word value="LazUtf8.ConvertEncoding"/>
       <word value="LazUtf8.Copy"/>
       <word value="LazUtf8.Length"/>
       <word value="LazUtf8.LowerCase"/>
+      <word value="LazUtf8.Next"/>
+      <word value="LazUtf8.NormalizeNFD"/>
       <word value="LazUtf8.Pos"/>
       <word value="LazUtf8.UpperCase"/>
+      <word value="os.setenv"/>
+      <word value="os.unsetenv"/>
       <word value="SysUtils.CreateDirectory"/>
       <word value="SysUtils.CreateHardLink"/>
       <word value="SysUtils.CreateSymbolicLink"/>
