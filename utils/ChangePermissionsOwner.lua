@@ -1,4 +1,4 @@
--- ChangePermissionsOwnwer.lua
+-- ChangePermissionsOwner.lua
 -- 2023.04.05
 --[[
 Set permissions or owner (will ask for root privileges if that doesn't work).
