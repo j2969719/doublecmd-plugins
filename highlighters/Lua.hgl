@@ -2,7 +2,7 @@
   <Info>
     <General Name="Lua*" Extensions="LUA"/>
     <Author Name="Skif_off" Email="" Web="" Copyright="" Company="" Remark="Alternative variant"/>
-    <Version Version="1" Revision="6" Date="45123,1849225463"/>
+    <Version Version="1" Revision="7" Date="45126,8703334838"/>
     <History>
     </History>
     <Sample>
@@ -224,13 +224,11 @@
       <word value="Dialogs.InputListBox"/>
       <word value="Dialogs.InputQuery"/>
       <word value="Dialogs.MessageBox"/>
-      <word value="LazUtf8.CanonicalOrder"/>
       <word value="LazUtf8.ConvertEncoding"/>
       <word value="LazUtf8.Copy"/>
       <word value="LazUtf8.Length"/>
       <word value="LazUtf8.LowerCase"/>
       <word value="LazUtf8.Next"/>
-      <word value="LazUtf8.NormalizeNFD"/>
       <word value="LazUtf8.Pos"/>
       <word value="LazUtf8.UpperCase"/>
       <word value="os.setenv"/>
