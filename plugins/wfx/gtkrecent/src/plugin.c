@@ -65,7 +65,18 @@ static gchar* ArrayToString(gchar **array)
 	GString *data = g_string_new(NULL);
 
 	while (array[i] != NULL)
+	{
 		g_string_append(data, array[i++]);
+		g_string_append(data, "\n");
+	}
+
+	if (data->str)
+	{
+		char *pos = strrchr(data->str, '\n');
+		
+		if (pos)
+			*pos = '\0';
+	}
 
 	g_strfreev(array);
 
@@ -161,13 +172,15 @@ static void AddPropLabels(GString *lfm_string, int Num, gchar *PropName, gchar *
 	                           "      Caption = '%s'\n"
 	                           "      Layout = tlCenter\n"
 	                           "      ParentColor = False\n"
-//	                           "      WordWrap = True\n"
 	                           "    end\n";
 
 
 	if (Value)
 	{
 		gchar *string = ReplaceString(Value, "'", "''");
+		gchar *tmp = string;
+		string = ReplaceString(tmp, "\n", "'#10'");
+		g_free(tmp);
 		g_string_append_printf(lfm_string, label_body, "Prop", Num, "taRightJustify", PropName);
 		g_string_append_printf(lfm_string, label_body, "Value", Num, "taLeftJustify", string);
 		g_free(string);
@@ -352,11 +365,10 @@ static BOOL PropertiesDialog(char *FileName, GtkRecentInfo *info)
 	                "  end\n"
 	                "end\n");
 
-	g_print("%s", lfm_string->str);
+	//g_print("%s", lfm_string->str);
 	return gExtensions->DialogBoxLFM((intptr_t)lfm_string->str, (unsigned long)strlen(lfm_string->str), PropertiesDlgProc);
 	g_string_free(lfm_string, TRUE);
 }
-
 
 gboolean SetFindData(tVFSDirData *dirdata, WIN32_FIND_DATAA *FindData)
 {

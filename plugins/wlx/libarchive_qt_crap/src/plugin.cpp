@@ -33,6 +33,9 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	int r, row = 0;
 	size_t totalsize = 0;
 
+	if (db.mimeTypeForFile(FileToLoad).name() == "text/plain")
+		return nullptr;
+
 	a = archive_read_new();
 	archive_read_support_filter_all(a);
 	archive_read_support_format_all(a);
