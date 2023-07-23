@@ -2,7 +2,7 @@ CC = gcc
 CFLAGS = -shared -fPIC -Wl,--no-as-needed
 
 libs := `pkg-config --cflags --libs gtk+-2.0 atril-view-1.5.0 atril-document-1.5.0`
-includes := -I../../../sdk
+includes := -I../../../sdk -I.
 
 plugdir := $(shell basename $(realpath ..))
 plugtype := $(shell basename $(realpath ../..))
