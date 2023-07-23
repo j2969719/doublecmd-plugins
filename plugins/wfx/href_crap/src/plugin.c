@@ -869,7 +869,7 @@ static gboolean SetFindData(tVFSDirData *dirdata, WIN32_FIND_DATAA *FindData)
 			if (curl_easy_perform(curl) == CURLE_OK)
 			{
 				curl_easy_getinfo(curl, CURLINFO_FILETIME, &filetime);
-				curl_easy_getinfo(curl, CURLINFO_CONTENT_LENGTH_DOWNLOAD, &filesize);
+				curl_easy_getinfo(curl, CURLINFO_CONTENT_LENGTH_DOWNLOAD_T, &filesize);
 			}
 		}
 		else

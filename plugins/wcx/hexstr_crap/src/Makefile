@@ -1,10 +1,26 @@
 CC = gcc
 CFLAGS = -shared -fPIC -Wl,--no-as-needed
-INCLUDES = `pkg-config --cflags --libs glib-2.0` -I../../../sdk
-PLUGNAME = $(shell basename $(realpath ..)).$(shell basename $(realpath ../..))
+
+libs := `pkg-config --cflags --libs glib-2.0`
+includes := -I../../../sdk
+
+plugdir := $(shell basename $(realpath ..))
+plugtype := $(shell basename $(realpath ../..))
+plugname := $(plugdir).$(plugtype)
+plugdescr := `grep '$(plugtype)/$(plugdir))' ../../../../plugins.md -1 | tail -1 | sed 's/[[]//' | sed 's/[]][\(][^\)]\+.//' | sed 's/\s[\(].\+[\)]//'`
+plugfiles := $(filter-out $(wildcard ../*.$(plugtype)), $(wildcard ../*))
+
+wcx_ext := hexstr
+
 
 all:
-		$(CC) $(CFLAGS) $(INCLUDES) plugin.c -o ../$(PLUGNAME)
+		$(CC) $(CFLAGS) -o ../$(plugname) plugin.c $(libs) $(includes) -D'PLUGNAME="$(plugname)"'
+
+dist:
+		test -f ../$(plugname) && \
+			echo -e "[plugininstall]\ndescription=$(plugdescr)\ntype=$(plugtype)\nfile=$(plugname)\ndefaultdir=$(plugdir)\ndefaultextension=$(wcx_ext)" > ../pluginst.inf && \
+			tar --exclude=../src -h -cvzf '../../../dist/$(plugtype)_$(plugdir)_$(shell date +%y.%m.%d).tar.gz' ../pluginst.inf ../$(plugname) $(plugfiles) && \
+			rm ../pluginst.inf || echo turboencabulator
 
 clean:
-		$(RM) ../$(PLUGNAME)
+		$(RM) $(wildcard ../*.$(plugtype))

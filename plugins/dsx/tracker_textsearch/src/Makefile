@@ -1,10 +1,21 @@
 CC = gcc
 CFLAGS = -shared -fPIC -Wl,--no-as-needed
-INCLUDES = `pkg-config --cflags --libs tracker-sparql-3.0` -I../../../sdk
-PLUGNAME = $(shell basename $(realpath ..)).$(shell basename $(realpath ../..))
+
+libs := `pkg-config --cflags --libs tracker-sparql-3.0`
+includes := -I../../../sdk
+
+plugdir := $(shell basename $(realpath ..))
+plugtype := $(shell basename $(realpath ../..))
+plugname := $(plugdir).$(plugtype)
+plugdescr := `grep '$(plugtype)/$(plugdir))' ../../../../plugins.md -1 | tail -1 | sed 's/[[]//' | sed 's/[]][\(][^\)]\+.//' | sed 's/\s[\(].\+[\)]//'`
+plugfiles := $(filter-out $(wildcard ../*.$(plugtype)), $(wildcard ../*))
+
 
 all:
-		$(CC) $(CFLAGS) $(INCLUDES) plugin.c -o ../$(PLUGNAME)
+		$(CC) $(CFLAGS) -o ../$(plugname) plugin.c $(libs) $(includes) -D'PLUGNAME="$(plugname)"'
+
+dist:
+		# nobody cares about search plugins:(
 
 clean:
-		$(RM) ../$(PLUGNAME)
+		$(RM) $(wildcard ../*.$(plugtype))

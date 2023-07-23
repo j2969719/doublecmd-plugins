@@ -1,10 +1,26 @@
 CC = gcc
 CFLAGS = -shared -fPIC -Wl,--no-as-needed
-INCLUDES = -lgcrypt -lgpg-error -I../../../sdk
-PLUGNAME = $(shell basename $(realpath ..)).$(shell basename $(realpath ../..))
+
+libs := -lgcrypt -lgpg-error
+includes := -I../../../sdk
+
+plugdir := $(shell basename $(realpath ..))
+plugtype := $(shell basename $(realpath ../..))
+plugname := $(plugdir).$(plugtype)
+plugdescr := `grep '$(plugtype)/$(plugdir))' ../../../../plugins.md -1 | tail -1 | sed 's/[[]//' | sed 's/[]][\(][^\)]\+.//' | sed 's/\s[\(].\+[\)]//'`
+plugfiles := $(filter-out $(wildcard ../*.$(plugtype)), $(wildcard ../*))
+
+detectstring :=
+
 
 all:
-		$(CC) $(CFLAGS) $(INCLUDES) simplechecksumwdx.c -o ../$(PLUGNAME)
+		$(CC) $(CFLAGS) -o ../$(plugname) simplechecksumwdx.c $(libs) $(includes) -D'PLUGNAME="$(plugname)"' -D'DETECT_STRING="$(detectstring)"'
+
+dist:
+		test -f ../$(plugname) && \
+			echo -e "[plugininstall]\ndescription=$(plugdescr)\ntype=$(plugtype)\nfile=$(plugname)\ndefaultdir=$(plugdir)" > ../pluginst.inf && \
+			tar --exclude=../src -h -cvzf '../../../dist/$(plugtype)_$(plugdir)_$(shell date +%y.%m.%d).tar.gz' ../pluginst.inf ../$(plugname) $(plugfiles) && \
+			rm ../pluginst.inf || echo turboencabulator
 
 clean:
-		$(RM) ../$(PLUGNAME)
+		$(RM) $(wildcard ../*.$(plugtype))

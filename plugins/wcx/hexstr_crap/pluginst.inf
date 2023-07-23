@@ -1,6 +1,0 @@
-[plugininstall]
-description=who cares
-type=wcx
-file=hexstr_crap.wcx
-defaultdir=hexstr_crap
-defaultextension=hexstr
