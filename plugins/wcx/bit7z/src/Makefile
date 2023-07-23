@@ -25,7 +25,7 @@ dist:
 		test -f ../$(plugname) && \
 			echo -e "[plugininstall]\ndescription=$(plugdescr)\ntype=$(plugtype)\nfile=$(plugname)\ndefaultdir=$(plugdir)\ndefaultextension=$(wcx_ext)" > ../pluginst.inf && \
 			tar --exclude=../src -h -cvzf '../../../dist/$(plugtype)_$(plugdir)_$(shell date +%y.%m.%d).tar.gz' ../pluginst.inf ../$(plugname) $(plugfiles) && \
-			rm ../pluginst.inf || echo turboencabulator
+			rm ../pluginst.inf || echo $(plugname) >> ../../../dist/.missing.log
 
 		test -f ../auto_$(plugname) && \
 			echo -e "[plugininstall]\ndescription=$(plugdescr)\ntype=$(plugtype)\nfile=auto_$(plugname)\ndefaultdir=$(plugdir)\ndefaultextension=cab" > ../pluginst.inf && \
