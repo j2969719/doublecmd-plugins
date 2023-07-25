@@ -1,5 +1,5 @@
 -- filenameunwdx.lua (cross-platform)
--- 2023.07.23
+-- 2023.07.25
 --[[
 Returns the normalized (Unicode normalization) filename:
 - form C (NFC);
@@ -86,7 +86,7 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
       return UTF8Normalization(UnitIndex + 1, fnb)
     end
   elseif FieldIndex == 2 then
-    local st = UTF8Normalization(0, fn)
+    local st = UTF8Normalization(1, fn)
     if fn == st then
       return false
     else
