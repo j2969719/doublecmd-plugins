@@ -388,10 +388,16 @@ int DCPCALL ReadHeaderEx(HANDLE hArcData, tHeaderDataEx *HeaderDataEx)
 		auto item = data->arc_items[data->index];
 		strncpy(HeaderDataEx->FileName, item.path().c_str(), sizeof(HeaderDataEx->FileName) - 1);
 
-		if (item.isDir())
-			HeaderDataEx->FileAttr = S_IFDIR;
+		HeaderDataEx->FileAttr = item.attributes() >> 16;
 
-		HeaderDataEx->FileAttr |= item.attributes() >> 16;
+		if (HeaderDataEx->FileAttr == 0)
+		{
+			if (item.isDir())
+				HeaderDataEx->FileAttr = S_IFDIR | S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH;
+			else
+				HeaderDataEx->FileAttr = S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH;
+		}
+
 		HeaderDataEx->PackSizeHigh = (item.packSize() & 0xFFFFFFFF00000000) >> 32;
 		HeaderDataEx->PackSize = item.packSize() & 0x00000000FFFFFFFF;
 		HeaderDataEx->UnpSizeHigh = (item.size() & 0xFFFFFFFF00000000) >> 32;
@@ -408,7 +414,9 @@ int DCPCALL ProcessFile(HANDLE hArcData, int Operation, char *DestPath, char *De
 {
 	ArcData data = (ArcData)hArcData;
 
-	if (data->ProcessDataProc(DestName, -1000) == 0)
+	int totalProgress = data->count > 0 ? -(data->index * 100 / data->count) : 0;
+
+	if (data->ProcessDataProc(DestName, totalProgress) == 0)
 		return E_EABORTED;
 
 	if (Operation == PK_EXTRACT)
