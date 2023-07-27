@@ -194,6 +194,9 @@ Getting custom extended attributes. Requires `getfattr`.
 - [gitinfowdx.lua](plugins/wdx/scripts/gitinfowdx.lua)<br>
 Getting some information from local copy of Git repository. Requires `git`.
 
+- [groupswdx.lua](plugins/wdx/scripts/groupswdx.lua)<br>
+Returns the group name by the file mask.
+
 - [hexdecheaderwdx.lua](plugins/wdx/scripts/hexdecheaderwdx.lua) and [hexheaderwdx.lua](plugins/wdx/scripts/hexheaderwdx.lua) *(cross platform)*<br>
 Examples: search by hex value. Now Double Commander can do it itself.
 
