@@ -107,7 +107,7 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 		item->setFont(monofont);
 		table->setItem(row, c++, item);
 
-		item = new QTableWidgetItem(QDateTime::fromTime_t(archive_entry_mtime(entry)).toString("yyyy-MM-dd hh:mm"));
+		item = new QTableWidgetItem(QDateTime::fromSecsSinceEpoch(archive_entry_mtime(entry)).toString("yyyy-MM-dd hh:mm"));
 		item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
 		item->setFont(monofont);
 		item->setTextAlignment(Qt::AlignCenter);

@@ -23,7 +23,7 @@ qt5:
 dist:
 		test -f ../$(plugdir)_qt5.$(plugtype) && \
 			echo -e "[plugininstall]\ndescription=$(plugdescr)\ntype=$(plugtype)\nfile=$(plugdir)_qt5.$(plugtype)\ndefaultdir=$(plugdir)" > ../pluginst.inf && \
-			tar --exclude=../src -h -cvzf '../../../dist/$(plugtype)_$(plugdir)_qt5_$(shell date +%y.%m.%d).tar.gz' ../$(plugdir)_qt5.$(plugtype) $(plugfiles) && \
+			tar --exclude=../src -h -cvzf '../../../dist/$(plugtype)_$(plugdir)_qt5_$(shell date +%y.%m.%d).tar.gz' ../pluginst.inf ../$(plugdir)_qt5.$(plugtype) $(plugfiles) && \
 			rm ../pluginst.inf || echo $(plugdir)_qt5.$(plugtype) >> ../../../dist/.missing.log
 
 clean:
