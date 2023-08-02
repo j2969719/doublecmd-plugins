@@ -14,6 +14,16 @@
 #define CFG_CONTROLS PLUGNAME"/controls"
 #define CFG_SINGLEPAGE PLUGNAME"/single_page"
 #define CFG_FITTOWIDTH PLUGNAME"/fit_to_width"
+#if QT_VERSION >= 0x060000
+#define NoError Error::None
+#define CustomZoom Custom
+#define pageCount() document()->pageCount()
+#define navigator pageNavigator
+#define QPdfPageNavigation QPdfPageNavigator
+#else
+#define navigator pageNavigation
+#define pageCount() pageNavigation()->pageCount()
+#endif
 
 static bool gControls = true;
 static bool gSinglePage = false;
@@ -21,8 +31,8 @@ static bool gFitToWidth = true;
 
 static void update_pagecount(QLabel *label, QPdfView *view)
 {
-	int total = view->pageNavigation()->pageCount();
-	int page = view->pageNavigation()->currentPage() + 1;
+	int total = view->pageCount();
+	int page = view->navigator()->currentPage() + 1;
 	label->setText(QString("%1/%2").arg(page).arg(total));
 }
 
@@ -51,7 +61,11 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 	actFirst->setShortcut(QKeySequence::MoveToStartOfDocument);
 	QObject::connect(actFirst, &QAction::triggered, [pdfView]()
 	{
-		pdfView->pageNavigation()->setCurrentPage(0);
+#if QT_VERSION >= 0x060000
+		pdfView->navigator()->jump(0,  pdfView->navigator()->currentLocation());
+#else
+		pdfView->navigator()->setCurrentPage(0);
+#endif
 	});
 	controls->addAction(actFirst);
 
@@ -59,7 +73,14 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 	actPrev->setShortcut(QKeySequence::MoveToPreviousPage);
 	QObject::connect(actPrev, &QAction::triggered, [pdfView]()
 	{
-		pdfView->pageNavigation()->goToPreviousPage();
+#if QT_VERSION >= 0x060000
+		int page = pdfView->navigator()->currentPage();
+
+		if (page > 0)
+			pdfView->navigator()->jump(page - 1,  pdfView->navigator()->currentLocation());
+#else
+		pdfView->navigator()->goToPreviousPage();
+#endif
 	});
 	controls->addAction(actPrev);
 
@@ -67,7 +88,14 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 	actNext->setShortcut(QKeySequence::MoveToNextPage);
 	QObject::connect(actNext, &QAction::triggered, [pdfView]()
 	{
-		pdfView->pageNavigation()->goToNextPage();
+#if QT_VERSION >= 0x060000
+		int page = pdfView->navigator()->currentPage();
+
+		if (page < pdfView->pageCount() - 1)
+			pdfView->navigator()->jump(page + 1,  pdfView->navigator()->currentLocation());
+#else
+		pdfView->navigator()->goToNextPage();
+#endif
 	});
 	controls->addAction(actNext);
 
@@ -75,20 +103,31 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 	actLast->setShortcut(QKeySequence::MoveToEndOfDocument);
 	QObject::connect(actLast, &QAction::triggered, [pdfView]()
 	{
-		int pages = pdfView->pageNavigation()->pageCount();
+		int pages = pdfView->pageCount();
 
 		if (pages > 0)
-			pdfView->pageNavigation()->setCurrentPage(pages - 1);
+#if QT_VERSION >= 0x060000
+			pdfView->navigator()->jump(pages - 1, pdfView->navigator()->currentLocation());
+#else
+			pdfView->navigator()->setCurrentPage(pages - 1);
+#endif
 	});
 	controls->addAction(actLast);
 
 	controls->addSeparator();
 	QLabel *lblPages = new QLabel(view);
-	QObject::connect(pdfView->pageNavigation(), &QPdfPageNavigation::pageCountChanged, [lblPages, pdfView]()
+#if QT_VERSION >= 0x060000
+	QObject::connect(pdfView, &QPdfView::documentChanged, [lblPages, pdfView]()
 	{
 		update_pagecount(lblPages, pdfView);
 	});
-	QObject::connect(pdfView->pageNavigation(), &QPdfPageNavigation::currentPageChanged, [lblPages, pdfView]()
+#else
+	QObject::connect(pdfView->navigator(), &QPdfPageNavigation::pageCountChanged, [lblPages, pdfView]()
+	{
+		update_pagecount(lblPages, pdfView);
+	});
+#endif
+	QObject::connect(pdfView->navigator(), &QPdfPageNavigation::currentPageChanged, [lblPages, pdfView]()
 	{
 		update_pagecount(lblPages, pdfView);
 	});
@@ -97,14 +136,18 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 	actGoTo->setShortcut(QKeySequence("Ctrl+G"));
 	QObject::connect(actGoTo, &QAction::triggered, [pdfView]()
 	{
-		int pages = pdfView->pageNavigation()->pageCount();
-		int cur = pdfView->pageNavigation()->currentPage() + 1;
+		int pages = pdfView->pageCount();
+		int cur = pdfView->navigator()->currentPage() + 1;
 
 		bool ret;
 		int page = QInputDialog::getInt(pdfView, "", _("Page number to go to:"), cur, 1, pages, 1, &ret);
 
 		if (ret)
-			pdfView->pageNavigation()->setCurrentPage(page - 1);
+#if QT_VERSION >= 0x060000
+			pdfView->navigator()->jump(page - 1, pdfView->navigator()->currentLocation());
+#else
+			pdfView->navigator()->setCurrentPage(page - 1);
+#endif
 	});
 	controls->addAction(actGoTo);
 
@@ -114,8 +157,8 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 	actZoomIn->setShortcut(QKeySequence::ZoomIn);
 	QObject::connect(actZoomIn, &QAction::triggered, [pdfView]()
 	{
-		if (pdfView->zoomMode() != QPdfView::CustomZoom)
-			pdfView->setZoomMode(QPdfView::CustomZoom);
+		if (pdfView->zoomMode() != QPdfView::ZoomMode::CustomZoom)
+			pdfView->setZoomMode(QPdfView::ZoomMode::CustomZoom);
 
 		pdfView->setZoomFactor(pdfView->zoomFactor() + 0.05);
 	});
@@ -125,8 +168,8 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 	actZoomOut->setShortcut(QKeySequence::ZoomOut);
 	QObject::connect(actZoomOut, &QAction::triggered, [pdfView]()
 	{
-		if (pdfView->zoomMode() != QPdfView::CustomZoom)
-			pdfView->setZoomMode(QPdfView::CustomZoom);
+		if (pdfView->zoomMode() != QPdfView::ZoomMode::CustomZoom)
+			pdfView->setZoomMode(QPdfView::ZoomMode::CustomZoom);
 
 		pdfView->setZoomFactor(pdfView->zoomFactor() - 0.05);
 	});
@@ -136,8 +179,8 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 	actZoomOrg->setShortcut(QKeySequence("Ctrl+0"));
 	QObject::connect(actZoomOrg, &QAction::triggered, [pdfView]()
 	{
-		if (pdfView->zoomMode() != QPdfView::CustomZoom)
-			pdfView->setZoomMode(QPdfView::CustomZoom);
+		if (pdfView->zoomMode() != QPdfView::ZoomMode::CustomZoom)
+			pdfView->setZoomMode(QPdfView::ZoomMode::CustomZoom);
 
 		pdfView->setZoomFactor(1);
 	});
@@ -150,10 +193,10 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 	actFit->setCheckable(true);
 	QObject::connect(actFit, &QAction::triggered, [pdfView]()
 	{
-		if (pdfView->zoomMode() == QPdfView::FitInView)
-			pdfView->setZoomMode(QPdfView::FitToWidth);
+		if (pdfView->zoomMode() == QPdfView::ZoomMode::FitInView)
+			pdfView->setZoomMode(QPdfView::ZoomMode::FitToWidth);
 		else
-			pdfView->setZoomMode(QPdfView::FitInView);
+			pdfView->setZoomMode(QPdfView::ZoomMode::FitInView);
 	});
 	controls->addAction(actFit);
 
@@ -162,10 +205,10 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 	actPageMode->setCheckable(true);
 	QObject::connect(actPageMode, &QAction::triggered, [pdfView]()
 	{
-		if (pdfView->pageMode() != QPdfView::MultiPage)
-			pdfView->setPageMode(QPdfView::MultiPage);
+		if (pdfView->pageMode() != QPdfView::PageMode::MultiPage)
+			pdfView->setPageMode(QPdfView::PageMode::MultiPage);
 		else
-			pdfView->setPageMode(QPdfView::SinglePage);
+			pdfView->setPageMode(QPdfView::PageMode::SinglePage);
 	});
 	controls->addAction(actPageMode);
 
@@ -177,14 +220,14 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 	{
 		QString info;
 		QMap<QString, QPdfDocument::MetaDataField> fields;
-		fields[_("Author")] = QPdfDocument::Author;
-		fields[_("Title")] = QPdfDocument::Title;
-		fields[_("Subject")] = QPdfDocument::Subject;
-		fields[_("Producer")] = QPdfDocument::Producer;
-		fields[_("Creator")] = QPdfDocument::Creator;
-		fields[_("Keywords")] = QPdfDocument::Keywords;
-		fields[_("Creation Date")] = QPdfDocument::CreationDate;
-		fields[_("Modification Date")] = QPdfDocument::ModificationDate;
+		fields[_("Author")] = QPdfDocument::MetaDataField::Author;
+		fields[_("Title")] = QPdfDocument::MetaDataField::Title;
+		fields[_("Subject")] = QPdfDocument::MetaDataField::Subject;
+		fields[_("Producer")] = QPdfDocument::MetaDataField::Producer;
+		fields[_("Creator")] = QPdfDocument::MetaDataField::Creator;
+		fields[_("Keywords")] = QPdfDocument::MetaDataField::Keywords;
+		fields[_("Creation Date")] = QPdfDocument::MetaDataField::CreationDate;
+		fields[_("Modification Date")] = QPdfDocument::MetaDataField::ModificationDate;
 		QMapIterator<QString, QPdfDocument::MetaDataField> i(fields);
 
 		while (i.hasNext())
@@ -211,12 +254,12 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 	pdfView->setDocument(document);
 
 	if (gSinglePage)
-		pdfView->setPageMode(QPdfView::SinglePage);
+		pdfView->setPageMode(QPdfView::PageMode::SinglePage);
 	else
-		pdfView->setPageMode(QPdfView::MultiPage);
+		pdfView->setPageMode(QPdfView::PageMode::MultiPage);
 
 	if (gFitToWidth)
-		pdfView->setZoomMode(QPdfView::FitToWidth);
+		pdfView->setZoomMode(QPdfView::ZoomMode::FitToWidth);
 
 	pdfView->setObjectName("pdf_view");
 	view->show();

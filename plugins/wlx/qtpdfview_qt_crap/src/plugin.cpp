@@ -9,6 +9,10 @@
 #include <dlfcn.h>
 #include "wlxplugin.h"
 
+#if QT_VERSION >= 0x060000
+#define NoError Error::None
+#endif
+
 static char inipath[PATH_MAX];
 
 HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
@@ -25,7 +29,9 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 		return nullptr;
 
 	QSettings settings(inipath, QSettings::IniFormat);
+#if QT_VERSION < 0x060000
 	settings.setIniCodec("UTF-8");
+#endif
 
 	key = QString("%1/command").arg(fi.suffix().toLower());
 
@@ -83,8 +89,8 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 
 	QPdfView *view = new QPdfView((QWidget*)ParentWin);
 	view->setDocument(document);
-	view->setPageMode(QPdfView::MultiPage);
-	view->setZoomMode(QPdfView::FitToWidth);
+	view->setPageMode(QPdfView::PageMode::MultiPage);
+	view->setZoomMode(QPdfView::ZoomMode::FitToWidth);
 
 	view->show();
 

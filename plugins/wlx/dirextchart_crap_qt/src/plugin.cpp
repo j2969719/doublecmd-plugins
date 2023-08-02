@@ -15,7 +15,9 @@ static calcdata CalcContentSize(QString path)
 	calcdata result;
 
 	QSettings settings(inipath, QSettings::IniFormat);
+#if QT_VERSION < 0x060000
 	settings.setIniCodec("UTF-8");
+#endif
 
 	QDirIterator iter(path, QDir::Files | QDir::Hidden, QDirIterator::Subdirectories);
 

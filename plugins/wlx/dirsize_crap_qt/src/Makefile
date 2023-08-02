@@ -5,6 +5,7 @@ libs :=
 includes := -I../../../sdk
 
 qt5_libs := `pkg-config --cflags --libs Qt5Widgets Qt5Charts Qt5Concurrent`
+qt6_libs := `pkg-config --cflags --libs Qt6Widgets Qt6Charts Qt6Concurrent`
 
 plugdir := $(shell basename $(realpath ..))
 plugtype := $(shell basename $(realpath ../..))
@@ -15,9 +16,12 @@ plugfiles := $(filter-out $(wildcard ../*.$(plugtype)), $(wildcard ../*))
 detectstring :=
 
 
-all: qt5
+all: qt5 qt6
 
 qt5:
+		$(CXX) $(CXXFLAGS) -o ../$(plugdir)_$@.$(plugtype) plugin.cpp $(libs) $($@_libs) $(includes) -D'PLUGNAME="$(plugdir)_$@.$(plugtype)"' -D'DETECT_STRING="$(detectstring)"'
+
+qt6:
 		$(CXX) $(CXXFLAGS) -o ../$(plugdir)_$@.$(plugtype) plugin.cpp $(libs) $($@_libs) $(includes) -D'PLUGNAME="$(plugdir)_$@.$(plugtype)"' -D'DETECT_STRING="$(detectstring)"'
 
 dist:
@@ -25,6 +29,11 @@ dist:
 			echo -e "[plugininstall]\ndescription=$(plugdescr)\ntype=$(plugtype)\nfile=$(plugdir)_qt5.$(plugtype)\ndefaultdir=$(plugdir)" > ../pluginst.inf && \
 			tar --exclude=../src -h -cvzf '../../../dist/$(plugtype)_$(plugdir)_qt5_$(shell date +%y.%m.%d).tar.gz' ../pluginst.inf ../$(plugdir)_qt5.$(plugtype) $(plugfiles) && \
 			rm ../pluginst.inf || echo $(plugdir)_qt5.$(plugtype) >> ../../../dist/.missing.log
+
+		test -f ../$(plugdir)_qt6.$(plugtype) && \
+			echo -e "[plugininstall]\ndescription=$(plugdescr)\ntype=$(plugtype)\nfile=$(plugdir)_qt6.$(plugtype)\ndefaultdir=$(plugdir)" > ../pluginst.inf && \
+			tar --exclude=../src -h -cvzf '../../../dist/$(plugtype)_$(plugdir)_qt6_$(shell date +%y.%m.%d).tar.gz' ../pluginst.inf ../$(plugdir)_qt6.$(plugtype) $(plugfiles) && \
+			rm ../pluginst.inf || echo $(plugdir)_qt6.$(plugtype) >> ../../../dist/.missing.log
 
 clean:
 		$(RM) $(wildcard ../*.$(plugtype))
