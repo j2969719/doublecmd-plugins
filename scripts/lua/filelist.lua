@@ -103,6 +103,17 @@ DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
         <Param>$DC_CONFIG_PATH/scripts/lua/filelist.lua</Param>
         <Param>remove</Param>
       </Command>
+      <Separator>
+        <Style>False</Style>
+      </Separator>
+      <Command>
+        <ID>{D9A64959-D7AA-4B50-A4E3-4766355A88D1}</ID>
+        <Icon>cm_quickfilter</Icon>
+        <Hint>Only "Filter" Panel</Hint>
+        <Command>cm_ExecuteScript</Command>
+        <Param>$DC_CONFIG_PATH/scripts/lua/filelist.lua</Param>
+        <Param>filter</Param>
+      </Command>
     </MenuItems>
   </Menu>
 </doublecmd>
@@ -292,4 +303,23 @@ elseif (Args[1] == "open") then
     end
 elseif (Args[1] == "cursor") then
     DC.ExecuteCommand("cm_LoadList", "filename=" .. Args[2])
+elseif (Args[1] == "filter") then
+    local BackupText = Clipbrd.GetAsText()
+    DC.ExecuteCommand("cm_MarkPlus")
+    DC.ExecuteCommand("cm_CopyFullNamesToClip")
+    local Text = Clipbrd.GetAsText()
+    Clipbrd.SetAsText(BackupText)
+    if Text ~= nil and Text ~= '' then
+        Text = Text .. '\n'
+        local TmpFile = os.tmpname()
+        local File = io.output(TmpFile)
+        if File ~= nil then
+            for Line in Text:gmatch("[^\n]-\n") do
+                File:write(Line)
+            end
+            File:close()
+        end
+        DC.ExecuteCommand("cm_LoadList", "filename=" .. TmpFile)
+        os.remove(TmpFile)
+    end
 end

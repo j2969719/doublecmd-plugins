@@ -58,14 +58,15 @@ if folder ~= nil then
             Dialogs.MessageBox("Enter two drives separated by a semicolom.", "", 0x0010)
         else
             if SysUtils.PathDelim == '/' then
-               first = get_output('df --output=target /dev/"' .. first .. '" | tail -1'):sub(1, -2)
-               second = get_output('df --output=target /dev/"' .. second .. '" | tail -1'):sub(1, -2)
+               first = get_output('df --output=target /dev/' .. first .. ' | tail -1'):sub(1, -2)
+               second = get_output('df --output=target /dev/' .. second .. ' | tail -1'):sub(1, -2)
             end
             if not first or first == '' then
                 Dialogs.MessageBox("Failed to get mountpoint for " .. drives:match("choice:%s+([^;]+);.+") .. ".", "", 0x0010)
             elseif not second or second == '' then
                 Dialogs.MessageBox("Failed to get mountpoint for " .. drives:match("choice:%s+[^;]+;(.+)") .. ".", "", 0x0010)
-            else    if first ~= '/' and path:sub(1, first:len()) == first then
+            else
+                if first ~= '/' and path:sub(1, first:len()) == first then
                     prefix_len = first:len() + 1
                     result = second
                 elseif path:sub(1, second:len()) == second then
@@ -117,10 +118,18 @@ if folder ~= nil then
                 if path ~= nil then
                     DC.ExecuteCommand("cm_ChangeDir", panel .. '=' .. path)
                 else
-                    Dialogs.MessageBox("Failed to change directory.", "", 0x0010)
+                    if log_err then
+                        DC.LogWrite("Failed to change directory.", 2, true, false)
+                    else
+                        Dialogs.MessageBox("Failed to change directory.", "", 0x0010)
+                    end
                 end
             else
-                Dialogs.MessageBox(path .. " is not exists.", "", 0x0010)
+                if log_err then
+                    DC.LogWrite(path .. " is not exists.", 2, true, false)
+                else
+                    Dialogs.MessageBox(path .. " is not exists.", "", 0x0010)
+                end
             end
         end
     end
