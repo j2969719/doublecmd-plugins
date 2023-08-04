@@ -216,8 +216,8 @@ void DCPCALL ListSetDefaultParams(ListDefaultParamStruct* dps)
 	QString cfgpath = defini.absolutePath() + "/j2969719.ini";
 	QSettings settings(cfgpath, QSettings::IniFormat);
 
-	if (!settings.contains("wlxwebkit/controls"))
-		settings.setValue("wlxwebkit/controls", gControls);
+	if (!settings.contains(PLUGNAME "/controls"))
+		settings.setValue(PLUGNAME "/controls", gControls);
 	else
-		gControls = settings.value("wlxwebkit/controls").toBool();
+		gControls = settings.value(PLUGNAME "/controls").toBool();
 }

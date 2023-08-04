@@ -133,22 +133,22 @@ void DCPCALL ListSetDefaultParams(ListDefaultParamStruct* dps)
 	QFileInfo defini(QString::fromStdString(dps->DefaultIniName));
 	QString cfgpath = defini.absolutePath() + "/j2969719.ini";
 	QSettings settings(cfgpath, QSettings::IniFormat);
-	int size = settings.value("fileinfo/fontsize").toInt();
+	int size = settings.value(PLUGNAME "/fontsize").toInt();
 
 	if (size == 0)
 	{
 		//font = QFontDatabase::systemFont(QFontDatabase::FixedFont);
 		font.setFamily("mono");
 		size = 12;
-		settings.setValue("fileinfo/fontsize", 12);
-		settings.setValue("fileinfo/font", font.family());
-		settings.setValue("fileinfo/fontbold", font.bold());
+		settings.setValue(PLUGNAME "/fontsize", 12);
+		settings.setValue(PLUGNAME "/font", font.family());
+		settings.setValue(PLUGNAME "/fontbold", font.bold());
 	}
 
 	font.setFixedPitch(true);
 	font.setPointSize(size);
-	font.setFamily(settings.value("fileinfo/font").toString());
-	font.setBold(settings.value("fileinfo/fontbold").toBool());
+	font.setFamily(settings.value(PLUGNAME "/font").toString());
+	font.setBold(settings.value(PLUGNAME "/fontbold").toBool());
 
 	static char inipath[PATH_MAX + 1];
 	strncpy(inipath, dps->DefaultIniName, PATH_MAX);

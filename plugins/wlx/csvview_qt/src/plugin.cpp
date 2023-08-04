@@ -325,41 +325,39 @@ void DCPCALL ListSetDefaultParams(ListDefaultParamStruct* dps)
 	QString cfgpath = defini.absolutePath() + "/j2969719.ini";
 	QSettings settings(cfgpath, QSettings::IniFormat);
 
-	settings.remove("csvviewer");
-
-	if (!settings.contains("csvview/resize_columns"))
-		settings.setValue("csvview/resize_columns", g_resize);
+	if (!settings.contains(PLUGNAME "/resize_columns"))
+		settings.setValue(PLUGNAME "/resize_columns", g_resize);
 	else
-		g_resize = settings.value("csvview/resize_columns").toBool();
+		g_resize = settings.value(PLUGNAME "/resize_columns").toBool();
 
-	if (!settings.contains("csvview/enca"))
-		settings.setValue("csvview/enca", g_enca);
+	if (!settings.contains(PLUGNAME "/enca"))
+		settings.setValue(PLUGNAME "/enca", g_enca);
 	else
-		g_enca = settings.value("csvview/enca").toBool();
+		g_enca = settings.value(PLUGNAME "/enca").toBool();
 
-	if (!settings.contains("csvview/enca_lang"))
+	if (!settings.contains(PLUGNAME "/enca_lang"))
 	{
 		char lang[3];
 		snprintf(lang, 3, "%s", setlocale(LC_ALL, ""));
-		settings.setValue("csvview/enca_lang", lang);
+		settings.setValue(PLUGNAME "/enca_lang", lang);
 	}
 	else
-		g_lang = settings.value("csvview/enca_lang").toString();
+		g_lang = settings.value(PLUGNAME "/enca_lang").toString();
 
-	if (!settings.contains("csvview/enca_readall"))
-		settings.setValue("csvview/enca_readall", g_readall);
+	if (!settings.contains(PLUGNAME "/enca_readall"))
+		settings.setValue(PLUGNAME "/enca_readall", g_readall);
 	else
-		g_readall = settings.value("csvview/enca_readall").toBool();
+		g_readall = settings.value(PLUGNAME "/enca_readall").toBool();
 
-	if (!settings.contains("csvview/doublequoted"))
-		settings.setValue("csvview/doublequoted", g_quoted);
+	if (!settings.contains(PLUGNAME "/doublequoted"))
+		settings.setValue(PLUGNAME "/doublequoted", g_quoted);
 	else
-		g_quoted = settings.value("csvview/doublequoted").toBool();
+		g_quoted = settings.value(PLUGNAME "/doublequoted").toBool();
 
-	if (!settings.contains("csvview/draw_grid"))
-		settings.setValue("csvview/draw_grid", g_grid);
+	if (!settings.contains(PLUGNAME "/draw_grid"))
+		settings.setValue(PLUGNAME "/draw_grid", g_grid);
 	else
-		g_grid = settings.value("csvview/draw_grid").toBool();
+		g_grid = settings.value(PLUGNAME "/draw_grid").toBool();
 
 	Dl_info dlinfo;
 	static char plg_path[PATH_MAX];

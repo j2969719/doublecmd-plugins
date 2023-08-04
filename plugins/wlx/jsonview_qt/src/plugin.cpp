@@ -269,38 +269,38 @@ void DCPCALL ListSetDefaultParams(ListDefaultParamStruct* dps)
 	QString cfgpath = defini.absolutePath() + "/j2969719.ini";
 	QSettings settings(cfgpath, QSettings::IniFormat);
 
-	if (!settings.contains("jsonview/resize_columns"))
-		settings.setValue("jsonview/resize_columns", g_resize);
+	if (!settings.contains(PLUGNAME "/resize_columns"))
+		settings.setValue(PLUGNAME "/resize_columns", g_resize);
 	else
-		g_resize = settings.value("jsonview/resize_columns").toBool();
+		g_resize = settings.value(PLUGNAME "/resize_columns").toBool();
 
-	if (!settings.contains("jsonview/tree_expand"))
-		settings.setValue("jsonview/tree_expand", g_expand);
+	if (!settings.contains(PLUGNAME "/tree_expand"))
+		settings.setValue(PLUGNAME "/tree_expand", g_expand);
 	else
-		g_expand = settings.value("jsonview/tree_expand").toBool();
+		g_expand = settings.value(PLUGNAME "/tree_expand").toBool();
 
-	if (!settings.contains("jsonview/column_width"))
-		settings.setValue("jsonview/column_width", g_width);
+	if (!settings.contains(PLUGNAME "/column_width"))
+		settings.setValue(PLUGNAME "/column_width", g_width);
 	else
 	{
-		g_width = settings.value("jsonview/column_width").toInt();
+		g_width = settings.value(PLUGNAME "/column_width").toInt();
 
 		if (g_width < 10)
 		{
 			g_width = 10;
-			settings.setValue("jsonview/column_width", 10);
+			settings.setValue(PLUGNAME "/column_width", 10);
 		}
 	}
 
-	if (!settings.contains("jsonview/sorting"))
-		settings.setValue("jsonview/sorting", g_sorting);
+	if (!settings.contains(PLUGNAME "/sorting"))
+		settings.setValue(PLUGNAME "/sorting", g_sorting);
 	else
-		g_sorting = settings.value("jsonview/sorting").toBool();
+		g_sorting = settings.value(PLUGNAME "/sorting").toBool();
 
-	if (!settings.contains("jsonview/show_filename"))
-		settings.setValue("jsonview/show_filename", g_filename);
+	if (!settings.contains(PLUGNAME "/show_filename"))
+		settings.setValue(PLUGNAME "/show_filename", g_filename);
 	else
-		g_filename = settings.value("jsonview/show_filename").toBool();
+		g_filename = settings.value(PLUGNAME "/show_filename").toBool();
 
 	Dl_info dlinfo;
 	static char plg_path[PATH_MAX];

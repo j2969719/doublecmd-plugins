@@ -322,29 +322,29 @@ void DCPCALL ListSetDefaultParams(ListDefaultParamStruct* dps)
 
 	g_key_file_load_from_file(cfg, cfg_path, G_KEY_FILE_KEEP_COMMENTS, NULL);
 
-	if (!g_key_file_has_key(cfg, "jsonview", "tree_expand", NULL))
+	if (!g_key_file_has_key(cfg, PLUGNAME, "tree_expand", NULL))
 	{
-		g_key_file_set_boolean(cfg, "jsonview", "tree_expand", g_expand);
+		g_key_file_set_boolean(cfg, PLUGNAME, "tree_expand", g_expand);
 		g_key_file_save_to_file(cfg, cfg_path, NULL);
 	}
 	else
-		g_expand = g_key_file_get_boolean(cfg, "jsonview", "tree_expand", NULL);
+		g_expand = g_key_file_get_boolean(cfg, PLUGNAME, "tree_expand", NULL);
 
-	if (!g_key_file_has_key(cfg, "jsonview", "sorting", NULL))
+	if (!g_key_file_has_key(cfg, PLUGNAME, "sorting", NULL))
 	{
-		g_key_file_set_boolean(cfg, "jsonview", "sorting", g_sorting);
+		g_key_file_set_boolean(cfg, PLUGNAME, "sorting", g_sorting);
 		g_key_file_save_to_file(cfg, cfg_path, NULL);
 	}
 	else
-		g_sorting = g_key_file_get_boolean(cfg, "jsonview", "sorting", NULL);
+		g_sorting = g_key_file_get_boolean(cfg, PLUGNAME, "sorting", NULL);
 
-	if (!g_key_file_has_key(cfg, "jsonview", "show_filename", NULL))
+	if (!g_key_file_has_key(cfg, PLUGNAME, "show_filename", NULL))
 	{
-		g_key_file_set_boolean(cfg, "jsonview", "show_filename", g_filename);
+		g_key_file_set_boolean(cfg, PLUGNAME, "show_filename", g_filename);
 		g_key_file_save_to_file(cfg, cfg_path, NULL);
 	}
 	else
-		g_filename = g_key_file_get_boolean(cfg, "jsonview", "show_filename", NULL);
+		g_filename = g_key_file_get_boolean(cfg, PLUGNAME, "show_filename", NULL);
 
 	g_key_file_free(cfg);
 }

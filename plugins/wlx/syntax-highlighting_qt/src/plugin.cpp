@@ -215,24 +215,24 @@ void DCPCALL ListSetDefaultParams(ListDefaultParamStruct* dps)
 	QFileInfo defini(QString::fromStdString(dps->DefaultIniName));
 	QString cfgpath = defini.absolutePath() + "/j2969719.ini";
 	QSettings settings(cfgpath, QSettings::IniFormat);
-	int size = settings.value("synthighl/fontsize").toInt();
+	int size = settings.value(PLUGNAME "/fontsize").toInt();
 
 	if (size == 0)
 	{
 		//font = QFontDatabase::systemFont(QFontDatabase::FixedFont);
 		font.setFamily("mono");
 		size = 12;
-		settings.setValue("synthighl/fontsize", 12);
-		settings.setValue("synthighl/font", font.family());
-		settings.setValue("synthighl/fontbold", font.bold());
-		settings.setValue("synthighl/darktheme", darktheme);
+		settings.setValue(PLUGNAME "/fontsize", 12);
+		settings.setValue(PLUGNAME "/font", font.family());
+		settings.setValue(PLUGNAME "/fontbold", font.bold());
+		settings.setValue(PLUGNAME "/darktheme", darktheme);
 	}
 
-	font.setFamily(settings.value("synthighl/font").toString());
+	font.setFamily(settings.value(PLUGNAME "/font").toString());
 	font.setFixedPitch(true);
 	font.setPointSize(size);
-	font.setBold(settings.value("synthighl/fontbold").toBool());
-	darktheme = settings.value("synthighl/darktheme").toBool();
+	font.setBold(settings.value(PLUGNAME "/fontbold").toBool());
+	darktheme = settings.value(PLUGNAME "/darktheme").toBool();
 
 	Dl_info dlinfo;
 	static char plg_path[PATH_MAX];

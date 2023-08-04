@@ -343,45 +343,39 @@ void DCPCALL ListSetDefaultParams(ListDefaultParamStruct* dps)
 
 	g_key_file_load_from_file(cfg, cfg_path, G_KEY_FILE_KEEP_COMMENTS, NULL);
 
-	if (g_key_file_has_group(cfg, "csvviewer"))
+	if (!g_key_file_has_key(cfg, PLUGNAME, "draw_grid", NULL))
 	{
-		g_key_file_remove_group(cfg, "csvviewer", NULL);
-		g_key_file_save_to_file(cfg, cfg_path, NULL);
-	}
-
-	if (!g_key_file_has_key(cfg, "csvview", "draw_grid", NULL))
-	{
-		g_key_file_set_boolean(cfg, "csvview", "draw_grid", g_grid);
+		g_key_file_set_boolean(cfg, PLUGNAME, "draw_grid", g_grid);
 		g_key_file_save_to_file(cfg, cfg_path, NULL);
 	}
 	else
-		g_grid = g_key_file_get_boolean(cfg, "csvview", "draw_grid", NULL);
+		g_grid = g_key_file_get_boolean(cfg, PLUGNAME, "draw_grid", NULL);
 
-	if (!g_key_file_has_key(cfg, "csvview", "enca", NULL))
+	if (!g_key_file_has_key(cfg, PLUGNAME, "enca", NULL))
 	{
-		g_key_file_set_boolean(cfg, "csvview", "enca", g_enca);
+		g_key_file_set_boolean(cfg, PLUGNAME, "enca", g_enca);
 		g_key_file_save_to_file(cfg, cfg_path, NULL);
 	}
 	else
-		g_enca = g_key_file_get_boolean(cfg, "csvview", "enca", NULL);
+		g_enca = g_key_file_get_boolean(cfg, PLUGNAME, "enca", NULL);
 
-	if (!g_key_file_has_key(cfg, "csvview", "doublequoted", NULL))
+	if (!g_key_file_has_key(cfg, PLUGNAME, "doublequoted", NULL))
 	{
-		g_key_file_set_boolean(cfg, "csvview", "doublequoted", g_quoted);
+		g_key_file_set_boolean(cfg, PLUGNAME, "doublequoted", g_quoted);
 		g_key_file_save_to_file(cfg, cfg_path, NULL);
 	}
 	else
-		g_quoted = g_key_file_get_boolean(cfg, "csvview", "doublequoted", NULL);
+		g_quoted = g_key_file_get_boolean(cfg, PLUGNAME, "doublequoted", NULL);
 
-	if (!g_key_file_has_key(cfg, "csvview", "enca_lang", NULL))
+	if (!g_key_file_has_key(cfg, PLUGNAME, "enca_lang", NULL))
 	{
 		snprintf(g_lang, 3, "%s", setlocale(LC_ALL, ""));
-		g_key_file_set_string(cfg, "csvview", "enca_lang", g_lang);
+		g_key_file_set_string(cfg, PLUGNAME, "enca_lang", g_lang);
 		g_key_file_save_to_file(cfg, cfg_path, NULL);
 	}
 	else
 	{
-		gchar *val = g_key_file_get_string(cfg, "csvview", "enca_lang", NULL);
+		gchar *val = g_key_file_get_string(cfg, PLUGNAME, "enca_lang", NULL);
 
 		if (val)
 		{
