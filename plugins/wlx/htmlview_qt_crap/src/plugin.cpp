@@ -1,10 +1,4 @@
-#include <QProcess>
 #include <QTextBrowser>
-#include <QSettings>
-#include <QFileInfo>
-#include <QMimeDatabase>
-#include <QTemporaryDir>
-
 #include <QMessageBox>
 
 #include <dlfcn.h>
@@ -15,40 +9,20 @@
 
 #include "wlxplugin.h"
 
-QString path;
-
-QString convert(char* FileToLoad, QString tmpdir)
-{
-	QProcess proc;
-	QString output = tmpdir + "/output.html";
-	QString exec = "./exsimple";
-	QStringList params;
-	params << FileToLoad << output << path + "/redist/default.cfg";
-	proc.setWorkingDirectory(path + "/redist");
-	proc.start(exec, params);
-	proc.waitForFinished();
-	proc.close();
-	return output;
-}
-
 HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 {
-	QTemporaryDir tmpdir;
-	tmpdir.setAutoRemove(false);
-	QString output = convert(FileToLoad, tmpdir.path());
-	QFileInfo html(output);
-
-	if (!html.exists())
-	{
-		tmpdir.remove();
-		return nullptr;
-	}
-
 	QTextBrowser *view = new QTextBrowser((QWidget*)ParentWin);
-	view->setSource(QUrl::fromLocalFile(output));
+	view->setSource(QUrl::fromLocalFile(FileToLoad));
 	view->show();
 
 	return view;
+}
+
+int DCPCALL ListLoadNext(HWND ParentWin, HWND PluginWin, char* FileToLoad, int ShowFlags)
+{
+	QTextBrowser *view = (QTextBrowser*)PluginWin;
+	view->setSource(QUrl::fromLocalFile(FileToLoad));
+	return LISTPLUGIN_OK;
 }
 
 void DCPCALL ListCloseWindow(HANDLE ListWin)
@@ -112,18 +86,28 @@ int DCPCALL ListSendCommand(HWND ListWin, int Command, int Parameter)
 	return LISTPLUGIN_OK;
 }
 
+void DCPCALL ListGetDetectString(char* DetectString, int maxlen)
+{
+	snprintf(DetectString, maxlen - 1, "%s", DETECT_STRING);
+}
+
 void DCPCALL ListSetDefaultParams(ListDefaultParamStruct* dps)
 {
-	static char inipath[PATH_MAX];
-	strncpy(inipath, dps->DefaultIniName, PATH_MAX);
-
 	Dl_info dlinfo;
+	static char plg_path[PATH_MAX];
+	const char* loc_dir = "langs";
 	memset(&dlinfo, 0, sizeof(dlinfo));
 
-	if (dladdr(inipath, &dlinfo) != 0)
+	if (dladdr(plg_path, &dlinfo) != 0)
 	{
-		QString scrpath(dlinfo.dli_fname);
-		QFileInfo script(scrpath);
-		path = script.absolutePath();
+		strncpy(plg_path, dlinfo.dli_fname, PATH_MAX);
+		char *pos = strrchr(plg_path, '/');
+
+		if (pos)
+			strcpy(pos + 1, loc_dir);
+
+		setlocale(LC_ALL, "");
+		bindtextdomain(GETTEXT_PACKAGE, plg_path);
+		textdomain(GETTEXT_PACKAGE);
 	}
 }

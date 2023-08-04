@@ -81,15 +81,8 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 	if (!fiout.exists())
 		return nullptr;
 
-	QFile file(out);
-
-	if (!file.open(QFile::ReadOnly | QFile::Text))
-		return nullptr;
-
 	QTextBrowser *view = new QTextBrowser((QWidget*)ParentWin);
-
-	view->setHtml(file.readAll());
-	file.close();
+	view->setSource(QUrl::fromLocalFile(out));
 	view->show();
 
 	return view;
