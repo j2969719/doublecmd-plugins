@@ -1,5 +1,4 @@
 #include <QFile>
-#include <QTextCodec>
 #include <QTableWidget>
 #include <QHeaderView>
 
@@ -11,6 +10,7 @@
 
 #include <QMessageBox>
 
+#include <glib.h>
 #include <enca.h>
 
 #include <dlfcn.h>
@@ -21,26 +21,38 @@
 
 #include "wlxplugin.h"
 
-static bool g_enca = true;
-static bool g_resize = false;
-static bool g_readall = false;
-static bool g_quoted = true;
-static bool g_grid = false;
-static QString g_lang;
+static bool gEnca = true;
+static bool gResize = false;
+static bool gReadAll = false;
+static bool gQuoted = true;
+static bool gGrid = false;
+static QString gLang;
 
 
-static QStringList parse_line(QByteArray line, QTextCodec *codec, char separator)
+static QStringList parse_line(QByteArray line, char *enc, char separator)
 {
 	QStringList list, rawlist;
 
-	if (codec)
-		rawlist = codec->toUnicode(line).split(QLatin1Char(separator));
+	if (enc[0] != '\0')
+	{
+		gsize len;
+		gchar *converted = g_convert_with_fallback(line.data(), (gsize)line.size(), "UTF-8", enc, NULL, NULL, &len, NULL);
+
+		if (converted)
+			rawlist = QString(converted).split(QLatin1Char(separator));
+
+		g_free(converted);
+	}
 	else
 		rawlist = QString(line).split(QLatin1Char(separator));
 
-	rawlist.last().remove(-1, 1);
+	if (rawlist.isEmpty())
+		return rawlist;
 
-	if (!g_quoted || separator == '\t')
+	if (rawlist.last().back() == '\n')
+		rawlist.last().remove(-1, 1);
+
+	if (!gQuoted || separator == '\t')
 		list = rawlist;
 	else
 	{
@@ -88,7 +100,7 @@ static QStringList parse_line(QByteArray line, QTextCodec *codec, char separator
 HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 {
 	char separator;
-	char codec_name[13];
+	char enc[256] = "";
 	int columns, row = 0;
 	QStringList header, list;
 	QFile file(FileToLoad);
@@ -97,16 +109,16 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 	if (!file.open(QFile::ReadOnly | QFile::Text))
 		return nullptr;
 
-	if (g_enca)
+	if (gEnca)
 	{
-		if (g_readall)
+		if (gReadAll)
 			line = file.readAll();
 		else
 			line = file.read(4096);
 
 		EncaAnalyser analyser;
 		EncaEncoding encoding;
-		analyser = enca_analyser_alloc(g_lang.toStdString().c_str());
+		analyser = enca_analyser_alloc(gLang.toStdString().c_str());
 
 		if (analyser)
 		{
@@ -117,24 +129,8 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 			enca_set_filtering(analyser, 0);
 			encoding = enca_analyse(analyser, (unsigned char*)line.data(), (size_t)line.size());
 
-			switch (encoding.charset)
-			{
-
-			case 8:
-				strcpy(codec_name, "Windows-1251");
-				break;
-
-			case 13:
-				strcpy(codec_name, "IBM 866");
-				break;
-
-			case 20:
-				strcpy(codec_name, "KOI8-R");
-				break;
-
-			default:
-				strcpy(codec_name, "System");
-			}
+			if (encoding.charset > 0 && encoding.charset != 27)
+				snprintf(enc, sizeof(enc), "%s", enca_charset_name(encoding.charset, ENCA_NAME_STYLE_ICONV));
 
 			enca_analyser_free(analyser);
 		}
@@ -144,7 +140,6 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 	}
 
 	line = file.readLine();
-	QTextCodec *codec = QTextCodec::codecForName(codec_name);
 	QByteArray seps(",;\t");
 
 	QTableWidget *view = new QTableWidget((QWidget*)ParentWin);
@@ -153,7 +148,7 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 	{
 		separator = seps.at(i);
 
-		header = parse_line(line, codec, separator);
+		header = parse_line(line, enc, separator);
 		columns = header.size();
 
 		if (columns > 1)
@@ -173,13 +168,13 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 		return nullptr;
 	}
 
-	if (g_resize)
+	if (gResize)
 		view->horizontalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
 
 	while (!file.atEnd())
 	{
 		view->insertRow(row);
-		list = parse_line(file.readLine(), codec, separator);
+		list = parse_line(file.readLine(), enc, separator);
 
 		if (list.size() > columns)
 		{
@@ -201,7 +196,7 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 	file.close();
 
 	view->setSortingEnabled(true);
-	view->setShowGrid(g_grid);
+	view->setShowGrid(gGrid);
 
 	view->show();
 
@@ -326,38 +321,38 @@ void DCPCALL ListSetDefaultParams(ListDefaultParamStruct* dps)
 	QSettings settings(cfgpath, QSettings::IniFormat);
 
 	if (!settings.contains(PLUGNAME "/resize_columns"))
-		settings.setValue(PLUGNAME "/resize_columns", g_resize);
+		settings.setValue(PLUGNAME "/resize_columns", gResize);
 	else
-		g_resize = settings.value(PLUGNAME "/resize_columns").toBool();
+		gResize = settings.value(PLUGNAME "/resize_columns").toBool();
 
 	if (!settings.contains(PLUGNAME "/enca"))
-		settings.setValue(PLUGNAME "/enca", g_enca);
+		settings.setValue(PLUGNAME "/enca", gEnca);
 	else
-		g_enca = settings.value(PLUGNAME "/enca").toBool();
+		gEnca = settings.value(PLUGNAME "/enca").toBool();
 
 	if (!settings.contains(PLUGNAME "/enca_lang"))
 	{
 		char lang[3];
 		snprintf(lang, 3, "%s", setlocale(LC_ALL, ""));
-		settings.setValue(PLUGNAME "/enca_lang", lang);
+		settings.setValue(PLUGNAME "/enca_lang", QString(lang));
 	}
 	else
-		g_lang = settings.value(PLUGNAME "/enca_lang").toString();
+		gLang = settings.value(PLUGNAME "/enca_lang").toString();
 
 	if (!settings.contains(PLUGNAME "/enca_readall"))
-		settings.setValue(PLUGNAME "/enca_readall", g_readall);
+		settings.setValue(PLUGNAME "/enca_readall", gReadAll);
 	else
-		g_readall = settings.value(PLUGNAME "/enca_readall").toBool();
+		gReadAll = settings.value(PLUGNAME "/enca_readall").toBool();
 
 	if (!settings.contains(PLUGNAME "/doublequoted"))
-		settings.setValue(PLUGNAME "/doublequoted", g_quoted);
+		settings.setValue(PLUGNAME "/doublequoted", gQuoted);
 	else
-		g_quoted = settings.value(PLUGNAME "/doublequoted").toBool();
+		gQuoted = settings.value(PLUGNAME "/doublequoted").toBool();
 
 	if (!settings.contains(PLUGNAME "/draw_grid"))
-		settings.setValue(PLUGNAME "/draw_grid", g_grid);
+		settings.setValue(PLUGNAME "/draw_grid", gGrid);
 	else
-		g_grid = settings.value(PLUGNAME "/draw_grid").toBool();
+		gGrid = settings.value(PLUGNAME "/draw_grid").toBool();
 
 	Dl_info dlinfo;
 	static char plg_path[PATH_MAX];
