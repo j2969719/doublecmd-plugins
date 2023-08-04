@@ -6,6 +6,7 @@ PDF Viewer.
 
 ## Compatibility
 - `doublecmd-qt5`
+- `doublecmd-qt6`
 
 ## Dependencies
 ![arch](https://wiki.archlinux.org/favicon.ico) `pacman -S qt5-webengine`

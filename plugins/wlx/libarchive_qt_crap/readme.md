@@ -6,6 +6,7 @@ Displays file content with `libarchive` ([supported formats](https://github.com/
 
 ## Compatibility
 - `doublecmd-qt5`
+- `doublecmd-qt6`
 
 ## Notes
 Requires `libarchive` library.

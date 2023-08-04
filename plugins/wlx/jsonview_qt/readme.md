@@ -6,3 +6,4 @@ Very primitive JSON Viewer.
 
 ## Compatibility
 - `doublecmd-qt5`
+- `doublecmd-qt6`

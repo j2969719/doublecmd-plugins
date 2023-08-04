@@ -6,3 +6,4 @@ Very primitive SQL Viewer.
 
 ## Compatibility
 - `doublecmd-qt5`
+- `doublecmd-qt6`

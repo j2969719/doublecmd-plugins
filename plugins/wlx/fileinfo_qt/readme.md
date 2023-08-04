@@ -6,3 +6,4 @@ Displays various information about file using command line utilities ([original]
 
 ## Compatibility
 - `doublecmd-qt5`
+- `doublecmd-qt6`

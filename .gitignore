@@ -10,6 +10,7 @@
 plugins/*/pluginst.inf
 backup/
 plugins/dist/
+plugins/wlx/hx_qt_crap/redist/
 plugins/wlx/hx_webkit_crap/redist/
 plugins/wlx/hx_webkit_qt_crap/redist/
 plugins/wfx/adbplugin-x64/*.zip
