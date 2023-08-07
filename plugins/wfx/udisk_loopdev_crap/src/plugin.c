@@ -35,6 +35,7 @@ tExtensionStartupInfo* gExtensions = NULL;
 
 static UDisksClient *gUdisksClient = NULL;
 const char *gAllowedExts[] = { ".img", ".iso", NULL };
+GString *gLogString = NULL;
 
 static gboolean IsRootDir(char *path)
 {
@@ -376,13 +377,13 @@ int DCPCALL FsPutFile(char* LocalName, char* RemoteName, int CopyFlags)
 				}
 			}
 
-			g_print("%s -> %s\n", LocalName, loopPath);
+			g_string_append_printf(gLogString, "%s -> %s\n", LocalName, loopPath);
 			g_clear_object(&fd_list);
 			g_free(loopPath);
 		}
 	}
 	else
-		g_print("SKIP %s\n", LocalName);
+		g_string_append_printf(gLogString, "SKIP %s\n", LocalName);
 
 	return FS_FILE_OK;
 }
@@ -421,6 +422,26 @@ int DCPCALL FsContentGetValue(char* FileName, int FieldIndex, int UnitIndex, voi
 		return ft_fileerror;
 
 	return ft_string;
+}
+
+void DCPCALL FsStatusInfo(char* RemoteDir, int InfoStartEnd, int InfoOperation)
+{
+	if (InfoOperation == FS_STATUS_OP_LIST)
+	{
+		if (gLogString)
+		{
+			MessageBox(gLogString->str, NULL, MB_OK);
+			g_string_free(gLogString, TRUE);
+			gLogString = NULL;
+		}
+	}
+	else if (InfoOperation > FS_STATUS_OP_LIST && InfoOperation < FS_STATUS_OP_RENMOV_SINGLE)
+	{
+		if (InfoStartEnd == FS_STATUS_START)
+		{
+			gLogString = g_string_new(NULL);
+		}
+	}
 }
 
 BOOL DCPCALL FsContentGetDefaultView(char* ViewContents, char* ViewHeaders, char* ViewWidths, char* ViewOptions, int maxlen)
