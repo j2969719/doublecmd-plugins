@@ -96,6 +96,7 @@ static gboolean SetFindData(tVFSDirData *dirdata, WIN32_FIND_DATAA *FindData)
 		g_free(filename);
 		FindData->nFileSizeHigh = 0xFFFFFFFF;
 		FindData->nFileSizeLow = 0xFFFFFFFE;
+		FindData->dwFileAttributes = FILE_ATTRIBUTE_REPARSE_POINT;
 		dirdata->index++;
 		return TRUE;
 	}
@@ -105,6 +106,7 @@ static gboolean SetFindData(tVFSDirData *dirdata, WIN32_FIND_DATAA *FindData)
 		dirdata->blockdev = NULL;
 		FindData->nFileSizeHigh = 0xFFFFFFFF;
 		FindData->nFileSizeLow = 0xFFFFFFFE;
+		FindData->dwFileAttributes = FILE_ATTRIBUTE_REPARSE_POINT;
 		return TRUE;
 	}
 
@@ -266,7 +268,7 @@ int DCPCALL FsExecuteFile(HWND MainWin, char* RemoteName, char* Verb)
 			{
 				if (IsRootDir(RemoteName))
 				{
-					if (block && udisks_block_get_size(block) > 0 && MessageBox("Detach loop device?", NULL,  MB_YESNO | MB_ICONQUESTION) == ID_YES)
+					if (block && udisks_block_get_size(block) > 0 && MessageBox("Detach image from loop device?", NULL,  MB_YESNO | MB_ICONQUESTION) == ID_YES)
 					{
 						GVariantBuilder opts;
 						g_variant_builder_init(&opts, G_VARIANT_TYPE_VARDICT);
@@ -276,6 +278,11 @@ int DCPCALL FsExecuteFile(HWND MainWin, char* RemoteName, char* Verb)
 						{
 							MessageBox(err->message, NULL,  MB_OK | MB_ICONERROR);
 							g_error_free(err);
+						}
+						else
+						{
+							gLogString = g_string_new(NULL);
+							g_string_append_printf(gLogString, "Image detached from %s.\n", udisks_block_get_device(block));
 						}
 					}
 				}
@@ -325,6 +332,9 @@ int DCPCALL FsPutFile(char* LocalName, char* RemoteName, int CopyFlags)
 		MessageBox("Failed to get UDisks client.", NULL,  MB_OK | MB_ICONERROR);
 		return FS_FILE_WRITEERROR;
 	}
+
+	 if (gProgressProc(gPluginNr, RemoteName, LocalName, 0))
+		return FS_FILE_USERABORT;
 
 	gboolean isOK = FALSE;
 	char *dot = strrchr(LocalName, '.');
@@ -384,6 +394,8 @@ int DCPCALL FsPutFile(char* LocalName, char* RemoteName, int CopyFlags)
 	}
 	else
 		g_string_append_printf(gLogString, "SKIP %s\n", LocalName);
+
+	gProgressProc(gPluginNr, RemoteName, LocalName, 100);
 
 	return FS_FILE_OK;
 }

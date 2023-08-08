@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -shared -fPIC -Wl,--no-as-needed -Wall -pedantic
+CFLAGS = -shared -fPIC -Wl,--no-as-needed
 
 libs := `pkg-config --cflags --libs glib-2.0 udisks2`
 includes := -I../../../sdk
