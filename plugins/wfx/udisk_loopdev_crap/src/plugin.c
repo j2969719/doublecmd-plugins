@@ -345,7 +345,7 @@ int DCPCALL FsPutFile(char* LocalName, char* RemoteName, int CopyFlags)
 
 		while (gAllowedExts[i])
 		{
-			if (strcmp(dot, gAllowedExts[i++]) == 0)
+			if (strcasecmp(dot, gAllowedExts[i++]) == 0)
 				isOK = TRUE;
 		}
 	}
