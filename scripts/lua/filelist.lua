@@ -15,6 +15,14 @@ DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
         <Param>$DC_CONFIG_PATH/scripts/lua/filelist.lua</Param>
       </Command>
       <Command>
+        <ID>{962A9BE2-19BE-4B4A-A058-27B235838140}</ID>
+        <Icon>cm_loadlist</Icon>
+        <Hint>Load FileList in new tab</Hint>
+        <Command>cm_ExecuteScript</Command>
+        <Param>$DC_CONFIG_PATH/scripts/lua/filelist.lua</Param>
+        <Param>newtab</Param>
+      </Command>
+      <Command>
         <ID>{E974E3D8-E6C5-411F-A9A1-6E8D95F4C1E8}</ID>
         <Icon>cm_loadlist</Icon>
         <Hint>Load FileList from file under cursor</Hint>
@@ -213,9 +221,12 @@ function SaveTableToFile(Table, FileName)
 end
 
 
-if not Args[1] then
+if not Args[1] or (Args[1] == "newtab") then
     local FileList = GetFileListFile(Messages[2])
     if (FileList ~= nil and SysUtils.FileExists(FileList)) then
+        if (Args[1] == "newtab") then
+            DC.ExecuteCommand("cm_NewTab")
+        end
         DC.ExecuteCommand("cm_LoadList", "filename=" .. FileList)
     end
 elseif (Args[1] == "store") then

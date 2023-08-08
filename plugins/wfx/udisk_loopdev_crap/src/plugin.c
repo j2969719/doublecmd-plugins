@@ -36,6 +36,7 @@ tExtensionStartupInfo* gExtensions = NULL;
 static UDisksClient *gUdisksClient = NULL;
 const char *gAllowedExts[] = { ".img", ".iso", NULL };
 GString *gLogString = NULL;
+gboolean gReadOnly = TRUE;
 
 static gboolean IsRootDir(char *path)
 {
@@ -346,15 +347,17 @@ int DCPCALL FsPutFile(char* LocalName, char* RemoteName, int CopyFlags)
 		while (gAllowedExts[i])
 		{
 			if (strcasecmp(dot, gAllowedExts[i++]) == 0)
+			{
 				isOK = TRUE;
+				break;
+			}
 		}
 	}
 
 	if (isOK)
 	{
-		gboolean isReadOnly = (MessageBox("Set Read Only?", NULL,  MB_YESNO | MB_ICONQUESTION) == ID_YES);
 		gchar *loopPath = NULL;
-		int fd = open(LocalName, isReadOnly ? O_RDONLY : O_RDWR);
+		int fd = open(LocalName, gReadOnly ? O_RDONLY : O_RDWR);
 
 		if (fd == -1)
 			return FS_FILE_READERROR;
@@ -366,7 +369,7 @@ int DCPCALL FsPutFile(char* LocalName, char* RemoteName, int CopyFlags)
 			GUnixFDList *fd_list = g_unix_fd_list_new_from_array(&fd, 1);
 			g_variant_builder_init(&opts, G_VARIANT_TYPE_VARDICT);
 
-			if (isReadOnly)
+			if (gReadOnly)
 				g_variant_builder_add(&opts, "{sv}", "read-only", g_variant_new_boolean(TRUE));
 
 			if (!udisks_manager_call_loop_setup_sync(udisks_client_get_manager(gUdisksClient), g_variant_new_handle(0), g_variant_builder_end(&opts), fd_list, &loopPath, NULL, NULL, &err))
@@ -451,6 +454,7 @@ void DCPCALL FsStatusInfo(char* RemoteDir, int InfoStartEnd, int InfoOperation)
 	{
 		if (InfoStartEnd == FS_STATUS_START)
 		{
+			gReadOnly = (MessageBox("Set Read Only?", NULL,  MB_YESNO | MB_ICONQUESTION) == ID_YES);
 			gLogString = g_string_new(NULL);
 		}
 	}
