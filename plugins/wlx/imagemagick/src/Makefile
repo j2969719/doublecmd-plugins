@@ -1,8 +1,11 @@
 CC = gcc
 CFLAGS = -shared -fPIC -Wl,--no-as-needed
 
-libs := `pkg-config --cflags --libs MagickWand gtkimageview`
+libs := `pkg-config --cflags --libs gtkimageview`
 includes := -I../../../sdk
+
+libs_magick6 := `pkg-config --cflags --libs MagickWand`
+libs_magick7 := `pkg-config --cflags --libs MagickWand`
 
 plugdir := $(shell basename $(realpath ..))
 plugtype := $(shell basename $(realpath ../..))
@@ -13,8 +16,12 @@ plugfiles := $(filter-out $(wildcard ../*.$(plugtype)), $(wildcard ../*))
 detectstring :=
 
 
-all:
-		$(CC) $(CFLAGS) -o ../$(plugname) wlximagemagick.c $(libs) $(includes) -D'PLUGNAME="$(plugname)"' -D'DETECT_STRING="$(detectstring)"'
+all: 6 7
+
+6:
+		$(CC) $(CFLAGS) -o ../$(plugname) wlximagemagick.c $(libs) $(libs_magick$@) $(includes) -D'PLUGNAME="$(plugname)"' -D'DETECT_STRING="$(detectstring)"' -D'PLUGTARGET=$@' || true
+7:
+		$(CC) $(CFLAGS) -o ../$(plugname) wlximagemagick.c $(libs) $(libs_magick$@) $(includes) -D'PLUGNAME="$(plugname)"' -D'DETECT_STRING="$(detectstring)"' -D'PLUGTARGET=$@' || true
 
 dist:
 		test -f ../$(plugname) && \

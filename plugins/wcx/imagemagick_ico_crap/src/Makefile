@@ -1,8 +1,11 @@
 CC = gcc
 CFLAGS = -shared -fPIC -Wl,--no-as-needed
 
-libs := `pkg-config --cflags --libs glib-2.0 MagickWand`
+libs := `pkg-config --cflags --libs glib-2.0`
 includes := -I../../../sdk
+
+libs_magick6 := `pkg-config --cflags --libs MagickWand`
+libs_magick7 := `pkg-config --cflags --libs MagickWand`
 
 plugdir := $(shell basename $(realpath ..))
 plugtype := $(shell basename $(realpath ../..))
@@ -13,8 +16,12 @@ plugfiles := $(filter-out $(wildcard ../*.$(plugtype)), $(wildcard ../*))
 wcx_ext := ico
 
 
-all:
-		$(CC) $(CFLAGS) -o ../$(plugname) plugin.c $(libs) $(includes) -D'PLUGNAME="$(plugname)"'
+all: 6 7
+
+6:
+		$(CC) $(CFLAGS) -o ../$(plugname) plugin.c $(libs) $(libs_magick$@) $(includes) -D'PLUGNAME="$(plugname)"' -D'PLUGTARGET=$@' || true
+7:
+		$(CC) $(CFLAGS) -o ../$(plugname) plugin.c $(libs) $(libs_magick$@) $(includes) -D'PLUGNAME="$(plugname)"' -D'PLUGTARGET=$@' || true
 
 dist:
 		test -f ../$(plugname) && \

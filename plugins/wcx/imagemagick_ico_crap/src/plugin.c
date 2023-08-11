@@ -1,6 +1,12 @@
 #include <glib.h>
 #include <unistd.h>
+
+#if PLUGTARGET == 6
+#include <wand/MagickWand.h>
+#else
 #include <MagickWand/MagickWand.h>
+#endif
+
 #include "wcxplugin.h"
 #include "extension.h"
 
@@ -157,7 +163,12 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 			{
 				if (sizes[i] <= width && sizes[i] <= height)
 					if (MagickAddImage(out, magick_wand) == MagickTrue)
+#if PLUGTARGET == 6
+//fixme
+						MagickResizeImage(out, sizes[i], sizes[i], 0);
+#else
 						MagickResizeImage(out, sizes[i], sizes[i], LanczosFilter);
+#endif
 			}
 
 			g_free(path);

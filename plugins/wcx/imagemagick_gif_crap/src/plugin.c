@@ -1,6 +1,12 @@
 #include <glib.h>
 #include <unistd.h>
+
+#if PLUGTARGET == 6
+#include <wand/MagickWand.h>
+#else
 #include <MagickWand/MagickWand.h>
+#endif
+
 #include "wcxplugin.h"
 #include "extension.h"
 

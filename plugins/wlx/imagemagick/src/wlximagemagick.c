@@ -1,7 +1,11 @@
 #define _GNU_SOURCE
 
-//#include <wand/MagickWand.h>
+#if PLUGTARGET == 6
+#include <wand/MagickWand.h>
+#else
 #include <MagickWand/MagickWand.h>
+#endif
+
 #include <gtkimageview/gtkimagescrollwin.h>
 #include <gtkimageview/gtkimageview.h>
 #include "wlxplugin.h"
