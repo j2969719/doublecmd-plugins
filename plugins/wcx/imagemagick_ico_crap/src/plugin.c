@@ -164,8 +164,7 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 				if (sizes[i] <= width && sizes[i] <= height)
 					if (MagickAddImage(out, magick_wand) == MagickTrue)
 #if PLUGTARGET == 6
-//fixme
-						MagickResizeImage(out, sizes[i], sizes[i], 0);
+						MagickResizeImage(out, sizes[i], sizes[i], LanczosFilter, 1.0);
 #else
 						MagickResizeImage(out, sizes[i], sizes[i], LanczosFilter);
 #endif
