@@ -18,7 +18,7 @@ detectstring := EXT=\"GIF\"|EXT=\"JPG\"|EXT=\"PNG\"
 all: qt5
 
 qt5:
-		$(CXX) $(CXXFLAGS) -o ../$(plugdir)_$@.$(plugtype) plugin.cpp $(libs) $($@_libs) $(includes) -D'PLUGNAME="$(plugdir)_$@.$(plugtype)"' -D'DETECT_STRING="$(detectstring)"'
+		$(CXX) $(CXXFLAGS) -o ../$(plugdir)_$@.$(plugtype) plugin.cpp $(libs) $($@_libs) $(includes) -D'PLUGNAME="$(plugdir)_$@.$(plugtype)"' -D'DETECT_STRING="$(detectstring)"' -D'PLUGTARGET="$@"' || echo $(plugdir)_$@.$(plugtype) >> ../../../dist/.build_fail.lst
 
 dist:
 		test -f ../$(plugdir)_qt5.$(plugtype) && \

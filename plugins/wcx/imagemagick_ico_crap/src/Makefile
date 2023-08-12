@@ -17,6 +17,7 @@ wcx_ext := ico
 
 
 all: 6 7
+		test -f ../$(plugname) || echo $(plugname) >> ../../../dist/.build_fail.lst
 
 6:
 		$(CC) $(CFLAGS) -o ../$(plugname) plugin.c $(libs) $(libs_magick$@) $(includes) -D'PLUGNAME="$(plugname)"' -D'PLUGTARGET=$@' || true

@@ -1,5 +1,5 @@
 CXX = g++
-CXXFLAGS = -shared -fPIC -Wl,--no-as-needed
+CXXFLAGS = -shared -fPIC -Wl,--no-as-needed -std=c++17
 
 libs := -L third_party/bit7z/lib/x64 -lbit7z64
 includes := -I../../../sdk -Ithird_party/bit7z/include
@@ -16,10 +16,10 @@ wcx_ext := 7z
 all: default auto
 
 default:
-		$(CXX) $(CXXFLAGS) -o ../$(plugname) plugin.cpp $(libs) $(includes) `pkg-config --cflags --libs glib-2.0` -D'PLUGNAME="$(plugname)"'
+		$(CXX) $(CXXFLAGS) -o ../$(plugname) plugin.cpp $(libs) $(includes) `pkg-config --cflags --libs glib-2.0` -D'PLUGNAME="$(plugname)"' -D'PLUGTARGET="$@"' || echo $(plugname) >> ../../../dist/.build_fail.lst
 
 auto:
-		$(CXX) $(CXXFLAGS) -o ../auto_$(plugname) plugin.cpp -DBIT7Z_AUTO_FORMAT $(libs) $(includes) -D'PLUGNAME="auto_$(plugname)"'
+		$(CXX) $(CXXFLAGS) -o ../auto_$(plugname) plugin.cpp -DBIT7Z_AUTO_FORMAT $(libs) $(includes) -D'PLUGNAME="auto_$(plugname)"' -D'PLUGTARGET="$@"' || echo auto_$(plugname) >> ../../../dist/.build_fail.lst
 
 dist:
 		test -f ../$(plugname) && \

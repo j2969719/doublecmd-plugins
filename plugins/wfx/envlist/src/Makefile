@@ -12,7 +12,7 @@ plugfiles := $(filter-out $(wildcard ../*.$(plugtype)), $(wildcard ../*))
 
 
 all:
-		$(CC) $(CFLAGS) -o ../$(plugname) envlistwfx.c $(libs) $(includes) -D'PLUGNAME="$(plugname)"'
+		$(CC) $(CFLAGS) -o ../$(plugname) envlistwfx.c $(libs) $(includes) -D'PLUGNAME="$(plugname)"' -D'PLUGTARGET="$@"' || echo $(plugname) >> ../../../dist/.build_fail.lst
 
 dist:
 		test -f ../$(plugname) && \

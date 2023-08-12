@@ -19,10 +19,10 @@ detectstring := EXT=\"HTML\"|EXT=\"HTM\"|EXT=\"XHTM\"|EXT=\"XHTML\"
 all: qt5 qt6
 
 qt5:
-		$(CXX) $(CXXFLAGS) -o ../$(plugdir)_$@.$(plugtype) plugin.cpp $(libs) $($@_libs) $(includes) -D'PLUGNAME="$(plugdir)_$@.$(plugtype)"' -D'DETECT_STRING="$(detectstring)"'
+		$(CXX) $(CXXFLAGS) -o ../$(plugdir)_$@.$(plugtype) plugin.cpp $(libs) $($@_libs) $(includes) -D'PLUGNAME="$(plugdir)_$@.$(plugtype)"' -D'DETECT_STRING="$(detectstring)"' -D'PLUGTARGET="$@"' || echo $(plugdir)_$@.$(plugtype) >> ../../../dist/.build_fail.lst
 
 qt6:
-		$(CXX) $(CXXFLAGS) -o ../$(plugdir)_$@.$(plugtype) plugin.cpp $(libs) $($@_libs) $(includes) -D'PLUGNAME="$(plugdir)_$@.$(plugtype)"' -D'DETECT_STRING="$(detectstring)"'
+		$(CXX) $(CXXFLAGS) -o ../$(plugdir)_$@.$(plugtype) plugin.cpp $(libs) $($@_libs) $(includes) -D'PLUGNAME="$(plugdir)_$@.$(plugtype)"' -D'DETECT_STRING="$(detectstring)"' -D'PLUGTARGET="$@"' || echo $(plugdir)_$@.$(plugtype) >> ../../../dist/.build_fail.lst
 
 dist:
 		test -f ../$(plugdir)_qt5.$(plugtype) && \

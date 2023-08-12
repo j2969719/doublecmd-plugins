@@ -14,7 +14,7 @@ wcx_ext := blake2b_512,blake2b_384,blake2b_256,blake2b_160,blake2s_256,blake2s_2
 
 
 all:
-		$(CC) $(CFLAGS) -o ../$(plugname) plugin.c $(libs) $(includes) -D'PLUGNAME="$(plugname)"'
+		$(CC) $(CFLAGS) -o ../$(plugname) plugin.c $(libs) $(includes) -D'PLUGNAME="$(plugname)"' -D'PLUGTARGET="$@"' || echo $(plugname) >> ../../../dist/.build_fail.lst
 
 dist:
 		test -f ../$(plugname) && \

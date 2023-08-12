@@ -2,6 +2,7 @@
 #include <bit7z/bit7z.hpp>
 #include <bit7z/bitarchivewriter.hpp>
 #include <bit7z/bitarchiveeditor.hpp>
+#include <unistd.h>
 #include <sys/stat.h>
 #include <limits.h>
 #include <string.h>

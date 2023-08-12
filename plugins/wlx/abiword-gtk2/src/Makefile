@@ -14,7 +14,7 @@ detectstring :=
 
 
 all:
-		$(CC) $(CFLAGS) -o ../$(plugname) wlxabiword.c $(libs) $(includes) -D'PLUGNAME="$(plugname)"' -D'DETECT_STRING="$(detectstring)"'
+		$(CC) $(CFLAGS) -o ../$(plugname) wlxabiword.c $(libs) $(includes) -D'PLUGNAME="$(plugname)"' -D'DETECT_STRING="$(detectstring)"' -D'PLUGTARGET="$@"' || echo $(plugname) >> ../../../dist/.build_fail.lst
 
 dist:
 		test -f ../$(plugname) && \

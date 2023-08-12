@@ -14,10 +14,10 @@ plugfiles := $(filter-out $(wildcard ../*.$(plugtype)), $(wildcard ../*))
 all: default tmppanel
 
 default:
-		$(CC) $(CFLAGS) -o ../$(plugname) plugin.c $(libs) $(includes) -D'PLUGNAME="$(plugname)"'
+		$(CC) $(CFLAGS) -o ../$(plugname) plugin.c $(libs) $(includes) -D'PLUGNAME="$(plugname)"' -D'PLUGTARGET="$@"' || echo $(plugname) >> ../../../dist/.build_fail.lst
 
 tmppanel:
-		$(CC) $(CFLAGS) -o ../tp_$(plugname) plugin.c $(libs) $(includes) -D'PLUGNAME="$(plugname)"' -D TEMP_PANEL
+		$(CC) $(CFLAGS) -o ../tp_$(plugname) plugin.c $(libs) $(includes) -D'PLUGNAME="$(plugname)"' -D TEMP_PANEL -D'PLUGTARGET="$@"' || echo tp_$(plugname) >> ../../../dist/.build_fail.lst
 
 dist:
 		test -f ../$(plugname) && \

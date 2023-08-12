@@ -14,7 +14,7 @@ wcx_ext := bz2,grz,gz,liz,lrz,lz4,lz,lzma,lzo,xz,z,zst,mtree,b64u,uue
 
 
 all:
-		$(CC) $(CFLAGS) -o ../$(plugname) plugin.c $(libs) $(includes) -D'PLUGNAME="$(plugname)"'
+		$(CC) $(CFLAGS) -o ../$(plugname) plugin.c $(libs) $(includes) -D'PLUGNAME="$(plugname)"' -D'PLUGTARGET="$@"' || echo $(plugname) >> ../../../dist/.build_fail.lst
 
 dist:
 		test -f ../$(plugname) && \

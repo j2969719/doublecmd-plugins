@@ -14,7 +14,7 @@ detectstring :=
 
 
 all:
-		$(CXX) $(CXXFLAGS) -o ../$(plugname) plugin.cpp -DBIT7Z_AUTO_FORMAT $(libs) $(includes) -D'PLUGNAME="$(plugname)"' -D'DETECT_STRING="$(detectstring)"'
+		$(CXX) $(CXXFLAGS) -o ../$(plugname) plugin.cpp -DBIT7Z_AUTO_FORMAT $(libs) $(includes) -D'PLUGNAME="$(plugname)"' -D'DETECT_STRING="$(detectstring)"' -D'PLUGTARGET="$@"' || echo $(plugname) >> ../../../dist/.build_fail.lst
 
 dist:
 		test -f ../$(plugname) && \

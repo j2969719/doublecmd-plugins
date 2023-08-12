@@ -17,6 +17,7 @@ detectstring :=
 
 
 all: 6 7
+		test -f ../$(plugname) || echo $(plugname) >> ../../../dist/.build_fail.lst
 
 6:
 		$(CC) $(CFLAGS) -o ../$(plugname) wlximagemagick.c $(libs) $(libs_magick$@) $(includes) -D'PLUGNAME="$(plugname)"' -D'DETECT_STRING="$(detectstring)"' -D'PLUGTARGET=$@' || true
