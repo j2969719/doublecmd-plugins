@@ -39,18 +39,6 @@ static char gHistoryFile[PATH_MAX];
 int gListItems = 0;
 bool gAbortCD = false;
 
-char* strlcpy(char* p, const char* p2, int maxlen)
-{
-	if ((int)strlen(p2) >= maxlen)
-	{
-		strncpy(p, p2, maxlen);
-		p[maxlen] = 0;
-	}
-	else
-		strcpy(p, p2);
-
-	return p;
-}
 
 void UnixTimeToFileTime(time_t t, LPFILETIME pft)
 {
@@ -108,7 +96,7 @@ bool SetFindData(DIR *cur, char *path, WIN32_FIND_DATAA *FindData)
 			FindData->ftLastWriteTime.dwLowDateTime = 0xFFFFFFFE;
 		}
 
-		strlcpy(FindData->cFileName, ent->d_name, MAX_PATH - 1);
+		snprintf(FindData->cFileName, MAX_PATH - 1, "%s", ent->d_name);
 
 		return true;
 	}
@@ -169,16 +157,16 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 				if (strrchr(file, '#') == NULL)
 					snprintf(gAVFSPath, sizeof(gAVFSPath), "%s#", file);
 				else
-					strlcpy(gAVFSPath, file, sizeof(gAVFSPath));
+					snprintf(gAVFSPath, sizeof(gAVFSPath), "%s", file);
 			}
 			else
 			{
 				path = (char*)SendDlgMsg(pDlg, "cmbPath", DM_GETTEXT, 0, 0);
 
 				if (!localfile && path[0] != '\0')
-					strlcpy(gAVFSPath, path, sizeof(gAVFSPath));
+					snprintf(gAVFSPath, sizeof(gAVFSPath), "%s", path);
 				else
-					strlcpy(gAVFSPath, "/#avfsstat", sizeof(gAVFSPath));
+					snprintf(gAVFSPath, sizeof(gAVFSPath), "/#avfsstat");
 			}
 
 			if ((fp = fopen(gHistoryFile, "w")) != NULL)
@@ -668,7 +656,7 @@ void DCPCALL FsSetDefaultParams(FsDefaultParamStruct* dps)
 	Dl_info dlinfo;
 	const char* lfm_name = "dialog.lfm";
 
-	strlcpy(gHistoryFile, dps->DefaultIniName, PATH_MAX);
+	snprintf(gHistoryFile, PATH_MAX - 1, "%s", dps->DefaultIniName);
 	char *pos = strrchr(gHistoryFile, '/');
 
 	if (pos)
@@ -678,7 +666,7 @@ void DCPCALL FsSetDefaultParams(FsDefaultParamStruct* dps)
 
 	if (dladdr(lfm_name, &dlinfo) != 0)
 	{
-		strlcpy(gLFMPath, dlinfo.dli_fname, PATH_MAX);
+		snprintf(gLFMPath, PATH_MAX - 1, "%s", dlinfo.dli_fname);
 		pos = strrchr(gLFMPath, '/');
 
 		if (pos)
@@ -698,7 +686,7 @@ BOOL DCPCALL FsContentGetDefaultView(char* ViewContents, char* ViewHeaders, char
 
 void DCPCALL FsGetDefRootName(char* DefRootName, int maxlen)
 {
-	strlcpy(DefRootName, "AVFS", maxlen - 1);
+	snprintf(DefRootName, maxlen - 1, "AVFS");
 }
 
 void DCPCALL ExtensionInitialize(tExtensionStartupInfo* StartupInfo)

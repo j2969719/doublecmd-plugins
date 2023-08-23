@@ -103,18 +103,6 @@ tStatusLines gStatusLines[] =
 
 #define statuslcount (sizeof(gStatusLines)/sizeof(tStatusLines))
 
-char* strlcpy(char* p, const char* p2, int maxlen)
-{
-	if ((int)strlen(p2) >= maxlen)
-	{
-		strncpy(p, p2, maxlen);
-		p[maxlen] = 0;
-	}
-	else
-		strcpy(p, p2);
-
-	return p;
-}
 
 void UnixTimeToFileTime(time_t t, LPFILETIME pft)
 {
@@ -145,7 +133,7 @@ bool SetFindData(tVFSDirData *dirdata, WIN32_FIND_DATAA *FindData)
 				char name[100];
 				fscanf(info, "Name:\t%100[^\n]s", name);
 				snprintf(lpath, PATH_MAX, "%s.%s", name, ent->d_name);
-				strlcpy(FindData->cFileName, lpath, MAX_PATH - 1);
+				strncpy(FindData->cFileName, lpath, MAX_PATH - 1);
 				fclose(info);
 				found = true;
 
@@ -299,14 +287,14 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 			{
 				if (len > 7 && line[len - 3] == ' ' && line[len - 7] != ' ')
 				{
-					strlcpy(lpath, line, len - 6);
+					strncpy(lpath, line, len - 6);
 					strcat(lpath, " ");
 					strcat(lpath, line + len - 6);
 					SendDlgMsg(pDlg, DlgItemName, DM_SETTEXT, (intptr_t)lpath, 0);
 				}
 				else if (len > 11 && line[len - 3] == ' ' && line[len - 11] != ' ')
 				{
-					strlcpy(lpath, line, len - 10);
+					strncpy(lpath, line, len - 10);
 					strcat(lpath, " ");
 					strcat(lpath, line + len - 10);
 					SendDlgMsg(pDlg, DlgItemName, DM_SETTEXT, (intptr_t)lpath, 0);
@@ -315,7 +303,7 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 		}
 		else if (strcmp(DlgItemName, "cbLink") == 0)
 		{
-			strlcpy(gLinkPath, (char*)SendDlgMsg(pDlg, DlgItemName, DM_GETTEXT, 0, 0), PATH_MAX - 1);
+			strncpy(gLinkPath, (char*)SendDlgMsg(pDlg, DlgItemName, DM_GETTEXT, 0, 0), PATH_MAX - 1);
 		}
 		else if (strcmp(DlgItemName, "edUpdTime") == 0)
 		{
@@ -397,7 +385,7 @@ int DCPCALL FsExecuteFile(HWND MainWin, char* RemoteName, char* Verb)
 		{
 			if (gDialogApi && access(gLFMPath, F_OK) == 0)
 			{
-				strlcpy(gLastPath, "self", PATH_MAX);
+				strncpy(gLastPath, "self", PATH_MAX);
 				gDialogApi->DialogBoxLFMFile(gLFMPath, DlgProc);
 			}
 
@@ -411,7 +399,7 @@ int DCPCALL FsExecuteFile(HWND MainWin, char* RemoteName, char* Verb)
 			{
 				if (gDialogApi && access(gLFMPath, F_OK) == 0)
 				{
-					strlcpy(gLastPath, dot + 1, PATH_MAX);
+					strncpy(gLastPath, dot + 1, PATH_MAX);
 					gDialogApi->DialogBoxLFMFile(gLFMPath, DlgProc);
 				}
 
@@ -472,7 +460,7 @@ void DCPCALL FsSetDefaultParams(FsDefaultParamStruct* dps)
 
 	if (dladdr(lfm_name, &dlinfo) != 0)
 	{
-		strlcpy(gLFMPath, dlinfo.dli_fname, PATH_MAX);
+		strncpy(gLFMPath, dlinfo.dli_fname, PATH_MAX);
 		char *pos = strrchr(gLFMPath, '/');
 
 		if (pos)
@@ -490,7 +478,7 @@ int DCPCALL FsContentGetSupportedField(int FieldIndex, char* FieldName, char* Un
 	if (len < 0 || len > maxlen)
 		return ft_nomorefields;
 
-	strlcpy(FieldName, gStatusLines[FieldIndex].name, maxlen - 1);
+	strncpy(FieldName, gStatusLines[FieldIndex].name, maxlen - 1);
 
 	if (FieldName[len - 1] == ':')
 		FieldName[len - 1] = '\0';
@@ -526,7 +514,7 @@ int DCPCALL FsContentGetValue(char* FileName, int FieldIndex, int UnitIndex, voi
 					if (line + strlen(gStatusLines[FieldIndex].name) + 1)
 					{
 						if (gStatusLines[FieldIndex].type == ft_string)
-							strlcpy((char*)FieldValue, line + strlen(gStatusLines[FieldIndex].name) + 1, maxlen - 1);
+							strncpy((char*)FieldValue, line + strlen(gStatusLines[FieldIndex].name) + 1, maxlen - 1);
 						else if (gStatusLines[FieldIndex].type == ft_numeric_32)
 							*(int*)FieldValue = atoi(line + strlen(gStatusLines[FieldIndex].name) + 1);
 
@@ -551,16 +539,16 @@ int DCPCALL FsContentGetValue(char* FileName, int FieldIndex, int UnitIndex, voi
 
 BOOL DCPCALL FsContentGetDefaultView(char* ViewContents, char* ViewHeaders, char* ViewWidths, char* ViewOptions, int maxlen)
 {
-	strlcpy(ViewContents, "[Plugin(FS).State{}]\\n[DC().GETFILESIZE{}]\\n[Plugin(FS).Pid{}]\\n[Plugin(FS).Threads{}]", maxlen - 1);
-	strlcpy(ViewHeaders, "State\\nMem\\nPid\\nThreads", maxlen - 1);
-	strlcpy(ViewWidths, "100,0,55,-40,-30,-35", maxlen - 1);
-	strlcpy(ViewOptions, "-1|0", maxlen - 1);
+	strncpy(ViewContents, "[Plugin(FS).State{}]\\n[DC().GETFILESIZE{}]\\n[Plugin(FS).Pid{}]\\n[Plugin(FS).Threads{}]", maxlen - 1);
+	strncpy(ViewHeaders, "State\\nMem\\nPid\\nThreads", maxlen - 1);
+	strncpy(ViewWidths, "100,0,55,-40,-30,-35", maxlen - 1);
+	strncpy(ViewOptions, "-1|0", maxlen - 1);
 	return true;
 }
 
 void DCPCALL FsGetDefRootName(char* DefRootName, int maxlen)
 {
-	strlcpy(DefRootName, "Process List", maxlen - 1);
+	strncpy(DefRootName, "Process List", maxlen - 1);
 }
 
 void DCPCALL ExtensionInitialize(tExtensionStartupInfo* StartupInfo)

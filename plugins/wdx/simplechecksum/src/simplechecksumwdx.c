@@ -58,30 +58,18 @@ FIELD fields[] =
 	{"Whirlpool",		ft_string,	305	/* GCRY_MD_WHIRLPOOL */},
 };
 
-char* strlcpy(char* p, const char* p2, int maxlen)
-{
-	if ((int)strlen(p2) >= maxlen)
-	{
-		strncpy(p, p2, maxlen);
-		p[maxlen] = 0;
-	}
-	else
-		strcpy(p, p2);
-
-	return p;
-}
 
 int DCPCALL ContentGetSupportedField(int FieldIndex, char* FieldName, char* Units, int maxlen)
 {
 	if (FieldIndex < 0 || FieldIndex >= fieldcount)
 		return ft_nomorefields;
 
-	strlcpy(FieldName, fields[FieldIndex].name, maxlen - 1);
+	strncpy(FieldName, fields[FieldIndex].name, maxlen - 1);
 
 	if (gcry_md_get_algo_dlen(fields[FieldIndex].algo) == 0)
-		strlcpy(Units, "<not supported>", maxlen - 1);
+		strncpy(Units, "<not supported>", maxlen - 1);
 	else
-		strlcpy(Units, "Lowercase|Uppercase", maxlen - 1);
+		strncpy(Units, "Lowercase|Uppercase", maxlen - 1);
 
 	return fields[FieldIndex].type;
 }
@@ -108,7 +96,7 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 
 	if (flags && CONTENT_DELAYIFSLOW)
 	{
-		strlcpy((char*)FieldValue, "???", maxlen - 1);
+		strncpy((char*)FieldValue, "???", maxlen - 1);
 		return ft_delayed;
 		//return ft_ondemand;
 	}
@@ -156,7 +144,7 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 
 	if (result != NULL)
 	{
-		strlcpy((char*)FieldValue, result, maxlen - 1);
+		strncpy((char*)FieldValue, result, maxlen - 1);
 		free(result);
 	}
 	else

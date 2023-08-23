@@ -52,18 +52,6 @@ FIELD fields[] =
 	{"Real path",			ft_string,		 	       		""},
 };
 
-char* strlcpy(char* p, const char* p2, int maxlen)
-{
-	if ((int)strlen(p2) >= maxlen)
-	{
-		strncpy(p, p2, maxlen);
-		p[maxlen] = 0;
-	}
-	else
-		strcpy(p, p2);
-
-	return p;
-}
 
 int convertDecimalToOctal(int decimalNumber)
 {
@@ -84,14 +72,14 @@ int DCPCALL ContentGetSupportedField(int FieldIndex, char* FieldName, char* Unit
 	if (FieldIndex < 0 || FieldIndex >= fieldcount)
 		return ft_nomorefields;
 
-	strlcpy(FieldName, fields[FieldIndex].name, maxlen - 1);
-	strlcpy(Units, fields[FieldIndex].unit, maxlen - 1);
+	strncpy(FieldName, fields[FieldIndex].name, maxlen - 1);
+	strncpy(Units, fields[FieldIndex].unit, maxlen - 1);
 	return fields[FieldIndex].type;
 }
 
 int DCPCALL ContentGetDetectString(char* DetectString, int maxlen)
 {
-	strlcpy(DetectString, _detectstring, maxlen - 1);
+	strncpy(DetectString, _detectstring, maxlen - 1);
 	return 0;
 }
 
@@ -241,7 +229,7 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 			close(fd);
 		}
 
-		strlcpy((char*)FieldValue, flags_str, maxlen - 1);
+		strncpy((char*)FieldValue, flags_str, maxlen - 1);
 		break;
 	}
 
@@ -283,7 +271,7 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 		i++;
 		access_str[i] = '\0';
 
-		strlcpy((char*)FieldValue, access_str, maxlen - 1);
+		strncpy((char*)FieldValue, access_str, maxlen - 1);
 
 		break;
 	}
@@ -587,7 +575,7 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 		magic_full = magic_file(magic_cookie, FileName);
 
 		if (magic_full)
-			strlcpy((char*)FieldValue, magic_full, maxlen - 1);
+			strncpy((char*)FieldValue, magic_full, maxlen - 1);
 		else
 			return ft_fieldempty;
 

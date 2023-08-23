@@ -52,32 +52,20 @@ t_field fields[] =
 
 t_cache *cachedata;
 
-char* strlcpy(char* p, const char* p2, int maxlen)
-{
-	if ((int)strlen(p2) >= maxlen)
-	{
-		strncpy(p, p2, maxlen);
-		p[maxlen] = 0;
-	}
-	else
-		strcpy(p, p2);
-
-	return p;
-}
 
 int DCPCALL ContentGetSupportedField(int FieldIndex, char* FieldName, char* Units, int maxlen)
 {
 	if (FieldIndex < 0 || FieldIndex >= fieldcount)
 		return ft_nomorefields;
 
-	strlcpy(FieldName, fields[FieldIndex].name, maxlen - 1);
-	strlcpy(Units, fields[FieldIndex].unit, maxlen - 1);
+	strncpy(FieldName, fields[FieldIndex].name, maxlen - 1);
+	strncpy(Units, fields[FieldIndex].unit, maxlen - 1);
 	return fields[FieldIndex].type;
 }
 
 int DCPCALL ContentGetDetectString(char* DetectString, int maxlen)
 {
-	strlcpy(DetectString, detect_string, maxlen - 1);
+	strncpy(DetectString, detect_string, maxlen - 1);
 	return 0;
 }
 
@@ -94,7 +82,7 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 
 	if (strcmp(FileName, cachedata->lastfile) != 0)
 	{
-		strlcpy(path_temp, FileName, PATH_MAX);
+		strncpy(path_temp, FileName, PATH_MAX);
 		char *current_dir = dirname(path_temp);
 
 		if (strcmp(current_dir, cachedata->dirname) != 0)
@@ -113,7 +101,7 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 				git_buf_free(&repo_buf);
 			}
 
-			strlcpy(cachedata->dirname, current_dir, PATH_MAX);
+			strncpy(cachedata->dirname, current_dir, PATH_MAX);
 		}
 
 		if (cachedata->repo != NULL)
@@ -127,7 +115,7 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 				cachedata->status_flags = 0;
 		}
 
-		strlcpy(cachedata->lastfile, FileName, PATH_MAX);
+		strncpy(cachedata->lastfile, FileName, PATH_MAX);
 	}
 
 	if (cachedata->repo == NULL)
@@ -169,7 +157,7 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 		if (!string)
 			return ft_fieldempty;
 		else
-			strlcpy((char*)FieldValue, string, maxlen - 1);
+			strncpy((char*)FieldValue, string, maxlen - 1);
 
 		break;
 
@@ -183,7 +171,7 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 		if (!remote.strings[0])
 			return ft_fieldempty;
 		else
-			strlcpy((char*)FieldValue, remote.strings[0], maxlen - 1);
+			strncpy((char*)FieldValue, remote.strings[0], maxlen - 1);
 
 		break;
 
@@ -318,7 +306,7 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 
 	case 18:
 		if (cachedata->workdir != NULL)
-			strlcpy((char*)FieldValue, cachedata->workdir, maxlen - 1);
+			strncpy((char*)FieldValue, cachedata->workdir, maxlen - 1);
 		else
 			return ft_fieldempty;
 
@@ -332,7 +320,7 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 			if (!realpath(FileName, path_temp))
 				return ft_fieldempty;
 
-			strlcpy((char*)FieldValue, path_temp + (strlen(cachedata->workdir) - 1), maxlen - 1);
+			strncpy((char*)FieldValue, path_temp + (strlen(cachedata->workdir) - 1), maxlen - 1);
 		}
 		else
 			return ft_fieldempty;

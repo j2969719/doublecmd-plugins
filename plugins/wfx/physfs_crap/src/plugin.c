@@ -28,19 +28,6 @@ tExtensionStartupInfo* gDialogApi = NULL;
 
 static char gLFMPath[PATH_MAX];
 
-char* strlcpy(char* p, const char* p2, int maxlen)
-{
-	if ((int)strlen(p2) >= maxlen)
-	{
-		strncpy(p, p2, maxlen);
-		p[maxlen] = 0;
-	}
-	else
-		strcpy(p, p2);
-
-	return p;
-}
-
 void UnixTimeToFileTime(time_t t, LPFILETIME pft)
 {
 	int64_t ll = Int32x32To64(t, 10000000) + 116444736000000000;
@@ -58,7 +45,7 @@ bool SetFindData(tVFSDirData *dirdata, WIN32_FIND_DATAA *FindData)
 
 	if (dirdata->cur != NULL && *dirdata->cur != NULL)
 	{
-		strlcpy(FindData->cFileName, *dirdata->cur, MAX_PATH - 1);
+		snprintf(FindData->cFileName, MAX_PATH - 1, "%s", *dirdata->cur);
 
 		FindData->ftCreationTime.dwHighDateTime = 0xFFFFFFFF;
 		FindData->ftCreationTime.dwLowDateTime = 0xFFFFFFFE;
@@ -463,7 +450,7 @@ BOOL DCPCALL FsContentGetDefaultView(char* ViewContents, char* ViewHeaders, char
 
 void DCPCALL FsGetDefRootName(char* DefRootName, int maxlen)
 {
-	strlcpy(DefRootName, "PhysFS", maxlen - 1);
+	snprintf(DefRootName, maxlen - 1, "PhysFS");
 }
 
 void DCPCALL ExtensionInitialize(tExtensionStartupInfo* StartupInfo)
@@ -472,7 +459,7 @@ void DCPCALL ExtensionInitialize(tExtensionStartupInfo* StartupInfo)
 	{
 		gDialogApi = malloc(sizeof(tExtensionStartupInfo));
 		memcpy(gDialogApi, StartupInfo, sizeof(tExtensionStartupInfo));
-		strlcpy(gLFMPath, gDialogApi->PluginDir, PATH_MAX);
+		snprintf(gLFMPath, PATH_MAX - 1, "%s", gDialogApi->PluginDir);
 		strncat(gLFMPath, "dialog.lfm", PATH_MAX - 11);
 		PHYSFS_init(NULL);
 	}

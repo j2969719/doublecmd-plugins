@@ -114,25 +114,13 @@ enum multichoicenum
 char lastfile[PATH_MAX];
 bool lastfile_ok = false;
 
-char* strlcpy(char* p, const char* p2, int maxlen)
-{
-	if ((int)strlen(p2) >= maxlen)
-	{
-		strncpy(p, p2, maxlen);
-		p[maxlen] = 0;
-	}
-	else
-		strcpy(p, p2);
-
-	return p;
-}
 
 int DCPCALL ContentGetSupportedField(int FieldIndex, char* FieldName, char* Units, int maxlen)
 {
 	if (FieldIndex < 0 || FieldIndex >= fieldcount)
 		return ft_nomorefields;
 
-	strlcpy(FieldName, fields[FieldIndex].name, maxlen - 1);
+	strncpy(FieldName, fields[FieldIndex].name, maxlen - 1);
 	memset(Units, 0, maxlen);
 
 	if (fields[FieldIndex].type == ft_multiplechoice)
@@ -176,7 +164,7 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 		for (int i = 0; i < fieldcount; i++)
 			fields[i].val = 0;
 
-		strlcpy(lastfile, FileName, PATH_MAX);
+		strncpy(lastfile, FileName, PATH_MAX);
 		a = archive_read_new();
 		archive_read_support_filter_all(a);
 		archive_read_support_format_all(a);
@@ -433,7 +421,7 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 			return ft_fieldempty;
 		}
 
-		strlcpy((char*)FieldValue, archive_multichoice[index], maxlen - 1);
+		strncpy((char*)FieldValue, archive_multichoice[index], maxlen - 1);
 	}
 	else if (fields[FieldIndex].type == ft_boolean)
 		*(int*)FieldValue = (int)fields[FieldIndex].val;
