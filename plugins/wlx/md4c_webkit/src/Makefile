@@ -1,7 +1,7 @@
 CC = gcc
 CFLAGS = -shared -fPIC -Wl,--no-as-needed
 
-libs := `pkg-config --cflags --libs gtk+-2.0 webkit-1.0 md4c-html`
+libs := `pkg-config --cflags --libs gtk+-2.0 webkit-1.0 md4c-html md4c`
 includes := -I../../../sdk
 
 plugdir := $(shell basename $(realpath ..))

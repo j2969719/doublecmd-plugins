@@ -4,7 +4,7 @@ CXXFLAGS = -shared -fPIC -Wl,--no-as-needed
 libs :=
 includes := -I../../../sdk
 
-qt5_libs := `pkg-config --cflags --libs Qt5WebKit Qt5WebKitWidgets md4c-html`
+qt5_libs := `pkg-config --cflags --libs Qt5WebKit Qt5WebKitWidgets md4c-html md4c`
 
 plugdir := $(shell basename $(realpath ..))
 plugtype := $(shell basename $(realpath ../..))
