@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <stdbool.h>
 #include <gtk/gtk.h>
 #include <gtk/gtkx.h>
 #include <gdk/gdkkeysyms.h>
