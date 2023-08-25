@@ -66,5 +66,5 @@ int DCPCALL ListSendCommand(HWND ListWin, int Command, int Parameter)
 
 void DCPCALL ListGetDetectString(char* DetectString, int maxlen)
 {
-	snprintf(DetectString, maxlen - 1, "(EXT=\"HTML\")|(EXT=\"HTM\")|(EXT=\"XHTM\")|(EXT=\"XHTML\")");
+	snprintf(DetectString, maxlen - 1, "%s", DETECT_STRING);
 }
