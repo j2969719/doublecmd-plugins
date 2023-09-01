@@ -5,6 +5,7 @@ libs :=
 includes := -I../../../sdk
 
 qt5_libs := `pkg-config --cflags --libs Qt5MultimediaWidgets`
+qt6_libs := `pkg-config --cflags --libs Qt6MultimediaWidgets`
 
 plugdir := $(shell basename $(realpath ..))
 plugtype := $(shell basename $(realpath ../..))
@@ -15,9 +16,12 @@ plugfiles := $(filter-out $(wildcard ../*.$(plugtype)), $(wildcard ../*))
 detectstring :=
 
 
-all: qt5
+all: qt5 qt6
 
 qt5:
+		$(CXX) $(CXXFLAGS) -o ../$(plugdir)_$@.$(plugtype) plugin.cpp $(libs) $($@_libs) $(includes) -D'PLUGNAME="$(plugdir)_$@.$(plugtype)"' -D'DETECT_STRING="$(detectstring)"' -D'PLUGTARGET="$@"' || echo $(plugdir)_$@.$(plugtype) >> ../../../dist/.build_fail.lst
+
+qt6:
 		$(CXX) $(CXXFLAGS) -o ../$(plugdir)_$@.$(plugtype) plugin.cpp $(libs) $($@_libs) $(includes) -D'PLUGNAME="$(plugdir)_$@.$(plugtype)"' -D'DETECT_STRING="$(detectstring)"' -D'PLUGTARGET="$@"' || echo $(plugdir)_$@.$(plugtype) >> ../../../dist/.build_fail.lst
 
 dist:

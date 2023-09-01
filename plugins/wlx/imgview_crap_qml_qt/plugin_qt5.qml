@@ -75,7 +75,7 @@ Rectangle
 			}
 		}
 	}
-	function myListLoad(FileToLoad, ShowFlags)
+	function myListLoad(FileToLoad: string, ShowFlags: int): bool
 	{
 		// https://ghisler.github.io/WLX-SDK/listload.htm
 
@@ -114,7 +114,7 @@ Rectangle
 			return false
 		return true
 	}
-	function myListLoadNext(FileToLoad, ShowFlags)
+	function myListLoadNext(FileToLoad: string, ShowFlags: int): bool
 	{
 		// https://ghisler.github.io/WLX-SDK/listloadnext.htm
 
@@ -122,7 +122,7 @@ Rectangle
 
 		return myListLoad(FileToLoad, ShowFlags)
 	}
-	function myListSendCommand(Command, Parameter)
+	function myListSendCommand(Command: int, Parameter: int): bool
 	{
 		// https://ghisler.github.io/WLX-SDK/listsendcommand.htm
 
@@ -158,15 +158,15 @@ Rectangle
 
 		return true
 	}
-	function myListSearchDialog(FindNext)
+	function myListSearchDialog(FindNext: bool): bool
 	{
 		// https://ghisler.github.io/WLX-SDK/listsearchdialog.htm
 
 		//console.log("myListSearchDialog, FindNext:", FindNext)
 
-		return true
+		return false
 	}
-	function myListSearchText(SearchString, SearchParameter)
+	function myListSearchText(SearchString: string, SearchParameter: int): bool
 	{
 		// https://ghisler.github.io/WLX-SDK/listsearchtext.htm
 
@@ -185,7 +185,7 @@ Rectangle
 
 		return false
 	}
-	function myListPrint(FileToPrint, DefPrinter, PrintFlags, Margins)
+	function myListPrint(FileToPrint: string, DefPrinter: string, PrintFlags: int, Margins: rect): bool
 	{
 		// https://ghisler.github.io/WLX-SDK/listprint.htm
 

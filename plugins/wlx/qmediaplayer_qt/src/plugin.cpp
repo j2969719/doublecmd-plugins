@@ -1,17 +1,167 @@
 #include <QtWidgets>
-#include <QMessageBox>
 #include <QVideoWidget>
 #include <QMediaPlayer>
 #include <QMimeDatabase>
-#include <QMediaPlaylist>
 #include <QMediaMetaData>
+
+#if QT_VERSION >= 0x060000
+#include <QAudioOutput>
+#else
+#include <QMediaPlaylist>
 #include <QVideoSurfaceFormat>
 #include <QAbstractVideoSurface>
+#endif
+
 #include "wlxplugin.h"
 
 Q_DECLARE_METATYPE(QMediaPlayer *)
 QMimeDatabase db;
 
+#if QT_VERSION >= 0x060000
+HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
+{
+	QVariant vplayer;
+	QMimeType type = db.mimeTypeForFile(QString(FileToLoad));
+
+	if (!type.name().contains("audio") && !type.name().contains("video"))
+		return NULL;
+
+	QFrame *view = new QFrame((QWidget*)ParentWin);
+
+	QMediaPlayer *player = new QMediaPlayer((QObject*)view);
+
+	QObject::connect(player, &QMediaPlayer::errorChanged, [player, view]()
+	{
+		if (player->error() != QMediaPlayer::NoError)
+			QMessageBox::critical(view, "", player->errorString());
+	});
+
+
+	QAudioOutput *audio = new QAudioOutput((QObject*)view);
+	player->setAudioOutput(audio);
+
+	QVBoxLayout *main = new QVBoxLayout(view);
+
+	QVideoWidget *video = new QVideoWidget(view);
+	player->setVideoOutput(video);
+	main->addWidget(video);
+
+	QSlider *spos = new QSlider(Qt::Horizontal, view);
+	spos->setRange(0, player->duration() / 1000);
+
+	QObject::connect(spos, &QSlider::sliderMoved, [player](int x)
+	{
+		player->setPosition(x * 1000);
+	});
+
+	QObject::connect(player, &QMediaPlayer::durationChanged, [spos](qint64 x)
+	{
+		spos->setMaximum(x / 1000);
+	});
+
+	QObject::connect(player, &QMediaPlayer::positionChanged, [spos](qint64 x)
+	{
+		spos->setValue(x / 1000);
+	});
+
+	main->addWidget(spos);
+
+	QHBoxLayout *controls = new QHBoxLayout;
+
+	QPushButton *bplay = new QPushButton(view);
+	bplay->setIcon(QApplication::style()->standardIcon(QStyle::SP_MediaPlay));
+	QObject::connect(bplay, SIGNAL(clicked()), player, SLOT(play()));
+
+	QPushButton *bpause = new QPushButton(view);
+	bpause->setIcon(QApplication::style()->standardIcon(QStyle::SP_MediaPause));
+	QObject::connect(bpause, SIGNAL(clicked()), player, SLOT(pause()));
+
+
+	QPushButton *binfo = new QPushButton(view);
+	binfo->setIcon(QApplication::style()->standardIcon(QStyle::SP_MessageBoxInformation));
+	binfo->setFocusPolicy(Qt::NoFocus);
+
+	QObject::connect(binfo, &QPushButton::clicked, [player, view]()
+	{
+		QString info;
+		QList<QMediaMetaData::Key> keys = player->metaData().keys();
+
+		for (qsizetype i = 0; i < keys.size(); ++i)
+		{
+			QString str;
+			str.append(player->metaData().metaDataKeyToString(keys.at(i)).replace(QRegularExpression("([a-z])([A-Z])"), "\\1 \\2"));
+			str.append(": ");
+			str.append(player->metaData().stringValue(keys.at(i)));
+			str.append("\n");
+			info.append(str);
+
+		}
+		if (!info.isEmpty())
+			QMessageBox::information(view, "", info);
+		else
+			QMessageBox::information(view, "", "no suitable info available");
+	});
+
+	QPushButton *bmute = new QPushButton(view);
+	bmute->setIcon(QApplication::style()->standardIcon(QStyle::SP_MediaVolume));
+	bmute->setFocusPolicy(Qt::NoFocus);
+
+	QObject::connect(bmute, &QPushButton::clicked, [bmute, audio]()
+	{
+		bool state = audio->isMuted();
+		audio->setMuted(!state);
+
+		if (state)
+			bmute->setIcon(QApplication::style()->standardIcon(QStyle::SP_MediaVolume));
+		else
+			bmute->setIcon(QApplication::style()->standardIcon(QStyle::SP_MediaVolumeMuted));
+	});
+
+	QSlider *svolume = new QSlider(Qt::Horizontal, view);
+	svolume->setRange(0, 100);
+
+	QObject::connect(svolume, &QSlider::sliderMoved, [svolume, audio]()
+	{
+		audio->setVolume(QAudio::convertVolume(svolume->value() / qreal(100), QAudio::LogarithmicVolumeScale, QAudio::LinearVolumeScale));
+	});
+
+	svolume->setValue(80);
+
+	controls->addWidget(bplay);
+	controls->addWidget(bpause);
+	controls->addSpacing(10);
+	controls->addWidget(binfo);
+	controls->addStretch(1);
+	controls->addWidget(bmute);
+	controls->addWidget(svolume);
+	main->addLayout(controls);
+
+	vplayer.setValue(player);
+	view->setProperty("player", vplayer);
+	view->show();
+	player->setSource(QUrl::fromLocalFile(FileToLoad));
+	player->play();
+
+	return view;
+}
+
+int DCPCALL ListLoadNext(HWND ParentWin, HWND PluginWin, char* FileToLoad, int ShowFlags)
+{
+	QWidget *view = (QWidget*)PluginWin;
+	QMediaPlayer *player = view->property("player").value<QMediaPlayer *>();
+
+	QMimeType type = db.mimeTypeForFile(QString(FileToLoad));
+
+	if (type.name().contains("audio") || type.name().contains("video"))
+	{
+		player->setSource(QUrl::fromLocalFile(FileToLoad));
+		player->play();
+		return LISTPLUGIN_OK;
+	}
+
+	return LISTPLUGIN_ERROR;
+}
+#else
 HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 {
 	QVariant vplayer;
@@ -282,6 +432,7 @@ int DCPCALL ListLoadNext(HWND ParentWin, HWND PluginWin, char* FileToLoad, int S
 
 	return LISTPLUGIN_ERROR;
 }
+#endif
 
 
 void DCPCALL ListCloseWindow(HANDLE ListWin)

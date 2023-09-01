@@ -62,7 +62,7 @@ Rectangle
 					dirchart.title = (fmodel.count == 0) ? "There are no files in this folder" : "Top 10 files you want to remove"
 					var count = (fmodel.count < 10) ? fmodel.count : 10
 
-					for (var i =0; i < count; i++)
+					for (var i = 0; i < count; i++)
 						pieser.append(fmodel.get(i, "fileName"), fmodel.get(i, "fileSize"))
 
 					if (fmodel.count > 10)
@@ -78,28 +78,28 @@ Rectangle
 			}
 		}
 	}
-	function myListLoad(FileToLoad, ShowFlags)
+	function myListLoad(FileToLoad: string, ShowFlags: int): bool
 	{
 		path.text = FileToLoad
 		return true
 	}
-	function myListLoadNext(FileToLoad, ShowFlags)
+	function myListLoadNext(FileToLoad: string, ShowFlags: int): bool
 	{
 		return myListLoad(FileToLoad, ShowFlags)
 	}
-	function myListSendCommand(Command, Parameter)
+	function myListSendCommand(Command: int, Parameter: int): bool
 	{
 		return false
 	}
-	function myListSearchDialog(FindNext)
+	function myListSearchDialog(FindNext: bool): bool
 	{
 		return true
 	}
-	function myListSearchText(SearchString, SearchParameter)
+	function myListSearchText(SearchString: string, SearchParameter: int): bool
 	{
 		return false
 	}
-	function myListPrint(FileToPrint, DefPrinter, PrintFlags, Margins)
+	function myListPrint(FileToPrint: string, DefPrinter: string, PrintFlags: int, Margins: rect): bool
 	{
 		return false
 	}

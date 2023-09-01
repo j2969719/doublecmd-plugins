@@ -55,7 +55,7 @@ Rectangle
 				wheel.accepted = false
 		}
 	}
-	function myListLoad(FileToLoad, ShowFlags)
+	function myListLoad(FileToLoad: string, ShowFlags: int): bool
 	{
 		doc.source = encodeURIComponent(FileToLoad)
 
@@ -66,11 +66,11 @@ Rectangle
 
 		return true
 	}
-	function myListLoadNext(FileToLoad, ShowFlags)
+	function myListLoadNext(FileToLoad: string, ShowFlags: int): bool
 	{
 		return myListLoad(FileToLoad, ShowFlags)
 	}
-	function myListSendCommand(Command, Parameter)
+	function myListSendCommand(Command: int, Parameter: int): bool
 	{
 		switch (Command)
 		{
@@ -84,7 +84,7 @@ Rectangle
 
 		return true
 	}
-	function myListSearchText(SearchString, SearchParameter)
+	function myListSearchText(SearchString: string, SearchParameter: int): bool
 	{
 		pdfView.searchString = SearchString
 
@@ -101,11 +101,11 @@ Rectangle
 	}
 
 
-	function myListSearchDialog(FindNext)
+	function myListSearchDialog(FindNext: bool): bool
 	{
 		return false
 	}
-	function myListPrint(FileToPrint, DefPrinter, PrintFlags, Margins)
+	function myListPrint(FileToPrint: string, DefPrinter: string, PrintFlags: int, Margins: rect): bool
 	{
 		return false
 	}
