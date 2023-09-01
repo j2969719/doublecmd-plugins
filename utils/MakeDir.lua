@@ -1,5 +1,5 @@
 -- MakeDir.lua (cross-platform)
--- 2023.07.02
+-- 2023.08.30
 --
 -- Creating directory(ies) with additional features.
 --[[
@@ -18,6 +18,7 @@
     For example: "name<1-15>" means 15 folders: "name01", "name02", ... "name15".
   Note: You can use more then one variable in each name.
 5. Use "<c>" to get the names from the clipboard.
+6. If the first symbol is ":" (without quotes), this script will open the first directory.
 
 Params:
   %"0%D
@@ -53,19 +54,17 @@ local function GetOutput(cmd)
 end
 
 local function MakeDir(a, m)
+  local e = {}
   local r
   if m ~= nil then
     r = GetOutput('mkdir -m ' .. m .. ' -p "' .. table.concat(a, '" "') .. '" 2>&1')
   else
-    r = ""
-    local c = 0
     for i = 1, #a do
       if SysUtils.CreateDirectory(a[i]) == false then
-        r = r .. "\n" .. a[i]
-        c = c + 1
+        table.insert(e, a[i])
       end
     end
-    if c > 0 then r = "Error:\n" .. r end
+    if #e > 0 then r = "Error:\n" .. table.concat(e, "\n") end
   end
   return r
 end
@@ -114,8 +113,8 @@ else
 end
 pf = SysUtils.ExtractFileName(params[1])
 
-local msg = ""
-local msgl = [[
+local b, ret
+local msg = [[
 Variables:
 <dt>: current date and time: YYYYMMDDhhmmss;
 <d> or <t>: current date (YYYYMMDD) or time (hhmmss);
@@ -123,10 +122,12 @@ Variables:
 <fdt>, <fd>, <ft>, <fy>: last modified date/time from file under cursor;
 <p>: parent folder from current directory;
 <x-y>: multiple folder creation with counter.
--------
+---
 <c>: name(s) from clipboard.
+-------
+Add ":" to the beginning and the script will open the first directory.
 ]]
-local ba, dn = Dialogs.InputQuery("Make dir(s)", msgl .. "\nEnter name:", false, nm)
+local ba, dn = Dialogs.InputQuery("Make dir(s)", msg .. "\nEnter name:", false, nm)
 if ba == false then return end
 if dn == "<c>" then
   nm = Clipbrd.GetAsText()
@@ -137,9 +138,13 @@ if dn == "<c>" then
     nm = string.gsub(nm, "%s+$", "")
     nm = string.gsub(nm, "^%s+", "")
     nm = string.gsub(nm, "[\t ]*[\r\n]+[\t ]*", "|")
-    ba, dn = Dialogs.InputQuery("Make dir(s)", msgl .. "\nEnter name:", false, nm)
+    ba, dn = Dialogs.InputQuery("Make dir(s)", msg .. "\nEnter name:", false, nm)
     if ba == false then return end
   end
+end
+if string.sub(dn, 1, 1) == ":" then
+  dn = string.sub(dn, 2, -1)
+  b = true
 end
 -- delete trailing space(s)
 dn = string.gsub(dn, "%s+$", "")
@@ -148,9 +153,9 @@ dn = string.gsub(dn, "(%s+)([\\/|])", "%2")
 dn = string.gsub(dn, "([\\/|])(%s+)", "%1")
 
 local lst = {}
-local lst2 = {}
+local res = {}
 local r = {}
-local n1, n2, c1, c2, t, tmp
+local n1, n2, c1, c2, t
 local n3, c3 = 1, 1
 for l in string.gmatch(dn, "[^|]+") do
   if PathIsAbsolute(l) then
@@ -169,9 +174,13 @@ for i = 1, #lst do
   lst[i] = string.gsub(lst[i], "<ft>", string.sub(fdt, 9, 14))
   lst[i] = string.gsub(lst[i], "<fy>", string.sub(fdt, 1, 4))
   lst[i] = string.gsub(lst[i], "<p>", pf)
+  -- <x-y>
   while true do
     n1, n2 = string.find(lst[i], "<%d+%-%d+>", n3, false)
-    if n1 == nil then break else table.insert(r, i) end
+    if n1 == nil then
+      table.insert(res, lst[i])
+      break
+    end
     c1, c2 = string.match(string.sub(lst[i], n1, n2), "<(%d+)%-(%d+)>")
     c1 = tonumber(c1)
     c2 = tonumber(c2)
@@ -179,34 +188,26 @@ for i = 1, #lst do
     for j = c1, c2 do
       t = j
       while true do
-        if string.len(t) == c3 then
-          break
-        else
-          t = "0" .. t
-        end
+        if string.len(t) == c3 then break end
+        t = "0" .. t
       end
-      table.insert(lst2, string.sub(lst[i], 1, n1 - 1) .. t .. string.sub(lst[i], n2 + 1, -1))
+      table.insert(res, string.sub(lst[i], 1, n1 - 1) .. t .. string.sub(lst[i], n2 + 1, -1))
     end
     n3 = n2
   end
   n3 = 1
 end
--- <x-y>
-for i = #r, 1, -1 do table.remove(lst, r[i]) end
 
-if #lst > 0 then msg = MakeDir(lst, pm) end
-if #lst2 > 0 then
-  tmp = MakeDir(lst2, pm)
-  if (tmp ~= "") and (tmp ~= nil) then
-    if (msg ~= "") and (msg ~= nil) then
-      msg = msg .. string.sub(tmp, 7, -1)
-    else
-      msg = tmp
+if #res > 0 then
+  ret = MakeDir(res, pm)
+  if (ret ~= "") and (ret ~= nil) then
+    ret = string.gsub(ret, "\n\n+", "\n")
+    Dialogs.MessageBox(ret, "Make dir(s)", 0x0030)
+  else
+    if b == true then
+      DC.ExecuteCommand("cm_ChangeDir", "activepath=" .. res[1])
     end
   end
-end
-
-if (msg ~= "") and (msg ~= nil) then
-  msg = string.gsub(msg, "\n\n+", "\n")
-  Dialogs.MessageBox(msg, "Make dir(s)", 0x0030)
+else
+  Dialogs.MessageBox("Unknown error.", "Make dir(s)", 0x0030)
 end
