@@ -1,8 +1,10 @@
 -- RemoveCharacters.lua (cross-platform)
--- 2023.07.02
+-- 2023.09.01
 --[[
 Remove N characters from the beginning (use "N") or end (use "-N") of the selected filenames.
 Spaces/dots at the beginning of the name or spaces at the end will be removed.
+
+If a file with the new name already exists, script will use the "name(N).ext" pattern (where N >= 2).
 
 How to use:
 command: cm_ExecuteScript
@@ -25,7 +27,7 @@ if #params ~= 1 then
 end
 
 local function RenameWithCut(sFileName, iN, bB)
-  local sNewName
+  local sNewName, sTmp
   local sPath = SysUtils.ExtractFilePath(sFileName)
   local sName = SysUtils.ExtractFileName(sFileName)
   local sBaseName = string.gsub(sName, "^(.+)%.[^%.]+$", "%1")
@@ -49,7 +51,18 @@ local function RenameWithCut(sFileName, iN, bB)
     return 0
   end
 
-  local bResult, sError, iError = os.rename(sFileName, sPath .. sNewName)
+  sTmp = sPath .. sNewName .. sNameExt
+  if SysUtils.FileGetAttr(sTmp) ~= -1 then
+    iN = 2
+    while true do
+      sTmp = sPath .. sNewName .. "(" iN .. ")" .. sNameExt
+      if SysUtils.FileGetAttr(sTmp) == -1 then
+        break
+      end
+      iN = iN + 1
+    end
+  end
+  local bResult, sError, iError = os.rename(sFileName, sTmp)
   if bResult == nil then
     Dialogs.MessageBox("Error " .. iError .. ": " .. sError, sScrName, 0x0030)
     return 0
