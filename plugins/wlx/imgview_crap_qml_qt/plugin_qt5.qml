@@ -164,7 +164,7 @@ Rectangle
 
 		//console.log("myListSearchDialog, FindNext:", FindNext)
 
-		return false
+		return true
 	}
 	function myListSearchText(SearchString: string, SearchParameter: int): bool
 	{
