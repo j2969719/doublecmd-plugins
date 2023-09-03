@@ -234,7 +234,7 @@ Requires GTK2 version, i.e. Evince <= 2.32.
 - [gtk_socket](plugins/wlx/gtk_socket)<br>
 `apt install build-essential libgtk2.0-dev libmagic-dev`<br>
 Additions:`<br>
-src/abiword: `apt install build-essential libabiword-dev`<br>
+src/abiword: `apt install build-essential libabiword-dev libjpeg-dev`<br>
 src/evince: `apt install build-essential libevince-dev`<br>
 src/libreoffice: `apt install build-essential libgtk-3-dev libreofficekit-dev`<br>
 src/webkit2gtk: `apt install build-essential libwebkit2gtk-4.0-dev`<br>
@@ -313,7 +313,8 @@ Qt6: `apt install build-essential pkg-config libglib2.0-dev libenca-dev qt6-base
 
 - [dirchart_qml_qt_crap](plugins/wlx/dirchart_qml_qt_crap)<br>
 Qt5: `apt install build-essential pkg-config qtbase5-dev qtdeclarative5-dev`<br>
-Qt6: `apt install build-essential pkg-config qt6-base-dev qt6-declarative-dev`
+Qt6: `apt install build-essential pkg-config qt6-base-dev qt6-declarative-dev libqt6opengl6-dev`
+Note about `libqt6opengl6-dev`: If this package is not found, then in your version of distribution this package has merged into the `qt6-base-dev` package, so just remove it from the list.
 
 - [dirextchart_crap_qt](plugins/wlx/dirextchart_crap_qt)<br>
 Qt5: `apt install build-essential pkg-config qtbase5-dev libqt5charts5-dev`<br>
