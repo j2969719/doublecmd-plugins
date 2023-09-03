@@ -1,4 +1,4 @@
-Additions for Double Commander (third- party hard)
+Additions for Double Commander (third-party)
 ------------------------------
 
 Not all but most of additions for Linux only.
