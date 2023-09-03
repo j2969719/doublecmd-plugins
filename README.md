@@ -1,17 +1,17 @@
-Additions for Double Commander
+Additions for Double Commander (third- party hard)
 ------------------------------
 
 Not all but most of additions for Linux only.
 
-### 1. Plugins [>>](plugins.md)
+### 1. [Plugins](plugins.md), (build plugins in [Debian/Ubuntu](dubuild.md))
 
-### 2. External archivers (for MultiArc) [>>](multiarc.ini.md)
+### 2. [External archivers (for MultiArc)](multiarc.ini.md)
 
-### 3. Several buttons for the toolbar [>>](buttons.md)
+### 3. [Several buttons for the toolbar](buttons.md)
 
-### 4. File associations and actions [>>](extassoc.xml.md)
+### 4. [File associations and actions](extassoc.xml.md)
 
-### 5. Syntax highlighting (DC internal editor) [>>](highlighters)
+### 5. [Syntax highlighting (DC internal editor)](highlighters)
 
 ---
 ### Also see:
@@ -27,5 +27,3 @@ Not all but most of additions for Linux only.
 - wlxmpv: [GitHub](https://github.com/bayarookie/wlxmpv) or [GitLab](https://gitlab.com/bayarookie/wlxmpv) (try to check both link and use latest version).
 - [A WCX plugin (Total Commander, Double Commander etc) that aims to handle all Atari ST (etc) floppy and hard disk ](https://github.com/ggnkua/Jacknife)<br>
 - [Double/Total Commander plugin to access kubernetes resources ](https://github.com/calinrc/k8s_wfx)<br>
-
-[Build plugins in Debian/Ubuntu](dubuild.md).
