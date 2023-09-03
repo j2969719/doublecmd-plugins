@@ -188,7 +188,13 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 	QVBoxLayout *main = new QVBoxLayout(view);
 
 	QVideoWidget *video = new QVideoWidget(view);
+
+#if (QT_VERSION >= QT_VERSION_CHECK(5, 15, 0))
 	player->setVideoOutput(video->videoSurface());
+#else
+	player->setVideoOutput(video);
+#endif
+
 	video->setAspectRatioMode(Qt::KeepAspectRatio);
 	video->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 	main->addWidget(video);
@@ -334,6 +340,7 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 		linfo->setText("");
 	});
 
+#if (QT_VERSION >= QT_VERSION_CHECK(5, 15, 0))
 	QObject::connect(player, QOverload<const QString &, const QVariant &>::of(&QMediaObject::metaDataChanged), [video, linfo](const QString & key, const QVariant & value)
 	{
 		if (key == "CoverArtImage")
@@ -359,7 +366,7 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 			linfo->setText(text);
 		}
 	});
-
+#endif
 
 	QPushButton *bmute = new QPushButton(view);
 	bmute->setIcon(QApplication::style()->standardIcon(QStyle::SP_MediaVolume));
