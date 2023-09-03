@@ -233,7 +233,7 @@ Requires GTK2 version, i.e. Evince <= 2.32.
 
 - [gtk_socket](plugins/wlx/gtk_socket)<br>
 `apt install build-essential libgtk2.0-dev libmagic-dev`<br>
-Additions:`<br>
+Additions:<br>
 src/abiword: `apt install build-essential libabiword-dev libjpeg-dev`<br>
 src/evince: `apt install build-essential libevince-dev`<br>
 src/libreoffice: `apt install build-essential libgtk-3-dev libreofficekit-dev`<br>
