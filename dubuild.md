@@ -3,9 +3,7 @@ Build plugins in Debian/Ubuntu
 
 Development packages and note (if it needed) for each plugin.
 
-List of plugins with a brief description on [one pages](plugins.md).
-
-The [main page](README.md) of this repository.
+The [main page](README.md) of this repository. List of plugins with a brief description on [one pages](plugins.md).
 
 First of all, you need a compiler (`gcc` or `g++`) and the `make` program, an easy way is to install the `build-essential` package.
 Now install required packages, open plugin directory, launch terminal and use the following commands:
@@ -15,19 +13,21 @@ cd src
 make
 ```
 
-You can pack the plugin files into a `.tar` archive: use `make dist` after `make `.
+You can pack the plugin files into a `.tar` archive: use `make dist` after `make`.
 See the description of the `cm_AddPlugin` command [here](https://doublecmd.github.io/doc/en/cmds.html#cm_AddPlugin) (DC >= 1.1.0).
 
 Alternatively, you can use the scripts in the [plugins](plugins) directory:
 
-- `make_all.sh`: allows to compile all possible plugins, i.e. `make `, but for all plugins. Don't forget to install all required packages for the necessary (or all) plugins. Also see the note about the `bit7z` library below.<br>
+- `make_all.sh`: allows to compile all possible plugins, i.e. `make`, but for all plugins. Don't forget to install all required packages for the necessary (or all) plugins. Also see the note about the `bit7z` library below.<br>
 - `make_all_clean.sh`: cleanup after compilation, i.e. `make clean`, but for all plugins.<br>
 - `pack_to_tarballs.sh`: pack all plugins into separate archives,  i.e. `make dist`, but for all plugins.<br>
-- `run_ldd.sh`: generates a list of required libraries (`plugins/dist/.broken.log`, for all plugins) that are not installed on your system. See [FAQ: This is not a valid plugin!](https://doublecmd.github.io/doc/en/faq.html#not_valid).
+- `run_ldd.sh`: generates a list of required libraries (`plugins/dist/.broken.log`, for all plugins) that are not installed on your system. See [FAQ: This is not a valid plugin](https://doublecmd.github.io/doc/en/faq.html#not_valid).
+
+Note: If you are not a programmer or if you rarely build programs and libraries from source, then installing a large number of development packages can be inconvenient for several reasons: a good solution might be to use the same version of your operation system in a virtual machine (QEMU, VirtualBox and so on) or a minimal installation of Debian/Ubuntu in chroot (schroot, sbuild, pbuilder)
 
 
 ---
-###Plugins:
+### Plugins:
 
 - [WCX plugins](#wcx)
 
@@ -45,7 +45,7 @@ Alternatively, you can use the scripts in the [plugins](plugins) directory:
 
 - [bit7z](plugins/wcx/bit7z)<br>
 `apt install build-essential libglib2.0-dev cmake ninja-build git ca-certificates`<br>
-The last four packages for the `bit7z` library, see the `src/third_party ` subfolder.
+The last four packages for the `bit7z` library, see the `src/third_party` subfolder.
 
 - [cmdconv_crap](plugins/wcx/cmdconv_crap)<br>
 `apt install build-essential libglib2.0-dev`
@@ -64,11 +64,11 @@ The last four packages for the `bit7z` library, see the `src/third_party ` subfo
 
 - [imagemagick_ico_crap](plugins/wcx/imagemagick_ico_crap)<br>
 `apt install build-essential libglib2.0-dev libmagickwand-6.q16-dev`<br>
-`Makefile` is universal for ImageMagick 6 and ImageMagick 7, Debian/Ubuntu and derivative distributions still use ImageMagick 6, so use `make 6` instead of `make `.
+`Makefile` is universal for ImageMagick 6 and ImageMagick 7, Debian/Ubuntu and derivative distributions still use ImageMagick 6, so use `make 6` instead of `make`.
 
 - [imagemagick_gif_crap](plugins/wcx/imagemagick_gif_crap)<br>
 `apt install build-essential libglib2.0-dev libmagickwand-6.q16-dev`<br>
-`Makefile` is universal for ImageMagick 6 and ImageMagick 7, Debian/Ubuntu and derivative distributions still use ImageMagick 6, so use `make 6` instead of `make `.
+`Makefile` is universal for ImageMagick 6 and ImageMagick 7, Debian/Ubuntu and derivative distributions still use ImageMagick 6, so use `make 6` instead of `make`.
 
 - [libarchive_crap](plugins/wcx/libarchive_crap)<br>
 `apt install build-essential libglib2.0-dev libarchive-dev`
@@ -257,7 +257,7 @@ src/yelp: `apt install build-essential libgtk-3-dev libwebkit2gtk-4.0-dev libyel
 
 - [imagemagick](plugins/wlx/imagemagick)<br>
 `apt install build-essential libgtkimageview-dev libmagickwand-6.q16-dev`<br>
-`Makefile` is universal for ImageMagick 6 and ImageMagick 7, Debian/Ubuntu and derivative distributions still use ImageMagick 6, so use `make 6` instead of `make `.
+`Makefile` is universal for ImageMagick 6 and ImageMagick 7, Debian/Ubuntu and derivative distributions still use ImageMagick 6, so use `make 6` instead of `make`.
 
 - [libarchive_crap](plugins/wlx/libarchive_crap)<br>
 `apt install build-essential libgtk2.0-dev libarchive-dev libenca-dev`
@@ -300,7 +300,7 @@ Requires md4c >= 0.4.4.
 ---
 <a name="wlxqt"><h3>WLX plugins: Qt5 or Qt6</h3></a>
 
-We can use `make qt5` (Qt5 only), `make qt6` (Qt6 only) or `make` (both versions).
+You can use `make qt5` (Qt5 only), `make qt6` (Qt6 only) or `make` (both versions).
 
 - [bit7z_qt_crap](plugins/wlx/bit7z_qt_crap)<br>
 Qt5: `apt install build-essential pkg-config qtbase5-dev`<br>
@@ -313,7 +313,7 @@ Qt6: `apt install build-essential pkg-config libglib2.0-dev libenca-dev qt6-base
 
 - [dirchart_qml_qt_crap](plugins/wlx/dirchart_qml_qt_crap)<br>
 Qt5: `apt install build-essential pkg-config qtbase5-dev qtdeclarative5-dev`<br>
-Qt6: `apt install build-essential pkg-config qt6-base-dev qt6-declarative-dev libqt6opengl6-dev`
+Qt6: `apt install build-essential pkg-config qt6-base-dev qt6-declarative-dev libqt6opengl6-dev`<br>
 Note about `libqt6opengl6-dev`: If this package is not found, then in your version of distribution this package has merged into the `qt6-base-dev` package, so just remove it from the list.
 
 - [dirextchart_crap_qt](plugins/wlx/dirextchart_crap_qt)<br>
