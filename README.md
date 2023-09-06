@@ -3,7 +3,7 @@ Additions for Double Commander (third-party)
 
 Not all but most of additions for Linux only.
 
-### 1. [Plugins](plugins.md), (build plugins in [Debian/Ubuntu](dubuild.md))
+### 1. [Plugins](plugins.md) (build plugins in [Debian/Ubuntu](dubuild.md))
 
 ### 2. [External archivers (for MultiArc)](multiarc.ini.md)
 
