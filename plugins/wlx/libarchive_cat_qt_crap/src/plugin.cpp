@@ -34,7 +34,7 @@ static bool probe_file(char *filename)
 	return result;
 }
 
-static QString open_file(QString path)
+static QString open_file(char *filename)
 {
 	QString result;
 	size_t size;
@@ -47,13 +47,13 @@ static QString open_file(QString path)
 	archive_read_support_format_raw(a);
 	struct archive_entry *entry;
 
-	int r = archive_read_open_filename(a, path.toStdString().c_str(), 10240);
+	int r = archive_read_open_filename(a, filename, 10240);
 
 	if (r != ARCHIVE_OK)
 	{
 		archive_read_close(a);
 		archive_read_free(a);
-		QMessageBox::critical(nullptr, "", QString("libarchive: failed to read %1").arg(path));
+		QMessageBox::critical(nullptr, "", QString::asprintf(_("libarchive: failed to read %s"), filename));
 		return nullptr;
 	}
 
@@ -95,7 +95,7 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 		view->setPlainText(result);
 	});
 
-	watcher->setFuture(QtConcurrent::run(open_file, QString(FileToLoad)));
+	watcher->setFuture(QtConcurrent::run(open_file, FileToLoad));
 	view->document()->setDefaultFont(gFont);
 	view->setReadOnly(true);
 
