@@ -25,6 +25,10 @@ msgstr "Спамить информацию об операциях Curl на st
 msgid "Number of redirects allowed:"
 msgstr "Число разрешенных перенаправлений:"
 
+#: DialogBox.ckNoQuery.Сaption
+msgid "Skip links with '?'"
+msgstr "Пропускать ссылки с '?'"
+
 #: DialogBox.lblUserAgent.Сaption
 msgid "User Agent:"
 msgstr ""

@@ -25,6 +25,10 @@ msgstr ""
 msgid "Number of redirects allowed:"
 msgstr ""
 
+#: DialogBox.ckNoQuery.Сaption
+msgid "Skip links with '?'"
+msgstr ""
+
 #: DialogBox.lblUserAgent.Сaption
 msgid "User Agent:"
 msgstr ""
