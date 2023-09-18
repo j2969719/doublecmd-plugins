@@ -1,19 +1,19 @@
 #define _GNU_SOURCE
-#include <glib.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <fcntl.h>
 #include <dirent.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/xattr.h>
-#include <magic.h>
 #include <string.h>
 #include <unistd.h>
 #include <errno.h>
-#include <utime.h>
+#include <time.h>
 #include <pwd.h>
 #include <grp.h>
-#include <fnmatch.h>
+#include <libgen.h>
+#include <utime.h>
 #include "wfxplugin.h"
 #include "extension.h"
 
@@ -22,8 +22,11 @@
 #define SendDlgMsg gExtensions->SendDlgMsg
 #define MessageBox gExtensions->MessageBox
 
-#define ROOTNAME "Match Pattern"
-#define ININAME "j2969719_wfx.ini"
+#define FALSE 0
+#define TRUE !FALSE
+
+#define ROOTNAME "Case-insensitive Copy"
+#define HISTNAME "history_" PLUGNAME ".txt"
 #define MAXINIITEMS 256
 #define BUFSIZE 8192
 
@@ -39,12 +42,10 @@ tLogProc gLogProc = NULL;
 tRequestProc gRequestProc = NULL;
 tExtensionStartupInfo* gExtensions = NULL;
 
-GKeyFile *gCfg = NULL;
-static gchar *gCfgPath = NULL;
-int gMatchFlags = 0;
-static char gPattern[256] = "*";
-static char gStartPath[PATH_MAX] = "/";
+static char gStartPath[PATH_MAX];
+static char gHistoryFile[PATH_MAX];
 static char gRemoteName[PATH_MAX];
+static char gCaseName[PATH_MAX];
 
 void UnixTimeToFileTime(time_t t, LPFILETIME pft)
 {
@@ -61,183 +62,125 @@ unsigned long FileTimeToUnixTime(LPFILETIME ft)
 	return (unsigned long)ll;
 }
 
-intptr_t DCPCALL FilterDlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr_t wParam, intptr_t lParam)
+static int CaseDuplExists(char* FileName, BOOL SkipSelf)
 {
-	switch (Msg)
+	gCaseName[0] = '\0';
+	char file[PATH_MAX];
+	snprintf(file, PATH_MAX, "%s", FileName);
+	char *filename = basename(file);
+	char out[PATH_MAX];
+	snprintf(out, PATH_MAX, "%s", FileName);
+	char *outdir = dirname(out);
+	DIR *dir = opendir(outdir);
+
+	if (dir)
 	{
-	case DN_INITDIALOG:
-		g_key_file_load_from_file(gCfg, gCfgPath, 0, NULL);
-		gchar *path = g_key_file_get_string(gCfg, ROOTNAME, "Path", NULL);
-		gboolean history = g_key_file_has_key(gCfg, ROOTNAME, "HistoryPath0", NULL);
-		SendDlgMsg(pDlg, "lbHistory", DM_SHOWITEM, (int)history, 0);
+		struct dirent *ent;
 
-		if (path)
+		while ((ent = readdir(dir)) != NULL)
 		{
-			SendDlgMsg(pDlg, "deStartPath", DM_SETTEXT, (intptr_t)path, 0);
-			SendDlgMsg(pDlg, "lbHistory", DM_LISTADDSTR, (intptr_t)path, 0);
-			g_free(path);
-		}
-
-		if (history)
-		{
-			int num = 0;
-			gchar *key = NULL;
-
-			do
+			if (strcasecmp(filename, ent->d_name) == 0)
 			{
-				g_free(key);
-				key = g_strdup_printf("HistoryPath%d", num++);
-				gchar *path = g_key_file_get_string(gCfg, ROOTNAME, key, NULL);
+				if (SkipSelf != FALSE && strcmp(filename, ent->d_name) == 0)
+					continue;
 
-				if (path)
-					SendDlgMsg(pDlg, "lbHistory", DM_LISTADDSTR, (intptr_t)path, 0);
-
-				g_free(path);
-			}
-			while (g_key_file_has_key(gCfg, ROOTNAME, key, NULL));
-
-			g_free(key);
-		}
-
-		gchar *item = g_key_file_get_string(gCfg, ROOTNAME, "Pattern0", NULL);
-
-		if (item)
-		{
-			SendDlgMsg(pDlg, "cbPattern", DM_LISTADDSTR, (intptr_t)item, 0);
-			SendDlgMsg(pDlg, "cbPattern", DM_LISTSETITEMINDEX, 0, 0);
-			g_free(item);
-
-			int num = 1;
-			gchar *key = NULL;
-
-			do
-			{
-				g_free(key);
-				key = g_strdup_printf("Pattern%d", num++);
-				item = g_key_file_get_string(gCfg, ROOTNAME, key, NULL);
-
-				if (item)
-					SendDlgMsg(pDlg, "cbPattern", DM_LISTADDSTR, (intptr_t)item, 0);
-
-				g_free(item);
-			}
-			while (g_key_file_has_key(gCfg, ROOTNAME, key, NULL));
-
-			g_free(key);
-		}
-
-		int flags = g_key_file_get_integer(gCfg, ROOTNAME, "Flags", NULL);
-
-		if (flags & FNM_CASEFOLD)
-			SendDlgMsg(pDlg, "chCaseFold", DM_SETCHECK, 1, 0);
-
-		if (flags & FNM_NOESCAPE)
-			SendDlgMsg(pDlg, "cbNoescape", DM_SETCHECK, 1, 0);
-
-		break;
-
-	case DN_CLICK:
-		if (strcmp(DlgItemName, "btnOK") == 0)
-		{
-			char *path = (char*)SendDlgMsg(pDlg, "deStartPath", DM_GETTEXT, 0, 0);
-
-			if (path && strlen(path) > 0)
-			{
-				g_strlcpy(gStartPath, path, sizeof(gStartPath));
-				g_key_file_set_string(gCfg, ROOTNAME, "Path", path);
-
-				int num = 0;
-				gchar *key = NULL;
-
-				gsize count = (gsize)SendDlgMsg(pDlg, "lbHistory", DM_LISTGETCOUNT, 0, 0);
-
-				for (gsize i = 0; i < count; i++)
-				{
-					if (num >= MAX_PATH)
-						break;
-
-					path = (char*)SendDlgMsg(pDlg, "lbHistory", DM_LISTGETITEM, i, 0);
-
-					if (strcmp(gStartPath, path) != 0)
-					{
-						gchar *key = g_strdup_printf("HistoryPath%d", num++);
-						g_key_file_set_string(gCfg, ROOTNAME, key, path);
-						g_free(key);
-					}
-				}
-
-				key = g_strdup_printf("HistoryPath%d", num);
-
-				if (g_key_file_has_key(gCfg, ROOTNAME, key, NULL))
-					g_key_file_remove_key(gCfg, ROOTNAME, key, NULL);
-
-				g_free(key);
-			}
-
-			g_strlcpy(gPattern, (char*)SendDlgMsg(pDlg, "cbPattern", DM_GETTEXT, 0, 0), sizeof(gPattern));
-
-			gMatchFlags = 0;
-
-			if (SendDlgMsg(pDlg, "chCaseFold", DM_GETCHECK, 0, 0))
-				gMatchFlags |= FNM_CASEFOLD;
-
-			if (SendDlgMsg(pDlg, "cbNoescape", DM_GETCHECK, 0, 0))
-				gMatchFlags |= FNM_NOESCAPE;
-
-			g_key_file_set_string(gCfg, ROOTNAME, "Pattern0", gPattern);
-			g_key_file_set_integer(gCfg, ROOTNAME, "Flags", gMatchFlags);
-
-			gsize count = (gsize)SendDlgMsg(pDlg, "cbPattern", DM_LISTGETCOUNT, 0, 0);
-			int num = 1;
-
-			for (gsize i = 0; i < count; i++)
-			{
-				char *line = (char*)SendDlgMsg(pDlg, "cbPattern", DM_LISTGETITEM, i, 0);
-
-				if (g_strcmp0(line, gPattern) != 0)
-				{
-					gchar *key = g_strdup_printf("Pattern%d", num++);
-					g_key_file_set_string(gCfg, ROOTNAME, key, line);
-					g_free(key);
-				}
-
-				if (num == MAXINIITEMS)
-					break;
-			}
-
-			g_key_file_save_to_file(gCfg, gCfgPath, NULL);
-		}
-		else if (strcmp(DlgItemName, "lbHistory") == 0)
-		{
-			int i = (int)SendDlgMsg(pDlg, "lbHistory", DM_LISTGETITEMINDEX, 0, 0);
-
-			if (i != -1)
-			{
-				char *path = (char*)SendDlgMsg(pDlg, "lbHistory", DM_LISTGETITEM, i, 0);
-				SendDlgMsg(pDlg, "deStartPath", DM_SETTEXT, (intptr_t)path, 0);
+				snprintf(gCaseName, PATH_MAX, "%s", ent->d_name);
+				closedir(dir);
+				return FS_FILE_EXISTS;
 			}
 		}
 
-		break;
-
-	case DN_KEYUP:
-		if (strcmp(DlgItemName, "lbHistory") == 0)
-		{
-			int16_t *key = (int16_t*)wParam;
-
-			if (lParam == 1 && *key == 46)
-			{
-				int i = (int)SendDlgMsg(pDlg, "lbHistory", DM_LISTGETITEMINDEX, 0, 0);
-
-				if (i != -1)
-					SendDlgMsg(pDlg, "lbHistory", DM_LISTDELETE, i, 0);
-			}
-		}
-
-		break;
+		closedir(dir);
 	}
 
-	return 0;
+	return FS_FILE_OK;
+}
+
+static int CopyLocalFile(char* InFileName, char* OutFileName)
+{
+	int ifd, ofd, done;
+	ssize_t len, total = 0;
+	char buff[BUFSIZE];
+	struct stat buf;
+	int result = FS_FILE_OK;
+	char file[PATH_MAX];
+
+	snprintf(file, PATH_MAX, "%s", OutFileName);
+
+	if (gCaseName[0] != '\0')
+	{
+		char *pos = strrchr(file, '/');
+
+		if (pos)
+			strcpy(pos + 1, gCaseName);
+	}
+
+	if (strcmp(InFileName, file) == 0)
+		return FS_FILE_NOTSUPPORTED;
+
+	if (stat(InFileName, &buf) != 0)
+		return FS_FILE_READERROR;
+
+	ifd = open(InFileName, O_RDONLY);
+
+	if (ifd == -1)
+		return FS_FILE_READERROR;
+
+	ofd = open(file, O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR);
+
+	if (ofd > -1)
+	{
+
+		while ((len = read(ifd, buff, sizeof(buff))) > 0)
+		{
+			if (write(ofd, buff, len) == -1)
+			{
+				result = FS_FILE_WRITEERROR;
+				break;
+			}
+
+			total += len;
+
+			if (buf.st_size > 0)
+				done = total * 100 / buf.st_size;
+			else
+				done = 0;
+
+			if (done > 100)
+				done = 100;
+
+			if (gProgressProc(gPluginNr, InFileName, file, done) == 1)
+			{
+				result = FS_FILE_USERABORT;
+				remove(OutFileName);
+				break;
+			}
+		}
+
+		close(ofd);
+		chmod(file, buf.st_mode);
+
+		char list[XATTR_SIZE_MAX];
+		ssize_t len = listxattr(InFileName, list, XATTR_SIZE_MAX);
+
+		if (len > 0)
+		{
+			for (int i = 0; i < len; i += strlen(&list[i]) + 1)
+			{
+				char value[XATTR_SIZE_MAX];
+				ssize_t value_len = getxattr(InFileName, &list[i], value, XATTR_SIZE_MAX);
+
+				if (value_len > -1)
+					setxattr(file,  &list[i], value, value_len, XATTR_CREATE);
+			}
+		}
+	}
+	else
+		result = FS_FILE_WRITEERROR;
+
+	close(ifd);
+
+	return result;
 }
 
 intptr_t DCPCALL PropertiesDlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr_t wParam, intptr_t lParam)
@@ -255,21 +198,6 @@ intptr_t DCPCALL PropertiesDlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t M
 		{
 			SendDlgMsg(pDlg, "lbProps", DM_LISTADDSTR, (intptr_t)"realpath:", 0);
 			SendDlgMsg(pDlg, "lbProps", DM_LISTADDSTR, (intptr_t)res_path, 0);
-		}
-
-		magic_t magic_cookie = magic_open(MAGIC_NONE);
-
-		if (magic_cookie)
-		{
-
-			if (magic_load(magic_cookie, NULL) == 0)
-			{
-				SendDlgMsg(pDlg, "lbProps", DM_LISTADDSTR, 0, 0);
-				const char *magic_full = magic_file(magic_cookie, gRemoteName);
-				SendDlgMsg(pDlg, "lbProps", DM_LISTADDSTR, (intptr_t)magic_full, 0);
-			}
-
-			magic_close(magic_cookie);
 		}
 
 		if (statx(AT_FDCWD, gRemoteName, AT_SYMLINK_NOFOLLOW, STATX_ALL, &buf) == 0)
@@ -470,175 +398,115 @@ intptr_t DCPCALL PropertiesDlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t M
 	return 0;
 }
 
-static BOOL FilterDialog(void)
+intptr_t DCPCALL OptionsDlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr_t wParam, intptr_t lParam)
 {
-	const char lfmdata[] = ""
-	                       "object DialogBox: TDialogBox\n"
-	                       "  Left = 458\n"
-	                       "  Height = 284\n"
-	                       "  Top = 307\n"
-	                       "  Width = 627\n"
-	                       "  AutoSize = True\n"
-	                       "  BorderStyle = bsDialog\n"
-	                       "  Caption = 'Match Pattern'\n"
-	                       "  ChildSizing.LeftRightSpacing = 10\n"
-	                       "  ChildSizing.TopBottomSpacing = 10\n"
-	                       "  ClientHeight = 284\n"
-	                       "  ClientWidth = 627\n"
-	                       "  DesignTimePPI = 100\n"
-	                       "  OnShow = DialogBoxShow\n"
-	                       "  Position = poOwnerFormCenter\n"
-	                       "  LCLVersion = '2.2.4.0'\n"
-	                       "  object lbHistory: TListBox\n"
-	                       "    AnchorSideLeft.Control = Owner\n"
-	                       "    AnchorSideTop.Control = Owner\n"
-	                       "    AnchorSideRight.Control = deStartPath\n"
-	                       "    AnchorSideRight.Side = asrBottom\n"
-	                       "    Left = 10\n"
-	                       "    Height = 83\n"
-	                       "    Top = 10\n"
-	                       "    Width = 564\n"
-	                       "    Anchors = [akTop, akLeft, akRight]\n"
-	                       "    ItemHeight = 0\n"
-	                       "    OnClick = ListBoxClick\n"
-	                       "    OnKeyUp = ListBoxKeyUp"
-	                       "    TabOrder = 0\n"
-	                       "    Visible = False\n"
-	                       "  end\n"
-	                       "  object lblStartPath: TLabel\n"
-	                       "    AnchorSideLeft.Control = Owner\n"
-	                       "    AnchorSideTop.Control = deStartPath\n"
-	                       "    AnchorSideTop.Side = asrCenter\n"
-	                       "    Left = 10\n"
-	                       "    Height = 17\n"
-	                       "    Top = 108\n"
-	                       "    Width = 31\n"
-	                       "    BorderSpacing.Right = 5\n"
-	                       "    Caption = 'Path'\n"
-	                       "    ParentColor = False\n"
-	                       "  end\n"
-	                       "  object deStartPath: TDirectoryEdit\n"
-	                       "    AnchorSideLeft.Control = lblStartPath\n"
-	                       "    AnchorSideLeft.Side = asrBottom\n"
-	                       "    AnchorSideTop.Control = lbHistory\n"
-	                       "    AnchorSideTop.Side = asrBottom\n"
-	                       "    AnchorSideRight.Control = cbNoescape\n"
-	                       "    AnchorSideRight.Side = asrBottom\n"
-	                       "    Left = 46\n"
-	                       "    Height = 36\n"
-	                       "    Top = 98\n"
-	                       "    Width = 528\n"
-	                       "    Directory = '/'\n"
-	                       "    ShowHidden = False\n"
-	                       "    ButtonWidth = 24\n"
-	                       "    NumGlyphs = 1\n"
-	                       "    Flat = True\n"
-	                       "    Anchors = [akTop, akLeft, akRight]\n"
-	                       "    BorderSpacing.Left = 5\n"
-	                       "    BorderSpacing.Top = 5\n"
-	                       "    MaxLength = 0\n"
-	                       "    TabOrder = 1\n"
-	                       "    Text = '/'\n"
-	                       "  end\n"
-	                       "  object lblPattern: TLabel\n"
-	                       "    AnchorSideLeft.Control = Owner\n"
-	                       "    AnchorSideTop.Control = cbPattern\n"
-	                       "    AnchorSideTop.Side = asrCenter\n"
-	                       "    Left = 10\n"
-	                       "    Height = 17\n"
-	                       "    Top = 149\n"
-	                       "    Width = 87\n"
-	                       "    BorderSpacing.Right = 5\n"
-	                       "    Caption = 'Unix Pattern'\n"
-	                       "    ParentColor = False\n"
-	                       "  end\n"
-	                       "  object cbPattern: TComboBox\n"
-	                       "    AnchorSideLeft.Control = lblPattern\n"
-	                       "    AnchorSideLeft.Side = asrBottom\n"
-	                       "    AnchorSideTop.Control = deStartPath\n"
-	                       "    AnchorSideTop.Side = asrBottom\n"
-	                       "    AnchorSideRight.Side = asrBottom\n"
-	                       "    Left = 102\n"
-	                       "    Height = 36\n"
-	                       "    Top = 139\n"
-	                       "    Width = 250\n"
-	                       "    BorderSpacing.Left = 5\n"
-	                       "    BorderSpacing.Top = 5\n"
-	                       "    ItemHeight = 23\n"
-	                       "    MaxLength = 256\n"
-	                       "    TabOrder = 2\n"
-	                       "    Text = '*'\n"
-	                       "  end\n"
-	                       "  object cbNoescape: TCheckBox\n"
-	                       "    AnchorSideLeft.Control = chCaseFold\n"
-	                       "    AnchorSideLeft.Side = asrBottom\n"
-	                       "    AnchorSideTop.Control = cbPattern\n"
-	                       "    AnchorSideTop.Side = asrCenter\n"
-	                       "    Left = 470\n"
-	                       "    Height = 23\n"
-	                       "    Top = 146\n"
-	                       "    Width = 104\n"
-	                       "    BorderSpacing.Left = 10\n"
-	                       "    Caption = 'No Escape'\n"
-	                       "    TabOrder = 4\n"
-	                       "  end\n"
-	                       "  object chCaseFold: TCheckBox\n"
-	                       "    AnchorSideLeft.Control = cbPattern\n"
-	                       "    AnchorSideLeft.Side = asrBottom\n"
-	                       "    AnchorSideTop.Control = cbPattern\n"
-	                       "    AnchorSideTop.Side = asrCenter\n"
-	                       "    Left = 362\n"
-	                       "    Height = 23\n"
-	                       "    Top = 146\n"
-	                       "    Width = 98\n"
-	                       "    BorderSpacing.Left = 10\n"
-	                       "    Caption = 'Case Fold'\n"
-	                       "    TabOrder = 3\n"
-	                       "  end\n"
-	                       "  object btnOK: TBitBtn\n"
-	                       "    AnchorSideTop.Control = cbPattern\n"
-	                       "    AnchorSideTop.Side = asrBottom\n"
-	                       "    AnchorSideRight.Control = deStartPath\n"
-	                       "    AnchorSideRight.Side = asrBottom\n"
-	                       "    Left = 473\n"
-	                       "    Height = 31\n"
-	                       "    Top = 190\n"
-	                       "    Width = 101\n"
-	                       "    Anchors = [akTop, akRight]\n"
-	                       "    AutoSize = True\n"
-	                       "    BorderSpacing.Top = 15\n"
-	                       "    Constraints.MinHeight = 31\n"
-	                       "    Constraints.MinWidth = 101\n"
-	                       "    Default = True\n"
-	                       "    DefaultCaption = True\n"
-	                       "    Kind = bkOK\n"
-	                       "    ModalResult = 1\n"
-	                       "    OnClick = ButtonClick\n"
-	                       "    TabOrder = 5\n"
-	                       "  end\n"
-	                       "  object btnCancel: TBitBtn\n"
-	                       "    AnchorSideTop.Control = btnOK\n"
-	                       "    AnchorSideTop.Side = asrCenter\n"
-	                       "    AnchorSideRight.Control = btnOK\n"
-	                       "    Left = 367\n"
-	                       "    Height = 31\n"
-	                       "    Top = 190\n"
-	                       "    Width = 101\n"
-	                       "    Anchors = [akTop, akRight]\n"
-	                       "    AutoSize = True\n"
-	                       "    BorderSpacing.Right = 5\n"
-	                       "    Cancel = True\n"
-	                       "    Constraints.MinHeight = 31\n"
-	                       "    Constraints.MinWidth = 101\n"
-	                       "    DefaultCaption = True\n"
-	                       "    Kind = bkCancel\n"
-	                       "    ModalResult = 2\n"
-	                       "    OnClick = ButtonClick\n"
-	                       "    TabOrder = 6\n"
-	                       "  end\n"
-	                       "end\n";
+	FILE *fp;
+	size_t len = 0;
+	ssize_t read = 0;
+	int i = 0;
+	char *line = NULL;
 
-	return gExtensions->DialogBoxLFM((intptr_t)lfmdata, (unsigned long)strlen(lfmdata), FilterDlgProc);
+	switch (Msg)
+	{
+	case DN_INITDIALOG:
+		if ((fp = fopen(gHistoryFile, "r")) != NULL)
+		{
+			while (((read = getline(&line, &len, fp)) != -1))
+			{
+				if (i == 1)
+					SendDlgMsg(pDlg, "lbHistory", DM_SHOWITEM, 1, 0);
+				else if (i > MAXINIITEMS)
+					break;
+
+				if (line[read - 1] == '\n')
+					line[read - 1] = '\0';
+
+				if (line != NULL && line[0] != '\0' && (strcmp(gStartPath, line) != 0))
+				{
+					if (i == 0)
+						SendDlgMsg(pDlg, "fnSelectPath", DM_SETTEXT, (intptr_t)line, 0);
+
+					SendDlgMsg(pDlg, "lbHistory", DM_LISTADD, (intptr_t)line, 0);
+					i++;
+				}
+			}
+
+			free(line);
+			fclose(fp);
+		}
+
+		if (gStartPath[0] != '\0')
+		{
+			SendDlgMsg(pDlg, "fnSelectPath", DM_SETTEXT, (intptr_t)gStartPath, 0);
+			SendDlgMsg(pDlg, "lbHistory", DM_LISTINSERT, 0, (intptr_t)gStartPath);
+
+			if (SendDlgMsg(pDlg, "lbHistory", DM_LISTGETCOUNT, 0, 0) > 1)
+				SendDlgMsg(pDlg, "lbHistory", DM_SHOWITEM, 1, 0);
+		}
+
+		break;
+
+	case DN_CLICK:
+		if (strcmp(DlgItemName, "btnOK") == 0)
+		{
+			char *path = (char*)SendDlgMsg(pDlg, "fnSelectPath", DM_GETTEXT, 0, 0);
+
+			if (path && strlen(path) > 0)
+			{
+				if (strcmp(gStartPath, path) != 0)
+					snprintf(gStartPath, sizeof(gStartPath), "%s", path);
+			}
+
+			if ((fp = fopen(gHistoryFile, "w")) != NULL)
+			{
+				fprintf(fp, "%s\n", gStartPath);
+				size_t count = (size_t)SendDlgMsg(pDlg, "lbHistory", DM_LISTGETCOUNT, 0, 0);
+
+				for (i = 0; i < count; i++)
+				{
+					if (i > MAXINIITEMS)
+						break;
+
+					line = (char*)SendDlgMsg(pDlg, "lbHistory", DM_LISTGETITEM, i, 0);
+
+					if (line != NULL && line[0] != '\0' && (strcmp(gStartPath, line) != 0))
+						fprintf(fp, "%s\n", line);
+				}
+
+				fclose(fp);
+			}
+		}
+		else if (strcmp(DlgItemName, "lbHistory") == 0)
+		{
+			int i = (int)SendDlgMsg(pDlg, "lbHistory", DM_LISTGETITEMINDEX, 0, 0);
+
+			if (i != -1)
+			{
+				char *path = (char*)SendDlgMsg(pDlg, "lbHistory", DM_LISTGETITEM, i, 0);
+				SendDlgMsg(pDlg, "fnSelectPath", DM_SETTEXT, (intptr_t)path, 0);
+			}
+		}
+
+		break;
+
+	case DN_KEYUP:
+		if (strcmp(DlgItemName, "lbHistory") == 0)
+		{
+			int16_t *key = (int16_t*)wParam;
+
+			if (lParam == 1 && *key == 46)
+			{
+				int i = (int)SendDlgMsg(pDlg, "lbHistory", DM_LISTGETITEMINDEX, 0, 0);
+
+				if (i != -1)
+					SendDlgMsg(pDlg, "lbHistory", DM_LISTDELETE, i, 0);
+			}
+		}
+
+		break;
+	}
+
+	return 0;
 }
 
 static BOOL PropertiesDialog(void)
@@ -698,65 +566,119 @@ static BOOL PropertiesDialog(void)
 	return gExtensions->DialogBoxLFM((intptr_t)lfmdata, (unsigned long)strlen(lfmdata), PropertiesDlgProc);
 }
 
-static int CopyLocalFile(char* InFileName, char* OutFileName)
+static BOOL OptionsDialog(void)
 {
-	int ifd, ofd, done;
-	ssize_t len, total = 0;
-	char buff[BUFSIZE];
-	struct stat buf;
-	int result = FS_FILE_OK;
+	const char lfmdata[] = ""
+	                       "object OptDialogBox: TOptDialogBox\n"
+	                       "  Left = 458\n"
+	                       "  Height = 262\n"
+	                       "  Top = 307\n"
+	                       "  Width = 672\n"
+	                       "  AutoSize = True\n"
+	                       "  BorderStyle = bsDialog\n"
+	                       "  Caption = 'Options'\n"
+	                       "  ChildSizing.LeftRightSpacing = 15\n"
+	                       "  ChildSizing.TopBottomSpacing = 15\n"
+	                       "  ChildSizing.VerticalSpacing = 10\n"
+	                       "  ClientHeight = 262\n"
+	                       "  ClientWidth = 672\n"
+	                       "  DesignTimePPI = 100\n"
+	                       "  OnShow = DialogBoxShow\n"
+	                       "  Position = poOwnerFormCenter\n"
+	                       "  LCLVersion = '2.2.4.0'\n"
+	                       "  object lblStartPath: TLabel\n"
+	                       "    AnchorSideLeft.Control = Owner\n"
+	                       "    AnchorSideTop.Control = Owner\n"
+	                       "    Left = 15\n"
+	                       "    Height = 49\n"
+	                       "    Top = 15\n"
+	                       "    Width = 638\n"
+	                       "    BorderSpacing.Right = 5\n"
+	                       "    Caption = 'Please select the folder you want to work with.'#10#10'You can re-open this dialog by clicking plugin properties or \"..\" properties in the root folder.'\n"
+	                       "    ParentColor = False\n"
+	                       "  end\n"
+	                       "  object lbHistory: TListBox\n"
+	                       "    AnchorSideLeft.Control = fnSelectPath\n"
+	                       "    AnchorSideTop.Control = lblStartPath\n"
+	                       "    AnchorSideTop.Side = asrBottom\n"
+	                       "    AnchorSideRight.Control = lblStartPath\n"
+	                       "    AnchorSideRight.Side = asrBottom\n"
+	                       "    Left = 15\n"
+	                       "    Height = 83\n"
+	                       "    Top = 74\n"
+	                       "    Width = 638\n"
+	                       "    Anchors = [akTop, akLeft, akRight]\n"
+	                       "    ItemHeight = 0\n"
+	                       "    OnClick = ListBoxClick\n"
+	                       "    OnKeyUp = ListBoxKeyUp\n"
+	                       "    TabOrder = 0\n"
+	                       "    Visible = False\n"
+	                       "  end\n"
+	                       "  object fnSelectPath: TDirectoryEdit\n"
+	                       "    AnchorSideLeft.Control = lblStartPath\n"
+	                       "    AnchorSideTop.Control = lbHistory\n"
+	                       "    AnchorSideTop.Side = asrBottom\n"
+	                       "    AnchorSideRight.Control = lblStartPath\n"
+	                       "    AnchorSideRight.Side = asrBottom\n"
+	                       "    Left = 15\n"
+	                       "    Height = 36\n"
+	                       "    Top = 167\n"
+	                       "    Width = 638\n"
+	                       "    Directory = '/'\n"
+	                       "    DialogTitle = 'Select folder'\n"
+	                       "    ShowHidden = False\n"
+	                       "    ButtonWidth = 24\n"
+	                       "    NumGlyphs = 1\n"
+	                       "    Anchors = [akTop, akLeft, akRight]\n"
+	                       "    BorderSpacing.Bottom = 1\n"
+	                       "    MaxLength = 0\n"
+	                       "    TabOrder = 1\n"
+	                       "    Text = '/'\n"
+	                       "  end\n"
+	                       "  object btnCancel: TBitBtn\n"
+	                       "    AnchorSideTop.Control = btnOK\n"
+	                       "    AnchorSideTop.Side = asrCenter\n"
+	                       "    AnchorSideRight.Control = btnOK\n"
+	                       "    Left = 446\n"
+	                       "    Height = 31\n"
+	                       "    Top = 218\n"
+	                       "    Width = 101\n"
+	                       "    Anchors = [akTop, akRight]\n"
+	                       "    AutoSize = True\n"
+	                       "    BorderSpacing.Right = 5\n"
+	                       "    Cancel = True\n"
+	                       "    Constraints.MinHeight = 31\n"
+	                       "    Constraints.MinWidth = 101\n"
+	                       "    DefaultCaption = True\n"
+	                       "    Kind = bkCancel\n"
+	                       "    ModalResult = 2\n"
+	                       "    OnClick = ButtonClick\n"
+	                       "    TabOrder = 3\n"
+	                       "  end\n"
+	                       "  object btnOK: TBitBtn\n"
+	                       "    AnchorSideTop.Control = fnSelectPath\n"
+	                       "    AnchorSideTop.Side = asrBottom\n"
+	                       "    AnchorSideRight.Control = fnSelectPath\n"
+	                       "    AnchorSideRight.Side = asrBottom\n"
+	                       "    Left = 552\n"
+	                       "    Height = 31\n"
+	                       "    Top = 218\n"
+	                       "    Width = 101\n"
+	                       "    Anchors = [akTop, akRight]\n"
+	                       "    AutoSize = True\n"
+	                       "    BorderSpacing.Top = 15\n"
+	                       "    Constraints.MinHeight = 31\n"
+	                       "    Constraints.MinWidth = 101\n"
+	                       "    Default = True\n"
+	                       "    DefaultCaption = True\n"
+	                       "    Kind = bkOK\n"
+	                       "    ModalResult = 1\n"
+	                       "    OnClick = ButtonClick\n"
+	                       "    TabOrder = 2\n"
+	                       "  end\n"
+	                       "end\n";
 
-	if (strcmp(InFileName, OutFileName) == 0)
-		return FS_FILE_NOTSUPPORTED;
-
-	if (stat(InFileName, &buf) != 0)
-		return FS_FILE_READERROR;
-
-	ifd = open(InFileName, O_RDONLY);
-
-	if (ifd == -1)
-		return FS_FILE_READERROR;
-
-	ofd = open(OutFileName, O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR);
-
-	if (ofd > -1)
-	{
-
-		while ((len = read(ifd, buff, sizeof(buff))) > 0)
-		{
-			if (write(ofd, buff, len) == -1)
-			{
-				result = FS_FILE_WRITEERROR;
-				break;
-			}
-
-			total += len;
-
-			if (buf.st_size > 0)
-				done = total * 100 / buf.st_size;
-			else
-				done = 0;
-
-			if (done > 100)
-				done = 100;
-
-			if (gProgressProc(gPluginNr, InFileName, OutFileName, done) == 1)
-			{
-				result = FS_FILE_USERABORT;
-				remove(OutFileName);
-				break;
-			}
-		}
-
-		close(ofd);
-		chmod(OutFileName, buf.st_mode);
-	}
-	else
-		result = FS_FILE_WRITEERROR;
-
-	close(ifd);
-
-	return result;
+	return gExtensions->DialogBoxLFM((intptr_t)lfmdata, (unsigned long)strlen(lfmdata), OptionsDlgProc);
 }
 
 static BOOL SetFindData(DIR *cur, char *path, WIN32_FIND_DATAA *FindData)
@@ -780,9 +702,6 @@ static BOOL SetFindData(DIR *cur, char *path, WIN32_FIND_DATAA *FindData)
 				FindData->dwFileAttributes = FILE_ATTRIBUTE_DIRECTORY;
 			else
 			{
-				if (fnmatch(gPattern, ent->d_name, gMatchFlags) != 0)
-					continue;
-
 				FindData->nFileSizeHigh = (buf.st_size & 0xFFFFFFFF00000000) >> 32;
 				FindData->nFileSizeLow = buf.st_size & 0x00000000FFFFFFFF;
 			}
@@ -795,7 +714,7 @@ static BOOL SetFindData(DIR *cur, char *path, WIN32_FIND_DATAA *FindData)
 		else
 			continue;
 
-		g_strlcpy(FindData->cFileName, ent->d_name, MAX_PATH - 1);
+		snprintf(FindData->cFileName, MAX_PATH - 1, "%s", ent->d_name);
 
 		return TRUE;
 	}
@@ -810,7 +729,7 @@ int DCPCALL FsInit(int PluginNr, tProgressProc pProgressProc, tLogProc pLogProc,
 	gLogProc = pLogProc;
 	gRequestProc = pRequestProc;
 
-	FilterDialog();
+	OptionsDialog();
 
 	return 0;
 }
@@ -819,6 +738,9 @@ HANDLE DCPCALL FsFindFirst(char* Path, WIN32_FIND_DATAA *FindData)
 {
 	DIR *dir;
 	tVFSDirData *dirdata;
+
+	if (strcmp(gStartPath, "/") == 0)
+		gStartPath[0] = '\0';
 
 	dirdata = malloc(sizeof(tVFSDirData));
 
@@ -875,28 +797,10 @@ BOOL DCPCALL FsLinksToLocalFiles(void)
 
 BOOL DCPCALL FsGetLocalName(char* RemoteName, int maxlen)
 {
-	gchar *localpath = g_strdup_printf("%s%s", gStartPath, RemoteName);
-	g_strlcpy(RemoteName, localpath, maxlen - 1);
-	g_free(localpath);
-
+	char localpath[PATH_MAX];
+	snprintf(localpath, PATH_MAX, "%s%s", gStartPath, RemoteName);
+	snprintf(RemoteName, maxlen - 1, "%s", localpath);
 	return TRUE;
-}
-
-int DCPCALL FsGetFile(char* RemoteName, char* LocalName, int CopyFlags, RemoteInfoStruct* ri)
-{
-	char realname[PATH_MAX];
-	snprintf(realname, sizeof(realname), "%s%s", gStartPath, RemoteName);
-
-	if (strcmp(LocalName, realname) == 0)
-		return FS_FILE_NOTSUPPORTED;
-
-	if (CopyFlags == 0 && access(LocalName, F_OK) == 0)
-		return FS_FILE_EXISTS;
-
-	if (gProgressProc(gPluginNr, realname, LocalName, 0) == 1)
-		return FS_FILE_USERABORT;
-
-	return CopyLocalFile(realname, LocalName);
 }
 
 int DCPCALL FsPutFile(char* LocalName, char* RemoteName, int CopyFlags)
@@ -907,7 +811,7 @@ int DCPCALL FsPutFile(char* LocalName, char* RemoteName, int CopyFlags)
 	if (strcmp(LocalName, realname) == 0)
 		return FS_FILE_NOTSUPPORTED;
 
-	if (CopyFlags == 0 && access(realname, F_OK) == 0)
+	if (CopyFlags == 0 && CaseDuplExists(realname, FALSE) == FS_FILE_EXISTS)
 		return FS_FILE_EXISTS;
 
 	if (gProgressProc(gPluginNr, LocalName, realname, 0) == 1)
@@ -923,11 +827,21 @@ int DCPCALL FsRenMovFile(char* OldName, char* NewName, BOOL Move, BOOL OverWrite
 	snprintf(oldpath, sizeof(oldpath), "%s%s", gStartPath, OldName);
 	snprintf(newpath, sizeof(newpath), "%s%s", gStartPath, NewName);
 
-	if (!OverWrite && access(newpath, F_OK) == 0)
-		return FS_FILE_EXISTS;
+	if (!OverWrite)
+	{
+		if (!Move)
+		{
+			if (CaseDuplExists(newpath, FALSE) == FS_FILE_EXISTS)
+				return FS_FILE_EXISTS;
+			else
+			{
+				gCaseName[0] = '\0';
 
-	if (strcmp(oldpath, newpath) == 0)
-		return FS_FILE_NOTSUPPORTED;
+				if (access(newpath, F_OK) == 0)
+					return FS_FILE_EXISTS;
+			}
+		}
+	}
 
 	if (gProgressProc(gPluginNr, oldpath, newpath, 0))
 		return FS_FILE_USERABORT;
@@ -1010,7 +924,7 @@ int DCPCALL FsExecuteFile(HWND MainWin, char* RemoteName, char* Verb)
 	{
 		if (strcmp(RemoteName, "/") == 0 || strcmp(RemoteName, "/..") == 0)
 		{
-			FilterDialog();
+			OptionsDialog();
 			result = FS_EXEC_OK;
 		}
 		else if (PropertiesDialog())
@@ -1057,19 +971,106 @@ BOOL DCPCALL FsSetTime(char* RemoteName, FILETIME *CreationTime, FILETIME *LastA
 	return TRUE;
 }
 
-void DCPCALL FsGetDefRootName(char* DefRootName, int maxlen)
+int DCPCALL FsContentGetSupportedField(int FieldIndex, char* FieldName, char* Units, int maxlen)
 {
-	snprintf(DefRootName, maxlen - 1, ROOTNAME);
+	if (FieldIndex > 3)
+		return ft_nomorefields;
+
+	Units[0] = '\0';
+
+	if (FieldIndex == 0)
+		snprintf(FieldName, maxlen - 1, "casedupl");
+	else if (FieldIndex == 1)
+		snprintf(FieldName, maxlen - 1, "DOSATTRIB");
+	else if (FieldIndex == 2)
+		snprintf(FieldName, maxlen - 1, "object");
+	else if (FieldIndex == 3)
+		snprintf(FieldName, maxlen - 1, "access");
+
+	return ft_string;
+}
+
+int DCPCALL FsContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void* FieldValue, int maxlen, int flags)
+{
+	char realname[PATH_MAX];
+	snprintf(realname, sizeof(realname), "%s%s", gStartPath, FileName);
+
+	if (FieldIndex == 0 && CaseDuplExists(realname, TRUE) == FS_FILE_EXISTS)
+	{
+		sprintf((char*)FieldValue, "❗");
+		return ft_string;
+	}
+	else if (FieldIndex == 1)
+	{
+		char value[XATTR_SIZE_MAX];
+		ssize_t value_len = getxattr(realname, "user.DOSATTRIB", value, XATTR_SIZE_MAX);
+
+		if (value_len > 0)
+		{
+			value[value_len] = '\0';
+			int num = (int)strtol(value, NULL, 16);
+			snprintf((char*)FieldValue, maxlen, "%s%s%s%s", num & 0x1 ? "Ⓡ" : "㊀", num & 0x20 ? "Ⓐ" : "㊀", num & 0x2 ? "Ⓗ" : "㊀", num & 0x4 ? "Ⓢ" : "㊀");
+			return ft_string;
+		}
+	}
+	else if (FieldIndex == 2)
+	{
+		struct stat buf;
+
+		if (lstat(realname, &buf) == 0)
+		{
+			if (S_ISREG(buf.st_mode))
+				sprintf((char*)FieldValue, "🅁");
+			else if (S_ISDIR(buf.st_mode))
+				sprintf((char*)FieldValue, "🄳");
+			else if (S_ISLNK(buf.st_mode))
+				sprintf((char*)FieldValue, "🄻");
+			else if (S_ISCHR(buf.st_mode))
+				sprintf((char*)FieldValue, "🄲");
+			else if (S_ISBLK(buf.st_mode))
+				sprintf((char*)FieldValue, "🄱");
+			else if (S_ISFIFO(buf.st_mode))
+				sprintf((char*)FieldValue, "🄵");
+			else if (S_ISSOCK(buf.st_mode))
+				sprintf((char*)FieldValue, "🅂");
+
+			return ft_string;
+		}
+	}
+	else if (FieldIndex == 3)
+	{
+		snprintf((char*)FieldValue, maxlen - 1, "%s%s%s",
+		         (access(realname, R_OK) == 0) ? "Ⓡ" : "㊀",
+		         (access(realname, W_OK) == 0) ? "Ⓦ" : "㊀",
+		         (access(realname, X_OK) == 0) ? "Ⓧ" : "㊀");
+		return ft_string;
+	}
+
+	return ft_fieldempty;
+}
+
+BOOL DCPCALL FsContentGetDefaultView(char* ViewContents, char* ViewHeaders, char* ViewWidths, char* ViewOptions, int maxlen)
+{
+	snprintf(ViewContents, maxlen - 1,
+	         "[DC().GETFILESIZE{}]\\n[DC().GETFILETIME{}]\\n[DC().GETFILEATTR{OCTAL}] [Plugin(FS).access{}] [Plugin(FS).object{}] [Plugin(FS).DOSATTRIB{}]\\n[Plugin(FS).casedupl{}]");
+	snprintf(ViewHeaders,  maxlen - 1, "Size\\nDate\\nAttr\\n!!!");
+	snprintf(ViewWidths,   maxlen - 1, "100,15,-25,40,41,-6");
+	snprintf(ViewOptions,  maxlen - 1, "-1|0");
+	return TRUE;
 }
 
 void DCPCALL FsSetDefaultParams(FsDefaultParamStruct* dps)
 {
-	if (gCfg == NULL)
-	{
-		gCfg = g_key_file_new();
-		gchar *cfgdir = g_path_get_dirname(dps->DefaultIniName);
-		gCfgPath = g_strdup_printf("%s/%s", cfgdir, ININAME);
-	}
+	snprintf(gHistoryFile, PATH_MAX, "%s", dps->DefaultIniName);
+	char *pos = strrchr(gHistoryFile, '/');
+
+	if (pos)
+		strcpy(pos + 1, HISTNAME);
+}
+
+void DCPCALL FsGetDefRootName(char* DefRootName, int maxlen)
+{
+	snprintf(DefRootName, maxlen - 1, ROOTNAME);
 }
 
 void DCPCALL ExtensionInitialize(tExtensionStartupInfo* StartupInfo)
@@ -1088,11 +1089,4 @@ void DCPCALL ExtensionFinalize(void* Reserved)
 
 	gExtensions = NULL;
 
-	if (gCfg != NULL)
-	{
-		g_key_file_free(gCfg);
-		g_free(gCfgPath);
-	}
-
-	gCfg = NULL;
 }
