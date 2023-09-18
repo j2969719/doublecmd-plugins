@@ -11,3 +11,6 @@ Shows href links from web page as files.
 
 ## Dependencies
 ![arch](https://wiki.archlinux.org/favicon.ico) `pacman -S curl libxml2`
+
+## Credits
+- Icon: [papirus icon theme](https://github.com/PapirusDevelopmentTeam/papirus-icon-theme)

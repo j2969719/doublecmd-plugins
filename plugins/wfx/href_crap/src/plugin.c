@@ -44,6 +44,7 @@ typedef struct sPlugSettings
 	gboolean ask_sizes;
 	gboolean follow;
 	gboolean verbose;
+	gboolean noquery;
 	gboolean fail;
 	long max_redir;
 	long timeout;
@@ -56,14 +57,14 @@ tProgressProc gProgressProc = NULL;
 tLogProc gLogProc = NULL;
 tRequestProc gRequestProc = NULL;
 tExtensionStartupInfo* gDialogApi = NULL;
-xmlDocPtr g_doc = NULL;
-CURL *g_curl;
-clock_t g_clock;
+xmlDocPtr gDoc = NULL;
+CURL *gCurl = NULL;
+clock_t gClock;
 
-static char g_lfm_path[PATH_MAX];
-static char g_history_file[PATH_MAX];
-static char g_selected_file[PATH_MAX];
-tPlugSettings g_settings;
+static char gLFMPath[PATH_MAX];
+static char gHistoryFile[PATH_MAX];
+static char gSelectedFile[PATH_MAX];
+tPlugSettings gSettings;
 
 
 static gboolean UnixTimeToFileTime(unsigned long mtime, LPFILETIME ft)
@@ -185,14 +186,14 @@ static xmlChar *name_to_url(char *name, xmlDocPtr doc)
 
 static void curl_set_additional_options(CURL *curl)
 {
-	curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, (long)g_settings.follow);
-	curl_easy_setopt(curl, CURLOPT_VERBOSE, (long)g_settings.verbose);
-	curl_easy_setopt(curl, CURLOPT_MAXREDIRS, g_settings.max_redir);
+	curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, (long)gSettings.follow);
+	curl_easy_setopt(curl, CURLOPT_VERBOSE, (long)gSettings.verbose);
+	curl_easy_setopt(curl, CURLOPT_MAXREDIRS, gSettings.max_redir);
 
-	if (g_settings.user_agent[0] != '\0')
-		curl_easy_setopt(curl, CURLOPT_USERAGENT, g_settings.user_agent);
+	if (gSettings.user_agent[0] != '\0')
+		curl_easy_setopt(curl, CURLOPT_USERAGENT, gSettings.user_agent);
 
-	curl_easy_setopt(curl, CURLOPT_FAILONERROR, (long)g_settings.fail);
+	curl_easy_setopt(curl, CURLOPT_FAILONERROR, (long)gSettings.fail);
 }
 
 static gchar *parse_date(char *text, gint index)
@@ -438,19 +439,19 @@ static xmlNodePtr get_links(gchar *url)
 	xmlNodePtr result = NULL;
 	tMemBuf membuf;
 
-	if (!g_curl)
+	if (!gCurl)
 		return NULL;
 
 	membuf.buf = malloc(1);
 	membuf.size = 0;
 
-	curl_easy_setopt(g_curl, CURLOPT_URL, url);
-	curl_set_additional_options(g_curl);
-	curl_easy_setopt(g_curl, CURLOPT_WRITEFUNCTION, write_to_buffer_cb);
-	curl_easy_setopt(g_curl, CURLOPT_WRITEDATA, (void *)&membuf);
-	curl_easy_setopt(g_curl, CURLOPT_TIMEOUT, g_settings.timeout);
+	curl_easy_setopt(gCurl, CURLOPT_URL, url);
+	curl_set_additional_options(gCurl);
+	curl_easy_setopt(gCurl, CURLOPT_WRITEFUNCTION, write_to_buffer_cb);
+	curl_easy_setopt(gCurl, CURLOPT_WRITEDATA, (void *)&membuf);
+	curl_easy_setopt(gCurl, CURLOPT_TIMEOUT, gSettings.timeout);
 
-	res = curl_easy_perform(g_curl);
+	res = curl_easy_perform(gCurl);
 
 	if (res != CURLE_OK)
 	{
@@ -487,9 +488,9 @@ static xmlNodePtr get_links(gchar *url)
 
 		for (int i = 0; i < nodeset->nodeNr; i++)
 		{
-			clock_t cur_time = (double)(clock() - g_clock) / CLOCKS_PER_SEC;
+			clock_t cur_time = (double)(clock() - gClock) / CLOCKS_PER_SEC;
 
-			if ((long)cur_time >= g_settings.timeout)
+			if ((long)cur_time >= gSettings.timeout)
 			{
 				errmsg("Retrieving link list aborted: timed out");
 				break;
@@ -503,7 +504,7 @@ static xmlNodePtr get_links(gchar *url)
 			if (!href)
 				continue;
 
-			if (href[0] == '\0' || href[0] == '#' || strchr((char*)href, '{') || strrchr((char*)href, '?'))
+			if (href[0] == '\0' || href[0] == '#' || strchr((char*)href, '{') || (gSettings.noquery && strrchr((char*)href, '?')))
 			{
 				continue;
 				xmlFree(href);
@@ -633,10 +634,10 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 	{
 	case DN_INITDIALOG:
 
-		if (!g_settings.init)
+		if (!gSettings.init)
 			gDialogApi->SendDlgMsg(pDlg, "lblInfo", DM_SHOWITEM, 0, 0);
 
-		if ((fp = fopen(g_history_file, "r")) != NULL)
+		if ((fp = fopen(gHistoryFile, "r")) != NULL)
 		{
 			while ((read = getline(&line, &len, fp)) != -1 && count < MAX_PATH)
 			{
@@ -654,28 +655,28 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 			fclose(fp);
 		}
 
-		if (count == 0 && g_settings.url[0] != '\0')
-			gDialogApi->SendDlgMsg(pDlg, "cbURL", DM_LISTADD, (intptr_t)g_settings.url, 0);
+		if (count == 0 && gSettings.url[0] != '\0')
+			gDialogApi->SendDlgMsg(pDlg, "cbURL", DM_LISTADD, (intptr_t)gSettings.url, 0);
 
 		if (gDialogApi->SendDlgMsg(pDlg, "cbURL", DM_LISTGETCOUNT, 0, 0) == 0)
 			gDialogApi->SendDlgMsg(pDlg, "btnRemove", DM_ENABLE, 0, 0);
 
-		if (g_settings.url[0] == '\0')
+		if (gSettings.url[0] == '\0')
 			gDialogApi->SendDlgMsg(pDlg, "btnBrowser", DM_ENABLE, 0, 0);
 
-		gDialogApi->SendDlgMsg(pDlg, "cbURL", DM_SETTEXT, (intptr_t)g_settings.url, 0);
+		gDialogApi->SendDlgMsg(pDlg, "cbURL", DM_SETTEXT, (intptr_t)gSettings.url, 0);
 
-		if (g_selected_file[0] != '\0' && strcmp("/", g_selected_file) != 0 && strcmp("..", g_selected_file) != 0)
+		if (gSelectedFile[0] != '\0' && strcmp("/", gSelectedFile) != 0 && strcmp("..", gSelectedFile) != 0)
 		{
 			gDialogApi->SendDlgMsg(pDlg, "gbCurrent", DM_SHOWITEM, 1, 0);
-			gDialogApi->SendDlgMsg(pDlg, "edName", DM_SETTEXT, (intptr_t)g_selected_file, 0);
-			xmlChar *url = name_to_url(g_selected_file, g_doc);
+			gDialogApi->SendDlgMsg(pDlg, "edName", DM_SETTEXT, (intptr_t)gSelectedFile, 0);
+			xmlChar *url = name_to_url(gSelectedFile, gDoc);
 			gDialogApi->SendDlgMsg(pDlg, "edURL", DM_SETTEXT, (intptr_t)url, 0);
 			gDialogApi->SendDlgMsg(pDlg, "btnSelected", DM_ENABLE, 1, 0);
 			xmlFree(url);
 			char extra[256];
 
-			if (FsContentGetValue(g_selected_file, 1, 0, (void*)extra, 256, 0) == ft_string)
+			if (FsContentGetValue(gSelectedFile, 1, 0, (void*)extra, 256, 0) == ft_string)
 				gDialogApi->SendDlgMsg(pDlg, "edExtra", DM_SETTEXT, (intptr_t)extra, 0);
 			else
 			{
@@ -687,32 +688,33 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 		else
 			gDialogApi->SendDlgMsg(pDlg, "gbCurrent", DM_SHOWITEM, 0, 0);
 
-		gDialogApi->SendDlgMsg(pDlg, "ckSizes", DM_SETCHECK, (intptr_t)g_settings.ask_sizes, 0);
-		gDialogApi->SendDlgMsg(pDlg, "ckFollow", DM_SETCHECK, (intptr_t)g_settings.follow, 0);
-		gDialogApi->SendDlgMsg(pDlg, "ckVerbose", DM_SETCHECK, (intptr_t)g_settings.verbose, 0);
-		gDialogApi->SendDlgMsg(pDlg, "ckFail", DM_SETCHECK, (intptr_t)g_settings.fail, 0);
+		gDialogApi->SendDlgMsg(pDlg, "ckSizes", DM_SETCHECK, (intptr_t)gSettings.ask_sizes, 0);
+		gDialogApi->SendDlgMsg(pDlg, "ckFollow", DM_SETCHECK, (intptr_t)gSettings.follow, 0);
+		gDialogApi->SendDlgMsg(pDlg, "ckVerbose", DM_SETCHECK, (intptr_t)gSettings.verbose, 0);
+		gDialogApi->SendDlgMsg(pDlg, "ckFail", DM_SETCHECK, (intptr_t)gSettings.fail, 0);
+		gDialogApi->SendDlgMsg(pDlg, "ckNoQuery", DM_SETCHECK, (intptr_t)gSettings.noquery, 0);
 
-		gchar *num = g_strdup_printf("%ld", g_settings.max_redir);
+		gchar *num = g_strdup_printf("%ld", gSettings.max_redir);
 		gDialogApi->SendDlgMsg(pDlg, "edMaxRedir", DM_SETTEXT, (intptr_t)num, 0);
 		g_free(num);
 
-		num = g_strdup_printf("%ld", g_settings.timeout);
+		num = g_strdup_printf("%ld", gSettings.timeout);
 		gDialogApi->SendDlgMsg(pDlg, "edTimeout", DM_SETTEXT, (intptr_t)num, 0);
 		g_free(num);
 
-		gDialogApi->SendDlgMsg(pDlg, "cbUserAgent", DM_SETTEXT, (intptr_t)g_settings.user_agent, 0);
+		gDialogApi->SendDlgMsg(pDlg, "cbUserAgent", DM_SETTEXT, (intptr_t)gSettings.user_agent, 0);
 
 		break;
 
 	case DN_CLICK:
 		if (strcmp(DlgItemName, "btnOK") == 0)
 		{
-			g_strlcpy(g_settings.url, (char*)gDialogApi->SendDlgMsg(pDlg, "cbURL", DM_GETTEXT, 0, 0), PATH_MAX);
+			g_strlcpy(gSettings.url, (char*)gDialogApi->SendDlgMsg(pDlg, "cbURL", DM_GETTEXT, 0, 0), PATH_MAX);
 
-			if ((fp = fopen(g_history_file, "w")) != NULL)
+			if ((fp = fopen(gHistoryFile, "w")) != NULL)
 			{
-				if (g_settings.url[0] != '\0')
-					fprintf(fp, "%s\n", g_settings.url);
+				if (gSettings.url[0] != '\0')
+					fprintf(fp, "%s\n", gSettings.url);
 
 				count = (int)gDialogApi->SendDlgMsg(pDlg, "cbURL", DM_LISTGETCOUNT, 0, 0);
 
@@ -720,7 +722,7 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 				{
 					line = (char*)gDialogApi->SendDlgMsg(pDlg, "cbURL", DM_LISTGETITEM, i, 0);
 
-					if (line && (strcmp(g_settings.url, line) != 0))
+					if (line && (strcmp(gSettings.url, line) != 0))
 						fprintf(fp, "%s\n", line);
 
 				}
@@ -728,29 +730,30 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 				fclose(fp);
 			}
 
-			g_settings.ask_sizes = (gboolean)gDialogApi->SendDlgMsg(pDlg, "ckSizes", DM_GETCHECK, 0, 0);
-			g_settings.follow = (gboolean)gDialogApi->SendDlgMsg(pDlg, "ckFollow", DM_GETCHECK, 0, 0);
-			g_settings.verbose = (gboolean)gDialogApi->SendDlgMsg(pDlg, "ckVerbose", DM_GETCHECK, 0, 0);
-			g_settings.fail = (gboolean)gDialogApi->SendDlgMsg(pDlg, "ckFail", DM_GETCHECK, 0, 0);
+			gSettings.ask_sizes = (gboolean)gDialogApi->SendDlgMsg(pDlg, "ckSizes", DM_GETCHECK, 0, 0);
+			gSettings.follow = (gboolean)gDialogApi->SendDlgMsg(pDlg, "ckFollow", DM_GETCHECK, 0, 0);
+			gSettings.verbose = (gboolean)gDialogApi->SendDlgMsg(pDlg, "ckVerbose", DM_GETCHECK, 0, 0);
+			gSettings.fail = (gboolean)gDialogApi->SendDlgMsg(pDlg, "ckFail", DM_GETCHECK, 0, 0);
+			gSettings.noquery = (gboolean)gDialogApi->SendDlgMsg(pDlg, "ckNoQuery", DM_GETCHECK, 0, 0);
 
 			line = (char*)gDialogApi->SendDlgMsg(pDlg, "edMaxRedir", DM_GETTEXT, 0, 0);
-			g_settings.max_redir = (long)g_ascii_strtod((char*)line, NULL);
+			gSettings.max_redir = (long)g_ascii_strtod((char*)line, NULL);
 
 			line = (char*)gDialogApi->SendDlgMsg(pDlg, "edTimeout", DM_GETTEXT, 0, 0);
-			g_settings.timeout = (long)g_ascii_strtod((char*)line, NULL);
+			gSettings.timeout = (long)g_ascii_strtod((char*)line, NULL);
 
 			line = (char*)gDialogApi->SendDlgMsg(pDlg, "cbUserAgent", DM_GETTEXT, 0, 0);
-			g_strlcpy(g_settings.user_agent, line, MAX_PATH);
+			g_strlcpy(gSettings.user_agent, line, MAX_PATH);
 
-			if (g_settings.init)
-				g_settings.init = FALSE;
+			if (gSettings.init)
+				gSettings.init = FALSE;
 
 			gDialogApi->SendDlgMsg(pDlg, DlgItemName, DM_CLOSE, ID_OK, 0);
 		}
 		else if (strcmp(DlgItemName, "btnCancel") == 0)
 		{
-			if (g_settings.init)
-				g_settings.url[0] = '\0';
+			if (gSettings.init)
+				gSettings.url[0] = '\0';
 
 			gDialogApi->SendDlgMsg(pDlg, DlgItemName, DM_CLOSE, ID_CANCEL, 0);
 		}
@@ -829,14 +832,14 @@ static void ShowCfgURLDlg(void)
 {
 	if (gDialogApi)
 	{
-		if (g_file_test(g_lfm_path, G_FILE_TEST_EXISTS))
-			gDialogApi->DialogBoxLFMFile(g_lfm_path, DlgProc);
+		if (g_file_test(gLFMPath, G_FILE_TEST_EXISTS))
+			gDialogApi->DialogBoxLFMFile(gLFMPath, DlgProc);
 		else
-			gDialogApi->InputBox("Double Commander", "URL:", FALSE, g_settings.url, PATH_MAX);
+			gDialogApi->InputBox("Double Commander", "URL:", FALSE, gSettings.url, PATH_MAX);
 	}
 
 	else if (gRequestProc)
-		gRequestProc(gPluginNr, RT_URL, NULL, NULL, g_settings.url, PATH_MAX);
+		gRequestProc(gPluginNr, RT_URL, NULL, NULL, gSettings.url, PATH_MAX);
 }
 
 static gboolean SetFindData(tVFSDirData *dirdata, WIN32_FIND_DATAA *FindData)
@@ -932,10 +935,10 @@ int DCPCALL FsInit(int PluginNr, tProgressProc pProgressProc, tLogProc pLogProc,
 	gProgressProc = pProgressProc;
 	gLogProc = pLogProc;
 	gRequestProc = pRequestProc;
-	g_doc = xmlNewDoc(BAD_CAST "1.0");
-	g_curl = curl_easy_init();
+	gDoc = xmlNewDoc(BAD_CAST "1.0");
+	gCurl = curl_easy_init();
 
-	if ((fp = fopen(g_history_file, "r")) != NULL)
+	if ((fp = fopen(gHistoryFile, "r")) != NULL)
 	{
 		if ((read = getline(&line, &len, fp)) != -1)
 		{
@@ -943,25 +946,26 @@ int DCPCALL FsInit(int PluginNr, tProgressProc pProgressProc, tLogProc pLogProc,
 				line[read - 1] = '\0';
 
 			if (strlen(line) > 0)
-				g_strlcpy(g_settings.url, line, PATH_MAX);
+				g_strlcpy(gSettings.url, line, PATH_MAX);
 			else
-				g_strlcpy(g_settings.url, DEFAULT_URL, PATH_MAX);
+				g_strlcpy(gSettings.url, DEFAULT_URL, PATH_MAX);
 		}
 
 		fclose(fp);
 	}
 	else
-		g_strlcpy(g_settings.url, DEFAULT_URL, PATH_MAX);
+		g_strlcpy(gSettings.url, DEFAULT_URL, PATH_MAX);
 
-	g_settings.ask_sizes = FALSE;
-	g_settings.follow = TRUE;
-	g_settings.verbose = FALSE;
-	g_settings.max_redir = 3;
-	g_settings.fail = TRUE;
+	gSettings.ask_sizes = FALSE;
+	gSettings.follow = TRUE;
+	gSettings.verbose = FALSE;
+	gSettings.max_redir = 3;
+	gSettings.noquery = TRUE;
+	gSettings.fail = TRUE;
 
-	g_settings.timeout = 30;
+	gSettings.timeout = 30;
 
-	if (g_settings.init)
+	if (gSettings.init)
 		ShowCfgURLDlg();
 
 	return 0;
@@ -971,10 +975,10 @@ HANDLE DCPCALL FsFindFirst(char* Path, WIN32_FIND_DATAA *FindData)
 {
 	tVFSDirData *dirdata;
 
-	if (g_settings.url[0] == '\0')
+	if (gSettings.url[0] == '\0')
 		return (HANDLE)(-1);
 
-	xmlNodePtr root = xmlDocGetRootElement(g_doc);
+	xmlNodePtr root = xmlDocGetRootElement(gDoc);
 
 	if (root)
 	{
@@ -982,17 +986,17 @@ HANDLE DCPCALL FsFindFirst(char* Path, WIN32_FIND_DATAA *FindData)
 		xmlFreeNode(root);
 	}
 
-	g_clock = clock();
+	gClock = clock();
 
-	root = get_links(g_settings.url);
+	root = get_links(gSettings.url);
 
 	if (!root)
 		return (HANDLE)(-1);
 
-	xmlDocSetRootElement(g_doc, root);
+	xmlDocSetRootElement(gDoc, root);
 
 	xmlChar *xpath = (xmlChar*)"/links/link";
-	xmlXPathContextPtr context = xmlXPathNewContext(g_doc);
+	xmlXPathContextPtr context = xmlXPathNewContext(gDoc);
 	xmlXPathObjectPtr obj = xmlXPathEvalExpression(xpath, context);
 	xmlXPathFreeContext(context);
 
@@ -1016,14 +1020,14 @@ HANDLE DCPCALL FsFindFirst(char* Path, WIN32_FIND_DATAA *FindData)
 	dirdata->nodeset = nodeset;
 	dirdata->index = 0;
 
-	if (g_settings.ask_sizes)
+	if (gSettings.ask_sizes)
 	{
 		dirdata->curl = curl_easy_init();
 		curl_easy_setopt(dirdata->curl, CURLOPT_NOBODY, 1L);
 		curl_easy_setopt(dirdata->curl, CURLOPT_FILETIME, 1L);
 		curl_easy_setopt(dirdata->curl, CURLOPT_HEADERFUNCTION, do_nothing_cb);
 		curl_easy_setopt(dirdata->curl, CURLOPT_HEADER, 0L);
-		curl_easy_setopt(dirdata->curl, CURLOPT_TIMEOUT, g_settings.timeout);
+		curl_easy_setopt(dirdata->curl, CURLOPT_TIMEOUT, gSettings.timeout);
 		curl_set_additional_options(dirdata->curl);
 	}
 
@@ -1067,7 +1071,7 @@ int DCPCALL FsGetFile(char* RemoteName, char* LocalName, int CopyFlags, RemoteIn
 	if (CopyFlags == 0 && g_file_test(LocalName, G_FILE_TEST_EXISTS))
 		return FS_FILE_EXISTS;
 
-	xmlChar *url = name_to_url(RemoteName + 1, g_doc);
+	xmlChar *url = name_to_url(RemoteName + 1, gDoc);
 
 	if (!url)
 		return FS_FILE_READERROR;
@@ -1075,13 +1079,13 @@ int DCPCALL FsGetFile(char* RemoteName, char* LocalName, int CopyFlags, RemoteIn
 	CURLcode res;
 	tOutFile output = { LocalName, url, NULL, (size_t)((int64_t)ri->SizeHigh << 32 | ri->SizeLow), 0 };
 
-	curl_easy_setopt(g_curl, CURLOPT_URL, url);
-	curl_set_additional_options(g_curl);
-	curl_easy_setopt(g_curl, CURLOPT_WRITEFUNCTION, write_to_file_cb);
-	curl_easy_setopt(g_curl, CURLOPT_WRITEDATA, &output);
-	curl_easy_setopt(g_curl, CURLOPT_TIMEOUT, 0);
+	curl_easy_setopt(gCurl, CURLOPT_URL, url);
+	curl_set_additional_options(gCurl);
+	curl_easy_setopt(gCurl, CURLOPT_WRITEFUNCTION, write_to_file_cb);
+	curl_easy_setopt(gCurl, CURLOPT_WRITEDATA, &output);
+	curl_easy_setopt(gCurl, CURLOPT_TIMEOUT, 0);
 
-	res = curl_easy_perform(g_curl);
+	res = curl_easy_perform(gCurl);
 
 	if (output.fp)
 		fclose(output.fp);
@@ -1105,13 +1109,13 @@ int DCPCALL FsExecuteFile(HWND MainWin, char* RemoteName, char* Verb)
 
 	if (strcmp(Verb, "open") == 0)
 	{
-		xmlChar *url = name_to_url(RemoteName + 1, g_doc);
+		xmlChar *url = name_to_url(RemoteName + 1, gDoc);
 
 		if (url)
 		{
 			if (is_reparse_point((char*)url))
 			{
-				g_strlcpy(g_settings.url, (char*)url, PATH_MAX);
+				g_strlcpy(gSettings.url, (char*)url, PATH_MAX);
 				result = FS_EXEC_OK;
 			}
 			else
@@ -1122,11 +1126,11 @@ int DCPCALL FsExecuteFile(HWND MainWin, char* RemoteName, char* Verb)
 	}
 	else if (strcmp(Verb, "properties") == 0)
 	{
-		if (RemoteName[1] == '\0' && g_settings.init)
+		if (RemoteName[1] == '\0' && gSettings.init)
 			return result;
 		else
 		{
-			g_strlcpy(g_selected_file, RemoteName + 1, PATH_MAX);
+			g_strlcpy(gSelectedFile, RemoteName + 1, PATH_MAX);
 			ShowCfgURLDlg();
 		}
 
@@ -1135,7 +1139,7 @@ int DCPCALL FsExecuteFile(HWND MainWin, char* RemoteName, char* Verb)
 	else if (strncmp(Verb, "quote", 5) == 0)
 	{
 		if (strncmp(Verb + 6, "sizes", 9) == 0)
-			g_settings.ask_sizes = !g_settings.ask_sizes;
+			gSettings.ask_sizes = !gSettings.ask_sizes;
 
 		result = FS_EXEC_OK;
 	}
@@ -1157,15 +1161,15 @@ void DCPCALL FsSetDefaultParams(FsDefaultParamStruct* dps)
 
 	if (dladdr(lfm_name, &dlinfo) != 0)
 	{
-		g_strlcpy(g_lfm_path, dlinfo.dli_fname, PATH_MAX);
-		char *pos = strrchr(g_lfm_path, '/');
+		g_strlcpy(gLFMPath, dlinfo.dli_fname, PATH_MAX);
+		char *pos = strrchr(gLFMPath, '/');
 
 		if (pos)
 			strcpy(pos + 1, lfm_name);
 	}
 
-	g_strlcpy(g_history_file, dps->DefaultIniName, PATH_MAX);
-	char *pos = strrchr(g_history_file, '/');
+	g_strlcpy(gHistoryFile, dps->DefaultIniName, PATH_MAX);
+	char *pos = strrchr(gHistoryFile, '/');
 
 	if (pos)
 		strcpy(pos + 1, "history_href.txt");
@@ -1201,7 +1205,7 @@ int DCPCALL FsContentGetValue(char* FileName, int FieldIndex, int UnitIndex, voi
 	int result = ft_fieldempty;
 
 	gchar *xpath = g_strdup_printf("/links/link[@name=\"%s\"]", FileName[0] == '/' ? FileName + 1 : FileName);
-	xmlXPathContextPtr context = xmlXPathNewContext(g_doc);
+	xmlXPathContextPtr context = xmlXPathNewContext(gDoc);
 	xmlXPathObjectPtr obj = xmlXPathEvalExpression((xmlChar*)xpath, context);
 	xmlXPathFreeContext(context);
 	g_free(xpath);
@@ -1243,7 +1247,7 @@ void DCPCALL ExtensionInitialize(tExtensionStartupInfo* StartupInfo)
 {
 	if (gDialogApi == NULL)
 	{
-		g_settings.init = TRUE;
+		gSettings.init = TRUE;
 		gDialogApi = malloc(sizeof(tExtensionStartupInfo));
 		memcpy(gDialogApi, StartupInfo, sizeof(tExtensionStartupInfo));
 	}
@@ -1253,12 +1257,12 @@ void DCPCALL ExtensionFinalize(void* Reserved)
 {
 	xmlCleanupParser();
 
-	if (g_doc)
-		xmlFreeDoc(g_doc);
+	if (gDoc)
+		xmlFreeDoc(gDoc);
 
-	if (g_curl)
+	if (gCurl)
 	{
-		curl_easy_cleanup(g_curl);
+		curl_easy_cleanup(gCurl);
 		curl_global_cleanup();
 	}
 
