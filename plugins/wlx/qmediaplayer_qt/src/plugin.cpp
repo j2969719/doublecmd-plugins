@@ -39,6 +39,7 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 
 	QAudioOutput *audio = new QAudioOutput((QObject*)view);
 	player->setAudioOutput(audio);
+	player->setLoops(QMediaPlayer::Infinite);
 
 	QVBoxLayout *main = new QVBoxLayout(view);
 
@@ -197,6 +198,10 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 
 	video->setAspectRatioMode(Qt::KeepAspectRatio);
 	video->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+	QPalette pal;
+	pal.setColor(QPalette::Window, Qt::black);
+	video->setPalette(pal);
+	video->setAutoFillBackground(true);
 	main->addWidget(video);
 
 	QLabel *linfo = new QLabel(view);
