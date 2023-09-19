@@ -55,6 +55,7 @@ typedef struct _CustomData
 	guint total_pages;
 	guint alloc_width;
 	guint alloc_height;
+	gboolean quickview;
 
 } CustomData;
 
@@ -349,7 +350,10 @@ static GtkWidget *create_ui(HWND ParentWin, CustomData *data)
 	gtk_box_pack_start(GTK_BOX(main_vbox), data->scrolled_window, TRUE, TRUE, 0);
 	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(data->scrolled_window),
 	                               GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
-	gtk_widget_grab_focus(data->scrolled_window);
+
+	if (!data->quickview)
+		gtk_widget_grab_focus(data->scrolled_window);
+
 	g_signal_connect(G_OBJECT(data->scrolled_window), "size-allocate",
 	                 G_CALLBACK(on_size_allocate), data);
 	g_signal_connect(G_OBJECT(data->scrolled_window), "key_press_event",
@@ -449,6 +453,8 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	fileUri = g_filename_to_uri(FileToLoad, NULL, NULL);
 	data->document = poppler_document_new_from_file(fileUri, NULL, NULL);
 	data->total_pages = poppler_document_get_n_pages(data->document);
+	const gchar *role = gtk_window_get_role(GTK_WINDOW(gtk_widget_get_toplevel(GTK_WIDGET(ParentWin))));
+	data->quickview = (g_strcmp0(role, "TfrmViewer") != 0);
 
 	if (fileUri)
 		g_free(fileUri);
