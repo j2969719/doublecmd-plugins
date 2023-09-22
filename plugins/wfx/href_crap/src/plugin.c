@@ -301,13 +301,27 @@ static void parse_fileinfo(char *text, xmlNodePtr link, xmlDocPtr doc)
 
 static gboolean is_reparse_point(char *url)
 {
-	if (url[strlen(url) - 1] == '/')
-		return TRUE;
+	gboolean result = FALSE;
+	char *link = g_strdup(url);
 
-	char *dot = strrchr(url, '.');
+	char *pos = strrchr(link, '?');
+
+	if (pos)
+		*pos = '\0';
+
+	if (url[strlen(link) - 1] == '/')
+	{
+		g_free(link);
+		return TRUE;
+	}
+
+	char *dot = strrchr(link, '.');
 
 	if (!dot)
+	{
+		g_free(link);
 		return FALSE;
+	}
 
 	char *exts[] =
 	{
@@ -321,11 +335,15 @@ static gboolean is_reparse_point(char *url)
 	for (char **p = exts; *p != NULL; p++)
 	{
 		if (g_strcmp0(*p, dot) == 0)
-			return TRUE;
+		{
+			result = TRUE;
+			break;
+		}
 	}
 
+	g_free(link);
 
-	return FALSE;
+	return result;
 }
 
 static gboolean is_ext_candidate(char *text, char *dot)
