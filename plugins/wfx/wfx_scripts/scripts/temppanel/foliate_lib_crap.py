@@ -6,7 +6,10 @@ import json
 import stat
 import tempfile
 import calendar
-import send2trash
+try:
+	import send2trash
+except:
+	pass
 from urllib.parse import quote, unquote, urlparse
 from datetime import datetime, timezone
 from shutil import copyfile
@@ -56,7 +59,7 @@ def vfs_init():
 			title = info['metadata']['title'][:80] + '...'
 		rawname = autor + ' - ' + title
 		ext = os.path.splitext(element[1])[1]
-		tmp_name = "".join(c for c in rawname if c != "/")
+		tmp_name = "".join(c for c in rawname.lstrip() if c != "/")
 		extra = ''
 		i = 1
 		name = tmp_name + ext

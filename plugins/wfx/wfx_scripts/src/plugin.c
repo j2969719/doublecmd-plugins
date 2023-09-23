@@ -15,6 +15,7 @@
 #include "extension.h"
 
 #define MAX_SCRIPT_LINES 10
+#define PICTURE_MAX_SIZE 3000000
 
 #ifdef  TEMP_PANEL
 #define EXEC_DIR "scripts/temppanel"
@@ -35,7 +36,6 @@
 
 #define STRIP_OPT(S, O) S + strlen(O) + 1
 
-
 #define OPT_STATUSINFO "Fs_StatusInfo_Needed"
 #define OPT_GETVALUE "Fs_GetValue_Needed"
 
@@ -51,12 +51,11 @@
 #define OPT_PUSH "Fs_PushValue"
 #define OPT_ASK "Fs_PushYesNo"
 
-
+#define MARK_PIDS  "Fs_PIDStorage"
 #define MARK_NOISE "Fs_DebugMode"
 #define MARK_INUSE "Fs_InUse"
-#define MARK_BOOL "Fs_Bool"
-#define MARK_PREV "Fs_Old"
-
+#define MARK_BOOL  "Fs_Bool"
+#define MARK_PREV  "Fs_Old"
 
 #define VERB_INIT     "init"
 #define VERB_DEINIT   "deinit"
@@ -93,10 +92,14 @@ typedef struct sVFSDirData
 
 typedef struct sProgressData
 {
+	gchar *script;
+	gchar *verb;
 	gchar *arg1;
 	gchar *arg2;
-	GPid  pid;
+	int *pid;
 	int *progress;
+	gboolean *is_running;
+	gboolean *result;
 } tProgressData;
 
 int gPluginNr;
@@ -112,13 +115,12 @@ static gchar *gCaller = NULL;
 static gchar **gChoice = NULL;
 static GKeyFile *gCfg = NULL;
 static gboolean gNoise = FALSE;
+static gboolean gExtraNoise = FALSE;
 static char gScript[PATH_MAX];
 static char gExecStart[PATH_MAX];
 static char gScriptDir[PATH_MAX];
-static char gLFMPath[PATH_MAX];
 static char gHistoryFile[PATH_MAX];
 static char gLang[10];
-
 
 unsigned long FileTimeToUnixTime(LPFILETIME ft)
 {
@@ -142,20 +144,6 @@ static void SetCurrentFileTime(LPFILETIME ft)
 	ll = ll * 10 + 116444736000000000;
 	ft->dwLowDateTime = (DWORD)ll;
 	ft->dwHighDateTime = ll >> 32;
-}
-
-
-static gboolean CheckCancel(gpointer userdata)
-{
-	tProgressData *data = (tProgressData*)userdata;
-
-	if (gProgressProc(gPluginNr, data->arg1, data->arg2, *data->progress))
-	{
-		kill(data->pid, SIGTERM);
-		return FALSE;
-	}
-
-	return TRUE;
 }
 
 static void LogMessage(int PluginNr, int MsgType, char* LogString)
@@ -221,6 +209,7 @@ static gchar *ReplaceString(gchar *Text, gchar *Old, gchar *New)
 
 	return result;
 }
+
 static gchar *TranslateString(GKeyFile *KeyFile, char *String)
 {
 	gchar *result = g_strdup(String);
@@ -274,7 +263,7 @@ static gchar *TranslateString(GKeyFile *KeyFile, char *String)
 	return result;
 }
 
-static gboolean ExecuteScript(gchar * script_name, gchar * verb, char *arg1, char *arg2, gchar **output, gboolean is_progress_needed)
+static gboolean ExecuteScript(gchar * script_name, gchar * verb, char *arg1, char *arg2, gchar **output, tProgressData *data)
 {
 	gchar *argv[4];
 	gsize len, term;
@@ -286,6 +275,8 @@ static gboolean ExecuteScript(gchar * script_name, gchar * verb, char *arg1, cha
 	gboolean result = TRUE;
 	gchar **envp = NULL;
 	GError *err = NULL;
+
+	gchar *pids = g_key_file_get_string(gCfg, script_name, MARK_PIDS, NULL);
 
 	if (!script_name || script_name[0] == '\0')
 		return FALSE;
@@ -321,23 +312,32 @@ static gboolean ExecuteScript(gchar * script_name, gchar * verb, char *arg1, cha
 	if (err)
 	{
 		LogMessage(gPluginNr, MSGTYPE_IMPORTANTERROR, (err)->message);
-		g_clear_error(&err);
+		g_free(pids);
 	}
-
-	if (result)
+	else if (result)
 	{
-		guint timer_id;
-		int progress = 0;
+		gchar *pid_string = g_strdup_printf("%d;", (int)pid);
 
-		if (is_progress_needed)
+		if (!pids)
+			g_key_file_set_string(gCfg, script_name, MARK_PIDS, pid_string);
+		else
 		{
-			tProgressData *data = g_new0(tProgressData, 1);
-			data->arg1 = arg1;
-			data->arg2 = arg2;
-			data->pid = pid;
-			data->progress = &progress;
-			timer_id = g_timeout_add_full(G_PRIORITY_DEFAULT, 1000, CheckCancel, data, (GDestroyNotify)g_free);
+			gchar *string = g_strdup_printf("%s%s", pids, pid_string);
+			g_key_file_set_string(gCfg, script_name, MARK_PIDS, string);
+			g_free(string);
+
+			if (gNoise && pids[0] != '\0')
+			{
+				string  = g_strdup_printf("another instance of the script is running (%s)", pids);
+				LogMessage(gPluginNr, MSGTYPE_DETAILS, string);
+				g_free(string);
+			}
+
+			g_free(pids);
 		}
+
+		if (data)
+			*data->pid = (int)pid;
 
 		GIOChannel *stdout_chan = g_io_channel_unix_new(stdout_fp);
 		GString *lines = g_string_new(NULL);
@@ -352,20 +352,12 @@ static gboolean ExecuteScript(gchar * script_name, gchar * verb, char *arg1, cha
 				if (gNoise)
 					LogMessage(gPluginNr, MSGTYPE_DETAILS, line);
 
-				if (is_progress_needed)
+				if (data)
 				{
 					gint64 ret = g_ascii_strtoll(line, NULL, 0);
 
 					if (ret >= 0 || ret <= 100)
-						progress = ret;
-					else
-
-
-						if (gProgressProc(gPluginNr, arg1, arg2, progress))
-						{
-							kill(pid, SIGTERM);
-							break;
-						}
+						*data->progress = (int)ret;
 				}
 
 				g_free(line);
@@ -395,7 +387,6 @@ static gboolean ExecuteScript(gchar * script_name, gchar * verb, char *arg1, cha
 			LogMessage(gPluginNr, MSGTYPE_IMPORTANTERROR, (err)->message);
 			g_clear_error(&err);
 		}
-
 
 		waitpid(pid, &status, 0);
 		g_spawn_close_pid(pid);
@@ -430,8 +421,15 @@ static gboolean ExecuteScript(gchar * script_name, gchar * verb, char *arg1, cha
 		else
 			g_string_free(lines, TRUE);
 
-		if (is_progress_needed)
-			g_source_remove(timer_id);
+		pids = g_key_file_get_string(gCfg, script_name, MARK_PIDS, NULL);
+		pids = ReplaceString(pids, pid_string, "");
+
+		if (pids)
+			g_key_file_set_string(gCfg, script_name, MARK_PIDS, pids);
+		else
+			g_key_file_remove_key(gCfg, script_name, MARK_PIDS, NULL);
+
+		g_free(pid_string);
 	}
 
 	if (gNoise)
@@ -446,6 +444,52 @@ static gboolean ExecuteScript(gchar * script_name, gchar * verb, char *arg1, cha
 
 	if (status != 0)
 		result = FALSE;
+
+	return result;
+}
+
+static gpointer ExecFileOP(gpointer userdata)
+{
+	tProgressData *data = (tProgressData*)userdata;
+	*data->result = ExecuteScript(data->script, data->verb, data->arg1, data->arg2, NULL, data);
+	*data->is_running = FALSE;
+	return NULL;
+}
+
+static gboolean RunFileOP(gchar *script_name, gchar *verb, char *arg1, char *arg2)
+{
+	tProgressData *data = g_new0(tProgressData, 1);
+	int pid = 0;
+	int progress = 0;
+	gboolean result = FALSE;
+	gboolean is_running = TRUE;
+	data->script  = script_name;
+	data->verb  = verb;
+	data->arg1  = arg1;
+	data->arg2  = arg2;
+	data->pid  = &pid;
+	data->progress  = &progress;
+	data->result  = &result;
+	data->is_running  = &is_running;
+
+	GThread *thread = g_thread_new("FILEOP", ExecFileOP, data);
+
+	while (is_running)
+	{
+		if (gProgressProc(gPluginNr, arg1, arg2, progress))
+		{
+			if (pid > 0)
+				kill(pid, SIGTERM);
+
+			break;
+		}
+
+		sleep(0.1);
+	}
+
+	g_thread_join(thread);
+	g_thread_unref(thread);
+	g_free(data);
 
 	return result;
 }
@@ -500,7 +544,6 @@ static void LoadPreview(uintptr_t pDlg, gchar * file)
 		src_file = g_strdup_printf("%s/%s", gScriptDir, file);
 	}
 
-
 	GFile *gfile = g_file_new_for_path(src_file);
 
 	if (gfile)
@@ -526,6 +569,188 @@ static void LoadPreview(uintptr_t pDlg, gchar * file)
 static gboolean IsValidOpt(gchar * str, gchar * opt)
 {
 	return (strncmp(str, opt, strlen(opt)) == 0 && strlen(str) > (strlen(opt) + 2));
+}
+
+static gchar* BuildPictureData(char *FileName, char *LinePrefix, char *Class)
+{
+	unsigned char buff[32];
+	struct stat buf;
+
+	if (stat(FileName, &buf) != 0 || buf.st_size == 0 || buf.st_size > PICTURE_MAX_SIZE)
+		return NULL;
+
+	ssize_t len = strlen(Class);
+	unsigned char class_size = (unsigned char)len;
+	GString *data = g_string_new(NULL);
+	g_string_append(data, LinePrefix);
+	g_string_append_printf(data, "%02X", class_size);
+
+	for (int i = 0; i < len; i++)
+		g_string_append_printf(data, "%02X", Class[i]);
+
+	unsigned char size[4];
+	unsigned long s = (unsigned long)buf.st_size;
+	size[3] = (s >> 24) & 0xFF;
+	size[2] = (s >> 16) & 0xFF;
+	size[1] = (s >> 8) & 0xFF;
+	size[0] = s & 0xFF;
+
+	for (int i = 0; i < 4; i++)
+		g_string_append_printf(data, "%02X", size[i]);
+
+	int fd = open(FileName, O_RDONLY);
+
+	if (fd > -1)
+	{
+		int first_size = sizeof(buff) - (len + 5);
+
+		if ((len = read(fd, buff, first_size)) > 0)
+		{
+			for (int i = 0; i < len; i++)
+				g_string_append_printf(data, "%02X", buff[i]);
+		}
+
+		g_string_append(data, "\n");
+
+		while ((len = read(fd, buff, sizeof(buff))) > 0)
+		{
+			g_string_append(data, LinePrefix);
+
+			for (int i = 0; i < len; i++)
+				g_string_append_printf(data, "%02X", buff[i]);
+
+			g_string_append(data, "\n");
+		}
+
+		close(fd);
+	}
+
+	if (strlen(data->str) < strlen(LinePrefix) + strlen(Class) + 6)
+	{
+		g_string_free(data, TRUE);
+		return NULL;
+	}
+
+	return g_string_free(data, FALSE);
+}
+
+static void AddPropLabels(GString *lfm_string)
+{
+	int i = 0;
+
+	if (gProps && gProps[0] != '\0')
+	{
+		GKeyFile *langs = OpenTranslations(gScript);
+		gchar **split = g_strsplit(gProps, "\n", -1);
+
+		for (gchar **p = split; *p != NULL; p++)
+		{
+			if (!IsValidOpt(*p, OPT_ACTS))
+			{
+				gchar **res = g_strsplit(*p, "\t", 2);
+
+				if (!res[0] || !res[1])
+					continue;
+
+				if (g_strcmp0(res[0], "filetype") == 0 || g_strcmp0(res[0], "filetype") == 0 || g_strcmp0(res[0], "path") == 0 || g_strcmp0(res[0], "url") == 0)
+					continue;
+
+				i++;
+
+				if (strncmp(res[0], "png:", 4) == 0)
+				{
+					gchar *picture = NULL;
+					const char label_body[] =  "      object lProp%d: TLabel\n"
+					                           "        Left = 0\n"
+					                           "        Height = 72\n"
+					                           "        Top = 305\n"
+					                           "        Width = 202\n"
+					                           "        Alignment = taRightJustify\n"
+					                           "        Caption = 'Label1'\n"
+					                           "        Layout = tlCenter\n"
+					                           "        ParentColor = False\n"
+					                           "        ShowAccelChar = False\n"
+					                           "        Visible = False\n"
+					                           "        WordWrap = True\n"
+					                           "      end\n"
+					                           "      object iValue%d: TImage\n"
+					                           "        Left = 212\n"
+					                           "        Height = 72\n"
+					                           "        Top = 305\n"
+					                           "        Width = 295\n"
+					                           "        AntialiasingMode = amOn\n"
+					                           "        Constraints.MaxHeight = 256\n"
+					                           "        Picture.Data = {\n"
+					                           "        %s"
+					                           "        }\n"
+					                           "        Proportional = True\n"
+					                           "        Stretch = True\n"
+					                           "        Transparent = True\n"
+					                           "        Visible = False\n"
+					                           "      end\n";
+
+					if (res[1][0] == '/')
+						picture = BuildPictureData(res[1], "      ", "TPortableNetworkGraphic");
+
+					/*					else
+										{
+											GtkIconTheme *theme = gtk_icon_theme_get_default();
+											GtkIconInfo *icon_info = gtk_icon_theme_lookup_icon(theme, res[1], 48, 0);
+											GdkPixbuf *pixbuf = gtk_icon_info_load_icon(icon_info, NULL);
+											gtk_icon_info_free(icon_info);
+											gchar *tmpdir = g_dir_make_tmp("gtkrecent_XXXXXX", NULL);
+											gchar *img = g_strdup_printf("%s/image,png", tmpdir);
+											gdk_pixbuf_save(pixbuf, img, "png", NULL, NULL);
+											g_object_unref(pixbuf);
+											picture = BuildPictureData(img, "      ", "TPortableNetworkGraphic");
+											remove(img);
+											remove(tmpdir);
+											g_free(tmpdir);
+											g_free(img);
+										}
+					*/
+					if (picture)
+					{
+						g_string_append_printf(lfm_string, label_body, i, i, picture);
+						g_free(picture);
+					}
+				}
+				else
+				{
+					const char label_body[] =  "      object lProp%d: TLabel\n"
+					                           "        Left = 0\n"
+					                           "        Height = 17\n"
+					                           "        Top = 129\n"
+					                           "        Width = 202\n"
+					                           "        Alignment = taRightJustify\n"
+					                           "        Caption = ''\n"
+					                           "        ParentColor = False\n"
+					                           "        ParentFont = False\n"
+					                           "        ShowAccelChar = False\n"
+					                           "        Visible = False\n"
+					                           "        WordWrap = True\n"
+					                           "      end\n"
+					                           "      object lValue%d: TLabel\n"
+					                           "        Left = 212\n"
+					                           "        Height = 17\n"
+					                           "        Top = 129\n"
+					                           "        Width = 295\n"
+					                           "        Caption = ''\n"
+					                           "        ParentColor = False\n"
+					                           "        ParentFont = False\n"
+					                           "        ShowAccelChar = False\n"
+					                           "        Visible = False\n"
+					                           "        WordWrap = True\n"
+					                           "      end\n";
+
+					g_string_append_printf(lfm_string, label_body, i, i);
+				}
+			}
+		}
+
+		g_strfreev(split);
+		CloseTranslations(langs);
+	}
 }
 
 static void FillProps(uintptr_t pDlg)
@@ -567,19 +792,6 @@ static void FillProps(uintptr_t pDlg)
 				if (!res[0] || !res[1])
 					continue;
 
-				if (i > 10)
-				{
-					gchar *prop = TranslateString(langs, g_strstrip(res[0]));
-					gchar *value = TranslateString(langs, g_strstrip(res[1]));
-					gchar *string = g_strdup_printf("%s\t%s", prop, value);
-					SendDlgMsg(pDlg, "lbExtraProps", DM_SHOWITEM, 1, 0);
-					SendDlgMsg(pDlg, "lbExtraProps", DM_LISTADDSTR, (intptr_t)string, 0);
-					g_free(prop);
-					g_free(value);
-					g_free(string);
-					continue;
-				}
-
 				if (g_ascii_strcasecmp(res[0], "filetype") == 0)
 					SendDlgMsg(pDlg, "lType", DM_SETTEXT, (intptr_t)g_strstrip(res[1]), 0);
 				else if (g_ascii_strcasecmp(res[0], "content_type") == 0)
@@ -602,6 +814,19 @@ static void FillProps(uintptr_t pDlg)
 					SendDlgMsg(pDlg, "lURL", DM_SETTEXT, (intptr_t)g_strstrip(res[1]), 0);
 					SendDlgMsg(pDlg, "lURLLabel", DM_SHOWITEM, 1, 0);
 					SendDlgMsg(pDlg, "lURL", DM_SHOWITEM, 1, 0);
+				}
+				else if (strncmp(res[0], "png:", 4) == 0 && strlen(res[0]) > 4)
+				{
+					gchar *prop = TranslateString(langs, g_strstrip(res[0] + 4));
+					gchar *item = g_strdup_printf("lProp%d", i);
+					SendDlgMsg(pDlg, item, DM_SETTEXT, (intptr_t)prop, 0);
+					SendDlgMsg(pDlg, item, DM_SHOWITEM, 1, 0);
+					g_free(item);
+					item = g_strdup_printf("iValue%d", i);
+					SendDlgMsg(pDlg, item, DM_SHOWITEM, 1, 0);
+					g_free(item);
+					g_free(prop);
+					i++;
 				}
 				else
 				{
@@ -666,7 +891,7 @@ static void ParseOpts(gchar * script, gchar * text);
 static void SetOpt(gchar * script, gchar * opt, gchar * value)
 {
 	gchar *output = NULL;
-	ExecuteScript(script, VERB_SETOPT, opt, value, &output, FALSE);
+	ExecuteScript(script, VERB_SETOPT, opt, value, &output, NULL);
 
 	if (output && output[0] != '\0')
 		ParseOpts(script, output);
@@ -733,7 +958,6 @@ intptr_t DCPCALL DlgRequestValueProc(uintptr_t pDlg, char* DlgItemName, intptr_t
 			SendDlgMsg(pDlg, "lbHistory", DM_SHOWITEM, (int)history, 0);
 			SendDlgMsg(pDlg, "lbHistory", DM_LISTADDSTR, (intptr_t)value, 0);
 
-
 			if (history)
 			{
 				int num = 0;
@@ -744,7 +968,6 @@ intptr_t DCPCALL DlgRequestValueProc(uintptr_t pDlg, char* DlgItemName, intptr_t
 					g_free(key);
 					key = g_strdup_printf("%s_%s_%d", MARK_PREV, text, num++);
 					gchar *oldvalue = g_key_file_get_string(gCfg, gScript, key, NULL);
-					g_print("!!! %s %s", value, oldvalue);
 
 					if (oldvalue && strcmp(oldvalue, value) != 0)
 						SendDlgMsg(pDlg, "lbHistory", DM_LISTADDSTR, (intptr_t)oldvalue, 0);
@@ -773,7 +996,7 @@ intptr_t DCPCALL DlgRequestValueProc(uintptr_t pDlg, char* DlgItemName, intptr_t
 			if (res && res[0] != '\0')
 			{
 				SaveHistory(pDlg, text, res);
-				ExecuteScript(gScript, VERB_SETOPT, text, res, &output, FALSE);
+				ExecuteScript(gScript, VERB_SETOPT, text, res, &output, NULL);
 
 				if (output && output[0] != '\0')
 					ParseOpts(gScript, output);
@@ -865,7 +1088,6 @@ static gchar *BuildRequestLFMData(const char *lfmdata_templ, char *text)
 	return lfmdata;
 }
 
-
 static void ShowSelectFileDlg(char *text)
 {
 	char lfmdata_templ[] = ""
@@ -938,6 +1160,7 @@ static void ShowSelectFileDlg(char *text)
 	                       "    Height = 36\n"
 	                       "    Top = 37\n"
 	                       "    Width = 598\n"
+	                       "    DialogKind = %s\n"
 	                       "    Filter = '%s'\n"
 	                       "    FilterIndex = 0\n"
 	                       "    HideDirectories = False\n"
@@ -996,13 +1219,24 @@ static void ShowSelectFileDlg(char *text)
 
 	if (len > 0)
 	{
+		gchar *filer = NULL;
+		gboolean is_opendlg = TRUE;
 		GKeyFile *langs = OpenTranslations(gScript);
 		gchar *string = TranslateString(langs, split[0]);
+
+		if (split[1] && strlen(split[1]) > 0)
+			filer = TranslateString(langs, split[1]);
+
 		CloseTranslations(langs);
+
+		if (g_strv_length(split) > 2 && g_ascii_strcasecmp(split[2], "save") == 0)
+			is_opendlg = FALSE;
+
 		gchar *prev = g_key_file_get_string(gCfg, gScript, split[0], NULL);
-		gchar *lfmdata = g_strdup_printf(lfmdata_templ, split[0], string, split[1] ? split[1] : "*.*|*.*", prev ? prev : "");
+		gchar *lfmdata = g_strdup_printf(lfmdata_templ, split[0], string, is_opendlg ? "dkOpen" : "dkSave", filer ? filer : "*.*|*.*", prev ? prev : "");
 		g_free(prev);
 		g_free(string);
+		g_free(filer);
 
 		gDialogApi->DialogBoxLFM((intptr_t)lfmdata, (unsigned long)strlen(lfmdata), DlgRequestValueProc);
 		g_free(lfmdata);
@@ -1330,7 +1564,7 @@ intptr_t DCPCALL DlgMultiChoiceProc(uintptr_t pDlg, char* DlgItemName, intptr_t 
 
 			if (res && res[0] != '\0')
 			{
-				ExecuteScript(gScript, VERB_SETOPT, text, res, &output, FALSE);
+				ExecuteScript(gScript, VERB_SETOPT, text, res, &output, NULL);
 
 				if (output && output[0] != '\0')
 					ParseOpts(gScript, output);
@@ -1392,7 +1626,7 @@ object MultichoiceDialogBox: TMultichoiceDialogBox
     Top = 21
     Width = 358
     BorderSpacing.Top = 10
-    Constraints.MinWidth = 300
+    Constraints.MinWidth = 500
     ItemHeight = 0
     Style = csOwnerDrawVariable
     TabOrder = 1
@@ -1619,7 +1853,7 @@ static void ParseOpts(gchar *script, gchar *text)
 
 							if (gRequestProc && gRequestProc(gPluginNr, RT_Password, script, NULL, value, MAX_PATH))
 							{
-								ExecuteScript(script, VERB_SETOPT, *p, value, &output, FALSE);
+								ExecuteScript(script, VERB_SETOPT, *p, value, &output, NULL);
 
 
 								if (!gCryptProc)
@@ -1662,8 +1896,27 @@ static void DeInitializeScript(gchar *script)
 {
 	if (g_key_file_get_boolean(gCfg, script, MARK_INUSE, NULL))
 	{
-		if (!ExecuteScript(script, VERB_DEINIT, NULL, NULL, NULL, FALSE) && gNoise)
+		if (!ExecuteScript(script, VERB_DEINIT, NULL, NULL, NULL, NULL) && gNoise)
 			LogMessage(gPluginNr, MSGTYPE_DETAILS, "Deinitialization not implemented or not completed successfully");
+
+		gsize len;
+		gchar **pids = g_key_file_get_string_list(gCfg, script, MARK_PIDS, &len, NULL);
+
+		for (gsize i = 0; i < len; i++)
+		{
+			int pid = atoi(pids[i]);
+
+			if (pid > 0)
+			{
+				gchar *message = g_strdup_printf("PID %d: SIGTERM", pid);
+				LogMessage(gPluginNr, MSGTYPE_DETAILS, message);
+				kill(pid, SIGTERM);
+				g_free(message);
+			}
+		}
+
+		g_key_file_remove_key(gCfg, script, MARK_PIDS, NULL);
+		g_strfreev(pids);
 
 		g_key_file_remove_key(gCfg, script, MARK_INUSE, NULL);
 		g_key_file_remove_key(gCfg, script, OPT_ENVVAR, NULL);
@@ -1690,7 +1943,7 @@ static void InitializeScript(gchar *script)
 	g_free(message);
 #endif
 
-	ExecuteScript(script, VERB_INIT, NULL, NULL, &output, FALSE);
+	ExecuteScript(script, VERB_INIT, NULL, NULL, &output, NULL);
 	g_key_file_set_boolean(gCfg, script, MARK_INUSE, TRUE);
 	ParseOpts(script, output);
 	g_free(output);
@@ -1705,6 +1958,8 @@ intptr_t DCPCALL DlgPropertiesProc(uintptr_t pDlg, char* DlgItemName, intptr_t M
 	case DN_INITDIALOG:
 		gNoise = g_key_file_get_boolean(gCfg, gScript, MARK_NOISE, NULL);
 		SendDlgMsg(pDlg, "ckNoise", DM_SETCHECK, (intptr_t)gNoise, 0);
+		SendDlgMsg(pDlg, "ckExtraNoise", DM_ENABLE, (intptr_t)gNoise, 0);
+		SendDlgMsg(pDlg, "ckExtraNoise", DM_SETCHECK, (intptr_t)gExtraNoise, 0);
 		SendDlgMsg(pDlg, "lScriptName", DM_SETTEXT, (intptr_t)gScript, 0);
 		LoadPreview(pDlg, gScript);
 
@@ -1723,6 +1978,7 @@ intptr_t DCPCALL DlgPropertiesProc(uintptr_t pDlg, char* DlgItemName, intptr_t M
 			g_free(content_type);
 			g_free(descr);
 			SendDlgMsg(pDlg, "pProperties", DM_SHOWITEM, 1, 0);
+			SendDlgMsg(pDlg, "ScrollBox", DM_SHOWITEM, 1, 0);
 			SendDlgMsg(pDlg, "lFileName", DM_SHOWITEM, 1, 0);
 			SendDlgMsg(pDlg, "lTypeLabel", DM_SHOWITEM, 1, 0);
 			SendDlgMsg(pDlg, "lType", DM_SHOWITEM, 1, 0);
@@ -1746,23 +2002,25 @@ intptr_t DCPCALL DlgPropertiesProc(uintptr_t pDlg, char* DlgItemName, intptr_t M
 		else if (strcmp(DlgItemName, "btnReset") == 0)
 		{
 			g_key_file_remove_group(gCfg, gScript, NULL);
-			ExecuteScript(gScript, VERB_RESET, NULL, NULL, NULL, FALSE);
+			ExecuteScript(gScript, VERB_RESET, NULL, NULL, NULL, NULL);
 		}
 		else if (strcmp(DlgItemName, "btnAct") == 0)
 		{
 			int i = SendDlgMsg(pDlg, "cbAct", DM_LISTGETITEMINDEX, 0, 0);
+
 			if (i > -1)
 			{
-			char *cmd = g_strdup((char*)SendDlgMsg(pDlg, "lbDataStore", DM_LISTGETITEM, i, 0));
+				//SendDlgMsg(pDlg, "cbAct", DM_SHOWDIALOG, 0, 0);
+				char *cmd = g_strdup((char*)SendDlgMsg(pDlg, "lbDataStore", DM_LISTGETITEM, i, 0));
 
-			if (cmd && cmd[0] != '\0')
-			{
-				SetOpt(gScript, cmd, gCaller);
-				SendDlgMsg(pDlg, DlgItemName, DM_CLOSE, ID_OK, 0);
+				if (cmd && cmd[0] != '\0')
+				{
+					SetOpt(gScript, cmd, gCaller);
+					SendDlgMsg(pDlg, DlgItemName, DM_CLOSE, ID_OK, 0);
+				}
+
+				g_free(cmd);
 			}
-
-			g_free(cmd);
-		}
 		}
 
 		break;
@@ -1771,7 +2029,18 @@ intptr_t DCPCALL DlgPropertiesProc(uintptr_t pDlg, char* DlgItemName, intptr_t M
 		if (strcmp(DlgItemName, "ckNoise") == 0)
 		{
 			gNoise = (gboolean)SendDlgMsg(pDlg, DlgItemName, DM_GETCHECK, 0, 0);
+			SendDlgMsg(pDlg, "ckExtraNoise", DM_ENABLE, (intptr_t)gNoise, 0);
 			g_key_file_set_boolean(gCfg, gScript, MARK_NOISE, gNoise);
+
+			if (!gNoise)
+			{
+				gExtraNoise = FALSE;
+				SendDlgMsg(pDlg, "ckExtraNoise", DM_SETCHECK, (intptr_t)gExtraNoise, 0);
+			}
+		}
+		else if (strcmp(DlgItemName, "ckExtraNoise") == 0)
+		{
+			gExtraNoise = (gboolean)SendDlgMsg(pDlg, DlgItemName, DM_GETCHECK, 0, 0);
 		}
 		else if (strcmp(DlgItemName, "cbAct") == 0)
 		{
@@ -1791,18 +2060,20 @@ intptr_t DCPCALL DlgPropertiesProc(uintptr_t pDlg, char* DlgItemName, intptr_t M
 			if ( *key == 13)
 			{
 				int i = SendDlgMsg(pDlg, "cbAct", DM_LISTGETITEMINDEX, 0, 0);
+
 				if (i > -1)
 				{
-				char *cmd = g_strdup((char*)SendDlgMsg(pDlg, "lbDataStore", DM_LISTGETITEM, i, 0));
+					SendDlgMsg(pDlg, "cbAct", DM_SHOWDIALOG, 0, 0);
+					char *cmd = g_strdup((char*)SendDlgMsg(pDlg, "lbDataStore", DM_LISTGETITEM, i, 0));
 
-				if (cmd && cmd[0] != '\0')
-				{
-					SetOpt(gScript, cmd, gCaller);
-					SendDlgMsg(pDlg, DlgItemName, DM_CLOSE, ID_OK, 0);
+					if (cmd && cmd[0] != '\0')
+					{
+						SetOpt(gScript, cmd, gCaller);
+						SendDlgMsg(pDlg, DlgItemName, DM_CLOSE, ID_OK, 0);
+					}
+
+					g_free(cmd);
 				}
-
-				g_free(cmd);
-			}
 			}
 		}
 
@@ -1816,8 +2087,430 @@ intptr_t DCPCALL DlgPropertiesProc(uintptr_t pDlg, char* DlgItemName, intptr_t M
 
 static void ShowPropertiesDlg(void)
 {
-	if (gDialogApi && g_file_test(gLFMPath, G_FILE_TEST_EXISTS))
-		gDialogApi->DialogBoxLFMFile(gLFMPath, DlgPropertiesProc);
+	if (gDialogApi)
+	{
+		GString *lfm_string = g_string_new(NULL);
+		g_string_append(lfm_string, "object DialogBox: TDialogBox\n"
+		                "  Left = 662\n"
+		                "  Height = 742\n"
+		                "  Top = 171\n"
+		                "  Width = 540\n"
+		                "  ActiveControl = lFileName\n"
+		                "  AutoSize = True\n"
+		                "  BorderStyle = bsDialog\n"
+		                "  Caption = 'Properties'\n"
+		                "  ChildSizing.LeftRightSpacing = 10\n"
+		                "  ChildSizing.TopBottomSpacing = 10\n"
+		                "  ClientHeight = 742\n"
+		                "  ClientWidth = 540\n"
+		                "  DesignTimePPI = 100\n"
+		                "  OnCreate = DialogBoxShow\n"
+		                "  Position = poOwnerFormCenter\n"
+		                "  LCLVersion = '2.2.6.0'\n"
+		                "  object lFileName: TEdit\n"
+		                "    AnchorSideLeft.Control = mPreview\n"
+		                "    AnchorSideTop.Control = Owner\n"
+		                "    AnchorSideRight.Control = mPreview\n"
+		                "    AnchorSideRight.Side = asrBottom\n"
+		                "    Left = 10\n"
+		                "    Height = 36\n"
+		                "    Top = 10\n"
+		                "    Width = 521\n"
+		                "    Alignment = taCenter\n"
+		                "    Anchors = [akTop, akLeft, akRight]\n"
+		                "    AutoSelect = False\n"
+		                "    BorderStyle = bsNone\n"
+		                "    Color = clForm\n"
+		                "    Font.Style = [fsBold]\n"
+		                "    ParentFont = False\n"
+		                "    ReadOnly = True\n"
+		                "    TabStop = False\n"
+		                "    TabOrder = 0\n"
+		                "    Text = 'File'\n"
+		                "    Visible = False\n"
+		                "  end\n"
+		                "  object ScrollBox: TScrollBox\n"
+		                "    AnchorSideLeft.Control = lFileName\n"
+		                "    AnchorSideTop.Control = lFileName\n"
+		                "    AnchorSideTop.Side = asrBottom\n"
+		                "    AnchorSideRight.Control = lFileName\n"
+		                "    AnchorSideRight.Side = asrBottom\n"
+		                "    Left = 10\n"
+		                "    Height = 236\n"
+		                "    Top = 46\n"
+		                "    Width = 521\n"
+		                "    HorzScrollBar.Page = 1\n"
+		                "    HorzScrollBar.Visible = False\n"
+		                "    VertScrollBar.Increment = 23\n"
+		                "    VertScrollBar.Page = 236\n"
+		                "    VertScrollBar.Smooth = True\n"
+		                "    VertScrollBar.Tracking = True\n"
+		                "    Anchors = [akTop, akLeft, akRight]\n"
+		                "    BorderStyle = bsNone\n"
+		                "    ClientHeight = 200\n"
+		                "    ClientWidth = 507\n"
+		                "    TabOrder = 1\n"
+		                "    Visible = False\n"
+		                "    object pProperties: TPanel\n"
+		                "      AnchorSideLeft.Control = ScrollBox\n"
+		                "      AnchorSideTop.Control = ScrollBox\n"
+		                "      AnchorSideRight.Control = ScrollBox\n"
+		                "      AnchorSideRight.Side = asrBottom\n"
+		                "      Left = 0\n"
+		                "      Height = 377\n"
+		                "      Top = 10\n"
+		                "      Width = 507\n"
+		                "      Anchors = [akTop, akLeft, akRight]\n"
+		                "      AutoSize = True\n"
+		                "      BorderSpacing.Top = 10\n"
+		                "      BevelOuter = bvNone\n"
+		                "      ChildSizing.HorizontalSpacing = 10\n"
+		                "      ChildSizing.VerticalSpacing = 5\n"
+		                "      ChildSizing.EnlargeHorizontal = crsHomogenousChildResize\n"
+		                "      ChildSizing.EnlargeVertical = crsHomogenousChildResize\n"
+		                "      ChildSizing.Layout = cclLeftToRightThenTopToBottom\n"
+		                "      ChildSizing.ControlsPerLine = 2\n"
+		                "      ClientHeight = 377\n"
+		                "      ClientWidth = 507\n"
+		                "      ParentFont = False\n"
+		                "      TabOrder = 0\n"
+		                "      Visible = False\n"
+		                "      object lTypeLabel: TLabel\n"
+		                "        Left = 0\n"
+		                "        Height = 17\n"
+		                "        Top = 0\n"
+		                "        Width = 202\n"
+		                "        Alignment = taRightJustify\n"
+		                "        Caption = 'Type'\n"
+		                "        ParentColor = False\n"
+		                "        ParentFont = False\n"
+		                "        ShowAccelChar = False\n"
+		                "        Visible = False\n"
+		                "        WordWrap = True\n"
+		                "      end\n"
+		                "      object lType: TLabel\n"
+		                "        Left = 212\n"
+		                "        Height = 17\n"
+		                "        Top = 0\n"
+		                "        Width = 295\n"
+		                "        Caption = 'Value'\n"
+		                "        ParentColor = False\n"
+		                "        ParentFont = False\n"
+		                "        ShowAccelChar = False\n"
+		                "        Visible = False\n"
+		                "        WordWrap = True\n"
+		                "      end\n"
+		                "      object lPath: TLabel\n"
+		                "        Left = 0\n"
+		                "        Height = 36\n"
+		                "        Top = 22\n"
+		                "        Width = 202\n"
+		                "        Alignment = taRightJustify\n"
+		                "        Caption = 'Path'\n"
+		                "        Layout = tlCenter\n"
+		                "        ParentColor = False\n"
+		                "        ParentFont = False\n"
+		                "        ShowAccelChar = False\n"
+		                "        Visible = False\n"
+		                "      end\n"
+		                "      object ePath: TEdit\n"
+		                "        Left = 212\n"
+		                "        Height = 36\n"
+		                "        Top = 22\n"
+		                "        Width = 295\n"
+		                "        AutoSelect = False\n"
+		                "        BorderStyle = bsNone\n"
+		                "        Color = clForm\n"
+		                "        ParentFont = False\n"
+		                "        ReadOnly = True\n"
+		                "        TabStop = False\n"
+		                "        TabOrder = 0\n"
+		                "        Text = '/home/user/'\n"
+		                "        Visible = False\n"
+		                "      end\n"
+		                "      object lURLLabel: TLabel\n"
+		                "        Left = 0\n"
+		                "        Height = 17\n"
+		                "        Top = 63\n"
+		                "        Width = 202\n"
+		                "        Alignment = taRightJustify\n"
+		                "        Caption = 'URL'\n"
+		                "        ParentColor = False\n"
+		                "        ParentFont = False\n"
+		                "        ShowAccelChar = False\n"
+		                "        Visible = False\n"
+		                "      end\n"
+		                "      object lURL: TLabel\n"
+		                "        Cursor = crHandPoint\n"
+		                "        Left = 212\n"
+		                "        Height = 17\n"
+		                "        Top = 63\n"
+		                "        Width = 295\n"
+		                "        Caption = 'https://shitcode.net/'\n"
+		                "        Font.Color = clHighlight\n"
+		                "        Font.Style = [fsUnderline]\n"
+		                "        ParentColor = False\n"
+		                "        ParentFont = False\n"
+		                "        ParentShowHint = False\n"
+		                "        ShowAccelChar = False\n"
+		                "        ShowHint = True\n"
+		                "        Visible = False\n"
+		                "        OnClick = ButtonClick\n"
+		                "      end\n");
+
+
+		AddPropLabels(lfm_string);
+
+		g_string_append(lfm_string, "    end\n"
+		                "  end\n"
+		                "  object cbAct: TComboBox\n"
+		                "    AnchorSideLeft.Control = ScrollBox\n"
+		                "    AnchorSideTop.Control = ScrollBox\n"
+		                "    AnchorSideTop.Side = asrBottom\n"
+		                "    AnchorSideRight.Control = btnAct\n"
+		                "    Left = 10\n"
+		                "    Height = 36\n"
+		                "    Top = 287\n"
+		                "    Width = 389\n"
+		                "    Anchors = [akTop, akLeft, akRight]\n"
+		                "    BorderSpacing.Top = 5\n"
+		                "    BorderSpacing.Right = 10\n"
+		                "    ItemHeight = 17\n"
+		                "    OnChange = ComboBoxChange\n"
+		                "    OnKeyUp = ComboBoxKeyUp\n"
+		                "    Style = csDropDownList\n"
+		                "    TabOrder = 2\n"
+		                "    Visible = False\n"
+		                "  end\n"
+		                "  object btnAct: TBitBtn\n"
+		                "    AnchorSideTop.Control = cbAct\n"
+		                "    AnchorSideRight.Control = ScrollBox\n"
+		                "    AnchorSideRight.Side = asrBottom\n"
+		                "    AnchorSideBottom.Control = cbAct\n"
+		                "    AnchorSideBottom.Side = asrBottom\n"
+		                "    Left = 409\n"
+		                "    Height = 36\n"
+		                "    Top = 287\n"
+		                "    Width = 80\n"
+		                "    Anchors = [akTop, akRight, akBottom]\n"
+		                "    AutoSize = True\n"
+		                "    Caption = 'Start'\n"
+		                "    Enabled = False\n"
+		                "    Glyph.Data = {\n"
+		                "      36040000424D3604000000000000360000002800000010000000100000000100\n"
+		                "      200000000000000400006400000064000000000000000000000000000000066A\n"
+		                "      1D8B03651A4E0060200800000000000000000000000000000000000000000000\n"
+		                "      0000000000000000000000000000000000000000000000000000000000000B78\n"
+		                "      2CC02DA25CF30E7D31B504661841006633050000000000000000000000000000\n"
+		                "      0000000000000000000000000000000000000000000000000000000000000C79\n"
+		                "      2EC05ACB8FFF50C385FF2CA15CEC0E7B30AA0560133500800002000000000000\n"
+		                "      0000000000000000000000000000000000000000000000000000000000000D7A\n"
+		                "      30C05CCE93FF3AC47EFF55CD8FFF4EC485FF289E57E50F7A319D0059122B0000\n"
+		                "      0001000000000000000000000000000000000000000000000000000000000F7C\n"
+		                "      31C05ED197FF31C57AFF32C67CFF40CB85FF52D091FF47C281FF239750DD0D78\n"
+		                "      2C8A005D0F21000000000000000000000000000000000000000000000000107D\n"
+		                "      34C05CD298FF35C980FF37CB82FF38CC83FF3ACD85FF44D08CFF4FD292FF3EBE\n"
+		                "      7DFF1F954CD80D752C7A005C141900000000000000000000000000000000117E\n"
+		                "      35C05AD598FF39CD86FF3BCF88FF3CD089FF3DD18BFF3ED28BFF3FD28CFF47D4\n"
+		                "      90FF4FD594FF3EBD7BFD1D9147D10C71266A00550E1200000000000000001380\n"
+		                "      36C059D79AFF3ED28BFF3FD38DFF41D58FFF42D691FF42D691FF43D792FF42D6\n"
+		                "      91FF43D691FF4DD797FF56D69AFF6DCA99FC219048CA0C6F2455000000001481\n"
+		                "      38C057D99CFF42D691FF44D893FF45D995FF46DA97FF47DB98FF47DB98FF47DB\n"
+		                "      97FF47DA97FF84E6B9FFAAECCDFF6FCD9BFB21904ACA0C6F2455000000001582\n"
+		                "      3AC055DB9DFF46DA96FF48DC99FF4ADE9BFF4BDF9DFF4CE09EFF4DE09EFF58E2\n"
+		                "      A4FFADF0D1FF82D8ADFE2F9B58D30E732B6A00550E1200000000000000001783\n"
+		                "      3CC05ADFA2FF4ADE9BFF4CE09EFF4EE2A1FF51E3A3FF5BE5A9FFAEF2D4FF8EE1\n"
+		                "      B9FF3BA769DB137A327B005C1419000000000000000000000000000000001885\n"
+		                "      3DC05FE2A7FF4DE19FFF50E4A3FF5CE6ABFFADF3D5FF9BE7C4FF4AB176E11880\n"
+		                "      398A005D0F210000000000000000000000000000000000000000000000001885\n"
+		                "      3EC065E5ACFF58E5A8FFA7F2D2FFA3EBCBFF59BB86E91D87439D0059122B0000\n"
+		                "      0001000000000000000000000000000000000000000000000000000000001986\n"
+		                "      3EC0B8F4DAFFA7EDCEFF62C490EF218C47AA0560183500800002000000000000\n"
+		                "      0000000000000000000000000000000000000000000000000000000000001986\n"
+		                "      40C069CA97F5238C49B608662341006633050000000000000000000000000000\n"
+		                "      0000000000000000000000000000000000000000000000000000000000000F74\n"
+		                "      2C8B0A6C244E0060200800000000000000000000000000000000000000000000\n"
+		                "      0000000000000000000000000000000000000000000000000000\n"
+		                "    }\n"
+		                "    OnClick = ButtonClick\n"
+		                "    TabOrder = 3\n"
+		                "    Visible = False\n"
+		                "  end\n");
+
+		g_string_append(lfm_string, "  object lScriptName: TEdit\n"
+		                "    AnchorSideLeft.Control = mPreview\n"
+		                "    AnchorSideTop.Control = cbAct\n"
+		                "    AnchorSideTop.Side = asrBottom\n"
+		                "    AnchorSideRight.Control = mPreview\n"
+		                "    AnchorSideRight.Side = asrBottom\n"
+		                "    Left = 10\n"
+		                "    Height = 36\n"
+		                "    Top = 344\n"
+		                "    Width = 521\n"
+		                "    Alignment = taCenter\n"
+		                "    Anchors = [akTop, akLeft, akRight]\n"
+		                "    AutoSelect = False\n"
+		                "    BorderSpacing.Top = 21\n"
+		                "    BorderStyle = bsNone\n"
+		                "    Color = clForm\n"
+		                "    Font.Style = [fsBold]\n"
+		                "    ParentFont = False\n"
+		                "    ReadOnly = True\n"
+		                "    TabStop = False\n"
+		                "    TabOrder = 4\n"
+		                "    Text = 'Script'\n"
+		                "  end\n"
+		                "  object lScriptType: TLabel\n"
+		                "    AnchorSideLeft.Control = mPreview\n"
+		                "    AnchorSideTop.Control = ckNoise\n"
+		                "    AnchorSideTop.Side = asrCenter\n"
+		                "    AnchorSideRight.Side = asrBottom\n"
+		                "    Left = 10\n"
+		                "    Height = 17\n"
+		                "    Top = 393\n"
+		                "    Width = 33\n"
+		                "    Caption = 'Type'\n"
+		                "    ParentColor = False\n"
+		                "    ParentFont = False\n"
+		                "    Visible = False\n"
+		                "  end\n"
+		                "  object pSrciptActs: TPanel\n"
+		                "    AnchorSideLeft.Control = mPreview\n"
+		                "    AnchorSideLeft.Side = asrCenter\n"
+		                "    AnchorSideTop.Control = ckNoise\n"
+		                "    AnchorSideBottom.Control = ckNoise\n"
+		                "    AnchorSideBottom.Side = asrBottom\n"
+		                "    Left = 202\n"
+		                "    Height = 23\n"
+		                "    Top = 390\n"
+		                "    Width = 137\n"
+		                "    Anchors = [akTop, akLeft, akBottom]\n"
+		                "    AutoSize = True\n"
+		                "    BevelOuter = bvNone\n"
+		                "    ChildSizing.HorizontalSpacing = 2\n"
+		                "    ChildSizing.EnlargeHorizontal = crsHomogenousSpaceResize\n"
+		                "    ChildSizing.ShrinkVertical = crsHomogenousChildResize\n"
+		                "    ChildSizing.Layout = cclLeftToRightThenTopToBottom\n"
+		                "    ChildSizing.ControlsPerLine = 3\n"
+		                "    ClientHeight = 23\n"
+		                "    ClientWidth = 137\n"
+		                "    TabOrder = 5\n"
+		                "    object btnUnmount: TButton\n"
+		                "      Left = 0\n"
+		                "      Height = 23\n"
+		                "      Top = 0\n"
+		                "      Width = 80\n"
+		                "      AutoSize = True\n"
+		                "      Caption = 'Unmount'\n"
+		                "      ModalResult = 11\n"
+		                "      OnClick = ButtonClick\n"
+		                "      TabOrder = 0\n"
+		                "    end\n"
+		                "    object btnReset: TButton\n"
+		                "      Left = 82\n"
+		                "      Height = 23\n"
+		                "      Top = 0\n"
+		                "      Width = 55\n"
+		                "      AutoSize = True\n"
+		                "      Caption = 'Reset'\n"
+		                "      ModalResult = 11\n"
+		                "      OnClick = ButtonClick\n"
+		                "      TabOrder = 1\n"
+		                "    end\n"
+		                "  end\n"
+		                "  object ckNoise: TCheckBox\n"
+		                "    AnchorSideLeft.Control = lScriptType\n"
+		                "    AnchorSideLeft.Side = asrBottom\n"
+		                "    AnchorSideTop.Control = lScriptName\n"
+		                "    AnchorSideTop.Side = asrBottom\n"
+		                "    AnchorSideRight.Control = ckExtraNoise\n"
+		                "    Left = 368\n"
+		                "    Height = 23\n"
+		                "    Top = 390\n"
+		                "    Width = 121\n"
+		                "    Anchors = [akTop, akRight]\n"
+		                "    BorderSpacing.Top = 10\n"
+		                "    Caption = 'De&bug mode'\n"
+		                "    OnChange = CheckBoxChange\n"
+		                "    ParentFont = False\n"
+		                "    TabOrder = 6\n"
+		                "    TabStop = False\n"
+		                "  end\n"
+		                "  object ckExtraNoise: TCheckBox\n"
+		                "    AnchorSideTop.Control = ckNoise\n"
+		                "    AnchorSideTop.Side = asrCenter\n"
+		                "    AnchorSideRight.Control = mPreview\n"
+		                "    AnchorSideRight.Side = asrBottom\n"
+		                "    Left = 489\n"
+		                "    Height = 23\n"
+		                "    Top = 390\n"
+		                "    Width = 42\n"
+		                "    Anchors = [akTop, akRight]\n"
+		                "    Caption = '+'\n"
+		                "    Enabled = False\n"
+		                "    OnChange = CheckBoxChange\n"
+		                "    TabOrder = 7\n"
+		                "  end\n"
+		                "  object mPreview: TMemo\n"
+		                "    AnchorSideLeft.Control = Owner\n"
+		                "    AnchorSideTop.Control = ckNoise\n"
+		                "    AnchorSideTop.Side = asrBottom\n"
+		                "    AnchorSideRight.Control = Owner\n"
+		                "    AnchorSideRight.Side = asrBottom\n"
+		                "    Left = 10\n"
+		                "    Height = 153\n"
+		                "    Top = 418\n"
+		                "    Width = 521\n"
+		                "    BorderSpacing.Top = 5\n"
+		                "    Enabled = False\n"
+		                "    Font.Name = 'Monospace'\n"
+		                "    ParentFont = False\n"
+		                "    ReadOnly = True\n"
+		                "    ScrollBars = ssAutoBoth\n"
+		                "    TabOrder = 8\n"
+		                "    TabStop = False\n"
+		                "  end\n"
+		                "  object btnClose: TBitBtn\n"
+		                "    AnchorSideTop.Control = mPreview\n"
+		                "    AnchorSideTop.Side = asrBottom\n"
+		                "    AnchorSideRight.Control = mPreview\n"
+		                "    AnchorSideRight.Side = asrBottom\n"
+		                "    Left = 430\n"
+		                "    Height = 31\n"
+		                "    Top = 581\n"
+		                "    Width = 101\n"
+		                "    Anchors = [akTop, akRight]\n"
+		                "    AutoSize = True\n"
+		                "    BorderSpacing.Top = 10\n"
+		                "    Constraints.MinHeight = 31\n"
+		                "    Constraints.MinWidth = 101\n"
+		                "    DefaultCaption = True\n"
+		                "    Kind = bkClose\n"
+		                "    ModalResult = 11\n"
+		                "    OnClick = ButtonClick\n"
+		                "    ParentFont = False\n"
+		                "    TabOrder = 9\n"
+		                "  end\n"
+		                "  object lbDataStore: TListBox\n"
+		                "    AnchorSideLeft.Control = Owner\n"
+		                "    AnchorSideRight.Control = Owner\n"
+		                "    AnchorSideBottom.Control = Owner\n"
+		                "    AnchorSideBottom.Side = asrBottom\n"
+		                "    Left = 10\n"
+		                "    Height = 83\n"
+		                "    Top = 649\n"
+		                "    Width = 164\n"
+		                "    Anchors = [akLeft, akBottom]\n"
+		                "    ItemHeight = 0\n"
+		                "    TabOrder = 10\n"
+		                "    TabStop = False\n"
+		                "    Visible = False\n"
+		                "  end\n"
+		                "end\n");
+
+		gDialogApi->DialogBoxLFM((intptr_t)lfm_string->str, (unsigned long)strlen(lfm_string->str), DlgPropertiesProc);
+		g_string_free(lfm_string, TRUE);
+	}
 	else  if (gRequestProc && gProps)
 		gRequestProc(gPluginNr, RT_MsgOK, NULL, gProps, NULL, 0);
 }
@@ -1840,16 +2533,18 @@ static gchar *ExtractScriptFromPath(char *path)
 
 static gboolean IsInvalidPath(char *path)
 {
-	return (g_strcmp0(path, "/.") == 0 || g_strcmp0(path, "/..") == 0 || strncmp(path, "/../", 4) == 0);
+	return (path == NULL || path[0] != '/' || g_strcmp0(path, "/.") == 0 || g_strcmp0(path, "/..") == 0 || strncmp(path, "/../", 4) == 0);
 }
 
 static gboolean IsRootDir(char *path)
 {
+	if (path[1] == '\0')
+		return TRUE;
+
 	while (*path++)
 	{
 		if (*path == '/')
 			return FALSE;
-
 	}
 
 	return TRUE;
@@ -1857,6 +2552,12 @@ static gboolean IsRootDir(char *path)
 
 static gchar *StripScriptFromPath(char *path)
 {
+	if (path[0] != '/')
+	{
+		LogMessage(gPluginNr, MSGTYPE_IMPORTANTERROR, "path is invalid");
+		return NULL;
+	}
+
 	gchar *result = NULL;
 
 	gchar **split = g_strsplit(path, "/", -1);
@@ -1928,7 +2629,7 @@ static gboolean SetFindData(tVFSDirData * dirdata, WIN32_FIND_DATAA * FindData)
 	{
 		string = g_match_info_fetch(dirdata->match_info, 0);
 
-		if (gNoise)
+		if (gExtraNoise)
 		{
 			message = g_strdup_printf("Found: %s", string);
 			LogMessage(gPluginNr, MSGTYPE_DETAILS, message);
@@ -1939,7 +2640,7 @@ static gboolean SetFindData(tVFSDirData * dirdata, WIN32_FIND_DATAA * FindData)
 
 		string = g_match_info_fetch(dirdata->match_info, 1);
 
-		if (gNoise)
+		if (gExtraNoise)
 		{
 			message = g_strdup_printf("mode: %s", string);
 			LogMessage(gPluginNr, MSGTYPE_DETAILS, message);
@@ -2023,7 +2724,7 @@ static gboolean SetFindData(tVFSDirData * dirdata, WIN32_FIND_DATAA * FindData)
 
 		string = g_match_info_fetch(dirdata->match_info, 2);
 
-		if (gNoise)
+		if (gExtraNoise)
 		{
 			message = g_strdup_printf("date: %s", string);
 			LogMessage(gPluginNr, MSGTYPE_DETAILS, message);
@@ -2038,7 +2739,7 @@ static gboolean SetFindData(tVFSDirData * dirdata, WIN32_FIND_DATAA * FindData)
 			filetime = g_date_time_to_unix(dt);
 			g_date_time_unref(dt);
 		}
-		else if (gNoise)
+		else if (gExtraNoise)
 		{
 			message = g_strdup_printf("\"%s\" is not a valid ISO 8601 UTC formatted string", string);
 			LogMessage(gPluginNr, MSGTYPE_DETAILS, message);
@@ -2050,13 +2751,13 @@ static gboolean SetFindData(tVFSDirData * dirdata, WIN32_FIND_DATAA * FindData)
 			struct tm tm = {0};
 
 			gchar *formats[] =
-			{
-				"%Y-%m-%d %R",
-				"%Y-%m-%dT%R",
-				"%Y-%m-%dt%R",
-				"%Y%m%d %R",
-				NULL
-			};
+			        {
+			                "%Y-%m-%d %R",
+			                "%Y-%m-%dT%R",
+			                "%Y-%m-%dt%R",
+			                "%Y%m%d %R",
+			                NULL
+			        };
 
 			for (char **p = formats; *p != NULL; p++)
 			{
@@ -2064,7 +2765,7 @@ static gboolean SetFindData(tVFSDirData * dirdata, WIN32_FIND_DATAA * FindData)
 				{
 					filetime = (gint64)mktime(&tm);
 
-					if (gNoise)
+					if (gExtraNoise)
 					{
 						message = g_strdup_printf("Used %s to parse the date", *p);
 						LogMessage(gPluginNr, MSGTYPE_DETAILS, message);
@@ -2091,15 +2792,15 @@ static gboolean SetFindData(tVFSDirData * dirdata, WIN32_FIND_DATAA * FindData)
 			if (gNoise)
 				LogMessage(gPluginNr, MSGTYPE_DETAILS, "The current datetime has been set");
 
-			//			FindData->ftLastWriteTime.dwHighDateTime = 0xFFFFFFFF;
-			//			FindData->ftLastWriteTime.dwLowDateTime = 0xFFFFFFFE;
+			//FindData->ftLastWriteTime.dwHighDateTime = 0xFFFFFFFF;
+			//FindData->ftLastWriteTime.dwLowDateTime = 0xFFFFFFFE;
 		}
 
 		g_free(string);
 
 		string = g_match_info_fetch(dirdata->match_info, 3);
 
-		if (gNoise)
+		if (gExtraNoise)
 		{
 			message = g_strdup_printf("size: %s", string);
 			LogMessage(gPluginNr, MSGTYPE_DETAILS, message);
@@ -2123,7 +2824,7 @@ static gboolean SetFindData(tVFSDirData * dirdata, WIN32_FIND_DATAA * FindData)
 
 		string = g_match_info_fetch(dirdata->match_info, 4);
 
-		if (gNoise)
+		if (gExtraNoise)
 		{
 			message = g_strdup_printf("name: %s", string);
 			LogMessage(gPluginNr, MSGTYPE_DETAILS, message);
@@ -2181,6 +2882,9 @@ HANDLE DCPCALL FsFindFirst(char* Path, WIN32_FIND_DATAA * FindData)
 	{
 		gchar *script = ExtractScriptFromPath(Path);
 
+		if (!script)
+			return (HANDLE)(-1);
+
 		if (!g_key_file_get_boolean(gCfg, script, MARK_INUSE, NULL))
 		{
 			g_strlcpy(gScript, script, PATH_MAX);
@@ -2197,7 +2901,7 @@ HANDLE DCPCALL FsFindFirst(char* Path, WIN32_FIND_DATAA * FindData)
 		if (len > 1 && list_path[len - 1] == '/')
 			list_path[len - 1] = '\0';
 
-		if (!ExecuteScript(script, VERB_LIST, list_path, NULL, &output, FALSE))
+		if (!ExecuteScript(script, VERB_LIST, list_path, NULL, &output, NULL))
 		{
 			g_free(list_path);
 			g_free(script);
@@ -2301,7 +3005,7 @@ int DCPCALL FsGetFile(char* RemoteName, char* LocalName, int CopyFlags, RemoteIn
 		gchar *script = ExtractScriptFromPath(RemoteName);
 		gchar *path = StripScriptFromPath(RemoteName);
 
-		if (IsInvalidPath(path) || !ExecuteScript(script, VERB_GET_FILE, path, LocalName, NULL, TRUE))
+		if (IsInvalidPath(path) || !RunFileOP(script, VERB_GET_FILE, path, LocalName))
 			result = FS_FILE_NOTSUPPORTED;
 
 #ifndef TEMP_PANEL
@@ -2345,11 +3049,11 @@ int DCPCALL FsPutFile(char* LocalName, char* RemoteName, int CopyFlags)
 
 	gchar *script = ExtractScriptFromPath(RemoteName);
 
-	if (CopyFlags == 0 && ExecuteScript(script, VERB_EXISTS, path, NULL, NULL, FALSE))
+	if (CopyFlags == 0 && ExecuteScript(script, VERB_EXISTS, path, NULL, NULL, NULL))
 		result = FS_FILE_EXISTS;
 	else
 	{
-		if (!ExecuteScript(script, VERB_PUT_FILE, LocalName, path, NULL, TRUE))
+		if (!RunFileOP(script, VERB_PUT_FILE, LocalName, path))
 			result = FS_FILE_NOTSUPPORTED;
 
 #ifndef TEMP_PANEL
@@ -2373,9 +3077,6 @@ int DCPCALL FsPutFile(char* LocalName, char* RemoteName, int CopyFlags)
 
 int DCPCALL FsRenMovFile(char* OldName, char* NewName, BOOL Move, BOOL OverWrite, RemoteInfoStruct * ri)
 {
-	// iwanttobelive
-	gboolean wtf_overwrite = (gboolean)abs((int)OverWrite % 2);
-
 	if (gProgressProc(gPluginNr, OldName, NewName, 0))
 		return FS_FILE_USERABORT;
 
@@ -2394,10 +3095,10 @@ int DCPCALL FsRenMovFile(char* OldName, char* NewName, BOOL Move, BOOL OverWrite
 	gchar *script = ExtractScriptFromPath(OldName);
 	gchar *oldpath = StripScriptFromPath(OldName);
 
-	if (!wtf_overwrite && ExecuteScript(script, VERB_EXISTS, newpath, NULL, NULL, FALSE))
+	if (!OverWrite && ExecuteScript(script, VERB_EXISTS, newpath, NULL, NULL, NULL))
 		return FS_FILE_EXISTS;
 
-	if (!ExecuteScript(script, Move ? VERB_MOVE : VERB_COPY, oldpath, newpath, NULL, TRUE))
+	if (!RunFileOP(script, Move ? VERB_MOVE : VERB_COPY, oldpath, newpath))
 		return FS_FILE_NOTSUPPORTED;
 
 	gProgressProc(gPluginNr, oldpath, newpath, 100);
@@ -2425,7 +3126,7 @@ BOOL DCPCALL FsMkDir(char* Path)
 
 		gchar *output = NULL;
 		gchar *script = ExtractScriptFromPath(Path);
-		result = ExecuteScript(script, VERB_MKDIR, newpath, NULL, &output, FALSE);
+		result = ExecuteScript(script, VERB_MKDIR, newpath, NULL, &output, NULL);
 
 		if (output && output[0] != '\0')
 			ParseOpts(script, output);
@@ -2446,7 +3147,7 @@ BOOL DCPCALL FsDeleteFile(char* RemoteName)
 	{
 		gchar *script = ExtractScriptFromPath(RemoteName);
 		gchar *newpath = StripScriptFromPath(RemoteName);
-		result = ExecuteScript(script, VERB_REMOVE, newpath, NULL, NULL, TRUE);
+		result = RunFileOP(script, VERB_REMOVE, newpath, NULL);
 		g_free(script);
 		g_free(newpath);
 	}
@@ -2462,7 +3163,7 @@ BOOL DCPCALL FsRemoveDir(char* RemoteName)
 	{
 		gchar *script = ExtractScriptFromPath(RemoteName);
 		gchar *newpath = StripScriptFromPath(RemoteName);
-		result = ExecuteScript(script, VERB_RMDIR, newpath, NULL, NULL, TRUE);
+		result = RunFileOP(script, VERB_RMDIR, newpath, NULL);
 		g_free(script);
 		g_free(newpath);
 	}
@@ -2481,13 +3182,15 @@ int DCPCALL FsExecuteFile(HWND MainWin, char* RemoteName, char* Verb)
 	{
 		if (IsRootDir(RemoteName))
 		{
-			InitializeScript(script);
+			if (!g_key_file_get_boolean(gCfg, script, MARK_INUSE, NULL))
+				InitializeScript(script);
+
 			g_strlcpy(gScript, script, PATH_MAX);
 			result = FS_EXEC_SYMLINK;
 		}
 		else
 		{
-			if (!ExecuteScript(script, VERB_EXEC, path, NULL, &output, FALSE))
+			if (!ExecuteScript(script, VERB_EXEC, path, NULL, &output, NULL))
 				result = FS_EXEC_YOURSELF;
 			else if (output && output[0] != '\0')
 			{
@@ -2519,7 +3222,7 @@ int DCPCALL FsExecuteFile(HWND MainWin, char* RemoteName, char* Verb)
 
 			if (!IsRootDir(RemoteName) && !IsInvalidPath(path))
 			{
-				gboolean is_ok = ExecuteScript(script, VERB_PROPS, path, NULL, &gProps, FALSE);
+				gboolean is_ok = ExecuteScript(script, VERB_PROPS, path, NULL, &gProps, NULL);
 
 				if (!is_ok || (gProps && gProps[0] != '\0'))
 				{
@@ -2549,12 +3252,12 @@ int DCPCALL FsExecuteFile(HWND MainWin, char* RemoteName, char* Verb)
 	{
 		if (strncmp(Verb, "chmod", 5) == 0)
 		{
-			if (ExecuteScript(script, VERB_CHMOD, path, Verb + 6, NULL, FALSE))
+			if (ExecuteScript(script, VERB_CHMOD, path, Verb + 6, NULL, NULL))
 				result = FS_EXEC_OK;
 		}
 		else if (strncmp(Verb, "quote", 5) == 0)
 		{
-			ExecuteScript(script, VERB_QUOTE, Verb + 6, path, &output, FALSE);
+			ExecuteScript(script, VERB_QUOTE, Verb + 6, path, &output, NULL);
 
 			if (output && output[0] != '\0')
 				ParseOpts(script, output);
@@ -2597,7 +3300,7 @@ BOOL DCPCALL FsSetTime(char* RemoteName, FILETIME * CreationTime, FILETIME * Las
 			{
 				gchar *script = ExtractScriptFromPath(RemoteName);
 
-				result = ExecuteScript(script, VERB_MODTIME, newpath, date, NULL, FALSE);
+				result = ExecuteScript(script, VERB_MODTIME, newpath, date, NULL, NULL);
 				g_free(date);
 				g_free(script);
 			}
@@ -2646,7 +3349,18 @@ int DCPCALL FsContentGetValue(char* FileName, int FieldIndex, int UnitIndex, voi
 
 	if (IsRootDir(FileName))
 	{
-		if (g_key_file_get_boolean(gCfg, script, MARK_INUSE, NULL))
+		gchar *pids = g_key_file_get_string(gCfg, script, MARK_PIDS, NULL);
+
+		if (pids && pids[0] != '\0')
+		{
+			gchar *string = g_strdup_printf("! %s", pids);
+			g_strlcpy((char*)FieldValue, string, maxlen - 1);
+			g_free(string);
+			g_free(script);
+			g_free(pids);
+			return ft_string;
+		}
+		else if (g_key_file_get_boolean(gCfg, script, MARK_INUSE, NULL))
 		{
 			g_strlcpy((char*)FieldValue, "*", maxlen - 1);
 			g_free(script);
@@ -2664,7 +3378,7 @@ int DCPCALL FsContentGetValue(char* FileName, int FieldIndex, int UnitIndex, voi
 
 	gchar *path = StripScriptFromPath(FileName);
 
-	ExecuteScript(script, VERB_GETVALUE, path, NULL, &output, FALSE);
+	ExecuteScript(script, VERB_GETVALUE, path, NULL, &output, NULL);
 
 	if (output)
 	{
@@ -2713,7 +3427,7 @@ BOOL DCPCALL FsGetLocalName(char* RemoteName, int maxlen)
 		gchar *output = NULL;
 		gchar *script = ExtractScriptFromPath(RemoteName);
 		gchar *newpath = StripScriptFromPath(RemoteName);
-		ExecuteScript(gScript, VERB_REALNAME, newpath, NULL, &output, FALSE);
+		ExecuteScript(gScript, VERB_REALNAME, newpath, NULL, &output, NULL);
 		g_free(script);
 		g_free(newpath);
 
@@ -2747,10 +3461,15 @@ BOOL DCPCALL FsGetLocalName(char* RemoteName, int maxlen)
 void DCPCALL FsStatusInfo(char* RemoteDir, int InfoStartEnd, int InfoOperation)
 {
 
-	if (IsRootDir(RemoteDir))
+	if (InfoOperation != FS_STATUS_OP_LIST && IsRootDir(RemoteDir))
+		return;
+	else if (InfoOperation == FS_STATUS_OP_LIST && RemoteDir[1] == '\0')
 		return;
 
 	gchar *script = ExtractScriptFromPath(RemoteDir);
+
+	if (!script)
+		return;
 
 	gNoise = g_key_file_get_boolean(gCfg, script, MARK_NOISE, NULL);
 
@@ -2766,51 +3485,51 @@ void DCPCALL FsStatusInfo(char* RemoteDir, int InfoStartEnd, int InfoOperation)
 	switch (InfoOperation)
 	{
 	case FS_STATUS_OP_LIST:
-		ExecuteScript(script, VERB_STATUS, (InfoStartEnd == FS_STATUS_START) ? "list start" : "list end", path, &output, FALSE);
+		ExecuteScript(script, VERB_STATUS, (InfoStartEnd == FS_STATUS_START) ? "list start" : "list end", path, &output, NULL);
 		break;
 
 	case FS_STATUS_OP_GET_SINGLE:
-		ExecuteScript(script, VERB_STATUS, (InfoStartEnd == FS_STATUS_START) ? "get_single start" : "get_single end", path, &output, FALSE);
+		ExecuteScript(script, VERB_STATUS, (InfoStartEnd == FS_STATUS_START) ? "get_single start" : "get_single end", path, &output, NULL);
 		break;
 
 	case FS_STATUS_OP_GET_MULTI:
-		ExecuteScript(script, VERB_STATUS, (InfoStartEnd == FS_STATUS_START) ? "get_multi start" : "get_multi end", path, &output, FALSE);
+		ExecuteScript(script, VERB_STATUS, (InfoStartEnd == FS_STATUS_START) ? "get_multi start" : "get_multi end", path, &output, NULL);
 		break;
 
 	case FS_STATUS_OP_PUT_SINGLE:
-		ExecuteScript(script, VERB_STATUS, (InfoStartEnd == FS_STATUS_START) ? "put_single start" : "put_single end", path, &output, FALSE);
+		ExecuteScript(script, VERB_STATUS, (InfoStartEnd == FS_STATUS_START) ? "put_single start" : "put_single end", path, &output, NULL);
 		break;
 
 	case FS_STATUS_OP_PUT_MULTI:
-		ExecuteScript(script, VERB_STATUS, (InfoStartEnd == FS_STATUS_START) ? "put_multi start" : "put_multi end", path, &output, FALSE);
+		ExecuteScript(script, VERB_STATUS, (InfoStartEnd == FS_STATUS_START) ? "put_multi start" : "put_multi end", path, &output, NULL);
 		break;
 
 	case FS_STATUS_OP_GET_MULTI_THREAD:
-		ExecuteScript(script, VERB_STATUS, (InfoStartEnd == FS_STATUS_START) ? "get_multi_thread start" : "get_multi_thread end", path, &output, FALSE);
+		ExecuteScript(script, VERB_STATUS, (InfoStartEnd == FS_STATUS_START) ? "get_multi_thread start" : "get_multi_thread end", path, &output, NULL);
 		break;
 
 	case FS_STATUS_OP_PUT_MULTI_THREAD:
-		ExecuteScript(script, VERB_STATUS, (InfoStartEnd == FS_STATUS_START) ? "put_multi_thread start" : "put_multi_thread end", path, &output, FALSE);
+		ExecuteScript(script, VERB_STATUS, (InfoStartEnd == FS_STATUS_START) ? "put_multi_thread start" : "put_multi_thread end", path, &output, NULL);
 		break;
 
 	case FS_STATUS_OP_RENMOV_SINGLE:
-		ExecuteScript(script, VERB_STATUS, (InfoStartEnd == FS_STATUS_START) ? "renmov_single start" : "renmov_single end", path, &output, FALSE);
+		ExecuteScript(script, VERB_STATUS, (InfoStartEnd == FS_STATUS_START) ? "renmov_single start" : "renmov_single end", path, &output, NULL);
 		break;
 
 	case FS_STATUS_OP_RENMOV_MULTI:
-		ExecuteScript(script, VERB_STATUS, (InfoStartEnd == FS_STATUS_START) ? "renmov_multi start" : "renmov_multi end", path, &output, FALSE);
+		ExecuteScript(script, VERB_STATUS, (InfoStartEnd == FS_STATUS_START) ? "renmov_multi start" : "renmov_multi end", path, &output, NULL);
 		break;
 
 	case FS_STATUS_OP_DELETE:
-		ExecuteScript(script, VERB_STATUS, (InfoStartEnd == FS_STATUS_START) ? "delete start" : "delete end", path, &output, FALSE);
+		ExecuteScript(script, VERB_STATUS, (InfoStartEnd == FS_STATUS_START) ? "delete start" : "delete end", path, &output, NULL);
 		break;
 
 	case FS_STATUS_OP_ATTRIB:
-		ExecuteScript(script, VERB_STATUS, (InfoStartEnd == FS_STATUS_START) ? "attrib start" : "attrib end", path, &output, FALSE);
+		ExecuteScript(script, VERB_STATUS, (InfoStartEnd == FS_STATUS_START) ? "attrib start" : "attrib end", path, &output, NULL);
 		break;
 
 	case FS_STATUS_OP_MKDIR:
-		ExecuteScript(script, VERB_STATUS, (InfoStartEnd == FS_STATUS_START) ? "mkdir start" : "mkdir end", path, &output, FALSE);
+		ExecuteScript(script, VERB_STATUS, (InfoStartEnd == FS_STATUS_START) ? "mkdir start" : "mkdir end", path, &output, NULL);
 		break;
 
 	case FS_STATUS_OP_EXEC:
@@ -2819,35 +3538,35 @@ void DCPCALL FsStatusInfo(char* RemoteDir, int InfoStartEnd, int InfoOperation)
 		else if (g_strcmp0(gExecStart, gScript) != 0)
 			return;
 
-		ExecuteScript(script, VERB_STATUS, (InfoStartEnd == FS_STATUS_START) ? "exec start" : "exec end", path, &output, FALSE);
+		ExecuteScript(script, VERB_STATUS, (InfoStartEnd == FS_STATUS_START) ? "exec start" : "exec end", path, &output, NULL);
 		break;
 
 	case FS_STATUS_OP_CALCSIZE:
-		ExecuteScript(script, VERB_STATUS, (InfoStartEnd == FS_STATUS_START) ? "calcsize start" : "calcsize end", path, &output, FALSE);
+		ExecuteScript(script, VERB_STATUS, (InfoStartEnd == FS_STATUS_START) ? "calcsize start" : "calcsize end", path, &output, NULL);
 		break;
 
 	case FS_STATUS_OP_SEARCH:
-		ExecuteScript(script, VERB_STATUS, (InfoStartEnd == FS_STATUS_START) ? "search start" : "search end", path, &output, FALSE);
+		ExecuteScript(script, VERB_STATUS, (InfoStartEnd == FS_STATUS_START) ? "search start" : "search end", path, &output, NULL);
 		break;
 
 	case FS_STATUS_OP_SEARCH_TEXT:
-		ExecuteScript(script, VERB_STATUS, (InfoStartEnd == FS_STATUS_START) ? "search_text start" : "search_text end", path, &output, FALSE);
+		ExecuteScript(script, VERB_STATUS, (InfoStartEnd == FS_STATUS_START) ? "search_text start" : "search_text end", path, &output, NULL);
 		break;
 
 	case FS_STATUS_OP_SYNC_SEARCH:
-		ExecuteScript(script, VERB_STATUS, (InfoStartEnd == FS_STATUS_START) ? "sync_search start" : "sync_search end", path, &output, FALSE);
+		ExecuteScript(script, VERB_STATUS, (InfoStartEnd == FS_STATUS_START) ? "sync_search start" : "sync_search end", path, &output, NULL);
 		break;
 
 	case FS_STATUS_OP_SYNC_GET:
-		ExecuteScript(script, VERB_STATUS, (InfoStartEnd == FS_STATUS_START) ? "sync_get start" : "sync_get end", path, &output, FALSE);
+		ExecuteScript(script, VERB_STATUS, (InfoStartEnd == FS_STATUS_START) ? "sync_get start" : "sync_get end", path, &output, NULL);
 		break;
 
 	case FS_STATUS_OP_SYNC_PUT:
-		ExecuteScript(script, VERB_STATUS, (InfoStartEnd == FS_STATUS_START) ? "sync_put start" : "sync_put end", path, &output, FALSE);
+		ExecuteScript(script, VERB_STATUS, (InfoStartEnd == FS_STATUS_START) ? "sync_put start" : "sync_put end", path, &output, NULL);
 		break;
 
 	case FS_STATUS_OP_SYNC_DELETE:
-		ExecuteScript(script, VERB_STATUS, (InfoStartEnd == FS_STATUS_START) ? "sync_delete start" : "sync_delete end", path, &output, FALSE);
+		ExecuteScript(script, VERB_STATUS, (InfoStartEnd == FS_STATUS_START) ? "sync_delete start" : "sync_delete end", path, &output, NULL);
 		break;
 	}
 
@@ -2911,8 +3630,6 @@ void DCPCALL ExtensionInitialize(tExtensionStartupInfo * StartupInfo)
 		memcpy(gDialogApi, StartupInfo, sizeof(tExtensionStartupInfo));
 		g_strlcpy(gScriptDir, gDialogApi->PluginDir, PATH_MAX);
 		strcat(gScriptDir, EXEC_DIR);
-		g_strlcpy(gLFMPath, gDialogApi->PluginDir, PATH_MAX);
-		strcat(gLFMPath, "dialog.lfm");
 	}
 }
 

@@ -15,6 +15,8 @@ act_commit = "WFX_SCRIPT_STR_SEL_COMMIT"
 act_changes = "WFX_SCRIPT_STR_CHANGES"
 act_diff_file = "WFX_SCRIPT_STR_SEL_DIFFFILE"
 act_commit_file = "WFX_SCRIPT_STR_SEL_COMMITFILE"
+act_diff_file_save = "WFX_SCRIPT_STR_DIFFFILE_SAVE"
+msg_diff_file_save = "WFX_SCRIPT_STR_DIFFFILE_SAVEMSG"
 
 
 function get_output(command)
@@ -141,6 +143,10 @@ function fs_setopt(option, value)
         elseif option == act_diff_file then
             print("Fs_LogInfo")
             os.execute('cd ' .. dir .. ' && git diff "' ..  treeish .. '..HEAD" -- "' .. value:gsub('^/', ''):gsub('"', '\\"') .. '" ":|*/"')
+        elseif option == msg_diff_file_save then
+            os.execute('cd ' .. dir .. ' && git diff "' ..  treeish .. '..HEAD" -- > ' .. value)
+        elseif option == act_diff_file_save then
+            print("Fs_SelectFile " .. msg_diff_file_save .. '\t*.diff\tsave')
         end
     end
     os.exit()
@@ -196,7 +202,7 @@ function fs_properties(file)
     print("WFX_SCRIPT_STR_COMMITER\t" .. commiter)
     print("WFX_SCRIPT_STR_SUBJECT\t" .. subject)
     print("WFX_SCRIPT_STR_CDATE\t" .. datetime)
-    print("Fs_PropsActs " .. act_diff_file .. '\t' .. act_changes .. '\t' .. act_commit_file .. '\t' .. act_commit .. '\t' .. act_select)
+    print("Fs_PropsActs " .. act_commit_file .. '\t' .. act_commit .. '\t' .. act_select .. '\t' .. act_diff_file .. '\t' .. act_changes .. '\t' .. act_diff_file_save)
     os.exit()
 end
 
@@ -225,11 +231,26 @@ function fs_getvalue(file)
     if not output then
         os.exit(1)
     end
-    local line, count = output:gsub("\n", '')
-    if count == 1 then
-        print(line:match("."))
-    elseif count > 0 then
-        print(count .. ' WFX_SCRIPT_STR_COUNT')
+    local added = 0
+    local changed = 0
+    local status = ''
+    for line in output:gmatch("[^\n]*\n?") do
+        if line:find('^A') then
+            added = added + 1
+        else
+            changed = changed + 1
+            if changed == 1 and line:len() > 0 then
+                status = line:match(".")
+            end
+        end
+    end
+    if changed == 1 then
+        print(status)
+    elseif changed > 0 or added >0 then
+        if added >0 then
+            print(changed .. '+' .. added .. ' WFX_SCRIPT_STR_COUNT')
+        end
+        print(changed .. ' WFX_SCRIPT_STR_COUNT')
     end
     os.exit()
 end

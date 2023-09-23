@@ -1,6 +1,7 @@
 #!/bin/env lua
 
 args = {...}
+jump_str = "<jump>.link"
 
 function get_output(command)
     local handle = io.popen(command, 'r')
@@ -62,6 +63,9 @@ function fs_getlist(path)
                 files[file] = true
             end
         end
+        if target ~= '/' then
+            print("lr-xr-xr-x 0000-00-00 00:00:00 - " .. jump_str)
+        end
     end
     os.exit()
 end
@@ -106,6 +110,13 @@ function fs_properties(file)
 end
 
 function fs_execute(file)
+    if (file:match("([^/]+)$") == jump_str) then
+        local path = file:match("^/.-(/.*)/[^/]+$")
+        if path ~= nil then
+            print(path)
+        end
+        os.exit()
+    end
     os.execute('xdg-open "' .. get_realname(file):gsub('"', '\\"') .. '" &')
     os.exit()
 end
