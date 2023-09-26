@@ -46,6 +46,7 @@ static char gStartPath[PATH_MAX];
 static char gHistoryFile[PATH_MAX];
 static char gRemoteName[PATH_MAX];
 static char gCaseName[PATH_MAX];
+BOOL gFileListOP = FALSE;
 
 void UnixTimeToFileTime(time_t t, LPFILETIME pft)
 {
@@ -94,6 +95,34 @@ static int CaseDuplExists(char* FileName, BOOL SkipSelf)
 	}
 
 	return FS_FILE_OK;
+}
+
+static void BuildCasePath(char *RemoteName, char *Path)
+{
+	char *pos;
+	char localpath[PATH_MAX];
+	char casepath[PATH_MAX] = "";
+	char remote[PATH_MAX];
+	snprintf(remote, PATH_MAX, "%s", RemoteName + 1);
+	char *backup = strdup(gCaseName);
+
+	while ((pos = strchr(remote, '/')) != NULL)
+	{
+		*pos = '\0';
+		snprintf(Path, PATH_MAX, "%s%s%s/%s", gStartPath, (casepath[0] != '/') ? "/" : "", (casepath[0] == '\0') ? "" : casepath, remote);
+		snprintf(localpath, PATH_MAX, "%s", casepath);
+
+		if (CaseDuplExists(Path, TRUE) == FS_FILE_EXISTS)
+			snprintf(casepath, PATH_MAX, "%s/%s", localpath, gCaseName);
+		else
+			snprintf(casepath, PATH_MAX, "%s/%s", localpath, remote);
+
+		snprintf(remote, PATH_MAX, "%s", pos + 1);
+	}
+
+	snprintf(gCaseName, PATH_MAX, "%s", backup);
+	free(backup);
+	snprintf(Path, PATH_MAX, "%s%s/%s", gStartPath, casepath, remote);
 }
 
 static int CopyLocalFile(char* InFileName, char* OutFileName)
@@ -159,6 +188,10 @@ static int CopyLocalFile(char* InFileName, char* OutFileName)
 
 		close(ofd);
 		chmod(file, buf.st_mode);
+		struct utimbuf ubuf;
+		ubuf.actime = buf.st_atime;
+		ubuf.modtime = buf.st_mtime;
+		utime(file, &ubuf);
 
 		char list[XATTR_SIZE_MAX];
 		ssize_t len = listxattr(InFileName, list, XATTR_SIZE_MAX);
@@ -753,7 +786,10 @@ HANDLE DCPCALL FsFindFirst(char* Path, WIN32_FIND_DATAA *FindData)
 	if ((dir = opendir(dirdata->path)) == NULL)
 	{
 		int errsv = errno;
-		MessageBox(strerror(errsv), ROOTNAME, MB_OK | MB_ICONERROR);
+
+		if (gFileListOP)
+			MessageBox(strerror(errsv), ROOTNAME, MB_OK | MB_ICONERROR);
+
 		free(dirdata);
 		return (HANDLE)(-1);
 	}
@@ -806,7 +842,7 @@ BOOL DCPCALL FsGetLocalName(char* RemoteName, int maxlen)
 int DCPCALL FsPutFile(char* LocalName, char* RemoteName, int CopyFlags)
 {
 	char realname[PATH_MAX];
-	snprintf(realname, sizeof(realname), "%s%s", gStartPath, RemoteName);
+	BuildCasePath(RemoteName, realname);
 
 	if (strcmp(LocalName, realname) == 0)
 		return FS_FILE_NOTSUPPORTED;
@@ -864,7 +900,7 @@ BOOL DCPCALL FsMkDir(char* Path)
 	char realname[PATH_MAX];
 	snprintf(realname, sizeof(realname), "%s%s", gStartPath, Path);
 
-	if (mkdir(realname, S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH) == -1)
+	if (CaseDuplExists(realname, FALSE) != FS_FILE_EXISTS && mkdir(realname, S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH) == -1)
 		return FALSE;
 
 	return TRUE;
@@ -969,6 +1005,12 @@ BOOL DCPCALL FsSetTime(char* RemoteName, FILETIME *CreationTime, FILETIME *LastA
 	}
 
 	return TRUE;
+}
+
+void DCPCALL FsStatusInfo(char* RemoteDir, int InfoStartEnd, int InfoOperation)
+{
+	if (InfoOperation == FS_STATUS_OP_LIST)
+		gFileListOP = (InfoStartEnd == FS_STATUS_START) ? TRUE : FALSE;
 }
 
 int DCPCALL FsContentGetSupportedField(int FieldIndex, char* FieldName, char* Units, int maxlen)
