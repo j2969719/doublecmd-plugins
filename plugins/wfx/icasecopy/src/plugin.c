@@ -109,7 +109,7 @@ static void BuildCasePath(char *RemoteName, char *Path)
 	while ((pos = strchr(remote, '/')) != NULL)
 	{
 		*pos = '\0';
-		snprintf(Path, PATH_MAX, "%s%s%s/%s", gStartPath, (casepath[0] != '/') ? "/" : "", (casepath[0] == '\0') ? "" : casepath, remote);
+		snprintf(Path, PATH_MAX, "%s%s%s/%s", (gStartPath[0] != '\0') ? gStartPath : "/", (casepath[0] != '/') ? "/" : "", (casepath[0] == '\0') ? "" : casepath, remote);
 		snprintf(localpath, PATH_MAX, "%s", casepath);
 
 		if (CaseDuplExists(Path, TRUE) == FS_FILE_EXISTS)
@@ -1010,7 +1010,7 @@ BOOL DCPCALL FsSetTime(char* RemoteName, FILETIME *CreationTime, FILETIME *LastA
 void DCPCALL FsStatusInfo(char* RemoteDir, int InfoStartEnd, int InfoOperation)
 {
 	if (InfoOperation == FS_STATUS_OP_LIST)
-		gFileListOP = (InfoStartEnd == FS_STATUS_START) ? TRUE : FALSE;
+		gFileListOP = (InfoStartEnd == FS_STATUS_START);
 }
 
 int DCPCALL FsContentGetSupportedField(int FieldIndex, char* FieldName, char* Units, int maxlen)
