@@ -178,6 +178,9 @@ Requires the `bit7z` library, see [bit7z packer plugin](#wcx).
 - [href_crap](plugins/wfx/href_crap)<br>
 `apt install build-essential libglib2.0-dev libcurl4-gnutls-dev libxml2-dev`
 
+- [icasecopy](plugins/wfx/icasecopy)<br>
+`apt install build-essential`
+
 - [null_crap](plugins/wfx/null_crap)<br>
 `apt install build-essential`
 
@@ -195,7 +198,6 @@ Requires the `bit7z` library, see [bit7z packer plugin](#wcx).
 
 - [trash_crap](plugins/wfx/trash_crap)<br>
 `apt install build-essential libglib2.0-dev`
-
 
 - [udisk_loopdev_crap](plugins/wfx/udisk_loopdev_crap)<br>
 `apt install build-essential libglib2.0-dev libudisks2-dev`
