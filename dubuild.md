@@ -112,7 +112,8 @@ Requires the `bit7z` library, see [bit7z packer plugin](#wcx).
 `apt install build-essential libglib2.0-dev`
 
 - [gimgsize](plugins/wdx/gimgsize)<br>
-`apt install build-essential libglib2.0-dev libgtk2.0-dev`
+Debian 11.0+/Ubuntu 22.04+: `apt install build-essential libglib2.0-dev libgdk-pixbuf-2.0-dev`<br>
+Previous versions: `apt install build-essential libglib2.0-dev libgdk-pixbuf2.0-dev`
 
 - [gitrepo](plugins/wdx/gitrepo)<br>
 `apt install build-essential pkg-config libgit2-dev`

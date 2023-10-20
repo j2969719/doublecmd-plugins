@@ -1,7 +1,7 @@
 CC = gcc
 CFLAGS = -shared -fPIC -Wl,--no-as-needed
 
-libs := `pkg-config --cflags --libs glib-2.0 gdk-2.0`
+libs := `pkg-config --cflags --libs glib-2.0 gdk-pixbuf-2.0`
 includes := -I../../../sdk
 
 plugdir := $(shell basename $(realpath ..))
