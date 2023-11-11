@@ -264,6 +264,9 @@ Getting some information from SVG files.
 - [svninfowdx.lua](plugins/wdx/scripts/svninfowdx.lua)<br>
 Getting some information from local copy of SVN repository. Requires `svn`.
 
+- [symlinkwdx.lua](plugins/wdx/scripts/symlinkwdx.lua)<br>
+Getting some details about symlinks.
+
 - [tags](utils/tags) *(cross platform)*<br>
 Assign any tag to any file or folder (local file systems), see readme.md.
 
