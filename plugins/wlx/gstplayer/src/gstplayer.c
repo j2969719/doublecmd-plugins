@@ -22,6 +22,9 @@
 (EXT=\"BIK\")|(EXT=\"VOC\")|(EXT=\"WAV\")|(EXT=\"WEBM\")|(EXT=\"VOB\")|(EXT=\"ROQ\")|\
 (EXT=\"IVF\")|(EXT=\"MOV\")|(EXT=\"FLAC\")|(EXT=\"WMV\")"
 
+gboolean gLoop = FALSE;
+gboolean gVis = FALSE;
+
 /* Structure to contain all our information, so we can pass it around */
 typedef struct _CustomData {
   GstElement *playbin;            /* Our one and only pipeline */
@@ -41,6 +44,8 @@ typedef struct _CustomData {
   GstState state;                 /* Current state of the pipeline */
   gint64 duration;                /* Duration of the clip, in nanoseconds */
   guint timer;                    /* Refresh timer */
+  gboolean init_volume;
+  gboolean init_video;
 } CustomData;
 
 typedef enum {
@@ -73,6 +78,18 @@ static void realize_cb (GtkWidget *widget, CustomData *data) {
   gst_video_overlay_set_window_handle (GST_VIDEO_OVERLAY (data->playbin), window_handle);
 }
 
+static gboolean volume_scroll_cb (GtkRange *range, GdkEventScroll *event, CustomData *data) {
+  gdouble value = gtk_range_get_value (range);
+
+  if (event->direction == GDK_SCROLL_UP) {
+    gtk_range_set_value (GTK_RANGE (data->volume_slider), value + 0.05);
+    return TRUE;
+  } else if (event->direction == GDK_SCROLL_DOWN) {
+    gtk_range_set_value (GTK_RANGE (data->volume_slider), value - 0.05);
+    return TRUE;
+  }
+  return FALSE;
+}
 static void volume_cb (GtkRange *range, CustomData *data) {
   gdouble value = gtk_range_get_value (range);
 
@@ -86,17 +103,21 @@ static void volume_cb (GtkRange *range, CustomData *data) {
     else if (value > 0)
       gtk_tool_button_set_icon_name (GTK_TOOL_BUTTON (data->btn_mute), "audio-volume-low");
 
+    g_object_set (data->playbin, "volume", value, NULL);
   } else
     gtk_toggle_tool_button_set_active (GTK_TOGGLE_TOOL_BUTTON (data->btn_mute), TRUE);
-
-  g_object_set (data->playbin, "volume", value, NULL);
 }
 
 static void mute_cb (GtkToolItem *btn_mute, CustomData *data) {
   if (gtk_toggle_tool_button_get_active (GTK_TOGGLE_TOOL_BUTTON (btn_mute))) {
     gtk_tool_button_set_icon_name (GTK_TOOL_BUTTON (btn_mute), "audio-volume-muted");
-    g_object_set (data->playbin, "volume", 0, NULL);
+    g_object_set (data->playbin, "mute", TRUE, NULL);
   } else {
+    g_object_set (data->playbin, "mute", FALSE, NULL);
+
+    if (gtk_range_get_value (GTK_RANGE (data->volume_slider)) == 0)
+      gtk_range_set_value (GTK_RANGE (data->volume_slider), 0.05);
+
     volume_cb (GTK_RANGE (data->volume_slider), data);
   }
 }
@@ -267,7 +288,7 @@ static GtkWidget *create_ui (GtkWidget *ParentWin, CustomData *data) {
 
   data->btn_loop = gtk_toggle_tool_button_new ();
   gtk_tool_button_set_icon_name (GTK_TOOL_BUTTON (data->btn_loop), "media-playlist-repeat");
-  gtk_toggle_tool_button_set_active (GTK_TOGGLE_TOOL_BUTTON (data->btn_loop), TRUE);
+  gtk_toggle_tool_button_set_active (GTK_TOGGLE_TOOL_BUTTON (data->btn_loop), gLoop);
 
   data->btn_mute = gtk_toggle_tool_button_new ();
   gtk_tool_button_set_icon_name(GTK_TOOL_BUTTON (data->btn_mute), "audio-volume-high");
@@ -289,6 +310,7 @@ static GtkWidget *create_ui (GtkWidget *ParentWin, CustomData *data) {
   gtk_scale_set_draw_value (GTK_SCALE (data->volume_slider), 0);
   gtk_widget_set_size_request(data->volume_slider, 100, -1);
   g_signal_connect (G_OBJECT (data->volume_slider), "value-changed", G_CALLBACK (volume_cb), data);
+  g_signal_connect (G_OBJECT (data->volume_slider), "scroll-event", G_CALLBACK (volume_scroll_cb), data);
 
   scroll_window = gtk_scrolled_window_new(NULL, NULL);
   gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scroll_window), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
@@ -494,6 +516,17 @@ static void analyze_streams (CustomData *data) {
   g_object_get (data->playbin, "n-audio", &n_audio, NULL);
   g_object_get (data->playbin, "n-text", &n_text, NULL);
 
+  if (!gVis && !data->init_video) {
+    gtk_toggle_tool_button_set_active (GTK_TOGGLE_TOOL_BUTTON (data->btn_info), (n_video == 0));
+
+    if (n_video != 0) {
+      data->init_video = TRUE;
+      gtk_widget_show (GTK_WIDGET (data->btn_info));
+    } else {
+      gtk_widget_hide (GTK_WIDGET (data->btn_info));
+    }
+  }
+
   total_str = g_strdup_printf ("%d video stream(s), %d audio stream(s), %d text stream(s)\n",
     n_video, n_audio, n_text);
   gtk_text_buffer_insert_at_cursor (text, total_str, -1);
@@ -549,6 +582,16 @@ static void analyze_streams (CustomData *data) {
 /* This function is called when an "application" message is posted on the bus.
  * Here we retrieve the message posted by the tags_cb callback */
 static void application_cb (GstBus *bus, GstMessage *msg, CustomData *data) {
+  if (!data->init_volume) {
+    gdouble volume;
+    gboolean mute;
+    g_object_get (data->playbin, "mute", &mute, NULL);
+    g_object_get (data->playbin, "volume", &volume, NULL);
+    gtk_range_set_value (GTK_RANGE (data->volume_slider), (volume == 0.0) ? 1.0 : volume);
+    gtk_toggle_tool_button_set_active (GTK_TOGGLE_TOOL_BUTTON (data->btn_mute),  (volume == 0.0 || mute));
+    data->init_volume = TRUE;
+  }
+
   if (g_strcmp0 (gst_structure_get_name (gst_message_get_structure (msg)), "tags-changed") == 0) {
     /* If the message is the "tags-changed" (only one we are currently issuing), update
      * the stream info GUI */
@@ -564,7 +607,6 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
   GstStateChangeReturn ret;
   GstBus *bus;
   gint flags;
-  gdouble volume;
 
   /* Initialize GStreamer */
   gst_init (NULL, NULL);
@@ -594,7 +636,8 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
   g_signal_connect (G_OBJECT (data->playbin), "text-tags-changed", (GCallback) tags_cb, &data);
 
   g_object_get (data->playbin, "flags", &flags, NULL);
-  flags |= GST_PLAY_FLAG_VIDEO | GST_PLAY_FLAG_AUDIO | GST_PLAY_FLAG_TEXT | GST_PLAY_FLAG_VIS;
+  flags |= GST_PLAY_FLAG_VIDEO | GST_PLAY_FLAG_AUDIO | GST_PLAY_FLAG_TEXT;
+  if (gVis) flags |= GST_PLAY_FLAG_VIS;
   g_object_set (data->playbin, "flags", flags, NULL);
 
   /* Create the GUI */
@@ -610,9 +653,6 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
   g_signal_connect (G_OBJECT (bus), "message::application", (GCallback)application_cb, data);
   gst_object_unref (bus);
 
-  g_object_get (data->playbin, "volume", &volume, NULL);
-  gtk_range_set_value (GTK_RANGE (data->volume_slider), volume);
-
   /* Start playing */
   ret = gst_element_set_state (data->playbin, GST_STATE_PLAYING);
   if (ret == GST_STATE_CHANGE_FAILURE) {
@@ -624,7 +664,6 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 
   /* Register a function that GLib will call every second */
   data->timer = g_timeout_add_seconds (1, (GSourceFunc)refresh_ui, data);
-  mute_cb (GTK_TOOL_ITEM (data->btn_mute), data);
 
   g_object_set_data (G_OBJECT (main_window), "custom-data", data);
   g_signal_connect (G_OBJECT (main_window), "key_press_event", G_CALLBACK (on_key_press), (gpointer)data);
@@ -660,6 +699,7 @@ int DCPCALL ListLoadNext(HWND ParentWin, HWND PluginWin, char* FileToLoad, int S
   fileUri = g_filename_to_uri (FileToLoad, NULL, NULL);
   g_object_set (data->playbin, "uri", fileUri, NULL);
   gtk_label_set_text (GTK_LABEL (data->lbl_info), g_path_get_basename (FileToLoad));
+  data->init_video = FALSE;
 
   if (fileUri) g_free (fileUri);
 
@@ -744,4 +784,26 @@ int DCPCALL ListSendCommand(HWND ListWin, int Command, int Parameter)
        return LISTPLUGIN_ERROR;
   }
   return LISTPLUGIN_OK;
+}
+
+void DCPCALL ListSetDefaultParams(ListDefaultParamStruct* dps)
+{
+  gchar *cfgdir = g_path_get_dirname (dps->DefaultIniName);
+  gchar *cfgpath = g_strdup_printf ("%s/j2969719.ini", cfgdir);
+  g_free (cfgdir);
+  GKeyFile *cfg = g_key_file_new ();
+  g_key_file_load_from_file (cfg, cfgpath, G_KEY_FILE_KEEP_COMMENTS, NULL);
+
+  if (!g_key_file_has_key (cfg, PLUGNAME, "MusicVis", NULL) || !g_key_file_has_key (cfg, PLUGNAME, "Loop", NULL)) {
+    g_key_file_set_boolean (cfg, PLUGNAME, "MusicVis", gVis);
+    g_key_file_set_boolean (cfg, PLUGNAME, "Loop", gLoop);
+    g_key_file_save_to_file (cfg, cfgpath, NULL);
+  }
+  else {
+    gVis = g_key_file_get_boolean (cfg, PLUGNAME, "MusicVis", NULL);
+    gLoop = g_key_file_get_boolean (cfg, PLUGNAME, "Loop", NULL);
+  }
+
+  g_key_file_free (cfg);
+  g_free (cfgpath);
 }

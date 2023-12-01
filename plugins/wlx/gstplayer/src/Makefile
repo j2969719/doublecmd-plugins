@@ -10,11 +10,12 @@ plugname := $(plugdir).$(plugtype)
 plugdescr := `grep '$(plugtype)/$(plugdir))' ../../../../plugins.md -1 | tail -1 | sed 's/[[]//' | sed 's/[]][\(][^\)]\+.//' | sed 's/\s[\(].\+[\)]//'`
 plugfiles := $(filter-out $(wildcard ../*.$(plugtype)), $(wildcard ../*))
 
-detectstring :=
+#detectstring :=
 
 
 all:
-		$(CC) $(CFLAGS) -o ../$(plugname) gstplayer.c $(libs) $(includes) -D'PLUGNAME="$(plugname)"' -D'DETECT_STRING="$(detectstring)"' -D'PLUGTARGET="$@"' || echo $(plugname) >> ../../../dist/.build_fail.lst
+		#$(CC) $(CFLAGS) -o ../$(plugname) gstplayer.c $(libs) $(includes) -D'PLUGNAME="$(plugname)"' -D'DETECT_STRING="$(detectstring)"' -D'PLUGTARGET="$@"' || echo $(plugname) >> ../../../dist/.build_fail.lst
+		$(CC) $(CFLAGS) -o ../$(plugname) gstplayer.c $(libs) $(includes) -D'PLUGNAME="$(plugname)"' -D'PLUGTARGET="$@"' || echo $(plugname) >> ../../../dist/.build_fail.lst
 
 dist:
 		test -f ../$(plugname) && \
