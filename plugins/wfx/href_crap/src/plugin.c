@@ -46,10 +46,13 @@ typedef struct sPlugSettings
 	gboolean verbose;
 	gboolean noquery;
 	gboolean fail;
+	gboolean auth;
 	long max_redir;
 	long timeout;
 	char url[PATH_MAX];
 	char user_agent[MAX_PATH];
+	char user[MAX_PATH];
+	char passwd[MAX_PATH];
 } tPlugSettings;
 
 int gPluginNr;
@@ -192,6 +195,15 @@ static void curl_set_additional_options(CURL *curl)
 
 	if (gSettings.user_agent[0] != '\0')
 		curl_easy_setopt(curl, CURLOPT_USERAGENT, gSettings.user_agent);
+
+	if (gSettings.auth)
+	{
+		if (gSettings.user[0] == '\0' && gRequestProc(gPluginNr, RT_UserName, NULL, NULL, gSettings.user, MAX_PATH))
+			curl_easy_setopt(curl, CURLOPT_USERNAME, gSettings.user);
+		if (gSettings.passwd[0] == '\0' && gRequestProc(gPluginNr, RT_Password, NULL, NULL, gSettings.passwd, MAX_PATH))
+			curl_easy_setopt(curl, CURLOPT_PASSWORD, gSettings.passwd);
+		
+	}
 
 	curl_easy_setopt(curl, CURLOPT_FAILONERROR, (long)gSettings.fail);
 }
@@ -711,6 +723,7 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 		gDialogApi->SendDlgMsg(pDlg, "ckVerbose", DM_SETCHECK, (intptr_t)gSettings.verbose, 0);
 		gDialogApi->SendDlgMsg(pDlg, "ckFail", DM_SETCHECK, (intptr_t)gSettings.fail, 0);
 		gDialogApi->SendDlgMsg(pDlg, "ckNoQuery", DM_SETCHECK, (intptr_t)gSettings.noquery, 0);
+		gDialogApi->SendDlgMsg(pDlg, "ckAuth", DM_SETCHECK, (intptr_t)gSettings.auth, 0);
 
 		gchar *num = g_strdup_printf("%ld", gSettings.max_redir);
 		gDialogApi->SendDlgMsg(pDlg, "edMaxRedir", DM_SETTEXT, (intptr_t)num, 0);
@@ -753,6 +766,7 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 			gSettings.verbose = (gboolean)gDialogApi->SendDlgMsg(pDlg, "ckVerbose", DM_GETCHECK, 0, 0);
 			gSettings.fail = (gboolean)gDialogApi->SendDlgMsg(pDlg, "ckFail", DM_GETCHECK, 0, 0);
 			gSettings.noquery = (gboolean)gDialogApi->SendDlgMsg(pDlg, "ckNoQuery", DM_GETCHECK, 0, 0);
+			gSettings.auth = (gboolean)gDialogApi->SendDlgMsg(pDlg, "ckAuth", DM_GETCHECK, 0, 0);
 
 			line = (char*)gDialogApi->SendDlgMsg(pDlg, "edMaxRedir", DM_GETTEXT, 0, 0);
 			gSettings.max_redir = (long)g_ascii_strtod((char*)line, NULL);
@@ -838,6 +852,10 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 				gDialogApi->SendDlgMsg(pDlg, "btnRemove", DM_ENABLE, 0, 0);
 			else
 				gDialogApi->SendDlgMsg(pDlg, "btnRemove", DM_ENABLE, 1, 0);
+
+			gDialogApi->SendDlgMsg(pDlg, "ckAuth", DM_SETCHECK, 0, 0);
+			gSettings.user[0] = '\0';
+			gSettings.passwd[0] = '\0';
 		}
 
 		break;

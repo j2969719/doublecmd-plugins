@@ -3,7 +3,6 @@
 -- In Poettering We Trust 2
 
 args = {...}
-terminal_cmd = "xterm -e"  -- xterm ftw
 
 function get_output(command)
     local handle = io.popen(command, 'r')
@@ -19,14 +18,10 @@ function get_output(command)
 end
 
 function fs_init()
-    print("Fs_PushValue WFX_SCRIPT_STR_TERM\t" .. terminal_cmd)
     os.exit()
 end
 
 function fs_setopt(option, value)
-    if option == "WFX_SCRIPT_STR_TERM" and value ~= '' then
-        print("Fs_Set_DC_WFX_TP_SCRIPT_DATA " .. value)
-    end
     os.exit()
 end
 
@@ -38,7 +33,7 @@ function fs_getlist(path)
             if filedate ~= nil and pid ~= nil and name ~= nil then
                 local filesize = nil
                 if size ~= nil then
-                    filesize = tonumber(size:match("%d+.%d"))
+                    filesize = tonumber(size:match("%d+[%.,]?%d?"))
                     local char = size:sub(-1)
                     if char == 'K' then
                         filesize = math.floor(filesize * 1024)
@@ -94,12 +89,17 @@ function fs_properties(file)
 end
 
 function fs_execute(file)
-
-    local data = os.getenv("DC_WFX_TP_SCRIPT_DATA")
+--[[
+    local data = os.getenv("DC_TERMCMD_CLOSE")
     if data ~= nil and data ~= '' then
         terminal_cmd = data
     end
-    os.execute(terminal_cmd .. ' "coredumpctl debug ' .. file:match("%.(%d+)$") .. '"')
+    if not terminal_cmd:find('"{command}"') and not terminal_cmd:find("'{command}'") then
+        terminal_cmd = terminal_cmd:gsub("{command}", '"{command}"')
+    end
+    os.execute(terminal_cmd:gsub("{command}", "coredumpctl debug " .. file:match("%.(%d+)$")))
+]]
+    print("Fs_RunTermKeep coredumpctl debug " .. file:match("%.(%d+)$"))
     os.exit()
 end
 

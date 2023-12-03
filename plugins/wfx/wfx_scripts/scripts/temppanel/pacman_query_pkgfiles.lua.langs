@@ -9,6 +9,7 @@ WFX_SCRIPT_STR_SIZE=Installed Size
 WFX_SCRIPT_STR_BUILD=Build Date
 WFX_SCRIPT_STR_INSTALL=Install Date
 WFX_SCRIPT_STR_REASON=Install Reason
+ENV_WFX_SCRIPT_STR_JUMP=jump
 
 [ru_RU]
 WFX_SCRIPT_STR_DESCR=Описание
@@ -21,3 +22,4 @@ WFX_SCRIPT_STR_SIZE=Установленный размер
 WFX_SCRIPT_STR_BUILD=Дата сборки
 WFX_SCRIPT_STR_INSTALL=Дата установки
 WFX_SCRIPT_STR_REASON=Причина установки
+ENV_WFX_SCRIPT_STR_JUMP=Переход в реальную папку

@@ -29,6 +29,7 @@ def get_jsonobj():
 	return obj
 
 def vfs_init():
+	print('Fs_DisableFakeDates')
 	tf = tempfile.NamedTemporaryFile(suffix='_foliate.json', delete=False)
 	filename = tf.name
 	tf.close()

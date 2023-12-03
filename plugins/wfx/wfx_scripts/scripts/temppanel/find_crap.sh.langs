@@ -1,0 +1,26 @@
+[Default]
+WFX_SCRIPT_STR_DIR=Select directory
+WFX_SCRIPT_STR_MASK=Enter filename pattern (e.g. *.mp3)
+WFX_SCRIPT_STR_OPT=Enter additional parameters (e.g. -size +5M)
+WFX_SCRIPT_STR_VAL=Command to get additional info for the files
+WFX_SCRIPT_STR_ACTDIR=Change start path
+WFX_SCRIPT_STR_ACTMASK=Change filename pattern
+WFX_SCRIPT_STR_ACTOPT=Change additional parameters
+WFX_SCRIPT_STR_ACTVAL=Change the command for getting info
+WFX_SCRIPT_STR_ACTMAN=Execute man find
+WFX_SCRIPT_STR_ASKOPT=Prompt each time for additional parameters (e.g. -size +5M etc) for the find command? They can also be set in the file properties dialog.
+WFX_SCRIPT_STR_INFO=Info
+WFX_SCRIPT_STR_TYPE=Object
+WFX_SCRIPT_STR_SIZE=Size
+WFX_SCRIPT_STR_PERM=Permissions
+WFX_SCRIPT_STR_MTIME=Modification
+WFX_SCRIPT_STR_BTIME=Birth
+WFX_SCRIPT_STR_ATIME=Access
+WFX_SCRIPT_STR_CTIME=Status change
+WFX_SCRIPT_STR_OWNER=User
+WFX_SCRIPT_STR_GROUP=Group
+WFX_SCRIPT_STR_INODE=Inode
+WFX_SCRIPT_STR_NLINKS=Number of links
+
+[ru_RU]
+WFX_SCRIPT_STR_ACTMAN=Казнить мужчина находка

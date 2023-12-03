@@ -81,7 +81,7 @@ function fs_properties(file)
     if not file:find("%.tar%.gz$") then
         print("Fs_YesNo_Message " .. update_msg)
     else
-        os.execute("xdg-open https://aur.archlinux.org/pkgbase" .. file:match("(/[^/]+)%.tar%.gz$"))
+        print("Fs_Open https://aur.archlinux.org/pkgbase" .. file:match("(/[^/]+)%.tar%.gz$"))
     end
     os.exit()
 end

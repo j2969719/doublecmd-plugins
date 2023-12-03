@@ -39,6 +39,7 @@ def open_mimeappslist():
 def vfs_init():
 	copyfile(get_mimeappsfilename(), '/tmp/mimeapps.list.bak')
 	print('Fs_Info_Message Backup copy created in /tmp/mimeapps.list.bak')
+	sys.exit()
 
 def vfs_list(path):
 	mimeapps = open_mimeappslist()
@@ -127,7 +128,7 @@ def vfs_rmdir(path):
 def vfs_execute(path):
 	appinfo = get_appinfo_from_path(path)
 	if appinfo is not None:
-		os.system('xdg-open "' + appinfo.get_filename() + '"')
+		print('Fs_Open ' + appinfo.get_filename())
 	sys.exit()
 
 def vfs_properties(path):

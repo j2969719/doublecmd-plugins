@@ -40,6 +40,7 @@ function escape_string(string)
 end
 
 function fs_init()
+    print("Fs_CONNECT_Needed")
     os.execute(adb_cmd .. " start-server")
     print("Fs_LogInfo")
     os.execute(adb_cmd .. " devices -l")

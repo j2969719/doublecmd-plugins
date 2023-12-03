@@ -82,7 +82,7 @@ def vfs_setopt(option, value):
 			print('Fs_Request_Options')
 			print('Name')
 			print("Fs_Info_Message Authenticate in your browser and copy the code.")
-			os.system('xdg-open "%s"' % y.get_code_url())
+			print('Fs_Open %s' % y.get_code_url())
 			print('Code')
 			sys.exit()
 		elif not value is None:

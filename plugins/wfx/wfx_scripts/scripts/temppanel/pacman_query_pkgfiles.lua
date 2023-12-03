@@ -1,7 +1,6 @@
 #!/bin/env lua
 
 args = {...}
-jump_str = "<jump>.link"
 
 function get_output(command)
     local handle = io.popen(command, 'r')
@@ -41,7 +40,7 @@ function fs_getlist(path)
     else
         local files = {}
         if not path:find("/$") then
-           path = path .. '/'
+            path = path .. '/'
         end
         local pkgname = get_pkgname(path)
         local target = path:match("^/.-(/.*)")
@@ -64,7 +63,7 @@ function fs_getlist(path)
             end
         end
         if target ~= '/' then
-            print("lr-xr-xr-x 0000-00-00 00:00:00 - " .. jump_str)
+            print("lr-xr-xr-x 0000-00-00 00:00:00 - <" .. os.getenv("ENV_WFX_SCRIPT_STR_JUMP") .. ">.-->")
         end
     end
     os.exit()
@@ -85,24 +84,28 @@ function fs_properties(file)
     else
         print('content_type\tinode/directory')
         local fields = {
-            {"WFX_SCRIPT_STR_DESCR",     "Description%s+:%s+([^\n]-)\n"},
+            {"WFX_SCRIPT_STR_DESCR", "Description%s+:%s+([^\n]-)\n"},
             {"WFX_SCRIPT_STR_ARCH_BTW", "Architecture%s+:%s+([^\n]-)\n"},
-            {"URL",                              "URL%s+:%s+([^\n]-)\n"},
-            {"WFX_SCRIPT_STR_LICENSE",      "Licenses%s+:%s+([^\n]-)\n"},
-            {"WFX_SCRIPT_STR_DEPENDS",    "Depends On%s+:%s+([^\n]-)\n"},
-            {"WFX_SCRIPT_STR_REQUIRED",  "Required By%s+:%s+([^\n]-)\n"},
-            {"WFX_SCRIPT_STR_OPT",     "Optional Deps%s+:%s+([^\n]-)\n"},
-            {"WFX_SCRIPT_STR_SIZE",   "Installed Size%s+:%s+([^\n]-)\n"},
-            {"WFX_SCRIPT_STR_BUILD",      "Build Date%s+:%s+([^\n]-)\n"},
-            {"WFX_SCRIPT_STR_INSTALL",  "Install Date%s+:%s+([^\n]-)\n"},
+            {"URL", "URL%s+:%s+([^\n]-)\n"},
+            {"WFX_SCRIPT_STR_LICENSE", "Licenses%s+:%s+([^\n]-)\n"},
+            {"WFX_SCRIPT_STR_DEPENDS", "Depends On%s+:%s+([^\n]-)\n"},
+            {"WFX_SCRIPT_STR_REQUIRED", "Required By%s+:%s+([^\n]-)\n"},
+            {"WFX_SCRIPT_STR_OPT", "Optional Deps%s+:%s+([^\n]-)\n"},
+            {"WFX_SCRIPT_STR_SIZE", "Installed Size%s+:%s+([^\n]-)\n"},
+            {"WFX_SCRIPT_STR_BUILD", "Build Date%s+:%s+([^\n]-)\n"},
+            {"WFX_SCRIPT_STR_INSTALL", "Install Date%s+:%s+([^\n]-)\n"},
             {"WFX_SCRIPT_STR_REASON", "Install Reason%s+:%s+([^\n]-)\n"},
         }
         local pkgname = get_pkgname(file .. '/')
         local output = get_output("LANG= pacman -Qiq " .. pkgname)
-        for i=1, #fields do
+        local icon = get_output("find /usr/share/icons/hicolor/48x48/apps /usr/share/pixmaps -name " .. pkgname .. '.png'):sub(1, -2)
+        for i = 1, #fields do
             value = output:match(fields[i][2])
             if value ~= nil then
-                print(fields[i][1]..'\t'..value)
+                print(fields[i][1] .. '\t'..value)
+            end
+            if i == 1 and icon then
+                print("png: \t" .. icon)
             end
         end
     end
@@ -110,14 +113,14 @@ function fs_properties(file)
 end
 
 function fs_execute(file)
-    if (file:match("([^/]+)$") == jump_str) then
+    if (file:match("([^/]+)$") == '<' .. os.getenv("ENV_WFX_SCRIPT_STR_JUMP") .. ">.-->") then
         local path = file:match("^/.-(/.*)/[^/]+$")
         if path ~= nil then
             print(path)
         end
         os.exit()
     end
-    os.execute('xdg-open "' .. get_realname(file):gsub('"', '\\"') .. '" &')
+    print("Fs_OpenTerm " .. get_realname(file))
     os.exit()
 end
 

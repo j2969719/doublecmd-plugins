@@ -132,8 +132,7 @@ bool SetFindData(tVFSDirData *dirdata, WIN32_FIND_DATAA *FindData)
 			{
 				char name[100];
 				fscanf(info, "Name:\t%100[^\n]s", name);
-				snprintf(lpath, PATH_MAX, "%s.%s", name, ent->d_name);
-				strncpy(FindData->cFileName, lpath, MAX_PATH - 1);
+				snprintf(FindData->cFileName, MAX_PATH, "%s.%s", name, ent->d_name);
 				fclose(info);
 				found = true;
 
@@ -287,14 +286,14 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 			{
 				if (len > 7 && line[len - 3] == ' ' && line[len - 7] != ' ')
 				{
-					strncpy(lpath, line, len - 6);
+					snprintf(lpath, len - 6, "%s", line);
 					strcat(lpath, " ");
 					strcat(lpath, line + len - 6);
 					SendDlgMsg(pDlg, DlgItemName, DM_SETTEXT, (intptr_t)lpath, 0);
 				}
 				else if (len > 11 && line[len - 3] == ' ' && line[len - 11] != ' ')
 				{
-					strncpy(lpath, line, len - 10);
+					snprintf(lpath, len - 10, "%s", line);
 					strcat(lpath, " ");
 					strcat(lpath, line + len - 10);
 					SendDlgMsg(pDlg, DlgItemName, DM_SETTEXT, (intptr_t)lpath, 0);
@@ -303,7 +302,7 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 		}
 		else if (strcmp(DlgItemName, "cbLink") == 0)
 		{
-			strncpy(gLinkPath, (char*)SendDlgMsg(pDlg, DlgItemName, DM_GETTEXT, 0, 0), PATH_MAX - 1);
+			snprintf(gLinkPath, PATH_MAX, "%s", (char*)SendDlgMsg(pDlg, DlgItemName, DM_GETTEXT, 0, 0));
 		}
 		else if (strcmp(DlgItemName, "edUpdTime") == 0)
 		{
@@ -385,7 +384,7 @@ int DCPCALL FsExecuteFile(HWND MainWin, char* RemoteName, char* Verb)
 		{
 			if (gDialogApi && access(gLFMPath, F_OK) == 0)
 			{
-				strncpy(gLastPath, "self", PATH_MAX);
+				strcpy(gLastPath, "self");
 				gDialogApi->DialogBoxLFMFile(gLFMPath, DlgProc);
 			}
 
@@ -399,7 +398,7 @@ int DCPCALL FsExecuteFile(HWND MainWin, char* RemoteName, char* Verb)
 			{
 				if (gDialogApi && access(gLFMPath, F_OK) == 0)
 				{
-					strncpy(gLastPath, dot + 1, PATH_MAX);
+					snprintf(gLastPath, PATH_MAX, "%s", dot + 1);
 					gDialogApi->DialogBoxLFMFile(gLFMPath, DlgProc);
 				}
 

@@ -80,3 +80,7 @@ msgstr ""
 #: DialogBox.lblURL.Сaption
 msgid "URL:"
 msgstr ""
+
+#: DialogBox.ckAuth.Сaption
+msgid "Authentication"
+msgstr ""

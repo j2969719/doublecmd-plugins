@@ -71,8 +71,7 @@ def vfs_setopt(option, value):
 		clipboard.store()
 		sys.exit()
 	elif option == act_open:
-		cmd = 'xdg-open https://www.imgur.com/' + obj[scr]['files'][os.path.basename(value)]['id']
-		os.system(cmd)
+		print('Fs_Open https://www.imgur.com/' + obj[scr]['files'][os.path.basename(value)]['id'])
 		sys.exit()
 	sys.exit(1)
 

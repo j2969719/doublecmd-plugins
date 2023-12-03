@@ -1,0 +1,64 @@
+[Default]
+ENV_WFX_SCRIPT_STR_MAN0=C header files
+ENV_WFX_SCRIPT_STR_MAN0P=C header files (posix dev)
+ENV_WFX_SCRIPT_STR_MAN1=user commands
+ENV_WFX_SCRIPT_STR_MAN1P=user commands (posix dev)
+ENV_WFX_SCRIPT_STR_MAN2=system calls
+ENV_WFX_SCRIPT_STR_MAN2TYPE=system calls (type)
+ENV_WFX_SCRIPT_STR_MAN3=library functions
+ENV_WFX_SCRIPT_STR_MAN3CONST=library functions (const)
+ENV_WFX_SCRIPT_STR_MAN3HEAD=library functions (head)
+ENV_WFX_SCRIPT_STR_MAN3TYPE=library functions (type)
+ENV_WFX_SCRIPT_STR_MAN3P=library functions (posix dev)
+ENV_WFX_SCRIPT_STR_MAN4=special files
+ENV_WFX_SCRIPT_STR_MAN5=file formats
+ENV_WFX_SCRIPT_STR_MAN6=games
+ENV_WFX_SCRIPT_STR_MAN7=conventions and misc
+ENV_WFX_SCRIPT_STR_MAN8=admin
+ENV_WFX_SCRIPT_STR_MAN9=kernel routines
+ENV_WFX_SCRIPT_STR_MANL=math library functions
+ENV_WFX_SCRIPT_STR_MANN=tcl functions
+ENV_WFX_SCRIPT_STR_MANX=X11
+ENV_WFX_SCRIPT_STR_DOC=doc dir
+ENV_WFX_SCRIPT_STR_GTKDOC=gtk-doc dir
+ENV_WFX_SCRIPT_STR_DEVHELP=devhelp dir
+ENV_WFX_SCRIPT_STR_ARCHWIKI=archwiki
+ENV_WFX_SCRIPT_STR_GTK2=old gtk2 docs
+
+WFX_SCRIPT_STR_FRM=Format
+WFX_SCRIPT_STR_PDF=PDF
+WFX_SCRIPT_STR_HTM=HTML
+WFX_SCRIPT_STR_TXT=Plain text
+WFX_SCRIPT_STR_MAN=Run man
+
+[ru_RU]
+ENV_WFX_SCRIPT_STR_MAN0=Заголовочные файлы Си
+ENV_WFX_SCRIPT_STR_MAN0P=Заголовочные файлы Си (posix dev)
+ENV_WFX_SCRIPT_STR_MAN1=Исполняемые программы или команды оболочки
+ENV_WFX_SCRIPT_STR_MAN1P=Исполняемые программы или команды оболочки (posix)
+ENV_WFX_SCRIPT_STR_MAN2=Системные вызовы (функции, предоставляемые ядром)
+ENV_WFX_SCRIPT_STR_MAN2TYPE=Системные вызовы (функции, предоставляемые ядром) (типы)
+ENV_WFX_SCRIPT_STR_MAN3=Библиотечные вызовы
+ENV_WFX_SCRIPT_STR_MAN3CONST=Библиотечные вызовы (const)
+ENV_WFX_SCRIPT_STR_MAN3HEAD=Библиотечные вызовы (head)
+ENV_WFX_SCRIPT_STR_MAN3TYPE=Библиотечные вызовы (типы)
+ENV_WFX_SCRIPT_STR_MAN3P=Библиотечные вызовы (posix dev)
+ENV_WFX_SCRIPT_STR_MAN4=Специальные файлы
+ENV_WFX_SCRIPT_STR_MAN5=Форматы файлов и соглашения
+ENV_WFX_SCRIPT_STR_MAN6=Игры
+ENV_WFX_SCRIPT_STR_MAN7=Разное
+ENV_WFX_SCRIPT_STR_MAN8=Команды администрирования системы
+ENV_WFX_SCRIPT_STR_MAN9=Процедуры ядра
+ENV_WFX_SCRIPT_STR_MANL=Функции библиотеки math
+ENV_WFX_SCRIPT_STR_MANN=Функции tcl
+ENV_WFX_SCRIPT_STR_MANX=X11
+ENV_WFX_SCRIPT_STR_DOC=Кaталог doc
+ENV_WFX_SCRIPT_STR_GTKDOC=Кaталог gtk-doc
+ENV_WFX_SCRIPT_STR_DEVHELP=Кaталог devhelp
+ENV_WFX_SCRIPT_STR_GTK2=Старые доки gtk2
+
+WFX_SCRIPT_STR_FRM=Формат
+WFX_SCRIPT_STR_PDF=PDF
+WFX_SCRIPT_STR_HTM=HTML
+WFX_SCRIPT_STR_TXT=Текст
+WFX_SCRIPT_STR_MAN=Беги человек

@@ -107,7 +107,7 @@ def vfs_execute(filename):
 		sys.exit(1)
 	for element in res_array:
 		if element['filename'] == filename[1:-4]:
-			os.system('xdg-open ' + element['link'])
+			print('Fs_Open ' + element['link'])
 			sys.exit()
 	sys.exit(1)
 

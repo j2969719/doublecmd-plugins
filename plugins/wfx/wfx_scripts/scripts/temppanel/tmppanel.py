@@ -181,7 +181,7 @@ def vfs_execute(filename):
 	obj = get_jsonobj()
 	localname = get_localname(obj, filename)
 	if not localname is None:
-		os.system('xdg-open "' + localname + '"')
+		print('Fs_Open ' + localname)
 	sys.exit()
 
 def vfs_properties(filename):
