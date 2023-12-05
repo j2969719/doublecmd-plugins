@@ -13,18 +13,40 @@
 
 #define MAX_PATH 260
 
-typedef int32_t LONG;
-typedef uint32_t DWORD;
-typedef uint16_t WORD;
+#ifndef LONG
+  typedef int32_t LONG;
+#endif
+#ifndef DWORD
+  typedef uint32_t DWORD;
+#endif
+#ifndef WORD
+  typedef uint16_t WORD;
+#endif
 typedef void *HANDLE;
-typedef HANDLE HICON;
-typedef HANDLE HBITMAP;
-typedef HANDLE HWND;
-typedef int BOOL;
-typedef char CHAR;
-typedef uint16_t WCHAR;
-typedef intptr_t LPARAM;
-typedef uintptr_t WPARAM;
+#ifndef HICON
+  typedef HANDLE HICON;
+#endif
+#ifndef HBITMAP
+  typedef HANDLE HBITMAP;
+#endif
+#ifndef HWND
+  typedef HANDLE HWND;
+#endif
+#ifndef BOOL
+  typedef int BOOL;
+#endif
+#ifndef CHAR
+  typedef char CHAR;
+#endif
+#ifndef WCHAR
+  typedef uint16_t WCHAR;
+#endif
+#ifndef LPARAM
+  typedef intptr_t LPARAM;
+#endif
+#ifndef WPARAM
+  typedef uintptr_t WPARAM;
+#endif
 
 #pragma pack(push, 1)
 
