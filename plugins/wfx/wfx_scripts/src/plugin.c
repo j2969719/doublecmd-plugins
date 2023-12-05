@@ -143,8 +143,6 @@ static gchar *gTermCmdClose = NULL;
 static gchar *gViewerFont = NULL;
 static gchar *gMemoText = NULL;
 
-GString *gExecLog = NULL;
-
 int gDebugFd = -1;
 gchar *gDebugFileName = NULL;
 
@@ -802,6 +800,57 @@ static void AddPropLabels(GString *lfm_string)
 	}
 }
 
+static void StoreEnvVar(char *line, char *script)
+{
+	GMatchInfo *match_info = NULL;
+	GRegex *regex = g_regex_new(REGEXP_ENVVAAR, 0, 0, NULL);
+
+	if (g_regex_match(regex, line, 0, &match_info))
+	{
+		if (g_match_info_matches(match_info))
+		{
+			gchar *key = g_match_info_fetch(match_info, 1);
+
+			if (key)
+			{
+				gchar *envvar = key + strlen(OPT_ENVVAR);
+
+				if (strcmp(envvar, ENVVAR_REMOTENAME) == 0)
+					dprintf(gDebugFd, "ERR (%s): " ENVVAR_REMOTENAME " is reserved, ignored.\n", script);
+				else
+				{
+					gchar *value = STRIP_OPT(line, key);
+
+					if (value[0] == '\0')
+					{
+						g_key_file_remove_key(gCfg, script, key, NULL);
+
+						if (gNoise)
+							dprintf(gDebugFd, "INFO (%s): $%s value will be unset.\n", script, envvar);
+					}
+					else
+					{
+						g_key_file_set_string(gCfg, script, key, value);
+
+						if (gNoise)
+							dprintf(gDebugFd, "INFO (%s): $%s value will be set to \"%s\".\n", script, envvar, value);
+					}
+				}
+
+				g_free(key);
+			}
+			else
+				dprintf(gDebugFd, "ERR (%s): Failed to fetch envvar name.\n", script);
+		}
+	}
+
+	if (match_info)
+		g_match_info_free(match_info);
+
+	if (regex)
+		g_regex_unref(regex);
+}
+
 static void FillProps(uintptr_t pDlg)
 {
 	int i = 0;
@@ -837,32 +886,7 @@ static void FillProps(uintptr_t pDlg)
 			}
 			else if (IsValidOpt(*p, OPT_ENVVAR))
 			{
-				GMatchInfo *match_info = NULL;
-				GRegex *regex = g_regex_new(REGEXP_ENVVAAR, 0, 0, NULL);
-
-				if (g_regex_match(regex, *p, 0, &match_info))
-				{
-					if (g_match_info_matches(match_info))
-					{
-						gchar *key = g_match_info_fetch(match_info, 1);
-
-						if (key)
-						{
-							g_key_file_set_string(gCfg, gScript, key, STRIP_OPT(*p, key));
-
-							if (gNoise)
-								dprintf(gDebugFd, "INFO (%s): $%s value will be set to \"%s\".\n", gScript, key, STRIP_OPT(*p, key));
-
-							g_free(key);
-						}
-					}
-				}
-
-				if (match_info)
-					g_match_info_free(match_info);
-
-				if (regex)
-					g_regex_unref(regex);
+				StoreEnvVar(*p, gScript);
 			}
 			else
 			{
@@ -1650,9 +1674,9 @@ static void ShowRequestValueDlg(char *text, gboolean request_once)
 
 intptr_t DCPCALL DlgTextOutputProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr_t wParam, intptr_t lParam)
 {
-	if (Msg == DN_INITDIALOG)
+	if (Msg == DN_INITDIALOG && gMemoText != NULL)
 	{
-		gchar **split = g_strsplit(gMemoText != NULL ? gMemoText : gExecLog->str, "\n", -1);
+		gchar **split = g_strsplit(gMemoText, "\n", -1);
 
 		for (gchar **p = split; *p != NULL; p++)
 		{
@@ -1660,14 +1684,8 @@ intptr_t DCPCALL DlgTextOutputProc(uintptr_t pDlg, char* DlgItemName, intptr_t M
 		}
 
 		g_strfreev(split);
-
-		if (gMemoText != NULL)
-		{
-			g_free(gMemoText);
-			gMemoText = NULL;
-		}
-		else
-			g_string_truncate(gExecLog, 0);
+		g_free(gMemoText);
+		gMemoText = NULL;
 	}
 
 	return 0;
@@ -1998,50 +2016,7 @@ static void ParseOpts(gchar *script, gchar *text, gboolean thread)
 					g_key_file_set_boolean(gCfg, script, OPT_GETVALUE, TRUE);
 				else if (IsValidOpt(*p, OPT_ENVVAR))
 				{
-					GMatchInfo *match_info = NULL;
-					GRegex *regex = g_regex_new(REGEXP_ENVVAAR, 0, 0, NULL);
-
-					if (g_regex_match(regex, *p, 0, &match_info))
-					{
-						if (g_match_info_matches(match_info))
-						{
-							gchar *key = g_match_info_fetch(match_info, 1);
-
-							if (key)
-							{
-								if (strcmp(key, ENVVAR_REMOTENAME) == 0)
-									dprintf(gDebugFd, "ERR (%s): " ENVVAR_REMOTENAME " is reserved, ignored.\n", script);
-								else
-								{
-									gchar *envvar = STRIP_OPT(*p, key);
-									if (envvar[0] == '\0')
-									{
-										g_key_file_remove_key(gCfg, script, key, NULL);
-
-										if (gNoise)
-											dprintf(gDebugFd, "INFO (%s): $%s value will be unset.\n", script, key);
-									}
-									else
-									{
-										g_key_file_set_string(gCfg, script, key, envvar);
-
-										if (gNoise)
-											dprintf(gDebugFd, "INFO (%s): $%s value will be set to \"%s\".\n", script, key, STRIP_OPT(*p, key));
-									}
-								}
-
-								g_free(key);
-							}
-							else
-								dprintf(gDebugFd, "ERR (%s): Failed to fetch envvar name.\n", script);
-						}
-					}
-
-					if (match_info)
-						g_match_info_free(match_info);
-
-					if (regex)
-						g_regex_unref(regex);
+					StoreEnvVar(*p, script);
 				}
 				else if (IsValidOpt(*p, OPT_INFORM) && gRequestProc)
 				{
@@ -2196,10 +2171,10 @@ static void ParseOpts(gchar *script, gchar *text, gboolean thread)
 					{
 						dprintf(gDebugFd, "ERR (%s): %s (%s)\n", script, err->message, STRIP_OPT(*p, OPT_RUN));
 						g_error_free(err);
-						SetOpt(script, STRIP_OPT(*p, OPT_RUN), "Error");
+						SetOpt(script, *p, "Error");
 					}
 					else
-						SetOpt(script, STRIP_OPT(*p, OPT_RUN), "OK");
+						SetOpt(script, *p, "OK");
 				}
 				else if (IsValidOpt(*p, OPT_TERM))
 				{
@@ -2213,10 +2188,10 @@ static void ParseOpts(gchar *script, gchar *text, gboolean thread)
 					{
 						dprintf(gDebugFd, "ERR (%s): %s (%s)\n", script, err->message, command);
 						g_error_free(err);
-						SetOpt(script, command, "Error");
+						SetOpt(script, *p, "Error");
 					}
 					else
-						SetOpt(script, command, "OK");
+						SetOpt(script, *p, "OK");
 
 					g_free(command);
 				}
@@ -2258,10 +2233,10 @@ static void ParseOpts(gchar *script, gchar *text, gboolean thread)
 					{
 						dprintf(gDebugFd, "ERR (%s): %s (%s)\n", script, err->message, command ? command : file);
 						g_error_free(err);
-						SetOpt(script, file, "Error");
+						SetOpt(script, *p, "Error");
 					}
 					else
-						SetOpt(script, file, "OK");
+						SetOpt(script, *p, "OK");
 
 					g_free(command);
 				}
@@ -2349,8 +2324,8 @@ static void ParseOpts(gchar *script, gchar *text, gboolean thread)
 						}
 					}
 				}
-				else
-					dprintf(gDebugFd, "ERR (%s): " OPT_REQUEST "  directive not received, Line \"%s\" will be omitted.\n", script, *p);
+				else if (gNoise)
+					dprintf(gDebugFd, "INFO (%s): " OPT_REQUEST " directive not received, Line \"%s\" will be omitted.\n", script, *p);
 			}
 
 			g_free(string);
@@ -3761,7 +3736,7 @@ int DCPCALL FsExecuteFile(HWND MainWin, char* RemoteName, char* Verb)
 						output[len - 1] = '\0';
 
 					if (output[0] == '/' && output[1] == '\0')
-						g_string_append_printf(gExecLog, "ERR (%s): local path '/' is not supported", script);
+						dprintf(gDebugFd, "ERR (%s): local path '/' is not supported", script);
 					else if (output[0] == '/')
 					{
 						DIR *dir = opendir(output);
@@ -3773,7 +3748,7 @@ int DCPCALL FsExecuteFile(HWND MainWin, char* RemoteName, char* Verb)
 							result = FS_EXEC_SYMLINK;
 						}
 						else
-							g_string_append_printf(gExecLog, "ERR (%s): failed to change dir to local path\n%s\n%s\n%s\n", script, EXEC_SEP, output, EXEC_SEP);
+							dprintf(gDebugFd, "ERR (%s): failed to change dir to local path\n%s\n%s\n%s\n", script, EXEC_SEP, output, EXEC_SEP);
 					}
 					else if (output[0] == '.')
 					{
@@ -3783,7 +3758,7 @@ int DCPCALL FsExecuteFile(HWND MainWin, char* RemoteName, char* Verb)
 						result = FS_EXEC_SYMLINK;
 					}
 					else
-						g_string_append_printf(gExecLog, "ERR (%s): unexpected output\n%s\n%s\n%s\n", script, EXEC_SEP, output, EXEC_SEP);
+						dprintf(gDebugFd, "ERR (%s): unexpected output\n%s\n%s\n%s\n", script, EXEC_SEP, output, EXEC_SEP);
 				}
 			}
 			else
@@ -3933,11 +3908,14 @@ int DCPCALL FsContentGetValue(char* FileName, int FieldIndex, int UnitIndex, voi
 			g_strlcpy((char*)FieldValue, "@", maxlen - 1);
 			result = ft_string;
 		}
+		if (strcmp("/" MARK_DEBG, FileName) == 0)
+		{
+			g_strlcpy((char*)FieldValue, "!!!", maxlen - 1);
+			result = ft_string;
+		}
 		else if (strcmp("/..", FileName) == 0)
 		{
-			if (strlen(gExecLog->str) > 0)
-			g_strlcpy((char*)FieldValue, "#", maxlen - 1);
-			result = ft_string;
+
 		}
 		else
 		{
@@ -4262,7 +4240,6 @@ void DCPCALL ExtensionInitialize(tExtensionStartupInfo * StartupInfo)
 		memcpy(gDialogApi, StartupInfo, sizeof(tExtensionStartupInfo));
 		g_strlcpy(gScriptDir, gDialogApi->PluginDir, PATH_MAX);
 		strcat(gScriptDir, EXEC_DIR);
-		gExecLog = g_string_new(NULL);
 		gDebugFd = g_file_open_tmp(CFG_NAME "_XXXXXX.log", &gDebugFileName, NULL);
 	}
 }
@@ -4302,8 +4279,6 @@ void DCPCALL ExtensionFinalize(void* Reserved)
 
 	if (gDialogApi != NULL)
 		free(gDialogApi);
-
-	g_string_free(gExecLog, TRUE);
 
 	if (gDebugFd != -1)
 	{

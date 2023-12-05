@@ -1,6 +1,5 @@
 #!/bin/env lua
 
--- show commit date in filelist (slow af)
 args = {...}
 
 
@@ -72,7 +71,7 @@ function select_treeish(dir)
     end
     if treeish == extra then
         log_err(get_text("ENV_WFX_SCRIPT_STR_ERRTREEISH"))
-        get_repo()
+        print("Fs_SelectDir WFX_SCRIPT_STR_REPO")
     end
     print("Fs_MultiChoice WFX_SCRIPT_STR_TREEISH" .. treeish)
 end
@@ -124,10 +123,9 @@ function diff_changes(dir, treeish, diff)
     if not diff then
         print("Fs_ShowOutput git -C "..dir..' show --pretty="" -p ' .. output)
     else
-        local extra = ' -- -p --pretty=""  -- > "' .. diff:gsub('"', '\\"') .. '"'
-        os.execute('cd ' .. dir .. ' && git show --pretty="" -p' .. output .. extra)
+        local extra = ' -p --pretty=""  -- > "' .. diff:gsub('"', '\\"') .. '"'
+        os.execute('cd ' .. dir .. ' && git show ' .. output .. extra)
     end
-
 end
 
 function diff_head(dir, treeish, file, diff)
@@ -141,7 +139,6 @@ function diff_head(dir, treeish, file, diff)
         extra = extra .. '> "' .. diff:gsub('"', '\\"') .. '"'
         os.execute('cd ' .. dir .. ' && git diff "' .. treeish .. '..HEAD" -- ' .. extra)
     end
-
 end
 
 function show_help()
