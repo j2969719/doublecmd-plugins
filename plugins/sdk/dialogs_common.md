@@ -66,3 +66,16 @@ BOOL InputBox(char* Caption, char* Prompt, BOOL MaskInput, char* Value, int Valu
 - `ValueMaxLen` - output buffer length
 ## Return value:
 Modal result
+
+# StartupInfo->MsgChoiceBox
+MsgChoiceBox function
+
+```c
+int MsgChoiceBox(char* Text, char* Caption, char** Buttons);
+```
+## Parameters:
+- `Text` - the message to be displayed
+- `Caption` - the dialog box title
+- `Buttons` - array of button names
+## Return value:
+Button index

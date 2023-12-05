@@ -129,6 +129,27 @@ BOOL DialogBoxLFMFile(char* LFMFileName, tDlgProc DlgProc);
 ## Return value:
 Modal result
 
+# StartupInfo->DialogBoxParam
+Parse Lazarus Form from LFM file
+```c
+BOOL DialogBoxParam(void* Data, uint32_t DataSize, tDlgProc DlgProc, uint32_t Flags, void *UserData, void* Reserved);
+```
+## Parameters:
+- `Data` - pointer to data (LFM or LRS or LFMFileName)
+- `DataSize` - size of data
+- `DlgProc` - dialog window callback function
+- `Flags` - `Data` form
+- `UserData` - pointer to userdata
+- `Reserved` - ...
+
+#### Flags
+- `DB_LFM` - `Data` contains a form in the LFM format
+- `DB_LRS` - `Data` contains a form in the LRS format
+- `DB_FILENAME` - `Data`  contains a form file name (*.lfm)
+
+## Return value:
+Modal result
+
 # Supported LCL controls
 
 - [TTimer](https://wiki.lazarus.freepascal.org/TTimer)
