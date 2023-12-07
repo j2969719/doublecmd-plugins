@@ -1,5 +1,5 @@
 -- ChangeSequentialNumbers.lua (cross-platform)
---2023.07.16
+--2023.12.07
 --[[
 Add (use "N") or subtract (use "-N") number from sequential numbers.
 Supported numbering styles:
@@ -80,7 +80,8 @@ local function GetNewName(sFileName, iN)
     if iN1 ~= nil then
       sTmp = string.sub(sBaseName, iN1 + 2, -2)
       iTmp = tonumber(sTmp) + iN
-      sTmp = SetWidth(sTmp, iTmp)
+      --sTmp = SetWidth(sTmp, iTmp)
+      sTmp = tostring(iTmp)
       sNewName = string.sub(sBaseName, 1, iN1 + 1) .. sTmp .. ")"
     end
   end
@@ -92,7 +93,7 @@ local function GetNewName(sFileName, iN)
   end
 end
 
-local function GetName(sP, sN, sE)
+local function GetUniqueName(sP, sN, sE)
   local sRes = sP .. sN .. sE
   local iTmp = SysUtils.FileGetAttr(sRes)
   if iTmp ~= -1 then
@@ -117,7 +118,7 @@ local function RenameWithNum(iN)
   local iD = 0
   for i = iN1, iN2, iN3 do
     aTmp = StringSplit(aNList[i], "|")
-    sTmp = GetName(aTmp[2], aTmp[3], aTmp[4])
+    sTmp = GetUniqueName(aTmp[2], aTmp[3], aTmp[4])
     bRes, sErr, iErr = os.rename(aTmp[5], sTmp)
     if bRes ~= nil then
       iD = iD + 1
