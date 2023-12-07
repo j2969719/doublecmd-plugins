@@ -80,8 +80,11 @@ local function GetNewName(sFileName, iN)
     if iN1 ~= nil then
       sTmp = string.sub(sBaseName, iN1 + 2, -2)
       iTmp = tonumber(sTmp) + iN
-      --sTmp = SetWidth(sTmp, iTmp)
-      sTmp = tostring(iTmp)
+      if string.sub(sTmp, 1, 1) == "0" then
+        sTmp = SetWidth(sTmp, iTmp)
+      else
+        sTmp = tostring(iTmp)
+      end
       sNewName = string.sub(sBaseName, 1, iN1 + 1) .. sTmp .. ")"
     end
   end
