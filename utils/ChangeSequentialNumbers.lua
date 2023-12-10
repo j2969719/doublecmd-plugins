@@ -1,9 +1,10 @@
 -- ChangeSequentialNumbers.lua (cross-platform)
---2023.12.07
+--2023.12.09
 --[[
 Add (use "N") or subtract (use "-N") number from sequential numbers.
 Supported numbering styles:
-"# - filename.ext" and "filename (#).ext"
+N - filename.ext and N - foldername,
+filename (N).ext and foldername (N).
 
 Details: https://doublecmd.h1n.ru/viewtopic.php?t=7793
 
@@ -27,24 +28,8 @@ if #params ~= 1 then
   return
 end
 
-local aNList = {}
-
-local function StringSplit(sdata, sdelim)
-  local ares = {}
-  local n1, n2, n3, c = 1, 1, 1, 1
-  while true do
-    n1, n2 = string.find(sdata, sdelim, n3, true)
-    if n1 ~= nil then
-      ares[c] = string.sub(sdata, n3, n1 - 1)
-      c = c + 1
-    else
-      ares[c] = string.sub(sdata, n3, -1)
-      break
-    end
-    n3 = n2 + 1
-  end
-  return ares
-end
+local aTmp = {}
+local iNum
 
 local function SetWidth(sN, iN)
   local iL = string.len(sN)
@@ -59,81 +44,72 @@ local function SetWidth(sN, iN)
   return sT
 end
 
-local function GetNewName(sFileName, iN)
-  local sNewName
+local function GetNewName(sFileName)
+  local sBaseName, sExt, sNewBaseName
   local sPath = SysUtils.ExtractFilePath(sFileName)
   local sName = SysUtils.ExtractFileName(sFileName)
-  local sBaseName = string.gsub(sName, "^(.+)%.[^%.]+$", "%1")
-  local sNameExt = string.sub(sName, string.len(sBaseName) + 1, -1)
-
+  local iAttr = SysUtils.FileGetAttr(sFileName)
+  if math.floor(iAttr / 0x00000010) % 2 ~= 0 then
+    sBaseName = sName
+    sExt = ""
+  else
+    sBaseName = string.gsub(sName, "^(.+)%.[^%.]+$", "%1")
+    sExt = string.sub(sName, string.len(sBaseName) + 1, -1)
+  end
   local iN1, iN2, iTmp, sTmp
   -- "# - filename.ext"
   iN1, iN2 = string.find(sBaseName, "^%d+ %- ", 1, false)
   if iN1 ~= nil then
     sTmp = string.sub(sBaseName, iN1, iN2 - 3)
-    iTmp = tonumber(sTmp) + iN
+    iTmp = tonumber(sTmp) + iNum
     sTmp = SetWidth(sTmp, iTmp)
-    sNewName = sTmp .. string.sub(sBaseName, iN2 - 2, -1)
+    sNewBaseName = sTmp .. string.sub(sBaseName, iN2 - 2, -1)
   else
     -- "filename (#).ext"
     iN1, iN2 = string.find(sBaseName, " %(%d+%)$", 1, false)
     if iN1 ~= nil then
       sTmp = string.sub(sBaseName, iN1 + 2, -2)
-      iTmp = tonumber(sTmp) + iN
+      iTmp = tonumber(sTmp) + iNum
       if string.sub(sTmp, 1, 1) == "0" then
         sTmp = SetWidth(sTmp, iTmp)
       else
         sTmp = tostring(iTmp)
       end
-      sNewName = string.sub(sBaseName, 1, iN1 + 1) .. sTmp .. ")"
+      sNewBaseName = string.sub(sBaseName, 1, iN1 + 1) .. sTmp .. ")"
     end
   end
-  if sNewName == nil then
-    return nil
+  if sNewBaseName == nil then
+    return false
   else
-     sName = sTmp .. "|" .. sPath .. "|" .. sNewName .. "|" .. sNameExt .. "|" .. sFileName
-     return sName
+    aTmp[1] = sPath
+    aTmp[2] = sNewBaseName
+    aTmp[3] = sExt
+    return true
   end
 end
 
 local function GetUniqueName(sP, sN, sE)
   local sRes = sP .. sN .. sE
-  local iTmp = SysUtils.FileGetAttr(sRes)
-  if iTmp ~= -1 then
+  local iAt = SysUtils.FileGetAttr(sRes)
+  if iAt ~= -1 then
     local iC = 2
     while true do
       sRes = sP .. sN .. " (" .. iC .. ")" .. sE
-      iTmp = SysUtils.FileGetAttr(sRes)
-      if iTmp == -1 then break end
+      iAt = SysUtils.FileGetAttr(sRes)
+      if iAt == -1 then break end
       iC = iC + 1
     end
   end
   return sRes
 end
 
-local function RenameWithNum(iN)
-  local iN1, iN2, iN3
-  if iN > 0 then
-    iN1, iN2, iN3 = #aNList, 1, -1
-  else
-    iN1, iN2, iN3 = 1, #aNList, 1
-  end
-  local iD = 0
-  for i = iN1, iN2, iN3 do
-    aTmp = StringSplit(aNList[i], "|")
-    sTmp = GetUniqueName(aTmp[2], aTmp[3], aTmp[4])
-    bRes, sErr, iErr = os.rename(aTmp[5], sTmp)
-    if bRes ~= nil then
-      iD = iD + 1
-    end
-  end
-  return iD
-end
-
 local bAct, sNum = Dialogs.InputQuery(sScrName, "Number:", false, "0")
 if bAct == false then return end
-local iNum = tonumber(sNum)
-if iNum == 0 then return end
+iNum = tonumber(sNum)
+if (iNum == nil) or (iNum == 0) then
+  Dialogs.MessageBox("Incorrect value: " .. sNum, sScrName, 0x0030)
+  return
+end
 
 local h, err = io.open(params[1], "r")
 if h == nil then
@@ -141,32 +117,35 @@ if h == nil then
   return
 end
 local aList = {}
-local iCount = 1
-local iDone
 for line in h:lines() do
-  aList[iCount] = line
-  iCount = iCount + 1
+  table.insert(aList, line)
 end
 h:close()
 
-if #aList > 0 then
-  iCount = 1
-  for i = 1, #aList do
-    sTmp = GetNewName(aList[i], iNum)
-    if sTmp ~= nil then
-      aNList[iCount] = sTmp
-      iCount = iCount + 1
-    end
-  end
-  if #aNList > 0 then
-    table.sort(aNList)
-    iDone = RenameWithNum(iNum)
-    if iDone > 0 then
-      DC.ExecuteCommand("cm_Refresh")
-    end
-  else
-    Dialogs.MessageBox("There are no matching files.", sScrName, 0x0030)
-  end
-else
+if #aList == 0 then
   Dialogs.MessageBox("Looks like nothing is selected.", sScrName, 0x0030)
+  return
+end
+
+local iN1, iN2, iN3, sTmp
+local bRes, sErr, iErr
+local iDone = 0
+
+if iNum > 0 then
+  iN1, iN2, iN3 = #aList, 1, -1
+else
+  iN1, iN2, iN3 = 1, #aList, 1
+end
+for i = iN1, iN2, iN3 do
+  if GetNewName(aList[i]) == true then
+    sTmp = GetUniqueName(aTmp[1], aTmp[2], aTmp[3])
+    bRes, sErr, iErr = os.rename(aList[i], sTmp)
+    if bRes ~= nil then
+      iDone = iDone + 1
+    end
+  end
+end
+
+if iDone > 0 then
+  DC.ExecuteCommand("cm_Refresh")
 end
