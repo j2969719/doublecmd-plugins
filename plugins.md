@@ -122,6 +122,9 @@ Checking: binary or Unicode text file (encoding UTF-8, UTF-16 or UTF-32 and byte
 - [caseduplwdx.lua](plugins/wdx/scripts/caseduplwdx.lua) *(cross platform)*<br>
 Search for duplicates with the same name but with a different case.
 
+- [changecasewdx.lua](plugins/wdx/scripts/changecasewdx.lua) *(cross platform)*<br>
+Changing the case of letters, see description in the beginning of script.
+
 - [checkfileextwdx.lua](plugins/wdx/scripts/checkfileextwdx.lua) *(cross platform)*<br>
 Checking that the file extension matches the file type (by the file signatures) and returns some additional info. See details in the beginning of script.
 
