@@ -1,5 +1,5 @@
 -- changecasewdx.lua (cross-platform)
---2023.12.16
+--2023.12.18
 --[[
 Changing the case of letters
 
@@ -48,6 +48,7 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
   local iA, sN, sB, sE
   sN = SysUtils.ExtractFileName(FileName)
   iA = SysUtils.FileGetAttr(FileName)
+  if iA == -1 then return nil end
   if math.floor(iA / 0x00000010) % 2 ~= 0 then
     sB = sN
     sE = ""
