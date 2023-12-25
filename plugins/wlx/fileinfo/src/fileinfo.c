@@ -17,10 +17,13 @@
 #include <string.h>
 #include <limits.h>
 #include <dlfcn.h>
+#include "wlxplugin.h"
+
+#ifdef WLXSRCVW   
 #include <gtksourceview/gtksourceview.h>
 #include <gtksourceview/gtksourceiter.h>
-#include <gtksourceview/gtksourcebuffer.h>
-#include "wlxplugin.h"
+#include <gtksourceview/gtksourcebuffer.h>   
+#endif
 
 #include <glib/gi18n.h>
 #include <locale.h>
@@ -54,7 +57,11 @@ void enc_swap(gchar* encin, gchar* encout, GtkWidget *widget)
 	gchar *result;
 	gsize coverted;
 	gchar *buf1 = g_object_get_data(G_OBJECT(widget), "origin");
+#ifndef WLXSRCVW   
+	GtkTextBuffer *sBuf = g_object_get_data(G_OBJECT(widget), "txtbuf");
+#else
 	GtkSourceBuffer *sBuf = g_object_get_data(G_OBJECT(widget), "txtbuf");
+#endif
 
 	if (encout)
 	{
@@ -74,17 +81,18 @@ void enc_swap(gchar* encin, gchar* encout, GtkWidget *widget)
 		gtk_text_buffer_set_text(GTK_TEXT_BUFFER(sBuf), result, -1);
 		g_free(result);
 	}
-
 }
 
 void reset_textbuf(GtkWidget *widget)
 {
 	gchar *buf1 = g_object_get_data(G_OBJECT(widget), "origin");
+#ifndef WLXSRCVW   
+	GtkTextBuffer *sBuf = g_object_get_data(G_OBJECT(widget), "txtbuf");
+#else
 	GtkSourceBuffer *sBuf = g_object_get_data(G_OBJECT(widget), "txtbuf");
+#endif
 	gtk_text_buffer_set_text(GTK_TEXT_BUFFER(sBuf), buf1, -1);
 }
-
-
 
 gboolean on_key_press(GtkWidget *widget, GdkEventKey *event, gpointer data)
 {
@@ -114,7 +122,12 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 	GtkWidget *gFix;
 	GtkWidget *scroll;
 	GtkWidget *tView;
+#ifndef WLXSRCVW   
+	GtkTextBuffer *tBuf;
+#else
 	GtkSourceBuffer *tBuf;
+#endif
+
 	gchar *tmp, *buf1;
 
 	gchar *argv[] = { script_path, FileToLoad, NULL };
@@ -136,7 +149,11 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 	scroll = gtk_scrolled_window_new(NULL, NULL);
 	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scroll), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
 
+#ifndef WLXSRCVW  
+	tBuf = gtk_text_buffer_new(NULL);
+#else
 	tBuf = gtk_source_buffer_new(NULL);
+#endif
 	g_object_set_data_full(G_OBJECT(gFix), "txtbuf", tBuf, (GDestroyNotify)g_object_unref);
 	tmp = g_locale_to_utf8(buf1, -1, NULL, NULL, NULL);
 
@@ -157,7 +174,11 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 	g_object_set_data_full(G_OBJECT(gFix), "origin", tmp, (GDestroyNotify)g_free);
 	gtk_text_buffer_set_text(GTK_TEXT_BUFFER(tBuf), tmp, -1); // utf only
 
+#ifndef WLXSRCVW 
+	tView = gtk_text_view_new_with_buffer(tBuf);
+#else
 	tView = gtk_source_view_new_with_buffer(tBuf);
+#endif
 	gtk_widget_modify_font(tView, pango_font_description_from_string(font));
 	gtk_text_view_set_editable(GTK_TEXT_VIEW(tView), FALSE);
 	g_signal_connect(G_OBJECT(tView), "key_press_event", G_CALLBACK(on_key_press), (gpointer)gFix);
@@ -327,7 +348,11 @@ void DCPCALL ListSetDefaultParams(ListDefaultParamStruct* dps)
 
 int DCPCALL ListSearchText(HWND ListWin, char* SearchString, int SearchParameter)
 {
+#ifndef WLXSRCVW 
+	GtkTextBuffer *sBuf;
+#else
 	GtkSourceBuffer *sBuf;
+#endif
 	GtkTextMark *last_pos;
 	GtkTextIter iter, mstart, mend;
 	gboolean found;
@@ -345,6 +370,12 @@ int DCPCALL ListSearchText(HWND ListWin, char* SearchString, int SearchParameter
 	else
 		gtk_text_buffer_get_iter_at_mark(GTK_TEXT_BUFFER(sBuf), &iter, last_pos);
 
+#ifndef WLXSRCVW 
+	if ((SearchParameter & lcs_backwards) && (SearchParameter & lcs_matchcase))
+		found = gtk_text_iter_backward_search(&iter, SearchString, GTK_TEXT_SEARCH_TEXT_ONLY, &mend, &mstart, NULL);
+	else if (SearchParameter & lcs_matchcase)
+		found = gtk_text_iter_forward_search(&iter, SearchString, GTK_TEXT_SEARCH_TEXT_ONLY, &mstart, &mend, NULL);
+#else
 	if ((SearchParameter & lcs_backwards) && (SearchParameter & lcs_matchcase))
 		found = gtk_source_iter_backward_search(&iter, SearchString, GTK_SOURCE_SEARCH_TEXT_ONLY, &mend, &mstart, NULL);
 	else if (SearchParameter & lcs_matchcase)
@@ -355,6 +386,7 @@ int DCPCALL ListSearchText(HWND ListWin, char* SearchString, int SearchParameter
 	else
 		found = gtk_source_iter_forward_search(&iter, SearchString, GTK_SOURCE_SEARCH_TEXT_ONLY | GTK_SOURCE_SEARCH_CASE_INSENSITIVE,
 		                                       &mstart, &mend, NULL);
+#endif
 
 	if (found)
 	{

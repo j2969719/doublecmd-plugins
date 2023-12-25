@@ -12,7 +12,7 @@ vfs_init()
     echo -e "Fs_RequestOnce"
     echo -e "Fs_YesNo_Message WFX_SCRIPT_STR_ASKOPT"
 
-    echo -e "Fs_GetValue_Needed"
+    echo -e "Fs_GetValues_Needed"
     echo -e 'Fs_PushValue WFX_SCRIPT_STR_VAL\tstat -c"%i" "$file"'
     echo -e "WFX_SCRIPT_STR_VAL"
 
@@ -184,6 +184,22 @@ vfs_getinfovalue()
     exit $?
 }
 
+vfs_getinfovalues()
+{
+    path="$DC_WFX_SCRIPT_DIR""$1"
+    command='file="$path$0" ; val=`eval "$DC_WFX_SCRIPT_VAL"` ; [ -z "$DC_WFX_SCRIPT_VAL" ] || echo -e "`basename "$0"`\t$val"'
+    file="$DC_WFX_SCRIPT_DIR""$1"
+
+    if [ -z "$DC_WFX_SCRIPT_MASK" ]; then
+        find "$path" -mindepth 1 -maxdepth 1 -name "*" -exec sh -c "$command" '{}' \;
+    else
+        find "$path" -mindepth 1 -maxdepth 1 -type d -name "*" -exec sh -c "$command" '{}' \;
+        find "$path" -mindepth 1 -maxdepth 1 -not -type d -name "$DC_WFX_SCRIPT_MASK" $DC_WFX_SCRIPT_OPT -exec sh -c "$command" '{}' \;
+    fi
+
+    exit $?
+}
+
 vfs_statusinfo()
 {
     op="$1"
@@ -223,6 +239,7 @@ case "$1" in
     quote) vfs_quote "$2" "$3";;
     localname) vfs_localname "$2";;
     getvalue) vfs_getinfovalue "$2";;
+    getvalues) vfs_getinfovalues "$2";;
     statusinfo) vfs_statusinfo "$2" "$3";;
     deinit) vfs_deinit;;
     reset) vfs_reset;;

@@ -17,13 +17,23 @@
 
 #include "wlxplugin.h"
 
-#define DETECT_STRING "(EXT=\"AVI\")|(EXT=\"MKV\")|(EXT=\"FLV\")|(EXT=\"MPG\")|\
-(EXT=\"MPEG\")|(EXT=\"MP4\")|(EXT=\"3GP\")|(EXT=\"MP3\")|(EXT=\"OGG\")|(EXT=\"WMA\")|\
-(EXT=\"BIK\")|(EXT=\"VOC\")|(EXT=\"WAV\")|(EXT=\"WEBM\")|(EXT=\"VOB\")|(EXT=\"ROQ\")|\
-(EXT=\"IVF\")|(EXT=\"MOV\")|(EXT=\"FLAC\")|(EXT=\"WMV\")"
+
+#define DURATION_EMPTY "-:--:--/-:--:--"
+#define GST_TIME_MYFORMAT "u:%02u:%02u"
+#define GST_TIME_MYARGS(t) \
+        GST_CLOCK_TIME_IS_VALID (t) ? \
+        (guint) (((GstClockTime)(t)) / (GST_SECOND * 60 * 60)) : 99, \
+        GST_CLOCK_TIME_IS_VALID (t) ? \
+        (guint) ((((GstClockTime)(t)) / (GST_SECOND * 60)) % 60) : 99, \
+        GST_CLOCK_TIME_IS_VALID (t) ? \
+        (guint) ((((GstClockTime)(t)) / GST_SECOND) % 60) : 99
 
 gboolean gLoop = FALSE;
 gboolean gVis = FALSE;
+gboolean gMute = FALSE;
+gdouble gVolume = 0.8;
+static char gCfgPath[PATH_MAX]; 
+static char gFont[PATH_MAX] = ""; 
 
 /* Structure to contain all our information, so we can pass it around */
 typedef struct _CustomData {
@@ -40,11 +50,11 @@ typedef struct _CustomData {
   GtkToolItem *btn_info;
   GtkWidget *notebook;
   GtkWidget *lbl_info;
+  GtkWidget *lbl_duration;
 
   GstState state;                 /* Current state of the pipeline */
   gint64 duration;                /* Duration of the clip, in nanoseconds */
   guint timer;                    /* Refresh timer */
-  gboolean init_volume;
   gboolean init_video;
 } CustomData;
 
@@ -76,6 +86,19 @@ static void realize_cb (GtkWidget *widget, CustomData *data) {
 #endif
   /* Pass it to playbin, which implements XOverlay and will forward it to the video sink */
   gst_video_overlay_set_window_handle (GST_VIDEO_OVERLAY (data->playbin), window_handle);
+}
+
+static gboolean duration_scroll_cb (GtkRange *range, GdkEventScroll *event, CustomData *data) {
+  gdouble value = gtk_range_get_value (range);
+
+  if (event->direction == GDK_SCROLL_UP) {
+    gtk_range_set_value (GTK_RANGE (data->slider), value + 1);
+    return TRUE;
+  } else if (event->direction == GDK_SCROLL_DOWN) {
+    gtk_range_set_value (GTK_RANGE (data->slider), value - 1);
+    return TRUE;
+  }
+  return FALSE;  
 }
 
 static gboolean volume_scroll_cb (GtkRange *range, GdkEventScroll *event, CustomData *data) {
@@ -299,18 +322,23 @@ static GtkWidget *create_ui (GtkWidget *ParentWin, CustomData *data) {
   g_signal_connect (G_OBJECT (data->btn_info), "clicked", G_CALLBACK (info_cb), data);
 
   data->lbl_info = gtk_label_new (NULL);
+  data->lbl_duration = gtk_label_new (DURATION_EMPTY);
 
   data->slider = gtk_hscale_new_with_range (0, 100, 1);
   gtk_scale_set_draw_value (GTK_SCALE (data->slider), 0);
   gtk_widget_set_can_focus (data->slider, FALSE);
   data->slider_update_signal_id = g_signal_connect (G_OBJECT (data->slider), "value-changed", G_CALLBACK (slider_cb), data);
+  g_signal_connect (G_OBJECT (data->slider), "scroll-event", G_CALLBACK (duration_scroll_cb), data);
 
-  data->volume_slider = gtk_hscale_new_with_range (0, 1, 0.05);
+  data->volume_slider = gtk_hscale_new_with_range (0.05, 1, 0.05);
   gtk_widget_set_can_focus (data->volume_slider, FALSE);
   gtk_scale_set_draw_value (GTK_SCALE (data->volume_slider), 0);
   gtk_widget_set_size_request(data->volume_slider, 100, -1);
   g_signal_connect (G_OBJECT (data->volume_slider), "value-changed", G_CALLBACK (volume_cb), data);
   g_signal_connect (G_OBJECT (data->volume_slider), "scroll-event", G_CALLBACK (volume_scroll_cb), data);
+
+  gtk_range_set_value (GTK_RANGE (data->volume_slider), gVolume);
+  gtk_toggle_tool_button_set_active (GTK_TOGGLE_TOOL_BUTTON (data->btn_mute), gMute);
 
   scroll_window = gtk_scrolled_window_new(NULL, NULL);
   gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scroll_window), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
@@ -318,6 +346,9 @@ static GtkWidget *create_ui (GtkWidget *ParentWin, CustomData *data) {
   data->streams_list = gtk_text_view_new ();
   gtk_text_view_set_editable (GTK_TEXT_VIEW (data->streams_list), FALSE);
   gtk_text_view_set_cursor_visible (GTK_TEXT_VIEW (data->streams_list), FALSE);
+
+  if (gFont[0] != '\0')
+    gtk_widget_modify_font(data->streams_list, pango_font_description_from_string(gFont));
 
   gtk_container_add (GTK_CONTAINER (scroll_window), data->streams_list);
 
@@ -343,7 +374,10 @@ static GtkWidget *create_ui (GtkWidget *ParentWin, CustomData *data) {
   main_box = gtk_vbox_new (FALSE, 0);
   gtk_box_pack_start (GTK_BOX (main_box), data->notebook, TRUE, TRUE, 0);
   gtk_box_pack_start (GTK_BOX (main_box), GTK_WIDGET (data->lbl_info), FALSE, TRUE, 4);
-  gtk_box_pack_start (GTK_BOX (main_box), data->slider, FALSE, TRUE, 0);
+  GtkWidget *duration = gtk_hbox_new (FALSE, 0);
+  gtk_box_pack_start (GTK_BOX (duration), data->slider, TRUE, TRUE, 0);
+  gtk_box_pack_end (GTK_BOX (duration), GTK_WIDGET (data->lbl_duration), FALSE, FALSE, 2);
+  gtk_box_pack_start (GTK_BOX (main_box), duration, FALSE, FALSE, 0);
   gtk_box_pack_start (GTK_BOX (main_box), controls, FALSE, FALSE, 0);
   gtk_container_add (GTK_CONTAINER (main_window), main_box);
 
@@ -365,6 +399,7 @@ static gboolean refresh_ui (CustomData *data) {
   /* If we didn't know it yet, query the stream duration */
   if (!GST_CLOCK_TIME_IS_VALID (data->duration)) {
     if (!gst_element_query_duration (data->playbin, GST_FORMAT_TIME, &data->duration)) {
+      gtk_label_set_text (GTK_LABEL (data->lbl_duration), DURATION_EMPTY);
       g_printerr ("Could not query current duration.\n");
     } else {
       /* Set the range of the slider to the clip duration, in SECONDS */
@@ -380,7 +415,13 @@ static gboolean refresh_ui (CustomData *data) {
     gtk_range_set_value (GTK_RANGE (data->slider), (gdouble)current / GST_SECOND);
     /* Re-enable the signal */
     g_signal_handler_unblock (data->slider, data->slider_update_signal_id);
+    gchar *string = g_strdup_printf ("%" GST_TIME_MYFORMAT "/%" GST_TIME_MYFORMAT, GST_TIME_MYARGS (current), GST_TIME_MYARGS (data->duration));
+    gtk_label_set_text (GTK_LABEL (data->lbl_duration), string);
+    g_free(string);
   }
+  else
+    gtk_label_set_text (GTK_LABEL (data->lbl_duration), DURATION_EMPTY);
+
   return TRUE;
 }
 
@@ -469,7 +510,7 @@ static void text_add_tags (const GstTagList *list, const gchar *tag, GtkTextBuff
   }
   else if (gst_tag_get_type (tag) == G_TYPE_UINT) {
     if (gst_tag_list_get_uint (list, tag, &num)) {
-      total_str = g_strdup_printf ("  %s: %d\n", gst_tag_get_nick (tag), num);
+      total_str = g_strdup_printf ("  %s: %'d\n", gst_tag_get_nick (tag), num);
       gtk_text_buffer_insert_at_cursor (text, total_str, -1);
       g_free (total_str);
     }
@@ -582,15 +623,6 @@ static void analyze_streams (CustomData *data) {
 /* This function is called when an "application" message is posted on the bus.
  * Here we retrieve the message posted by the tags_cb callback */
 static void application_cb (GstBus *bus, GstMessage *msg, CustomData *data) {
-  if (!data->init_volume) {
-    gdouble volume;
-    gboolean mute;
-    g_object_get (data->playbin, "mute", &mute, NULL);
-    g_object_get (data->playbin, "volume", &volume, NULL);
-    gtk_range_set_value (GTK_RANGE (data->volume_slider), (volume == 0.0) ? 1.0 : volume);
-    gtk_toggle_tool_button_set_active (GTK_TOGGLE_TOOL_BUTTON (data->btn_mute),  (volume == 0.0 || mute));
-    data->init_volume = TRUE;
-  }
 
   if (g_strcmp0 (gst_structure_get_name (gst_message_get_structure (msg)), "tags-changed") == 0) {
     /* If the message is the "tags-changed" (only one we are currently issuing), update
@@ -624,6 +656,9 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
     g_free(data);
     return 0;
   }
+
+  g_object_set (data->playbin, "volume", gVolume, NULL);
+  g_object_set (data->playbin, "mute", gMute, NULL);
 
   /* Set the URI to play */
   fileUri = g_filename_to_uri(FileToLoad, NULL, NULL);
@@ -680,6 +715,19 @@ void DCPCALL ListCloseWindow(HWND ListWin)
   /* Free resources */
   g_source_remove (data->timer);
   gst_element_set_state (data->playbin, GST_STATE_NULL);
+  GKeyFile *cfg = g_key_file_new ();
+  gLoop = gtk_toggle_tool_button_get_active (GTK_TOGGLE_TOOL_BUTTON (data->btn_loop));
+  gMute = gtk_toggle_tool_button_get_active (GTK_TOGGLE_TOOL_BUTTON (data->btn_mute));
+  gVolume = gtk_range_get_value (GTK_RANGE (data->volume_slider));
+
+  if (g_key_file_load_from_file (cfg, gCfgPath, G_KEY_FILE_KEEP_COMMENTS, NULL)) {
+    g_key_file_set_boolean (cfg, PLUGNAME, "Loop", gLoop);
+    g_key_file_set_boolean (cfg, PLUGNAME, "Mute", gMute);
+    g_key_file_set_double (cfg, PLUGNAME, "Volume", gVolume);
+    g_key_file_save_to_file (cfg, gCfgPath, NULL);
+  }
+
+  g_key_file_free (cfg);
   gst_object_unref (data->playbin);
   gtk_widget_destroy (GTK_WIDGET (ListWin));
   g_free (data);
@@ -788,22 +836,49 @@ int DCPCALL ListSendCommand(HWND ListWin, int Command, int Parameter)
 
 void DCPCALL ListSetDefaultParams(ListDefaultParamStruct* dps)
 {
+  gboolean is_updcfg = FALSE;
   gchar *cfgdir = g_path_get_dirname (dps->DefaultIniName);
-  gchar *cfgpath = g_strdup_printf ("%s/j2969719.ini", cfgdir);
+  snprintf (gCfgPath, PATH_MAX, "%s/j2969719.ini", cfgdir);
   g_free (cfgdir);
   GKeyFile *cfg = g_key_file_new ();
-  g_key_file_load_from_file (cfg, cfgpath, G_KEY_FILE_KEEP_COMMENTS, NULL);
+  g_key_file_load_from_file (cfg, gCfgPath, G_KEY_FILE_KEEP_COMMENTS, NULL);
 
-  if (!g_key_file_has_key (cfg, PLUGNAME, "MusicVis", NULL) || !g_key_file_has_key (cfg, PLUGNAME, "Loop", NULL)) {
+  if (!g_key_file_has_key (cfg, PLUGNAME, "MusicVis", NULL)) {
     g_key_file_set_boolean (cfg, PLUGNAME, "MusicVis", gVis);
-    g_key_file_set_boolean (cfg, PLUGNAME, "Loop", gLoop);
-    g_key_file_save_to_file (cfg, cfgpath, NULL);
+    is_updcfg = TRUE;
   }
-  else {
+  else
     gVis = g_key_file_get_boolean (cfg, PLUGNAME, "MusicVis", NULL);
-    gLoop = g_key_file_get_boolean (cfg, PLUGNAME, "Loop", NULL);
+
+  if (!g_key_file_has_key (cfg, PLUGNAME, "Loop", NULL)) {
+    g_key_file_set_boolean (cfg, PLUGNAME, "Loop", gLoop);
+    is_updcfg = TRUE;
   }
+  else
+    gLoop = g_key_file_get_boolean (cfg, PLUGNAME, "Loop", NULL);
+
+  if (!g_key_file_has_key (cfg, PLUGNAME, "Mute", NULL)) {
+    g_key_file_set_boolean (cfg, PLUGNAME, "Mute", gMute);
+    is_updcfg = TRUE;
+  }
+  else
+    gMute = g_key_file_get_boolean (cfg, PLUGNAME, "Mute", NULL);
+
+  if (!g_key_file_has_key (cfg, PLUGNAME, "Volume", NULL)) {
+    g_key_file_set_double (cfg, PLUGNAME, "Volume", gVolume);
+    is_updcfg = TRUE;
+  }
+  else
+    gVolume = g_key_file_get_double (cfg, PLUGNAME, "Volume", NULL);
+
+  if (g_key_file_has_key (cfg, PLUGNAME, "Font", NULL)) {
+    gchar *font = g_key_file_get_string (cfg, PLUGNAME, "Font", NULL);
+    g_strlcpy (gFont, font, PATH_MAX);
+    g_free (font);
+  }
+
+  if (is_updcfg)
+    g_key_file_save_to_file (cfg, gCfgPath, NULL);
 
   g_key_file_free (cfg);
-  g_free (cfgpath);
 }

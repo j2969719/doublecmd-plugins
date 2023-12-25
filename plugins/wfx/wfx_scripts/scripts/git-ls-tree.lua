@@ -61,7 +61,7 @@ function select_treeish(dir)
         end
         if line:find("^%*%s") then
             line = line:match("%s?%*?%s?(.+)")
-            print(get_text("ENV_WFX_SCRIPT_STR_BRANCH") .. ' ' .. line)
+            print("WFX_SCRIPT_STR_BRANCH " .. line)
         end
         treeish = treeish .. '\t' .. line:match("^%s?%s?(.+)\n")
     end
@@ -88,7 +88,7 @@ function select_commit(dir, treeish, path, extra)
     local output = get_output('cd ' .. dir .. ' && git log --oneline ' .. treeish .. extra .. ' -- "' .. path .. '"')
     local commits = ''
     for line in output:gmatch("[^\n]-\n") do
-        commits = commits .. '\t' .. line:match("(.+)\n")
+        commits = commits .. '\t' .. line:match("(.+)\n"):gsub('\t', '    ')
     end
     if commits == '' then
         log_err(get_text("ENV_WFX_SCRIPT_STR_ERRCOMMIT"))
@@ -134,22 +134,24 @@ function diff_head(dir, treeish, file, diff)
         extra = '"' .. file:gsub('^/', ''):gsub('"', '\\"') .. '" ":|*/" '
     end
     if not diff then
-        print("Fs_ShowOutput " .. 'git -C ' .. dir .. ' diff "' .. treeish .. '..HEAD" -- ' .. extra)
+        print("Fs_ShowOutput " .. 'git -C ' .. dir .. ' diff "' .. treeish .. '..' .. os.getenv("DC_WFX_SCRIPT_CMPTREEISH") .. '" -- ' .. extra)
     else
         extra = extra .. '> "' .. diff:gsub('"', '\\"') .. '"'
-        os.execute('cd ' .. dir .. ' && git diff "' .. treeish .. '..HEAD" -- ' .. extra)
+        os.execute('cd ' .. dir .. ' && git diff "' .. treeish .. '..' .. os.getenv("DC_WFX_SCRIPT_CMPTREEISH") .. '" -- ' .. extra)
     end
 end
 
 function show_help()
     print("Fs_LogInfo")
-    print(get_text("ENV_WFX_SCRIPT_STR_HELP"))
-    print("\trepo\t\t\t" .. get_text("ENV_WFX_SCRIPT_STR_HELPREPO"))
-    print("\tselect\t\t\t" .. get_text("ENV_WFX_SCRIPT_STR_HELPSEL"))
-    print("\tset [tree-ish]\t\t" .. get_text("ENV_WFX_SCRIPT_STR_HELPHEAD"))
-    print("\tcommits [..tree-ish]\t" .. get_text("ENV_WFX_SCRIPT_STR_HELPCOM"))
-    print("\tadded\t\t\t" .. get_text("ENV_WFX_SCRIPT_STR_HELPADD"))
-    print("\tchanges\t\t\t" .. get_text("ENV_WFX_SCRIPT_STR_HELPCHG"))
+    print("WFX_SCRIPT_STR_HELP")
+    print("\twhere\t\t\tWFX_SCRIPT_STR_HELPWHERE")
+    print("\trepo\t\t\tWFX_SCRIPT_STR_HELPREPO")
+    print("\tselect\t\t\tWFX_SCRIPT_STR_HELPSEL")
+    print("\tset [tree-ish]\t\tWFX_SCRIPT_STR_HELPHEAD")
+    print("\tcommits [..tree-ish]\tWFX_SCRIPT_STR_HELPCOM")
+    print("\tadded\t\t\tWFX_SCRIPT_STR_HELPADD")
+    print("\tchanges\t\t\tWFX_SCRIPT_STR_HELPCHG")
+    print("\tdates\t\t\tWFX_SCRIPT_STR_HELPDATE")
 end
 
 function fs_init()
@@ -157,6 +159,8 @@ function fs_init()
     print("Fs_GetValue_Needed")
     print("Fs_SelectDir WFX_SCRIPT_STR_REPO")
     print("Fs_ClearValue WFX_SCRIPT_STR_DATEFORM")
+    print("Fs_Set_DC_WFX_SCRIPT_CMPTREEISH HEAD")
+
     show_help()
     os.exit()
 end
@@ -168,6 +172,7 @@ function fs_setopt(option, value)
         select_treeish(dir)
     elseif option == "WFX_SCRIPT_STR_TREEISH" or option == "WFX_SCRIPT_STR_CUSTOM" then
         if value == "WFX_SCRIPT_STR_CUSTOM" then
+            print("Fs_PushValue WFX_SCRIPT_STR_CUSTOM\tHEAD")
             print("Fs_Request_Options")
             print("WFX_SCRIPT_STR_CUSTOM")
             os.exit()
@@ -188,6 +193,12 @@ function fs_setopt(option, value)
         where_am_i(dir, commit)
     elseif option == "WFX_SCRIPT_STR_DATES" then
         print("Fs_MultiChoice WFX_SCRIPT_STR_DATEFORM\tWFX_SCRIPT_STR_NONE\tWFX_SCRIPT_STR_ADATE\tWFX_SCRIPT_STR_CDATE")
+    elseif option == "WFX_SCRIPT_STR_CMP" then
+            print("Fs_PushValue WFX_SCRIPT_STR_CMPTREEISH\tHEAD")
+            print("Fs_Request_Options")
+            print("WFX_SCRIPT_STR_CMPTREEISH")
+    elseif option == "WFX_SCRIPT_STR_CMPTREEISH" then
+            print("Fs_Set_DC_WFX_SCRIPT_CMPTREEISH " .. value)
     elseif option == "WFX_SCRIPT_STR_DATEFORM" then
         if value == "WFX_SCRIPT_STR_ADATE" then
             print("Fs_Set_DC_WFX_SCRIPT_DATES %ad")
@@ -206,13 +217,13 @@ function fs_setopt(option, value)
             select_commit(dir, treeish, '.')
         elseif option == "WFX_SCRIPT_STR_SELCOMMITFILE" then
             select_commit(dir, treeish, value, '')
-        elseif option == "WFX_SCRIPT_STR_CHGHEAD" then
+        elseif option:find("^WFX_SCRIPT_STR_CHGHEAD ") then
             diff_head(dir, treeish, value, nil)
         elseif option == "WFX_SCRIPT_STR_DIFFCHG" then
             print("Fs_SelectFile WFX_SCRIPT_STR_DIFFCHGMSG\t*.diff\tdiff\tsave")
-        elseif option == "WFX_SCRIPT_STR_DIFFHEAD" then
+        elseif option:find("^WFX_SCRIPT_STR_DIFFHEAD ") then
             print("Fs_SelectFile WFX_SCRIPT_STR_DIFFHEADMSG\t*.diff\tsave\tdiff")
-        elseif option == "WFX_SCRIPT_STR_DIFFFILE" then
+        elseif option:find("^WFX_SCRIPT_STR_DIFFFILE ") then
             print("Fs_SelectFile WFX_SCRIPT_STR_DIFFFILEMSG\t*.diff\tdiff\tsave")
         elseif option == "WFX_SCRIPT_STR_DIFFCHGMSG" then
             diff_changes(dir, treeish, value)
@@ -280,15 +291,16 @@ function fs_properties(file)
     print_prop("WFX_SCRIPT_STR_SUBJECT", subject)
     print_prop("WFX_SCRIPT_STR_CDATE", datetime)
     local acts = {
+        "WFX_SCRIPT_STR_OBJ",
         "WFX_SCRIPT_STR_SELCOMMITFILE",
         "WFX_SCRIPT_STR_SELCOMMIT",
         "WFX_SCRIPT_STR_SELTREEISH",
-        "WFX_SCRIPT_STR_CHGHEAD",
+        "WFX_SCRIPT_STR_CHGHEAD " .. treeish .. '..' .. os.getenv("DC_WFX_SCRIPT_CMPTREEISH"),
         "WFX_SCRIPT_STR_CHG",
-        "WFX_SCRIPT_STR_DIFFHEAD",
-        "WFX_SCRIPT_STR_DIFFFILE",
+        "WFX_SCRIPT_STR_DIFFHEAD " .. treeish .. '..' .. os.getenv("DC_WFX_SCRIPT_CMPTREEISH"),
+        "WFX_SCRIPT_STR_DIFFFILE " .. treeish .. '..' .. os.getenv("DC_WFX_SCRIPT_CMPTREEISH"),
         "WFX_SCRIPT_STR_DIFFCHG",
-        "WFX_SCRIPT_STR_OBJ",
+        "WFX_SCRIPT_STR_CMP",
         "WFX_SCRIPT_STR_DATES",
     }
     local propacts = "Fs_PropsActs"
@@ -324,7 +336,7 @@ function fs_quote(str, path)
             offset = offset + path:len() - 1
             pathspec = '"' .. path:gsub('^/', ''):gsub('"', '\\"') .. '"'-- ":|*/"'
         end
-        local output = get_output('cd ' .. dir .. ' && git diff --name-status "' .. treeish .. '..HEAD" --  ' .. pathspec)
+        local output = get_output('cd ' .. dir .. ' && git diff --name-status "' .. treeish .. '..' .. os.getenv("DC_WFX_SCRIPT_CMPTREEISH") .. '" --  ' .. pathspec)
         if not output then
             os.exit(1)
         end
@@ -337,8 +349,13 @@ function fs_quote(str, path)
             end
         end
         if added > 0 then
+            print(treeish .. '..' .. os.getenv("DC_WFX_SCRIPT_CMPTREEISH"))
             print('  ' .. added .. ' WFX_SCRIPT_STR_COUNT')
         end
+    elseif str == "dates" then
+        print("Fs_MultiChoice WFX_SCRIPT_STR_DATEFORM\tWFX_SCRIPT_STR_NONE\tWFX_SCRIPT_STR_ADATE\tWFX_SCRIPT_STR_CDATE")
+    elseif str == "where" then
+        where_am_i(dir, treeish)
     else
         os.exit(1)
     end
@@ -350,7 +367,7 @@ function fs_getvalue(file)
         os.exit(1)
     end
     local dir, treeish = get_data()
-    local output = get_output('cd ' .. dir .. ' && git diff --name-status "' .. treeish .. '..HEAD" -- "' .. file:gsub('^/', ''):gsub('"', '\\"') .. '" ":|*/"')
+    local output = get_output('cd ' .. dir .. ' && git diff --name-status "' .. treeish .. '..' .. os.getenv("DC_WFX_SCRIPT_CMPTREEISH") .. '" -- "' .. file:gsub('^/', ''):gsub('"', '\\"') .. '" ":|*/"')
     if not output then
         os.exit(1)
     end

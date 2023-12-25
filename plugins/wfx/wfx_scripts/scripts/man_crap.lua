@@ -174,7 +174,7 @@ function fs_execute(file)
 end
 
 function fs_properties(file)
-    if file == "/>man<" then
+    if file == "/>man<.run" then
         os.exit()
     end
     local link = file:match("^/<([^>]+)>%.%-%->$")

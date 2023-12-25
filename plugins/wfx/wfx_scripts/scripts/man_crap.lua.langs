@@ -1,4 +1,5 @@
 [Default]
+WFX_SCRIPT_NAME=Manuals and Docs
 ENV_WFX_SCRIPT_STR_MAN0=C header files
 ENV_WFX_SCRIPT_STR_MAN0P=C header files (posix dev)
 ENV_WFX_SCRIPT_STR_MAN1=user commands
@@ -32,6 +33,7 @@ WFX_SCRIPT_STR_TXT=Plain text
 WFX_SCRIPT_STR_MAN=Run man
 
 [ru_RU]
+WFX_SCRIPT_NAME=Мануалы
 ENV_WFX_SCRIPT_STR_MAN0=Заголовочные файлы Си
 ENV_WFX_SCRIPT_STR_MAN0P=Заголовочные файлы Си (posix dev)
 ENV_WFX_SCRIPT_STR_MAN1=Исполняемые программы или команды оболочки

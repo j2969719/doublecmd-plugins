@@ -450,23 +450,6 @@ BOOL DCPCALL FsDeleteFile(char* RemoteName)
 	return false;
 }
 
-void DCPCALL FsSetDefaultParams(FsDefaultParamStruct* dps)
-{
-	Dl_info dlinfo;
-	const char* lfm_name = "dialog.lfm";
-
-	memset(&dlinfo, 0, sizeof(dlinfo));
-
-	if (dladdr(lfm_name, &dlinfo) != 0)
-	{
-		strncpy(gLFMPath, dlinfo.dli_fname, PATH_MAX);
-		char *pos = strrchr(gLFMPath, '/');
-
-		if (pos)
-			strcpy(pos + 1, lfm_name);
-	}
-}
-
 int DCPCALL FsContentGetSupportedField(int FieldIndex, char* FieldName, char* Units, int maxlen)
 {
 	if (FieldIndex < 0 || FieldIndex >= statuslcount)
@@ -556,6 +539,23 @@ void DCPCALL ExtensionInitialize(tExtensionStartupInfo* StartupInfo)
 	{
 		gDialogApi = malloc(sizeof(tExtensionStartupInfo));
 		memcpy(gDialogApi, StartupInfo, sizeof(tExtensionStartupInfo));
+
+		Dl_info dlinfo;
+		memset(&dlinfo, 0, sizeof(dlinfo));
+
+		if (dladdr(gLFMPath, &dlinfo) != 0)
+		{
+			strncpy(gLFMPath, dlinfo.dli_fname, PATH_MAX);
+			char *pos = strrchr(gLFMPath, '/');
+
+			if (pos)
+			{
+				if (gDialogApi && gDialogApi->VersionAPI > 0)
+					strcpy(pos + 1, "dialog_with_timer.lfm");
+				else
+					strcpy(pos + 1, "dialog.lfm");
+			}
+		}
 	}
 }
 

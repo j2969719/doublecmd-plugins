@@ -30,6 +30,7 @@ def get_jsonobj():
 
 def vfs_init():
 	print('Fs_DisableFakeDates')
+	print('Fs_GetValues_Needed')
 	tf = tempfile.NamedTemporaryFile(suffix='_foliate.json', delete=False)
 	filename = tf.name
 	tf.close()
@@ -130,6 +131,13 @@ def vfs_localname(filename):
 		sys.exit()
 	sys.exit(1)
 
+def vfs_getvalues(path):
+	obj = get_jsonobj()
+	for name in obj:
+		if 'progress' in obj[name] and not obj[name]['progress'] is None:
+			print(name + '\t' + str(obj[name]['progress']) + '%')
+	sys.exit()
+
 def vfs_deinit():
 	os.remove(os.environ[envvar])
 	sys.exit()
@@ -151,6 +159,8 @@ elif verb == 'properties':
 	vfs_properties(sys.argv[2])
 elif verb == 'localname':
 	vfs_localname(sys.argv[2])
+elif verb == 'getvalues':
+	vfs_getvalues(sys.argv[2])
 elif verb == 'deinit':
 	vfs_deinit()
 
