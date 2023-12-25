@@ -39,7 +39,7 @@ intptr_t SendDlgMsg(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr_t wP
 ```
 ## Parameters:
 - `pDlg` - pointer to dialog
-- `DlgItemName` - LCL control name
+- `DlgItemName` - LCL control name or `NULL` for dialog itself
 - `Msg` - events message
 - `wParam` - pointer to additional message-specific data
 - `lParam` - pointer to additional message-specific data
@@ -55,18 +55,18 @@ intptr_t SendDlgMsg(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr_t wP
 |`DM_GETDROPPEDDOWN`|`TComboBox`|-|-|`bool` DroppedDown||
 |`DM_GETITEMBOUNDS`|*|-|-|`RECT *` Result||
 |`DM_GETITEMDATA`|*|-|-|`intptr_t` Tag||
-|`DM_LISTADD`|`TComboBox`, `TListBox`, `TMemo`|`char *` Text|`intptr_t` UserData|`intptr_t` Result||
-|`DM_LISTADDSTR`|`TComboBox`, `TListBox`, `TMemo`|`char *` Text|-|`intptr_t` Result||
-|`DM_LISTDELETE`|`TComboBox`, `TListBox`, `TMemo`|`intptr_t` Index|-|-||
-|`DM_LISTINDEXOF`|`TComboBox`, `TListBox`, `TMemo`|-|`char *` Text|`intptr_t` Result||
-|`DM_LISTINSERT`|`TComboBox`, `TListBox`, `TMemo`|`intptr_t` Index|`char *` Text|-||
-|`DM_LISTGETCOUNT`|`TComboBox`, `TListBox`, `TMemo`|-|-|`intptr_t` Count||
-|`DM_LISTGETDATA`|`TComboBox`, `TListBox`, `TMemo`|`intptr_t` Index|-|`intptr_t` UserData||
-|`DM_LISTGETITEM`|`TComboBox`, `TListBox`, `TMemo`|`intptr_t` Index|-|`char *` Text|Retrieve a list item|
+|`DM_LISTADD`|`TComboBox`, `TListBox`, `TMemo`, `TSynEdit`|`char *` Text|`intptr_t` UserData|`intptr_t` Result||
+|`DM_LISTADDSTR`|`TComboBox`, `TListBox`, `TMemo`, `TSynEdit`|`char *` Text|-|`intptr_t` Result||
+|`DM_LISTDELETE`|`TComboBox`, `TListBox`, `TMemo`, `TSynEdit`|`intptr_t` Index|-|-||
+|`DM_LISTINDEXOF`|`TComboBox`, `TListBox`, `TMemo`, `TSynEdit`|-|`char *` Text|`intptr_t` Result||
+|`DM_LISTINSERT`|`TComboBox`, `TListBox`, `TMemo`, `TSynEdit`|`intptr_t` Index|`char *` Text|-||
+|`DM_LISTGETCOUNT`|`TComboBox`, `TListBox`, `TMemo`, `TSynEdit`|-|-|`intptr_t` Count||
+|`DM_LISTGETDATA`|`TComboBox`, `TListBox`, `TMemo`, `TSynEdit`|`intptr_t` Index|-|`intptr_t` UserData||
+|`DM_LISTGETITEM`|`TComboBox`, `TListBox`, `TMemo`, `TSynEdit`|`intptr_t` Index|-|`char *` Text|Retrieve a list item|
 |`DM_LISTGETITEMINDEX`|`TComboBox`, `TListBox`, `TRadioGroup`|-|-|`intptr_t` Index|Get current item index in a list|
 |`DM_LISTSETITEMINDEX`|`TComboBox`, `TListBox`, `TRadioGroup`|`intptr_t` Index|-|-|Set current item index in a list|
-|`DM_LISTUPDATE`|`TComboBox`, `TListBox`, `TMemo`|`intptr_t` Index|`char *` Text|-||
-|`DM_LISTCLEAR`|`TComboBox`, `TListBox`, `TMemo`|-|-|-||
+|`DM_LISTUPDATE`|`TComboBox`, `TListBox`, `TMemo`, `TSynEdit`|`intptr_t` Index|`char *` Text|-||
+|`DM_LISTCLEAR`|`TComboBox`, `TListBox`, `TMemo`, `TSynEdit`|-|-|-||
 |`DM_GETTEXT`|*|-|-|`char *` Text|Retrieve the text of an edit string or the caption of an item|
 |`DM_KEYDOWN`|*|`intptr_t` Key|-|`intptr_t` Key||
 |`DM_KEYUP`|*|`intptr_t` Key|-|`intptr_t` Key||
@@ -132,7 +132,7 @@ Modal result
 # StartupInfo->DialogBoxParam
 Parse Lazarus Form from LFM file
 ```c
-BOOL DialogBoxParam(void* Data, uint32_t DataSize, tDlgProc DlgProc, uint32_t Flags, void *UserData, void* Reserved);
+uintptr_t DialogBoxParam(void* Data, uint32_t DataSize, tDlgProc DlgProc, uint32_t Flags, void *UserData, void* Reserved);
 ```
 ## Parameters:
 - `Data` - pointer to data (LFM or LRS or LFMFileName)
@@ -172,6 +172,7 @@ Modal result
 - [TPageControl](https://wiki.lazarus.freepascal.org/TPageControl)
 - [TProgressBar](https://wiki.lazarus.freepascal.org/TProgressBar)
 - [TDividerBevel](https://wiki.lazarus.freepascal.org/TDividerBevel)
+- [TSynEdit](https://wiki.lazarus.freepascal.org/TSynEdit)
 
 
 # Supported events (Lazarus->Object Inspector->Events)

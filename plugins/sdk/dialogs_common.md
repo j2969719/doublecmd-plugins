@@ -71,11 +71,13 @@ Modal result
 MsgChoiceBox function
 
 ```c
-int MsgChoiceBox(char* Text, char* Caption, char** Buttons);
+int MsgChoiceBox(char* Text, char* Caption, char** Buttons, int BtnDef, int BtnEsc);
 ```
 ## Parameters:
 - `Text` - the message to be displayed
 - `Caption` - the dialog box title
 - `Buttons` - array of button names
+- `BtnDef` - default button index or -1
+- `BtnEsc` - button index trigerred on Esc or -1
 ## Return value:
 Button index
