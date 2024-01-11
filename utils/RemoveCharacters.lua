@@ -1,5 +1,5 @@
 -- RemoveCharacters.lua (cross-platform)
--- 2023.09.01
+-- 2024.01.11
 --[[
 Remove N characters from the beginning (use "N") or end (use "-N") of the selected filenames.
 Spaces/dots at the beginning of the name or spaces at the end will be removed.
@@ -16,7 +16,7 @@ params:
 local params = {...}
 
 local sScrName = debug.getinfo(1).source
-if string.sub(sScrName, 1, 1) == '@' then
+if string.sub(sScrName, 1, 1) == "@" then
   sScrName = string.sub(sScrName, 2, -1)
 end
 sScrName = SysUtils.ExtractFileName(sScrName)
@@ -55,7 +55,7 @@ local function RenameWithCut(sFileName, iN, bB)
   if SysUtils.FileGetAttr(sTmp) ~= -1 then
     iN = 2
     while true do
-      sTmp = sPath .. sNewName .. "(" iN .. ")" .. sNameExt
+      sTmp = sPath .. sNewName .. "(" .. iN .. ")" .. sNameExt
       if SysUtils.FileGetAttr(sTmp) == -1 then
         break
       end
