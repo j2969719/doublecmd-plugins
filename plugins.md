@@ -159,7 +159,7 @@ Getting MS-DOS attributes in a FAT file system. Requires `fatattr`.
 Validating FictionBook2 (FB2) files (first test can be used with ANY XML-based files).
 
 - [filecountwdx.lua](plugins/wdx/scripts/filecountwdx.lua) *(cross platform)*<br>
-Returns file or directory count, without scanning symbolic links to folders.<br>
+Returns file or directory count and directory size (without scanning symbolic links to folders).<br>
 Only for columns set or tooltips!
 
 - [filenamewdx.lua](plugins/wdx/scripts/filenamewdx.lua) *(cross platform)*<br>
