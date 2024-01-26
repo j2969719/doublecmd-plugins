@@ -307,9 +307,6 @@ Getting some information from zsync-files.
 ---
 <a name="wfx"><h3>WFX plugins</h3></a>
 
-- [adbplugin-x64](plugins/wfx/adbplugin-x64)<br>
-PKGBUILD file for [Android ADB](http://www.uniqtec.eu/applications/android-adb.html).
-
 - [aur_crap](plugins/wfx/aur_crap)<br>
 List of packages in [AUR](https://aur.archlinux.org/). (slow, pretty useless)
 

@@ -1,0 +1,86 @@
+[Default]
+WFX_SCRIPT_NAME=Transfer files via ADB
+WFX_SCRIPT_STR_SIZE=Size
+WFX_SCRIPT_STR_UID=Uid
+WFX_SCRIPT_STR_GID=Gid
+WFX_SCRIPT_STR_MODE=Mode
+WFX_SCRIPT_STR_ACCESS=Access
+WFX_SCRIPT_STR_MODIFY=Modify
+WFX_SCRIPT_STR_CHANGE=Change
+
+WFX_SCRIPT_STR_DEV=Device
+WFX_SCRIPT_STR_BRAND=Brand
+WFX_SCRIPT_STR_MODEL=Model
+WFX_SCRIPT_STR_MDEV=Device
+WFX_SCRIPT_STR_BOARD=Board
+WFX_SCRIPT_STR_ABI=CPU ABI
+WFX_SCRIPT_STR_RAM=RAM
+WFX_SCRIPT_STR_VER=Android
+WFX_SCRIPT_STR_DEVPATH=Connected
+WFX_SCRIPT_STR_MAGIC=Action
+WFX_SCRIPT_STR_ALL=All Files (*)
+WFX_SCRIPT_STR_SCRPNG=Save image file
+WFX_SCRIPT_STR_BUG=Bugreports directory
+WFX_SCRIPT_STR_TCPPORT=Port
+WFX_SCRIPT_STR_LOGOPT=Additional parameters for logcat (see logcat --help)
+WFX_SCRIPT_STR_ACT_REBOOT=Reboot
+WFX_SCRIPT_STR_ACT_REBOOTREC=Reboot (recovery)
+WFX_SCRIPT_STR_ACT_REBOOTBL=Reboot (bootloader)
+
+WFX_SCRIPT_STR_ACT_SHELL=Open shell
+WFX_SCRIPT_STR_ACT_SCRPNG=Take screenshot
+WFX_SCRIPT_STR_ACT_SCRCPY=Run scrcpy
+WFX_SCRIPT_STR_ACT_LOGCAT=Run logcat
+WFX_SCRIPT_STR_ACT_BUG=Save bugreport
+
+WFX_SCRIPT_STR_ERRNA=not implemented!
+WFX_SCRIPT_STR_ERRSCRCPY=Failed to run scrcpy. (not installed maybe?)
+
+ENV_WFX_SCRIPT_STR_USB=Restart adbd listening on USB
+ENV_WFX_SCRIPT_STR_TCP=Restart adbd listening on TCP
+ENV_WFX_SCRIPT_STR_ROOT=Restart adbd with root permissions
+ENV_WFX_SCRIPT_STR_UNROOT=Restart adbd without root permissions
+ENV_WFX_SCRIPT_STR_OFFLINE=Reset offline or unauthorized devices to force reconnect
+ENV_WFX_SCRIPT_STR_LOG=Set additional parameters for logcat
+
+[ru_RU]
+WFX_SCRIPT_NAME=Передача файлов по ADB
+WFX_SCRIPT_STR_SIZE=Размер
+WFX_SCRIPT_STR_UID=ID пользователя
+WFX_SCRIPT_STR_GID=ID группы
+WFX_SCRIPT_STR_MODE=Права
+WFX_SCRIPT_STR_ACCESS=Последний доступ
+WFX_SCRIPT_STR_MODIFY=Последнее изменение
+WFX_SCRIPT_STR_CHANGE=Изменение статуса
+
+WFX_SCRIPT_STR_DEV=Устройство
+WFX_SCRIPT_STR_BRAND=Brand
+WFX_SCRIPT_STR_MODEL=Модель
+WFX_SCRIPT_STR_MDEV=Устройство
+WFX_SCRIPT_STR_BOARD=Board
+WFX_SCRIPT_STR_DEVPATH=Подключен
+WFX_SCRIPT_STR_MAGIC=Действие
+WFX_SCRIPT_STR_ALL=Все файлы (*)
+WFX_SCRIPT_STR_SCRPNG=Сохранить изображение
+WFX_SCRIPT_STR_BUG=Папка для багрепортов
+WFX_SCRIPT_STR_TCPPORT=Порт
+WFX_SCRIPT_STR_LOGOPT=Дополнительные параметры для logcat (см. logcat --help)
+WFX_SCRIPT_STR_ACT_REBOOT=Перезапустить
+WFX_SCRIPT_STR_ACT_REBOOTREC=Перезапустить (recovery)
+WFX_SCRIPT_STR_ACT_REBOOTBL=Перезапустить (bootloader)
+
+WFX_SCRIPT_STR_ACT_SHELL=Открыть shell
+WFX_SCRIPT_STR_ACT_SCRPNG=Take screenshot
+WFX_SCRIPT_STR_ACT_SCRCPY=Запустить scrcpy
+WFX_SCRIPT_STR_ACT_LOGCAT=Запустить logcat
+WFX_SCRIPT_STR_ACT_BUG=Сохранить багрепорт
+
+WFX_SCRIPT_STR_ERRNA=не реализовано!
+WFX_SCRIPT_STR_ERRSCRCPY=Не удалось запустить scrcpy. (мож не установлен?)
+
+ENV_WFX_SCRIPT_STR_USB=Перезапустить adbd, использовать USB
+ENV_WFX_SCRIPT_STR_TCP=Перезапустить adbd, использовать TCP
+ENV_WFX_SCRIPT_STR_ROOT=Перезапустить adbd с привилегиями root
+ENV_WFX_SCRIPT_STR_UNROOT=Перезапустить adbd без привилегий
+ENV_WFX_SCRIPT_STR_OFFLINE=Сбрость оффлайн устройства для принудительного реконнекта
+ENV_WFX_SCRIPT_STR_LOG=Задать дополнительные параметры для logcat
