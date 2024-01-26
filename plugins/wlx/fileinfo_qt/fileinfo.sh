@@ -172,7 +172,7 @@ case "${filetype}" in
 			"inode/directory")
 				stat "$file"
 				;;
-			"application/x-dosexec")
+			"application/x-dosexec"|"application/vnd.microsoft.portable-executable")
 				exiftool "$file" || \
 				wrestool --extract --raw --type=version "$file" | strings -el
 				readpe -A "$file"
