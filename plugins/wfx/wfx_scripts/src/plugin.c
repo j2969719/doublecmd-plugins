@@ -36,7 +36,7 @@
 
 #define EXEC_SEP "< < < < < < < < < < < < < < < < < < < < < < < < < > > > > > > > > > > > > > > > > > > > > > > > > >"
 
-#define REGEXP_LIST "([0-9cbdflrstwxST\\-]+)\\s+(\\d{4}\\-?\\d{2}\\-?\\d{2}[\\stT]\\d{2}:?\\d{2}:?\\d?\\d?Z?)\\s+([0-9\\-]+)\\s+([^\\n]+)"
+#define REGEXP_LIST "([0-9cbdflrstwxST\\-]+)\\s+(\\d{4}\\-?\\d{2}\\-?\\d{2}[\\stT]\\d{2}:?\\d{2}:?\\d?\\d?Z?)[.0-9]*\\s+([0-9\\-]+)\\s+([^\\n]+)"
 #define REGEXP_ENVVAAR "^(" OPT_ENVVAR "[A-Z0-9_]+)\\s"
 #define REGEXP_STRING "E?N?V?_?WFX_SCRIPT_STR_[A-Z0-9_]+"
 
@@ -937,7 +937,11 @@ static void FillProps(uintptr_t pDlg)
 				i++;
 
 				if (g_ascii_strcasecmp(res[0], "filetype") == 0)
-					SendDlgMsg(pDlg, "lType", DM_SETTEXT, (intptr_t)g_strstrip(res[1]), 0);
+				{
+					gchar *value = TranslateString(langs, g_strstrip(res[1]));
+					SendDlgMsg(pDlg, "lType", DM_SETTEXT, (intptr_t)value, 0);
+					g_free(value);
+				}
 				else if (g_ascii_strcasecmp(res[0], "content_type") == 0)
 				{
 					gchar *description = g_content_type_get_description(g_strstrip(res[1]));
@@ -1424,10 +1428,13 @@ static void ShowSelectFileDlg(char *text, gboolean request_once)
 		{
 			for (guint i = 2; i < len; i++)
 			{
-				if (g_ascii_strcasecmp(split[i], "save") == 0)
-					is_opendlg = FALSE;
-				else
-					ext = split[i];
+				if (strlen(split[i]) > 0)
+				{
+					if (g_ascii_strcasecmp(split[i], "save") == 0)
+						is_opendlg = FALSE;
+					else
+						ext = split[i];
+				}
 			}
 		}
 
@@ -3057,6 +3064,7 @@ static void ShowPropertiesDlg(void)
 		                "    ScrollBars = ssAutoBoth\n"
 		                "    TabOrder = 9\n"
 		                "    TabStop = False\n"
+		                "    WordWrap = False\n"
 		                "  end\n"
 		                "  object btnClose: TBitBtn\n"
 		                "    AnchorSideTop.Control = mPreview\n"
@@ -3186,11 +3194,10 @@ static gboolean SetScriptsFindData(tVFSDirData *dirdata, WIN32_FIND_DATAA *FindD
 				gchar *string = ReplaceTemplate(langs, "WFX_SCRIPT_NAME");
 				CloseTranslations(langs);
 
-				if (string)
-				{
+				if (string && string[0] != '\0')
 					filename = g_strdup_printf("%s%s", string, (dot != NULL) ? dot : "");
-					g_free(string);
-				}
+
+				g_free(string);
 
 				if (filename && !g_key_file_has_key(gCfg, "/", filename, NULL))
 					g_strlcpy(FindData->cFileName, filename, sizeof(FindData->cFileName));
@@ -3450,7 +3457,11 @@ static gboolean SetFindData(tVFSDirData * dirdata, WIN32_FIND_DATAA * FindData)
 		g_free(string);
 
 		g_match_info_next(dirdata->match_info, NULL);
-		return TRUE;
+
+		if (strchr(FindData->cFileName, '/') != NULL)
+			dprintf(gDebugFd, "ERR (%s): filename \"%s\" is invalid, ignored.\n", dirdata->script, FindData->cFileName);
+		else
+			return TRUE;
 	}
 
 	return FALSE;
@@ -3542,8 +3553,10 @@ HANDLE DCPCALL FsFindFirst(char* Path, WIN32_FIND_DATAA * FindData)
 			return (HANDLE)(-1);
 		}
 
+		g_strlcpy(dirdata->script, script, MAX_PATH);
+		g_free(script);
 		dirdata->regex = g_regex_new(REGEXP_LIST, G_REGEX_MULTILINE, G_REGEX_MATCH_NEWLINE_ANY, NULL);
-		dirdata->empty_dates = g_key_file_get_boolean(gCfg, script, OPT_NOFAKEDATES, NULL);
+		dirdata->empty_dates = g_key_file_get_boolean(gCfg, dirdata->script, OPT_NOFAKEDATES, NULL);
 
 		if (!g_regex_match(dirdata->regex, output, 0, &(dirdata->match_info)))
 		{
@@ -3552,7 +3565,6 @@ HANDLE DCPCALL FsFindFirst(char* Path, WIN32_FIND_DATAA * FindData)
 
 			g_regex_unref(dirdata->regex);
 			g_free(list_path);
-			g_free(script);
 			g_free(output);
 			return (HANDLE)(-1);
 		}
@@ -3564,17 +3576,16 @@ HANDLE DCPCALL FsFindFirst(char* Path, WIN32_FIND_DATAA * FindData)
 			g_match_info_free(dirdata->match_info);
 			g_regex_unref(dirdata->regex);
 			g_free(list_path);
-			g_free(script);
 			g_free(output);
 			g_free(dirdata);
 			return (HANDLE)(-1);
 		}
 
-		if (g_key_file_get_boolean(gCfg, script, OPT_GETVALUES, NULL) && !g_key_file_has_key(gCfg, script, "Fs_Set_" ENVVAR_MULTIFILEOP, NULL))
-			g_key_file_set_string(gCfg, script, MARK_VALS, list_path);
+		if (g_key_file_get_boolean(gCfg, dirdata->script, OPT_GETVALUES, NULL) && !g_key_file_has_key(gCfg, dirdata->script, "Fs_Set_" ENVVAR_MULTIFILEOP, NULL))
+			g_key_file_set_string(gCfg, dirdata->script, MARK_VALS, list_path);
 
 		g_free(list_path);
-		g_free(script);
+
 	}
 
 	return dirdata;

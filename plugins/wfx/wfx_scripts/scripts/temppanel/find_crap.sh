@@ -12,7 +12,8 @@ vfs_init()
     echo -e "Fs_RequestOnce"
     echo -e "Fs_YesNo_Message WFX_SCRIPT_STR_ASKOPT"
 
-    echo -e "Fs_GetValues_Needed"
+    echo -e "Fs_GetValue_Needed"
+#   echo -e "Fs_GetValues_Needed"
     echo -e 'Fs_PushValue WFX_SCRIPT_STR_VAL\tstat -c"%i" "$file"'
     echo -e "WFX_SCRIPT_STR_VAL"
 

@@ -164,6 +164,12 @@ static size_t do_nothing_cb(void *buffer, size_t size, size_t nitems, void *user
 	return size * nitems;
 }
 
+static int debuginfo_cb(CURL *handle, curl_infotype type, char *data, size_t size, void *clientp)
+{
+	if (type <= 2)
+		gLogProc(gPluginNr, MSGTYPE_DETAILS, data);
+}
+
 static xmlChar *name_to_url(char *name, xmlDocPtr doc)
 {
 	xmlChar *url = NULL;
@@ -199,10 +205,14 @@ static void curl_set_additional_options(CURL *curl)
 	if (gSettings.auth)
 	{
 		if (gSettings.user[0] == '\0' && gRequestProc(gPluginNr, RT_UserName, NULL, NULL, gSettings.user, MAX_PATH))
+		{
 			curl_easy_setopt(curl, CURLOPT_USERNAME, gSettings.user);
-		if (gSettings.passwd[0] == '\0' && gRequestProc(gPluginNr, RT_Password, NULL, NULL, gSettings.passwd, MAX_PATH))
-			curl_easy_setopt(curl, CURLOPT_PASSWORD, gSettings.passwd);
-		
+
+			if (gSettings.passwd[0] == '\0' && gRequestProc(gPluginNr, RT_Password, NULL, NULL, gSettings.passwd, MAX_PATH))
+				curl_easy_setopt(curl, CURLOPT_PASSWORD, gSettings.passwd);
+		}
+		else
+			gSettings.auth = FALSE;
 	}
 
 	curl_easy_setopt(curl, CURLOPT_FAILONERROR, (long)gSettings.fail);
@@ -405,7 +415,7 @@ static gchar *prepare_name(char *text, xmlDocPtr doc)
 		temp = end;
 	}
 
-	gchar *grabage[] =
+	gchar *garbage[] =
 	{
 		"https://",
 		"http://",
@@ -426,7 +436,7 @@ static gchar *prepare_name(char *text, xmlDocPtr doc)
 		NULL
 	};
 
-	for (gchar **p = grabage; *p != NULL; p++)
+	for (gchar **p = garbage; *p != NULL; p++)
 	{
 		split = g_strsplit(temp, *p, -1);
 		g_free(temp);
@@ -780,6 +790,8 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 			if (gSettings.init)
 				gSettings.init = FALSE;
 
+			gLogProc(gPluginNr, MSGTYPE_CONNECT, "CONNECT /");
+			gLogProc(gPluginNr, MSGTYPE_DETAILS, gSettings.url);
 			gDialogApi->SendDlgMsg(pDlg, DlgItemName, DM_CLOSE, ID_OK, 0);
 		}
 		else if (strcmp(DlgItemName, "btnCancel") == 0)
@@ -973,6 +985,7 @@ int DCPCALL FsInit(int PluginNr, tProgressProc pProgressProc, tLogProc pLogProc,
 	gRequestProc = pRequestProc;
 	gDoc = xmlNewDoc(BAD_CAST "1.0");
 	gCurl = curl_easy_init();
+	curl_easy_setopt(gCurl, CURLOPT_DEBUGFUNCTION, debuginfo_cb);
 
 	if ((fp = fopen(gHistoryFile, "r")) != NULL)
 	{
@@ -1136,6 +1149,10 @@ int DCPCALL FsGetFile(char* RemoteName, char* LocalName, int CopyFlags, RemoteIn
 	if (!g_file_test(LocalName, G_FILE_TEST_EXISTS))
 		return FS_FILE_WRITEERROR;
 
+	gchar *message = g_strdup_printf("%s -> %s", RemoteName, LocalName);
+	gLogProc(gPluginNr, MSGTYPE_TRANSFERCOMPLETE, message);
+	g_free(message);
+
 	return FS_FILE_OK;
 }
 
@@ -1152,6 +1169,7 @@ int DCPCALL FsExecuteFile(HWND MainWin, char* RemoteName, char* Verb)
 			if (is_reparse_point((char*)url))
 			{
 				g_strlcpy(gSettings.url, (char*)url, PATH_MAX);
+				gLogProc(gPluginNr, MSGTYPE_DETAILS, gSettings.url);
 				result = FS_EXEC_OK;
 			}
 			else
@@ -1181,6 +1199,12 @@ int DCPCALL FsExecuteFile(HWND MainWin, char* RemoteName, char* Verb)
 	}
 
 	return result;
+}
+
+BOOL DCPCALL FsDisconnect(char* DisconnectRoot)
+{
+	gLogProc(gPluginNr, MSGTYPE_DISCONNECT, "DISCONNECT /");
+	return TRUE;
 }
 
 void DCPCALL FsGetDefRootName(char* DefRootName, int maxlen)

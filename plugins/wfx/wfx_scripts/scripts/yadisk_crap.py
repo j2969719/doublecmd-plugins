@@ -13,7 +13,7 @@ import yadisk
 from yadisk import YaDisk
 
 verb = sys.argv[1]
-scr = os.path.basename(__file__)
+scr = os.path.basename(__file__) + "new"
 auth_token = None
 try:
 	auth_token = os.environ['DC_WFX_SCRIPT_DATA']
@@ -34,7 +34,10 @@ except FileNotFoundError:
 	with open(conf, 'w') as f:
 		json.dump(obj, f)
 		f.close()
-y = YaDisk(id=obj[scr]['app_id'], secret=obj[scr]['secret'], token=auth_token)
+try:
+	y = YaDisk(id=obj[scr]['app_id'], secret=obj[scr]['secret'], token=auth_token)
+except:
+	pass
 
 def save_obj():
 	with open(conf, 'w') as f:
@@ -120,7 +123,6 @@ def vfs_setopt(option, value):
 	sys.exit(1)
 
 def vfs_list(path):
-	
 	if y.check_token() == True:
 		ls = y.listdir(path, fields=['name', 'type', 'size', 'modified'])
 		for f in ls:

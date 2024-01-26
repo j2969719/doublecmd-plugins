@@ -8,8 +8,29 @@ import requests
 from requests.exceptions import HTTPError
 
 verb = sys.argv[1]
-envvar = 'DC_WFX_SCRIPT_DATA'
 
+
+def get_jsonobj():
+	try:
+		with open(os.environ['DC_WFX_SCRIPT_JSON']) as f:
+			try:
+				obj = json.loads(f.read())
+				f.close()
+			except:
+				print('Failed to get json object', file=sys.stderr)
+				sys.exit(1)
+	except FileNotFoundError:
+		print('Failed to open json file', file=sys.stderr)
+		sys.exit(1)
+	return obj
+
+def save_jsonobj(obj):
+	try:
+		with open(os.environ['DC_WFX_SCRIPT_JSON'], 'w') as f:
+			json.dump(obj, f)
+			f.close()
+	except FileNotFoundError:
+		pass
 
 def get_dir_contents(obj, path):
 	try:
@@ -21,14 +42,16 @@ def get_dir_contents(obj, path):
 		obj['contents'][path] = response.json()
 		return obj
 	else:
-		print(str(response.status_code) + ": " + response.reason,file=sys.stderr)
+		print(str(response.status_code) + ": " + response.reason, file=sys.stderr)
 		sys.exit(1)
 
 def vfs_init():
 	tf = tempfile.NamedTemporaryFile(suffix='_github.json', delete=False)
 	filename = tf.name
 	tf.close()
-	print('Fs_Set_'+ envvar +' ' + filename)
+	print('Fs_Set_DC_WFX_SCRIPT_JSON ' + filename)
+	print('Fs_CONNECT_Needed')
+	print('Fs_PushValue WFX_SCRIPT_STR_REPO\tdoublecmd/doublecmd')
 	print('Fs_Request_Options')
 	print('WFX_SCRIPT_STR_REPO')
 	sys.exit()
@@ -44,9 +67,7 @@ def vfs_setopt(option, value):
 			string = '{ "repo": "'+ str(value) +'", "contents" : {}}'
 			obj = json.loads(string)
 			obj['contents']['/'] = response.json()
-			with open(os.environ[envvar], 'w') as f:
-				json.dump(obj, f)
-				f.close()
+			save_jsonobj(obj)
 			sys.exit()
 		else:
 			print(str(response.status_code) + ": " + response.reason, file=sys.stderr)
@@ -56,17 +77,10 @@ def vfs_setopt(option, value):
 	sys.exit(1)
 
 def vfs_list(path):
-	try:
-		with open(os.environ[envvar]) as f:
-			try:
-				obj = json.loads(f.read())
-				f.close()
-			except:
-				sys.exit(1)
-	except FileNotFoundError:
-		sys.exit(1)
+	obj = get_jsonobj()
 	if path not in obj['contents']:
 		obj = get_dir_contents(obj, path)
+		save_jsonobj(obj)
 	for element in obj['contents'][path]:
 		if 'attrstr' not in element:
 			if element['type'] == 'dir':
@@ -76,25 +90,14 @@ def vfs_list(path):
 			elif element['type'] == 'symlink':
 				element['attrstr'] = 'lr--r--r--'
 		print(element['attrstr'] + '\t0000-00-00 00:00:00 \t' + str(element['size']) + '\t' + element['name'])
-	try:
-		with open(os.environ[envvar], 'w') as f:
-			json.dump(obj, f)
-			f.close()
-	except FileNotFoundError:
-		pass
 	sys.exit()
 
 def vfs_getfile(src, dst):
-	try:
-		with open(os.environ[envvar]) as f:
-			obj = json.loads(f.read())
-			f.close()
-	except FileNotFoundError:
-		sys.exit(1)
+	obj = get_jsonobj()
 	dirname = os.path.dirname(src)
 	if dirname not in obj['contents']:
 		obj = get_dir_contents(obj, dirname)
-		with open(os.environ[envvar], 'w') as f:
+		with open(os.environ['DC_WFX_SCRIPT_JSON'], 'w') as f:
 			json.dump(obj, f)
 			f.close()
 	for element in obj['contents'][dirname]:
@@ -125,19 +128,14 @@ def vfs_getfile(src, dst):
 	sys.exit(1)
 
 def vfs_properties(filename):
-	try:
-		with open(os.environ[envvar]) as f:
-			obj = json.loads(f.read())
-			f.close()
-	except FileNotFoundError:
-		sys.exit(1)
+	obj = get_jsonobj()
 	for element in obj['contents'][os.path.dirname(filename)]:
 		if element['name'] == os.path.basename(filename):
 			print('SHA\t' + element['sha'])
 	sys.exit()
 
 def vfs_deinit():
-	os.remove(os.environ[envvar])
+	os.remove(os.environ['DC_WFX_SCRIPT_JSON'])
 	sys.exit()
 
 

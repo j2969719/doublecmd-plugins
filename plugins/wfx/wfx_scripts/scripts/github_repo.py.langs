@@ -1,5 +1,7 @@
 [Default]
+WFX_SCRIPT_NAME=View repository on GitHub
 WFX_SCRIPT_STR_REPO=user/repo
 
 [ru_RU]
-WFX_SCRIPT_STR_REPO=user/repo
+WFX_SCRIPT_NAME=Просмотр репозитория на GitHub
+WFX_SCRIPT_STR_REPO=пользователь/репозиторий

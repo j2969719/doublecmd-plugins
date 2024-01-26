@@ -19,7 +19,6 @@ end
 
 function fs_setopt(option, value)
     if option:find("^Reset ") and value == "Yes" then
-      --local key = option:sub(6, -3)
         local key = os.getenv("DC_WFX_SCRIPT_REMOTENAME")
         if (os.execute("dconf reset " .. key) == true) then
             print("Fs_Info_Message " .. key .. " has been reset.")
@@ -54,7 +53,7 @@ function fs_getfile(src, dst)
 end
 
 function fs_exists(file)
-    if (os.execute("dconf read " .. src) == true) then
+    if (os.execute("dconf read " .. file) == true) then
         os.exit()
     end
     os.exit(1)

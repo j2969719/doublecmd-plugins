@@ -53,13 +53,20 @@ def vfs_init():
 		except Exception as e:
 			print(e, file=sys.stderr)
 			sys.exit(1)
-		autor = info['metadata']['creator']
-		if len(autor) > 80:
-			autor = info['metadata']['creator'][:80] + '...'
+		author = ''
+		if 'creator' in info['metadata'] and not info['metadata']['creator'] is None:
+			author = info['metadata']['creator']
+		elif 'author' in info['metadata']:
+			for name in info['metadata']['author']:
+				author = author + name['name'] + ', '
+			author = author[:-2]
+		creator = author
+		if len(author) > 80:
+			author = author[:80] + '...'
 		title = info['metadata']['title']
 		if len(title) > 80:
 			title = info['metadata']['title'][:80] + '...'
-		rawname = autor + ' - ' + title
+		rawname = author + ' - ' + title
 		ext = os.path.splitext(element[1])[1]
 		tmp_name = "".join(c for c in rawname.lstrip() if c != "/")
 		extra = ''
@@ -69,11 +76,19 @@ def vfs_init():
 			name = tmp_name + ' (' + str(i) + ')' + ext
 			i += 1
 		res[name] = {}
-		res[name]['path'] = unquote(urlparse(element[1]).path)
+		if element[1][:8] == 'file:///':
+			res[name]['path'] = unquote(urlparse(element[1]).path)
+		elif element[1][:1] == '~':
+			res[name]['path'] = home_dir + element[1][1:]
+		else:
+			res[name]['path'] = element[1]
 		res[name]['id'] = element[0]
+		res[name]['id-file'] = book_info
 		for prop in props:
 			if prop in info['metadata'] and info['metadata'][prop] != '':
 				res[name][prop] = info['metadata'][prop]
+		if not 'creator' in res[name]:
+			res[name]['creator'] = creator
 		if 'progress' in info:
 			res[name]['progress'] = int(info['progress'][0] * 100 / info['progress'][1])
 	try:
@@ -131,6 +146,12 @@ def vfs_localname(filename):
 		sys.exit()
 	sys.exit(1)
 
+def vfs_getvalue(filename):
+	obj = get_jsonobj()
+	if 'progress' in obj[filename[1:]] and not obj[filename[1:]]['progress'] is None:
+		print(str(obj[filename[1:]]['progress']) + '%')
+	sys.exit()
+
 def vfs_getvalues(path):
 	obj = get_jsonobj()
 	for name in obj:
@@ -159,6 +180,8 @@ elif verb == 'properties':
 	vfs_properties(sys.argv[2])
 elif verb == 'localname':
 	vfs_localname(sys.argv[2])
+elif verb == 'getvalue':
+	vfs_getvalue(sys.argv[2])
 elif verb == 'getvalues':
 	vfs_getvalues(sys.argv[2])
 elif verb == 'deinit':

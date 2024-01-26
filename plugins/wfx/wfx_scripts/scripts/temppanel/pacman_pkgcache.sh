@@ -8,7 +8,8 @@ vfs_setopt()
     file="/var/cache/pacman/pkg$value"
 
     case "$option" in
-        "Install package") echo "Fs_RunTerm sudo pacman -U $file" ;;
+        "Install package") echo "Fs_RunTermKeep sudo pacman -U $file" ;;
+        "Install package (overwrite)") echo "Fs_RunTermKeep sudo pacman -U --overwrite \* $file" ;;
         "Show installed package info") echo "Fs_RunTermKeep pacman -Qiq $DC_WFX_TP_SCRIPT_DATA" ;;
     esac
     exit 0
@@ -62,7 +63,7 @@ vfs_properties()
         grep $field <<< $output | sed 's/\s=\s/\t/g'
     done
     echo -e "Fs_Set_DC_WFX_TP_SCRIPT_DATA $pkgname"
-    echo -e "Fs_PropsActs Install package\tShow installed package info"
+    echo -e "Fs_PropsActs Install package\tInstall package (overwrite)\tShow installed package info"
 
     exit 0
 }

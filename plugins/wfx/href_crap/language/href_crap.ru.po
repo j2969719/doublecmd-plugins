@@ -18,8 +18,8 @@ msgid "Follow HTTP 3xx redirects"
 msgstr "Следовать перенаправлениям HTTP 3xx"
 
 #: DialogBox.ckVerbose.Сaption
-msgid "Spam a lot of verbose information about curl operations to stderr"
-msgstr "Спамить информацию об операциях Curl на stderr"
+msgid "Spam a lot of verbose information about curl operations"
+msgstr "Спамить информацию об операциях Curl"
 
 #: DialogBox.lblMaxRedir.Сaption
 msgid "Number of redirects allowed:"
@@ -83,4 +83,8 @@ msgstr ""
 
 #: DialogBox.ckAuth.Сaption
 msgid "Authentication"
-msgstr ""
+msgstr "Аутентификация"
+
+#: DialogBox.ckNoQuery.Сaption
+msgid "Skip URLs with query string"
+msgstr "Пропускать ссылки со строкой запроса"
