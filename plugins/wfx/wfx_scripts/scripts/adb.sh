@@ -8,6 +8,8 @@ vfs_init()
 
     echo "Fs_DisableFakeDates"
 
+    echo "Fs_Set_DC_WFX_SCRIPT_STDERR 2>/dev/null"
+
     echo "Fs_LogInfo"
     adb start-server
 }
@@ -75,6 +77,13 @@ vfs_list()
         echo "-r-xr-xr-x 0000-00-00 00:00:00 - >$ENV_WFX_SCRIPT_STR_UNROOT<.sh"
         echo "-r-xr-xr-x 0000-00-00 00:00:00 - >$ENV_WFX_SCRIPT_STR_OFFLINE<.sh"
         echo "-r-xr-xr-x 0000-00-00 00:00:00 - >$ENV_WFX_SCRIPT_STR_LOG<.sh"
+
+        if [ -z "$DC_WFX_SCRIPT_STDERR" ]; then
+            echo "-r-xr-xr-x 0000-00-00 00:00:00 - >$ENV_WFX_SCRIPT_STR_STDERROFF<.sh"
+        else
+            echo "-r-xr-xr-x 0000-00-00 00:00:00 - >$ENV_WFX_SCRIPT_STR_STDERRON<.sh"
+        fi
+
         exit 0
     fi
 
@@ -83,7 +92,7 @@ vfs_list()
     [ -z "$devname" ] || device="-s $devname"
     path="/${1#/*/}"
     [ "$path" == "/$1" ] && path=/
-    command="cd \"$path\" && stat -c '%A %y %s %n' *"
+    command="cd \"$path\" && stat -c '%A %y %s %n' * $DC_WFX_SCRIPT_STDERR"
     adb $device shell "$command"
 
     exit 0
@@ -232,6 +241,8 @@ vfs_openfile()
         ">$ENV_WFX_SCRIPT_STR_ROOT<.sh") adb root ;;
         ">$ENV_WFX_SCRIPT_STR_UNROOT<.sh") adb unroot ;;
         ">$ENV_WFX_SCRIPT_STR_OFFLINE<.sh") adb reconnect offline ;;
+        ">$ENV_WFX_SCRIPT_STR_STDERRON<.sh") echo "Fs_Set_DC_WFX_SCRIPT_STDERR " ;;
+        ">$ENV_WFX_SCRIPT_STR_STDERROFF<.sh") echo "Fs_Set_DC_WFX_SCRIPT_STDERR 2>/dev/null" ;;
 
         *) echo "Fs_Info_Message \"${1:1}\" WFX_SCRIPT_STR_ERRNA" ;;
         esac
@@ -261,25 +272,25 @@ vfs_properties()
         magicfile=`echo "$1" | grep '<.sh'`
         if [ -z "$magicfile" ]; then
             echo -e "filetype\tWFX_SCRIPT_STR_DEV"
-            brand=`adb -s "${1:1}" shell getprop ro.product.brand`
+            brand=`adb -s "${1:1}" shell getprop ro.product.brand 2>/dev/null`
             [ -z "$brand" ] || echo -e "WFX_SCRIPT_STR_BRAND\t$brand"
-            model=`adb -s "${1:1}" shell getprop ro.product.model`
+            model=`adb -s "${1:1}" shell getprop ro.product.model 2>/dev/null`
             [ -z "$model" ] || echo -e "WFX_SCRIPT_STR_MODEL\t$model"
-            propdev=`adb -s "${1:1}" shell getprop ro.product.device`
+            propdev=`adb -s "${1:1}" shell getprop ro.product.device 2>/dev/null`
             [ -z "$propdev" ] || echo -e "WFX_SCRIPT_STR_MDEV\t$propdev"
-            board=`adb -s "${1:1}" shell getprop ro.product.board`
+            board=`adb -s "${1:1}" shell getprop ro.product.board 2>/dev/null`
             [ -z "$board" ] || echo -e "WFX_SCRIPT_STR_BOARD\t$board"
-            abilist=`adb -s "${1:1}" shell getprop ro.product.cpu.abilist`
+            abilist=`adb -s "${1:1}" shell getprop ro.product.cpu.abilist 2>/dev/null`
             [ -z "$abilist" ] || echo -e "WFX_SCRIPT_STR_ABI\t$abilist"
-            ramsize=`adb -s "${1:1}" shell getprop ro.ramsize`
+            ramsize=`adb -s "${1:1}" shell getprop ro.ramsize 2>/dev/null`
             [ -z "$ramsize" ] || echo -e "WFX_SCRIPT_STR_RAM\t$ramsize"
-            propver=`adb -s "${1:1}" shell getprop ro.build.version.release`
+            propver=`adb -s "${1:1}" shell getprop ro.build.version.release 2>/dev/null`
             [ -z "$propver" ] || echo -e "WFX_SCRIPT_STR_VER\t$propver"
-            prop=`adb -s "${1:1}" get-devpath`
+            prop=`adb -s "${1:1}" get-devpath 2>/dev/null`
             [ -z "$prop" ] || echo -e "WFX_SCRIPT_STR_DEVPATH\t$prop"
 
             # actions=(SHELL SCRPNG SCRCPY LOGCAT APK ATTACH DETACH BUG REBOOT REBOOTREC REBOOTBL REBOOTSL REBOOTSLA BACKUP RESTORE)
-            actions=(SHELL SCRPNG SCRCPY LOGCAT BUG REBOOT REBOOTREC REBOOTBL)
+            actions=(SHELL SCRPNG SCRCPY LOGCAT BUG REBOOT REBOOTREC)
             string=`printf '\tWFX_SCRIPT_STR_ACT_%s' "${actions[@]}"`
             echo -e "Fs_PropsActs$string"
         else
@@ -290,31 +301,31 @@ vfs_properties()
     devname=`echo "$1" | cut -d/ -f2`
     [ -z "$devname" ] || device="-s $devname"
 
-    output=`adb $device shell "stat -c '%s' \"$file\""`
+    output=`adb $device shell "stat -c '%s' \"$file\" 2>/dev/null"`
     [ -z "$output" ] || echo -e "WFX_SCRIPT_STR_SIZE\t`numfmt --to=iec <<< $output` `printf "(%'d)" $output`"
 
-    output=`adb $device shell "stat -c '%U (%u)' \"$file\""`
+    output=`adb $device shell "stat -c '%U (%u)' \"$file\" 2>/dev/null"`
     [ -z "$output" ] || echo -e "WFX_SCRIPT_STR_UID\t$output"
 
-    output=`adb $device shell "stat -c '%G (%g)' \"$file\""`
+    output=`adb $device shell "stat -c '%G (%g)' \"$file\" 2>/dev/null"`
     [ -z "$output" ] || echo -e "WFX_SCRIPT_STR_GID\t$output"
 
-    output=`adb $device shell "stat -c '%A (%a)' \"$file\""`
+    output=`adb $device shell "stat -c '%A (%a)' \"$file\" 2>/dev/null"`
     [ -z "$output" ] || echo -e "WFX_SCRIPT_STR_MODE\t$output"
 
-    output=`adb $device shell "stat -c '%x' \"$file\""`
+    output=`adb $device shell "stat -c '%x' \"$file\" 2>/dev/null"`
     [ -z "$output" ] || echo -e "WFX_SCRIPT_STR_ACCESS\t$output"
 
-    output=`adb $device shell "stat -c '%y' \"$file\""`
+    output=`adb $device shell "stat -c '%y' \"$file\" 2>/dev/null"`
     [ -z "$output" ] || echo -e "WFX_SCRIPT_STR_MODIFY\t$output"
 
-    output=`adb $device shell "stat -c '%z' \"$file\""`
+    output=`adb $device shell "stat -c '%z' \"$file\" 2>/dev/null"`
     [ -z "$output" ] || echo -e "WFX_SCRIPT_STR_CHANGE\t$output"
 
 
-    output=`adb $device shell "file -L \"$file\""`
+    output=`adb $device shell "file -L \"$file\" 2>/dev/null"`
     [ -z "$output" ] || echo -e "filetype\t$output"
-    output=`adb $device shell "readlink \"$file\""`
+    output=`adb $device shell "readlink \"$file\" 2>/dev/null"`
     [ -z "$output" ] || echo -e "path\t$output"
 
     exit 0
@@ -350,7 +361,7 @@ vfs_quote()
 {
     string="$1"
     path="/${2#/*/}"
-    [ "$path" == "/$2" ] && exit 1
+    [ "$path" == "/$2" ] && echo "Fs_RunTermKeep $string" ; exit 1
     command="cd \"$path\" && $string"
     devname=`echo "$2" | cut -d/ -f2`
     [ -z "$devname" ] || device="-s $devname"
@@ -366,13 +377,13 @@ vfs_getinfovalue()
     if [ "$path" == "/$1" ]; then
         magicfile=`echo "$1" | grep '<.sh'`
         if [ -z "$magicfile" ]; then
-            adb -s "${1:1}" shell getprop ro.product.model
+            adb -s "${1:1}" shell getprop ro.product.model 2>/dev/null
         else
             echo "WFX_SCRIPT_STR_MAGIC"
         fi
         exit 0
     fi
-    command="stat -c '%U/%G' \"$path\""
+    command="stat -c '%U/%G' \"$path\" $DC_WFX_SCRIPT_STDERR"
     devname=`echo "$1" | cut -d/ -f2`
     [ -z "$devname" ] || device="-s $devname"
 
