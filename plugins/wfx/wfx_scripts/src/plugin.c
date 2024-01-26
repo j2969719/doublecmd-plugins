@@ -36,7 +36,7 @@
 
 #define EXEC_SEP "< < < < < < < < < < < < < < < < < < < < < < < < < > > > > > > > > > > > > > > > > > > > > > > > > >"
 
-#define REGEXP_LIST "([0-9cbdflrstwxST\\-]+)\\s+(\\d{4}\\-?\\d{2}\\-?\\d{2}[\\stT]\\d{2}:?\\d{2}:?\\d?\\d?Z?)[.0-9]*\\s+([0-9\\-]+)\\s+([^\\n]+)"
+#define REGEXP_LIST "([0-9cbdflrstwxST\\-]+)\\s+(\\d{4}\\-?\\d{2}\\-?\\d{2}[\\stT]\\d{2}:?\\d{2}:?\\d?\\d?Z?)\\s+([0-9\\-]+)\\s+([^\\n]+)"
 #define REGEXP_ENVVAAR "^(" OPT_ENVVAR "[A-Z0-9_]+)\\s"
 #define REGEXP_STRING "E?N?V?_?WFX_SCRIPT_STR_[A-Z0-9_]+"
 
@@ -937,11 +937,7 @@ static void FillProps(uintptr_t pDlg)
 				i++;
 
 				if (g_ascii_strcasecmp(res[0], "filetype") == 0)
-				{
-					gchar *value = TranslateString(langs, g_strstrip(res[1]));
-					SendDlgMsg(pDlg, "lType", DM_SETTEXT, (intptr_t)value, 0);
-					g_free(value);
-				}
+					SendDlgMsg(pDlg, "lType", DM_SETTEXT, (intptr_t)g_strstrip(res[1]), 0);
 				else if (g_ascii_strcasecmp(res[0], "content_type") == 0)
 				{
 					gchar *description = g_content_type_get_description(g_strstrip(res[1]));
@@ -1428,13 +1424,10 @@ static void ShowSelectFileDlg(char *text, gboolean request_once)
 		{
 			for (guint i = 2; i < len; i++)
 			{
-				if (strlen(split[i]) > 0)
-				{
-					if (g_ascii_strcasecmp(split[i], "save") == 0)
-						is_opendlg = FALSE;
-					else
-						ext = split[i];
-				}
+				if (g_ascii_strcasecmp(split[i], "save") == 0)
+					is_opendlg = FALSE;
+				else
+					ext = split[i];
 			}
 		}
 
@@ -3064,7 +3057,6 @@ static void ShowPropertiesDlg(void)
 		                "    ScrollBars = ssAutoBoth\n"
 		                "    TabOrder = 9\n"
 		                "    TabStop = False\n"
-		                "    WordWrap = False\n"
 		                "  end\n"
 		                "  object btnClose: TBitBtn\n"
 		                "    AnchorSideTop.Control = mPreview\n"

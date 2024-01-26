@@ -597,9 +597,11 @@ static void analyze_streams (CustomData *data) {
       gst_tag_list_foreach(tags, (GstTagForeachFunc)text_add_tags, text);
       if (gst_tag_list_get_string (tags, GST_TAG_TITLE, &str)) {
         gtk_label_set_text (GTK_LABEL (data->lbl_info), str);
-        if (gst_tag_list_get_string (tags, GST_TAG_ARTIST, &str))
-          gtk_label_set_text (GTK_LABEL (data->lbl_info), g_strdup_printf ("%s - %s",
-            str, gtk_label_get_text (GTK_LABEL (data->lbl_info))));
+        if (gst_tag_list_get_string (tags, GST_TAG_ARTIST, &str)) {
+          gchar *newstr = g_strdup_printf ("%s - %s", str, gtk_label_get_text (GTK_LABEL (data->lbl_info)));
+          gtk_label_set_text (GTK_LABEL (data->lbl_info), newstr);
+          g_free(newstr);
+        }
         g_free(str);
       }
       gst_tag_list_free (tags);

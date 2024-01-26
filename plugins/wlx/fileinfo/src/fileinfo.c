@@ -22,7 +22,7 @@
 #ifdef WLXSRCVW   
 #include <gtksourceview/gtksourceview.h>
 #include <gtksourceview/gtksourceiter.h>
-#include <gtksourceview/gtksourcebuffer.h>   
+#include <gtksourceview/gtksourcebuffer.h>
 #endif
 
 #include <glib/gi18n.h>
