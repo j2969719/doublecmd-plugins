@@ -66,20 +66,6 @@ function log_err(str)
     io.stderr:write(str)
 end
 
-function get_filename(src, ext)
-    local lang = os.getenv("LANG"):match("^[^_]+") -- os.setlocale(nil, "ctype"):match("^[^_]+")
-    local section = mans[src:match("/([^/]+)")]
-    local name = '/' .. section .. src:match("(/[^/]+)$"):gsub(ext .. '$', "gz")
-    local filename = "/usr/share/man/" .. lang .. name
-    local file = io.open(filename, 'r')
-    if not file then
-        filename = "/usr/share/man" .. name
-    else
-        file:close()
-    end
-    return filename
-end
-
 function fs_init()
     print("Fs_PushValue WFX_SCRIPT_STR_MAN\tman man") -- rtfm
     print("Fs_RequestOnce")
@@ -136,13 +122,11 @@ function fs_getfile(src, dst)
     if not ext or ext == "-->" then
         os.exit(1)
     end
-    local filename = get_filename(src, ext)
-    if (ext == "html") then
-        cmd = 'roff2html -k -F "' .. dst:match("(.+/)[^/]+$"):gsub('"', '\\"') .. '" -- ' .. filename .. ' > "' .. dst:gsub('"', '\\"') .. '"'
-    elseif (ext == "pdf") then
-        cmd = 'roff2pdf -k -- ' .. filename .. ' > "' .. dst:gsub('"', '\\"') .. '"'
+    local page = src:match("([^/]+)%.[%a]-$")
+    if (ext == "txt") then
+        cmd = 'env LANG= man ' .. page .. ' > "' .. dst:gsub('"', '\\"') .. '"'
     else
-        cmd = 'gzip -cd ' .. filename .. ' | preconv | nroff -mandoc | col -xb > "' .. dst:gsub('"', '\\"') .. '"'
+        cmd = 'env LANG= man -T' .. ext .. ' ' .. page .. ' > "' .. dst:gsub('"', '\\"') .. '"'
     end
     if (cmd ~= nil) and (os.execute(cmd) == true) then
         os.exit()
