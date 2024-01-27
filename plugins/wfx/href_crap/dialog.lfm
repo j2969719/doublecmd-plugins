@@ -11,7 +11,7 @@ object DialogBox: TDialogBox
   ClientHeight = 485
   ClientWidth = 719
   OnCreate = DialogBoxShow
-  Position = poScreenCenter
+  Position = poOwnerFormCenter
   LCLVersion = '3.0.0.3'
   object gbCurrent: TGroupBox
     AnchorSideLeft.Control = cbURL

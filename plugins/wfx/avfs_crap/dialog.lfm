@@ -11,7 +11,7 @@ object DialogBox: TDialogBox
   ClientHeight = 465
   ClientWidth = 578
   OnShow = DialogBoxShow
-  Position = poScreenCenter
+  Position = poOwnerFormCenter
   LCLVersion = '2.0.5.0'
   object lblAVFSPath: TLabel
     AnchorSideLeft.Control = cmbPath

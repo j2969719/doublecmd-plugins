@@ -1,0 +1,15 @@
+object DialogBox: TDialogBox
+  Left = 404
+  Height = 391
+  Top = 142
+  Width = 447
+  AutoSize = True
+  BorderStyle = bsDialog
+  Caption = 'Sample Text'
+  ChildSizing.LeftRightSpacing = 10
+  ChildSizing.TopBottomSpacing = 10
+  OnClose = DialogBoxClose
+  OnCreate = DialogBoxShow
+  Position = poOwnerFormCenter
+  LCLVersion = '3.0.0.3'
+end

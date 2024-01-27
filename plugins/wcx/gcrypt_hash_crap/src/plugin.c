@@ -51,7 +51,7 @@ object DialogBox: TDialogBox
   ClientHeight = 105
   ClientWidth = 518
   OnCreate = DialogBoxShow
-  Position = poScreenCenter
+  Position = poOwnerFormCenter
   LCLVersion = '2.0.7.0'
   object lblMsg: TLabel
     AnchorSideLeft.Control = Owner

@@ -11,7 +11,7 @@ object DialogBox: TDialogBox
   ClientHeight = 363
   ClientWidth = 559
   OnCreate = DialogBoxShow
-  Position = poScreenCenter
+  Position = poOwnerFormCenter
   LCLVersion = '2.0.7.0'
   object mArcSupported: TMemo
     AnchorSideTop.Control = dbSupported
