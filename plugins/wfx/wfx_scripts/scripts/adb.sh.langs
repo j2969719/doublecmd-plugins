@@ -59,7 +59,7 @@ WFX_SCRIPT_STR_DEV=Устройство
 WFX_SCRIPT_STR_BRAND=Бренд
 WFX_SCRIPT_STR_MODEL=Модель
 WFX_SCRIPT_STR_MDEV=Устройство
-WFX_SCRIPT_STR_BOARD=Доска
+WFX_SCRIPT_STR_BOARD=Плата
 WFX_SCRIPT_STR_DEVPATH=Подключен
 WFX_SCRIPT_STR_MAGIC=Действие
 WFX_SCRIPT_STR_ALL=Все файлы (*)
@@ -72,7 +72,7 @@ WFX_SCRIPT_STR_ACT_REBOOTREC=Перезапустить (recovery)
 WFX_SCRIPT_STR_ACT_REBOOTBL=Перезапустить (bootloader)
 
 WFX_SCRIPT_STR_ACT_SHELL=Открыть shell
-WFX_SCRIPT_STR_ACT_SCRPNG=Взять снимок экана
+WFX_SCRIPT_STR_ACT_SCRPNG=Сделать снимок экана
 WFX_SCRIPT_STR_ACT_SCRCPY=Запустить scrcpy
 WFX_SCRIPT_STR_ACT_LOGCAT=Запустить logcat
 WFX_SCRIPT_STR_ACT_BUG=Сохранить багрепорт

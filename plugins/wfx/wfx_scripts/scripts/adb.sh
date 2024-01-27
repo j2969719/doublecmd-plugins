@@ -92,7 +92,7 @@ vfs_list()
     [ -z "$devname" ] || device="-s $devname"
     path="/${1#/*/}"
     [ "$path" == "/$1" ] && path=/
-    command="cd \"$path\" && stat -c '%A %y %s %n' * $DC_WFX_SCRIPT_STDERR"
+    command="cd \"$path\" && for file in *; do [ \"\$file\" != '*' ] && stat -c '%A %.19y %s %n' \"\$file\" $DC_WFX_SCRIPT_STDERR ; done"
     adb $device shell "$command"
 
     exit 0
