@@ -34,7 +34,6 @@ WFX_SCRIPT_STR_ACT_LOGCAT=Run logcat
 WFX_SCRIPT_STR_ACT_BUG=Save bugreport
 
 WFX_SCRIPT_STR_ERRNA=not implemented!
-WFX_SCRIPT_STR_ERRSCRCPY=Failed to run scrcpy. (not installed maybe?)
 
 ENV_WFX_SCRIPT_STR_USB=Restart adbd listening on USB
 ENV_WFX_SCRIPT_STR_TCP=Restart adbd listening on TCP
@@ -78,7 +77,6 @@ WFX_SCRIPT_STR_ACT_LOGCAT=Запустить logcat
 WFX_SCRIPT_STR_ACT_BUG=Сохранить багрепорт
 
 WFX_SCRIPT_STR_ERRNA=не реализовано!
-WFX_SCRIPT_STR_ERRSCRCPY=Не удалось запустить scrcpy. (мож не установлен?)
 
 ENV_WFX_SCRIPT_STR_USB=Перезапустить adbd, использовать USB
 ENV_WFX_SCRIPT_STR_TCP=Перезапустить adbd, использовать TCP

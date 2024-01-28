@@ -34,7 +34,7 @@ vfs_setopt()
     case "$option" in
         WFX_SCRIPT_STR_ACT_SHELL) echo "Fs_RunTerm adb $device shell" ;;
         WFX_SCRIPT_STR_ACT_SCRPNG) filedlg_show "WFX_SCRIPT_STR_SCRPNG" "PNG|*.png|WFX_SCRIPT_STR_ALL|*" "png" "save" ;;
-        WFX_SCRIPT_STR_ACT_SCRCPY) scrcpy -s $device || echo "Fs_Info_Message WFX_SCRIPT_STR_ERRSCRCPY" ;;
+        WFX_SCRIPT_STR_ACT_SCRCPY) echo "Fs_RunAsync scrcpy $device" ;;
         WFX_SCRIPT_STR_ACT_LOGCAT) echo "Fs_RunTerm adb $device logcat $DC_WFX_SCRIPT_LOGOPT" ;;
         WFX_SCRIPT_STR_ACT_BUG) echo -e "Fs_SelectDir WFX_SCRIPT_STR_BUG" ;;
         WFX_SCRIPT_STR_ACT_REBOOT) echo "Fs_LogInfo" && adb $device reboot ;;
