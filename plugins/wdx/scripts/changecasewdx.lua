@@ -1,5 +1,5 @@
 -- changecasewdx.lua (cross-platform)
---2023.12.18
+--2023.12.21
 --[[
 Changing the case of letters
 
@@ -70,8 +70,7 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
       -- First or Sentence case
       if (UnitIndex == 2) or (UnitIndex == 3) then
         for i = 1, #aU8 do
-          iA = Char.GetUnicodeCategory(aU8[i])
-          if iA < 5 then
+          if Char.GetUnicodeCategory(aU8[i]) < 5 then
             iP = i
             break
           end

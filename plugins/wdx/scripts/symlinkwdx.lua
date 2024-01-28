@@ -1,23 +1,22 @@
 -- symlinkwdx.lua (cross-platform)
--- 2023.10.12
+-- 2024.01.28
 --[[
 Returns the size of the symbolic link target (for files only!)
 and some additional info.
 ]]
 
 local fields = {
-{"Size (x)",    "B|KB|MB|GB", 2},
-{"Size (x.y)",  "B|KB|MB|GB", 3},
-{"Size (x.yz)", "B|KB|MB|GB", 3},
-{"Size (auto)", "x|x.y|x.yz", 8},
 {"Target",      "object|object (recursive)", 8},
-{"Target (parts)", "name|path|name (recursive)|path (recursive)", 8}
+{"Target (parts)", "name|path|name (recursive)|path (recursive)", 8},
+{"Size (x)",    "B|KB|MB|GB", 2},
+{"Size (x.y)",  "KB|MB|GB",   3},
+{"Size (x.yz)", "KB|MB|GB",   3},
+{"Size (auto)", "x|x.y|x.yz", 8}
 }
 local aM = {
-{1, " B"},
 {1024, " KB"},
-{1024 ^ 2, " MB"},
-{1024 ^ 3, " GB"}
+{1048576, " MB"},
+{1073741824, " GB"}
 }
 local aR = {"%.0f", "%.1f", "%.2f"}
 local aP = {"", "", "", ""}
@@ -45,27 +44,7 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
   end
   local st, t, n
   st = SysUtils.ReadSymbolicLink(FileName, true)
-  if FieldIndex < 4 then
-    if st == "" then return nil end
-    if math.floor(iattr / 0x00000010) % 2 ~= 0 then
-      return nil
-    end
-    n = GetFileSize(st)
-    if n == nil then return nil end
-    if FieldIndex == 3 then
-      for i = #aM, #aM - 1, -1 do
-        if n > aM[i][1] then
-          t = string.format(aR[UnitIndex + 1], n / aM[i][1]) .. aM[i][2]
-          break
-        end
-      end
-      if t == nil then t = tostring(n) .. " B" end
-      return t
-    else
-      t = string.format(aR[FieldIndex + 1], n / aM[UnitIndex + 1][1])
-      return tonumber(t, 10)
-    end
-  elseif FieldIndex == 4 then
+  if FieldIndex == 0 then
     if UnitIndex == 0 then
       return SysUtils.ReadSymbolicLink(FileName, false)
     elseif UnitIndex == 1 then
@@ -75,7 +54,7 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
         return st
       end
     end
-  elseif FieldIndex == 5 then
+  elseif FieldIndex == 1 then
     if (UnitIndex == 0) or (UnitIndex == 1) then
       t = SysUtils.ReadSymbolicLink(FileName, false)
       aP[1] = SysUtils.ExtractFileName(t)
@@ -88,6 +67,33 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
       return nil
     else
       return aP[UnitIndex + 1]
+    end
+  else
+    if st == "" then return nil end
+    n = GetFileSize(st)
+    if n == nil then return nil end
+    if FieldIndex == 2 then
+      if UnitIndex == 0 then
+        return n
+      else
+        t = string.format(aR[1], n / aM[UnitIndex][1])
+        return tonumber(t, 10)
+      end
+    elseif FieldIndex == 3 then
+      t = string.format(aR[2], n / aM[UnitIndex + 1][1])
+      return tonumber(t, 10)
+    elseif FieldIndex == 4 then
+      t = string.format(aR[3], n / aM[UnitIndex + 1][1])
+      return tonumber(t, 10)
+    elseif FieldIndex == 5 then
+      for i = #aM, 1, -1 do
+        if n > aM[i][1] then
+          t = string.format(aR[UnitIndex + 1], n / aM[i][1]) .. aM[i][2]
+          break
+        end
+      end
+      if t == nil then t = tostring(n) .. " B" end
+      return t
     end
   end
   return nil
