@@ -10,7 +10,7 @@ object DialogBox: TDialogBox
   ChildSizing.TopBottomSpacing = 10
   ClientHeight = 485
   ClientWidth = 719
-  OnCreate = DialogBoxShow
+  OnShow = DialogBoxShow
   Position = poOwnerFormCenter
   LCLVersion = '3.0.0.3'
   object gbCurrent: TGroupBox

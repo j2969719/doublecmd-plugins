@@ -10,7 +10,7 @@ object DialogBox: TDialogBox
   ChildSizing.TopBottomSpacing = 10
   ClientHeight = 337
   ClientWidth = 500
-  OnCreate = DialogBoxShow
+  OnShow = DialogBoxShow
   Position = poMainFormCenter
   LCLVersion = '2.2.0.3'
   object edName: TEdit

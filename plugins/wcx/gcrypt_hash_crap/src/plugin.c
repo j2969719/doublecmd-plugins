@@ -50,7 +50,7 @@ object DialogBox: TDialogBox
   ChildSizing.TopBottomSpacing = 10
   ClientHeight = 105
   ClientWidth = 518
-  OnCreate = DialogBoxShow
+  OnShow = DialogBoxShow
   Position = poOwnerFormCenter
   LCLVersion = '2.0.7.0'
   object lblMsg: TLabel

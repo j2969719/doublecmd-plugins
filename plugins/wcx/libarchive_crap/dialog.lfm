@@ -9,7 +9,7 @@ object DialogBox: TDialogBox
   ClientHeight = 617
   ClientWidth = 647
   DesignTimePPI = 100
-  OnCreate = DialogBoxShow
+  OnShow = DialogBoxShow
   Position = poOwnerFormCenter
   LCLVersion = '2.2.6.0'
   object pcOptions: TPageControl

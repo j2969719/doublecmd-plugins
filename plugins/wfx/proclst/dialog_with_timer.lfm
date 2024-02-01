@@ -11,7 +11,7 @@ object DialogBox: TDialogBox
   ClientHeight = 329
   ClientWidth = 570
   DesignTimePPI = 100
-  OnCreate = DialogBoxShow
+  OnShow = DialogBoxShow
   Position = poOwnerFormCenter
   LCLVersion = '2.2.4.0'
   object lblPid: TLabel

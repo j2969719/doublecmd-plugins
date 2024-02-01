@@ -9,7 +9,7 @@ object DialogBox: TDialogBox
   ChildSizing.LeftRightSpacing = 10
   ChildSizing.TopBottomSpacing = 10
   OnClose = DialogBoxClose
-  OnCreate = DialogBoxShow
+  OnShow = DialogBoxShow
   Position = poOwnerFormCenter
   LCLVersion = '3.0.0.3'
 end
