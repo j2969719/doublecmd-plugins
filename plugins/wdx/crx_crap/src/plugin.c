@@ -131,7 +131,7 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 
 	if (g_strcmp0(FileName, gLastFile) != 0)
 	{
-		for (int i = 0; i <= FIELDCOUNT; i++)
+		for (int i = 0; i < FIELDCOUNT; i++)
 		{
 			g_free(gFields[i].value);
 			gFields[i].value = NULL;
@@ -199,7 +199,7 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 
 void DCPCALL ContentPluginUnloading(void)
 {
-	for (int i = 0; i <= FIELDCOUNT; i++)
+	for (int i = 0; i < FIELDCOUNT; i++)
 		g_free(gFields[i].value);
 }
 
