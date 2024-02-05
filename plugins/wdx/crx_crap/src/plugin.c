@@ -10,36 +10,33 @@ typedef struct sfield
 {
 	char *name;
 	char *path;
+	char *value;
 } tfield;
 
 #define FIELDCOUNT (sizeof(gFields)/sizeof(tfield))
 
 tfield gFields[] =
 {
-	{"author",					      "$.author"},
-	{"name",						"$.name"},
-	{"short_name",				  	  "$.short_name"},
-	{"gecko.id",			       "$.applications.gecko.id"},
-	{"description",					 "$.description"},
-	{"permissions",					 "$.permissions"},
-	{"version_name",			  	"$.version_name"},
-	{"homepage_url",				"$.homepage_url"},
-	{"manifest_version",			    "$.manifest_version"},
-	{"minimum_chrome_version",	      "$.minimum_chrome_version"},
-	{"gecko min_version",  "$.applications.gecko.strict_min_version"},
-	{"web_accessible_resources",	    "$.web_accessible_resources"},
-	{"update_url",					  "$.update_url"},
-	{"incognito",					   "$.incognito"},
+	{"author",					  "$.author", NULL},
+	{"name",					    "$.name", NULL},
+	{"short_name",				      "$.short_name", NULL},
+	{"gecko.id",				      "$.*.gecko.id", NULL},
+	{"description",				     "$.description", NULL},
+	{"permissions",				     "$.permissions", NULL},
+	{"version_name",			    "$.version_name", NULL},
+	{"homepage_url",			    "$.homepage_url", NULL},
+	{"minimum_chrome_version",	  "$.minimum_chrome_version", NULL},
+	{"gecko.strict_min_version",  "$.*.gecko.strict_min_version", NULL},
+	{"web_accessible_resources",	"$.web_accessible_resources", NULL},
+	{"update_url",				      "$.update_url", NULL},
+	{"incognito",				       "$.incognito", NULL},
 
 };
 
-gchar gSep[] = "\n ;";
-gchar gUnits[] = "new line|space|semicolon";
 char gLastFile[PATH_MAX];
-gchar *gJson = NULL;
+gboolean gLastFileIsOK = FALSE;
 
-
-static gchar* ArrayToString(JsonNode *ret, int Sep)
+static gchar* ArrayToString(JsonNode *ret)
 {
 	gchar *tmp = NULL;
 	gchar *result = NULL;
@@ -71,14 +68,14 @@ static gchar* ArrayToString(JsonNode *ret, int Sep)
 			}
 		}
 		else if (type == JSON_NODE_ARRAY)
-			tmp = ArrayToString(node, Sep);
+			tmp = ArrayToString(node);
 
 		if (!result)
 			result = tmp;
 		else
 		{
 			gchar *prev = result;
-			result = g_strdup_printf("%s%c%s", prev, gSep[Sep], tmp);
+			result = g_strdup_printf("%s\n%s", prev, tmp);
 			g_free(prev);
 			g_free(tmp);
 		}
@@ -89,27 +86,19 @@ static gchar* ArrayToString(JsonNode *ret, int Sep)
 	return result;
 }
 
-static gchar* GetValueStringFromPath(const char *JsonPath, int Sep)
+static gchar* GetValueStringFromPath(JsonNode *root, const char *JsonPath)
 {
 	gchar *result = NULL;
 	GError *err = NULL;
-	JsonNode *root = json_from_string(gJson, &err);
+
+	JsonNode *node = json_path_query(JsonPath, root, &err);
 
 	if (err)
 		g_print("%s: %s\n", PLUGNAME, err->message);
 	else
 	{
-		JsonNode *ret = json_path_query(JsonPath, root, &err);
-
-		if (err)
-			g_print("%s: %s\n", PLUGNAME, err->message);
-		else
-		{
-			result = ArrayToString(ret, Sep);
-			json_node_unref(ret);
-		}
-
-		json_node_free(root);
+		result = ArrayToString(node);
+		json_node_unref(node);
 	}
 
 	if (err)
@@ -124,8 +113,7 @@ int DCPCALL ContentGetSupportedField(int FieldIndex, char* FieldName, char* Unit
 		return ft_nomorefields;
 
 	g_strlcpy(FieldName, gFields[FieldIndex].name, maxlen - 1);
-	g_strlcpy(Units, gUnits, maxlen - 1);
-
+	Units[0] = '\0';
 
 	return ft_string;
 }
@@ -135,6 +123,7 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 	int r;
 	struct stat buf;
 	struct archive *a;
+	GError *err = NULL;
 	struct archive_entry *entry;
 
 	if (stat(FileName, &buf) != 0 || !S_ISREG(buf.st_mode))
@@ -142,8 +131,13 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 
 	if (g_strcmp0(FileName, gLastFile) != 0)
 	{
-		g_free(gJson);
-		gJson = NULL;
+		for (int i = 0; i <= FIELDCOUNT; i++)
+		{
+			g_free(gFields[i].value);
+			gFields[i].value = NULL;
+		}
+
+		gLastFileIsOK = FALSE;
 
 		g_strlcpy(gLastFile, FileName, PATH_MAX);
 		a = archive_read_new();
@@ -152,22 +146,35 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 
 		if (r == ARCHIVE_OK)
 		{
-
 			while ((r = archive_read_next_header(a, &entry)) == ARCHIVE_OK || r == ARCHIVE_WARN)
 			{
 				if (strcmp(archive_entry_pathname(entry), "manifest.json") == 0)
 				{
 					size_t size = (size_t)archive_entry_size(entry);
-					gJson = g_malloc((gsize)size);
-					la_ssize_t ret = archive_read_data(a, gJson, size);
+					gchar *json_data = g_malloc((gsize)size);
+					la_ssize_t ret = archive_read_data(a, json_data, size);
 
-					if (ret = 0)
+					if (ret > 0)
 					{
-						g_free(gJson);
-						gJson = NULL;
+						json_data[size] = '\0';
+						JsonNode *root = json_from_string(json_data, &err);
+
+						if (err)
+						{
+							g_print("%s: %s\n", PLUGNAME, err->message);
+							g_error_free(err);
+						}
+						else
+						{
+							for (int i = 0; i < FIELDCOUNT; i++)
+								gFields[i].value = GetValueStringFromPath(root, gFields[i].path);
+
+							gLastFileIsOK = TRUE;
+							json_node_free(root);
+						}
+
+						g_free(json_data);
 					}
-					else
-						gJson[size] = '\0';
 
 					break;
 				}
@@ -179,26 +186,24 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 
 	}
 
-	if (gJson == NULL)
+	if (!gLastFileIsOK)
 		return ft_fileerror;
 
-	gchar *string = GetValueStringFromPath(gFields[FieldIndex].path, UnitIndex);
-
-	if (!string)
+	if (!gFields[FieldIndex].value)
 		return ft_fieldempty;
 
-	g_strlcpy((char*)FieldValue, string, maxlen - 1);
-	g_free(string);
+	g_strlcpy((char*)FieldValue, gFields[FieldIndex].value, maxlen - 1);
 
 	return ft_string;
 }
 
 void DCPCALL ContentPluginUnloading(void)
 {
-	g_free(gJson);
+	for (int i = 0; i <= FIELDCOUNT; i++)
+		g_free(gFields[i].value);
 }
 
-int DCPCALL ContentGetDetectString(char* DetectString,int maxlen)
+int DCPCALL ContentGetDetectString(char* DetectString, int maxlen)
 {
 	g_strlcpy(DetectString, DETECT_STRING, maxlen - 1);
 }
