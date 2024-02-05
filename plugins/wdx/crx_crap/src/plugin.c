@@ -16,17 +16,20 @@ typedef struct sfield
 
 tfield gFields[] =
 {
-	{"author",					  "$.author"},
-	{"name",					    "$.name"},
-	{"short_name",				      "$.short_name"},
-	{"description",				     "$.description"},
-	{"permissions",				     "$.permissions"},
-	{"version_name",			    "$.version_name"},
-	{"manifest_version",			"$.manifest_version"},
-	{"minimum_chrome_version",	  "$.minimum_chrome_version"},
-	{"web_accessible_resources",	"$.web_accessible_resources"},
-	{"update_url",				      "$.update_url"},
-	{"incognito",				       "$.incognito"},
+	{"author",					      "$.author"},
+	{"name",						"$.name"},
+	{"short_name",				  	  "$.short_name"},
+	{"gecko.id",			       "$.applications.gecko.id"},
+	{"description",					 "$.description"},
+	{"permissions",					 "$.permissions"},
+	{"version_name",			  	"$.version_name"},
+	{"homepage_url",				"$.homepage_url"},
+	{"manifest_version",			    "$.manifest_version"},
+	{"minimum_chrome_version",	      "$.minimum_chrome_version"},
+	{"gecko min_version",  "$.applications.gecko.strict_min_version"},
+	{"web_accessible_resources",	    "$.web_accessible_resources"},
+	{"update_url",					  "$.update_url"},
+	{"incognito",					   "$.incognito"},
 
 };
 
@@ -93,10 +96,7 @@ static gchar* GetValueStringFromPath(const char *JsonPath, int Sep)
 	JsonNode *root = json_from_string(gJson, &err);
 
 	if (err)
-	{
 		g_print("%s: %s\n", PLUGNAME, err->message);
-
-	}
 	else
 	{
 		JsonNode *ret = json_path_query(JsonPath, root, &err);

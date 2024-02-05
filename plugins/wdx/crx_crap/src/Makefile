@@ -10,7 +10,7 @@ plugname := $(plugdir).$(plugtype)
 plugdescr := `grep '$(plugtype)/$(plugdir))' ../../../../plugins.md -1 | tail -1 | sed 's/[[]//' | sed 's/[]][\(][^\)]\+.//' | sed 's/\s[\(].\+[\)]//'`
 plugfiles := $(filter-out $(wildcard ../*.$(plugtype)), $(wildcard ../*))
 
-detectstring := EXT=\"CRX\"|[0]=\"C\"&[1]=\"r\"&[2]=\"2\"&[3]=\"4\"
+detectstring := EXT=\"XPI\"|EXT=\"CRX\"|[0]=\"C\"&[1]=\"r\"&[2]=\"2\"&[3]=\"4\"
 
 
 all:
