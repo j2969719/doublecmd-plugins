@@ -529,7 +529,18 @@ int DCPCALL CloseArchive(HANDLE hArcData)
 						string arc_path = data->arc_items[i->first].path();
 						string outpath = outdir + fs::path::preferred_separator + arc_path;
 						fix_attr(data, i->first, (char*)outpath.c_str());
-						fs::rename(outpath, i->second);
+
+						try
+						{
+							fs::rename(outpath, i->second);
+						}
+						catch (fs::filesystem_error& ex)
+						{
+							int ret = MessageBox((char*)ex.what(), nullptr,  MB_OKCANCEL | MB_ICONERROR);
+
+							if (ret == ID_CANCEL)
+								break;
+						}
 					}
 
 					fs::remove_all(outdir);
