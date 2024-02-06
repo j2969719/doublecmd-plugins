@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <sys/stat.h>
 #include <limits.h>
+#include <utime.h>
 #include <string.h>
 #include "wcxplugin.h"
 #include "extension.h"
@@ -28,7 +29,6 @@ using namespace bit7z;
 #define LIST_ITEMS(L) (sizeof(L)/sizeof(tListItem))
 #define ARRAY_SIZE(A) (sizeof(A)/sizeof(A[0]))
 
-
 typedef struct sArcData
 {
 	BitArchiveReader *reader;
@@ -37,6 +37,8 @@ typedef struct sArcData
 	uint64_t total;
 	char procfile[PATH_MAX];
 	vector<bit7z::BitArchiveItemInfo> arc_items;
+	bool solid;
+	map<uint32_t, string> *dst_names;
 	tChangeVolProc ChangeVolProc;
 	tProcessDataProc ProcessDataProc;
 } tArcData;
@@ -152,7 +154,6 @@ static char *ask_password(void)
 		gPass[0] = '\0';
 
 	return gPass;
-
 }
 
 static bool show_progress(uint64_t size)
@@ -171,7 +172,6 @@ static void show_ratio(uint64_t input, uint64_t output)
 		gProcessDataProc(gProcFile, -1000 - output * 100 / input);
 }
 
-
 static void set_totalsize(uint64_t size)
 {
 	gTotalSize = size;
@@ -180,6 +180,43 @@ static void set_totalsize(uint64_t size)
 static void set_filename(string filename)
 {
 	snprintf(gProcFile, PATH_MAX, "%s", filename.c_str());
+}
+
+static void fix_attr(tArcData *data, uint32_t index, char *DestName)
+{
+	struct utimbuf ubuf;
+	auto item = data->arc_items[index];
+	int attr = item.attributes() >> 16;
+
+	if (attr == 0)
+	{
+		if (item.isDir())
+			attr = S_IFDIR | S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH;
+		else
+			attr = S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH;
+	}
+
+	chmod(DestName, attr);
+	ubuf.actime = chrono::system_clock::to_time_t(item.lastAccessTime());
+	ubuf.modtime = chrono::system_clock::to_time_t(item.lastWriteTime());
+	utime(DestName, &ubuf);
+}
+
+static void extract_single(tArcData *data, uint32_t index, char *DestName)
+{
+	ofstream outfile(DestName);
+
+	try
+	{
+		data->reader->extractTo(outfile, index);
+	}
+	catch (const bit7z::BitException& ex)
+	{
+		MessageBox((char*)ex.what(), nullptr,  MB_OK | MB_ICONERROR);
+	}
+
+	outfile.close();
+	fix_attr(data, index, DestName);
 }
 
 intptr_t DCPCALL OptionsDlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr_t wParam, intptr_t lParam)
@@ -195,7 +232,7 @@ intptr_t DCPCALL OptionsDlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg,
 			SendDlgMsg(pDlg, (char*)"cbLevel", DM_LISTADD, (intptr_t)gComprLevels[index].text, (intptr_t)gComprLevels[index].data);
 
 			if (gComprLevel == gComprLevels[index].data)
-				SendDlgMsg(pDlg, (char*)"cbLevel", DM_LISTSETITEMINDEX, index, 0);
+				SendDlgMsg(pDlg, (char *)"cbLevel", DM_LISTSETITEMINDEX, index, 0);
 		}
 
 		for (index = 0; index < (int)LIST_ITEMS(gComprMethods); index++)
@@ -203,7 +240,7 @@ intptr_t DCPCALL OptionsDlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg,
 			SendDlgMsg(pDlg, (char*)"cbMethod", DM_LISTADD, (intptr_t)gComprMethods[index].text, (intptr_t)gComprMethods[index].data);
 
 			if (gComprMethod == gComprMethods[index].data)
-				SendDlgMsg(pDlg, (char*)"cbMethod", DM_LISTSETITEMINDEX, index, 0);
+				SendDlgMsg(pDlg, (char *)"cbMethod", DM_LISTSETITEMINDEX, index, 0);
 		}
 
 		for (index = 0; index < (int)LIST_ITEMS(gDictSizes); index++)
@@ -211,7 +248,7 @@ intptr_t DCPCALL OptionsDlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg,
 			SendDlgMsg(pDlg, (char*)"cbDictionarySize", DM_LISTADD, (intptr_t)gDictSizes[index].text, (intptr_t)gDictSizes[index].data);
 
 			if (gDictSize == gDictSizes[index].data)
-				SendDlgMsg(pDlg, (char*)"cbDictionarySize", DM_LISTSETITEMINDEX, index, 0);
+				SendDlgMsg(pDlg, (char *)"cbDictionarySize", DM_LISTSETITEMINDEX, index, 0);
 		}
 
 		for (index = 0; index < (int)ARRAY_SIZE(gWordSizes); index++)
@@ -219,20 +256,20 @@ intptr_t DCPCALL OptionsDlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg,
 			SendDlgMsg(pDlg, (char*)"cbWordSize", DM_LISTADD, (intptr_t)to_string(gWordSizes[index]).c_str(), (intptr_t)gWordSizes[index]);
 
 			if (gWordSize == gWordSizes[index])
-				SendDlgMsg(pDlg, (char*)"cbWordSize", DM_LISTSETITEMINDEX, index, 0);
+				SendDlgMsg(pDlg, (char *)"cbWordSize", DM_LISTSETITEMINDEX, index, 0);
 		}
 
 		for (index = 0; index < (int)LIST_ITEMS(gVolumeSizes); index++)
-			SendDlgMsg(pDlg, (char*)"cbVolumeSize", DM_LISTADD, (intptr_t)gVolumeSizes[index].text, (intptr_t)gVolumeSizes[index].data);
+			SendDlgMsg(pDlg, (char *)"cbVolumeSize", DM_LISTADD, (intptr_t)gVolumeSizes[index].text, (intptr_t)gVolumeSizes[index].data);
 
 		if (gVolumeSize > 0)
-			SendDlgMsg(pDlg, (char*)"cbVolumeSize", DM_SETTEXT, (intptr_t)to_string(gVolumeSize).c_str(), 0);
+			SendDlgMsg(pDlg, (char *)"cbVolumeSize", DM_SETTEXT, (intptr_t)to_string(gVolumeSize).c_str(), 0);
 
 		for (index = 1; index < 5; index++)
-			SendDlgMsg(pDlg, (char*)"cbThreadsCount", DM_LISTADD, (intptr_t)to_string(index).c_str(), index);
+			SendDlgMsg(pDlg, (char *)"cbThreadsCount", DM_LISTADD, (intptr_t)to_string(index).c_str(), index);
 
 		if (gThreadCount > 0)
-			SendDlgMsg(pDlg, (char*)"cbThreadsCount", DM_LISTSETITEMINDEX, gThreadCount, 0);
+			SendDlgMsg(pDlg, (char *)"cbThreadsCount", DM_LISTSETITEMINDEX, gThreadCount, 0);
 
 		SendDlgMsg(pDlg, (char*)"ckSolid", DM_SETCHECK, (intptr_t)gSolid, 0);
 		SendDlgMsg(pDlg, (char*)"ckCryptHeaders", DM_SETCHECK, (intptr_t)gCryptHeaders, 0);
@@ -245,22 +282,22 @@ intptr_t DCPCALL OptionsDlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg,
 			index = (int)SendDlgMsg(pDlg, (char*)"cbLevel", DM_LISTGETITEMINDEX, 0, 0);
 
 			if (index != -1)
-				gComprLevel = (int)SendDlgMsg(pDlg, (char*)"cbLevel", DM_LISTGETDATA, index, 0);
+				gComprLevel = (int)SendDlgMsg(pDlg, (char *)"cbLevel", DM_LISTGETDATA, index, 0);
 
 			index = (int)SendDlgMsg(pDlg, (char*)"cbMethod", DM_LISTGETITEMINDEX, 0, 0);
 
 			if (index != -1)
-				gComprMethod = (int)SendDlgMsg(pDlg, (char*)"cbMethod", DM_LISTGETDATA, index, 0);
+				gComprMethod = (int)SendDlgMsg(pDlg, (char *)"cbMethod", DM_LISTGETDATA, index, 0);
 
 			index = (int)SendDlgMsg(pDlg, (char*)"cbDictionarySize", DM_LISTGETITEMINDEX, 0, 0);
 
 			if (index != -1)
-				gDictSize = (int)SendDlgMsg(pDlg, (char*)"cbDictionarySize", DM_LISTGETDATA, index, 0);
+				gDictSize = (int)SendDlgMsg(pDlg, (char *)"cbDictionarySize", DM_LISTGETDATA, index, 0);
 
 			index = (int)SendDlgMsg(pDlg, (char*)"cbWordSize", DM_LISTGETITEMINDEX, 0, 0);
 
 			if (index != -1)
-				gWordSize = (int)SendDlgMsg(pDlg, (char*)"cbWordSize", DM_LISTGETDATA, index, 0);
+				gWordSize = (int)SendDlgMsg(pDlg, (char *)"cbWordSize", DM_LISTGETDATA, index, 0);
 
 			char *text = (char*)SendDlgMsg(pDlg, (char*)"cbVolumeSize", DM_GETTEXT, 0, 0);
 			gVolumeSize = (int64_t)strtoll(text, nullptr, 10);
@@ -268,7 +305,7 @@ intptr_t DCPCALL OptionsDlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg,
 			index = (int)SendDlgMsg(pDlg, (char*)"cbThreadsCount", DM_LISTGETITEMINDEX, 0, 0);
 
 			if (index != -1)
-				gThreadCount = (int)SendDlgMsg(pDlg, (char*)"cbThreadsCount", DM_LISTGETDATA, index, 0);
+				gThreadCount = (int)SendDlgMsg(pDlg, (char *)"cbThreadsCount", DM_LISTGETDATA, index, 0);
 
 			gSolid = (bool)SendDlgMsg(pDlg, (char*)"ckSolid", DM_GETCHECK, 0, 0);
 			gCryptHeaders = (bool)SendDlgMsg(pDlg, (char*)"ckCryptHeaders", DM_GETCHECK, 0, 0);
@@ -359,6 +396,18 @@ HANDLE DCPCALL OpenArchive(tOpenArchiveData *ArchiveData)
 		});
 		data->count = data->reader->itemsCount();
 		data->arc_items = data->reader->items();
+
+		if (ArchiveData->OpenMode == PK_OM_EXTRACT)
+		{
+			data->solid = data->reader->isSolid();
+
+			if (data->solid)
+			{
+				data->dst_names = new map<uint32_t, string>;
+				snprintf(data->procfile, PATH_MAX, "%s", ArchiveData->ArcName);
+			}
+		}
+
 	}
 	catch (const bit7z::BitException& ex)
 	{
@@ -387,7 +436,7 @@ int DCPCALL ReadHeaderEx(HANDLE hArcData, tHeaderDataEx *HeaderDataEx)
 	if (data->index < data->count)
 	{
 		auto item = data->arc_items[data->index];
-		strncpy(HeaderDataEx->FileName, item.path().c_str(), sizeof(HeaderDataEx->FileName) - 1);
+		snprintf(HeaderDataEx->FileName, sizeof(HeaderDataEx->FileName), "%s", item.path().c_str());
 
 		HeaderDataEx->FileAttr = item.attributes() >> 16;
 
@@ -422,18 +471,10 @@ int DCPCALL ProcessFile(HANDLE hArcData, int Operation, char *DestPath, char *De
 
 	if (Operation == PK_EXTRACT)
 	{
-		ofstream outfile(DestName);
-
-		try
-		{
-			data->reader->extract(outfile, data->index);
-		}
-		catch (const bit7z::BitException& ex)
-		{
-			MessageBox((char*)ex.what(), nullptr,  MB_OK | MB_ICONERROR);
-		}
-
-		outfile.close();
+		if (data->solid)
+			data->dst_names->insert(pair<uint32_t, string>(data->index, string(DestName)));
+		else
+			extract_single(data, data->index, DestName);
 	}
 	else if (Operation == PK_TEST && data->index == 0)
 	{
@@ -455,6 +496,57 @@ int DCPCALL ProcessFile(HANDLE hArcData, int Operation, char *DestPath, char *De
 int DCPCALL CloseArchive(HANDLE hArcData)
 {
 	ArcData data = (ArcData)hArcData;
+
+	if (data->solid)
+	{
+		if (data->dst_names->size() > 1)
+		{
+			try
+			{
+				vector<uint32_t> indices;
+				std::filesystem::path p(data->dst_names->begin()->second);
+				char *tmppath = tempnam(p.parent_path().c_str(), "unpk_");
+				string outdir(tmppath);
+				free(tmppath);
+
+				if (fs::create_directory(outdir) == true)
+				{
+
+					for (auto i = data->dst_names->begin(); i != data->dst_names->end(); i++)
+						indices.push_back(i->first);
+
+					try
+					{
+						data->reader->extractTo(outdir, indices);
+					}
+					catch (const bit7z::BitException& ex)
+					{
+						MessageBox((char*)ex.what(), nullptr,  MB_OK | MB_ICONERROR);
+					}
+
+					for (auto i = data->dst_names->begin(); i != data->dst_names->end(); i++)
+					{
+						string arc_path = data->arc_items[i->first].path();
+						string outpath = outdir + fs::path::preferred_separator + arc_path;
+						fix_attr(data, i->first, (char*)outpath.c_str());
+						fs::rename(outpath, i->second);
+					}
+
+					fs::remove_all(outdir);
+				}
+				else
+					MessageBox((char*)"Cannot create a temp directory", nullptr,  MB_OK | MB_ICONERROR);
+			}
+			catch (fs::filesystem_error& ex)
+			{
+				MessageBox((char*)ex.what(), nullptr,  MB_OK | MB_ICONERROR);
+			}
+		}
+		else if (data->dst_names->size() == 1)
+			extract_single(data, data->dst_names->begin()->first, (char *)data->dst_names->begin()->second.c_str());
+
+		delete data->dst_names;
+	}
 
 	delete data->reader;
 	free(data);
@@ -638,7 +730,6 @@ int DCPCALL DeleteFiles(char *PackedFile, char *DeleteList)
 
 	return E_SUCCESS;
 }
-
 
 BOOL DCPCALL CanYouHandleThisFile(char *FileName)
 {
