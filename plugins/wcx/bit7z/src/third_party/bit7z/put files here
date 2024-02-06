@@ -2,5 +2,5 @@ https://github.com/rikyoz/bit7z
 https://github.com/rikyoz/bit7z/tree/release/v4.0.0
 mkdir build
 cd build
-cmake ../ -DCMAKE_BUILD_TYPE=Release -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DBIT7Z_AUTO_FORMAT=ON
+cmake ../ -DCMAKE_BUILD_TYPE=Release -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DBIT7Z_AUTO_FORMAT=ON -DBIT7Z_USE_LEGACY_IUNKNOWN=ON
 cmake --build . -j --config Release
