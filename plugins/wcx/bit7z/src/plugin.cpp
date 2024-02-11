@@ -36,7 +36,6 @@ typedef struct sArcData
 	uint32_t count;
 	uint64_t total;
 	char procfile[PATH_MAX];
-	vector<bit7z::BitArchiveItemInfo> arc_items;
 	bool solid;
 	map<uint32_t, string> *dst_names;
 	tChangeVolProc ChangeVolProc;
@@ -185,7 +184,8 @@ static void set_filename(string filename)
 static void fix_attr(tArcData *data, uint32_t index, char *DestName)
 {
 	struct utimbuf ubuf;
-	auto item = data->arc_items[index];
+	auto arc_items = data->reader->items();
+	auto item = arc_items[index];
 	int attr = item.attributes() >> 16;
 
 	if (attr == 0)
@@ -202,8 +202,9 @@ static void fix_attr(tArcData *data, uint32_t index, char *DestName)
 	utime(DestName, &ubuf);
 }
 
-static void extract_single(tArcData *data, uint32_t index, char *DestName)
+static bool extract_single(tArcData *data, uint32_t index, char *DestName)
 {
+	bool result = true;
 	ofstream outfile(DestName);
 
 	try
@@ -213,10 +214,13 @@ static void extract_single(tArcData *data, uint32_t index, char *DestName)
 	catch (const bit7z::BitException& ex)
 	{
 		MessageBox((char*)ex.what(), nullptr,  MB_OK | MB_ICONERROR);
+		result = false;
 	}
 
 	outfile.close();
 	fix_attr(data, index, DestName);
+
+	return result;
 }
 
 intptr_t DCPCALL OptionsDlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr_t wParam, intptr_t lParam)
@@ -359,7 +363,7 @@ HANDLE DCPCALL OpenArchive(tOpenArchiveData *ArchiveData)
 	memset(data, 0, sizeof(tArcData));
 
 #ifndef BIT7Z_AUTO_FORMAT
-	char pass[PATH_MAX];
+	char pass[PATH_MAX] = "";
 
 	if (ArchiveData->OpenMode == PK_OM_LIST)
 		g_key_file_load_from_file(gCfg, gPWDPath, G_KEY_FILE_NONE, NULL);
@@ -395,7 +399,6 @@ HANDLE DCPCALL OpenArchive(tOpenArchiveData *ArchiveData)
 			return (data->ProcessDataProc(data->procfile, progress) != 0);
 		});
 		data->count = data->reader->itemsCount();
-		data->arc_items = data->reader->items();
 
 		if (ArchiveData->OpenMode == PK_OM_EXTRACT)
 		{
@@ -435,7 +438,8 @@ int DCPCALL ReadHeaderEx(HANDLE hArcData, tHeaderDataEx *HeaderDataEx)
 
 	if (data->index < data->count)
 	{
-		auto item = data->arc_items[data->index];
+		auto arc_items = data->reader->items();
+		auto item = arc_items[data->index];
 		snprintf(HeaderDataEx->FileName, sizeof(HeaderDataEx->FileName), "%s", item.path().c_str());
 
 		HeaderDataEx->FileAttr = item.attributes() >> 16;
@@ -473,8 +477,8 @@ int DCPCALL ProcessFile(HANDLE hArcData, int Operation, char *DestPath, char *De
 	{
 		if (data->solid)
 			data->dst_names->insert(pair<uint32_t, string>(data->index, string(DestName)));
-		else
-			extract_single(data, data->index, DestName);
+		else if (extract_single(data, data->index, DestName) == false)
+			return E_EWRITE;
 	}
 	else if (Operation == PK_TEST && data->index == 0)
 	{
@@ -524,9 +528,11 @@ int DCPCALL CloseArchive(HANDLE hArcData)
 						MessageBox((char*)ex.what(), nullptr,  MB_OK | MB_ICONERROR);
 					}
 
+					auto arc_items = data->reader->items();
+
 					for (auto i = data->dst_names->begin(); i != data->dst_names->end(); i++)
 					{
-						string arc_path = data->arc_items[i->first].path();
+						string arc_path = arc_items[i->first].path();
 						string outpath = outdir + fs::path::preferred_separator + arc_path;
 						fix_attr(data, i->first, (char*)outpath.c_str());
 

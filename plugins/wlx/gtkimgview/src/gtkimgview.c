@@ -379,13 +379,13 @@ void DCPCALL ListCloseWindow(HWND ListWin)
 	gtk_image_view_set_pixbuf(GTK_IMAGE_VIEW(view), NULL, FALSE);
 
 	gtk_widget_destroy(GTK_WIDGET(ListWin));
-
+/*
 	if (G_IS_OBJECT(iter))
 		g_object_unref(iter);
 
 	if (G_IS_OBJECT(anim))
 		g_object_unref(anim);
-
+*/
 	if (G_IS_OBJECT(pixbuf))
 		g_object_unref(pixbuf);
 }
