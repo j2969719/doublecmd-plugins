@@ -64,14 +64,14 @@ function fs_rm(file)
     if (os.execute("dconf reset " .. file) == true) then
         os.exit()
     end
-    os.exit()
+    os.exit(1)
 end
 
 function fs_rmdir(path)
     if (os.execute("dconf reset " .. path) == true) then
         os.exit()
     end
-    os.exit()
+    os.exit(1)
 end
 
 function fs_properties(file)
