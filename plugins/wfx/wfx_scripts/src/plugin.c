@@ -3554,6 +3554,15 @@ HANDLE DCPCALL FsFindFirst(char* Path, WIN32_FIND_DATAA * FindData)
 		}
 
 		g_strlcpy(dirdata->script, script, MAX_PATH);
+		gchar **split = g_strsplit(output, "\n", -1);
+
+		for (gchar **p = split; *p != NULL; p++)
+		{
+			if (IsValidOpt(*p, OPT_ENVVAR))
+				StoreEnvVar(*p, script);
+		}
+
+		g_strfreev(split);
 		g_free(script);
 		dirdata->regex = g_regex_new(REGEXP_LIST, G_REGEX_MULTILINE, G_REGEX_MATCH_NEWLINE_ANY, NULL);
 		dirdata->empty_dates = g_key_file_get_boolean(gCfg, dirdata->script, OPT_NOFAKEDATES, NULL);
