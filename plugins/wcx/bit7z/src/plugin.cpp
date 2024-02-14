@@ -37,6 +37,7 @@ typedef struct sArcData
 	uint64_t total;
 	char procfile[PATH_MAX];
 	bool solid;
+	vector<BitArchiveItemInfo> items;
 	map<uint32_t, string> *dst_names;
 	tChangeVolProc ChangeVolProc;
 	tProcessDataProc ProcessDataProc;
@@ -184,8 +185,7 @@ static void set_filename(string filename)
 static void fix_attr(tArcData *data, uint32_t index, char *DestName)
 {
 	struct utimbuf ubuf;
-	auto arc_items = data->reader->items();
-	auto item = arc_items[index];
+	auto item = data->items[index];
 	int attr = item.attributes() >> 16;
 
 	if (attr == 0)
@@ -392,13 +392,15 @@ HANDLE DCPCALL OpenArchive(tOpenArchiveData *ArchiveData)
 		data->reader->setProgressCallback([data](uint64_t size)
 		{
 			int progress = 0;
+			int mode = data->solid ? 0 : -1000;
 
 			if (data->total > 0)
-				progress = -1000 - size * 100 / data->total;
+				progress = mode - size * 100 / data->total;
 
 			return (data->ProcessDataProc(data->procfile, progress) != 0);
 		});
 		data->count = data->reader->itemsCount();
+		data->items = data->reader->items();
 
 		if (ArchiveData->OpenMode == PK_OM_EXTRACT)
 		{
@@ -438,8 +440,7 @@ int DCPCALL ReadHeaderEx(HANDLE hArcData, tHeaderDataEx *HeaderDataEx)
 
 	if (data->index < data->count)
 	{
-		auto arc_items = data->reader->items();
-		auto item = arc_items[data->index];
+		auto item = data->items[data->index];
 		snprintf(HeaderDataEx->FileName, sizeof(HeaderDataEx->FileName), "%s", item.path().c_str());
 
 		HeaderDataEx->FileAttr = item.attributes() >> 16;
@@ -470,7 +471,7 @@ int DCPCALL ProcessFile(HANDLE hArcData, int Operation, char *DestPath, char *De
 
 	int totalProgress = data->count > 0 ? -(data->index * 100 / data->count) : 0;
 
-	if (data->ProcessDataProc(DestName, totalProgress) == 0)
+	if (!data->solid && data->ProcessDataProc(DestName, totalProgress) == 0)
 		return E_EABORTED;
 
 	if (Operation == PK_EXTRACT)
@@ -522,31 +523,29 @@ int DCPCALL CloseArchive(HANDLE hArcData)
 					try
 					{
 						data->reader->extractTo(outdir, indices);
+
+						for (auto i = data->dst_names->begin(); i != data->dst_names->end(); i++)
+						{
+							string arc_path = data->items[i->first].path();
+							string outpath = outdir + fs::path::preferred_separator + arc_path;
+							fix_attr(data, i->first, (char*)outpath.c_str());
+
+							try
+							{
+								fs::rename(outpath, i->second);
+							}
+							catch (fs::filesystem_error& ex)
+							{
+								int ret = MessageBox((char*)ex.what(), nullptr,  MB_OKCANCEL | MB_ICONERROR);
+
+								if (ret == ID_CANCEL)
+									break;
+							}
+						}
 					}
 					catch (const bit7z::BitException& ex)
 					{
 						MessageBox((char*)ex.what(), nullptr,  MB_OK | MB_ICONERROR);
-					}
-
-					auto arc_items = data->reader->items();
-
-					for (auto i = data->dst_names->begin(); i != data->dst_names->end(); i++)
-					{
-						string arc_path = arc_items[i->first].path();
-						string outpath = outdir + fs::path::preferred_separator + arc_path;
-						fix_attr(data, i->first, (char*)outpath.c_str());
-
-						try
-						{
-							fs::rename(outpath, i->second);
-						}
-						catch (fs::filesystem_error& ex)
-						{
-							int ret = MessageBox((char*)ex.what(), nullptr,  MB_OKCANCEL | MB_ICONERROR);
-
-							if (ret == ID_CANCEL)
-								break;
-						}
 					}
 
 					fs::remove_all(outdir);
