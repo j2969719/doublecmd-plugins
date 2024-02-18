@@ -502,7 +502,6 @@ static gboolean ExecuteScript(gchar * script_name, gchar * verb, char *arg1, cha
 	if (gNoise)
 		dprintf(gDebugFd, "INFO (%s [%d]]): exit status %d\n", script_name, (int)pid, WEXITSTATUS(status));
 
-
 	if (err)
 		g_error_free(err);
 
@@ -1114,6 +1113,7 @@ static void DlgRequestSetOption(uintptr_t pDlg)
 
 	g_free(res);
 	g_free(text);
+	SendDlgMsg(pDlg, "edValue", DM_CLOSE, 1, 0);
 }
 
 intptr_t DCPCALL DlgRequestValueProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr_t wParam, intptr_t lParam)
@@ -1800,8 +1800,12 @@ static void ShowTextOutput(gboolean Log)
 static void DlgMultiChoiceUpdLabel(uintptr_t pDlg)
 {
 	int i = SendDlgMsg(pDlg, "lbChoice", DM_LISTGETITEMINDEX, 0, 0);
-	char *text = (char*)SendDlgMsg(pDlg, "lbChoice", DM_LISTGETITEM, i, 0);
-	SendDlgMsg(pDlg, "lblChoice", DM_SETTEXT, (intptr_t)text, 0);
+
+	if (i != -1)
+	{
+		char *text = (char*)SendDlgMsg(pDlg, "lbChoice", DM_LISTGETITEM, i, 0);
+		SendDlgMsg(pDlg, "lblChoice", DM_SETTEXT, (intptr_t)text, 0);
+	}
 }
 
 static void DlgMultiChoiceSetOption(uintptr_t pDlg)
@@ -1834,6 +1838,84 @@ static void DlgMultiChoiceSetOption(uintptr_t pDlg)
 
 	g_free(text);
 	g_free(res);
+	SendDlgMsg(pDlg, "lbChoice", DM_CLOSE, 1, 0);
+}
+
+static void DlgListSearch(uintptr_t pDlg, char *text, int start, int end, int inc)
+{
+	gboolean is_found = FALSE;
+
+	for (int i = start; i != end; i += inc)
+	{
+		char *item = (char*)SendDlgMsg(pDlg, "lbChoice", DM_LISTGETITEM, i, 0);
+
+		if (strcasestr(item, text) != NULL)
+		{
+			SendDlgMsg(pDlg, "lbChoice", DM_LISTSETITEMINDEX, i, 0);
+			is_found = TRUE;
+			break;
+		}
+	}
+
+	if (is_found)
+	{
+		if (inc > 0)
+			SendDlgMsg(pDlg, "btnDown", DM_ENABLE, 1, 0);
+		else
+			SendDlgMsg(pDlg, "btnUp", DM_ENABLE, 1, 0);
+	}
+	else
+	{
+		if (inc > 0)
+			SendDlgMsg(pDlg, "btnDown", DM_ENABLE, 0, 0);
+		else
+			SendDlgMsg(pDlg, "btnUp", DM_ENABLE, 0, 0);
+	}
+}
+
+static void DlgListStartSearch(uintptr_t pDlg, intptr_t wParam)
+{
+	char *text = (char*)wParam;
+	SendDlgMsg(pDlg, "btnUp", DM_ENABLE, 0, 0);
+	SendDlgMsg(pDlg, "btnDown", DM_ENABLE, 0, 0);
+	SendDlgMsg(pDlg, "lbChoice", DM_LISTSETITEMINDEX, 0, 0);
+
+	if (text[0] != '\0')
+	{
+		int count = SendDlgMsg(pDlg, "lbChoice", DM_LISTGETCOUNT, 0, 0);
+		DlgListSearch(pDlg, text, 0, count - 1, 1);
+	}
+}
+
+static void DlgListSearchUp(uintptr_t pDlg)
+{
+	int i = SendDlgMsg(pDlg, "lbChoice", DM_LISTGETITEMINDEX, 0, 0);
+
+	if (i > 0)
+	{
+		SendDlgMsg(pDlg, "btnDown", DM_ENABLE, 1, 0);
+		char *text = g_strdup((char*)SendDlgMsg(pDlg, "edSearch", DM_GETTEXT, 0, 0));
+		DlgListSearch(pDlg, text, i - 1, -1, -1);
+		g_free(text);
+	}
+	else
+		SendDlgMsg(pDlg, "btnUp", DM_ENABLE, 0, 0);
+}
+
+static void DlgListSearchDown(uintptr_t pDlg)
+{
+	int i = SendDlgMsg(pDlg, "lbChoice", DM_LISTGETITEMINDEX, 0, 0);
+	int count = SendDlgMsg(pDlg, "lbChoice", DM_LISTGETCOUNT, 0, 0);
+
+	if (i < count - 1)
+	{
+		SendDlgMsg(pDlg, "btnUp", DM_ENABLE, 1, 0);
+		char *text = g_strdup((char*)SendDlgMsg(pDlg, "edSearch", DM_GETTEXT, 0, 0));
+		DlgListSearch(pDlg, text, i + 1, count, 1);
+		g_free(text);
+	}
+	else
+		SendDlgMsg(pDlg, "btnDown", DM_ENABLE, 0, 0);
 }
 
 intptr_t DCPCALL DlgMultiChoiceProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr_t wParam, intptr_t lParam)
@@ -1849,7 +1931,6 @@ intptr_t DCPCALL DlgMultiChoiceProc(uintptr_t pDlg, char* DlgItemName, intptr_t 
 			gsize count = 0;
 			GKeyFile *langs = OpenTranslations(gScript);
 			gchar *string = TranslateString(langs, gChoice[0]);
-			SendDlgMsg(pDlg, "MultichoiceDialogBox", DM_SETTEXT, (intptr_t)gScript, 0);
 			SendDlgMsg(pDlg, "lblText", DM_SETTEXT, (intptr_t)string, 0);
 			SendDlgMsg(pDlg, "lbDataStore", DM_LISTADDSTR, (intptr_t)gChoice[0], 0);
 			g_free(string);
@@ -1878,6 +1959,12 @@ intptr_t DCPCALL DlgMultiChoiceProc(uintptr_t pDlg, char* DlgItemName, intptr_t 
 					dprintf(gDebugFd, "ERR: " OPT_CHOICE " - there is no choice.\n");
 				else if (count < 1)
 					dprintf(gDebugFd, "ERR: " OPT_CHOICE " - there is no choice.\n");
+				else if (count > 10)
+				{
+					SendDlgMsg(pDlg, "edSearch", DM_SHOWITEM, 1, 0);
+					SendDlgMsg(pDlg, "btnUp", DM_SHOWITEM, 1, 0);
+					SendDlgMsg(pDlg, "btnDown", DM_SHOWITEM, 1, 0);
+				}
 
 				int index = (int)SendDlgMsg(pDlg, "lbChoice", DM_LISTGETITEMINDEX, 0, 0);
 
@@ -1885,6 +1972,8 @@ intptr_t DCPCALL DlgMultiChoiceProc(uintptr_t pDlg, char* DlgItemName, intptr_t 
 					SendDlgMsg(pDlg, "lbChoice", DM_LISTSETITEMINDEX, 0, 0);
 
 				DlgMultiChoiceUpdLabel(pDlg);
+				g_strfreev(gChoice);
+				gChoice = NULL;
 			}
 			else
 				dprintf(gDebugFd, "ERR: " OPT_CHOICE " - there is no choice.\n");
@@ -1898,6 +1987,12 @@ intptr_t DCPCALL DlgMultiChoiceProc(uintptr_t pDlg, char* DlgItemName, intptr_t 
 	case DN_CLICK:
 		if (strcmp(DlgItemName, "btnOK") == 0)
 			DlgMultiChoiceSetOption(pDlg);
+		else if (strcmp(DlgItemName, "lbChoice") == 0)
+			SendDlgMsg(pDlg, "edSearch", DM_SETTEXT, 0, 0);
+		else if (strcmp(DlgItemName, "btnUp") == 0)
+			DlgListSearchUp(pDlg);
+		else if (strcmp(DlgItemName, "btnDown") == 0)
+			DlgListSearchDown(pDlg);
 
 		break;
 
@@ -1910,8 +2005,21 @@ intptr_t DCPCALL DlgMultiChoiceProc(uintptr_t pDlg, char* DlgItemName, intptr_t 
 	case DN_CHANGE:
 		if (strcmp(DlgItemName, "lbChoice") == 0)
 			DlgMultiChoiceUpdLabel(pDlg);
+		else if (strcmp(DlgItemName, "edSearch") == 0)
+			DlgListStartSearch(pDlg, wParam);
 
 		break;
+
+	case DN_KEYDOWN:
+		if (strcmp(DlgItemName, "edSearch") == 0)
+		{
+			int16_t *key = (int16_t*)wParam;
+
+			if (*key == 38)
+				DlgListSearchUp(pDlg);
+			else if (*key == 40)
+				DlgListSearchDown(pDlg);
+		}
 	}
 
 	return 0;
@@ -1919,132 +2027,261 @@ intptr_t DCPCALL DlgMultiChoiceProc(uintptr_t pDlg, char* DlgItemName, intptr_t 
 
 static void ShowMultiChoiceDlg(char *text, gboolean request_once)
 {
-	const char *multichoice_lfm = ""
-	                              "object MultichoiceDialogBox: TMultichoiceDialogBox\n"
-	                              "  Left = 111\n"
-	                              "  Height = 172\n"
-	                              "  Top = 84\n"
-	                              "  Width = 519\n"
-	                              "  AutoSize = True\n"
-	                              "  BorderStyle = bsDialog\n"
-	                              "  Caption = 'Confirmation of parameter'\n"
-	                              "  ChildSizing.LeftRightSpacing = 10\n"
-	                              "  ChildSizing.TopBottomSpacing = 10\n"
-	                              "  ClientHeight = 172\n"
-	                              "  ClientWidth = 519\n"
-	                              "  OnShow = DialogBoxShow\n"
-	                              "  Position = poOwnerFormCenter\n"
-	                              "  LCLVersion = '2.2.0.3'\n"
-	                              "  object lblText: TLabel\n"
-	                              "    AnchorSideLeft.Control = Owner\n"
-	                              "    AnchorSideTop.Control = Owner\n"
-	                              "    AnchorSideRight.Control = lbChoice\n"
-	                              "    AnchorSideRight.Side = asrBottom\n"
-	                              "    Left = 10\n"
-	                              "    Height = 1\n"
-	                              "    Top = 10\n"
-	                              "    Width = 500\n"
-	                              "    Anchors = [akTop, akLeft, akRight]\n"
-	                              "    BorderSpacing.Left = 10\n"
-	                              "    BorderSpacing.Top = 10\n"
-	                              "    WordWrap = True\n"
-	                              "  end\n"
-	                              "  object lbChoice: TListBox\n"
-	                              "    AnchorSideLeft.Control = Owner\n"
-	                              "    AnchorSideTop.Control = lblText\n"
-	                              "    AnchorSideTop.Side = asrBottom\n"
-	                              "    Left = 10\n"
-	                              "    Height = 92\n"
-	                              "    Top = 21\n"
-	                              "    Width = 500\n"
-	                              "    BorderSpacing.Top = 10\n"
-	                              "    ItemHeight = 0\n"
-	                              "    OnDblClick = ListBoxDblClick\n"
-	                              "    OnSelectionChange = ListBoxSelectionChange\n"
-	                              "    TabOrder = 0\n"
-	                              "    TopIndex = -1\n"
-	                              "  end\n"
-	                              "  object lblChoice: TLabel\n"
-	                              "    AnchorSideLeft.Control = Owner\n"
-	                              "    AnchorSideTop.Control = lbChoice\n"
-	                              "    AnchorSideTop.Side = asrBottom\n"
-	                              "    AnchorSideRight.Control = lbChoice\n"
-	                              "    AnchorSideRight.Side = asrBottom\n"
-	                              "    Left = 10\n"
-	                              "    Height = 1\n"
-	                              "    Top = 123\n"
-	                              "    Width = 500\n"
-	                              "    Anchors = [akTop, akLeft, akRight]\n"
-	                              "    BorderSpacing.Left = 10\n"
-	                              "    BorderSpacing.Top = 10\n"
-	                              "    WordWrap = True\n"
-	                              "  end\n"
-	                              "  object btnCancel: TBitBtn\n"
-	                              "    AnchorSideTop.Control = btnOK\n"
-	                              "    AnchorSideRight.Control = btnOK\n"
-	                              "    Left = 306\n"
-	                              "    Height = 30\n"
-	                              "    Top = 134\n"
-	                              "    Width = 97\n"
-	                              "    Anchors = [akTop, akRight]\n"
-	                              "    AutoSize = True\n"
-	                              "    BorderSpacing.Right = 10\n"
-	                              "    Cancel = True\n"
-	                              "    Constraints.MinHeight = 30\n"
-	                              "    Constraints.MinWidth = 97\n"
-	                              "    DefaultCaption = True\n"
-	                              "    Kind = bkCancel\n"
-	                              "    ModalResult = 2\n"
-	                              "    OnClick = ButtonClick\n"
-	                              "    ParentFont = False\n"
-	                              "    TabOrder = 2\n"
-	                              "  end\n"
-	                              "  object btnOK: TBitBtn\n"
-	                              "    AnchorSideTop.Control = lblChoice\n"
-	                              "    AnchorSideTop.Side = asrBottom\n"
-	                              "    AnchorSideRight.Control = lbChoice\n"
-	                              "    AnchorSideRight.Side = asrBottom\n"
-	                              "    Left = 413\n"
-	                              "    Height = 30\n"
-	                              "    Top = 134\n"
-	                              "    Width = 97\n"
-	                              "    Anchors = [akTop, akRight]\n"
-	                              "    AutoSize = True\n"
-	                              "    BorderSpacing.Top = 10\n"
-	                              "    Constraints.MinHeight = 30\n"
-	                              "    Constraints.MinWidth = 97\n"
-	                              "    Default = True\n"
-	                              "    DefaultCaption = True\n"
-	                              "    Kind = bkOK\n"
-	                              "    ModalResult = 1\n"
-	                              "    OnClick = ButtonClick\n"
-	                              "    ParentFont = False\n"
-	                              "    TabOrder = 1\n"
-	                              "  end\n"
-	                              "  object lbDataStore: TListBox\n"
-	                              "    AnchorSideLeft.Control = Owner\n"
-	                              "    AnchorSideTop.Control = btnCancel\n"
-	                              "    AnchorSideRight.Side = asrBottom\n"
-	                              "    AnchorSideBottom.Side = asrBottom\n"
-	                              "    Left = 10\n"
-	                              "    Height = 27\n"
-	                              "    Top = 134\n"
-	                              "    Width = 164\n"
-	                              "    ItemHeight = 0\n"
-	                              "    TabOrder = 3\n"
-	                              "    TabStop = False\n"
-	                              "    TopIndex = -1\n"
-	                              "    Visible = False\n"
-	                              "  end\n"
-	                              "end\n";
-
 	if (!IsCanShowDlg(text, request_once))
 		return;
 
+	GString *lfm_string = g_string_new(NULL);
+	g_string_append(lfm_string, "object MultichoiceDialogBox: TMultichoiceDialogBox\n"
+	                "  Left = 329\n"
+	                "  Height = 243\n"
+	                "  Top = 107\n"
+	                "  Width = 519\n"
+	                "  AutoSize = True\n"
+	                "  BorderStyle = bsDialog\n"
+	                "  Caption = 'Confirmation of parameter'\n"
+	                "  ChildSizing.LeftRightSpacing = 10\n"
+	                "  ChildSizing.TopBottomSpacing = 10\n"
+	                "  ClientHeight = 243\n"
+	                "  ClientWidth = 519\n"
+	                "  OnShow = DialogBoxShow\n"
+	                "  Position = poOwnerFormCenter\n"
+	                "  LCLVersion = '3.0.0.3'\n"
+	                "  object lblText: TLabel\n"
+	                "    AnchorSideLeft.Control = Owner\n"
+	                "    AnchorSideTop.Control = Owner\n"
+	                "    AnchorSideRight.Control = lbChoice\n"
+	                "    AnchorSideRight.Side = asrBottom\n"
+	                "    Left = 10\n"
+	                "    Height = 1\n"
+	                "    Top = 10\n"
+	                "    Width = 500\n"
+	                "    Anchors = [akTop, akLeft, akRight]\n"
+	                "    BorderSpacing.Left = 10\n"
+	                "    BorderSpacing.Top = 10\n"
+	                "    WordWrap = True\n"
+	                "  end\n"
+	                "  object lbChoice: TListBox\n"
+	                "    AnchorSideLeft.Control = Owner\n"
+	                "    AnchorSideTop.Control = lblText\n"
+	                "    AnchorSideTop.Side = asrBottom\n"
+	                "    Left = 10\n"
+	                "    Height = 92\n"
+	                "    Top = 21\n"
+	                "    Width = 500\n"
+	                "    BorderSpacing.Top = 10\n"
+	                "    ItemHeight = 0\n"
+	                "    TabOrder = 0\n"
+	                "    TopIndex = -1\n"
+	                "    OnClick = ListBoxClick\n"
+	                "    OnDblClick = ListBoxDblClick\n"
+	                "    OnSelectionChange = ListBoxSelectionChange\n"
+	                "  end\n");
+
+	g_string_append(lfm_string, "  object edSearch: TEdit\n"
+	                "    AnchorSideLeft.Control = lbChoice\n"
+	                "    AnchorSideTop.Control = lbChoice\n"
+	                "    AnchorSideTop.Side = asrBottom\n"
+	                "    AnchorSideRight.Control = btnUp\n"
+	                "    Left = 10\n"
+	                "    Height = 28\n"
+	                "    Top = 118\n"
+	                "    Width = 448\n"
+	                "    Anchors = [akTop, akLeft, akRight]\n"
+	                "    BorderSpacing.Top = 5\n"
+	                "    TabOrder = 1\n"
+	                "    OnChange = EditChange\n"
+	                "    OnKeyDown = EditKeyDown\n"
+	                "    Visible = False\n"
+	                "  end\n"
+	                "  object btnUp: TBitBtn\n"
+	                "    AnchorSideLeft.Side = asrBottom\n"
+	                "    AnchorSideTop.Control = edSearch\n"
+	                "    AnchorSideRight.Control = btnDown\n"
+	                "    AnchorSideBottom.Control = edSearch\n"
+	                "    AnchorSideBottom.Side = asrBottom\n"
+	                "    Left = 458\n"
+	                "    Height = 28\n"
+	                "    Top = 118\n"
+	                "    Width = 26\n"
+	                "    Anchors = [akTop, akRight, akBottom]\n"
+	                "    AutoSize = True\n"
+	                "    Enabled = False\n"
+	                "    Glyph.Data = {\n"
+	                "      36040000424D3604000000000000360000002800000010000000100000000100\n"
+	                "      2000000000000004000064000000640000000000000000000000FFFFFF00FFFF\n"
+	                "      FF00FFFFFF00FFFFFF0004743AE804733AFF04733AFF04733AFF04733AFF0473\n"
+	                "      3AFF04733AFF04743BE8FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF\n"
+	                "      FF00FFFFFF00FFFFFF0004733AFFA5DFC1FF81D5AAFF81D7ABFF82D9ACFF82DA\n"
+	                "      ADFF82D9ADFF04733AFFFFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF\n"
+	                "      FF00FFFFFF00FFFFFF0004733AFFA9E2C5FF16B665FF0FBA63FF10BE66FF11C1\n"
+	                "      67FF83DEB0FF04733AFFFFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF\n"
+	                "      FF00FFFFFF00FFFFFF0004733AFFADE4C8FF1FBD6DFF10BF66FF12C56AFF13C9\n"
+	                "      6DFF84E3B3FF04733AFFFFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF\n"
+	                "      FF00FFFFFF00FFFFFF0004733AFFB0E5CAFF31C378FF11C067FF13C86CFF15CF\n"
+	                "      71FF85E5B4FF04733AFFFFFFFF00FFFFFF00FFFFFF00FFFFFF0004753BC50473\n"
+	                "      3AFF04733AFF04733AFF04783CF7B2E6CBFF4BC989FF10BD65FF11C369FF12C7\n"
+	                "      6BFF84E1B2FF057A3EF704733AFF04733AFF04733AFF04753BC504733A65288B\n"
+	                "      58F6B5E0CAFFBCE5D0FFB8E5CEFFB3E5CBFF63CD97FF19BA68FF0FBC64FF10BE\n"
+	                "      65FF83DCAFFF82DBAEFF82D9ACFF7BD3A6FF18844CF504733A65FFFFFF000474\n"
+	                "      3BAC56A97FF9B0DFC7FF77CBA0FF6CCA9AFF63CA96FF43C181FF0DB35EFF0DB5\n"
+	                "      5FFF0DB45FFF0FB25FFF6ACE9BFF359C67F804753BABFFFFFF00FFFFFF000473\n"
+	                "      3A0C04743AE180C4A1FE97D5B5FF69C596FF60C591FF56C38BFF1DB066FF0BAC\n"
+	                "      59FF0BAB59FF4DC185FF55B484FE04753BE104733A0CFFFFFF00FFFFFF00FFFF\n"
+	                "      FF0004733A2D0D7840F69CD4B7FF7AC9A0FF5ABE8BFF51BC86FF38B474FF08A3\n"
+	                "      53FF2CAF6CFF6EC397FF0A773EF604733A2DFFFFFF00FFFFFF00FFFFFF00FFFF\n"
+	                "      FF00FFFFFF0004733A65288A57F6A0D7BBFF5FBD8CFF4DB680FF44B37AFF1AA2\n"
+	                "      5CFF71C49AFF1D844FF504733A65FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF\n"
+	                "      FF00FFFFFF00FFFFFF0004743BAC4EA578FA91D2B0FF48B47DFF3FB176FF6AC2\n"
+	                "      95FF3B9C6AF904743AABFFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF\n"
+	                "      FF00FFFFFF00FFFFFF0004733A0C04743AE172BD96FE72C59AFF6AC295FF5BB3\n"
+	                "      86FE04743AE104733A0CFFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF\n"
+	                "      FF00FFFFFF00FFFFFF00FFFFFF0004733A2D0F7941F687CAA7FF7EC7A2FF0E79\n"
+	                "      41F604733A2DFFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF\n"
+	                "      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF0004733A65288957F5268956F50473\n"
+	                "      3A65FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF\n"
+	                "      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF0004753B9D04753B9DFFFF\n"
+	                "      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00\n"
+	                "    }\n"
+	                "    OnClick = ButtonClick\n"
+	                "    TabOrder = 2\n"
+	                "    Visible = False\n"
+	                "  end\n");
+
+	g_string_append(lfm_string, "  object btnDown: TBitBtn\n"
+	                "    AnchorSideTop.Control = edSearch\n"
+	                "    AnchorSideRight.Control = lbChoice\n"
+	                "    AnchorSideRight.Side = asrBottom\n"
+	                "    AnchorSideBottom.Control = edSearch\n"
+	                "    AnchorSideBottom.Side = asrBottom\n"
+	                "    Left = 484\n"
+	                "    Height = 28\n"
+	                "    Top = 118\n"
+	                "    Width = 26\n"
+	                "    Anchors = [akTop, akRight, akBottom]\n"
+	                "    AutoSize = True\n"
+	                "    Enabled = False\n"
+	                "    Glyph.Data = {\n"
+	                "      36040000424D3604000000000000360000002800000010000000100000000100\n"
+	                "      2000000000000004000064000000640000000000000000000000FFFFFF00FFFF\n"
+	                "      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF0004763C9D04763C9DFFFF\n"
+	                "      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF\n"
+	                "      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF0004733A65248B56F5248B56F50473\n"
+	                "      3A65FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF\n"
+	                "      FF00FFFFFF00FFFFFF00FFFFFF0004733A2D0E7A42F674D1A2FF75D3A3FF0E7B\n"
+	                "      42F604733A2DFFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF\n"
+	                "      FF00FFFFFF00FFFFFF0004733A0C04763BE15DBF8DFE4CD18DFF4ED590FF5FC5\n"
+	                "      92FE04763CE104733A0CFFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF\n"
+	                "      FF00FFFFFF00FFFFFF0004753BAC4CAA7AFA6DD6A0FF12C469FF14CB6EFF6CE0\n"
+	                "      A5FF3FA872F904763CABFFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF\n"
+	                "      FF00FFFFFF0004733A65268C57F594DBB7FF31C379FF11C067FF12C56AFF1FC9\n"
+	                "      73FF78DBA8FF1E8952F504733A65FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF\n"
+	                "      FF0004733A2D0D7840F690D3B1FF65CC98FF3BC27DFF0FB962FF0FBC65FF10BD\n"
+	                "      65FF32C57BFF71CE9FFF0A783FF604733A2DFFFFFF00FFFFFF00FFFFFF000473\n"
+	                "      3A0C04743AE175BF99FE83D1A9FF52C289FF4DC387FF1EB669FF0DB45FFF0DB4\n"
+	                "      5FFF0DB35EFF4EC589FF55B784FE04753BE104733A0CFFFFFF00FFFFFF000474\n"
+	                "      3BAC4FA57AF89BD6B8FF5DBE8DFF58C08AFF51C087FF42BC7EFF0CAB5AFF0BAB\n"
+	                "      59FF0AAA59FF0CA958FF68C797FF349A65F804743BABFFFFFF0004733A652789\n"
+	                "      56F6AADBC2FFAFDEC6FFADDDC5FFAADCC2FF56BD88FF4DBA82FF1FAA63FF08A2\n"
+	                "      53FF7FCEA5FF7ECDA4FF7ECCA4FF78C79FFF18824BF504733A6504753BC50473\n"
+	                "      3AFF04733AFF04733AFF04763BF7ADDDC5FF59BC89FF50B882FF34AD6FFF069A\n"
+	                "      4EFF7ECAA3FF04763BF704733AFF04733AFF04733AFF04753BC5FFFFFF00FFFF\n"
+	                "      FF00FFFFFF00FFFFFF0004733AFFB0DEC7FF5DBD8CFF54B985FF47B47CFF069A\n"
+	                "      4EFF7ECAA3FF04733AFFFFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF\n"
+	                "      FF00FFFFFF00FFFFFF0004733AFFB1DFC7FF5FBE8DFF55BA86FF41B278FF069A\n"
+	                "      4EFF7ECAA3FF04733AFFFFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF\n"
+	                "      FF00FFFFFF00FFFFFF0004733AFFB1DFC8FF5FBE8DFF55BA86FF37AE71FF069A\n"
+	                "      4EFF7ECAA3FF04733AFFFFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF\n"
+	                "      FF00FFFFFF00FFFFFF0004733AFFB0DEC7FFABDCC3FFA6DABFFF91D2B1FF7ECA\n"
+	                "      A3FF7ECAA3FF04733AFFFFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF\n"
+	                "      FF00FFFFFF00FFFFFF0004743AE804733AFF04733AFF04733AFF04733AFF0473\n"
+	                "      3AFF04733AFF04743AE8FFFFFF00FFFFFF00FFFFFF00FFFFFF00\n"
+	                "    }\n"
+	                "    OnClick = ButtonClick\n"
+	                "    TabOrder = 3\n"
+	                "    Visible = False\n"
+	                "  end\n");
+
+	g_string_append(lfm_string, "  object lblChoice: TMemo\n"
+	                "    AnchorSideLeft.Control = lbChoice\n"
+	                "    AnchorSideTop.Control = edSearch\n"
+	                "    AnchorSideTop.Side = asrBottom\n"
+	                "    AnchorSideRight.Control = lbChoice\n"
+	                "    AnchorSideRight.Side = asrBottom\n"
+	                "    Left = 10\n"
+	                "    Height = 42\n"
+	                "    Top = 151\n"
+	                "    Width = 500\n"
+	                "    Anchors = [akTop, akLeft, akRight]\n"
+	                "    BorderSpacing.Top = 5\n"
+	                "    BorderStyle = bsNone\n"
+	                "    Color = clForm\n"
+	                "    ReadOnly = True\n"
+	                "    ScrollBars = ssAutoVertical\n"
+	                "    TabOrder = 4\n"
+	                "    TabStop = False\n"
+	                "  end\n"
+	                "  object lbDataStore: TListBox\n"
+	                "    AnchorSideLeft.Control = Owner\n"
+	                "    AnchorSideTop.Control = btnCancel\n"
+	                "    AnchorSideRight.Side = asrBottom\n"
+	                "    AnchorSideBottom.Side = asrBottom\n"
+	                "    Left = 10\n"
+	                "    Height = 27\n"
+	                "    Top = 203\n"
+	                "    Width = 164\n"
+	                "    ItemHeight = 0\n"
+	                "    TabOrder = 5\n"
+	                "    TabStop = False\n"
+	                "    TopIndex = -1\n"
+	                "    Visible = False\n"
+	                "  end\n"
+	                "  object btnCancel: TBitBtn\n"
+	                "    AnchorSideTop.Control = btnOK\n"
+	                "    AnchorSideRight.Control = btnOK\n"
+	                "    Left = 306\n"
+	                "    Height = 30\n"
+	                "    Top = 203\n"
+	                "    Width = 97\n"
+	                "    Anchors = [akTop, akRight]\n"
+	                "    AutoSize = True\n"
+	                "    BorderSpacing.Right = 10\n"
+	                "    Cancel = True\n"
+	                "    Constraints.MinHeight = 30\n"
+	                "    Constraints.MinWidth = 97\n"
+	                "    DefaultCaption = True\n"
+	                "    Kind = bkCancel\n"
+	                "    ModalResult = 2\n"
+	                "    OnClick = ButtonClick\n"
+	                "    ParentFont = False\n"
+	                "    TabOrder = 7\n"
+	                "  end\n"
+	                "  object btnOK: TBitBtn\n"
+	                "    AnchorSideTop.Control = lblChoice\n"
+	                "    AnchorSideTop.Side = asrBottom\n"
+	                "    AnchorSideRight.Control = lbChoice\n"
+	                "    AnchorSideRight.Side = asrBottom\n"
+	                "    Left = 413\n"
+	                "    Height = 30\n"
+	                "    Top = 203\n"
+	                "    Width = 97\n"
+	                "    Anchors = [akTop, akRight]\n"
+	                "    AutoSize = True\n"
+	                "    BorderSpacing.Top = 10\n"
+	                "    Constraints.MinHeight = 30\n"
+	                "    Constraints.MinWidth = 97\n"
+	                "    Default = True\n"
+	                "    DefaultCaption = True\n"
+	                "    Kind = bkOK\n"
+	                "    ModalResult = 1\n"
+	                "    OnClick = ButtonClick\n"
+	                "    ParentFont = False\n"
+	                "    TabOrder = 6\n"
+	                "  end\n"
+	                "end\n");
+
 	gChoice = g_strsplit(text, "\t", -1);
-	gDialogApi->DialogBoxLFM((intptr_t)multichoice_lfm, (unsigned long)strlen(multichoice_lfm), DlgMultiChoiceProc);
-	g_strfreev(gChoice);
-	gChoice = NULL;
+	gDialogApi->DialogBoxLFM((intptr_t)lfm_string->str, (unsigned long)strlen(lfm_string->str), DlgMultiChoiceProc);
+	g_string_free(lfm_string, TRUE);
 }
 
 static void ParseOpts(gchar *script, gchar *text, gboolean thread)
@@ -2401,7 +2638,6 @@ static void ParseOpts(gchar *script, gchar *text, gboolean thread)
 							if (gNoise)
 								dprintf(gDebugFd, "INFO (%s): %s supports only basic dialogs here.\n", script, VERB_STATUS);
 
-
 							string = TranslateString(langs, *p);
 							gchar *prev = g_key_file_get_string(gCfg, script, *p, NULL);
 
@@ -2527,8 +2763,6 @@ static void InitializeScript(gchar *script)
 	ParseOpts(script, output, FALSE);
 	g_free(output);
 }
-
-
 
 intptr_t DCPCALL DlgPropertiesProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr_t wParam, intptr_t lParam)
 {
@@ -2660,10 +2894,8 @@ intptr_t DCPCALL DlgPropertiesProc(uintptr_t pDlg, char* DlgItemName, intptr_t M
 		break;
 	}
 
-
 	return 0;
 }
-
 
 static void ShowPropertiesDlg(void)
 {
@@ -2838,7 +3070,6 @@ static void ShowPropertiesDlg(void)
 		                "        Visible = False\n"
 		                "        OnClick = ButtonClick\n"
 		                "      end\n");
-
 
 		AddPropLabels(lfm_string);
 
@@ -3113,7 +3344,6 @@ static void ShowPropertiesDlg(void)
 		gRequestProc(gPluginNr, RT_MsgOK, NULL, gProps, NULL, 0);
 }
 
-
 static gchar *ExtractScriptFromPath(char *path)
 {
 	char *result = NULL;
@@ -3256,7 +3486,6 @@ static gboolean SetScriptsFindData(tVFSDirData *dirdata, WIN32_FIND_DATAA *FindD
 				return TRUE;
 		}
 	}
-
 
 	return FALSE;
 }
