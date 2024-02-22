@@ -1,4 +1,5 @@
 [Default]
+WFX_SCRIPT_NAME=Coredumps
 WFX_SCRIPT_STR_TERM=Terminal command
 WFX_SCRIPT_STR_CMD=Command Line
 WFX_SCRIPT_STR_EXE=Executable
@@ -9,6 +10,7 @@ WFX_SCRIPT_STR_TIME=Timestamp
 WFX_SCRIPT_STR_SIZE=Disk Size
 
 [ru_RU]
+WFX_SCRIPT_NAME=Дампы
 WFX_SCRIPT_STR_TERM=Команда терминала
 WFX_SCRIPT_STR_CMD=Командная строка
 WFX_SCRIPT_STR_EXE=Исполняемый файл

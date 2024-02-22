@@ -132,11 +132,17 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 	if (!file.open(QFile::ReadOnly | QFile::Text))
 		return nullptr;
 
-	QJsonDocument json = QJsonDocument().fromJson(file.readAll());
+	QJsonParseError err;
+	QJsonDocument json = QJsonDocument().fromJson(file.readAll(), &err);
 	file.close();
 
 	if (json.isNull() || json.isEmpty())
+	{
+		if (ShowFlags & lcp_forceshow && err.error != QJsonParseError::NoError)
+			QMessageBox::critical((QWidget*)ParentWin, PLUGNAME, err.errorString());
+
 		return nullptr;
+	}
 
 	QFileInfo fi(FileToLoad);
 	QTreeWidget *view = new QTreeWidget((QWidget*)ParentWin);

@@ -1,4 +1,5 @@
 [Default]
+WFX_SCRIPT_NAME=Filter files (find)
 WFX_SCRIPT_STR_DIR=Select directory
 WFX_SCRIPT_STR_MASK=Enter filename pattern (e.g. *.mp3)
 WFX_SCRIPT_STR_OPT=Enter additional parameters (e.g. -size +5M)
@@ -23,4 +24,25 @@ WFX_SCRIPT_STR_INODE=Inode
 WFX_SCRIPT_STR_NLINKS=Number of links
 
 [ru_RU]
-WFX_SCRIPT_STR_ACTMAN=Казнить мужчина находка
+WFX_SCRIPT_NAME=Фильтр файлов (команда find)
+WFX_SCRIPT_STR_DIR=Выбери начальную директорию
+WFX_SCRIPT_STR_MASK=Введи паттерн имени файлов (напр. *.mp3)
+WFX_SCRIPT_STR_OPT=Введи доп. параметры (напр. -size +5M)
+WFX_SCRIPT_STR_VAL=Команда для получения доп. инфо в столбце файловой панели
+WFX_SCRIPT_STR_ACTDIR=Изменить начальную директорию
+WFX_SCRIPT_STR_ACTMASK=Изменить паттерн имени файлов
+WFX_SCRIPT_STR_ACTOPT=Изменить дополнительные параметры
+WFX_SCRIPT_STR_ACTVAL=Изменить команду для получения инфо в столбце
+WFX_SCRIPT_STR_ACTMAN=Запустить man find
+WFX_SCRIPT_STR_ASKOPT=Каждый раз запрашивать дополнительные параметры (напр. -size +5M и т.п.) для команды find? Их можно изменить в окне свойств файла.
+WFX_SCRIPT_STR_INFO=Инфо
+WFX_SCRIPT_STR_TYPE=Объект
+WFX_SCRIPT_STR_SIZE=Размер
+WFX_SCRIPT_STR_PERM=Доступ
+WFX_SCRIPT_STR_MTIME=Изменен
+WFX_SCRIPT_STR_BTIME=Создан
+WFX_SCRIPT_STR_ATIME=Доступ
+WFX_SCRIPT_STR_CTIME=Статус
+WFX_SCRIPT_STR_OWNER=Владелец
+WFX_SCRIPT_STR_GROUP=Группа
+WFX_SCRIPT_STR_NLINKS=Ссылки

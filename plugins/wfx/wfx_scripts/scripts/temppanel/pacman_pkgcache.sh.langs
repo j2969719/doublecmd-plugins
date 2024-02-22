@@ -1,0 +1,5 @@
+[Default]
+WFX_SCRIPT_NAME=Filter files (pacman cache)
+
+[ru_RU]
+WFX_SCRIPT_NAME=Фильтр файлов (кэш pacman)

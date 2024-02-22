@@ -1,4 +1,5 @@
 [Default]
+WFX_SCRIPT_NAME=Filter files (ArchLinux packages)
 WFX_SCRIPT_STR_DESCR=Description
 WFX_SCRIPT_STR_ARCH_BTW=Architecture
 WFX_SCRIPT_STR_LICENSE=Licenses
@@ -12,6 +13,7 @@ WFX_SCRIPT_STR_REASON=Install Reason
 ENV_WFX_SCRIPT_STR_JUMP=jump
 
 [ru_RU]
+WFX_SCRIPT_NAME=Фильтр файлов (пакеты ArchLinux)
 WFX_SCRIPT_STR_DESCR=Описание
 WFX_SCRIPT_STR_ARCH_BTW=Архитектура
 WFX_SCRIPT_STR_LICENSE=Лицензии
