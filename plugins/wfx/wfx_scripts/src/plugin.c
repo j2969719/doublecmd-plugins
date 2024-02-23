@@ -2202,6 +2202,7 @@ static void ShowMultiChoiceDlg(char *text, gboolean request_once)
 	                "  end\n");
 
 	g_string_append(lfm_string, "  object lblChoice: TMemo\n"
+	                "    Alignment = taCenter\n"
 	                "    AnchorSideLeft.Control = lbChoice\n"
 	                "    AnchorSideTop.Control = edSearch\n"
 	                "    AnchorSideTop.Side = asrBottom\n"
@@ -2212,7 +2213,7 @@ static void ShowMultiChoiceDlg(char *text, gboolean request_once)
 	                "    Top = 151\n"
 	                "    Width = 500\n"
 	                "    Anchors = [akTop, akLeft, akRight]\n"
-	                "    BorderSpacing.Top = 5\n"
+	                "    BorderSpacing.Top = 10\n"
 	                "    BorderStyle = bsNone\n"
 	                "    Color = clForm\n"
 	                "    ReadOnly = True\n"
