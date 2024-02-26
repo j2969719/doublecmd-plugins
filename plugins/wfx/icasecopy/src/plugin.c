@@ -932,7 +932,7 @@ BOOL DCPCALL FsMkDir(char* Path)
 				gLogProc(gPluginNr, MSGTYPE_DETAILS, "");
 				snprintf(gCaseName, PATH_MAX, "%s", backup);
 				free(backup);
-				return TRUE;
+				return FALSE;
 			}
 
 			gLogProc(gPluginNr, MSGTYPE_DETAILS, "");
