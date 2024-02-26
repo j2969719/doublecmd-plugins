@@ -40,7 +40,7 @@ HANDLE DCPCALL OpenArchive(tOpenArchiveData *ArchiveData)
 
 	memset(data, 0, sizeof(tArcData));
 
-	data->ifp = fopen(ArchiveData->ArcName, "r");
+	data->ifp = fopen(ArchiveData->ArcName, "rb");
 
 	if (!data->ifp)
 	{
@@ -125,6 +125,10 @@ int DCPCALL ProcessFile(HANDLE hArcData, int Operation, char *DestPath, char *De
 
 		size_t data_size = data->size - (HEADER_SIZE + LEN_BLOCK_SIZE);
 		char* compressed_data = (char*)malloc(data_size);
+
+		if (!compressed_data)
+			return E_NO_MEMORY;
+
 		memset(compressed_data, 0, data_size);
 		size_t ret = fread(compressed_data, 1, data_size, data->ifp);
 
@@ -135,12 +139,25 @@ int DCPCALL ProcessFile(HANDLE hArcData, int Operation, char *DestPath, char *De
 		}
 
 		char* regen_buffer = (char*)malloc(data->src_size);
+
+		if (!regen_buffer)
+		{
+			free(compressed_data);
+			return E_NO_MEMORY;
+		}
+
 		memset(regen_buffer, 0, data->src_size);
 		const int decompressed_size = LZ4_decompress_safe(compressed_data, regen_buffer, ret, data->src_size);
 		free(compressed_data);
 
 		if (data->ProcessDataProc)
 			data->ProcessDataProc(DestName, decompressed_size);
+
+		if (decompressed_size < 0)
+		{
+			free(regen_buffer);
+			return E_BAD_DATA;
+		}
 
 		FILE *ofp = fopen(DestName, "wb");
 
@@ -170,6 +187,80 @@ int DCPCALL CloseArchive(HANDLE hArcData)
 	return E_SUCCESS;
 }
 
+int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddList, int Flags)
+{
+	struct stat st;
+	char in_parh[PATH_MAX];
+	snprintf(in_parh, PATH_MAX, "%s/%s", SrcPath, AddList);
+
+	if (stat(in_parh, &st) != 0)
+		return E_EOPEN;
+
+	if (st.st_size > UINT32_MAX)
+		return E_NOT_SUPPORTED;
+
+	uint32_t src_size = (uint32_t)st.st_size;
+	FILE *ifp = fopen(in_parh, "rb");
+
+	if (!ifp)
+		return E_EOPEN;
+
+	char* data = (char*)malloc(src_size);
+
+	if (!data)
+	{
+		fclose(ifp);
+		return E_NO_MEMORY;
+	}
+
+	memset(data, 0, src_size);
+	size_t ret = fread(data, 1, src_size, ifp);
+	fclose(ifp);
+
+	if (ret == 0)
+	{
+		free(data);
+		return E_EREAD;
+	}
+
+	const int max_dst_size = LZ4_compressBound(src_size);
+	char* compressed_data = (char*)malloc(src_size);
+
+	if (!compressed_data)
+	{
+		free(data);
+		return E_NO_MEMORY;
+	}
+
+	memset(compressed_data, 0, src_size);
+	const int compressed_data_size = LZ4_compress_default(data, compressed_data, src_size, max_dst_size);
+	free(data);
+
+	if (compressed_data_size < 0)
+	{
+		free(compressed_data);
+		return E_SMALL_BUF;
+	}
+
+	gProcessDataProc(in_parh, compressed_data_size);
+
+	FILE *ofp = fopen(PackedFile, "wb");
+
+	if (!ofp)
+	{
+		free(compressed_data);
+		return E_EWRITE;
+	}
+
+	ret = fwrite(HEADER, HEADER_SIZE, 1, ofp);
+	ret = fwrite(&src_size, LEN_BLOCK_SIZE, 1, ofp);
+	ret = fwrite(compressed_data, 1, compressed_data_size, ofp);
+	free(compressed_data);
+	fclose(ofp);
+
+	return E_SUCCESS;
+}
+
 void DCPCALL SetProcessDataProc(HANDLE hArcData, tProcessDataProc pProcessDataProc)
 {
 	ArcData data = (ArcData)hArcData;
@@ -182,6 +273,7 @@ void DCPCALL SetProcessDataProc(HANDLE hArcData, tProcessDataProc pProcessDataPr
 
 int DCPCALL GetPackerCaps(void)
 {
+//	return PK_CAPS_NEW | PK_CAPS_MODIFY | PK_CAPS_BY_CONTENT | PK_CAPS_SEARCHTEXT;
 	return PK_CAPS_BY_CONTENT | PK_CAPS_SEARCHTEXT;
 }
 

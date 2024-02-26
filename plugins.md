@@ -23,11 +23,20 @@ Converts multiple files via commandline utilities (Files -> Pack Files...).
 - [cmdoutput](plugins/wcx/cmdoutput)<br>
 View output of command line utilities on Ctrl+Page Down (see `settings_default.ini`).
 
+- [fb2bin_crap](plugins/wcx/fb2bin_crap)<br>
+Extract binary data from fb2.
+
 - [gcrypt_hash_crap](plugins/wcx/gcrypt_hash_crap)<br>
 Calculates a hash (Files -> Pack Files...), test file integrity (Files -> Test Archive(s)).
 
+- [hexstr_crap](plugins/wcx/hexstr_crap)<br>
+base16ish wtf.
+
 - [imagemagick_gif_crap](plugins/wcx/imagemagick_gif_crap)<br>
 Extract frames from GIF.
+
+- [imagemagick_ico_crap](plugins/wcx/imagemagick_ico_crap)<br>
+Extract pages from ICO.
 
 - [libarchive_crap](plugins/wcx/libarchive_crap)<br>
 A horrible attempt to make a simple WCX plugin based on `libarchive` ([supported formats](https://github.com/libarchive/libarchive#supported-formats) + [lizard](https://github.com/inikep/lizard)).
@@ -38,6 +47,9 @@ Creates hard or symbolic links for multiple files (Files -> Pack Files...).
 - [m3u8_crap](plugins/wcx/m3u8_crap)<br>
 Creates m3u8 files (Files -> Pack Files...).
 
+- [mozlz4json_crap](plugins/wcx/mozlz4json_crap)<br>
+View lz4 json from Mozilla.
+
 
 ---
 <a name="wdx-bin"><h3>WDX: Binary (compiled) plugins</h3></a>
@@ -47,6 +59,9 @@ Getting some information from archives.
 
 - [calcsize](plugins/wdx/calcsize)<br>
 Folder search by size.
+
+~- [crx_crap](plugins/wdx/crx_crap)<br>
+crx/xpi.~
 
 - [datetimestr](plugins/wdx/datetimestr)<br>
 Getting the time the file was last modified, last accessed or last changed. The time format is fully customizable (see `settings.ini`).
@@ -328,6 +343,9 @@ Like `cmdoutput` but it outputs data to a column in the file panel (DC 1.1+). Se
 - [contentfilter_crap](plugins/wfx/contentfilter_crap)<br>
 Filter files by content (DC 1.1+).
 
+- [desktopfiles](plugins/wfx/desktopfiles)<br>
+Edit *.desktop files.
+
 - [envlist](plugins/wfx/envlist)<br>
 Just a list of the current environment variables (DC 1.1+).
 
@@ -342,6 +360,9 @@ Mounting gvfs resources with automatic password entry (stored in ini file). F7 -
 
 - [href_crap](plugins/wfx/href_crap)<br>
 Shows href links from web page as files.
+
+- [icasecopy](plugins/wfx/icasecopy)<br>
+Case-insensitive Copy.
 
 - [null_crap](plugins/wfx/null_crap)<br>
 "Сopying" files to nowhere, to check if the file can still be read from some device. 
@@ -414,6 +435,9 @@ If you have ImageMagick 6 (for example, Debian/Ubuntu-based distributions) then 
 - [libarchive_crap](plugins/wlx/libarchive_crap)<br>
 Displays file content with `libarchive` ([supported formats](https://github.com/libarchive/libarchive#supported-formats)).
 
+- [libarchive_cat_crap](plugins/wlx/libarchive_cat_crap)<br>
+Displays decompress data with `libarchive`.
+
 - [md4c_webkit](plugins/wlx/md4c_webkit)<br>
 This plugin allows you to view Markdown files.
 
@@ -470,6 +494,18 @@ Display folder and file sizes in quick view.
 - [fileinfo_qt](plugins/wlx/fileinfo_qt)<br>
 Displays various information about file using command line utilities ([original](https://github.com/doublecmd/doublecmd/wiki/Plugins#fileinfo)).
 
+- [fontview_qt](plugins/wlx/fontview_qt)<br>
+Displays font from file.
+
+- [htmlconv_qt_crap](plugins/wlx/htmlconv_qt_crap)<br>
+Like [htmlview_qt_crap](plugins/wlx/htmlview_qt_crap) but for any files if you can convert it to HTML file (see `settings.ini`).
+
+- [htmlview_qt_crap](plugins/wlx/htmlview_qt_crap)<br>
+This plugin allows you to view HTML files.
+
+- [hx_qt_crap](plugins/wlx/hx_qt_crap)<br>
+Document viewer using HTML Export from Oracle Outside In Technology.
+
 - [hx_webkit_qt_crap](plugins/wlx/hx_webkit_qt_crap)<br>
 Document viewer based on Qt5WebKit and using HTML Export from Oracle Outside In Technology.
 
@@ -484,6 +520,12 @@ Very primitive JSON Viewer.
 
 - [libarchive_qt_crap](plugins/wlx/libarchive_qt_crap)<br>
 Displays file content with `libarchive` ([supported formats](https://github.com/libarchive/libarchive#supported-formats)).
+
+- [libarchive_cat_qt_crap](plugins/wlx/libarchive_cat_qt_crap)<br>
+Displays decompress data with `libarchive`.
+
+- [md4c_qt](plugins/wlx/md4c_qt)<br>
+This plugin allows you to view Markdown files.
 
 - [md4c_webkit_qt](plugins/wlx/md4c_webkit_qt)<br>
 This plugin allows you to view Markdown files.

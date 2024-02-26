@@ -3379,6 +3379,15 @@ static gboolean IsRootDir(char *path)
 	return TRUE;
 }
 
+static void CleanScriptName(char *fn)
+{
+	while (*fn++)
+	{
+		if (*fn == '/' || *fn == '[' || *fn == ']')
+			*fn = '_';
+	}
+}
+
 static gchar *StripScriptFromPath(char *path)
 {
 	if (path[0] != '/')
@@ -3435,6 +3444,7 @@ static gboolean SetScriptsFindData(tVFSDirData *dirdata, WIN32_FIND_DATAA *FindD
 				else
 					g_strlcpy(FindData->cFileName, ent->d_name, sizeof(FindData->cFileName));
 
+				CleanScriptName(FindData->cFileName);
 				g_key_file_set_string(gCfg, "/", FindData->cFileName, ent->d_name);
 				g_free(filename);
 
