@@ -213,6 +213,11 @@ static int CopyLocalFile(char* InFileName, char* OutFileName)
 
 	close(ifd);
 
+	gLogProc(gPluginNr, MSGTYPE_DETAILS, "COPY:");
+	gLogProc(gPluginNr, MSGTYPE_DETAILS, InFileName);
+	gLogProc(gPluginNr, MSGTYPE_DETAILS, file);
+	gLogProc(gPluginNr, MSGTYPE_DETAILS, "");
+
 	return result;
 }
 
@@ -508,6 +513,8 @@ intptr_t DCPCALL OptionsDlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg,
 
 				fclose(fp);
 			}
+
+			gLogProc(gPluginNr, MSGTYPE_CONNECT, "CONNECT /");
 		}
 		else if (strcmp(DlgItemName, "lbHistory") == 0)
 		{
@@ -847,7 +854,7 @@ int DCPCALL FsPutFile(char* LocalName, char* RemoteName, int CopyFlags)
 	if (strcmp(LocalName, realname) == 0)
 		return FS_FILE_NOTSUPPORTED;
 
-	if (CopyFlags == 0 && CaseDuplExists(realname, FALSE) == FS_FILE_EXISTS)
+	if (CaseDuplExists(realname, FALSE) == FS_FILE_EXISTS && CopyFlags == 0)
 		return FS_FILE_EXISTS;
 
 	if (gProgressProc(gPluginNr, LocalName, realname, 0) == 1)
@@ -863,19 +870,19 @@ int DCPCALL FsRenMovFile(char* OldName, char* NewName, BOOL Move, BOOL OverWrite
 	snprintf(oldpath, sizeof(oldpath), "%s%s", gStartPath, OldName);
 	snprintf(newpath, sizeof(newpath), "%s%s", gStartPath, NewName);
 
-	if (!OverWrite)
+	if (!Move)
 	{
-		if (!Move)
+		if (CaseDuplExists(newpath, FALSE) == FS_FILE_EXISTS)
 		{
-			if (CaseDuplExists(newpath, FALSE) == FS_FILE_EXISTS)
+			if (!OverWrite)
 				return FS_FILE_EXISTS;
-			else
-			{
-				gCaseName[0] = '\0';
+		}
+		else if (!OverWrite)
+		{
+			gCaseName[0] = '\0';
 
-				if (access(newpath, F_OK) == 0)
-					return FS_FILE_EXISTS;
-			}
+			if (access(newpath, F_OK) == 0)
+				return FS_FILE_EXISTS;
 		}
 	}
 
@@ -887,6 +894,11 @@ int DCPCALL FsRenMovFile(char* OldName, char* NewName, BOOL Move, BOOL OverWrite
 
 	int result = FS_FILE_WRITEERROR;
 
+	gLogProc(gPluginNr, MSGTYPE_DETAILS, "MOVE:");
+	gLogProc(gPluginNr, MSGTYPE_DETAILS, oldpath);
+	gLogProc(gPluginNr, MSGTYPE_DETAILS, newpath);
+	gLogProc(gPluginNr, MSGTYPE_DETAILS, "");
+
 	if (rename(oldpath, newpath) == 0)
 		result = FS_FILE_OK;
 
@@ -897,11 +909,46 @@ int DCPCALL FsRenMovFile(char* OldName, char* NewName, BOOL Move, BOOL OverWrite
 
 BOOL DCPCALL FsMkDir(char* Path)
 {
+	char path[PATH_MAX] = "";
+	char dirs[PATH_MAX] = "";
 	char realname[PATH_MAX];
-	snprintf(realname, sizeof(realname), "%s%s", gStartPath, Path);
+	snprintf(path, sizeof(path), "%s", Path + 1);
+	char *backup = strdup(gCaseName);
+	char *t = strtok(path, "/");
 
-	if (CaseDuplExists(realname, FALSE) != FS_FILE_EXISTS && mkdir(realname, S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH) == -1)
-		return FALSE;
+	while (t != NULL)
+	{
+		snprintf(realname, sizeof(realname), "%s%s/%s", gStartPath, dirs, t);
+
+		if (CaseDuplExists(realname, FALSE) != FS_FILE_EXISTS)
+		{
+			gLogProc(gPluginNr, MSGTYPE_DETAILS, "MAKE DIR:");
+			gLogProc(gPluginNr, MSGTYPE_DETAILS, realname);
+
+			if (mkdir(realname, S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH) == -1)
+			{
+				int errsv = errno;
+				gLogProc(gPluginNr, MSGTYPE_IMPORTANTERROR, strerror(errsv));
+				gLogProc(gPluginNr, MSGTYPE_DETAILS, "");
+				snprintf(gCaseName, PATH_MAX, "%s", backup);
+				free(backup);
+				return TRUE;
+			}
+
+			gLogProc(gPluginNr, MSGTYPE_DETAILS, "");
+		}
+		else
+		{
+			strcat(dirs, "/");
+			strcat(dirs, gCaseName);
+		}
+
+		t = strtok(NULL, "/");
+	}
+
+	snprintf(realname, sizeof(realname), "%s%s", gStartPath, Path);
+	snprintf(gCaseName, PATH_MAX, "%s", backup);
+	free(backup);
 
 	return TRUE;
 }
@@ -912,7 +959,14 @@ BOOL DCPCALL FsDeleteFile(char* RemoteName)
 	snprintf(realname, sizeof(realname), "%s%s", gStartPath, RemoteName);
 
 	if (remove(realname) == -1)
+	{
+		int errsv = errno;
+		gLogProc(gPluginNr, MSGTYPE_DETAILS, "REMOVE:");
+		gLogProc(gPluginNr, MSGTYPE_DETAILS, realname);
+		gLogProc(gPluginNr, MSGTYPE_IMPORTANTERROR, strerror(errsv));
+		gLogProc(gPluginNr, MSGTYPE_DETAILS, "");
 		return FALSE;
+	}
 
 	return TRUE;
 }
@@ -925,7 +979,10 @@ BOOL DCPCALL FsRemoveDir(char* RemoteName)
 	if (rmdir(realname) == -1)
 	{
 		int errsv = errno;
-		MessageBox(strerror(errsv), ROOTNAME, MB_OK | MB_ICONERROR);
+		gLogProc(gPluginNr, MSGTYPE_DETAILS, "REMOVE DIR:");
+		gLogProc(gPluginNr, MSGTYPE_DETAILS, realname);
+		gLogProc(gPluginNr, MSGTYPE_IMPORTANTERROR, strerror(errsv));
+		gLogProc(gPluginNr, MSGTYPE_DETAILS, "");
 		return FALSE;
 	}
 
@@ -1089,6 +1146,12 @@ int DCPCALL FsContentGetValue(char* FileName, int FieldIndex, int UnitIndex, voi
 	}
 
 	return ft_fieldempty;
+}
+
+BOOL DCPCALL FsDisconnect(char* DisconnectRoot)
+{
+	gLogProc(gPluginNr, MSGTYPE_DISCONNECT, "DISCONNECT /");
+	return TRUE;
 }
 
 BOOL DCPCALL FsContentGetDefaultView(char* ViewContents, char* ViewHeaders, char* ViewWidths, char* ViewOptions, int maxlen)
