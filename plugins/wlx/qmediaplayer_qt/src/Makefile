@@ -30,5 +30,10 @@ dist:
 			tar --exclude=../src -h -cvzf '../../../dist/$(plugtype)_$(plugdir)_qt5_$(shell date +%y.%m.%d).tar.gz' ../pluginst.inf '../$(plugdir)_qt5.$(plugtype)' $(plugfiles) && \
 			rm ../pluginst.inf || echo $(plugdir)_qt5.$(plugtype) >> ../../../dist/.missing.log
 
+		test -f '../$(plugdir)_qt6.$(plugtype)' && \
+			echo -e "[plugininstall]\ndescription=$(plugdescr)\ntype=$(plugtype)\nfile=$(plugdir)_qt6.$(plugtype)\ndefaultdir=$(plugdir)" > ../pluginst.inf && \
+			tar --exclude=../src -h -cvzf '../../../dist/$(plugtype)_$(plugdir)_qt6_$(shell date +%y.%m.%d).tar.gz' ../pluginst.inf '../$(plugdir)_qt6.$(plugtype)' $(plugfiles) && \
+			rm ../pluginst.inf || echo $(plugdir)_qt6.$(plugtype) >> ../../../dist/.missing.log
+
 clean:
 		$(RM) $(wildcard ../*.$(plugtype))
