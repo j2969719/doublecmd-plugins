@@ -37,3 +37,4 @@ utils/freearc/src/
 utils/freearc/pkg/
 *kostyl
 !*kostyl/
+settings.ini
