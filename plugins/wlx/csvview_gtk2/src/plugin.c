@@ -139,6 +139,10 @@ static GtkListStore *parse_file(char* FileToLoad, GtkTreeView *list)
 	if (!buffer)
 		return NULL;
 
+	gchar *org = buffer;
+	buffer = g_utf8_make_valid(org, -1);
+	g_free(org);
+
 	lines = g_regex_split_simple("[\r\n]+", buffer, 0, 0);
 	g_free(buffer);
 
