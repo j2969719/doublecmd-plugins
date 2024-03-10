@@ -259,7 +259,6 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	gtk_container_add(GTK_CONTAINER(tb_size), label);
 	gtk_toolbar_insert(GTK_TOOLBAR(mtb), tb_size, tb_pos++);
 
-	gtk_widget_grab_focus(view);
 	gtk_widget_show_all(gFix);
 
 	const gchar *role = gtk_window_get_role(GTK_WINDOW(gtk_widget_get_toplevel(GTK_WIDGET(ParentWin))));

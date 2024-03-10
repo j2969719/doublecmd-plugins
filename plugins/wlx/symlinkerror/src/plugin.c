@@ -57,7 +57,6 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 	g_free(text);
 	g_object_set_data(G_OBJECT(plug_vbox), "label", label);
 	gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(scroll_win), label);
-	gtk_widget_grab_focus(scroll_win);
 	gtk_widget_show_all(plug_vbox);
 
 

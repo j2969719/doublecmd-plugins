@@ -222,7 +222,6 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 
 	g_value_unset(&val);
 	gtk_widget_show_all(gFix);
-	gtk_widget_grab_focus(scroll);
 
 	return gFix;
 

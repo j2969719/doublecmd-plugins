@@ -284,7 +284,6 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	gtk_container_add(GTK_CONTAINER(tb_size), label);
 	gtk_toolbar_insert(GTK_TOOLBAR(mtb), tb_size, tb_pos++);
 
-	gtk_widget_grab_focus(view);
 	gtk_widget_show_all(gFix);
 
 	if (!anim || gdk_pixbuf_animation_is_static_image(anim))

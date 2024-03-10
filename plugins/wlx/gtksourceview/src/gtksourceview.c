@@ -619,7 +619,6 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	}
 
 	gtk_box_pack_end(GTK_BOX(gFix), hControlBox, FALSE, FALSE, 5);
-	gtk_widget_grab_focus(GTK_WIDGET(data->sView));
 
 	gtk_widget_show_all(gFix);
 
