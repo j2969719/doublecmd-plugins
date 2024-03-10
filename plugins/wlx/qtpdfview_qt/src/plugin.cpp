@@ -262,6 +262,7 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 		pdfView->setZoomMode(QPdfView::ZoomMode::FitToWidth);
 
 	pdfView->setObjectName("pdf_view");
+	view->setFocusProxy(pdfView);
 	view->show();
 
 	if (!gControls)
