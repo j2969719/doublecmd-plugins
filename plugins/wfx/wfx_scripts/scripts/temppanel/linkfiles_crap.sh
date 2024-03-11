@@ -70,7 +70,7 @@ vfs_rm()
 {
     file="$DC_WFX_SCRIPT_DIR""$1"
 
-    rm "$file"
+    gio trash "$file" || rm "$file"
     exit $?
 }
 
@@ -78,7 +78,7 @@ vfs_rmdir()
 {
     file="$DC_WFX_SCRIPT_DIR""$1"
 
-    rmdir "$file"
+    gio trash "$file" || rmdir "$file"
     exit $?
 }
 
