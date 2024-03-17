@@ -121,6 +121,11 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 	{
 		update_pagecount(lblPages, pdfView);
 	});
+
+	QObject::connect(document, &QPdfDocument::pageCountChanged, [lblPages, pdfView]()
+	{
+		update_pagecount(lblPages, pdfView);
+	});
 #else
 	QObject::connect(pdfView->navigator(), &QPdfPageNavigation::pageCountChanged, [lblPages, pdfView]()
 	{
