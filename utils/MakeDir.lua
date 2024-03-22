@@ -155,8 +155,7 @@ dn = string.gsub(dn, "([\\/|])(%s+)", "%1")
 local lst = {}
 local res = {}
 local r = {}
-local n1, n2, c1, c2, t
-local n3, c3 = 1, 1
+local n1, n2, c1, c2, c3, t
 for l in string.gmatch(dn, "[^|]+") do
   if PathIsAbsolute(l) then
     table.insert(lst, l)
@@ -175,27 +174,19 @@ for i = 1, #lst do
   lst[i] = string.gsub(lst[i], "<fy>", string.sub(fdt, 1, 4))
   lst[i] = string.gsub(lst[i], "<p>", pf)
   -- <x-y>
-  while true do
-    n1, n2 = string.find(lst[i], "<%d+%-%d+>", n3, false)
-    if n1 == nil then
-      table.insert(res, lst[i])
-      break
-    end
+  n1, n2 = string.find(lst[i], "<%d+%-%d+>", n3, false)
+  if n1 == nil then
+    table.insert(res, lst[i])
+  else
     c1, c2 = string.match(string.sub(lst[i], n1, n2), "<(%d+)%-(%d+)>")
     c1 = tonumber(c1)
     c2 = tonumber(c2)
     c3 = string.len(c2)
     for j = c1, c2 do
-      t = j
-      while true do
-        if string.len(t) == c3 then break end
-        t = "0" .. t
-      end
+      t = string.format("%0" .. c3 .. "d", j)
       table.insert(res, string.sub(lst[i], 1, n1 - 1) .. t .. string.sub(lst[i], n2 + 1, -1))
     end
-    n3 = n2
   end
-  n3 = 1
 end
 
 if #res > 0 then
