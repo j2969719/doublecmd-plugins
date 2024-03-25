@@ -1,5 +1,5 @@
 -- MakeDir.lua (cross-platform)
--- 2023.08.30
+-- 2024.03.24
 --
 -- Creating directory(ies) with additional features.
 --[[
@@ -14,7 +14,7 @@
     <y> - current year, 4 digits;
     <fdt>, <fd>, <ft> and <fy> - like previouses, but from file under cursor (last modified date/time);
     <p> - parent folder from current directory;
-    <x-y> - multiple folder creation with counter. Wight depends on y.
+    <x-y> - multiple folder creation with counter. Width depends on y.
     For example: "name<1-15>" means 15 folders: "name01", "name02", ... "name15".
   Note: You can use more then one variable in each name.
 5. Use "<c>" to get the names from the clipboard.
