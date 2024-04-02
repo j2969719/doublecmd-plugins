@@ -14,8 +14,40 @@
 
 #include "wlxplugin.h"
 
+#define DURATION_EMPTY "-:--:--/-:--:--"
+#define MY_TIME_FORMAT "u:%02u:%02u"
+#define MY_TIME_IS_VALID(t) t != -1
+#define MY_TIME_ARGS(t) \
+        MY_TIME_IS_VALID (t) ? \
+        (uint) (t / (1000 * 60 * 60)) : 99, \
+        MY_TIME_IS_VALID (t) ? \
+        (uint) ((t / (1000 * 60)) % 60) : 99, \
+        MY_TIME_IS_VALID (t) ? \
+        (uint) ((t / 1000) % 60) : 99
+
 Q_DECLARE_METATYPE(QMediaPlayer *)
 QMimeDatabase db;
+
+int gVolume = 80;
+bool gMute = false;
+bool gLoop = true;
+QString gCfgPath;
+
+static void update_mutebtn(QPushButton *bmute)
+{
+	if (!gMute)
+		bmute->setIcon(QApplication::style()->standardIcon(QStyle::SP_MediaVolume));
+	else
+		bmute->setIcon(QApplication::style()->standardIcon(QStyle::SP_MediaVolumeMuted));
+}
+
+static void update_loopbtn(QPushButton *bloop)
+{
+	if (!gLoop)
+		bloop->setText("once");
+	else
+		bloop->setText("loop");
+}
 
 #if QT_VERSION >= 0x060000
 HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
@@ -36,10 +68,20 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 			QMessageBox::critical(view, "", player->errorString());
 	});
 
-
 	QAudioOutput *audio = new QAudioOutput((QObject*)view);
 	player->setAudioOutput(audio);
-	player->setLoops(QMediaPlayer::Infinite);
+
+	QPushButton *bloop = new QPushButton(view);
+	update_loopbtn(bloop);
+
+	QObject::connect(bloop, &QPushButton::clicked, [bloop, player]()
+	{
+		gLoop = !gLoop;
+		player->setLoops(gLoop ? QMediaPlayer::Infinite : QMediaPlayer::Once);
+		update_loopbtn(bloop);
+	});
+
+	player->setLoops(gLoop ? QMediaPlayer::Infinite : QMediaPlayer::Once);
 
 	QVBoxLayout *main = new QVBoxLayout(view);
 
@@ -58,11 +100,16 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 	QObject::connect(player, &QMediaPlayer::durationChanged, [spos](qint64 x)
 	{
 		spos->setMaximum(x / 1000);
+		spos->setProperty("duration", x);
 	});
 
-	QObject::connect(player, &QMediaPlayer::positionChanged, [spos](qint64 x)
+	QLabel *ltime = new QLabel(DURATION_EMPTY, view);
+
+	QObject::connect(player, &QMediaPlayer::positionChanged, [spos, ltime](qint64 x)
 	{
 		spos->setValue(x / 1000);
+		qint64 duration = spos->property("duration").value<qint64>();
+		ltime->setText(QString::asprintf("%" MY_TIME_FORMAT "/%" MY_TIME_FORMAT, MY_TIME_ARGS(x), MY_TIME_ARGS(duration)));
 	});
 
 	main->addWidget(spos);
@@ -104,34 +151,36 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 	});
 
 	QPushButton *bmute = new QPushButton(view);
-	bmute->setIcon(QApplication::style()->standardIcon(QStyle::SP_MediaVolume));
 	bmute->setFocusPolicy(Qt::NoFocus);
+	audio->setMuted(gMute);
+	update_mutebtn(bmute);
 
 	QObject::connect(bmute, &QPushButton::clicked, [bmute, audio]()
 	{
-		bool state = audio->isMuted();
-		audio->setMuted(!state);
-
-		if (state)
-			bmute->setIcon(QApplication::style()->standardIcon(QStyle::SP_MediaVolume));
-		else
-			bmute->setIcon(QApplication::style()->standardIcon(QStyle::SP_MediaVolumeMuted));
+		gMute = !audio->isMuted();
+		audio->setMuted(gMute);
+		update_mutebtn(bmute);
 	});
 
 	QSlider *svolume = new QSlider(Qt::Horizontal, view);
-	svolume->setRange(0, 100);
+	svolume->setRange(1, 100);
 
-	QObject::connect(svolume, &QSlider::sliderMoved, [svolume, audio]()
+	QObject::connect(svolume, &QSlider::valueChanged, [svolume, audio]()
 	{
-		audio->setVolume(QAudio::convertVolume(svolume->value() / qreal(100), QAudio::LogarithmicVolumeScale, QAudio::LinearVolumeScale));
+		gVolume = svolume->value();
+		audio->setVolume(QAudio::convertVolume(gVolume / qreal(100), QAudio::LogarithmicVolumeScale, QAudio::LinearVolumeScale));
 	});
 
-	svolume->setValue(80);
+	svolume->setValue(gVolume);
 
 	controls->addWidget(bplay);
 	controls->addWidget(bpause);
 	controls->addSpacing(10);
 	controls->addWidget(binfo);
+	controls->addSpacing(5);
+	controls->addWidget(ltime);
+	controls->addSpacing(5);
+	controls->addWidget(bloop);
 	controls->addStretch(1);
 	controls->addWidget(bmute);
 	controls->addWidget(svolume);
@@ -177,12 +226,24 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 	QMediaPlayer *player = new QMediaPlayer((QObject*)view);
 	QMediaPlaylist *playlist = new QMediaPlaylist((QObject*)player);
 
-	playlist->setPlaybackMode(QMediaPlaylist::Loop);
+	QPushButton *bloop = new QPushButton(view);
+	update_loopbtn(bloop);
+
+	QObject::connect(bloop, &QPushButton::clicked, [bloop, player, playlist]()
+	{
+		gLoop = !gLoop;
+		playlist->setPlaybackMode(gLoop ? QMediaPlaylist::Loop : QMediaPlaylist::CurrentItemOnce);
+		update_loopbtn(bloop);
+	});
+
+	playlist->setPlaybackMode(gLoop ? QMediaPlaylist::Loop : QMediaPlaylist::CurrentItemOnce);
 	player->setPlaylist(playlist);
 
-	QObject::connect(player, QOverload<QMediaPlayer::Error>::of(&QMediaPlayer::error), [view, player](QMediaPlayer::Error error)
+	QObject::connect(player, QOverload<QMediaPlayer::Error>::of(&QMediaPlayer::error), [view, player, bloop](QMediaPlayer::Error error)
 	{
+		gLoop = false;
 		player->playlist()->setPlaybackMode(QMediaPlaylist::CurrentItemOnce);
+		update_loopbtn(bloop);
 		QMessageBox::critical(view, "", player->errorString());
 	});
 
@@ -231,11 +292,16 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 	QObject::connect(player, &QMediaPlayer::durationChanged, [spos](qint64 x)
 	{
 		spos->setMaximum(x / 1000);
+		spos->setProperty("duration", x);
 	});
 
-	QObject::connect(player, &QMediaPlayer::positionChanged, [spos](qint64 x)
+	QLabel *ltime = new QLabel(DURATION_EMPTY, view);
+
+	QObject::connect(player, &QMediaPlayer::positionChanged, [spos, ltime](qint64 x)
 	{
 		spos->setValue(x / 1000);
+		qint64 duration = spos->property("duration").value<qint64>();
+		ltime->setText(QString::asprintf("%" MY_TIME_FORMAT "/%" MY_TIME_FORMAT, MY_TIME_ARGS(x), MY_TIME_ARGS(duration)));
 	});
 
 	main->addWidget(spos);
@@ -374,24 +440,29 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 #endif
 
 	QPushButton *bmute = new QPushButton(view);
-	bmute->setIcon(QApplication::style()->standardIcon(QStyle::SP_MediaVolume));
 	bmute->setFocusPolicy(Qt::NoFocus);
+	player->setMuted(gMute);
+	update_mutebtn(bmute);
+
 
 	QObject::connect(bmute, &QPushButton::clicked, [bmute, player]()
 	{
-		bool state = player->isMuted();
-		player->setMuted(!state);
-
-		if (state)
-			bmute->setIcon(QApplication::style()->standardIcon(QStyle::SP_MediaVolume));
-		else
-			bmute->setIcon(QApplication::style()->standardIcon(QStyle::SP_MediaVolumeMuted));
+		gMute = !player->isMuted();
+		player->setMuted(gMute);
+		update_mutebtn(bmute);
 	});
 
 	QSlider *svolume = new QSlider(Qt::Horizontal, view);
-	svolume->setRange(0, 100);
-	QObject::connect(svolume, &QSlider::valueChanged, player, &QMediaPlayer::setVolume);
-	svolume->setValue(80);
+	svolume->setRange(1, 100);
+	svolume->setValue(gVolume);
+	player->setVolume(gVolume);
+
+	QObject::connect(svolume, &QSlider::valueChanged, [svolume, player]()
+	{
+		gVolume = svolume->value();
+		player->setVolume(gVolume);
+	});
+
 	svolume->setFocusPolicy(Qt::NoFocus);
 
 	controls->addWidget(bplay);
@@ -403,6 +474,10 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 	controls->addWidget(bnext);
 	controls->addSpacing(10);
 	controls->addWidget(lnum);
+	controls->addSpacing(5);
+	controls->addWidget(ltime);
+	controls->addSpacing(5);
+	controls->addWidget(bloop);
 	controls->addStretch(1);
 	controls->addWidget(bmute);
 	controls->addWidget(svolume);
@@ -452,6 +527,11 @@ void DCPCALL ListCloseWindow(HANDLE ListWin)
 	QFrame *view = (QFrame*)ListWin;
 	QMediaPlayer *player = view->property("player").value<QMediaPlayer *>();
 
+	QSettings settings(gCfgPath, QSettings::IniFormat);
+	settings.setValue(PLUGNAME "/volume", gVolume);
+	settings.setValue(PLUGNAME "/mute", gMute);
+	settings.setValue(PLUGNAME "/loop", gLoop);
+
 	delete player;
 	delete view;
 }
@@ -459,4 +539,26 @@ void DCPCALL ListCloseWindow(HANDLE ListWin)
 int DCPCALL ListSearchDialog(HWND ListWin, int FindNext)
 {
 	return LISTPLUGIN_OK;
+}
+
+void DCPCALL ListSetDefaultParams(ListDefaultParamStruct* dps)
+{
+	QFileInfo defini(QString::fromStdString(dps->DefaultIniName));
+	gCfgPath = defini.absolutePath() + "/j2969719.ini";
+	QSettings settings(gCfgPath, QSettings::IniFormat);
+
+	if (!settings.contains(PLUGNAME "/volume"))
+		settings.setValue(PLUGNAME "/volume", gVolume);
+	else
+		gVolume = settings.value(PLUGNAME "/volume").toInt();
+
+	if (!settings.contains(PLUGNAME "/mute"))
+		settings.setValue(PLUGNAME "/mute", gMute);
+	else
+		gMute = settings.value(PLUGNAME "/mute").toBool();
+
+	if (!settings.contains(PLUGNAME "/loop"))
+		settings.setValue(PLUGNAME "/loop", gLoop);
+	else
+		gLoop = settings.value(PLUGNAME "/loop").toBool();
 }
