@@ -27,13 +27,13 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 	QFile file(FileToLoad);
 
 	if (!file.open(QFile::ReadOnly | QFile::Text))
-		return NULL;
+		return nullptr;
 
 	QByteArray text = file.readAll();
 	file.close();
 
 	if (md_html(text.data(), text.size(), proc_md_cb, &html_str, MD_DIALECT_GITHUB, MD_HTML_FLAG_SKIP_UTF8_BOM) != 0)
-		return NULL;
+		return nullptr;
 
 	QWebView *webView = new QWebView((QWidget*)ParentWin);
 	webView->setStyleSheet("background-color:white;");

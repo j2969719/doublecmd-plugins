@@ -43,7 +43,7 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 		text = QString::asprintf("%s -> %s\n%s%s%s", FileToLoad, path, real_path, (real_path[0] == '\0') ? "" : ": ", strerror(errsv));
 	}
 	else
-		return NULL;
+		return nullptr;
 
 
 	QLabel *view = new QLabel((QWidget*)ParentWin);

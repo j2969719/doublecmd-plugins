@@ -56,7 +56,7 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 	QMimeType type = db.mimeTypeForFile(QString(FileToLoad));
 
 	if (!type.name().contains("audio") && !type.name().contains("video"))
-		return NULL;
+		return nullptr;
 
 	QFrame *view = new QFrame((QWidget*)ParentWin);
 

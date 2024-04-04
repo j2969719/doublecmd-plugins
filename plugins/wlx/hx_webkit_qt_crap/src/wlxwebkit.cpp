@@ -34,7 +34,7 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 	if (!html.exists())
 	{
 		tmpdir.remove();
-		return NULL;
+		return nullptr;
 	}
 
 	QWebView *webView = new QWebView((QWidget*)ParentWin);

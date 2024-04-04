@@ -38,7 +38,7 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 	QString output(getOutput(FileToLoad));
 
 	if (output.isEmpty())
-		return NULL;
+		return nullptr;
 
 	QPlainTextEdit *view = new QPlainTextEdit((QWidget*)ParentWin);
 	view->document()->setDefaultFont(font);

@@ -5,7 +5,7 @@ libs :=
 includes := -I../../../sdk
 
 qt5_libs := `pkg-config --cflags --libs Qt5PdfWidgets`
-qt6_libs := `pkg-config --cflags --libs Qt6PdfWidgets`
+qt6_libs := `pkg-config --cflags --libs Qt6PdfWidgets Qt6Pdf`
 
 plugdir := $(shell basename '$(realpath ..)')
 plugtype := $(shell basename '$(realpath ../..)')

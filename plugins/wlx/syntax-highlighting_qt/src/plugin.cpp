@@ -24,8 +24,10 @@
 
 #include "wlxplugin.h"
 
-Q_DECLARE_METATYPE(KSyntaxHighlighting::Repository *)
-Q_DECLARE_METATYPE(KSyntaxHighlighting::SyntaxHighlighter *)
+using namespace KSyntaxHighlighting;
+
+Q_DECLARE_METATYPE(Repository *)
+Q_DECLARE_METATYPE(SyntaxHighlighter *)
 
 bool darktheme = false;
 QFont font;
@@ -39,13 +41,13 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 		return nullptr;
 
 	QVariant vrepo, vhgl;
-	KSyntaxHighlighting::Repository *repo = new KSyntaxHighlighting::Repository();
-	KSyntaxHighlighting::Definition definition = repo->definitionForMimeType(type.name());
+	Repository *repo = new Repository();
+	Definition definition = repo->definitionForMimeType(type.name());
 
 	if (!definition.isValid())
 	{
 		delete repo;
-		return NULL;
+		return nullptr;
 	}
 
 	QFile file(FileToLoad);
@@ -53,7 +55,7 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 	if (!file.open(QFile::ReadOnly | QFile::Text))
 	{
 		delete repo;
-		return NULL;
+		return nullptr;
 	}
 
 	QPlainTextEdit *view = new QPlainTextEdit((QWidget*)ParentWin);
@@ -67,13 +69,13 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 	else
 		view->setLineWrapMode(QPlainTextEdit::NoWrap);
 
-	KSyntaxHighlighting::SyntaxHighlighter *highlighter = new KSyntaxHighlighting::SyntaxHighlighter();
+	SyntaxHighlighter *highlighter = new SyntaxHighlighter();
 	highlighter->setDefinition(definition);
 
 	if (darktheme)
-		highlighter->setTheme(repo->defaultTheme(KSyntaxHighlighting::Repository::DarkTheme));
+		highlighter->setTheme(repo->defaultTheme(Repository::DarkTheme));
 	else
-		highlighter->setTheme(repo->defaultTheme(KSyntaxHighlighting::Repository::LightTheme));
+		highlighter->setTheme(repo->defaultTheme(Repository::LightTheme));
 
 	highlighter->setDocument(view->document());
 	view->show();
@@ -95,9 +97,9 @@ int DCPCALL ListLoadNext(HWND ParentWin, HWND PluginWin, char* FileToLoad, int S
 		return LISTPLUGIN_ERROR;
 
 	QPlainTextEdit *view = (QPlainTextEdit*)PluginWin;
-	KSyntaxHighlighting::Repository *repo = view->property("repo").value<KSyntaxHighlighting::Repository *>();
-	KSyntaxHighlighting::SyntaxHighlighter *highlighter = view->property("hgl").value<KSyntaxHighlighting::SyntaxHighlighter *>();
-	KSyntaxHighlighting::Definition definition = repo->definitionForMimeType(type.name());
+	Repository *repo = view->property("repo").value<Repository *>();
+	SyntaxHighlighter *highlighter = view->property("hgl").value<SyntaxHighlighter *>();
+	Definition definition = repo->definitionForMimeType(type.name());
 
 	if (!definition.isValid())
 		return LISTPLUGIN_ERROR;
@@ -119,8 +121,8 @@ int DCPCALL ListLoadNext(HWND ParentWin, HWND PluginWin, char* FileToLoad, int S
 void DCPCALL ListCloseWindow(HANDLE ListWin)
 {
 	QPlainTextEdit *view = (QPlainTextEdit*)ListWin;
-	KSyntaxHighlighting::Repository *repo = view->property("repo").value<KSyntaxHighlighting::Repository *>();
-	KSyntaxHighlighting::SyntaxHighlighter *highlighter = view->property("hgl").value<KSyntaxHighlighting::SyntaxHighlighter *>();
+	Repository *repo = view->property("repo").value<Repository *>();
+	SyntaxHighlighter *highlighter = view->property("hgl").value<SyntaxHighlighter *>();
 	delete repo;
 	delete highlighter;
 	delete view;

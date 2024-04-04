@@ -84,7 +84,7 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 	if (document->load(out) != QPdfDocument::NoError)
 	{
 		delete document;
-		return NULL;
+		return nullptr;
 	}
 
 	QPdfView *view = new QPdfView((QWidget*)ParentWin);
