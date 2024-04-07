@@ -28,9 +28,10 @@
         GST_CLOCK_TIME_IS_VALID (t) ? \
         (guint) ((((GstClockTime)(t)) / GST_SECOND) % 60) : 99
 
-gboolean gLoop = FALSE;
+gboolean gLoop = TRUE;
 gboolean gVis = FALSE;
 gboolean gMute = FALSE;
+gboolean gSaveSettings = TRUE;
 gdouble gVolume = 0.8;
 static char gCfgPath[PATH_MAX]; 
 static char gFont[PATH_MAX] = ""; 
@@ -722,7 +723,7 @@ void DCPCALL ListCloseWindow(HWND ListWin)
   gMute = gtk_toggle_tool_button_get_active (GTK_TOGGLE_TOOL_BUTTON (data->btn_mute));
   gVolume = gtk_range_get_value (GTK_RANGE (data->volume_slider));
 
-  if (g_key_file_load_from_file (cfg, gCfgPath, G_KEY_FILE_KEEP_COMMENTS, NULL)) {
+  if (gSaveSettings && g_key_file_load_from_file (cfg, gCfgPath, G_KEY_FILE_KEEP_COMMENTS, NULL)) {
     g_key_file_set_boolean (cfg, PLUGNAME, "Loop", gLoop);
     g_key_file_set_boolean (cfg, PLUGNAME, "Mute", gMute);
     g_key_file_set_double (cfg, PLUGNAME, "Volume", gVolume);
@@ -878,6 +879,13 @@ void DCPCALL ListSetDefaultParams(ListDefaultParamStruct* dps)
     g_strlcpy (gFont, font, PATH_MAX);
     g_free (font);
   }
+
+  if (!g_key_file_has_key (cfg, PLUGNAME, "SaveOnExit", NULL)) {
+    g_key_file_set_boolean (cfg, PLUGNAME, "SaveOnExit", gSaveSettings);
+    is_updcfg = TRUE;
+  }
+  else
+    gSaveSettings = g_key_file_get_boolean (cfg, PLUGNAME, "SaveOnExit", NULL);
 
   if (is_updcfg)
     g_key_file_save_to_file (cfg, gCfgPath, NULL);
