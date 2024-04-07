@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-01-28 13:52+0300\n"
-"PO-Revision-Date: 2024-01-28 13:54+0300\n"
+"POT-Creation-Date: 2024-04-07 22:31+0300\n"
+"PO-Revision-Date: 2024-04-07 22:32+0300\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "Language: ru\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
 "n%10<=4 && (n%100<12 || n%100>14) ? 1 : 2);\n"
-"X-Generator: Poedit 3.4.1\n"
+"X-Generator: Poedit 3.4.2\n"
 
 #: ../wlx/libarchive_cat_crap/src/plugin.c:65
 #: ../wlx/libarchive_cat_qt_crap/src/plugin.cpp:56
@@ -31,12 +31,12 @@ msgstr "libarchive: не удалось прочитать %s"
 #: ../wlx/htmlconv_qt_crap/src/plugin.cpp:118
 #: ../wlx/wlxwebkit/src/wlxwebkit.c:117
 #: ../wlx/yet_another_vte_plugin/src/plugin.c:288
-#: ../wlx/gtksourceview/src/gtksourceview.c:721
+#: ../wlx/gtksourceview/src/gtksourceview.c:720
 #: ../wlx/sqlview_qt/src/plugin.cpp:273
-#: ../wlx/syntax-highlighting_qt/src/plugin.cpp:151
+#: ../wlx/syntax-highlighting_qt/src/plugin.cpp:153
 #: ../wlx/md4c_webkit_qt/src/plugin.cpp:90 ../wlx/csvview_qt/src/plugin.cpp:307
 #: ../wlx/hx_qt_crap/src/plugin.cpp:81 ../wlx/fileinfo/src/fileinfo.c:403
-#: ../wlx/jsonview_qt/src/plugin.cpp:256
+#: ../wlx/jsonview_qt/src/plugin.cpp:262
 #: ../wlx/mimescript/src/mimescriptwlx.c:309
 #: ../wlx/htmlview_qt_crap/src/plugin.cpp:55
 #: ../wlx/wlxwebkit_qt/src/wlxwebkit.cpp:167
@@ -47,21 +47,21 @@ msgstr "\"%s\" не найден!"
 
 #: ../wlx/imagemagick/src/wlximagemagick.c:207
 #: ../wlx/gtkimgview_crap/src/gtkimgview.c:371
-#: ../wlx/qtpdfview_qt/src/plugin.cpp:156
+#: ../wlx/qtpdfview_qt/src/plugin.cpp:161
 #: ../wlx/gtkimgview/src/gtkimgview.c:222
 msgid "Zoom In"
 msgstr "Увеличить"
 
 #: ../wlx/imagemagick/src/wlximagemagick.c:212
 #: ../wlx/gtkimgview_crap/src/gtkimgview.c:376
-#: ../wlx/qtpdfview_qt/src/plugin.cpp:167
+#: ../wlx/qtpdfview_qt/src/plugin.cpp:172
 #: ../wlx/gtkimgview/src/gtkimgview.c:227
 msgid "Zoom Out"
 msgstr "Уменьшить"
 
 #: ../wlx/imagemagick/src/wlximagemagick.c:217
 #: ../wlx/gtkimgview_crap/src/gtkimgview.c:381
-#: ../wlx/qtpdfview_qt/src/plugin.cpp:178
+#: ../wlx/qtpdfview_qt/src/plugin.cpp:183
 #: ../wlx/gtkimgview/src/gtkimgview.c:232
 msgid "Original Size"
 msgstr "Исходный размер"
@@ -69,7 +69,7 @@ msgstr "Исходный размер"
 #: ../wlx/imagemagick/src/wlximagemagick.c:222
 #: ../wlx/wlxpview/src/wlxPView.c:425 ../wlx/wlxpview/src/wlxPView.c:426
 #: ../wlx/gtkimgview_crap/src/gtkimgview.c:386
-#: ../wlx/qtpdfview_qt/src/plugin.cpp:191
+#: ../wlx/qtpdfview_qt/src/plugin.cpp:196
 #: ../wlx/gtkimgview/src/gtkimgview.c:237
 msgid "Fit"
 msgstr "Вместить"
@@ -134,7 +134,7 @@ msgid "Text"
 msgstr "Текст"
 
 #: ../wlx/wlxpview/src/wlxPView.c:289 ../wlx/wlxpview/src/wlxPView.c:439
-#: ../wlx/wlxpview/src/wlxPView.c:440 ../wlx/qtpdfview_qt/src/plugin.cpp:217
+#: ../wlx/wlxpview/src/wlxPView.c:440 ../wlx/qtpdfview_qt/src/plugin.cpp:222
 msgid "Info"
 msgstr "Информация"
 
@@ -181,51 +181,55 @@ msgstr "Следующая страница"
 msgid "Last page"
 msgstr "Последняя страница"
 
-#: ../wlx/qtpdfview_qt/src/plugin.cpp:135
+#: ../wlx/qtpdfview_qt/src/plugin.cpp:140
 msgid "Go to..."
 msgstr ""
 
-#: ../wlx/qtpdfview_qt/src/plugin.cpp:143
+#: ../wlx/qtpdfview_qt/src/plugin.cpp:148
 msgid "Page number to go to:"
 msgstr ""
 
-#: ../wlx/qtpdfview_qt/src/plugin.cpp:203
+#: ../wlx/qtpdfview_qt/src/plugin.cpp:208
 msgid "Page Mode"
 msgstr ""
 
-#: ../wlx/qtpdfview_qt/src/plugin.cpp:223
+#: ../wlx/qtpdfview_qt/src/plugin.cpp:228
+#: ../wlx/qmediaplayer_qt/src/plugin.cpp:55
 msgid "Author"
 msgstr ""
 
-#: ../wlx/qtpdfview_qt/src/plugin.cpp:224
+#: ../wlx/qtpdfview_qt/src/plugin.cpp:229
+#: ../wlx/qmediaplayer_qt/src/plugin.cpp:51
 msgid "Title"
 msgstr ""
 
-#: ../wlx/qtpdfview_qt/src/plugin.cpp:225
+#: ../wlx/qtpdfview_qt/src/plugin.cpp:230
 msgid "Subject"
 msgstr ""
 
-#: ../wlx/qtpdfview_qt/src/plugin.cpp:226
+#: ../wlx/qtpdfview_qt/src/plugin.cpp:231
 msgid "Producer"
 msgstr ""
 
-#: ../wlx/qtpdfview_qt/src/plugin.cpp:227
+#: ../wlx/qtpdfview_qt/src/plugin.cpp:232
 msgid "Creator"
 msgstr ""
 
-#: ../wlx/qtpdfview_qt/src/plugin.cpp:228
+#: ../wlx/qtpdfview_qt/src/plugin.cpp:233
 msgid "Keywords"
 msgstr ""
 
-#: ../wlx/qtpdfview_qt/src/plugin.cpp:229
+#: ../wlx/qtpdfview_qt/src/plugin.cpp:234
 msgid "Creation Date"
 msgstr ""
 
-#: ../wlx/qtpdfview_qt/src/plugin.cpp:230
+#: ../wlx/qtpdfview_qt/src/plugin.cpp:235
 msgid "Modification Date"
 msgstr ""
 
-#: ../wlx/qtpdfview_qt/src/plugin.cpp:250
+#: ../wlx/qtpdfview_qt/src/plugin.cpp:255
+#: ../wlx/qmediaplayer_qt/src/plugin.cpp:258
+#: ../wlx/qmediaplayer_qt/src/plugin.cpp:495
 msgid "no suitable info available"
 msgstr ""
 
@@ -339,12 +343,12 @@ msgid "Stop Animation"
 msgstr "Остановить анимацию"
 
 #: ../wlx/jsonview_gtk2/src/plugin.c:64 ../wlx/jsonview_qt/src/plugin.cpp:57
-#: ../wlx/jsonview_qt/src/plugin.cpp:154
+#: ../wlx/jsonview_qt/src/plugin.cpp:160
 msgid "Object"
 msgstr ""
 
 #: ../wlx/jsonview_gtk2/src/plugin.c:70 ../wlx/jsonview_qt/src/plugin.cpp:64
-#: ../wlx/jsonview_qt/src/plugin.cpp:159
+#: ../wlx/jsonview_qt/src/plugin.cpp:165
 msgid "Array"
 msgstr ""
 
@@ -380,21 +384,115 @@ msgstr ""
 msgid "Null"
 msgstr ""
 
-#: ../wlx/jsonview_gtk2/src/plugin.c:156 ../wlx/jsonview_gtk2/src/plugin.c:254
-#: ../wlx/jsonview_qt/src/plugin.cpp:150
+#: ../wlx/jsonview_gtk2/src/plugin.c:164 ../wlx/jsonview_gtk2/src/plugin.c:261
+#: ../wlx/jsonview_qt/src/plugin.cpp:156
 msgid "Root"
 msgstr ""
 
-#: ../wlx/jsonview_gtk2/src/plugin.c:175 ../wlx/jsonview_qt/src/plugin.cpp:177
+#: ../wlx/jsonview_gtk2/src/plugin.c:183 ../wlx/jsonview_qt/src/plugin.cpp:183
 msgid "Node"
 msgstr ""
 
-#: ../wlx/jsonview_gtk2/src/plugin.c:187 ../wlx/jsonview_qt/src/plugin.cpp:177
+#: ../wlx/jsonview_gtk2/src/plugin.c:195 ../wlx/jsonview_qt/src/plugin.cpp:183
 msgid "Value"
 msgstr ""
 
-#: ../wlx/jsonview_gtk2/src/plugin.c:199 ../wlx/jsonview_qt/src/plugin.cpp:177
+#: ../wlx/jsonview_gtk2/src/plugin.c:207 ../wlx/jsonview_qt/src/plugin.cpp:183
 msgid "Type"
+msgstr ""
+
+#: ../wlx/qmediaplayer_qt/src/plugin.cpp:50
+msgid "Artist"
+msgstr ""
+
+#: ../wlx/qmediaplayer_qt/src/plugin.cpp:52
+msgid "Album"
+msgstr ""
+
+#: ../wlx/qmediaplayer_qt/src/plugin.cpp:53
+msgid "Track Number"
+msgstr ""
+
+#: ../wlx/qmediaplayer_qt/src/plugin.cpp:54
+msgid "Album Artist"
+msgstr ""
+
+#: ../wlx/qmediaplayer_qt/src/plugin.cpp:56
+msgid "Composer"
+msgstr ""
+
+#: ../wlx/qmediaplayer_qt/src/plugin.cpp:57
+msgid "Lead Performer"
+msgstr ""
+
+#: ../wlx/qmediaplayer_qt/src/plugin.cpp:58
+msgid "Publisher"
+msgstr ""
+
+#: ../wlx/qmediaplayer_qt/src/plugin.cpp:59
+msgid "Genre"
+msgstr ""
+
+#: ../wlx/qmediaplayer_qt/src/plugin.cpp:60
+msgid "Duration"
+msgstr ""
+
+#: ../wlx/qmediaplayer_qt/src/plugin.cpp:61
+msgid "Description"
+msgstr ""
+
+#: ../wlx/qmediaplayer_qt/src/plugin.cpp:62
+msgid "Copyright"
+msgstr ""
+
+#: ../wlx/qmediaplayer_qt/src/plugin.cpp:63
+msgid "Comment"
+msgstr ""
+
+#: ../wlx/qmediaplayer_qt/src/plugin.cpp:64
+msgid "Resolution"
+msgstr ""
+
+#: ../wlx/qmediaplayer_qt/src/plugin.cpp:65
+msgid "Media Type"
+msgstr ""
+
+#: ../wlx/qmediaplayer_qt/src/plugin.cpp:66
+msgid "Video Codec"
+msgstr ""
+
+#: ../wlx/qmediaplayer_qt/src/plugin.cpp:67
+msgid "Video FrameRate"
+msgstr ""
+
+#: ../wlx/qmediaplayer_qt/src/plugin.cpp:68
+msgid "Video BitRate"
+msgstr ""
+
+#: ../wlx/qmediaplayer_qt/src/plugin.cpp:69
+msgid "Audio Codec"
+msgstr ""
+
+#: ../wlx/qmediaplayer_qt/src/plugin.cpp:70
+msgid "Audio BitRate"
+msgstr ""
+
+#: ../wlx/qmediaplayer_qt/src/plugin.cpp:71
+msgid "Date"
+msgstr ""
+
+#: ../wlx/qmediaplayer_qt/src/plugin.cpp:85
+msgid "once"
+msgstr ""
+
+#: ../wlx/qmediaplayer_qt/src/plugin.cpp:87
+msgid "loop"
+msgstr ""
+
+#: ../wlx/qmediaplayer_qt/src/plugin.cpp:240
+#: ../wlx/qmediaplayer_qt/src/plugin.cpp:479
+#, c-format
+msgid "%'d bps"
 msgstr ""
 
 #: ../wlx/fontview_qt/src/plugin.cpp:16
@@ -472,9 +570,6 @@ msgstr "не найдено"
 #: ../dsx/recollq_crap/src/plugin.c:79 ../dsx/tracker3_crap/src/plugin.c:78
 msgid "the search text was not specified"
 msgstr "искомый текст не указан"
-
-#~ msgid "Copy"
-#~ msgstr "Копировать"
 
 #~ msgid "Paste"
 #~ msgstr "Вставить"

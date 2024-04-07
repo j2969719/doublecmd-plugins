@@ -4,6 +4,10 @@
 #include <QMimeDatabase>
 #include <QMediaMetaData>
 
+#include <dlfcn.h>
+#include <libintl.h>
+#include <locale.h>
+
 #if QT_VERSION >= 0x060000
 #include <QAudioOutput>
 #else
@@ -13,6 +17,9 @@
 #endif
 
 #include "wlxplugin.h"
+
+#define _(STRING) gettext(STRING)
+#define GETTEXT_PACKAGE "plugins"
 
 #define DURATION_EMPTY "-:--:--/-:--:--"
 #define MY_TIME_FORMAT "u:%02u:%02u"
@@ -34,6 +41,36 @@ bool gLoop = true;
 bool gSaveSettings = true;
 QString gCfgPath;
 
+#if QT_VERSION >= 0x060000
+static QMap<const char*, QMediaMetaData::Key> gMetaFields
+#else
+static QMap<const char*, QString> gMetaFields
+#endif
+{
+	{_("Artist"),	   QMediaMetaData::ContributingArtist},
+	{_("Title"), 			QMediaMetaData::Title},
+	{_("Album"),		   QMediaMetaData::AlbumTitle},
+	{_("Track Number"),	  QMediaMetaData::TrackNumber},
+	{_("Album Artist"),	  QMediaMetaData::AlbumArtist},
+	{_("Author"),		       QMediaMetaData::Author},
+	{_("Composer"),		     QMediaMetaData::Composer},
+	{_("Lead Performer"),	QMediaMetaData::LeadPerformer},
+	{_("Publisher"),	    QMediaMetaData::Publisher},
+	{_("Genre"),			QMediaMetaData::Genre},
+	{_("Duration"),		     QMediaMetaData::Duration},
+	{_("Description"),	  QMediaMetaData::Description},
+	{_("Copyright"), 	    QMediaMetaData::Copyright},
+	{_("Comment"), 		      QMediaMetaData::Comment},
+	{_("Resolution"),	   QMediaMetaData::Resolution},
+	{_("Media Type"), 	    QMediaMetaData::MediaType},
+	{_("Video Codec"), 	   QMediaMetaData::VideoCodec},
+	{_("Video FrameRate"), QMediaMetaData::VideoFrameRate},
+	{_("Video BitRate"),	 QMediaMetaData::VideoBitRate},
+	{_("Audio Codec"),	   QMediaMetaData::AudioCodec},
+	{_("Audio BitRate"),	 QMediaMetaData::AudioBitRate},
+	{_("Date"),			 QMediaMetaData::Date},
+};
+
 static void btnMuteUpdate(QPushButton *btnMute)
 {
 	if (!gMute)
@@ -45,9 +82,9 @@ static void btnMuteUpdate(QPushButton *btnMute)
 static void btnLoopUpdate(QPushButton *btnLoop)
 {
 	if (!gLoop)
-		btnLoop->setText("once");
+		btnLoop->setText(_("once"));
 	else
-		btnLoop->setText("loop");
+		btnLoop->setText(_("loop"));
 }
 
 #if QT_VERSION >= 0x060000
@@ -177,41 +214,48 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 
 	QObject::connect(player, &QMediaPlayer::metaDataChanged, [player, lblMeta, lblThumb]()
 	{
-		QString info;
-		QList<QMediaMetaData::Key> keys = player->metaData().keys();
-		lblThumb->hide();
+		QString info, value;
 
-		for (qsizetype i = 0; i < keys.size(); ++i)
+		QImage thumb = player->metaData()[QMediaMetaData::ThumbnailImage].value<QImage>();
+
+		if (thumb.isNull())
+			thumb = player->metaData()[QMediaMetaData::CoverArtImage].value<QImage>();
+
+		if (!thumb.isNull())
 		{
-			QString str, val;
+			lblThumb->setPixmap(QPixmap::fromImage(thumb).scaled(256, 256, Qt::KeepAspectRatio));
+			lblThumb->show();
+		}
+		else
+			lblThumb->hide();
 
-			if (keys.at(i) == QMediaMetaData::VideoBitRate || keys.at(i) == QMediaMetaData::AudioBitRate)
-				val = QString::asprintf("%'d", player->metaData().value(keys.at(i)).toInt());
-			else if (keys.at(i) == QMediaMetaData::ThumbnailImage)
-			{
-				QImage thumb = player->metaData()[keys.at(i)].value<QImage>();
-				lblThumb->setPixmap(QPixmap::fromImage(thumb).scaled(256, 256, Qt::KeepAspectRatio));
-				lblThumb->show();
-			}
+		QMapIterator<const char*, QMediaMetaData::Key> i(gMetaFields);
+
+		while (i.hasNext())
+		{
+			i.next();
+			QVariant val = player->metaData().value(i.value());
+
+			if (i.value() == QMediaMetaData::VideoBitRate || i.value() == QMediaMetaData::AudioBitRate)
+				value = QString::asprintf(_("%'d bps"), val.toInt());
+			else if (i.value() == QMediaMetaData::VideoFrameRate)
+				value = QString::asprintf("%d", val.toInt());
 			else
-			{
-				val = player->metaData().stringValue(keys.at(i));
-			}
+				value = player->metaData().stringValue(i.value());
 
-			if (!val.isEmpty() && player->metaData().value(keys.at(i)) != 0)
+			if (!value.isEmpty() && !val.isNull() && val != 0)
 			{
-				str.append(player->metaData().metaDataKeyToString(keys.at(i)).replace(QRegularExpression("([a-z])([A-Z])"), "\\1 \\2"));
-				str.append(": ");
-				str.append(val);
-				str.append("\n");
-				info.append(str);
+				info.append(i.key());
+				info.append(": ");
+				info.append(value);
+				info.append("\n");
 			}
 		}
 
 		if (!info.isEmpty())
 			lblMeta->setText(info);
 		else
-			lblMeta->setText("no suitable info available");
+			lblMeta->setText(_("no suitable info available"));
 	});
 
 	QPushButton *btnMute = new QPushButton(view);
@@ -418,62 +462,37 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 		if (!isMeta)
 		{
 			QString info;
-			QStringList keys =
+			QMapIterator<const char*, QString> i(gMetaFields);
+
+			while (i.hasNext())
 			{
-				"Title",
-				"SubTitle",
-				"Author",
-				"LeadPerformer",
-				"ContributingArtist",
-				"Director",
-				"Writer",
-				"Composer",
-				"AlbumArtist",
-				"AlbumTitle",
-				"TrackNumber",
-				"ChapterNumber",
-				"Comment",
-				"Description",
-				"Category",
-				"Genre",
-				"Year",
-				"Date",
-				"Language",
-				"Publisher",
-				"Copyright",
-				"Conductor",
-				"ParentalRating",
-				"RatingOrganization",
-				"Keywords",
-				"MediaType",
-				"Resolution",
-				"VideoCodec",
-				"AudioCodec",
-			};
+				i.next();
 
-			for (int i = 0; i < keys.size(); ++i)
-				if (playlist->mediaObject()->metaData(keys[i]).isValid())
+				QVariant val = playlist->mediaObject()->metaData(i.value());
+
+				if (val.isValid())
 				{
-					QString str;
-					str.append(QString(keys[i]).replace(QRegularExpression("([a-z])([A-Z])"), "\\1 \\2"));
-					str.append(": ");
+					info.append(i.key());
+					info.append(": ");
 
-					if (playlist->mediaObject()->metaData(keys[i]).canConvert(QMetaType::QString))
-						str.append(playlist->mediaObject()->metaData(keys[i]).toString());
-					else if (playlist->mediaObject()->metaData(keys[i]).canConvert(QMetaType::QSize))
+					if (i.value() == QMediaMetaData::VideoBitRate || i.value() == QMediaMetaData::AudioBitRate)
+						info.append(QString::asprintf(_("%'d bps"), val.toInt()));
+					else if (val.canConvert(QMetaType::QString))
+						info.append(val.toString());
+					else if (val.canConvert(QMetaType::QSize))
 					{
-						QSize size = playlist->mediaObject()->metaData(keys[i]).toSize();
-						str.append(QString("%1x%2").arg(size.width()).arg(size.height()));
+						QSize size = val.toSize();
+						info.append(QString("%1x%2").arg(size.width()).arg(size.height()));
 					}
 
-					str.append("\n");
-					info.append(str);
+					info.append("\n");
 				}
+			}
 
 			if (!info.isEmpty())
 				lblMeta->setText(info);
 			else
-				lblMeta->setText("no suitable info available");
+				lblMeta->setText(_("no suitable info available"));
 		}
 
 		lblMeta->setVisible(!isMeta);
@@ -642,6 +661,25 @@ int DCPCALL ListSearchDialog(HWND ListWin, int FindNext)
 
 void DCPCALL ListSetDefaultParams(ListDefaultParamStruct* dps)
 {
+	Dl_info dlinfo;
+	static char plg_path[PATH_MAX];
+	const char* loc_dir = "langs";
+
+	memset(&dlinfo, 0, sizeof(dlinfo));
+
+	if (dladdr(plg_path, &dlinfo) != 0)
+	{
+		strncpy(plg_path, dlinfo.dli_fname, PATH_MAX);
+		char *pos = strrchr(plg_path, '/');
+
+		if (pos)
+			strcpy(pos + 1, loc_dir);
+
+		setlocale(LC_ALL, "");
+		bindtextdomain(GETTEXT_PACKAGE, plg_path);
+		textdomain(GETTEXT_PACKAGE);
+	}
+
 	QFileInfo defini(QString::fromStdString(dps->DefaultIniName));
 	gCfgPath = defini.absolutePath() + "/j2969719.ini";
 	QSettings settings(gCfgPath, QSettings::IniFormat);
