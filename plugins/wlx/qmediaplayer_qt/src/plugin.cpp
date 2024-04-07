@@ -26,34 +26,35 @@
         (uint) ((t / 1000) % 60) : 99
 
 Q_DECLARE_METATYPE(QMediaPlayer *)
-QMimeDatabase db;
 
+QMimeDatabase gDB;
 int gVolume = 80;
 bool gMute = false;
 bool gLoop = true;
+bool gSaveSettings = true;
 QString gCfgPath;
 
-static void update_mutebtn(QPushButton *bmute)
+static void btnMuteUpdate(QPushButton *btnMute)
 {
 	if (!gMute)
-		bmute->setIcon(QApplication::style()->standardIcon(QStyle::SP_MediaVolume));
+		btnMute->setIcon(QApplication::style()->standardIcon(QStyle::SP_MediaVolume));
 	else
-		bmute->setIcon(QApplication::style()->standardIcon(QStyle::SP_MediaVolumeMuted));
+		btnMute->setIcon(QApplication::style()->standardIcon(QStyle::SP_MediaVolumeMuted));
 }
 
-static void update_loopbtn(QPushButton *bloop)
+static void btnLoopUpdate(QPushButton *btnLoop)
 {
 	if (!gLoop)
-		bloop->setText("once");
+		btnLoop->setText("once");
 	else
-		bloop->setText("loop");
+		btnLoop->setText("loop");
 }
 
 #if QT_VERSION >= 0x060000
 HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 {
-	QVariant vplayer;
-	QMimeType type = db.mimeTypeForFile(QString(FileToLoad));
+	QVariant varPlayer;
+	QMimeType type = gDB.mimeTypeForFile(QString(FileToLoad));
 
 	if (!type.name().contains("audio") && !type.name().contains("video"))
 		return nullptr;
@@ -62,23 +63,17 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 
 	QMediaPlayer *player = new QMediaPlayer((QObject*)view);
 
-	QObject::connect(player, &QMediaPlayer::errorChanged, [player, view]()
-	{
-		if (player->error() != QMediaPlayer::NoError)
-			QMessageBox::critical(view, "", player->errorString());
-	});
-
 	QAudioOutput *audio = new QAudioOutput((QObject*)view);
 	player->setAudioOutput(audio);
 
-	QPushButton *bloop = new QPushButton(view);
-	update_loopbtn(bloop);
+	QPushButton *btnLoop = new QPushButton(view);
+	btnLoopUpdate(btnLoop);
 
-	QObject::connect(bloop, &QPushButton::clicked, [bloop, player]()
+	QObject::connect(btnLoop, &QPushButton::clicked, [btnLoop, player]()
 	{
 		gLoop = !gLoop;
 		player->setLoops(gLoop ? QMediaPlayer::Infinite : QMediaPlayer::Once);
-		update_loopbtn(bloop);
+		btnLoopUpdate(btnLoop);
 	});
 
 	player->setLoops(gLoop ? QMediaPlayer::Infinite : QMediaPlayer::Once);
@@ -86,108 +81,178 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 	QVBoxLayout *main = new QVBoxLayout(view);
 
 	QVideoWidget *video = new QVideoWidget(view);
+	video->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 	player->setVideoOutput(video);
+	video->hide();
 	main->addWidget(video);
 
-	QSlider *spos = new QSlider(Qt::Horizontal, view);
-	spos->setRange(0, player->duration() / 1000);
+	QLabel *lblThumb = new QLabel(view);
+	lblThumb->setAlignment(Qt::AlignCenter);
+	//lblThumb->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
+	lblThumb->hide();
+	main->addWidget(lblThumb);
 
-	QObject::connect(spos, &QSlider::sliderMoved, [player](int x)
+	QLabel *lblMeta = new QLabel(view);
+	lblMeta->setAlignment(Qt::AlignCenter);
+	lblMeta->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+	lblMeta->setTextInteractionFlags(Qt::TextSelectableByMouse);
+	main->addWidget(lblMeta);
+
+	QLabel *lblError = new QLabel(view);
+	lblError->setAlignment(Qt::AlignCenter);
+	lblError->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
+	lblError->hide();
+	main->addWidget(lblError);
+
+	QObject::connect(player, &QMediaPlayer::errorChanged, [player, lblError]()
+	{
+		if (player->error() != QMediaPlayer::NoError)
+		{
+			player->stop();
+			lblError->setText(QString("ERROR: %1").arg(player->errorString()));
+			lblError->show();
+		}
+		else
+			lblError->hide();
+	});
+
+	QSlider *sldrPos = new QSlider(Qt::Horizontal, view);
+	sldrPos->setRange(0, player->duration() / 1000);
+
+	QObject::connect(sldrPos, &QSlider::sliderMoved, [player](int x)
 	{
 		player->setPosition(x * 1000);
 	});
 
-	QObject::connect(player, &QMediaPlayer::durationChanged, [spos](qint64 x)
+	QObject::connect(player, &QMediaPlayer::durationChanged, [sldrPos](qint64 x)
 	{
-		spos->setMaximum(x / 1000);
-		spos->setProperty("duration", x);
+		sldrPos->setMaximum(x / 1000);
+		sldrPos->setProperty("duration", x);
 	});
 
-	QLabel *ltime = new QLabel(DURATION_EMPTY, view);
-
-	QObject::connect(player, &QMediaPlayer::positionChanged, [spos, ltime](qint64 x)
+	QObject::connect(player, &QMediaPlayer::seekableChanged, [sldrPos](bool seekable)
 	{
-		spos->setValue(x / 1000);
-		qint64 duration = spos->property("duration").value<qint64>();
-		ltime->setText(QString::asprintf("%" MY_TIME_FORMAT "/%" MY_TIME_FORMAT, MY_TIME_ARGS(x), MY_TIME_ARGS(duration)));
+		sldrPos->setEnabled(seekable);
 	});
 
-	main->addWidget(spos);
+	QLabel *lblTime = new QLabel(DURATION_EMPTY, view);
+
+	QObject::connect(player, &QMediaPlayer::positionChanged, [sldrPos, lblTime](qint64 x)
+	{
+		sldrPos->setValue(x / 1000);
+		qint64 duration = sldrPos->property("duration").value<qint64>();
+		lblTime->setText(QString::asprintf("%" MY_TIME_FORMAT "/%" MY_TIME_FORMAT, MY_TIME_ARGS(x), MY_TIME_ARGS(duration)));
+	});
+
+	main->addWidget(sldrPos);
 
 	QHBoxLayout *controls = new QHBoxLayout;
 
-	QPushButton *bplay = new QPushButton(view);
-	bplay->setIcon(QApplication::style()->standardIcon(QStyle::SP_MediaPlay));
-	QObject::connect(bplay, SIGNAL(clicked()), player, SLOT(play()));
+	QPushButton *btnPlay = new QPushButton(view);
+	btnPlay->setIcon(QApplication::style()->standardIcon(QStyle::SP_MediaPlay));
+	QObject::connect(btnPlay, SIGNAL(clicked()), player, SLOT(play()));
 
-	QPushButton *bpause = new QPushButton(view);
-	bpause->setIcon(QApplication::style()->standardIcon(QStyle::SP_MediaPause));
-	QObject::connect(bpause, SIGNAL(clicked()), player, SLOT(pause()));
+	QPushButton *btnPause = new QPushButton(view);
+	btnPause->setIcon(QApplication::style()->standardIcon(QStyle::SP_MediaPause));
+	QObject::connect(btnPause, SIGNAL(clicked()), player, SLOT(pause()));
 
+	QPushButton *btnInfo = new QPushButton(view);
+	btnInfo->setIcon(QApplication::style()->standardIcon(QStyle::SP_MessageBoxInformation));
+	btnInfo->setFocusPolicy(Qt::NoFocus);
+	btnInfo->setEnabled(false);
 
-	QPushButton *binfo = new QPushButton(view);
-	binfo->setIcon(QApplication::style()->standardIcon(QStyle::SP_MessageBoxInformation));
-	binfo->setFocusPolicy(Qt::NoFocus);
+	QObject::connect(player, &QMediaPlayer::hasVideoChanged, [lblMeta, btnInfo, lblThumb, video](bool videoAvailable)
+	{
+		lblMeta->setVisible(!videoAvailable);
+		btnInfo->setEnabled(videoAvailable);
+		video->setVisible(videoAvailable);
+		lblThumb->hide();
+	});
 
-	QObject::connect(binfo, &QPushButton::clicked, [player, view]()
+	QObject::connect(btnInfo, &QPushButton::clicked, [player, lblMeta, video]()
+	{
+		bool isMeta = lblMeta->isVisible();
+		lblMeta->setVisible(!isMeta);
+		video->setVisible(isMeta);
+	});
+
+	QObject::connect(player, &QMediaPlayer::metaDataChanged, [player, lblMeta, lblThumb]()
 	{
 		QString info;
 		QList<QMediaMetaData::Key> keys = player->metaData().keys();
+		lblThumb->hide();
 
 		for (qsizetype i = 0; i < keys.size(); ++i)
 		{
-			QString str;
-			str.append(player->metaData().metaDataKeyToString(keys.at(i)).replace(QRegularExpression("([a-z])([A-Z])"), "\\1 \\2"));
-			str.append(": ");
-			str.append(player->metaData().stringValue(keys.at(i)));
-			str.append("\n");
-			info.append(str);
+			QString str, val;
 
+			if (keys.at(i) == QMediaMetaData::VideoBitRate || keys.at(i) == QMediaMetaData::AudioBitRate)
+				val = QString::asprintf("%'d", player->metaData().value(keys.at(i)).toInt());
+			else if (keys.at(i) == QMediaMetaData::ThumbnailImage)
+			{
+				QImage thumb = player->metaData()[keys.at(i)].value<QImage>();
+				lblThumb->setPixmap(QPixmap::fromImage(thumb).scaled(256, 256, Qt::KeepAspectRatio));
+				lblThumb->show();
+			}
+			else
+			{
+				val = player->metaData().stringValue(keys.at(i));
+			}
+
+			if (!val.isEmpty() && player->metaData().value(keys.at(i)) != 0)
+			{
+				str.append(player->metaData().metaDataKeyToString(keys.at(i)).replace(QRegularExpression("([a-z])([A-Z])"), "\\1 \\2"));
+				str.append(": ");
+				str.append(val);
+				str.append("\n");
+				info.append(str);
+			}
 		}
+
 		if (!info.isEmpty())
-			QMessageBox::information(view, "", info);
+			lblMeta->setText(info);
 		else
-			QMessageBox::information(view, "", "no suitable info available");
+			lblMeta->setText("no suitable info available");
 	});
 
-	QPushButton *bmute = new QPushButton(view);
-	bmute->setFocusPolicy(Qt::NoFocus);
+	QPushButton *btnMute = new QPushButton(view);
+	btnMute->setFocusPolicy(Qt::NoFocus);
 	audio->setMuted(gMute);
-	update_mutebtn(bmute);
+	btnMuteUpdate(btnMute);
 
-	QObject::connect(bmute, &QPushButton::clicked, [bmute, audio]()
+	QObject::connect(btnMute, &QPushButton::clicked, [btnMute, audio]()
 	{
 		gMute = !audio->isMuted();
 		audio->setMuted(gMute);
-		update_mutebtn(bmute);
+		btnMuteUpdate(btnMute);
 	});
 
-	QSlider *svolume = new QSlider(Qt::Horizontal, view);
-	svolume->setRange(1, 100);
+	QSlider *sldrVolume = new QSlider(Qt::Horizontal, view);
+	sldrVolume->setRange(1, 100);
 
-	QObject::connect(svolume, &QSlider::valueChanged, [svolume, audio]()
+	QObject::connect(sldrVolume, &QSlider::valueChanged, [sldrVolume, audio]()
 	{
-		gVolume = svolume->value();
+		gVolume = sldrVolume->value();
 		audio->setVolume(QAudio::convertVolume(gVolume / qreal(100), QAudio::LogarithmicVolumeScale, QAudio::LinearVolumeScale));
 	});
 
-	svolume->setValue(gVolume);
+	sldrVolume->setValue(gVolume);
 
-	controls->addWidget(bplay);
-	controls->addWidget(bpause);
+	controls->addWidget(btnPlay);
+	controls->addWidget(btnPause);
 	controls->addSpacing(10);
-	controls->addWidget(binfo);
+	controls->addWidget(btnInfo);
 	controls->addSpacing(5);
-	controls->addWidget(ltime);
+	controls->addWidget(lblTime);
 	controls->addSpacing(5);
-	controls->addWidget(bloop);
+	controls->addWidget(btnLoop);
 	controls->addStretch(1);
-	controls->addWidget(bmute);
-	controls->addWidget(svolume);
+	controls->addWidget(btnMute);
+	controls->addWidget(sldrVolume);
 	main->addLayout(controls);
 
-	vplayer.setValue(player);
-	view->setProperty("player", vplayer);
+	varPlayer.setValue(player);
+	view->setProperty("player", varPlayer);
 	view->show();
 	player->setSource(QUrl::fromLocalFile(FileToLoad));
 	player->play();
@@ -200,7 +265,7 @@ int DCPCALL ListLoadNext(HWND ParentWin, HWND PluginWin, char* FileToLoad, int S
 	QWidget *view = (QWidget*)PluginWin;
 	QMediaPlayer *player = view->property("player").value<QMediaPlayer *>();
 
-	QMimeType type = db.mimeTypeForFile(QString(FileToLoad));
+	QMimeType type = gDB.mimeTypeForFile(QString(FileToLoad));
 
 	if (type.name().contains("audio") || type.name().contains("video"))
 	{
@@ -214,8 +279,8 @@ int DCPCALL ListLoadNext(HWND ParentWin, HWND PluginWin, char* FileToLoad, int S
 #else
 HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 {
-	QVariant vplayer;
-	QMimeType type = db.mimeTypeForFile(QString(FileToLoad));
+	QVariant varPlayer;
+	QMimeType type = gDB.mimeTypeForFile(QString(FileToLoad));
 
 	if (!type.name().contains("audio") && !type.name().contains("video"))
 		return nullptr;
@@ -226,26 +291,19 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 	QMediaPlayer *player = new QMediaPlayer((QObject*)view);
 	QMediaPlaylist *playlist = new QMediaPlaylist((QObject*)player);
 
-	QPushButton *bloop = new QPushButton(view);
-	update_loopbtn(bloop);
-
-	QObject::connect(bloop, &QPushButton::clicked, [bloop, player, playlist]()
-	{
-		gLoop = !gLoop;
-		playlist->setPlaybackMode(gLoop ? QMediaPlaylist::Loop : QMediaPlaylist::CurrentItemOnce);
-		update_loopbtn(bloop);
-	});
-
-	playlist->setPlaybackMode(gLoop ? QMediaPlaylist::Loop : QMediaPlaylist::CurrentItemOnce);
 	player->setPlaylist(playlist);
 
-	QObject::connect(player, QOverload<QMediaPlayer::Error>::of(&QMediaPlayer::error), [view, player, bloop](QMediaPlayer::Error error)
+	QPushButton *btnLoop = new QPushButton(view);
+	btnLoopUpdate(btnLoop);
+
+	QObject::connect(btnLoop, &QPushButton::clicked, [btnLoop, player, playlist]()
 	{
-		gLoop = false;
-		player->playlist()->setPlaybackMode(QMediaPlaylist::CurrentItemOnce);
-		update_loopbtn(bloop);
-		QMessageBox::critical(view, "", player->errorString());
+		gLoop = !gLoop;
+		playlist->setPlaybackMode(gLoop ? QMediaPlaylist::Loop : QMediaPlaylist::Sequential);
+		btnLoopUpdate(btnLoop);
 	});
+
+	playlist->setPlaybackMode(gLoop ? QMediaPlaylist::Loop : QMediaPlaylist::Sequential);
 
 	QVBoxLayout *main = new QVBoxLayout(view);
 
@@ -265,154 +323,193 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 	video->setAutoFillBackground(true);
 	main->addWidget(video);
 
-	QLabel *linfo = new QLabel(view);
-	linfo->setAlignment(Qt::AlignCenter);
-	linfo->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
-	main->addWidget(linfo);
+	QLabel *lblMeta = new QLabel(view);
+	lblMeta->setAlignment(Qt::AlignCenter);
+	lblMeta->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+	lblMeta->setTextInteractionFlags(Qt::TextSelectableByMouse);
+	lblMeta->hide();
+	main->addWidget(lblMeta);
 
-	QLabel *lnum = new QLabel(view);
-	lnum->hide();
+	QLabel *lblError = new QLabel(view);
+	lblError->setAlignment(Qt::AlignCenter);
+	lblError->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
+	lblError->hide();
+	main->addWidget(lblError);
 
-	QObject::connect(playlist, &QMediaPlaylist::currentIndexChanged, [player, linfo, lnum](int x)
+	QLabel *lblInfo = new QLabel(view);
+	lblInfo->setAlignment(Qt::AlignCenter);
+	lblInfo->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
+	main->addWidget(lblInfo);
+
+	QObject::connect(player, QOverload<QMediaPlayer::Error>::of(&QMediaPlayer::error), [view, player, lblError, video](QMediaPlayer::Error error)
 	{
-		linfo->setText("");
-		lnum->setText(QString("%1/%2").arg(x + 1).arg(player->playlist()->mediaCount()));
-		player->playlist()->setPlaybackMode(QMediaPlaylist::Loop);
+		player->playlist()->setPlaybackMode(QMediaPlaylist::CurrentItemOnce);
+		player->stop();
+		lblError->setText(QString("ERROR: %1").arg(player->errorString()));
+		lblError->show();
 	});
 
-	QSlider *spos = new QSlider(Qt::Horizontal, view);
-	spos->setFocusPolicy(Qt::NoFocus);
-	spos->setRange(0, player->duration() / 1000);
+	QObject::connect(player, &QMediaPlayer::currentMediaChanged, [lblMeta, lblError, video](const QMediaContent & media)
+	{
+		lblError->hide();
+		lblMeta->hide();
+		video->show();
+	});
 
-	QObject::connect(spos, &QSlider::sliderMoved, [player](int x)
+	QLabel *lblNum = new QLabel(view);
+	lblNum->hide();
+
+	QObject::connect(playlist, &QMediaPlaylist::currentIndexChanged, [player, lblInfo, lblNum, lblError](int x)
+	{
+		lblInfo->setText("");
+		lblNum->setText(QString("%1/%2").arg(x + 1).arg(player->playlist()->mediaCount()));
+	});
+
+	QSlider *sldrPos = new QSlider(Qt::Horizontal, view);
+	sldrPos->setFocusPolicy(Qt::NoFocus);
+	sldrPos->setRange(0, player->duration() / 1000);
+
+	QObject::connect(sldrPos, &QSlider::sliderMoved, [player](int x)
 	{
 		player->setPosition(x * 1000);
 	});
 
-	QObject::connect(player, &QMediaPlayer::durationChanged, [spos](qint64 x)
+	QObject::connect(player, &QMediaPlayer::durationChanged, [sldrPos](qint64 x)
 	{
-		spos->setMaximum(x / 1000);
-		spos->setProperty("duration", x);
+		sldrPos->setMaximum(x / 1000);
+		sldrPos->setProperty("duration", x);
 	});
 
-	QLabel *ltime = new QLabel(DURATION_EMPTY, view);
-
-	QObject::connect(player, &QMediaPlayer::positionChanged, [spos, ltime](qint64 x)
+	QObject::connect(player, &QMediaPlayer::seekableChanged, [sldrPos](bool seekable)
 	{
-		spos->setValue(x / 1000);
-		qint64 duration = spos->property("duration").value<qint64>();
-		ltime->setText(QString::asprintf("%" MY_TIME_FORMAT "/%" MY_TIME_FORMAT, MY_TIME_ARGS(x), MY_TIME_ARGS(duration)));
+		sldrPos->setEnabled(seekable);
 	});
 
-	main->addWidget(spos);
+	QLabel *lblTime = new QLabel(DURATION_EMPTY, view);
+
+	QObject::connect(player, &QMediaPlayer::positionChanged, [sldrPos, lblTime](qint64 x)
+	{
+		sldrPos->setValue(x / 1000);
+		qint64 duration = sldrPos->property("duration").value<qint64>();
+		lblTime->setText(QString::asprintf("%" MY_TIME_FORMAT "/%" MY_TIME_FORMAT, MY_TIME_ARGS(x), MY_TIME_ARGS(duration)));
+	});
+
+	main->addWidget(sldrPos);
 
 	QHBoxLayout *controls = new QHBoxLayout;
 
-	QPushButton *bplay = new QPushButton(view);
-	bplay->setIcon(QApplication::style()->standardIcon(QStyle::SP_MediaPlay));
-	QObject::connect(bplay, &QPushButton::clicked, player, &QMediaPlayer::play);
-	bplay->setFocusPolicy(Qt::NoFocus);
+	QPushButton *btnPlay = new QPushButton(view);
+	btnPlay->setIcon(QApplication::style()->standardIcon(QStyle::SP_MediaPlay));
+	QObject::connect(btnPlay, &QPushButton::clicked, player, &QMediaPlayer::play);
+	btnPlay->setFocusPolicy(Qt::NoFocus);
 
-	QPushButton *bpause = new QPushButton(view);
-	bpause->setIcon(QApplication::style()->standardIcon(QStyle::SP_MediaPause));
-	QObject::connect(bpause, &QPushButton::clicked, player, &QMediaPlayer::pause);
-	bpause->setFocusPolicy(Qt::NoFocus);
+	QPushButton *btnPause = new QPushButton(view);
+	btnPause->setIcon(QApplication::style()->standardIcon(QStyle::SP_MediaPause));
+	QObject::connect(btnPause, &QPushButton::clicked, player, &QMediaPlayer::pause);
+	btnPause->setFocusPolicy(Qt::NoFocus);
 
-	QPushButton *binfo = new QPushButton(view);
-	binfo->setIcon(QApplication::style()->standardIcon(QStyle::SP_MessageBoxInformation));
-	binfo->setFocusPolicy(Qt::NoFocus);
+	QPushButton *btnInfo = new QPushButton(view);
+	btnInfo->setIcon(QApplication::style()->standardIcon(QStyle::SP_MessageBoxInformation));
+	btnInfo->setFocusPolicy(Qt::NoFocus);
 
-	QObject::connect(binfo, &QPushButton::clicked, [playlist, view]()
+	QObject::connect(btnInfo, &QPushButton::clicked, [playlist, lblMeta, video]()
 	{
-		QString info;
-		QStringList keys =
+		bool isMeta = lblMeta->isVisible();
+
+		if (!isMeta)
 		{
-			"Title",
-			"SubTitle",
-			"Author",
-			"LeadPerformer",
-			"ContributingArtist",
-			"Director",
-			"Writer",
-			"Composer",
-			"AlbumArtist",
-			"AlbumTitle",
-			"TrackNumber",
-			"ChapterNumber",
-			"Comment",
-			"Description",
-			"Category",
-			"Genre",
-			"Year",
-			"Date",
-			"Language",
-			"Publisher",
-			"Copyright",
-			"Conductor",
-			"ParentalRating",
-			"RatingOrganization",
-			"Keywords",
-			"MediaType",
-			"Resolution",
-			"VideoCodec",
-			"AudioCodec",
-		};
-
-		for (int i = 0; i < keys.size(); ++i)
-			if (playlist->mediaObject()->metaData(keys[i]).isValid())
+			QString info;
+			QStringList keys =
 			{
-				QString str;
-				str.append(QString(keys[i]).replace(QRegularExpression("([a-z])([A-Z])"), "\\1 \\2"));
-				str.append(": ");
+				"Title",
+				"SubTitle",
+				"Author",
+				"LeadPerformer",
+				"ContributingArtist",
+				"Director",
+				"Writer",
+				"Composer",
+				"AlbumArtist",
+				"AlbumTitle",
+				"TrackNumber",
+				"ChapterNumber",
+				"Comment",
+				"Description",
+				"Category",
+				"Genre",
+				"Year",
+				"Date",
+				"Language",
+				"Publisher",
+				"Copyright",
+				"Conductor",
+				"ParentalRating",
+				"RatingOrganization",
+				"Keywords",
+				"MediaType",
+				"Resolution",
+				"VideoCodec",
+				"AudioCodec",
+			};
 
-				if (playlist->mediaObject()->metaData(keys[i]).canConvert(QMetaType::QString))
-					str.append(playlist->mediaObject()->metaData(keys[i]).toString());
-				else if (playlist->mediaObject()->metaData(keys[i]).canConvert(QMetaType::QSize))
+			for (int i = 0; i < keys.size(); ++i)
+				if (playlist->mediaObject()->metaData(keys[i]).isValid())
 				{
-					QSize size = playlist->mediaObject()->metaData(keys[i]).toSize();
-					str.append(QString("%1x%2").arg(size.width()).arg(size.height()));
+					QString str;
+					str.append(QString(keys[i]).replace(QRegularExpression("([a-z])([A-Z])"), "\\1 \\2"));
+					str.append(": ");
+
+					if (playlist->mediaObject()->metaData(keys[i]).canConvert(QMetaType::QString))
+						str.append(playlist->mediaObject()->metaData(keys[i]).toString());
+					else if (playlist->mediaObject()->metaData(keys[i]).canConvert(QMetaType::QSize))
+					{
+						QSize size = playlist->mediaObject()->metaData(keys[i]).toSize();
+						str.append(QString("%1x%2").arg(size.width()).arg(size.height()));
+					}
+
+					str.append("\n");
+					info.append(str);
 				}
 
-				str.append("\n");
-				info.append(str);
-			}
+			if (!info.isEmpty())
+				lblMeta->setText(info);
+			else
+				lblMeta->setText("no suitable info available");
+		}
 
-		if (!info.isEmpty())
-			QMessageBox::information(view, "", info);
-		else
-			QMessageBox::information(view, "", "no suitable info available");
+		lblMeta->setVisible(!isMeta);
+		video->setVisible(isMeta);
 	});
 
-	QPushButton *bprev = new QPushButton(view);
-	bprev->setIcon(QApplication::style()->standardIcon(QStyle::SP_ArrowBack));
-	QObject::connect(bprev, &QPushButton::clicked, playlist, &QMediaPlaylist::previous);
-	bprev->setFocusPolicy(Qt::NoFocus);
-	bprev->hide();
+	QPushButton *btnPrev = new QPushButton(view);
+	btnPrev->setIcon(QApplication::style()->standardIcon(QStyle::SP_ArrowBack));
+	QObject::connect(btnPrev, &QPushButton::clicked, playlist, &QMediaPlaylist::previous);
+	btnPrev->setFocusPolicy(Qt::NoFocus);
+	btnPrev->hide();
 
-	QPushButton *bnext = new QPushButton(view);
-	bnext->setIcon(QApplication::style()->standardIcon(QStyle::SP_ArrowForward));
-	QObject::connect(bnext, &QPushButton::clicked, playlist, &QMediaPlaylist::next);
-	bnext->setFocusPolicy(Qt::NoFocus);
-	bnext->hide();
+	QPushButton *btnNext = new QPushButton(view);
+	btnNext->setIcon(QApplication::style()->standardIcon(QStyle::SP_ArrowForward));
+	QObject::connect(btnNext, &QPushButton::clicked, playlist, &QMediaPlaylist::next);
+	btnNext->setFocusPolicy(Qt::NoFocus);
+	btnNext->hide();
 
-	QObject::connect(playlist, &QMediaPlaylist::loaded, [bnext, bprev, lnum]()
+	QObject::connect(playlist, &QMediaPlaylist::loaded, [btnNext, btnPrev, lblNum]()
 	{
-		bprev->show();
-		bnext->show();
-		lnum->show();
+		btnPrev->show();
+		btnNext->show();
+		lblNum->show();
 	});
 
-	QObject::connect(playlist, &QMediaPlaylist::mediaRemoved, [linfo, player, bnext, bprev, lnum](int start, int end)
+	QObject::connect(playlist, &QMediaPlaylist::mediaRemoved, [lblInfo, player, btnNext, btnPrev, lblNum, lblMeta, video](int start, int end)
 	{
-		bprev->hide();
-		bnext->hide();
-		lnum->hide();
-		player->playlist()->setPlaybackMode(QMediaPlaylist::Loop);
-		linfo->setText("");
+		btnPrev->hide();
+		btnNext->hide();
+		lblNum->hide();
+		lblInfo->setText("");
 	});
 
 #if (QT_VERSION >= QT_VERSION_CHECK(5, 15, 0))
-	QObject::connect(player, QOverload<const QString &, const QVariant &>::of(&QMediaObject::metaDataChanged), [video, linfo](const QString & key, const QVariant & value)
+	QObject::connect(player, QOverload<const QString &, const QVariant &>::of(&QMediaObject::metaDataChanged), [video, lblInfo, playlist, lblMeta](const QString & key, const QVariant & value)
 	{
 		if (key == "CoverArtImage")
 		{
@@ -422,10 +519,10 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 			video->videoSurface()->present(image);
 		}
 		else if (key == "ContributingArtist")
-			linfo->setText(value.value<QString>());
+			lblInfo->setText(value.value<QString>());
 		else if (key == "Title")
 		{
-			QString text = linfo->text();
+			QString text = lblInfo->text();
 
 			if (text.length() > 256 || text.contains("\t—\t"))
 				text.clear();
@@ -434,53 +531,52 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 				text.append("\t—\t");
 
 			text.append(value.value<QString>());
-			linfo->setText(text);
+			lblInfo->setText(text);
 		}
 	});
 #endif
 
-	QPushButton *bmute = new QPushButton(view);
-	bmute->setFocusPolicy(Qt::NoFocus);
+	QPushButton *btnMute = new QPushButton(view);
+	btnMute->setFocusPolicy(Qt::NoFocus);
 	player->setMuted(gMute);
-	update_mutebtn(bmute);
+	btnMuteUpdate(btnMute);
 
-
-	QObject::connect(bmute, &QPushButton::clicked, [bmute, player]()
+	QObject::connect(btnMute, &QPushButton::clicked, [btnMute, player]()
 	{
 		gMute = !player->isMuted();
 		player->setMuted(gMute);
-		update_mutebtn(bmute);
+		btnMuteUpdate(btnMute);
 	});
 
-	QSlider *svolume = new QSlider(Qt::Horizontal, view);
-	svolume->setRange(1, 100);
-	svolume->setValue(gVolume);
+	QSlider *sldrVolume = new QSlider(Qt::Horizontal, view);
+	sldrVolume->setRange(1, 100);
+	sldrVolume->setValue(gVolume);
 	player->setVolume(gVolume);
 
-	QObject::connect(svolume, &QSlider::valueChanged, [svolume, player]()
+	QObject::connect(sldrVolume, &QSlider::valueChanged, [sldrVolume, player]()
 	{
-		gVolume = svolume->value();
+		gVolume = sldrVolume->value();
 		player->setVolume(gVolume);
 	});
 
-	svolume->setFocusPolicy(Qt::NoFocus);
+	sldrVolume->setFocusPolicy(Qt::NoFocus);
 
-	controls->addWidget(bplay);
-	controls->addWidget(bpause);
+	controls->addWidget(btnPlay);
+	controls->addWidget(btnPause);
 	controls->addSpacing(10);
-	controls->addWidget(binfo);
-	controls->addSpacing(10);
-	controls->addWidget(bprev);
-	controls->addWidget(bnext);
-	controls->addSpacing(10);
-	controls->addWidget(lnum);
+	controls->addWidget(btnInfo);
 	controls->addSpacing(5);
-	controls->addWidget(ltime);
+	controls->addWidget(lblTime);
 	controls->addSpacing(5);
-	controls->addWidget(bloop);
+	controls->addWidget(btnLoop);
+	controls->addSpacing(10);
+	controls->addWidget(btnPrev);
+	controls->addWidget(btnNext);
+	controls->addSpacing(10);
+	controls->addWidget(lblNum);
 	controls->addStretch(1);
-	controls->addWidget(bmute);
-	controls->addWidget(svolume);
+	controls->addWidget(btnMute);
+	controls->addWidget(sldrVolume);
 	main->addLayout(controls);
 
 	if (type.name() == "audio/x-mpegurl")
@@ -488,8 +584,8 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 	else
 		playlist->addMedia(QUrl::fromLocalFile(FileToLoad));
 
-	vplayer.setValue(player);
-	view->setProperty("player", vplayer);
+	varPlayer.setValue(player);
+	view->setProperty("player", varPlayer);
 	view->show();
 
 	player->play();
@@ -502,7 +598,7 @@ int DCPCALL ListLoadNext(HWND ParentWin, HWND PluginWin, char* FileToLoad, int S
 	QFrame *view = (QFrame*)PluginWin;
 	QMediaPlayer *player = view->property("player").value<QMediaPlayer *>();
 
-	QMimeType type = db.mimeTypeForFile(QString(FileToLoad));
+	QMimeType type = gDB.mimeTypeForFile(QString(FileToLoad));
 
 	if (type.name().contains("audio") || type.name().contains("video"))
 	{
@@ -521,16 +617,20 @@ int DCPCALL ListLoadNext(HWND ParentWin, HWND PluginWin, char* FileToLoad, int S
 }
 #endif
 
-
 void DCPCALL ListCloseWindow(HANDLE ListWin)
 {
 	QFrame *view = (QFrame*)ListWin;
 	QMediaPlayer *player = view->property("player").value<QMediaPlayer *>();
 
-	QSettings settings(gCfgPath, QSettings::IniFormat);
-	settings.setValue(PLUGNAME "/volume", gVolume);
-	settings.setValue(PLUGNAME "/mute", gMute);
-	settings.setValue(PLUGNAME "/loop", gLoop);
+	player->stop();
+
+	if (gSaveSettings)
+	{
+		QSettings settings(gCfgPath, QSettings::IniFormat);
+		settings.setValue(PLUGNAME "/volume", gVolume);
+		settings.setValue(PLUGNAME "/mute", gMute);
+		settings.setValue(PLUGNAME "/loop", gLoop);
+	}
 
 	delete player;
 	delete view;
@@ -561,4 +661,9 @@ void DCPCALL ListSetDefaultParams(ListDefaultParamStruct* dps)
 		settings.setValue(PLUGNAME "/loop", gLoop);
 	else
 		gLoop = settings.value(PLUGNAME "/loop").toBool();
+
+	if (!settings.contains(PLUGNAME "/save_on_exit"))
+		settings.setValue(PLUGNAME "/save_on_exit", gSaveSettings);
+	else
+		gSaveSettings = settings.value(PLUGNAME "/save_on_exit").toBool();
 }
