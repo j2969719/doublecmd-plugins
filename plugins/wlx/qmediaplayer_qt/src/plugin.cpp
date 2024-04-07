@@ -88,7 +88,6 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 
 	QLabel *lblThumb = new QLabel(view);
 	lblThumb->setAlignment(Qt::AlignCenter);
-	//lblThumb->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
 	lblThumb->hide();
 	main->addWidget(lblThumb);
 
@@ -119,9 +118,9 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 	QSlider *sldrPos = new QSlider(Qt::Horizontal, view);
 	sldrPos->setRange(0, player->duration() / 1000);
 
-	QObject::connect(sldrPos, &QSlider::sliderMoved, [player](int x)
+	QObject::connect(sldrPos, &QSlider::actionTriggered, [player, sldrPos](int action)
 	{
-		player->setPosition(x * 1000);
+		player->setPosition(sldrPos->sliderPosition() * 1000);
 	});
 
 	QObject::connect(player, &QMediaPlayer::durationChanged, [sldrPos](qint64 x)
@@ -369,9 +368,9 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 	sldrPos->setFocusPolicy(Qt::NoFocus);
 	sldrPos->setRange(0, player->duration() / 1000);
 
-	QObject::connect(sldrPos, &QSlider::sliderMoved, [player](int x)
+	QObject::connect(sldrPos, &QSlider::actionTriggered, [player, sldrPos](int action)
 	{
-		player->setPosition(x * 1000);
+		player->setPosition(sldrPos->sliderPosition() * 1000);
 	});
 
 	QObject::connect(player, &QMediaPlayer::durationChanged, [sldrPos](qint64 x)
