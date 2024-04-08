@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-04-07 22:31+0300\n"
+"POT-Creation-Date: 2024-04-09 00:25+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -185,12 +185,12 @@ msgid "Page Mode"
 msgstr ""
 
 #: ../wlx/qtpdfview_qt/src/plugin.cpp:228
-#: ../wlx/qmediaplayer_qt/src/plugin.cpp:55
+#: ../wlx/qmediaplayer_qt/src/plugin.cpp:54
 msgid "Author"
 msgstr ""
 
 #: ../wlx/qtpdfview_qt/src/plugin.cpp:229
-#: ../wlx/qmediaplayer_qt/src/plugin.cpp:51
+#: ../wlx/qmediaplayer_qt/src/plugin.cpp:50
 msgid "Title"
 msgstr ""
 
@@ -219,8 +219,8 @@ msgid "Modification Date"
 msgstr ""
 
 #: ../wlx/qtpdfview_qt/src/plugin.cpp:255
-#: ../wlx/qmediaplayer_qt/src/plugin.cpp:258
-#: ../wlx/qmediaplayer_qt/src/plugin.cpp:495
+#: ../wlx/qmediaplayer_qt/src/plugin.cpp:422
+#: ../wlx/qmediaplayer_qt/src/plugin.cpp:478
 msgid "no suitable info available"
 msgstr ""
 
@@ -392,96 +392,88 @@ msgstr ""
 msgid "Type"
 msgstr ""
 
-#: ../wlx/qmediaplayer_qt/src/plugin.cpp:50
+#: ../wlx/qmediaplayer_qt/src/plugin.cpp:49
 msgid "Artist"
 msgstr ""
 
-#: ../wlx/qmediaplayer_qt/src/plugin.cpp:52
+#: ../wlx/qmediaplayer_qt/src/plugin.cpp:51
 msgid "Album"
 msgstr ""
 
-#: ../wlx/qmediaplayer_qt/src/plugin.cpp:53
+#: ../wlx/qmediaplayer_qt/src/plugin.cpp:52
 msgid "Track Number"
 msgstr ""
 
-#: ../wlx/qmediaplayer_qt/src/plugin.cpp:54
+#: ../wlx/qmediaplayer_qt/src/plugin.cpp:53
 msgid "Album Artist"
 msgstr ""
 
-#: ../wlx/qmediaplayer_qt/src/plugin.cpp:56
+#: ../wlx/qmediaplayer_qt/src/plugin.cpp:55
 msgid "Composer"
 msgstr ""
 
-#: ../wlx/qmediaplayer_qt/src/plugin.cpp:57
+#: ../wlx/qmediaplayer_qt/src/plugin.cpp:56
 msgid "Lead Performer"
 msgstr ""
 
-#: ../wlx/qmediaplayer_qt/src/plugin.cpp:58
+#: ../wlx/qmediaplayer_qt/src/plugin.cpp:57
 msgid "Publisher"
 msgstr ""
 
-#: ../wlx/qmediaplayer_qt/src/plugin.cpp:59
+#: ../wlx/qmediaplayer_qt/src/plugin.cpp:58
 msgid "Genre"
 msgstr ""
 
-#: ../wlx/qmediaplayer_qt/src/plugin.cpp:60
+#: ../wlx/qmediaplayer_qt/src/plugin.cpp:59
 msgid "Duration"
 msgstr ""
 
-#: ../wlx/qmediaplayer_qt/src/plugin.cpp:61
+#: ../wlx/qmediaplayer_qt/src/plugin.cpp:60
 msgid "Description"
 msgstr ""
 
-#: ../wlx/qmediaplayer_qt/src/plugin.cpp:62
+#: ../wlx/qmediaplayer_qt/src/plugin.cpp:61
 msgid "Copyright"
 msgstr ""
 
-#: ../wlx/qmediaplayer_qt/src/plugin.cpp:63
+#: ../wlx/qmediaplayer_qt/src/plugin.cpp:62
 msgid "Comment"
 msgstr ""
 
-#: ../wlx/qmediaplayer_qt/src/plugin.cpp:64
+#: ../wlx/qmediaplayer_qt/src/plugin.cpp:63
 msgid "Resolution"
 msgstr ""
 
-#: ../wlx/qmediaplayer_qt/src/plugin.cpp:65
+#: ../wlx/qmediaplayer_qt/src/plugin.cpp:64
 msgid "Media Type"
 msgstr ""
 
-#: ../wlx/qmediaplayer_qt/src/plugin.cpp:66
+#: ../wlx/qmediaplayer_qt/src/plugin.cpp:65
 msgid "Video Codec"
 msgstr ""
 
-#: ../wlx/qmediaplayer_qt/src/plugin.cpp:67
+#: ../wlx/qmediaplayer_qt/src/plugin.cpp:66
 msgid "Video FrameRate"
 msgstr ""
 
-#: ../wlx/qmediaplayer_qt/src/plugin.cpp:68
+#: ../wlx/qmediaplayer_qt/src/plugin.cpp:67
 msgid "Video BitRate"
 msgstr ""
 
-#: ../wlx/qmediaplayer_qt/src/plugin.cpp:69
+#: ../wlx/qmediaplayer_qt/src/plugin.cpp:68
 msgid "Audio Codec"
 msgstr ""
 
-#: ../wlx/qmediaplayer_qt/src/plugin.cpp:70
+#: ../wlx/qmediaplayer_qt/src/plugin.cpp:69
 msgid "Audio BitRate"
 msgstr ""
 
-#: ../wlx/qmediaplayer_qt/src/plugin.cpp:71
+#: ../wlx/qmediaplayer_qt/src/plugin.cpp:70
 msgid "Date"
 msgstr ""
 
-#: ../wlx/qmediaplayer_qt/src/plugin.cpp:85
-msgid "once"
-msgstr ""
-
-#: ../wlx/qmediaplayer_qt/src/plugin.cpp:87
-msgid "loop"
-msgstr ""
-
-#: ../wlx/qmediaplayer_qt/src/plugin.cpp:240
-#: ../wlx/qmediaplayer_qt/src/plugin.cpp:479
+#: ../wlx/qmediaplayer_qt/src/plugin.cpp:402
+#: ../wlx/qmediaplayer_qt/src/plugin.cpp:462
 #, c-format
 msgid "%'d bps"
 msgstr ""

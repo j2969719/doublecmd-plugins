@@ -97,18 +97,29 @@ static void setPlayerPlayPause(QMediaPlayer *player, QPushButton *btnPlay)
 		player->pause();
 }
 
-static void setPlayerMute(QMediaPlayer *player, QPushButton *btnMute)
+static void setPlayerVolume(QMediaPlayer *player, QPushButton *btnMute)
 {
 #if QT_VERSION >= 0x060000
 	player->audioOutput()->setMuted(gMute);
+	player->audioOutput()->setVolume(QAudio::convertVolume(gVolume / qreal(100),
+	                                 QAudio::LogarithmicVolumeScale, QAudio::LinearVolumeScale));
 #else
 	player->setMuted(gMute);
+	player->setVolume(gVolume);
 #endif
+	btnMute->setDown(gMute);
 
 	if (!gMute)
-		btnMute->setIcon(QApplication::style()->standardIcon(QStyle::SP_MediaVolume));
+	{
+		if (gVolume > 70)
+			btnMute->setIcon(QIcon::fromTheme("audio-volume-high"));
+		else if (gVolume > 30)
+			btnMute->setIcon(QIcon::fromTheme("audio-volume-medium"));
+		else
+			btnMute->setIcon(QIcon::fromTheme("audio-volume-low"));
+	}
 	else
-		btnMute->setIcon(QApplication::style()->standardIcon(QStyle::SP_MediaVolumeMuted));
+		btnMute->setIcon(QIcon::fromTheme("audio-volume-muted"));
 }
 
 static void setPlayerLoop(QMediaPlayer *player, QPushButton *btnLoop)
@@ -118,7 +129,7 @@ static void setPlayerLoop(QMediaPlayer *player, QPushButton *btnLoop)
 #else
 	player->playlist()->setPlaybackMode(gLoop ? QMediaPlaylist::Loop : QMediaPlaylist::Sequential);
 #endif
-	btnLoop->setText(gLoop ? _("loop") : _("once"));
+	btnLoop->setDown(gLoop);
 }
 
 
@@ -137,6 +148,7 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 
 	QFrame *view = new QFrame((QWidget*)ParentWin);
 	view->setFrameStyle(QFrame::NoFrame);
+	view->setFocusPolicy(Qt::NoFocus);
 
 	QMediaPlayer *player = new QMediaPlayer((QObject*)view);
 
@@ -329,7 +341,9 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 	});
 
 	QPushButton *btnLoop = new QPushButton(view);
+	btnLoop->setIcon(QIcon::fromTheme("media-playlist-repeat"));
 	setPlayerLoop(player, btnLoop);
+	btnLoop->setFocusPolicy(Qt::NoFocus);
 
 	QObject::connect(btnLoop, &QPushButton::clicked, [btnLoop, player]()
 	{
@@ -350,9 +364,10 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 		video->setVisible(videoAvailable);
 	});
 
-	QObject::connect(btnInfo, &QPushButton::clicked, [lblMeta, scroll, video]()
+	QObject::connect(btnInfo, &QPushButton::clicked, [btnInfo, lblMeta, scroll, video]()
 	{
 		bool isMeta = lblMeta->isVisible();
+		btnInfo->setDown(!isMeta);
 		scroll->setVisible(!isMeta);
 		lblMeta->setVisible(!isMeta);
 		video->setVisible(isMeta);
@@ -495,7 +510,7 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 #endif
 	QPushButton *btnMute = new QPushButton(view);
 	btnMute->setFocusPolicy(Qt::NoFocus);
-	setPlayerMute(player, btnMute);
+	setPlayerVolume(player, btnMute);
 
 	QObject::connect(btnMute, &QPushButton::clicked, [btnMute, player]()
 	{
@@ -504,24 +519,17 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 #else
 		gMute = !player->isMuted();
 #endif
-		setPlayerMute(player, btnMute);
+		setPlayerVolume(player, btnMute);
 	});
 
 	QSlider *sldrVolume = new QSlider(Qt::Horizontal, view);
 	sldrVolume->setRange(1, 100);
 	sldrVolume->setFocusPolicy(Qt::NoFocus);
 
-#if QT_VERSION >= 0x060000
-	QObject::connect(sldrVolume, &QSlider::valueChanged, [sldrVolume, audio]()
+	QObject::connect(sldrVolume, &QSlider::valueChanged, [btnMute, sldrVolume, player]()
 	{
 		gVolume = sldrVolume->value();
-		audio->setVolume(QAudio::convertVolume(gVolume / qreal(100), QAudio::LogarithmicVolumeScale, QAudio::LinearVolumeScale));
-#else
-	QObject::connect(sldrVolume, &QSlider::valueChanged, [sldrVolume, player]()
-	{
-		gVolume = sldrVolume->value();
-		player->setVolume(gVolume);
-#endif
+		setPlayerVolume(player, btnMute);
 	});
 
 	sldrVolume->setValue(gVolume);
