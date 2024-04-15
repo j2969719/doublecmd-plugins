@@ -589,11 +589,11 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 	controls->addWidget(btnPlay);
 	controls->addWidget(btnStop);
 	controls->addSpacing(10);
-	controls->addWidget(btnInfo);
+	controls->addWidget(btnLoop);
 	controls->addSpacing(5);
 	controls->addWidget(lblTime);
 	controls->addSpacing(5);
-	controls->addWidget(btnLoop);
+	controls->addWidget(btnInfo);
 #if QT_VERSION < 0x060000
 	controls->addSpacing(10);
 	controls->addWidget(btnPrev);

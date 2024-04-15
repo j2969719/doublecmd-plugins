@@ -135,6 +135,7 @@ def vfs_getfile(src, dst):
 	res_array = get_jsonobj()
 	for element in res_array:
 		if element['filename'] == src[1:]:
+			stream = None
 			yt = YouTube(element['link'], on_progress_callback=print_progress)
 			if src[-3:] == 'm4a':
 				stream = yt.streams.filter(abr=os.environ['DC_WFX_SCRIPT_ABR'], mime_type='audio/mp4').first()

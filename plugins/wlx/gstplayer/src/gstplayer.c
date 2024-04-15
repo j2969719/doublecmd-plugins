@@ -14,6 +14,7 @@
 #endif
 
 #include <gdk/gdkkeysyms.h>
+#include <gdk-pixbuf/gdk-pixbuf.h>
 
 #include "wlxplugin.h"
 
@@ -300,13 +301,6 @@ static GtkWidget *create_ui (GtkWidget *ParentWin, CustomData *data) {
   data->btn_play = gtk_tool_button_new (NULL, NULL);
   gtk_tool_button_set_icon_name (GTK_TOOL_BUTTON (data->btn_play), "media-playback-start");
   g_signal_connect (G_OBJECT (data->btn_play), "clicked", G_CALLBACK (playpause_cb), data);
-/*
-  play_button = gtk_tool_button_new_from_stock (GTK_STOCK_MEDIA_PLAY);
-  g_signal_connect (G_OBJECT (play_button), "clicked", G_CALLBACK (play_cb), data);
-
-  pause_button = gtk_tool_button_new_from_stock (GTK_STOCK_MEDIA_PAUSE);
-  g_signal_connect (G_OBJECT (pause_button), "clicked", G_CALLBACK (pause_cb), data);
-*/
   stop_button = gtk_tool_button_new_from_stock (GTK_STOCK_MEDIA_STOP);
   g_signal_connect (G_OBJECT (stop_button), "clicked", G_CALLBACK (stop_cb), data);
 
@@ -355,14 +349,11 @@ static GtkWidget *create_ui (GtkWidget *ParentWin, CustomData *data) {
 
   controls = gtk_hbox_new (FALSE, 0);
   gtk_box_pack_start (GTK_BOX (controls), GTK_WIDGET (data->btn_play), FALSE, FALSE, 2);
-/*
-  gtk_box_pack_start (GTK_BOX (controls), GTK_WIDGET (play_button), FALSE, FALSE, 2);
-  gtk_box_pack_start (GTK_BOX (controls), GTK_WIDGET (pause_button), FALSE, FALSE, 2);
-*/
   gtk_box_pack_start (GTK_BOX (controls), GTK_WIDGET (stop_button), FALSE, FALSE, 2);
-  gtk_box_pack_start (GTK_BOX (controls), GTK_WIDGET (data->btn_loop), FALSE, FALSE, 2);
-  gtk_box_pack_start (GTK_BOX (controls), GTK_WIDGET (data->btn_info), FALSE, FALSE, 2);
-  //gtk_box_pack_start (GTK_BOX (controls), GTK_WIDGET (data->lbl_info), TRUE, TRUE, 2);
+  gtk_box_pack_start (GTK_BOX (controls), GTK_WIDGET (data->btn_loop), FALSE, FALSE, 5);
+  gtk_box_pack_start (GTK_BOX (controls), GTK_WIDGET (data->lbl_duration), FALSE, FALSE, 5);
+  gtk_box_pack_start (GTK_BOX (controls), GTK_WIDGET (data->btn_info), FALSE, FALSE, 5);
+
   gtk_box_pack_end (GTK_BOX (controls), data->volume_slider, FALSE, TRUE, 2);
   gtk_box_pack_end (GTK_BOX (controls), GTK_WIDGET (data->btn_mute), FALSE, TRUE, 2);
 
@@ -375,10 +366,7 @@ static GtkWidget *create_ui (GtkWidget *ParentWin, CustomData *data) {
   main_box = gtk_vbox_new (FALSE, 0);
   gtk_box_pack_start (GTK_BOX (main_box), data->notebook, TRUE, TRUE, 0);
   gtk_box_pack_start (GTK_BOX (main_box), GTK_WIDGET (data->lbl_info), FALSE, TRUE, 4);
-  GtkWidget *duration = gtk_hbox_new (FALSE, 0);
-  gtk_box_pack_start (GTK_BOX (duration), data->slider, TRUE, TRUE, 0);
-  gtk_box_pack_end (GTK_BOX (duration), GTK_WIDGET (data->lbl_duration), FALSE, FALSE, 2);
-  gtk_box_pack_start (GTK_BOX (main_box), duration, FALSE, FALSE, 0);
+  gtk_box_pack_start (GTK_BOX (main_box), data->slider, FALSE, FALSE, 0);
   gtk_box_pack_start (GTK_BOX (main_box), controls, FALSE, FALSE, 0);
   gtk_container_add (GTK_CONTAINER (main_window), main_box);
 
@@ -497,9 +485,11 @@ static void state_changed_cb (GstBus *bus, GstMessage *msg, CustomData *data) {
 static void text_add_tags (const GstTagList *list, const gchar *tag, GtkTextBuffer *text) {
   gchar *str, *total_str;
   guint num;
+  guint64 num64;
   gdouble fnum;
   gboolean vbool;
-  GstDateTime *date;
+  GstDateTime *date = NULL;
+  GstSample *sample = NULL;
 
   if (gst_tag_get_type (tag) == G_TYPE_STRING) {
     if (gst_tag_list_get_string (list, tag, &str)) {
@@ -512,6 +502,17 @@ static void text_add_tags (const GstTagList *list, const gchar *tag, GtkTextBuff
   else if (gst_tag_get_type (tag) == G_TYPE_UINT) {
     if (gst_tag_list_get_uint (list, tag, &num)) {
       total_str = g_strdup_printf ("  %s: %'d\n", gst_tag_get_nick (tag), num);
+      gtk_text_buffer_insert_at_cursor (text, total_str, -1);
+      g_free (total_str);
+    }
+  }
+  else if (gst_tag_get_type (tag) == G_TYPE_UINT64) {
+    if (gst_tag_list_get_uint64 (list, tag, &num64)) {
+      if (g_strcmp0 (tag, "duration") == 0)
+        total_str = g_strdup_printf ("  %s: %" GST_TIME_FORMAT "\n", tag, GST_TIME_ARGS (num64));
+      else {
+        total_str = g_strdup_printf ("  %s: %'ld\n", tag, num64);
+      }
       gtk_text_buffer_insert_at_cursor (text, total_str, -1);
       g_free (total_str);
     }
@@ -537,6 +538,38 @@ static void text_add_tags (const GstTagList *list, const gchar *tag, GtkTextBuff
       g_free (total_str);
     }
   }
+  else if (gst_tag_get_type (tag) == GST_TYPE_SAMPLE) {
+    if (gst_tag_list_get_sample (list, tag, &sample)) {
+      GstBuffer *buf = gst_sample_get_buffer (sample);
+      GstMapInfo info;
+      if (gst_buffer_map (buf, &info, GST_MAP_READ)) {
+        GdkPixbufLoader *loader = gdk_pixbuf_loader_new ();
+        if (gdk_pixbuf_loader_write (loader, info.data, info.size, NULL)
+            && gdk_pixbuf_loader_close(loader, NULL)) {
+          GdkPixbuf *src = gdk_pixbuf_loader_get_pixbuf (loader);
+          GdkPixbuf *pixbuf = gdk_pixbuf_scale_simple(src, 256, 256, GDK_INTERP_BILINEAR);
+          GtkTextIter iter;
+          gtk_text_buffer_insert_at_cursor (text, "  ", -1);
+          gtk_text_buffer_insert_at_cursor (text, gst_tag_get_nick (tag), -1);
+          gtk_text_buffer_insert_at_cursor (text, ": ", -1);
+          gtk_text_buffer_get_end_iter (text, &iter);
+          gtk_text_buffer_insert_pixbuf (text, &iter, pixbuf);
+          gtk_text_buffer_insert (text, &iter, "\n", -1);
+          g_object_unref (pixbuf);
+        }
+        g_object_unref (loader);
+        gst_buffer_unmap (buf, &info);
+      }
+      gst_sample_unref(sample);
+    }
+  }
+/*  else {
+    gtk_text_buffer_insert_at_cursor (text, "  ", -1);
+    gtk_text_buffer_insert_at_cursor (text, gst_tag_get_nick (tag), -1);
+    gtk_text_buffer_insert_at_cursor (text, ": ??? (", -1);
+    gtk_text_buffer_insert_at_cursor (text, g_type_name ( gst_tag_get_type (tag)), -1);
+    gtk_text_buffer_insert_at_cursor (text, "}\n", -1);
+  } */
 }
 
 /* Extract metadata from all the streams and write it to the text widget in the GUI */
@@ -563,9 +596,9 @@ static void analyze_streams (CustomData *data) {
 
     if (n_video != 0) {
       data->init_video = TRUE;
-      gtk_widget_show (GTK_WIDGET (data->btn_info));
+      gtk_widget_set_sensitive (GTK_WIDGET (data->btn_info), TRUE);
     } else {
-      gtk_widget_hide (GTK_WIDGET (data->btn_info));
+      gtk_widget_set_sensitive (GTK_WIDGET (data->btn_info), FALSE);
     }
   }
 
