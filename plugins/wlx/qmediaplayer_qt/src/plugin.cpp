@@ -125,7 +125,7 @@ static void setPlayerVolume(QMediaPlayer *player, QPushButton *btnMute)
 static void setPlayerLoop(QMediaPlayer *player, QPushButton *btnLoop)
 {
 #if QT_VERSION >= 0x060000
-	player->setLoops(gLoop ? QMediaPlayer::Infinite : QMediaPlayer::Once);
+	//player->setLoops(gLoop ? QMediaPlayer::Infinite : QMediaPlayer::Once);
 #else
 	player->playlist()->setPlaybackMode(gLoop ? QMediaPlaylist::Loop : QMediaPlaylist::Sequential);
 #endif
@@ -264,20 +264,46 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 	sldrPos->setFocusPolicy(Qt::NoFocus);
 	sldrPos->setRange(0, player->duration() / 1000);
 
-	QObject::connect(sldrPos, &QSlider::actionTriggered, [player, sldrPos](int action)
+	// genius_meme.jpg x2
+	QObject::connect(sldrPos, &QSlider::sliderPressed, [player]()
 	{
+#if QT_VERSION >= 0x060000
+		player->setVideoOutput(nullptr);
+#endif
+		player->pause();
+	});
+	QObject::connect(sldrPos, &QSlider::sliderReleased, [player, video, sldrPos]()
+	{
+#if QT_VERSION >= 0x060000
+		player->setVideoOutput(video);
+#endif
 		player->setPosition(sldrPos->sliderPosition() * 1000);
+		player->play();
 	});
 
-	QObject::connect(player, &QMediaPlayer::durationChanged, [sldrPos](qint64 x)
+	QObject::connect(sldrPos, &QSlider::actionTriggered, [player, sldrPos](int action)
 	{
-		sldrPos->setMaximum(x / 1000);
-		sldrPos->setProperty("duration", x);
+		//player->setPosition(sldrPos->sliderPosition() * 1000);
+
+		// genius_meme.jpg x3
+		sldrPos->setSliderPosition(player->position() / 1000);
+	});
+
+	QObject::connect(sldrPos, &QSlider::sliderMoved, [player, sldrPos](int value)
+	{
+
+		player->setPosition(value * 1000);
 	});
 
 	QObject::connect(player, &QMediaPlayer::mediaStatusChanged, [player]()
 	{
 		//qDebug() << "mediaStatusChanged: " << player->mediaStatus();
+
+#if QT_VERSION >= 0x060000
+		// genius_meme.jpg x4
+		if (gLoop && player->mediaStatus() == QMediaPlayer::EndOfMedia)
+			player->play();
+#endif
 	});
 
 	QObject::connect(player, &QMediaPlayer::seekableChanged, [sldrPos](bool seekable)
@@ -289,7 +315,7 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 	QHBoxLayout *controls = new QHBoxLayout;
 
 	QPushButton *btnPlay = new QPushButton(view);
-	btnPlay->setIcon(QApplication::style()->standardIcon(QStyle::SP_MediaPlay));
+	btnPlay->setIcon(QIcon::fromTheme("media-playback-start"));
 
 	QObject::connect(btnPlay, &QPushButton::clicked, [btnPlay, player]()
 	{
@@ -303,15 +329,15 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 #endif
 	{
 		if (newState != QMediaPlayer::PlayingState)
-			btnPlay->setIcon(QApplication::style()->standardIcon(QStyle::SP_MediaPlay));
+			btnPlay->setIcon(QIcon::fromTheme("media-playback-start"));
 		else
-			btnPlay->setIcon(QApplication::style()->standardIcon(QStyle::SP_MediaPause));
+			btnPlay->setIcon(QIcon::fromTheme("media-playback-pause"));
 	});
 
 	btnPlay->setFocusPolicy(Qt::NoFocus);
 
 	QPushButton *btnStop = new QPushButton(view);
-	btnStop->setIcon(QApplication::style()->standardIcon(QStyle::SP_MediaStop));
+	btnStop->setIcon(QIcon::fromTheme("media-playback-stop"));
 	//QObject::connect(btnStop, &QPushButton::clicked, player, &QMediaPlayer::stop);
 
 	QObject::connect(btnStop, &QPushButton::clicked, [view, player]()
@@ -327,7 +353,7 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 	btnStop->setFocusPolicy(Qt::NoFocus);
 
 	QPushButton *btnInfo = new QPushButton(view);
-	btnInfo->setIcon(QApplication::style()->standardIcon(QStyle::SP_MessageBoxInformation));
+	btnInfo->setIcon(QIcon::fromTheme("dialog-information"));
 	btnInfo->setEnabled(false);
 	btnInfo->setFocusPolicy(Qt::NoFocus);
 
@@ -335,9 +361,30 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 
 	QObject::connect(player, &QMediaPlayer::positionChanged, [sldrPos, lblTime](qint64 x)
 	{
-		sldrPos->setValue(x / 1000);
+		if (!sldrPos->isSliderDown())
+			sldrPos->setValue(x / 1000);
+	});
+
+	QObject::connect(player, &QMediaPlayer::durationChanged, [sldrPos, lblTime](qint64 x)
+	{
+		sldrPos->setProperty("duration", x);
+
+		if (x > 0)
+		{
+			sldrPos->setMaximum(x / 1000);
+			lblTime->setText(QString::asprintf("%" MY_TIME_FORMAT "/%" MY_TIME_FORMAT, MY_TIME_ARGS(0), MY_TIME_ARGS(x)));
+		}
+		else
+			lblTime->setText(DURATION_EMPTY);
+	});
+
+	QObject::connect(sldrPos, &QSlider::valueChanged, [sldrPos, lblTime](int value)
+	{
 		qint64 duration = sldrPos->property("duration").value<qint64>();
-		lblTime->setText(QString::asprintf("%" MY_TIME_FORMAT "/%" MY_TIME_FORMAT, MY_TIME_ARGS(x), MY_TIME_ARGS(duration)));
+
+		if (duration > 0)
+			lblTime->setText(QString::asprintf("%" MY_TIME_FORMAT "/%" MY_TIME_FORMAT,
+			                                   MY_TIME_ARGS(value * 1000), MY_TIME_ARGS(duration)));
 	});
 
 	QPushButton *btnLoop = new QPushButton(view);
@@ -541,9 +588,10 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 	});
 
 	QShortcut *hkLoop = new QShortcut(QKeySequence("r"), view);
-	QObject::connect(hkLoop, &QShortcut::activated, [btnLoop]()
+	QObject::connect(hkLoop, &QShortcut::activated, [player, btnLoop]()
 	{
-		emit btnLoop->click();
+		gLoop = !gLoop;
+		setPlayerLoop(player, btnLoop);
 	});
 
 	QShortcut *hkMute = new QShortcut(QKeySequence("m"), view);
@@ -563,7 +611,7 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 	{
 		sldrVolume->setValue(sldrVolume->value() - 5);
 	});
-
+/*
 	QShortcut *hkPosLeft = new QShortcut(QKeySequence("Left"), view);
 	QObject::connect(hkPosLeft, &QShortcut::activated, [player, sldrPos]()
 	{
@@ -579,7 +627,7 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 		player->setPosition((sldrPos->sliderPosition() + 5) * 1000);
 		player->play();
 	});
-
+*/
 	QShortcut *hkPlay = new QShortcut(QKeySequence("Space"), view);
 	QObject::connect(hkPlay, &QShortcut::activated, [player, btnPlay]()
 	{
