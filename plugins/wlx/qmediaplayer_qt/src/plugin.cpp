@@ -112,14 +112,14 @@ static void setPlayerVolume(QMediaPlayer *player, QPushButton *btnMute)
 	if (!gMute)
 	{
 		if (gVolume > 70)
-			btnMute->setIcon(QIcon::fromTheme("audio-volume-high"));
+			btnMute->setIcon(QIcon::fromTheme("audio-volume-high", QApplication::style()->standardIcon(QStyle::SP_MediaVolume)));
 		else if (gVolume > 30)
-			btnMute->setIcon(QIcon::fromTheme("audio-volume-medium"));
+			btnMute->setIcon(QIcon::fromTheme("audio-volume-medium", QApplication::style()->standardIcon(QStyle::SP_MediaVolume)));
 		else
-			btnMute->setIcon(QIcon::fromTheme("audio-volume-low"));
+			btnMute->setIcon(QIcon::fromTheme("audio-volume-low", QApplication::style()->standardIcon(QStyle::SP_MediaVolume)));
 	}
 	else
-		btnMute->setIcon(QIcon::fromTheme("audio-volume-muted"));
+		btnMute->setIcon(QIcon::fromTheme("audio-volume-muted", QApplication::style()->standardIcon(QStyle::SP_MediaVolumeMuted)));
 }
 
 static void setPlayerLoop(QMediaPlayer *player, QPushButton *btnLoop)
@@ -291,7 +291,6 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 
 	QObject::connect(sldrPos, &QSlider::sliderMoved, [player, sldrPos](int value)
 	{
-
 		player->setPosition(value * 1000);
 	});
 
@@ -315,7 +314,7 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 	QHBoxLayout *controls = new QHBoxLayout;
 
 	QPushButton *btnPlay = new QPushButton(view);
-	btnPlay->setIcon(QIcon::fromTheme("media-playback-start"));
+	btnPlay->setIcon(QIcon::fromTheme("media-playback-start", QApplication::style()->standardIcon(QStyle::SP_MediaPlay)));
 
 	QObject::connect(btnPlay, &QPushButton::clicked, [btnPlay, player]()
 	{
@@ -329,15 +328,15 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 #endif
 	{
 		if (newState != QMediaPlayer::PlayingState)
-			btnPlay->setIcon(QIcon::fromTheme("media-playback-start"));
+			btnPlay->setIcon(QIcon::fromTheme("media-playback-start", QApplication::style()->standardIcon(QStyle::SP_MediaPlay)));
 		else
-			btnPlay->setIcon(QIcon::fromTheme("media-playback-pause"));
+			btnPlay->setIcon(QIcon::fromTheme("media-playback-pause", QApplication::style()->standardIcon(QStyle::SP_MediaPause)));
 	});
 
 	btnPlay->setFocusPolicy(Qt::NoFocus);
 
 	QPushButton *btnStop = new QPushButton(view);
-	btnStop->setIcon(QIcon::fromTheme("media-playback-stop"));
+	btnStop->setIcon(QIcon::fromTheme("media-playback-stop", QApplication::style()->standardIcon(QStyle::SP_MediaStop)));
 	//QObject::connect(btnStop, &QPushButton::clicked, player, &QMediaPlayer::stop);
 
 	QObject::connect(btnStop, &QPushButton::clicked, [view, player]()
@@ -353,7 +352,7 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 	btnStop->setFocusPolicy(Qt::NoFocus);
 
 	QPushButton *btnInfo = new QPushButton(view);
-	btnInfo->setIcon(QIcon::fromTheme("dialog-information"));
+	btnInfo->setIcon(QIcon::fromTheme("dialog-information", QApplication::style()->standardIcon(QStyle::SP_MessageBoxInformation)));
 	btnInfo->setEnabled(false);
 	btnInfo->setFocusPolicy(Qt::NoFocus);
 
@@ -388,7 +387,7 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 	});
 
 	QPushButton *btnLoop = new QPushButton(view);
-	btnLoop->setIcon(QIcon::fromTheme("media-playlist-repeat"));
+	btnLoop->setIcon(QIcon::fromTheme("media-playlist-repeat", QApplication::style()->standardIcon(QStyle::SP_BrowserReload)));
 	setPlayerLoop(player, btnLoop);
 	btnLoop->setFocusPolicy(Qt::NoFocus);
 

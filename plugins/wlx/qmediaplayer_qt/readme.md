@@ -2,7 +2,7 @@ qmediaplayer_qt5
 ========
 Very primitive media player.
 
-![plug-preview](https://i.imgur.com/YI25AxF.png)
+![plug-preview](https://i.imgur.com/LenjIOe.png)
 
 ## Compatibility
 - `doublecmd-qt5`
