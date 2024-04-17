@@ -205,7 +205,7 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 		{
 			anim = gdk_pixbuf_animation_new_from_file(FileToLoad, NULL);
 
-			if (G_IS_OBJECT(anim))
+			if (GDK_IS_PIXBUF_ANIMATION(anim))
 			{
 				gtk_anim_view_set_anim(GTK_ANIM_VIEW(view), anim);
 				gtk_anim_view_set_is_playing(GTK_ANIM_VIEW(view), TRUE);
@@ -301,7 +301,7 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	g_object_set_data(G_OBJECT(gFix), "play", GTK_WIDGET(tb_play));
 	g_object_set_data(G_OBJECT(gFix), "stop", GTK_WIDGET(tb_stop));
 
-	if (G_IS_OBJECT(pixbuf))
+	if (GDK_IS_PIXBUF(pixbuf))
 		g_object_unref(pixbuf);
 
 	return gFix;
@@ -352,14 +352,14 @@ int DCPCALL ListLoadNext(HWND ParentWin, HWND PluginWin, char* FileToLoad, int S
 
 	gtk_image_view_set_pixbuf(GTK_IMAGE_VIEW(view), pixbuf, TRUE);
 
-	if (G_IS_OBJECT(anim))
+	if (GDK_IS_PIXBUF_ANIMATION(anim))
 	{
 		gtk_anim_view_set_anim(GTK_ANIM_VIEW(view), anim);
 		gtk_anim_view_set_is_playing(GTK_ANIM_VIEW(view), TRUE);
 		g_object_unref(anim);
 	}
 
-	if (G_IS_OBJECT(pixbuf))
+	if (GDK_IS_PIXBUF(pixbuf))
 		g_object_unref(pixbuf);
 
 	return LISTPLUGIN_OK;
@@ -378,14 +378,10 @@ void DCPCALL ListCloseWindow(HWND ListWin)
 	gtk_image_view_set_pixbuf(GTK_IMAGE_VIEW(view), NULL, FALSE);
 
 	gtk_widget_destroy(GTK_WIDGET(ListWin));
-/*
-	if (G_IS_OBJECT(iter))
-		g_object_unref(iter);
 
-	if (G_IS_OBJECT(anim))
+	if (GDK_IS_PIXBUF_ANIMATION(anim))
 		g_object_unref(anim);
-*/
-	if (G_IS_OBJECT(pixbuf))
+	else if (GDK_IS_PIXBUF(pixbuf))
 		g_object_unref(pixbuf);
 }
 

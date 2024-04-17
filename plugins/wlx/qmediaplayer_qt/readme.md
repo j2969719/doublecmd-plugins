@@ -10,3 +10,4 @@ Very primitive media player.
 
 ## Dependencies
 ![arch](https://wiki.archlinux.org/favicon.ico) `pacman -S qt5-multimedia`
+![arch](https://wiki.archlinux.org/favicon.ico) `pacman -S qt6-multimedia`
