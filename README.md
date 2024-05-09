@@ -27,3 +27,4 @@ Not all but most of additions for Linux only.
 - wlxmpv: [GitHub](https://github.com/bayarookie/wlxmpv) or [GitLab](https://gitlab.com/bayarookie/wlxmpv) (try to check both link and use latest version).
 - [A WCX plugin (Total Commander, Double Commander etc) that aims to handle all Atari ST (etc) floppy and hard disk ](https://github.com/ggnkua/Jacknife)<br>
 - [Double/Total Commander plugin to access kubernetes resources ](https://github.com/calinrc/k8s_wfx)<br>
+- [Torrent Viewer WLX plugin for Double Commander](https://github.com/Kolcha/dc-torrent-view)<br>
