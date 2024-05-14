@@ -323,12 +323,14 @@ Note about `libqt6opengl6-dev`: If this package is not found, then in your versi
 - [dirextchart_crap_qt](plugins/wlx/dirextchart_crap_qt)<br>
 Qt5: `apt install build-essential pkg-config qtbase5-dev libqt5charts5-dev`<br>
 Qt6: `apt install build-essential pkg-config qt6-base-dev qt6-charts-dev libqt6opengl6-dev`<br>
-Note about `libqt6opengl6-dev`: If this package is not found, then in your version of distribution this package has merged into the `qt6-base-dev` package, so just remove it from the list.
+Note about `libqt6opengl6-dev`: If this package is not found, then in your version of distribution this package has merged into the `qt6-base-dev` package, so just remove it from the list.<br>
+Note about `qt6-charts-dev`: If this package is not found, then try `libqt6charts6-dev` instead.
 
 - [dirsize_crap_qt](plugins/wlx/dirsize_crap_qt)<br>
 Qt5: `apt install build-essential pkg-config qtbase5-dev libqt5charts5-dev`<br>
 Qt6: `apt install build-essential pkg-config qt6-base-dev qt6-charts-dev libqt6opengl6-dev`<br>
-Note about `libqt6opengl6-dev`: If this package is not found, then in your version of distribution this package has merged into the `qt6-base-dev` package, so just remove it from the list.
+Note about `libqt6opengl6-dev`: If this package is not found, then in your version of distribution this package has merged into the `qt6-base-dev` package, so just remove it from the list.<br>
+Note about `qt6-charts-dev`: If this package is not found, then try `libqt6charts6-dev` instead.
 
 - [fileinfo_qt](plugins/wlx/fileinfo_qt)<br>
 Qt5: `apt install build-essential pkg-config qtbase5-dev`<br>
