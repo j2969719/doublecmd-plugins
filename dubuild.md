@@ -79,6 +79,9 @@ The last four packages for the `bit7z` library, see the `src/third_party` subfol
 - [m3u8_crap](plugins/wcx/m3u8_crap)<br>
 `apt install build-essential libglib2.0-dev libtagc0-dev`
 
+- [mozlz4json_crap](plugins/wcx/mozlz4json_crap)<br>
+`apt install build-essential liblz4-dev`
+
 
 ---
 <a name="wdx"><h3>WDX plugins</h3></a>
@@ -89,6 +92,9 @@ Requires the `bit7z` library, see [bit7z packer plugin](#wcx).
 
 - [calcsize](plugins/wdx/calcsize)<br>
 `apt install build-essential`
+
+- [crx_crap](plugins/wdx/crx_crap)<br>
+`apt install build-essential libarchive-dev libjson-glib-dev`
 
 - [datetimestr](plugins/wdx/datetimestr)<br>
 `apt install build-essential libglib2.0-dev`
@@ -276,6 +282,9 @@ Requires md4c >= 0.4.4.
 - [mpv](plugins/wlx/mpv)<br>
 `apt install build-essential libgtk2.0-dev`
 
+- [mpv_alt](plugins/wlx/mpv_alt)<br>
+`apt install build-essential libgtk2.0-dev libmpv-dev`
+
 - [nfoview](plugins/wlx/nfoview)<br>
 `apt install build-essential libgtk2.0-dev`
 
@@ -336,6 +345,10 @@ Note about `qt6-charts-dev`: If this package is not found, then try `libqt6chart
 Qt5: `apt install build-essential pkg-config qtbase5-dev`<br>
 Qt6: `apt install build-essential pkg-config qt6-base-dev`
 
+- [fontview_qt](plugins/wlx/fontview_qt)<br>
+Qt5: `apt install build-essential pkg-config qtbase5-dev`<br>
+Qt6: `apt install build-essential pkg-config qt6-base-dev libgl-dev`
+
 - [htmlconv_qt_crap](plugins/wlx/htmlconv_qt_crap)<br>
 Qt5: `apt install build-essential pkg-config qtbase5-dev`<br>
 Qt6: `apt install build-essential pkg-config qt6-base-dev`
@@ -376,6 +389,10 @@ Requires md4c >= 0.4.4.
 Qt5: `apt install build-essential pkg-config qtbase5-dev libqt5webkit5-dev libmd4c-dev libmd4c-html0-dev`<br>
 Requires md4c >= 0.4.4.
 
+- [mpv_alt](plugins/wlx/mpv_alt)<br>
+Qt5: `apt install build-essential pkg-config qtbase5-dev libmpv-dev`<br>
+Qt6: `apt install build-essential pkg-config qt6-base-dev libgl-dev libmpv-dev`
+
 - [pdf_crap_qml_qt](plugins/wlx/pdf_crap_qml_qt)<br>
 Qt5: `apt install build-essential pkg-config qtbase5-dev qtdeclarative5-dev`<br>
 Qt6: `apt install build-essential pkg-config qt6-base-dev qt6-declarative-dev`
@@ -404,7 +421,8 @@ Qt5: `apt install build-essential pkg-config qtbase5-dev`<br>
 Qt6: `apt install build-essential pkg-config qt6-base-dev`
 
 - [syntax-highlighting_qt](plugins/wlx/syntax-highlighting_qt)<br>
-Qt5: `apt install build-essential pkg-config qtbase5-dev libkf5syntaxhighlighting-dev`
+Qt5: `apt install build-essential pkg-config qtbase5-dev libkf5syntaxhighlighting-dev`<br>
+Qt6: `apt install build-essential pkg-config qt6-base-dev libkf6syntaxhighlighting-dev`
 
 - [webengine_qt](plugins/wlx/webengine_qt)<br>
 Qt5: `apt install build-essential pkg-config qtbase5-dev qtwebengine5-dev`<br>
