@@ -5,7 +5,7 @@ libs :=
 includes := -I../../../sdk
 
 qt5_libs := `pkg-config --cflags --libs Qt5Widgets` -I/usr/include/KF5/KSyntaxHighlighting/ -I/usr/include/KF5/KSyntaxHighlighting/KSyntaxHighlighting/ -lKF5SyntaxHighlighting
-qt6_libs := `pkg-config --cflags --libs Qt5Widgets Qt6Core Qt6Gui` -I/usr/include/KF6/KSyntaxHighlighting/ -I/usr/include/KF6/KSyntaxHighlighting/KSyntaxHighlighting/ -lKF6SyntaxHighlighting
+qt6_libs := `pkg-config --cflags --libs Qt6Widgets Qt6Core Qt6Gui` -I/usr/include/KF6/KSyntaxHighlighting/ -I/usr/include/KF6/KSyntaxHighlighting/KSyntaxHighlighting/ -lKF6SyntaxHighlighting
 
 
 plugdir := $(shell basename '$(realpath ..)')
