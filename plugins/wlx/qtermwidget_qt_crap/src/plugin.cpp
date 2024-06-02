@@ -23,8 +23,6 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 		return nullptr;
 
 	QSettings settings(inipath, QSettings::IniFormat);
-	settings.setIniCodec("UTF-8");
-
 	key = QString("%1/command").arg(fi.suffix().toLower());
 
 	if (settings.contains(key))
