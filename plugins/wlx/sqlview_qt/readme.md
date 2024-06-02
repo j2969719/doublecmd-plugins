@@ -1,4 +1,4 @@
-sqlview_qt5
+sqlview_qt
 ========
 Very primitive SQL Viewer.
 

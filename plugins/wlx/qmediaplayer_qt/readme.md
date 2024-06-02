@@ -1,4 +1,4 @@
-qmediaplayer_qt5
+qmediaplayer_qt
 ========
 Very primitive media player.
 

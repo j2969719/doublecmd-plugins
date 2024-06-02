@@ -1,4 +1,4 @@
-md4c_webkit_qt5
+md4c_webkit_qt
 ========
 This plugin allows you to view Markdown files.
 

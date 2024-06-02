@@ -1,4 +1,4 @@
-wlxwebkit_qt5
+wlxwebkit_qt
 ========
 This plugin allows you to view HTML/XHTML files. It is based on Qt5WebKit engine.
 

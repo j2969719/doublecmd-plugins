@@ -1,4 +1,4 @@
-wlxwebkit_qt5_crap
+wlxwebkit_qt_crap
 ========
 Like [wlxwebkit_qt5](../wlxwebkit_qt5) but for any files if you can convert it to HTML file (see `settings.ini`).
 

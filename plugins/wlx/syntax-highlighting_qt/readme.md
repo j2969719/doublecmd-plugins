@@ -6,6 +6,7 @@ Displays source code files with syntax highlighting.
 
 ## Compatibility
 - `doublecmd-qt5`
+- `doublecmd-qt6`
 
 ## Notes
 Requires `syntax-highlighting` from KF5 framework.

@@ -1,4 +1,4 @@
-libarchive_qt5_crap
+libarchive_qt_crap
 ========
 Displays file content with `libarchive` ([supported formats](https://github.com/libarchive/libarchive#supported-formats)).
 

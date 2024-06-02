@@ -1,4 +1,4 @@
-jsonview_qt5
+jsonview_qt
 ========
 Very primitive JSON Viewer.
 

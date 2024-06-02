@@ -1,4 +1,4 @@
-qtpdfview_qt5
+qtpdfview_qt
 ========
 PDF Viewer.
 

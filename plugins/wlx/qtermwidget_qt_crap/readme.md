@@ -1,4 +1,4 @@
-qtermwidget_qt5_crap
+qtermwidget_qt_crap
 ========
 Embeds `qtermwidget` and runs command line utilities (see `settings.ini`).
 

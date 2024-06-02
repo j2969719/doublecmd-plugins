@@ -1,4 +1,4 @@
-csvview_qt5
+csvview_qt
 ========
 Very primitive CSV viewer.
 

@@ -1,4 +1,4 @@
-webengine_qt5
+webengine_qt
 ========
 This plugin allows you to view HTML/XHTML files. It is based on Blink engine.
 

@@ -1,4 +1,4 @@
-qtpdfview_qt5_crap
+qtpdfview_qt_crap
 ========
 Converts some file to PDF via some external tool assigned by mime or ext in `settings.ini` and displays the result.
 
