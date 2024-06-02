@@ -5,7 +5,7 @@ libs :=
 includes := -I../../../sdk
 
 qt5_libs := `pkg-config --cflags --libs Qt5Widgets` -I/usr/include/KF5/KSyntaxHighlighting/ -I/usr/include/KF5/KSyntaxHighlighting/KSyntaxHighlighting/ -lKF5SyntaxHighlighting
-qt6_libs := `pkg-config --cflags --libs Qt6Widgets Qt6Core Qt6Gui` -I/usr/include/KF6/KSyntaxHighlighting/ -I/usr/include/KF6/KSyntaxHighlighting/KSyntaxHighlighting/ -lKF6SyntaxHighlighting
+qt6_libs := `pkg-config --cflags --libs Qt6Widgets Qt6Core Qt6Core5Compat Qt6Gui` -I/usr/include/KF6/KSyntaxHighlighting/ -I/usr/include/KF6/KSyntaxHighlighting/KSyntaxHighlighting/ -lKF6SyntaxHighlighting
 
 
 plugdir := $(shell basename '$(realpath ..)')
@@ -17,7 +17,7 @@ plugfiles := $(filter-out $(wildcard ../*.$(plugtype)), $(wildcard ../*))
 detectstring :=
 
 
-all: qt5
+all: qt5 qt6
 
 qt5:
 		$(CXX) $(CXXFLAGS) -o '../$(plugdir)_$@.$(plugtype)' plugin.cpp $(libs) $($@_libs) $(includes) -D'PLUGNAME="'$(plugdir)_$@.$(plugtype)'"' -D'DETECT_STRING="$(detectstring)"' -D'PLUGTARGET="$@"' || echo '$(plugdir)_$@.$(plugtype)' >> ../../../dist/.build_fail.lst

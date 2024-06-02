@@ -60,7 +60,7 @@ Getting some information from archives.
 - [calcsize](plugins/wdx/calcsize)<br>
 Folder search by size.
 
-~- [crx_crap](plugins/wdx/crx_crap)<br>
+- ~[crx_crap](plugins/wdx/crx_crap)<br>
 crx/xpi.~
 
 - [datetimestr](plugins/wdx/datetimestr)<br>
@@ -447,6 +447,9 @@ Displays various information about file using command line utilities. Detection 
 - [mpv](plugins/wlx/mpv)<br>
 Media player plugin. Requires `mpv`.
 
+- [mpv_alt](plugins/wlx/mpv_alt)<br>
+Yet another media player plugin. Requires `mpv`.
+
 - [nfoview](plugins/wlx/nfoview)<br>
 Displays NFO, DIZ.
 
@@ -529,6 +532,9 @@ This plugin allows you to view Markdown files.
 
 - [md4c_webkit_qt](plugins/wlx/md4c_webkit_qt)<br>
 This plugin allows you to view Markdown files.
+
+- [mpv_alt](plugins/wlx/mpv_alt)<br>
+Yet another media player plugin. Requires `mpv`.
 
 - [pdf_crap_qml_qt](plugins/wlx/pdf_crap_qml_qt)<br>
 PDF Viewer.
