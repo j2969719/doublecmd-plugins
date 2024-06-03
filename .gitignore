@@ -35,6 +35,9 @@ utils/freearc/*.zst
 utils/freearc/*.xz
 utils/freearc/src/
 utils/freearc/pkg/
+utils/qtermwidget-qt5/*.xz
+utils/qtermwidget-qt5/src/
+utils/qtermwidget-qt5/pkg/
 *kostyl
 !*kostyl/
 settings.ini
