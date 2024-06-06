@@ -1,5 +1,5 @@
 -- svginfowdx.lua (cross-platform)
--- 2021.04.18
+-- 2024.06.06
 --[[
 Getting some information from SVG files.
 Similar to SVGInfo by Progman13 (https://totalcmd.net/plugring/svginfo.html).
@@ -99,6 +99,9 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
     end
     for i = 2, 10 do
       r = string.match(fc, '%s+' .. fields[i][2] .. '="([^"]+)"', nb)
+      if r == nil then
+        r = string.match(fc, '%s+' .. fields[i][2] .. "='([^']+)'", nb)
+      end
       if r ~= nil then ar[i] = r end
     end
     WHCalculation()
@@ -116,8 +119,8 @@ function WHCalculation()
     GetFromViewBox()
     return 1
   end
-  local cw = tonumber(string.match(ar[3], '^([0-9%.]+)'))
-  local ch = tonumber(string.match(ar[4], '^([0-9%.]+)'))
+  local cw = tonumber(string.match(ar[3], '^([0-9]+)'))
+  local ch = tonumber(string.match(ar[4], '^([0-9]+)'))
   local w = string.match(ar[3], '([a-z]+)$')
   if (w == nil) or (w == 'px') then
     ar[11] = RoundU(cw)
