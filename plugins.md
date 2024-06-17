@@ -236,7 +236,7 @@ Getting some information from Windows shell link (shortcut) file. Requires `lnki
 - [lslockswdx.lua](plugins/wdx/scripts/lslockswdx.lua)<br>
 List local system locks.
 
-- [marker](utils/marker) *(cross platform)*<br>
+- [marker](scripts/lua/marker) *(cross platform)*<br>
 Marker for file highlighting like in *Colors* > *File types*, but "on the fly". See readme.md.
 
 - [msgfulltextwdx.lua](plugins/wdx/scripts/msgfulltextwdx.lua) *(cross platform)*<br>
@@ -285,7 +285,7 @@ Getting some information from local copy of SVN repository. Requires `svn`.
 - [symlinkwdx.lua](plugins/wdx/scripts/symlinkwdx.lua)<br>
 Getting some details about symlinks.
 
-- [tags](utils/tags) *(cross platform)*<br>
+- [tags](scripts/lua/tags) *(cross platform)*<br>
 Assign any tag to any file or folder (local file systems), see readme.md.
 
 - [tarfilescountwdx.lua](plugins/wdx/scripts/tarfilescountwdx.lua) + [tarfilescountwdx.lng](plugins/wdx/scripts/tarfilescountwdx.lng)<br>

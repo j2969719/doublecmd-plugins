@@ -848,7 +848,7 @@ DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
 
 
 ### Create new file *(cross platform)*
-[CreateNewFile.lua](utils/CreateNewFile/CreateNewFile.lua), [templates](utils/CreateNewFile/newfiles)
+[CreateNewFile.lua](scripts/lua/CreateNewFile/CreateNewFile.lua), [templates](scripts/lua/CreateNewFile/newfiles)
 ```xml
 DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
 <doublecmd>
@@ -857,16 +857,16 @@ DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
     <Icon>cm_editnew</Icon>
     <Hint>Create new file</Hint>
     <Command>cm_ExecuteScript</Command>
-    <Param>%COMMANDER_PATH%/utils/CreateNewFile.lua</Param>
+    <Param>%COMMANDER_PATH%/scripts/lua/CreateNewFile.lua</Param>
     <Param>%"0%D</Param>
-    <Param>%COMMANDER_PATH%/utils/newfiles</Param>
+    <Param>%COMMANDER_PATH%/scripts/lua/newfiles</Param>
   </Command>
 </doublecmd>
 ```
 
 
 ### Make dir(s) with some additional features *(cross platform)*
-[MakeDir.lua](utils/MakeDir.lua), see details in the beginning of script.
+[MakeDir.lua](scripts/lua/MakeDir.lua), see details in the beginning of script.
 ```xml
 DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
 <doublecmd>
@@ -875,7 +875,7 @@ DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
     <Icon>cm_makedir</Icon>
     <Hint>Make dir(s)</Hint>
     <Command>cm_ExecuteScript</Command>
-    <Param>%COMMANDER_PATH%/utils/MakeDir.lua</Param>
+    <Param>%COMMANDER_PATH%/scripts/lua/MakeDir.lua</Param>
     <Param>%"0%D</Param>
   </Command>
 </doublecmd>
@@ -883,7 +883,7 @@ DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
 
 
 ### Calculate or verify checksum, auto choose *(cross platform)*
-[CheckSum.lua](utils/CheckSum.lua)
+[CheckSum.lua](scripts/lua/CheckSum.lua)
 ```xml
 DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="utf-8"?>
 <doublecmd>
@@ -892,7 +892,7 @@ DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="utf-8"?>
     <Icon>cm_checksumverify</Icon>
     <Hint>Calculate or verify checksum (auto choose)</Hint>
     <Command>cm_ExecuteScript</Command>
-    <Param>%COMMANDER_PATH%/utils/CheckSum.lua</Param>
+    <Param>%COMMANDER_PATH%/scripts/lua/CheckSum.lua</Param>
     <Param>%"0%es</Param>
     <Param>%"0%ps2</Param>
   </Command>
@@ -901,7 +901,7 @@ DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="utf-8"?>
 
 
 ### Set custom extended attribute(s)
-[SetFAttrCustom.lua](utils/SetFAttrCustom.lua). Also can be useful wdx-plugin: [getfattrcustomwdx.lua](plugins/wdx/scripts/getfattrcustomwdx.lua).
+[SetFAttrCustom.lua](scripts/lua/SetFAttrCustom.lua). Also can be useful wdx-plugin: [getfattrcustomwdx.lua](plugins/wdx/scripts/getfattrcustomwdx.lua).
 ```xml
 DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
 <doublecmd>
@@ -910,7 +910,7 @@ DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
     <Icon>cm_executescript</Icon>
     <Hint>Set custom extended attributes</Hint>
     <Command>cm_ExecuteScript</Command>
-    <Param>%COMMANDER_PATH%/utils/SetFAttrCustom.lua</Param>
+    <Param>%COMMANDER_PATH%/scripts/lua/SetFAttrCustom.lua</Param>
     <Param>%LU</Param>
   </Command>
 </doublecmd>
@@ -918,7 +918,7 @@ DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
 
 
 ### Save clipboard contents to text file *(cross platform)*
-[SaveClipboardToFile.lua](utils/SaveClipboardToFile.lua). Also you can open this new file in viewer or editor immediately, see details in the beginning of script.
+[SaveClipboardToFile.lua](scripts/lua/SaveClipboardToFile.lua). Also you can open this new file in viewer or editor immediately, see details in the beginning of script.
 ```xml
 DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
 <doublecmd>
@@ -927,7 +927,7 @@ DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
     <Icon>cm_executescript</Icon>
     <Hint>Save clipboard contents to text file</Hint>
     <Command>cm_ExecuteScript</Command>
-    <Param>%COMMANDER_PATH%/utils/SaveClipboardToFile.lua</Param>
+    <Param>%COMMANDER_PATH%/scripts/lua/SaveClipboardToFile.lua</Param>
     <Param>%"0%Ds</Param>
   </Command>
 </doublecmd>
@@ -935,7 +935,7 @@ DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
 
 
 ### Quick filter with a predefined list of masks *(cross platform)*
-[QuickFilter.lua](utils/QuickFilter.lua).
+[QuickFilter.lua](scripts/lua/QuickFilter.lua).
 ```xml
 DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
 <doublecmd>
@@ -944,14 +944,14 @@ DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
     <Icon>cm_executescript</Icon>
     <Hint>Quick filter with a predefined list of masks</Hint>
     <Command>cm_ExecuteScript</Command>
-    <Param>%COMMANDER_PATH%/utils/QuickFilter.lua</Param>
+    <Param>%COMMANDER_PATH%/scripts/lua/QuickFilter.lua</Param>
   </Command>
 </doublecmd>
 ```
 
 
 ### cm_FlatView/cm_FlatViewSel: copy files with keeping directory structure
-[CopyTree.py](utils/CopyTree.py). Use with cm_FlatView/cm_FlatViewSel: copy selected files to target directory with keeping source directory structure.
+[CopyTree.py](scripts/CopyTree.py). Use with cm_FlatView/cm_FlatViewSel: copy selected files to target directory with keeping source directory structure.
 ```xml
 DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
 <doublecmd>
@@ -959,7 +959,7 @@ DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
     <ID>{28AE07D0-12A0-4238-92BB-BE815AFB6F48}</ID>
     <Icon>cm_copy</Icon>
     <Hint>cm_FlatView/cm_FlatViewSel: copy files with keeping directory structure</Hint>
-    <Command>%COMMANDER_PATH%/utils/CopyTree.py</Command>
+    <Command>%COMMANDER_PATH%/scripts/CopyTree.py</Command>
     <Param> %t1 %"0 "%LU" "%Ds" "%Dt"</Param>
   </Program>
 </doublecmd>
@@ -967,8 +967,8 @@ DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
 
 
 ### Marker *(cross platform)*
-For file highlighting like in *Colors* > *File types*, but "on the fly": add selected color, delete or change. So you can use this scripts for file tagging. See details [here](utils/marker).
+For file highlighting like in *Colors* > *File types*, but "on the fly": add selected color, delete or change. So you can use this scripts for file tagging. See details [here](scripts/lua/marker).
 
 
 ### Tagging *(cross platform)*
-Assign any tag to any file or folder (local file systems). See details [here](utils/tags).
+Assign any tag to any file or folder (local file systems). See details [here](scripts/lua/tags).

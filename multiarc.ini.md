@@ -94,7 +94,7 @@ Add=balz c{%S} %FQ %AQ
 <a name="b64"><h3>Base64</h3></a>
 ```ini
 [Base64]
-Archiver=%COMMANDER_PATH%/utils/base64uue
+Archiver=%COMMANDER_PATH%/scripts/base64uue
 Description=Base64
 Extension=b64
 Format0=yyyy tt dd hh mm ss aaaaa zzzzzzzzzzzz n+
@@ -102,7 +102,7 @@ List=%P -l %AQ
 Extract=%P -d %AQ %FQ
 Add=%P -eb %AQ %FQ
 ```
-Script [base64uue](utils/base64uue), [forum](https://doublecmd.sourceforge.io/forum/viewtopic.php?p=24877#p24877)
+Script [base64uue](scripts/base64uue), [forum](https://doublecmd.sourceforge.io/forum/viewtopic.php?p=24877#p24877)
 
 ---
 <a name="chm"><h3>CHM</h3></a>
@@ -122,7 +122,7 @@ FormMode=8
 
 ---
 <a name="freearc"><h3>FreeArc</h3></a>
-Native Linux [binary](utils/freearc):
+Native Linux [binary](third-party_and_other/freearc):
 ```ini
 [FreeArc]
 Archiver=arc
@@ -608,7 +608,7 @@ Add=%P {%S} -q -o %AQ %FQ
 <a name="uue"><h3>UUEncode</h3></a>
 ```ini
 [UUEncode]
-Archiver=%COMMANDER_PATH%/utils/base64uue
+Archiver=%COMMANDER_PATH%/scripts/base64uue
 Description=UUEncode
 Extension=uue
 Format0=yyyy tt dd hh mm ss aaaaa zzzzzzzzzzzz n+
@@ -616,7 +616,7 @@ List=%P -l %AQ
 Extract=%P -d %AQ %FQ
 Add=%P -eu %AQ %FQ
 ```
-Script [base64uue](utils/base64uue), [forum](https://doublecmd.sourceforge.io/forum/viewtopic.php?p=24877#p24877)
+Script [base64uue](scripts/base64uue), [forum](https://doublecmd.sourceforge.io/forum/viewtopic.php?p=24877#p24877)
 
 ---
 <a name="zpaq"><h3>ZPAQ</h3></a>
