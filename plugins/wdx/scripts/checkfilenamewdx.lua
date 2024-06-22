@@ -1,5 +1,5 @@
 -- checkfilenamewdx.lua (cross-platform)
--- 2020.08.02
+-- 2024.06.22
 --[[
 Save as UTF-8 without BOM!
 
@@ -34,6 +34,8 @@ Returns "Good" if all is good or string with error message(s).
 
 "characters (relative)" and "bytes (relative)" for Unix-like OS:
 extracting a path which be relative to
+  /dev/ad
+  /dev/da
   /dev/fd
   /dev/hd
   /dev/nvme
@@ -41,8 +43,8 @@ extracting a path which be relative to
   /dev/sr
 i.e. relative to mount points.
 Result will not have a path delimiter in the beginning!
-On Windows this units returns path without "[drive]:\".
-Note: On Unix-like script uses /etc/mtab.
+In Windows this units returns path without "[drive]:\".
+Note: In Unix-like script uses /etc/mtab.
 
 7) Path length: chars = bytes
 Returns true if "path length in characters" = "path length in bytes".
@@ -275,11 +277,15 @@ function GetRelativeToDev(s)
   if not h then return nil end
   for l in h:lines() do
     t = string.sub(l, 1, 7)
-    if (t == '/dev/fd') or (t == '/dev/hd') or (t == '/dev/sd') or (t == '/dev/sr') or (string.sub(l, 1, 9) == '/dev/nvme') then
+    if (t == '/dev/ad') or (t == '/dev/da') or (t == '/dev/fd') or (t == '/dev/hd') or (t == '/dev/sd') or (t == '/dev/sr') or (string.sub(l, 1, 9) == '/dev/nvme') then
       t = string.match(l, '^[^ ]+ ([^ ]+) ')
       if t == '/' then
         rt = '/'
       else
+        if string.find(t, '\\', 1, true) ~= nil then
+          t = string.gsub(t, '\\([0-7][0-7][0-7])',
+                function(d) return string.char(tonumber(d, 8)) end)
+        end
         am[cm] = t
         cm = cm + 1
       end
