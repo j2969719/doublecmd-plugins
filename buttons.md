@@ -743,41 +743,6 @@ DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
 
 You can change the script path, icon and description.
 
-### Copy to subdirs
-[copytosubdirs.lua](scripts/lua/copytosubdirs.lua)
-```xml
-DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
-<doublecmd>
-  <Command>
-    <ID>{767A8509-B6FD-46A4-9856-7DD0FDEC8633}</ID>
-    <Icon>cm_copy</Icon>
-    <Hint>Copy to subdirs</Hint>
-    <Command>cm_ExecuteScript</Command>
-    <Param>$COMMANDER_PATH/scripts/lua/copytosubdirs.lua</Param>
-    <Param>%Dt</Param>
-    <Param>%Lt</Param>
-  </Command>
-</doublecmd>
-```
-
-
-### Copy to all subdirs (recursively)
-[copytoallsubdirs.lua](scripts/lua/copytoallsubdirs.lua)
-```xml
-DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
-<doublecmd>
-  <Command>
-    <ID>{767A8509-B6FD-46A4-9856-7DD0FDEC8633}</ID>
-    <Icon>cm_copy</Icon>
-    <Hint>Copy to all subdirs (recursively)</Hint>
-    <Command>cm_ExecuteScript</Command>
-    <Param>$COMMANDER_PATH/scripts/lua/copytoallsubdirs.lua</Param>
-    <Param>%Dt</Param>
-  </Command>
-</doublecmd>
-```
-
-
 ### Edit symlink
 [editsymlink.lua](scripts/lua/editsymlink.lua)
 ```xml
