@@ -1,5 +1,5 @@
 -- filenameunwdx.lua (cross-platform)
--- 2023.07.25
+-- 2024.07.19
 --[[
 Returns the normalized (Unicode normalization) filename:
 - form C (NFC);
@@ -28,7 +28,9 @@ local alib = {
 "libunistring.so.5",
 "libunistring.dll",
 "libunistring-2.dll",
-"libunistring-5.dll"
+"libunistring-5.dll",
+"libunistring.dylib",
+"libunistring.5.dylib"
 }
 local br, lib = pcall(ffi.load, "unistring")
 if br == false then
