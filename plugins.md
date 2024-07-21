@@ -200,6 +200,9 @@ Only for columns set or tooltips!
 - [filewinattrexwdx.lua](plugins/wdx/scripts/filewinattrexwdx.lua)<br>
 Return file attributes (Windows only!). See details in the beginning of script.
 
+- [folderbytextwdx.lua](plugins/wdx/scripts/folderbytextwdx.lua)<br>
+Search for folders by contents of text files (without a recursive search, i.e. for file search tool only).
+
 - [getfaclwdx.lua](plugins/wdx/scripts/getfaclwdx.lua)<br>
 Returns file permissions (ACL). Requires `getfacl`.
 
