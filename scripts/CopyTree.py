@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# 2020.09.01
+# 2024.07.26
 #
-# For file list after cm_FlatView/cm_FlatViewSel:
-#   copy selected files to target directory with keeping source directory
-#   structure and without overwriting existing files.
+# For file list after cm_FlatView/cm_FlatViewSel and search result
+#   (from the "///Search result" tab): copy selected files to target directory
+#   with keeping source directory structure and without overwriting existing files.
 #
 # How to use: make it executable and add button
 #   command: path/to/CopyTree.py
@@ -20,6 +20,8 @@ def copytree(fl, ds, dt):
     af = f.read().splitlines()
     f.close()
     dsl = len(ds)
+    if ds == "/":
+        dsl = 0
     c = 0
     for fn in af:
         if not os.path.isfile(fn):
@@ -50,8 +52,10 @@ def copytree(fl, ds, dt):
     print("\nDone: " + str(c) + " file(s)\n")
 
 if len(sys.argv) == 4:
-    copytree(sys.argv[1], sys.argv[2], sys.argv[3])
+    if sys.argv[2][0:3] == "///":
+        copytree(sys.argv[1], "/", sys.argv[3])
+    else:
+        copytree(sys.argv[1], sys.argv[2], sys.argv[3])
 else:
     print("Check parameters!")
     sys.exit(1)
-
