@@ -60,6 +60,7 @@
 #define OPT_ACTS "Fs_PropsActs"
 #define OPT_PUSH "Fs_PushValue"
 #define OPT_CLR "Fs_ClearValue"
+#define OPT_EDIT "Fs_EditLine"
 #define OPT_TERM  "Fs_RunTerm"
 #define OPT_RUN  "Fs_RunAsync"
 #define OPT_ENVVAR "Fs_Set_"
@@ -2544,6 +2545,28 @@ static void ParseOpts(gchar *script, gchar *text, gboolean thread)
 
 					g_free(command);
 				}
+				else if (IsValidOpt(*p, OPT_EDIT))
+				{
+					char value[MAX_PATH];
+					gchar **res = g_strsplit(STRIP_OPT(*p, OPT_EDIT), "\t", 2);
+					string = TranslateString(langs, res[0]);
+					g_strlcpy(value, res[1], MAX_PATH);
+
+					if (gRequestProc(gPluginNr, RT_Other, caption, string, value, MAX_PATH))
+					{
+						gchar *opt = g_strdup_printf("%s %s", OPT_EDIT, res[0]);
+						ExecuteScript(script, VERB_SETOPT, opt, value, &output, NULL);
+
+						if (output && output[0] != '\0')
+							ParseOpts(script, output, FALSE);
+
+						g_free(opt);
+						g_free(output);
+						output = NULL;
+					}
+
+					g_strfreev(res);
+				}
 				else if (IsValidOpt(*p, OPT_OPEN))
 				{
 					GError *err = NULL;
@@ -4369,7 +4392,7 @@ int DCPCALL FsContentGetValue(char* FileName, int FieldIndex, int UnitIndex, voi
 					strncat((char*)FieldValue, pids, 100);
 
 					if (strlen(pids) > 100)
-						strcat((char*)FieldValue, "...");
+						strcat((char *)FieldValue, "...");
 
 					g_free(pids);
 

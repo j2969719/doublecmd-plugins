@@ -17,6 +17,18 @@ function get_output(command)
     return output
 end
 
+function fs_init()
+    print("Fs_GetValue_Needed")
+end
+
+function fs_setopt(option, value)
+    local path = option:match("^Fs_EditLine (.+)")
+    if (path ~= nil and os.execute("dconf write " .. path .. ' "' .. value .. '"') == true) then
+        os.exit()
+    end
+    os.exit(1)
+end
+
 function fs_getlist(path)
     if not path:find('/$') then
         path = path .. '/'
@@ -74,6 +86,12 @@ function fs_rmdir(path)
     os.exit(1)
 end
 
+function fs_run(file)
+    local output = get_output("dconf read " .. file)
+    print("Fs_EditLine " .. file .. '\t' .. output)
+    os.exit()
+end
+
 function fs_properties(file)
     local dirs = os.getenv("DC_WFX_SCRIPT_DIRS")
     if dirs:find('\t' .. file .. '\t') then
@@ -83,8 +101,17 @@ function fs_properties(file)
     os.exit()
 end
 
+function fs_getvalue(file)
+    os.execute("dconf read " .. file)
+    os.exit()
+end
 
-if args[1] == "list" then
+
+if args[1] == "init" then
+    fs_init(args[2])
+elseif args[1] == "setopt" then
+    fs_setopt(args[2], args[3])
+elseif args[1] == "list" then
     fs_getlist(args[2])
 elseif args[1] == "copyout" then
     fs_getfile(args[2], args[3])
@@ -96,8 +123,12 @@ elseif args[1] == "rm" then
     fs_rm(args[2])
 elseif args[1] == "rmdir" then
     fs_rmdir(args[2])
+elseif args[1] == "run" then
+    fs_run(args[2])
 elseif args[1] == "properties" then
     fs_properties(args[2])
+elseif args[1] == "getvalue" then
+    fs_getvalue(args[2])
 end
 
 os.exit(1)
