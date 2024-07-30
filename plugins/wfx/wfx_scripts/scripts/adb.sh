@@ -2,6 +2,7 @@
 
 vfs_init()
 {
+    which adb >/dev/null 2>&1 || echo "Fs_Info_Message WFX_SCRIPT_STR_INSTALL_ADB"
     echo "Fs_CONNECT_Needed"
     echo "Fs_StatusInfo_Needed"
     echo "Fs_GetValue_Needed"
@@ -233,18 +234,18 @@ vfs_openfile()
     if [ "$file" == "/$1" ]; then
         echo "Fs_LogInfo"
         case "${1:1}" in
-        ">$ENV_WFX_SCRIPT_STR_USB<.sh") adb usb ;;
-        ">$ENV_WFX_SCRIPT_STR_TCP<.sh") echo -e "Fs_PushValue WFX_SCRIPT_STR_TCPPORT\t5555" &&\
-                                        echo -e "Fs_Request_Options\nWFX_SCRIPT_STR_TCPPORT" ;;
-        ">$ENV_WFX_SCRIPT_STR_LOG<.sh") echo -e "Fs_Request_Options\nWFX_SCRIPT_STR_LOGOPT" ;;
+            ">$ENV_WFX_SCRIPT_STR_USB<.sh") adb usb ;;
+            ">$ENV_WFX_SCRIPT_STR_TCP<.sh") echo -e "Fs_PushValue WFX_SCRIPT_STR_TCPPORT\t5555" &&\
+                                            echo -e "Fs_Request_Options\nWFX_SCRIPT_STR_TCPPORT" ;;
+            ">$ENV_WFX_SCRIPT_STR_LOG<.sh") echo -e "Fs_Request_Options\nWFX_SCRIPT_STR_LOGOPT" ;;
 
-        ">$ENV_WFX_SCRIPT_STR_ROOT<.sh") adb root ;;
-        ">$ENV_WFX_SCRIPT_STR_UNROOT<.sh") adb unroot ;;
-        ">$ENV_WFX_SCRIPT_STR_OFFLINE<.sh") adb reconnect offline ;;
-        ">$ENV_WFX_SCRIPT_STR_STDERRON<.sh") echo "Fs_Set_DC_WFX_SCRIPT_STDERR " ;;
-        ">$ENV_WFX_SCRIPT_STR_STDERROFF<.sh") echo "Fs_Set_DC_WFX_SCRIPT_STDERR 2>/dev/null" ;;
+            ">$ENV_WFX_SCRIPT_STR_ROOT<.sh") adb root ;;
+            ">$ENV_WFX_SCRIPT_STR_UNROOT<.sh") adb unroot ;;
+            ">$ENV_WFX_SCRIPT_STR_OFFLINE<.sh") adb reconnect offline ;;
+            ">$ENV_WFX_SCRIPT_STR_STDERRON<.sh") echo "Fs_Set_DC_WFX_SCRIPT_STDERR " ;;
+            ">$ENV_WFX_SCRIPT_STR_STDERROFF<.sh") echo "Fs_Set_DC_WFX_SCRIPT_STDERR 2>/dev/null" ;;
 
-        *) echo "Fs_Info_Message \"${1:1}\" WFX_SCRIPT_STR_ERRNA" ;;
+            *) echo "Fs_Info_Message \"${1:1}\" WFX_SCRIPT_STR_ERRNA" ;;
         esac
         exit 0
     fi

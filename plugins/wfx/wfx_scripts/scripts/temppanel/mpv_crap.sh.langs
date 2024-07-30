@@ -1,0 +1,4 @@
+[Default]
+WFX_SCRIPT_NAME=MPV panel
+WFX_SCRIPT_STR_INSTALL_MPV=mpv is not installed, the script will not work correctly!
+WFX_SCRIPT_STR_INSTALL_SOCAT=socat is not installed, the script will not work correctly!
