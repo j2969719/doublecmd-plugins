@@ -1,5 +1,5 @@
 -- folderbytextwdx.lua (cross-platform)
--- 2024.07.21
+-- 2024.07.30
 --[[
 Search for folders by contents of text files.
 Without a recursive search, i.e. for file search tool only.
@@ -23,6 +23,7 @@ end
 function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
   if aExt[FieldIndex + 1] == nil then return nil end
   if flags == 1 then return nil end; -- CONTENT_DELAYIFSLOW, https://doublecmd.github.io/doc/en/lua.html#preface
+  if UnitIndex ~= 0 then return nil end
   local k = SysUtils.FileGetAttr(FileName)
   if k < 0 then return nil end
   if (math.floor(k / 0x00000400) % 2 ~= 0) then return nil end
