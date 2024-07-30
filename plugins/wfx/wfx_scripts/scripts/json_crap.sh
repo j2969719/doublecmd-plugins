@@ -26,7 +26,7 @@ vfs_list()
 
     echo "$keys" | grep -Po '^  ".*' | sed 's/^  "\([^"]\+\)",\?/drwxr-xr-x 0000-00-00 00:00:00 - \1/'
     echo "$keys" | grep -Po '^  \d+' | sed 's/^  \([0-9]\+\),\?/drwxr-xr-x 0000-00-00 00:00:00 - [\1]/'
-    echo "644 0000-00-00 00:00:00 - $ENV_WFX_SCRIPT_STR_DATA.json"
+    echo "0644 0000-00-00 00:00:00 - $ENV_WFX_SCRIPT_STR_DATA.json"
     exit $?
 }
 
