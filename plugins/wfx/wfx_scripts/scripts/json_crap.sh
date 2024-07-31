@@ -21,7 +21,7 @@ vfs_setopt()
 
 vfs_list()
 {
-    json_path=`echo "$1" | sed 's#/\[#\[#' | tr '/' '.'`
+    json_path=`echo "$1"  | sed 's#/\[#\[#' | sed 's#/\([^/]\+\)#["\1"]#g' | sed 's#^/\?#\.#'`
     keys=`jq -r ''$json_path' | keys' "$DC_WFX_SCRIPT_JSON"`
 
     echo "$keys" | grep -Po '^  ".*' | sed 's/^  "\([^"]\+\)",\?/drwxr-xr-x 0000-00-00 00:00:00 - \1/'
@@ -32,7 +32,8 @@ vfs_list()
 
 vfs_copyout()
 {
-    json_path=`dirname "$1" | sed 's#/\[#\[#' | tr '/' '.'`
+    json_path=`dirname "$1" | sed 's#/\[#\[#' | sed 's#/\([^/]\+\)#["\1"]#g' | sed 's#^/\?#\.#'`
+    echo "$json_path"
     dst="$2"
 
     jq ''$json_path'' "$DC_WFX_SCRIPT_JSON" > "$dst"
@@ -41,7 +42,7 @@ vfs_copyout()
 
 vfs_fileexists()
 {
-    json_path=`dirname "$1" | sed 's#/\[#\[#' | tr '/' '.'`
+    json_path=`dirname "$1" | sed 's#/\[#\[#' | sed 's#/\([^/]\+\)#["\1"]#g' | sed 's#^/\?#\.#'`
 
     jq ''$json_path'' "$DC_WFX_SCRIPT_JSON"
     exit $?
@@ -50,7 +51,7 @@ vfs_fileexists()
 vfs_copyin()
 {
     data=`cat "$1"`
-    json_path=`dirname "$2" | sed 's#/\[#\[#' | tr '/' '.'`
+    json_path=`dirname "$2" | sed 's#/\[#\[#' | sed 's#/\([^/]\+\)#["\1"]#g' | sed 's#^/\?#\.#'`
 
     new_data=`jq -r --argjson data "$data" ''$json_path' = $data' "$DC_WFX_SCRIPT_JSON"`
     ["$new_data" != "\n"] exit 1 || echo "$new_data" > "$DC_WFX_SCRIPT_JSON"
@@ -59,9 +60,9 @@ vfs_copyin()
 
 vfs_cp()
 {
-    json_path=`dirname "$1" | sed 's#/\[#\[#' | tr '/' '.'`
+    json_path=`dirname "$1" | sed 's#/\[#\[#' | sed 's#/\([^/]\+\)#["\1"]#g' | sed 's#^/\?#\.#'`
     data=`jq ''$json_path'' "$DC_WFX_SCRIPT_JSON"`
-    json_path=`dirname "$2" | sed 's#/\[#\[#' | tr '/' '.'`
+    json_path=`dirname "$2" | sed 's#/\[#\[#' | sed 's#/\([^/]\+\)#["\1"]#g' | sed 's#^/\?#\.#'`
 
     new_data=`jq -r --argjson data "$data" ''$json_path' = $data' "$DC_WFX_SCRIPT_JSON"`
     ["$new_data" != "\n"] exit 1 || echo "$new_data" > "$DC_WFX_SCRIPT_JSON"
@@ -70,9 +71,9 @@ vfs_cp()
 
 vfs_mv()
 {
-    src=`dirname "$1" | sed 's#/\[#\[#' | tr '/' '.'`
+    src=`dirname "$1" | sed 's#/\[#\[#' | sed 's#/\([^/]\+\)#["\1"]#g' | sed 's#^/\?#\.#'`
     data=`jq ''$src'' "$DC_WFX_SCRIPT_JSON"`
-    json_path=`dirname "$2" | sed 's#/\[#\[#' | tr '/' '.'`
+    json_path=`dirname "$2" | sed 's#/\[#\[#' | sed 's#/\([^/]\+\)#["\1"]#g' | sed 's#^/\?#\.#'`
 
     new_data=`jq -r --argjson data "$data" ''$json_path' = $data' "$DC_WFX_SCRIPT_JSON"`
     ["$new_data" != "\n"] exit 1 || echo "$new_data" | jq -r 'del('$src')' > "$DC_WFX_SCRIPT_JSON"
@@ -81,7 +82,7 @@ vfs_mv()
 
 vfs_rm()
 {
-    json_path=`dirname "$1" | sed 's#/\[#\[#' | tr '/' '.'`
+    json_path=`dirname "$1" | sed 's#/\[#\[#' | sed 's#/\([^/]\+\)#["\1"]#g' | sed 's#^/\?#\.#'`
 
     new_data=`jq -r 'del('$json_path')' "$DC_WFX_SCRIPT_JSON"`
     ["$new_data" != "\n"] exit 1 || echo "$new_data" > "$DC_WFX_SCRIPT_JSON"
