@@ -1954,6 +1954,11 @@ intptr_t DCPCALL DlgMultiChoiceProc(uintptr_t pDlg, char* DlgItemName, intptr_t 
 
 						count++;
 					}
+
+					int index = (int)SendDlgMsg(pDlg, "lbChoice", DM_LISTGETITEMINDEX, 0, 0);
+
+					if (index == -1)
+						SendDlgMsg(pDlg, "lbChoice", DM_LISTSETITEMINDEX, 0, 0);
 				}
 
 				if (gNoise && count == 1)
@@ -1966,11 +1971,6 @@ intptr_t DCPCALL DlgMultiChoiceProc(uintptr_t pDlg, char* DlgItemName, intptr_t 
 					SendDlgMsg(pDlg, "btnUp", DM_SHOWITEM, 1, 0);
 					SendDlgMsg(pDlg, "btnDown", DM_SHOWITEM, 1, 0);
 				}
-
-				int index = (int)SendDlgMsg(pDlg, "lbChoice", DM_LISTGETITEMINDEX, 0, 0);
-
-				if (index == -1)
-					SendDlgMsg(pDlg, "lbChoice", DM_LISTSETITEMINDEX, 0, 0);
 
 				DlgMultiChoiceUpdLabel(pDlg);
 				g_strfreev(gChoice);

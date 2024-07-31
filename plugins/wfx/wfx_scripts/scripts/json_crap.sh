@@ -90,7 +90,7 @@ vfs_rm()
 
 vfs_properties()
 {
-    echo -e "Fs_SelectFile WFX_SCRIPT_STR_SELECTFILE\t*.*"
+    echo -e "Fs_SelectFile WFX_SCRIPT_STR_SELECTFILE\tWFX_SCRIPT_STR_MASKJSON|*.json|WFX_SCRIPT_STR_MASKALL|*.*"
     exit 0
 }
 
