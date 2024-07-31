@@ -8,16 +8,30 @@ DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
     <Hint>MarkUnmark</Hint>
     <Command>cm_ExecuteScript</Command>
     <Param>$DC_CONFIG_PATH/scripts/lua/markunmark.lua</Param>
-    <Param>%ps2</Param>
   </Command>
 </doublecmd>
 
 ]]
 
-local params = {...};
+local function IsSelectionExists()
+  local sTmp
+  local sFile = os.tmpname()
+  DC.ExecuteCommand("cm_SaveSelectionToFile", sFile)
+  local h = io.open(sFile, "rb")
+  if h ~= nil then
+    sTmp = h:read(1)
+    h:close()
+  end
+  os.remove(sFile)
+  if (sTmp == nil) or (sTmp == "") then
+    return false
+  else
+    return true
+  end
+end
 
-if (params[1] == '') then
-    DC.ExecuteCommand("cm_MarkMarkAll");
+if IsSelectionExists() == false then
+  DC.ExecuteCommand("cm_MarkMarkAll")
 else
-    DC.ExecuteCommand("cm_MarkUnmarkAll");
+  DC.ExecuteCommand("cm_MarkUnmarkAll")
 end
