@@ -2363,12 +2363,21 @@ static void ParseOpts(gchar *script, gchar *text, gboolean thread)
 					gboolean is_yes = FALSE;
 					gchar *key = g_strdup_printf("%s_%s", MARK_BOOL, STRIP_OPT(*p, OPT_YESNOMSG));
 
-					if (g_key_file_has_key(gCfg, script, key, NULL) && request_once)
+					if (request_once && g_key_file_has_key(gCfg, script, key, NULL))
 						is_yes = g_key_file_get_boolean(gCfg, script, key, NULL);
 					else
 					{
 						if (gDialogApi && !thread)
-							is_yes = (MessageBox(string, caption, MB_YESNO | MB_ICONQUESTION) == ID_YES);
+						{
+							int flags = MB_YESNO | MB_ICONQUESTION;
+
+							if (g_key_file_has_key(gCfg, script, key, NULL) && !g_key_file_get_boolean(gCfg, script, key, NULL))
+								flags |= MB_DEFBUTTON2;
+							else
+								flags |= MB_DEFBUTTON1;
+
+							is_yes = (MessageBox(string, caption, flags) == ID_YES);
+						}
 						else
 							is_yes = gRequestProc(gPluginNr, RT_MsgYesNo, caption, string, NULL, 0);
 

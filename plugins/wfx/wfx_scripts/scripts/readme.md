@@ -107,19 +107,20 @@ Operations **init**, **deinit**, **setopt**, **mkdir**, **quote** and **statusin
 |`Fs_CONNECT_Needed`|informs that the plugin must send CONNECT to display the drive button and the log window|-|`Fs_CONNECT_Needed`|-|
 |`Fs_DisableFakeDates`|disable substitution of an invalid date in the list of files for the current one|-|`Fs_DisableFakeDates`|-|
 |`Fs_RequestOnce`|informs that the following lines are values ​​that are requested from the user only once|-|`Fs_RequestOnce`|-|
-|`Fs_MultiChoice`|shows a dialog with several options to choose from|user input|`Fs_MultiChoice some option\tvalue1\tvalue2`|setopt some option value2|
-|`Fs_YesNo_Message`|shows a dialog with yes/no buttons|`Yes`, `No`|`Fs_YesNo_Message some message`|setopt some message No|
+|`Fs_MultiChoice`|shows a dialog with several options to choose from|user input|`Fs_MultiChoice some option\tvalue1\tvalue2`|`setopt` `some option` `value2`|
+|`Fs_YesNo_Message`|shows a dialog with yes/no buttons|`Yes`, `No`|`Fs_YesNo_Message some message`|`setopt` `some message` `No`|
 |`Fs_Info_Message`|shows a dialog with an ok button|-|`Fs_Info_Message some message`|-|
 |`Fs_PushValue`|sets the initial value before prompting the user|-|`Fs_PushValue startpath\t/home/user`|-|
-|`Fs_SelectFile`|shows file selection dialog|user input|`Fs_SelectFile export file\tlog files|*.log|all files|*.*\tsave\tlog`|setopt export file /tmp/myfile.log|
-|`Fs_SelectDir`|shows directory selection dialog|user input|`Fs_SelectDir workdir`|setopt workdir /tmp|
+|`Fs_SelectFile`|shows file selection dialog|user input|`Fs_SelectFile export file\tlog files\|*.log\|all files\|*.*\tsave\tlog`|`setopt` `export file` `/tmp/myfile.log`|
+|`Fs_SelectDir`|shows directory selection dialog|user input|`Fs_SelectDir workdir`|`setopt` `workdir` `/tmp`|
+|`Fs_EditLine`|editing one line of text|user input|`Fs_EditLine linename\tlinetext`|`setopt` `Fs_EditLine linename` `newtext`|
 |`Fs_LogInfo`|informs that the following lines must be shown in the log window|-|`Fs_LogInfo`|-|
-|`Fs_RunTerm`|executes command in terminal|`OK`, `Error`|`Fs_RunTerm ping 8.8.8.8`|setopt Fs_RunTerm ping 8.8.8.8 OK|
-|`Fs_RunTermKeep`|executes a command in the terminal and keeps the terminal window open|`OK`, `Error`|`Fs_RunTermKeep ping 8.8.8.8`|setopt Fs_RunTermKeep ping 8.8.8.8 OK|
-|`Fs_Open`|opens the file in the associated program using `xdg-open` or runs the executable file|`OK`, `Error`|`Fs_Open http://google.com`|setopt Fs_Open http://google.com OK|
-|`Fs_OpenTerm`|opens the file in the associated program using `xdg-open` or runs the executable file in the terminal|`OK`, `Error`|`Fs_OpenTerm /bin/7z`|setopt Fs_OpenTerm /bin/7z Error|
-|`Fs_RunAsync`|executes the command asynchronously|`OK`, `Error`|`Fs_RunAsync mousepad`|setopt Fs_RunAsync mousepad Error|
-|`Fs_ShowOutput`|executes the command and shows a dialog with the received stdout|`Error`|`Fs_ShowOutput man fish`|setopt Fs_ShowOutput man fish Error|
+|`Fs_RunTerm`|executes command in terminal|`OK`, `Error`|`Fs_RunTerm ping 8.8.8.8`|`setopt` `Fs_RunTerm ping 8.8.8.8` `OK`|
+|`Fs_RunTermKeep`|executes a command in the terminal and keeps the terminal window open|`OK`, `Error`|`Fs_RunTermKeep ping 8.8.8.8`|`setopt` `Fs_RunTermKeep ping 8.8.8.8` `OK`|
+|`Fs_Open`|opens the file in the associated program using `xdg-open` or runs the executable file|`OK`, `Error`|`Fs_Open http://google.com`|`setopt` `Fs_Open http://google.com` `OK`|
+|`Fs_OpenTerm`|opens the file in the associated program using `xdg-open` or runs the executable file in the terminal|`OK`, `Error`|`Fs_OpenTerm /bin/7z`|`setopt` `Fs_OpenTerm /bin/7z` `Error`|
+|`Fs_RunAsync`|executes the command asynchronously|`OK`, `Error`|`Fs_RunAsync mousepad`|`setopt` `Fs_RunAsync mousepad` `Error`|
+|`Fs_ShowOutput`|executes the command and shows a dialog with the received stdout|`Error`|`Fs_ShowOutput man fish`|`setopt` `Fs_ShowOutput man fish` `Error`|
 |`Fs_Set_`ENVVAR|informs that in subsequent calls to the script the environment variable ENVVAR must be set to the specified value|-|`Fs_Set_DC_WFX_SCRIPTDATA myvalue`|-|
 
 

@@ -3,5 +3,6 @@ WFX_SCRIPT_NAME=JSON slicing
 ENV_WFX_SCRIPT_STR_DATA=data
 WFX_SCRIPT_STR_INSTALL_JQ=jq is not installed, the script will not work correctly!
 WFX_SCRIPT_STR_SELECTFILE=Select JSON file
+WFX_SCRIPT_STR_OPENRO=Open file as readonly?
 WFX_SCRIPT_STR_MASKJSON=JSON files
 WFX_SCRIPT_STR_MASKALL=All files
