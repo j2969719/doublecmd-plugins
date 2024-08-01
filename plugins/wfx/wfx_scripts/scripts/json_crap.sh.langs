@@ -2,7 +2,26 @@
 WFX_SCRIPT_NAME=JSON slicing
 ENV_WFX_SCRIPT_STR_DATA=data
 WFX_SCRIPT_STR_INSTALL_JQ=jq is not installed, the script will not work correctly!
+WFX_SCRIPT_STR_INSTALL_PYJSON5=pyjson5 is not installed!
 WFX_SCRIPT_STR_SELECTFILE=Select JSON file
 WFX_SCRIPT_STR_OPENRO=Open file as readonly?
 WFX_SCRIPT_STR_MASKJSON=JSON files
 WFX_SCRIPT_STR_MASKALL=All files
+WFX_SCRIPT_STR_ACTS=Select action:
+WFX_SCRIPT_STR_CHANGEFILE=Open another JSON file
+WFX_SCRIPT_STR_CHANGERO=Change read/write mode
+WFX_SCRIPT_STR_USEPYJSON5=Pipe JSON5 data with pyjson5
+
+[ru_RU]
+WFX_SCRIPT_NAME=Кромсание JSON
+ENV_WFX_SCRIPT_STR_DATA=Данные
+WFX_SCRIPT_STR_INSTALL_JQ=jq не установлен, скрипт не будет работать корректно!
+WFX_SCRIPT_STR_INSTALL_PYJSON5=pyjson5 не установлен!
+WFX_SCRIPT_STR_SELECTFILE=Выбери файл JSON
+WFX_SCRIPT_STR_OPENRO=Открыть только для чтения?
+WFX_SCRIPT_STR_MASKJSON=Файлы JSON
+WFX_SCRIPT_STR_MASKALL=Все файлы
+WFX_SCRIPT_STR_ACTS=Выбери действие:
+WFX_SCRIPT_STR_CHANGEFILE=Открыть другой файл JSON
+WFX_SCRIPT_STR_CHANGERO=Переключить режим чтения/записи
+WFX_SCRIPT_STR_USEPYJSON5=Послать этот JSON5 по конвейеру с pyjson5

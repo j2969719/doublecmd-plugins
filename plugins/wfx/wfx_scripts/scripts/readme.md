@@ -34,26 +34,26 @@ For any operation, a executable script is launched with certain parameters and o
 ### List of possible statusinfo arg2 values
 |Start|End|Supported|
 |---|---|---|
-|`list start`|`list end`|[x]|
-|`get_single start`|`get_single end`|[ ]|
-|`get_multi start`|`get_multi end`|[ ]|
-|`put_single start`|`put_single end`|[ ]|
-|`put_multi start`|`put_multi end`|[ ]|
-|`get_multi_thread start`|`get_multi_thread end`|[x]|
-|`put_multi_thread start`|`put_multi_thread end`|[x]|
-|`renmov_single start`|`renmov_single end`|[x]|
-|`renmov_multi start`|`renmov_multi end`|[x]|
-|`delete start`|`delete end`|[x]|
-|`attrib start`|`attrib end`|[x]|
-|`mkdir start`|`mkdir end`|[x]|
-|`exec start`|`exec end`|[x]|
-|`calcsize start`|`calcsize end`|[x]|
-|`search start`|`search end`|[ ]|
-|`search_text start`|`search_text end`|[ ]|
-|`sync_search start`|`sync_search end`|[ ]|
-|`sync_get start`|`sync_get end`|[ ]|
-|`sync_put start`|`sync_put end`|[ ]|
-|`sync_delete start`|`sync_delete end`|[ ]|
+|`list start`|`list end`|☑️|
+|`get_single start`|`get_single end`|❎|
+|`get_multi start`|`get_multi end`|❎|
+|`put_single start`|`put_single end`|❎|
+|`put_multi start`|`put_multi end`|❎|
+|`get_multi_thread start`|`get_multi_thread end`|☑️|
+|`put_multi_thread start`|`put_multi_thread end`|☑️|
+|`renmov_single start`|`renmov_single end`|☑️|
+|`renmov_multi start`|`renmov_multi end`|☑️|
+|`delete start`|`delete end`|☑️|
+|`attrib start`|`attrib end`|☑️|
+|`mkdir start`|`mkdir end`|☑️|
+|`exec start`|`exec end`|☑️|
+|`calcsize start`|`calcsize end`|☑️|
+|`search start`|`search end`|❎|
+|`search_text start`|`search_text end`|❎|
+|`sync_search start`|`sync_search end`|❎|
+|`sync_get start`|`sync_get end`|❎|
+|`sync_put start`|`sync_put end`|❎|
+|`sync_delete start`|`sync_delete end`|❎|
 
 ## Expected script output to stdout
 
