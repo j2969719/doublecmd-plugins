@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# 2024.07.26
+# 2024.08.04
 #
 # For file list after cm_FlatView/cm_FlatViewSel and search result
 #   (from the "///Search result" tab): copy selected files to target directory
@@ -39,12 +39,12 @@ def copytree(fl, ds, dt):
                 print("Target directory can not be created: " + td)
                 continue
         try:
-            tmp = shutil.copy(fn, tfn)
+            tmp = shutil.copy(fn, tfn, follow_symlinks=False)
         except Exception:
             print("Failed to copy file: " + fn)
             continue
         if tmp == tfn:
-            shutil.copystat(fn, tfn)
+            shutil.copystat(fn, tfn, follow_symlinks=False)
             print('Ok: ' + fn)
         else:
             print('Error: ' + fn)
