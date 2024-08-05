@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# 2024.08.04
+# 2024.08.05
 #
 # For file list after cm_FlatView/cm_FlatViewSel and search result
 #   (from the "///Search result" tab): copy selected files to target directory
@@ -25,8 +25,9 @@ def copytree(fl, ds, dt):
     c = 0
     for fn in af:
         if not os.path.isfile(fn):
-            print("Not a file: " + fn)
-            continue
+            if os.path.islink(fn) and os.path.isdir(fn):
+                print("Not a file: " + fn)
+                continue
         tfn = dt + fn[dsl:]
         if os.path.isfile(tfn):
             print("Already exists: " + tfn)
