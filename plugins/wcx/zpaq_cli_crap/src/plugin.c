@@ -139,11 +139,7 @@ static int copy_file(char* infile, char* outfile)
 
 	if (ifd == -1)
 		return E_EREAD;
-/*
-	gchar *outdir = g_path_get_dirname(outfile);
-	g_mkdir_with_parents(outdir, 0755);
-	g_free(outdir);
-*/
+
 	ofd = open(outfile, O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR);
 
 	if (ofd > -1)
@@ -254,6 +250,8 @@ int DCPCALL ReadHeaderEx(HANDLE hArcData, tHeaderDataEx *HeaderDataEx)
 		else
 			g_strlcpy(HeaderDataEx->FileName, "<ERROR>", sizeof(HeaderDataEx->FileName) - 1);
 
+		g_free(string);
+
 		string = g_match_info_fetch_named(data->match_info, "attr");
 
 		if (string)
@@ -267,6 +265,8 @@ int DCPCALL ReadHeaderEx(HANDLE hArcData, tHeaderDataEx *HeaderDataEx)
 				HeaderDataEx->FileAttr = strtol(string, NULL, 8);
 		}
 
+		g_free(string);
+
 		string = g_match_info_fetch_named(data->match_info, "size");
 
 		if (string)
@@ -275,6 +275,8 @@ int DCPCALL ReadHeaderEx(HANDLE hArcData, tHeaderDataEx *HeaderDataEx)
 			HeaderDataEx->UnpSizeHigh = ((int64_t)filesize & 0xFFFFFFFF00000000) >> 32;
 			HeaderDataEx->UnpSize = (int64_t)filesize & 0x00000000FFFFFFFF;
 		}
+
+		g_free(string);
 
 		HeaderDataEx->PackSizeHigh = 0xFFFFFFFF;
 		HeaderDataEx->PackSize = 0xFFFFFFFE;
@@ -291,6 +293,8 @@ int DCPCALL ReadHeaderEx(HANDLE hArcData, tHeaderDataEx *HeaderDataEx)
 				HeaderDataEx->FileTime = (int)(utc - timezone + (daylight ? 3600 : 0));
 			}
 		}
+
+		g_free(string);
 
 		return E_SUCCESS;
 	}
@@ -344,6 +348,8 @@ int DCPCALL ProcessFile(HANDLE hArcData, int Operation, char *DestPath, char *De
 
 			g_free(file);
 		}
+
+		g_free(arc_path);
 	}
 	else if (Operation == PK_EXTRACT)
 		result = E_NOT_SUPPORTED;
