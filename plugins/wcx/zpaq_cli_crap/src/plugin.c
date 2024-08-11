@@ -3,6 +3,7 @@
 #include <glib.h>
 #include <gio/gio.h>
 #include <sys/stat.h>
+#include <sys/wait.h>
 #include <fcntl.h>
 #include <dirent.h>
 #include <dlfcn.h>
@@ -16,6 +17,9 @@
 #define BUFSIZE 8192
 #define RE_PATTERN "^\\-\\s(?'date'\\d{4}\\-\\d{2}\\-\\d{2}\\s\\d{2}:\\d{2}:\\d{2})\\s+\
 (?'size'\\d+)\\s+(?'attr'd?\\d+)\\s(?'name'[^\\n]+)"
+#define ZPAQ_ERRPASS "zpaq error: password incorrect"
+#define MSG_PASS "Enter password:"
+
 #define SendDlgMsg gExtensions->SendDlgMsg
 #define MessageBox gExtensions->MessageBox
 #define InputBox gExtensions->InputBox
@@ -41,6 +45,9 @@ tExtensionStartupInfo* gExtensions = NULL;
 static char gOptVerNum[3] = "0";
 static char gOptMethod[3] = "1";
 static char gOptThreads[3] = "0";
+static char gPass[MAX_PATH] = "";
+static char gPassLastFile[PATH_MAX] = "";
+
 
 intptr_t DCPCALL OptDlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr_t wParam, intptr_t lParam)
 {
@@ -182,12 +189,24 @@ static int copy_file(char* infile, char* outfile)
 
 HANDLE DCPCALL OpenArchive(tOpenArchiveData *ArchiveData)
 {
-	gchar *buf = NULL;
+	gchar **argv;
+	gint status = 0;
+	gchar *stdout = NULL;
+	gchar *stderr = NULL;
 	GError *err = NULL;
 
-	gchar *argv[] = { "zpaq", "l", ArchiveData->ArcName, "-all", gOptVerNum, NULL };
+	gchar *argv_nopass[] = { "zpaq", "l", ArchiveData->ArcName, "-all", gOptVerNum, NULL };
+	gchar *argv_pass[] = { "zpaq", "l", ArchiveData->ArcName, "-all", gOptVerNum, "-key", gPass, NULL };
 
-	if (!g_spawn_sync(NULL, argv, NULL, G_SPAWN_SEARCH_PATH, NULL, NULL, &buf, NULL, NULL, &err))
+	if (strcmp(gPassLastFile, ArchiveData->ArcName) != 0 && ArchiveData->OpenMode == PK_OM_LIST)
+		gPass[0] = '\0';
+
+	if (strcmp(gPassLastFile, ArchiveData->ArcName) == 0 && gPass[0] != '\0')
+		argv = argv_pass;
+	else
+		argv = argv_nopass;
+
+	if (!g_spawn_sync(NULL, argv, NULL, G_SPAWN_SEARCH_PATH, NULL, NULL, &stdout, &stderr, &status, &err))
 	{
 		if (err)
 		{
@@ -195,9 +214,47 @@ HANDLE DCPCALL OpenArchive(tOpenArchiveData *ArchiveData)
 			g_error_free(err);
 		}
 
+		g_free(stdout);
+		g_free(stderr);
 		ArchiveData->OpenResult = E_EOPEN;
 		return E_SUCCESS;
 	}
+
+	if (status != 0 && stderr)
+	{
+		gchar **lines = g_strsplit(stderr, "\n", -1);
+		g_free(stdout);
+		stdout = NULL;
+
+		if (lines)
+		{
+			if (strcmp(lines[0], ZPAQ_ERRPASS) == 0 && InputBox(PLUGNAME, MSG_PASS, TRUE, gPass, MAX_PATH))
+			{
+				g_strlcpy(gPassLastFile, ArchiveData->ArcName, PATH_MAX);
+				argv = argv_pass;
+
+				if (!g_spawn_sync(NULL, argv, NULL, G_SPAWN_SEARCH_PATH, NULL, NULL, &stdout, NULL, &status, NULL) || status != 0)
+				{
+					g_free(stdout);
+					g_free(stderr);
+					g_strfreev(lines);
+					ArchiveData->OpenResult = E_EOPEN;
+					return E_SUCCESS;
+				}
+			}
+			else
+			{
+				g_free(stderr);
+				g_strfreev(lines);
+				ArchiveData->OpenResult = E_EOPEN;
+				return E_SUCCESS;
+			}
+
+			g_strfreev(lines);
+		}
+	}
+
+	g_free(stderr);
 
 	tArcData *data = (tArcData *)malloc(sizeof(tArcData));
 
@@ -209,11 +266,11 @@ HANDLE DCPCALL OpenArchive(tOpenArchiveData *ArchiveData)
 
 	memset(data, 0, sizeof(tArcData));
 
-	if (buf)
+	if (stdout)
 	{
 		g_clear_error(&err);
 		data->arc = g_strdup(ArchiveData->ArcName);
-		data->output = buf;
+		data->output = stdout;
 		data->re = g_regex_new(RE_PATTERN, G_REGEX_MULTILINE, 0, &err);
 
 		if (data->re)
@@ -323,7 +380,18 @@ int DCPCALL ProcessFile(HANDLE hArcData, int Operation, char *DestPath, char *De
 		}
 
 		GPid pid;
-		gchar *argv[] = { "zpaq", "x", data->arc, arc_path, "-all", gOptVerNum, "-threads", gOptThreads, NULL };
+		gint status = 0;
+		gchar *args = g_strdup_printf("zpaq\nx\n%s\n%s\n-all\n%s\n-threads\n%s", data->arc, arc_path, gOptVerNum, gOptThreads);
+
+		if (gPass[0] != '\0')
+		{
+			gchar *tmp = g_strdup_printf("%s\n-key\n%s", args, gPass);
+			g_free(args);
+			args = tmp;
+		}
+
+		gchar **argv = g_strsplit(args, "\n", -1);
+		g_free(args);
 
 		if (!g_spawn_async(data->tmpdir, argv, NULL, G_SPAWN_SEARCH_PATH, NULL, NULL, &pid, NULL))
 			result = E_EWRITE;
@@ -337,7 +405,15 @@ int DCPCALL ProcessFile(HANDLE hArcData, int Operation, char *DestPath, char *De
 				kill(pid, SIGTERM);
 				result = E_EABORTED;
 			}
+
+			waitpid(pid, &status, 0);
+			g_spawn_close_pid(pid);
+
+			if (result == E_SUCCESS && status != 0)
+				result = E_EWRITE;
 		}
+
+		g_strfreev(argv);
 
 		if (result == E_SUCCESS)
 		{
@@ -351,7 +427,7 @@ int DCPCALL ProcessFile(HANDLE hArcData, int Operation, char *DestPath, char *De
 
 		g_free(arc_path);
 	}
-	else if (Operation == PK_EXTRACT)
+	else if (Operation == PK_TEST)
 		result = E_NOT_SUPPORTED;
 
 	g_match_info_next(data->match_info, NULL);
@@ -384,10 +460,21 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 	gchar *filelist = AddList;
 	gchar *arcdir = NULL;
 	GError *err = NULL;
+	gint status = 0;
 
-	if (Flags & PK_PACK_ENCRYPT || Flags & PK_PACK_MOVE_FILES || !(Flags & PK_PACK_SAVE_PATHS))
+	if (Flags & PK_PACK_MOVE_FILES || !(Flags & PK_PACK_SAVE_PATHS))
 		return E_NOT_SUPPORTED;
 
+	if (Flags & PK_PACK_ENCRYPT)
+	{
+		if (strcmp(gPassLastFile, PackedFile) != 0)
+			gPass[0] = '\0';
+
+		if (InputBox(PLUGNAME, MSG_PASS, TRUE, gPass, MAX_PATH))
+			g_strlcpy(gPassLastFile, PackedFile, PATH_MAX);
+		else
+			gPass[0] = '\0';
+	}
 
 	gchar *outdir = g_path_get_dirname(PackedFile);
 	gchar *tmpdir = tempnam(outdir, "arc_");
@@ -471,8 +558,18 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 
 		gchar *tmp = g_strdup_printf("%s\n-m%s\n-t%s", args, gOptMethod, gOptThreads);
 		g_free(args);
-		gchar **argv = g_strsplit(tmp, "\n", -1);
-		g_free(tmp);
+
+		if (gPass[0] != '\0')
+		{
+			args = g_strdup_printf("%s\n-key\n%s", tmp, gPass);
+			g_free(tmp);
+		}
+		else
+			args = tmp;
+
+
+		gchar **argv = g_strsplit(args, "\n", -1);
+		g_free(args);
 
 		if (!g_spawn_async(tmpdir, argv, NULL, G_SPAWN_SEARCH_PATH, NULL, NULL, &pid, &err))
 		{
@@ -486,20 +583,26 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 		}
 		else
 		{
-			while (gProcessDataProc(PackedFile, -50) != 0 && kill(pid, 0) == 0)
+			while (gProcessDataProc(tmpdir, -50) != 0 && kill(pid, 0) == 0)
 				sleep(0.5);
 
-			if (gProcessDataProc(PackedFile, -50) == 0 && kill(pid, 0) == 0)
+			if (gProcessDataProc(tmpdir, -50) == 0 && kill(pid, 0) == 0)
 			{
 				kill(pid, SIGTERM);
 				result = E_EABORTED;
 			}
+
+			waitpid(pid, &status, 0);
+			g_spawn_close_pid(pid);
+
+			if (result == E_SUCCESS && status != 0)
+				result = E_EWRITE;
 		}
 
 		g_strfreev(argv);
 	}
 
-	gProcessDataProc(PackedFile, -100);
+	gProcessDataProc(tmpdir, -100);
 	remove_target(tmpdir);
 	g_free(tmpdir);
 	g_free(arcdir);
@@ -529,7 +632,7 @@ void DCPCALL SetChangeVolProc(HANDLE hArcData, tChangeVolProc pChangeVolProc)
 
 int DCPCALL GetPackerCaps(void)
 {
-	return PK_CAPS_NEW | PK_CAPS_MODIFY | PK_CAPS_MULTIPLE | PK_CAPS_SEARCHTEXT | PK_CAPS_OPTIONS;
+	return PK_CAPS_NEW | PK_CAPS_MODIFY | PK_CAPS_MULTIPLE | PK_CAPS_SEARCHTEXT | PK_CAPS_OPTIONS | PK_CAPS_ENCRYPT;
 }
 
 void DCPCALL ConfigurePacker(HWND Parent, HINSTANCE DllInstance)
