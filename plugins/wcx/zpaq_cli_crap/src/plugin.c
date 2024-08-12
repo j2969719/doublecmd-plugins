@@ -16,7 +16,7 @@
 
 #define BUFSIZE 8192
 #define RE_PATTERN "^\\-\\s(?'date'\\d{4}\\-\\d{2}\\-\\d{2}\\s\\d{2}:\\d{2}:\\d{2})\\s+\
-(?'size'\\d+)\\s+(?'attr'd?\\d+)\\s(?'name'[^\\n]+)"
+(?'size'\\d+)\\s(?'attr'\\s?d?[DRASHI\\d]*)\\s+(?'name'[^\\n]+)"
 #define ZPAQ_ERRPASS "zpaq error: password incorrect"
 #define MSG_PASS "Enter password:"
 
