@@ -17,8 +17,13 @@
 #define BUFSIZE 8192
 #define RE_PATTERN "^\\-\\s(?'date'\\d{4}\\-\\d{2}\\-\\d{2}\\s\\d{2}:\\d{2}:\\d{2})\\s+\
 (?'size'\\d+)\\s(?'attr'\\s?d?[DRASHI\\d]*)\\s+(?'name'[^\\n]+)"
+#define RE_INFO_PATTERN "\\d+/\\s\\+\\d+\\s\\-\\d\\s\\->\\s\\d+"
 #define ZPAQ_ERRPASS "zpaq error: password incorrect"
 #define MSG_PASS "Enter password:"
+#define HEADER "7kSt"
+#define HEADER_SIZE 4
+#define PK_CAPS PK_CAPS_NEW | PK_CAPS_MODIFY | PK_CAPS_MULTIPLE | PK_CAPS_SEARCHTEXT |\
+ PK_CAPS_DELETE | PK_CAPS_OPTIONS | PK_CAPS_ENCRYPT | PK_CAPS_BY_CONTENT;
 
 #define SendDlgMsg gExtensions->SendDlgMsg
 #define MessageBox gExtensions->MessageBox
@@ -30,6 +35,7 @@ typedef struct sArcData
 	gchar *arc;
 	gchar *tmpdir;
 	gchar *output;
+	GRegex *re_info;
 	gboolean extract;
 	GMatchInfo *match_info;
 	tChangeVolProc ChangeVolProc;
@@ -47,6 +53,7 @@ static char gOptMethod[3] = "1";
 static char gOptThreads[3] = "0";
 static char gPass[MAX_PATH] = "";
 static char gPassLastFile[PATH_MAX] = "";
+gboolean gOptSkipInfo = TRUE;
 
 
 intptr_t DCPCALL OptDlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr_t wParam, intptr_t lParam)
@@ -63,6 +70,7 @@ intptr_t DCPCALL OptDlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, int
 			SendDlgMsg(pDlg, "chAll", DM_SETCHECK, 1, 0);
 		}
 
+		SendDlgMsg(pDlg, "chSkipInfo", DM_SETCHECK, (intptr_t)gOptSkipInfo, 0);
 		SendDlgMsg(pDlg, "edThreads", DM_SETTEXT, (intptr_t)gOptThreads, 0);
 		index = atoi(gOptMethod);
 		SendDlgMsg(pDlg, "cbCompr", DM_LISTSETITEMINDEX, (intptr_t)index, 0);
@@ -83,6 +91,7 @@ intptr_t DCPCALL OptDlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, int
 			g_strlcpy(gOptThreads, value, 3);
 			index = SendDlgMsg(pDlg, "cbCompr", DM_LISTGETITEMINDEX, 0, 0);
 			snprintf(gOptMethod, 3, "%d", index);
+			gOptSkipInfo = (gboolean)SendDlgMsg(pDlg, "chSkipInfo", DM_GETCHECK, 0, 0);
 		}
 
 		break;
@@ -92,6 +101,7 @@ intptr_t DCPCALL OptDlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, int
 		{
 			SendDlgMsg(pDlg, "lblDigits", DM_ENABLE, wParam, 0);
 			SendDlgMsg(pDlg, "edDigits", DM_ENABLE, wParam, 0);
+			SendDlgMsg(pDlg, "chSkipInfo", DM_ENABLE, wParam, 0);
 		}
 
 		break;
@@ -187,6 +197,44 @@ static int copy_file(char* infile, char* outfile)
 	return result;
 }
 
+int execute_archiver(char *workdir, char **argv, char *filename, tProcessDataProc process)
+{
+	GPid pid;
+	gint status = 0;
+	GError *err = NULL;
+	int result = E_SUCCESS;
+
+	if (!g_spawn_async(workdir, argv, NULL, G_SPAWN_SEARCH_PATH, NULL, NULL, &pid, &err))
+	{
+		if (err)
+		{
+			MessageBox(err->message, PLUGNAME,  MB_OK | MB_ICONERROR);
+			g_error_free(err);
+		}
+
+		result = E_EABORTED;
+	}
+	else
+	{
+		while (process(filename, -50) != 0 && kill(pid, 0) == 0)
+			sleep(0.5);
+
+		if (process(filename, -50) == 0 && kill(pid, 0) == 0)
+		{
+			kill(pid, SIGTERM);
+			result = E_EABORTED;
+		}
+
+		waitpid(pid, &status, 0);
+		g_spawn_close_pid(pid);
+
+		if (result == E_SUCCESS && status != 0)
+			result = E_EWRITE;
+	}
+
+	return result;
+}
+
 HANDLE DCPCALL OpenArchive(tOpenArchiveData *ArchiveData)
 {
 	gchar **argv;
@@ -272,6 +320,9 @@ HANDLE DCPCALL OpenArchive(tOpenArchiveData *ArchiveData)
 		else
 			MessageBox(err->message, PLUGNAME,  MB_OK | MB_ICONERROR);
 
+		if (strcmp(gOptVerNum, "0") != 0)
+			data->re_info = g_regex_new(RE_INFO_PATTERN, 0, 0, NULL);
+
 		if (err)
 			g_error_free(err);
 	}
@@ -292,12 +343,21 @@ int DCPCALL ReadHeaderEx(HANDLE hArcData, tHeaderDataEx *HeaderDataEx)
 
 	gchar *string;
 
-	if (g_match_info_matches(data->match_info))
+	while (g_match_info_matches(data->match_info))
 	{
 		string = g_match_info_fetch_named(data->match_info, "name");
 
 		if (string)
+		{
+			if (data->re_info && gOptSkipInfo && g_regex_match(data->re_info, string, 0, NULL))
+			{
+				g_free(string);
+				g_match_info_next(data->match_info, NULL);
+				continue;
+			}
+
 			g_strlcpy(HeaderDataEx->FileName, string, sizeof(HeaderDataEx->FileName) - 1);
+		}
 		else
 			g_strlcpy(HeaderDataEx->FileName, "<ERROR>", sizeof(HeaderDataEx->FileName) - 1);
 
@@ -373,9 +433,14 @@ int DCPCALL ProcessFile(HANDLE hArcData, int Operation, char *DestPath, char *De
 			data->extract = TRUE;
 		}
 
-		GPid pid;
-		gint status = 0;
-		gchar *args = g_strdup_printf("zpaq\nx\n%s\n%s\n-all\n%s\n-threads\n%s", data->arc, arc_path, gOptVerNum, gOptThreads);
+		if (data->re_info && !gOptSkipInfo && g_regex_match(data->re_info, arc_path, 0, NULL))
+		{
+			g_free(arc_path);
+			g_match_info_next(data->match_info, NULL);
+			return E_SUCCESS;
+		}
+
+		gchar *args = g_strdup_printf("zpaq\nx\n%s\n%s\n-all\n%s\n-threads\n%s\n-f", data->arc, arc_path, gOptVerNum, gOptThreads);
 
 		if (gPass[0] != '\0')
 		{
@@ -386,27 +451,7 @@ int DCPCALL ProcessFile(HANDLE hArcData, int Operation, char *DestPath, char *De
 
 		gchar **argv = g_strsplit(args, "\n", -1);
 		g_free(args);
-
-		if (!g_spawn_async(data->tmpdir, argv, NULL, G_SPAWN_SEARCH_PATH, NULL, NULL, &pid, NULL))
-			result = E_EWRITE;
-		else
-		{
-			while (data->ProcessDataProc(DestName, -1050) != 0 && kill(pid, 0) == 0)
-				sleep(0.5);
-
-			if (data->ProcessDataProc(DestName, -1050) == 0 && kill(pid, 0) == 0)
-			{
-				kill(pid, SIGTERM);
-				result = E_EABORTED;
-			}
-
-			waitpid(pid, &status, 0);
-			g_spawn_close_pid(pid);
-
-			if (result == E_SUCCESS && status != 0)
-				result = E_EWRITE;
-		}
-
+		result = execute_archiver(data->tmpdir, argv, DestName, data->ProcessDataProc);
 		g_strfreev(argv);
 
 		if (result == E_SUCCESS)
@@ -433,6 +478,9 @@ int DCPCALL CloseArchive(HANDLE hArcData)
 {
 	ArcData data = (ArcData)hArcData;
 
+	if (data->re_info)
+		g_regex_unref(data->re_info);
+
 	g_match_info_free(data->match_info);
 	g_regex_unref(data->re);
 	remove_target(data->tmpdir);
@@ -446,15 +494,12 @@ int DCPCALL CloseArchive(HANDLE hArcData)
 
 int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddList, int Flags)
 {
-	GPid pid;
 	DIR *dir;
 	struct stat buf;
 	struct dirent *ent;
 	int result = E_SUCCESS;
 	gchar *filelist = AddList;
 	gchar *arcdir = NULL;
-	GError *err = NULL;
-	gint status = 0;
 
 	if (Flags & PK_PACK_MOVE_FILES || !(Flags & PK_PACK_SAVE_PATHS))
 		return E_NOT_SUPPORTED;
@@ -493,48 +538,73 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 	else if (SubPath)
 		arcdir = g_strdup(SubPath);
 
-	while (*filelist)
+	if (arcdir)
 	{
-		gchar *infile = g_strdup_printf("%s%s", SrcPath, filelist);
-		gchar *tmpfile = g_strdup_printf("%s%s%s/%s", tmpdir, arcdir ? "/" : "", arcdir ? arcdir : "", filelist);
+		gchar **argv;
+		gchar *argv_nopass[] = { "zpaq", "x", PackedFile, arcdir, "-f", NULL };
+		gchar *argv_pass[] = { "zpaq", "x", PackedFile, arcdir, "-key", gPass, "-f", NULL };
+		gchar *tmpfile = g_strdup_printf("%s/%s", tmpdir, arcdir);
 
-		if (filelist[strlen(filelist) - 1] != '/')
-			result = copy_file(infile, tmpfile);
-		else if (mkdir(tmpfile, 0755) != 0)
+		if (g_mkdir_with_parents(tmpfile, 0755) != 0)
 			result = E_ECREATE;
-
-		g_free(infile);
-		g_free(tmpfile);
-
-		if (result != E_SUCCESS)
-			break;
-
-		while (*filelist++);
-	}
-
-	filelist = AddList;
-
-	while (*filelist)
-	{
-		gchar *infile = g_strdup_printf("%s%s", SrcPath, filelist);
-		gchar *tmpfile = g_strdup_printf("%s%s%s/%s", tmpdir, arcdir ? "/" : "", arcdir ? arcdir : "", filelist);
-
-		if (stat(infile, &buf) == 0)
+		else
 		{
-			struct utimbuf ubuf;
-			ubuf.actime = buf.st_atime;
-			ubuf.modtime = buf.st_mtime;
-			utime(tmpfile, &ubuf);
+			if (gPass[0] != '\0')
+				argv = argv_pass;
+			else
+				argv = argv_nopass;
+
+			result = execute_archiver(tmpdir, argv, tmpdir, gProcessDataProc);
 		}
 
-		g_free(infile);
 		g_free(tmpfile);
-
-		while (*filelist++);
 	}
 
 	if (result == E_SUCCESS)
 	{
+		while (*filelist)
+		{
+			gchar *infile = g_strdup_printf("%s%s", SrcPath, filelist);
+			gchar *tmpfile = g_strdup_printf("%s%s%s/%s", tmpdir, arcdir ? "/" : "", arcdir ? arcdir : "", filelist);
+
+			if (filelist[strlen(filelist) - 1] != '/')
+				result = copy_file(infile, tmpfile);
+			else if (mkdir(tmpfile, 0755) != 0)
+				result = E_ECREATE;
+
+			g_free(infile);
+			g_free(tmpfile);
+
+			if (result != E_SUCCESS)
+				break;
+
+			while (*filelist++);
+		}
+	}
+
+	filelist = AddList;
+
+	if (result == E_SUCCESS)
+	{
+		while (*filelist)
+		{
+			gchar *infile = g_strdup_printf("%s%s", SrcPath, filelist);
+			gchar *tmpfile = g_strdup_printf("%s%s%s/%s", tmpdir, arcdir ? "/" : "", arcdir ? arcdir : "", filelist);
+
+			if (stat(infile, &buf) == 0)
+			{
+				struct utimbuf ubuf;
+				ubuf.actime = buf.st_atime;
+				ubuf.modtime = buf.st_mtime;
+				utime(tmpfile, &ubuf);
+			}
+
+			g_free(infile);
+			g_free(tmpfile);
+
+			while (*filelist++);
+		}
+
 		gchar *args = g_strdup_printf("zpaq\na\n%s", PackedFile);
 
 		if ((dir = opendir(tmpdir)) != NULL)
@@ -550,7 +620,7 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 			}
 		}
 
-		gchar *tmp = g_strdup_printf("%s\n-m%s\n-t%s", args, gOptMethod, gOptThreads);
+		gchar *tmp = g_strdup_printf("%s\n-m%s\n-t%s\n-f", args, gOptMethod, gOptThreads);
 		g_free(args);
 
 		if (gPass[0] != '\0')
@@ -565,34 +635,7 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 		gchar **argv = g_strsplit(args, "\n", -1);
 		g_free(args);
 
-		if (!g_spawn_async(tmpdir, argv, NULL, G_SPAWN_SEARCH_PATH, NULL, NULL, &pid, &err))
-		{
-			if (err)
-			{
-				MessageBox(err->message, PLUGNAME,  MB_OK | MB_ICONERROR);
-				g_error_free(err);
-			}
-
-			result = E_EABORTED;
-		}
-		else
-		{
-			while (gProcessDataProc(tmpdir, -50) != 0 && kill(pid, 0) == 0)
-				sleep(0.5);
-
-			if (gProcessDataProc(tmpdir, -50) == 0 && kill(pid, 0) == 0)
-			{
-				kill(pid, SIGTERM);
-				result = E_EABORTED;
-			}
-
-			waitpid(pid, &status, 0);
-			g_spawn_close_pid(pid);
-
-			if (result == E_SUCCESS && status != 0)
-				result = E_EWRITE;
-		}
-
+		result = execute_archiver(tmpdir, argv, tmpdir, gProcessDataProc);
 		g_strfreev(argv);
 	}
 
@@ -601,6 +644,46 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 	g_free(tmpdir);
 	g_free(arcdir);
 
+	return result;
+}
+
+int DCPCALL DeleteFiles(char *PackedFile, char *DeleteList)
+{
+	gchar **argv;
+	int result = E_SUCCESS;
+	char filename[PATH_MAX];
+
+	gchar *argv_nopass[] = { "zpaq", "a", PackedFile, "", "-all", gOptVerNum, "-to", filename, NULL };
+	gchar *argv_pass[] = { "zpaq", "a", PackedFile, "", "-all", gOptVerNum, "-to", filename, "-key", gPass, NULL };
+
+	if (strcmp(gPassLastFile, PackedFile) != 0)
+		gPass[0] = '\0';
+
+	if (gPass[0] != '\0')
+		argv = argv_pass;
+	else
+		argv = argv_nopass;
+
+	while (*DeleteList)
+	{
+		char mask[5];
+		size_t len = strlen(DeleteList);
+		g_strlcpy(mask, DeleteList + (len - 4), 5);
+
+		if (strcmp(mask, "/*.*") == 0)
+			g_strlcpy(filename, DeleteList, len - 3);
+		else
+			g_strlcpy(filename, DeleteList, PATH_MAX);
+
+		result = execute_archiver(NULL, argv, DeleteList, gProcessDataProc);
+
+		if (result != E_SUCCESS)
+			break;
+
+		while (*DeleteList++);
+	}
+
+	gProcessDataProc(PackedFile, -100);
 	return result;
 }
 
@@ -626,7 +709,24 @@ void DCPCALL SetChangeVolProc(HANDLE hArcData, tChangeVolProc pChangeVolProc)
 
 int DCPCALL GetPackerCaps(void)
 {
-	return PK_CAPS_NEW | PK_CAPS_MODIFY | PK_CAPS_MULTIPLE | PK_CAPS_SEARCHTEXT | PK_CAPS_OPTIONS | PK_CAPS_ENCRYPT;
+	return PK_CAPS;
+}
+
+BOOL DCPCALL CanYouHandleThisFile(char *FileName)
+{
+	FILE *fp = fopen(FileName, "r");
+
+	if (!fp)
+		return FALSE;
+
+	char head_block[HEADER_SIZE];
+	fread(head_block, 1, HEADER_SIZE, fp);
+	fclose(fp);
+
+	if (strcmp(head_block, HEADER) == 0)
+		return TRUE;
+
+	return FALSE;
 }
 
 void DCPCALL ConfigurePacker(HWND Parent, HINSTANCE DllInstance)
@@ -689,15 +789,29 @@ void DCPCALL ConfigurePacker(HWND Parent, HINSTANCE DllInstance)
 	                         "    TabOrder = 1\n"
 	                         "    Text = '4'\n"
 	                         "  end\n"
+	                         "  object chSkipInfo: TCheckBox\n"
+	                         "    AnchorSideLeft.Control = chAll\n"
+	                         "    AnchorSideTop.Control = edDigits\n"
+	                         "    AnchorSideTop.Side = asrBottom\n"
+	                         "    Left = 20\n"
+	                         "    Height = 23\n"
+	                         "    Top = 48\n"
+	                         "    Width = 277\n"
+	                         "    Caption = 'Exclude information entities from the filelist'\n"
+	                         "    Checked = True\n"
+	                         "    Enabled = False\n"
+	                         "    State = cbChecked\n"
+	                         "    TabOrder = 2\n"
+	                         "  end\n"
 	                         "  object gbCompr: TGroupBox\n"
 	                         "    AnchorSideLeft.Control = Owner\n"
-	                         "    AnchorSideTop.Control = edDigits\n"
+	                         "    AnchorSideTop.Control = chSkipInfo\n"
 	                         "    AnchorSideTop.Side = asrBottom\n"
 	                         "    AnchorSideRight.Control = edDigits\n"
 	                         "    AnchorSideRight.Side = asrBottom\n"
 	                         "    Left = 20\n"
 	                         "    Height = 96\n"
-	                         "    Top = 68\n"
+	                         "    Top = 91\n"
 	                         "    Width = 320\n"
 	                         "    Anchors = [akTop, akLeft, akRight]\n"
 	                         "    AutoSize = True\n"
@@ -712,7 +826,7 @@ void DCPCALL ConfigurePacker(HWND Parent, HINSTANCE DllInstance)
 	                         "    ChildSizing.ControlsPerLine = 2\n"
 	                         "    ClientHeight = 79\n"
 	                         "    ClientWidth = 318\n"
-	                         "    TabOrder = 2\n"
+	                         "    TabOrder = 3\n"
 	                         "    object lblCompr: TLabel\n"
 	                         "      AnchorSideTop.Side = asrCenter\n"
 	                         "      Left = 10\n"
@@ -766,7 +880,7 @@ void DCPCALL ConfigurePacker(HWND Parent, HINSTANCE DllInstance)
 	                         "    AnchorSideRight.Control = btnOK\n"
 	                         "    Left = 142\n"
 	                         "    Height = 30\n"
-	                         "    Top = 194\n"
+	                         "    Top = 217\n"
 	                         "    Width = 97\n"
 	                         "    Anchors = [akTop, akRight]\n"
 	                         "    BorderSpacing.Right = 4\n"
@@ -777,7 +891,7 @@ void DCPCALL ConfigurePacker(HWND Parent, HINSTANCE DllInstance)
 	                         "    Kind = bkCancel\n"
 	                         "    ModalResult = 2\n"
 	                         "    OnClick = ButtonClick\n"
-	                         "    TabOrder = 4\n"
+	                         "    TabOrder = 5\n"
 	                         "  end\n"
 	                         "  object btnOK: TBitBtn\n"
 	                         "    AnchorSideTop.Control = gbCompr\n"
@@ -786,7 +900,7 @@ void DCPCALL ConfigurePacker(HWND Parent, HINSTANCE DllInstance)
 	                         "    AnchorSideRight.Side = asrBottom\n"
 	                         "    Left = 243\n"
 	                         "    Height = 30\n"
-	                         "    Top = 194\n"
+	                         "    Top = 217\n"
 	                         "    Width = 97\n"
 	                         "    Anchors = [akTop, akRight]\n"
 	                         "    BorderSpacing.Top = 30\n"
@@ -797,7 +911,7 @@ void DCPCALL ConfigurePacker(HWND Parent, HINSTANCE DllInstance)
 	                         "    Kind = bkOK\n"
 	                         "    ModalResult = 1\n"
 	                         "    OnClick = ButtonClick\n"
-	                         "    TabOrder = 3\n"
+	                         "    TabOrder = 4\n"
 	                         "  end\n"
 	                         "end\n";
 
@@ -820,4 +934,3 @@ void DCPCALL ExtensionFinalize(void* Reserved)
 
 	gExtensions = NULL;
 }
-
