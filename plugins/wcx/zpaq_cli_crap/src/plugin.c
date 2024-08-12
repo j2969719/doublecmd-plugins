@@ -222,41 +222,35 @@ HANDLE DCPCALL OpenArchive(tOpenArchiveData *ArchiveData)
 
 	if (status != 0 && stderr)
 	{
-		gchar **lines = g_strsplit(stderr, "\n", -1);
 		g_free(stdout);
 		stdout = NULL;
 
-		if (lines)
+		if (strncmp(stderr, ZPAQ_ERRPASS, strlen(ZPAQ_ERRPASS)) == 0 && InputBox(PLUGNAME, MSG_PASS, TRUE, gPass, MAX_PATH))
 		{
-			if (strcmp(lines[0], ZPAQ_ERRPASS) == 0 && InputBox(PLUGNAME, MSG_PASS, TRUE, gPass, MAX_PATH))
-			{
-				g_strlcpy(gPassLastFile, ArchiveData->ArcName, PATH_MAX);
-				argv = argv_pass;
+			g_strlcpy(gPassLastFile, ArchiveData->ArcName, PATH_MAX);
+			argv = argv_pass;
 
-				if (!g_spawn_sync(NULL, argv, NULL, G_SPAWN_SEARCH_PATH, NULL, NULL, &stdout, NULL, &status, NULL) || status != 0)
-				{
-					g_free(stdout);
-					g_free(stderr);
-					g_strfreev(lines);
-					ArchiveData->OpenResult = E_EOPEN;
-					return E_SUCCESS;
-				}
-			}
-			else
+			if (!g_spawn_sync(NULL, argv, NULL, G_SPAWN_SEARCH_PATH, NULL, NULL, &stdout, NULL, &status, NULL) || status != 0)
 			{
+				gPass[0] = '\0';
+				g_free(stdout);
 				g_free(stderr);
-				g_strfreev(lines);
 				ArchiveData->OpenResult = E_EOPEN;
 				return E_SUCCESS;
 			}
-
-			g_strfreev(lines);
+		}
+		else
+		{
+			gPass[0] = '\0';
+			g_free(stderr);
+			ArchiveData->OpenResult = E_EOPEN;
+			return E_SUCCESS;
 		}
 	}
 
 	g_free(stderr);
 
-	tArcData *data = (tArcData *)malloc(sizeof(tArcData));
+	tArcData *data = (tArcData*)malloc(sizeof(tArcData));
 
 	if (data == NULL)
 	{
@@ -465,11 +459,11 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 	if (Flags & PK_PACK_MOVE_FILES || !(Flags & PK_PACK_SAVE_PATHS))
 		return E_NOT_SUPPORTED;
 
+	if (strcmp(gPassLastFile, PackedFile) != 0)
+		gPass[0] = '\0';
+
 	if (Flags & PK_PACK_ENCRYPT)
 	{
-		if (strcmp(gPassLastFile, PackedFile) != 0)
-			gPass[0] = '\0';
-
 		if (InputBox(PLUGNAME, MSG_PASS, TRUE, gPass, MAX_PATH))
 			g_strlcpy(gPassLastFile, PackedFile, PATH_MAX);
 		else
