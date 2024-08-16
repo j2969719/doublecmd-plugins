@@ -16,10 +16,11 @@
 
 #define BUFSIZE 8192
 #define RE_PATTERN "^\\-\\s(?'date'\\d{4}\\-\\d{2}\\-\\d{2}\\s\\d{2}:\\d{2}:\\d{2})\\s+\
-(?'size'\\d+)\\s(?'attr'\\s?d?[DRASHI\\d]*)\\s+(?'name'[^\\n]+)"
+(?'size'\\-?\\d+)\\s(?'attr'\\s?d?[DRASHI\\d]*)\\s+(?'name'[^\\n]+)"
 #define RE_INFO_PATTERN "\\d+/\\s\\+\\d+\\s\\-\\d\\s\\->\\s\\d+"
 #define ZPAQ_ERRPASS "zpaq error: password incorrect"
 #define MSG_PASS "Enter password:"
+#define ERRFILE "<ERROR>"
 #define HEADER "7kSt"
 #define HEADER_SIZE 4
 #define PK_CAPS PK_CAPS_NEW | PK_CAPS_MODIFY | PK_CAPS_MULTIPLE | PK_CAPS_SEARCHTEXT |\
@@ -302,6 +303,10 @@ HANDLE DCPCALL OpenArchive(tOpenArchiveData *ArchiveData)
 
 	if (data == NULL)
 	{
+		if (err)
+			g_error_free(err);
+
+		g_free(stdout);
 		ArchiveData->OpenResult = E_NO_MEMORY;
 		return E_SUCCESS;
 	}
@@ -322,12 +327,12 @@ HANDLE DCPCALL OpenArchive(tOpenArchiveData *ArchiveData)
 
 		if (strcmp(gOptVerNum, "0") != 0)
 			data->re_info = g_regex_new(RE_INFO_PATTERN, 0, 0, NULL);
-
-		if (err)
-			g_error_free(err);
 	}
 	else
 		ArchiveData->OpenResult = E_UNKNOWN_FORMAT;
+
+	if (err)
+		g_error_free(err);
 
 	return data;
 }
@@ -356,10 +361,13 @@ int DCPCALL ReadHeaderEx(HANDLE hArcData, tHeaderDataEx *HeaderDataEx)
 				continue;
 			}
 
-			g_strlcpy(HeaderDataEx->FileName, string, sizeof(HeaderDataEx->FileName) - 1);
+			if (string[0] != '/')
+				g_strlcpy(HeaderDataEx->FileName, string, sizeof(HeaderDataEx->FileName) - 1);
+			else
+				g_strlcpy(HeaderDataEx->FileName, ERRFILE, sizeof(HeaderDataEx->FileName) - 1);
 		}
 		else
-			g_strlcpy(HeaderDataEx->FileName, "<ERROR>", sizeof(HeaderDataEx->FileName) - 1);
+			g_strlcpy(HeaderDataEx->FileName, ERRFILE, sizeof(HeaderDataEx->FileName) - 1);
 
 		g_free(string);
 
@@ -424,13 +432,11 @@ int DCPCALL ProcessFile(HANDLE hArcData, int Operation, char *DestPath, char *De
 	{
 		gchar *arc_path = g_match_info_fetch_named(data->match_info, "name");
 
-		if (!data->extract)
+		if (!arc_path || arc_path[0] == '/')
 		{
-			gchar *outdir = g_path_get_dirname(DestName);
-			data->tmpdir = tempnam(outdir, "arc_");
-			mkdir(data->tmpdir, 0755);
-			g_free(outdir);
-			data->extract = TRUE;
+			g_free(arc_path);
+			g_match_info_next(data->match_info, NULL);
+			return E_NOT_SUPPORTED;
 		}
 
 		if (data->re_info && !gOptSkipInfo && g_regex_match(data->re_info, arc_path, 0, NULL))
@@ -438,6 +444,15 @@ int DCPCALL ProcessFile(HANDLE hArcData, int Operation, char *DestPath, char *De
 			g_free(arc_path);
 			g_match_info_next(data->match_info, NULL);
 			return E_SUCCESS;
+		}
+
+		if (!data->extract)
+		{
+			gchar *outdir = g_path_get_dirname(DestName);
+			data->tmpdir = tempnam(outdir, "arc_");
+			mkdir(data->tmpdir, 0755);
+			g_free(outdir);
+			data->extract = TRUE;
 		}
 
 		gchar *args = g_strdup_printf("zpaq\nx\n%s\n%s\n-all\n%s\n-threads\n%s\n-f", data->arc, arc_path, gOptVerNum, gOptThreads);
