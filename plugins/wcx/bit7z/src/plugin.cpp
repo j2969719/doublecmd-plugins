@@ -2,6 +2,7 @@
 #include <bit7z/bit7z.hpp>
 #include <bit7z/bitarchivewriter.hpp>
 #include <bit7z/bitarchiveeditor.hpp>
+#include <errno.h>
 #include <unistd.h>
 #include <sys/stat.h>
 #include <limits.h>
@@ -213,7 +214,9 @@ static bool extract_single(tArcData *data, uint32_t index, char *DestName)
 	}
 	catch (const bit7z::BitException& ex)
 	{
-		MessageBox((char*)ex.what(), nullptr,  MB_OK | MB_ICONERROR);
+		if (ex.posixCode() != ECANCELED)
+			MessageBox((char*)ex.what(), nullptr,  MB_OK | MB_ICONERROR);
+
 		result = false;
 	}
 
@@ -489,7 +492,8 @@ int DCPCALL ProcessFile(HANDLE hArcData, int Operation, char *DestPath, char *De
 		}
 		catch (const bit7z::BitException& ex)
 		{
-			MessageBox((char*)ex.what(), nullptr,  MB_OK | MB_ICONERROR);
+			if (ex.posixCode() != ECANCELED)
+				MessageBox((char*)ex.what(), nullptr,  MB_OK | MB_ICONERROR);
 		}
 	}
 
@@ -545,7 +549,8 @@ int DCPCALL CloseArchive(HANDLE hArcData)
 					}
 					catch (const bit7z::BitException& ex)
 					{
-						MessageBox((char*)ex.what(), nullptr,  MB_OK | MB_ICONERROR);
+						if (ex.posixCode() != ECANCELED)
+							MessageBox((char*)ex.what(), nullptr,  MB_OK | MB_ICONERROR);
 					}
 
 					fs::remove_all(outdir);
@@ -667,7 +672,9 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 	}
 	catch (const bit7z::BitException& ex)
 	{
-		MessageBox((char*)ex.what(), nullptr,  MB_OK | MB_ICONERROR);
+		if (ex.posixCode() != ECANCELED)
+			MessageBox((char*)ex.what(), nullptr,  MB_OK | MB_ICONERROR);
+
 		return E_EABORTED;
 	}
 
@@ -729,8 +736,11 @@ int DCPCALL DeleteFiles(char *PackedFile, char *DeleteList)
 			}
 			catch (const bit7z::BitException& ex)
 			{
-				string msg = target + ": " + ex.what();
-				MessageBox((char*)msg.c_str(), nullptr,  MB_OK | MB_ICONERROR);
+				if (ex.posixCode() != ECANCELED)
+				{
+					string msg = target + ": " + ex.what();
+					MessageBox((char*)msg.c_str(), nullptr,  MB_OK | MB_ICONERROR);
+				}
 			}
 
 			while (*DeleteList++);
@@ -740,7 +750,9 @@ int DCPCALL DeleteFiles(char *PackedFile, char *DeleteList)
 	}
 	catch (const bit7z::BitException& ex)
 	{
-		MessageBox((char*)ex.what(), nullptr,  MB_OK | MB_ICONERROR);
+		if (ex.posixCode() != ECANCELED)
+			MessageBox((char*)ex.what(), nullptr,  MB_OK | MB_ICONERROR);
+
 		return E_EABORTED;
 	}
 

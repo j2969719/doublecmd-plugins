@@ -50,6 +50,9 @@ Creates m3u8 files (Files -> Pack Files...).
 - [mozlz4json_crap](plugins/wcx/mozlz4json_crap)<br>
 View lz4 json from Mozilla.
 
+- [zpaq_cli_crap](plugins/wcx/zpaq_cli_crap)<br>
+Wierd packer plugin for zpaq (cli executable).
+
 
 ---
 <a name="wdx-bin"><h3>WDX: Binary (compiled) plugins</h3></a>

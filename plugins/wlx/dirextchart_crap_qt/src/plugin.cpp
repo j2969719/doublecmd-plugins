@@ -11,7 +11,7 @@ typedef QMap<QString, QPair<qint64, qint64>> calcdata;
 
 static calcdata CalcContentSize(QString path)
 {
-	qDebug() << "CalcContentSize";
+	//qDebug() << "CalcContentSize";
 	calcdata result;
 
 	QSettings settings(inipath, QSettings::IniFormat);
@@ -47,7 +47,7 @@ static calcdata CalcContentSize(QString path)
 		}
 	}
 
-	qDebug() << result;
+	//qDebug() << result;
 	return result;
 }
 
@@ -171,7 +171,8 @@ int DCPCALL ListLoadNext(HWND ParentWin, HWND PluginWin, char* FileToLoad, int S
 void DCPCALL ListCloseWindow(HANDLE ListWin)
 {
 	QFrame *view = (QFrame*)ListWin;
-	QFutureWatcher<calcdata> *watcher = view->findChild<QFutureWatcher<calcdata>*>("watcher");
+	QObject *obj = view->findChild<QObject*>("watcher");
+	QFutureWatcher<QMap<QString, qint64>> *watcher = (QFutureWatcher<QMap<QString, qint64>> *)obj;
 
 	if (watcher->isRunning())
 		watcher->waitForFinished();

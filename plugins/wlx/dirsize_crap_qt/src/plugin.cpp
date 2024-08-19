@@ -29,7 +29,7 @@ static qint64 CalcSize(QString path)
 
 static QMap<QString, qint64> GetSizes(QString path)
 {
-	qDebug() << "GetSizes";
+	//qDebug() << "GetSizes";
 	QMap<QString, qint64> result;
 
 	QMap<QString, QFuture<qint64>> fields;
@@ -45,7 +45,7 @@ static QMap<QString, qint64> GetSizes(QString path)
 		result[iter.fileInfo().filePath()] = CalcSize(iter.fileInfo().filePath());
 	}
 
-	qDebug() << result;
+	//qDebug() << result;
 	return result;
 }
 
@@ -215,7 +215,8 @@ int DCPCALL ListLoadNext(HWND ParentWin, HWND PluginWin, char* FileToLoad, int S
 void DCPCALL ListCloseWindow(HANDLE ListWin)
 {
 	QFrame *view = (QFrame*)ListWin;
-	QFutureWatcher<QMap<QString, qint64>> *watcher = view->findChild<QFutureWatcher<QMap<QString, qint64>> *>("watcher");
+	QObject *obj = view->findChild<QObject*>("watcher");
+	QFutureWatcher<QMap<QString, qint64>> *watcher = (QFutureWatcher<QMap<QString, qint64>> *)obj;
 
 	if (watcher->isRunning())
 		watcher->waitForFinished();

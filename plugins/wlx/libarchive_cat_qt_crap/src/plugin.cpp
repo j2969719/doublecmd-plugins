@@ -112,7 +112,8 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 void DCPCALL ListCloseWindow(HANDLE ListWin)
 {
 	QPlainTextEdit *view = (QPlainTextEdit*)ListWin;
-	QFutureWatcher<QString> *watcher = view->findChild<QFutureWatcher<QString>*>("watcher");
+	QObject *obj = view->findChild<QObject*>("watcher");
+	QFutureWatcher<QMap<QString, qint64>> *watcher = (QFutureWatcher<QMap<QString, qint64>> *)obj;
 
 	if (watcher->isRunning())
 		watcher->waitForFinished();
