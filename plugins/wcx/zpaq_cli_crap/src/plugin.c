@@ -15,7 +15,7 @@
 #include "extension.h"
 
 #define BUFSIZE 8192
-#define RE_PATTERN "^\\-\\s(?'date'\\d{4}\\-\\d{2}\\-\\d{2}\\s\\d{2}:\\d{2}:\\d{2})\\s+\
+#define RE_PATTERN "^[\\-\\^+=#]\\s(?'date'\\d{4}\\-\\d{2}\\-\\d{2}\\s\\d{2}:\\d{2}:\\d{2})\\s+\
 (?'size'\\-?\\d+)\\s(?'attr'\\s?d?[DRASHI\\d]*)\\s+(?'name'[^\\n]+)"
 #define RE_INFO_PATTERN "\\d+/\\s\\+\\d+\\s\\-\\d\\s\\->\\s\\d+"
 #define ZPAQ_ERRPASS "zpaq error: password incorrect"
@@ -109,6 +109,21 @@ intptr_t DCPCALL OptDlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, int
 	}
 
 	return 0;
+}
+
+
+static int parse_utcdate(char *string)
+{
+	int result = 0;
+	struct tm tm = {0};
+
+	if (strptime(string, "%Y-%m-%d %R", &tm))
+	{
+		time_t utc = mktime(&tm);
+		result = (int)(utc - timezone + (daylight ? 3600 : 0));
+	}
+
+	return result;
 }
 
 static void remove_file(const char *file)
@@ -356,9 +371,31 @@ int DCPCALL ReadHeaderEx(HANDLE hArcData, tHeaderDataEx *HeaderDataEx)
 		{
 			if (data->re_info && gOptSkipInfo && g_regex_match(data->re_info, string, 0, NULL))
 			{
+				//g_free(string);
+				//g_match_info_next(data->match_info, NULL);
+				//continue;
+
+				char *p = strrchr(string, '/');
+
+				if (p)
+					*p = '\0';
+
+				g_strlcpy(HeaderDataEx->FileName, string, sizeof(HeaderDataEx->FileName) - 1);
+
+				g_strlcpy(HeaderDataEx->CmtBuf, p + 1, HeaderDataEx->CmtBufSize);
+				HeaderDataEx->CmtSize = (int)strlen(p + 1);
+
 				g_free(string);
-				g_match_info_next(data->match_info, NULL);
-				continue;
+
+				string = g_match_info_fetch_named(data->match_info, "date");
+
+				if (string)
+					HeaderDataEx->FileTime = parse_utcdate(string);
+
+				g_free(string);
+
+				HeaderDataEx->FileAttr = S_IFDIR | 0755;
+				return E_SUCCESS;
 			}
 
 			if (string[0] != '/')
@@ -403,15 +440,7 @@ int DCPCALL ReadHeaderEx(HANDLE hArcData, tHeaderDataEx *HeaderDataEx)
 		string = g_match_info_fetch_named(data->match_info, "date");
 
 		if (string)
-		{
-			struct tm tm = {0};
-
-			if (strptime(string, "%Y-%m-%d %R", &tm))
-			{
-				time_t utc = mktime(&tm);
-				HeaderDataEx->FileTime = (int)(utc - timezone + (daylight ? 3600 : 0));
-			}
-		}
+			HeaderDataEx->FileTime = parse_utcdate(string);
 
 		g_free(string);
 
