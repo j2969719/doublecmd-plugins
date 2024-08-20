@@ -15,9 +15,9 @@
 #include "extension.h"
 
 #define BUFSIZE 8192
-#define RE_PATTERN "^[\\-\\^+=#]\\s(?'date'\\d{4}\\-\\d{2}\\-\\d{2}\\s\\d{2}:\\d{2}:\\d{2})\\s+\
-(?'size'\\-?\\d+)\\s(?'attr'\\s?d?[DRASHI\\d]*)\\s+(?'name'[^\\n]+)"
-#define RE_INFO_PATTERN "\\d+/\\s\\+\\d+\\s\\-\\d\\s\\->\\s\\d+"
+#define RE_LIST "^[\\-\\^+=#]\\s(?'date'\\d{4}\\-\\d{2}\\-\\d{2}\\s\\d{2}:\\d{2}:\\d{2})\
+\\s+(?'size'\\-?\\d+)\\s(?'attr'\\s?d?[DRASHI\\d]*)\\s+(?'name'[^\\n]+)"
+#define RE_INFO "\\d+/\\s\\+\\d+\\s\\-\\d\\s\\->\\s\\d+"
 #define ZPAQ_ERRPASS "zpaq error: password incorrect"
 #define MSG_PASS "Enter password:"
 #define ERRFILE "<ERROR>"
@@ -34,10 +34,8 @@ typedef struct sArcData
 {
 	GRegex *re;
 	gchar *arc;
-	gchar *tmpdir;
 	gchar *output;
 	GRegex *re_info;
-	gboolean extract;
 	GMatchInfo *match_info;
 	tChangeVolProc ChangeVolProc;
 	tProcessDataProc ProcessDataProc;
@@ -111,7 +109,6 @@ intptr_t DCPCALL OptDlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, int
 	return 0;
 }
 
-
 static int parse_utcdate(char *string)
 {
 	int result = 0;
@@ -122,93 +119,6 @@ static int parse_utcdate(char *string)
 		time_t utc = mktime(&tm);
 		result = (int)(utc - timezone + (daylight ? 3600 : 0));
 	}
-
-	return result;
-}
-
-static void remove_file(const char *file)
-{
-	if (remove(file) == -1)
-	{
-		int errsv = errno;
-		printf("ERR(%s) remove '%s': %s\n", PLUGNAME, file, strerror(errsv));
-	}
-}
-
-static int nftw_remove_cb(const char *file, const struct stat *bif, int tflag, struct FTW *ftwbuf)
-{
-	remove_file(file);
-	return 0;
-}
-
-static void remove_target(const char *filename)
-{
-	struct stat st;
-
-	if (lstat(filename, &st) == 0)
-	{
-		if S_ISDIR(st.st_mode)
-			nftw(filename, nftw_remove_cb, 13, FTW_DEPTH | FTW_PHYS);
-		else
-			remove_file(filename);
-	}
-}
-
-static int copy_file(char* infile, char* outfile)
-{
-	int ifd, ofd, done;
-	ssize_t len, total = 0;
-	char buff[BUFSIZE];
-	struct stat buf;
-	int result = E_SUCCESS;
-
-	if (strcmp(infile, outfile) == 0)
-		return E_NOT_SUPPORTED;
-
-	if (stat(infile, &buf) != 0)
-		return E_NOT_SUPPORTED;
-
-	ifd = open(infile, O_RDONLY);
-
-	if (ifd == -1)
-		return E_EREAD;
-
-	ofd = open(outfile, O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR);
-
-	if (ofd > -1)
-	{
-		while ((len = read(ifd, buff, sizeof(buff))) > 0)
-		{
-			if (write(ofd, buff, len) == -1)
-			{
-				result = E_EWRITE;
-				break;
-			}
-
-			total += len;
-
-			if (buf.st_size > 0)
-				done = total * 100 / buf.st_size;
-			else
-				done = 0;
-
-			if (done > 100)
-				done = 100;
-
-			if (gProcessDataProc(infile, -(1000 + done)) == 0)
-			{
-				result = E_EABORTED;
-				break;
-			}
-		}
-
-		close(ofd);
-		chmod(outfile, buf.st_mode);
-	}
-	else
-		result = E_EWRITE;
-
-	close(ifd);
 
 	return result;
 }
@@ -333,7 +243,7 @@ HANDLE DCPCALL OpenArchive(tOpenArchiveData *ArchiveData)
 		g_clear_error(&err);
 		data->arc = g_strdup(ArchiveData->ArcName);
 		data->output = stdout;
-		data->re = g_regex_new(RE_PATTERN, G_REGEX_MULTILINE, 0, &err);
+		data->re = g_regex_new(RE_LIST, G_REGEX_MULTILINE, 0, &err);
 
 		if (data->re)
 			g_regex_match(data->re, data->output, 0, &data->match_info);
@@ -341,7 +251,7 @@ HANDLE DCPCALL OpenArchive(tOpenArchiveData *ArchiveData)
 			MessageBox(err->message, PLUGNAME,  MB_OK | MB_ICONERROR);
 
 		if (strcmp(gOptVerNum, "0") != 0)
-			data->re_info = g_regex_new(RE_INFO_PATTERN, 0, 0, NULL);
+			data->re_info = g_regex_new(RE_INFO, 0, 0, NULL);
 	}
 	else
 		ArchiveData->OpenResult = E_UNKNOWN_FORMAT;
@@ -461,7 +371,8 @@ int DCPCALL ProcessFile(HANDLE hArcData, int Operation, char *DestPath, char *De
 	{
 		gchar *arc_path = g_match_info_fetch_named(data->match_info, "name");
 
-		if (!arc_path || arc_path[0] == '/')
+
+		if (!arc_path) // || arc_path[0] == '/')
 		{
 			g_free(arc_path);
 			g_match_info_next(data->match_info, NULL);
@@ -475,16 +386,7 @@ int DCPCALL ProcessFile(HANDLE hArcData, int Operation, char *DestPath, char *De
 			return E_SUCCESS;
 		}
 
-		if (!data->extract)
-		{
-			gchar *outdir = g_path_get_dirname(DestName);
-			data->tmpdir = tempnam(outdir, "arc_");
-			mkdir(data->tmpdir, 0755);
-			g_free(outdir);
-			data->extract = TRUE;
-		}
-
-		gchar *args = g_strdup_printf("zpaq\nx\n%s\n%s\n-all\n%s\n-threads\n%s\n-f", data->arc, arc_path, gOptVerNum, gOptThreads);
+		gchar *args = g_strdup_printf("zpaq\nx\n%s\n%s\n-all\n%s\n-threads\n%s\n-to\n%s\n-f", data->arc, arc_path, gOptVerNum, gOptThreads, DestName);
 
 		if (gPass[0] != '\0')
 		{
@@ -495,19 +397,8 @@ int DCPCALL ProcessFile(HANDLE hArcData, int Operation, char *DestPath, char *De
 
 		gchar **argv = g_strsplit(args, "\n", -1);
 		g_free(args);
-		result = execute_archiver(data->tmpdir, argv, DestName, data->ProcessDataProc);
+		result = execute_archiver(NULL, argv, DestName, data->ProcessDataProc);
 		g_strfreev(argv);
-
-		if (result == E_SUCCESS)
-		{
-			gchar *file = g_strdup_printf("%s/%s", data->tmpdir, arc_path);
-
-			if (rename(file, DestName) != 0)
-				result = E_EWRITE;
-
-			g_free(file);
-		}
-
 		g_free(arc_path);
 	}
 	else if (Operation == PK_TEST)
@@ -527,9 +418,7 @@ int DCPCALL CloseArchive(HANDLE hArcData)
 
 	g_match_info_free(data->match_info);
 	g_regex_unref(data->re);
-	remove_target(data->tmpdir);
 	g_free(data->output);
-	g_free(data->tmpdir);
 	g_free(data->arc);
 	g_free(data);
 
@@ -538,9 +427,6 @@ int DCPCALL CloseArchive(HANDLE hArcData)
 
 int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddList, int Flags)
 {
-	DIR *dir;
-	struct stat buf;
-	struct dirent *ent;
 	int result = E_SUCCESS;
 	gchar *filelist = AddList;
 	gchar *arcdir = NULL;
@@ -559,16 +445,6 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 			gPass[0] = '\0';
 	}
 
-	gchar *outdir = g_path_get_dirname(PackedFile);
-	gchar *tmpdir = tempnam(outdir, "arc_");
-	g_free(outdir);
-
-	if (mkdir(tmpdir, 0755) != 0)
-	{
-		g_free(tmpdir);
-		return E_ECREATE;
-	}
-
 	if (SubPath && strcmp(gOptVerNum, "0") != 0)
 	{
 		gchar **split = g_strsplit(SubPath, "/", -1);
@@ -582,110 +458,52 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 	else if (SubPath)
 		arcdir = g_strdup(SubPath);
 
+	gchar *args = g_strdup_printf("zpaq\na\n%s", PackedFile);
+
+	while (*filelist)
+	{
+		gchar *tmp = g_strdup_printf("%s\n%s", args, filelist);
+		g_free(args);
+		args = tmp;
+
+		while (*filelist++);
+	}
+
 	if (arcdir)
 	{
-		gchar **argv;
-		gchar *argv_nopass[] = { "zpaq", "x", PackedFile, arcdir, "-f", NULL };
-		gchar *argv_pass[] = { "zpaq", "x", PackedFile, arcdir, "-key", gPass, "-f", NULL };
-		gchar *tmpfile = g_strdup_printf("%s/%s", tmpdir, arcdir);
-
-		if (g_mkdir_with_parents(tmpfile, 0755) != 0)
-			result = E_ECREATE;
-		else
-		{
-			if (gPass[0] != '\0')
-				argv = argv_pass;
-			else
-				argv = argv_nopass;
-
-			result = execute_archiver(tmpdir, argv, tmpdir, gProcessDataProc);
-		}
-
-		g_free(tmpfile);
-	}
-
-	if (result == E_SUCCESS)
-	{
-		while (*filelist)
-		{
-			gchar *infile = g_strdup_printf("%s%s", SrcPath, filelist);
-			gchar *tmpfile = g_strdup_printf("%s%s%s/%s", tmpdir, arcdir ? "/" : "", arcdir ? arcdir : "", filelist);
-
-			if (filelist[strlen(filelist) - 1] != '/')
-				result = copy_file(infile, tmpfile);
-			else if (mkdir(tmpfile, 0755) != 0)
-				result = E_ECREATE;
-
-			g_free(infile);
-			g_free(tmpfile);
-
-			if (result != E_SUCCESS)
-				break;
-
-			while (*filelist++);
-		}
-	}
-
-	filelist = AddList;
-
-	if (result == E_SUCCESS)
-	{
-		while (*filelist)
-		{
-			gchar *infile = g_strdup_printf("%s%s", SrcPath, filelist);
-			gchar *tmpfile = g_strdup_printf("%s%s%s/%s", tmpdir, arcdir ? "/" : "", arcdir ? arcdir : "", filelist);
-
-			if (stat(infile, &buf) == 0)
-			{
-				struct utimbuf ubuf;
-				ubuf.actime = buf.st_atime;
-				ubuf.modtime = buf.st_mtime;
-				utime(tmpfile, &ubuf);
-			}
-
-			g_free(infile);
-			g_free(tmpfile);
-
-			while (*filelist++);
-		}
-
-		gchar *args = g_strdup_printf("zpaq\na\n%s", PackedFile);
-
-		if ((dir = opendir(tmpdir)) != NULL)
-		{
-			while ((ent = readdir(dir)) != NULL)
-			{
-				if ((strcmp(ent->d_name, ".") != 0) && (strcmp(ent->d_name, "..") != 0))
-				{
-					gchar *tmp = g_strdup_printf("%s\n%s", args, ent->d_name);
-					g_free(args);
-					args = tmp;
-				}
-			}
-		}
-
-		gchar *tmp = g_strdup_printf("%s\n-m%s\n-t%s\n-f", args, gOptMethod, gOptThreads);
+		filelist = AddList;
+		gchar *tmp = g_strdup_printf("%s\n-to", args);
 		g_free(args);
+		args = tmp;
 
-		if (gPass[0] != '\0')
+		while (*filelist)
 		{
-			args = g_strdup_printf("%s\n-key\n%s", tmp, gPass);
-			g_free(tmp);
-		}
-		else
+			gchar *tmp = g_strdup_printf("%s\n%s/%s", args, arcdir, filelist);
+			g_free(args);
 			args = tmp;
 
-
-		gchar **argv = g_strsplit(args, "\n", -1);
-		g_free(args);
-
-		result = execute_archiver(tmpdir, argv, tmpdir, gProcessDataProc);
-		g_strfreev(argv);
+			while (*filelist++);
+		}
 	}
 
-	gProcessDataProc(tmpdir, -100);
-	remove_target(tmpdir);
-	g_free(tmpdir);
+	gchar *tmp = g_strdup_printf("%s\n-m%s\n-t%s\n-f", args, gOptMethod, gOptThreads);
+	g_free(args);
+
+	if (gPass[0] != '\0')
+	{
+		args = g_strdup_printf("%s\n-key\n%s", tmp, gPass);
+		g_free(tmp);
+	}
+	else
+		args = tmp;
+
+	gchar **argv = g_strsplit(args, "\n", -1);
+	g_free(args);
+
+	result = execute_archiver(SrcPath, argv, PackedFile, gProcessDataProc);
+	g_strfreev(argv);
+
+	gProcessDataProc(PackedFile, -100);
 	g_free(arcdir);
 
 	return result;
@@ -693,41 +511,69 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 
 int DCPCALL DeleteFiles(char *PackedFile, char *DeleteList)
 {
-	gchar **argv;
 	int result = E_SUCCESS;
 	char filename[PATH_MAX];
+	gchar *filelist = DeleteList;
 
-	gchar *argv_nopass[] = { "zpaq", "a", PackedFile, "", "-all", gOptVerNum, "-to", filename, NULL };
-	gchar *argv_pass[] = { "zpaq", "a", PackedFile, "", "-all", gOptVerNum, "-to", filename, "-key", gPass, NULL };
+	if (strcmp(gOptVerNum, "0") != 0)
+		return E_NOT_SUPPORTED;
 
 	if (strcmp(gPassLastFile, PackedFile) != 0)
 		gPass[0] = '\0';
 
-	if (gPass[0] != '\0')
-		argv = argv_pass;
-	else
-		argv = argv_nopass;
+	gchar *args = g_strdup_printf("zpaq\na\n%s", PackedFile);
 
-	while (*DeleteList)
+	while (*filelist)
+	{
+		gchar *tmp = g_strdup_printf("%s\n/dev/null", args);
+		g_free(args);
+		args = tmp;
+
+		while (*filelist++);
+	}
+
+	gchar *tmp = g_strdup_printf("%s\n-to", args);
+	g_free(args);
+	args = tmp;
+	filelist = DeleteList;
+
+	while (*filelist)
 	{
 		char mask[5];
 		size_t len = strlen(DeleteList);
-		g_strlcpy(mask, DeleteList + (len - 4), 5);
+		g_strlcpy(mask, filelist + (len - 4), 5);
 
 		if (strcmp(mask, "/*.*") == 0)
-			g_strlcpy(filename, DeleteList, len - 3);
+			g_strlcpy(filename, filelist, len - 3);
 		else
-			g_strlcpy(filename, DeleteList, PATH_MAX);
+			g_strlcpy(filename, filelist, PATH_MAX);
 
-		result = execute_archiver(NULL, argv, DeleteList, gProcessDataProc);
+		gchar *tmp = g_strdup_printf("%s\n%s", args, filename);
+		g_free(args);
+		args = tmp;
 
-		if (result != E_SUCCESS)
-			break;
-
-		while (*DeleteList++);
+		while (*filelist++);
 	}
 
+	tmp = g_strdup_printf("%s\n-m%s\n-t%s", args, gOptMethod, gOptThreads);
+	g_free(args);
+
+	if (gPass[0] != '\0')
+	{
+		args = g_strdup_printf("%s\n-key\n%s-f", tmp, gPass);
+		g_free(tmp);
+	}
+	else
+		args = tmp;
+
+	gchar **argv = g_strsplit(args, "\n", -1);
+	g_free(args);
+
+	result = execute_archiver(NULL, argv, PackedFile, gProcessDataProc);
+	g_strfreev(argv);
+
 	gProcessDataProc(PackedFile, -100);
+
 	return result;
 }
 

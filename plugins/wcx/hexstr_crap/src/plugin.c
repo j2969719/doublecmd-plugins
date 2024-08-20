@@ -202,7 +202,7 @@ BOOL DCPCALL CanYouHandleThisFile(char *FileName)
 {
 	char *dot = strrchr(FileName, '.');
 
-	if (strcmp(dot, FAKE_EXT) == 0)
+	if (dot && strcmp(dot, FAKE_EXT) == 0)
 		return TRUE;
 
 	return FALSE;
