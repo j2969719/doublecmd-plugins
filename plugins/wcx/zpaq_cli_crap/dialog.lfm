@@ -1,15 +1,15 @@
 object DialogBox: TDialogBox
-  Left = 404
-  Height = 391
-  Top = 142
-  Width = 447
+  Left = 268
+  Height = 433
+  Top = 212
+  Width = 359
   AutoSize = True
   BorderStyle = bsDialog
   Caption = 'Options'
   ChildSizing.LeftRightSpacing = 20
   ChildSizing.TopBottomSpacing = 20
-  ClientHeight = 391
-  ClientWidth = 447
+  ClientHeight = 433
+  ClientWidth = 359
   OnClose = DialogBoxClose
   OnShow = DialogBoxShow
   Position = poOwnerFormCenter
@@ -77,7 +77,7 @@ object DialogBox: TDialogBox
     AnchorSideRight.Control = edDigits
     AnchorSideRight.Side = asrBottom
     Left = 20
-    Height = 160
+    Height = 184
     Top = 91
     Width = 320
     Anchors = [akTop, akLeft, akRight]
@@ -91,7 +91,7 @@ object DialogBox: TDialogBox
     ChildSizing.EnlargeHorizontal = crsHomogenousChildResize
     ChildSizing.Layout = cclLeftToRightThenTopToBottom
     ChildSizing.ControlsPerLine = 2
-    ClientHeight = 143
+    ClientHeight = 167
     ClientWidth = 318
     TabOrder = 3
     object lblCompr: TLabel
@@ -117,8 +117,8 @@ object DialogBox: TDialogBox
         '3'
         '4'
         '5 (best)'
-        'journaling'
-        'streaming'
+        'x (journaling)'
+        's (streaming)'
       )
       Style = csDropDownList
       TabOrder = 0
@@ -183,14 +183,34 @@ object DialogBox: TDialogBox
       ItemHeight = 0
       ParentShowHint = False
       ShowHint = True
-      TabOrder = 4
+      TabOrder = 3
       Text = '3ci1'
+      OnChange = ComboBoxChange
+    end
+    object lblMethod: TLabel
+      Left = 10
+      Height = 19
+      Top = 105
+      Width = 181
+      Alignment = taRightJustify
+      Caption = '-method'
+      Font.Name = 'Monospace'
+      ParentFont = False
+    end
+    object lblPreview: TLabel
+      Left = 196
+      Height = 19
+      Top = 105
+      Width = 112
+      Caption = '1'
+      Font.Name = 'Monospace'
+      ParentFont = False
     end
     object lblThreads: TLabel
       Left = 10
       Height = 28
       Hint = 'The default is 0, which uses the number of processor cores,'#10'except not more than 2 when when zpaq is compiled to 32-bit code.'
-      Top = 105
+      Top = 129
       Width = 181
       Alignment = taCenter
       Caption = 'Thread count limit'
@@ -202,16 +222,111 @@ object DialogBox: TDialogBox
       Left = 196
       Height = 28
       Hint = 'The default is 0, which uses the number of processor cores,'#10'except not more than 2 when when zpaq is compiled to 32-bit code.'
-      Top = 105
+      Top = 129
       Width = 112
       Alignment = taRightJustify
       MaxLength = 2
       NumbersOnly = True
       ParentShowHint = False
       ShowHint = True
-      TabOrder = 3
+      TabOrder = 4
       Text = '0'
     end
+  end
+  object Memo: TMemo
+    AnchorSideLeft.Control = gbCompr
+    AnchorSideTop.Control = gbCompr
+    AnchorSideTop.Side = asrBottom
+    AnchorSideRight.Control = gbCompr
+    AnchorSideRight.Side = asrBottom
+    Left = 20
+    Height = 90
+    Top = 275
+    Width = 320
+    Anchors = [akTop, akLeft, akRight]
+    Font.Name = 'Monospace'
+    Lines.Strings = (
+      'Types "x" and "s" are for experimental use. Normally, zpaq selects different methods depending on the compression level and an analysis of the data (text, executable, or other binary, and degree of compressibility). type selects journaling or streaming format. pre is 0..7 selecting a preprocessing step (LZ77, BWT, E8E9), comp is a series of context modeling components from the set {c,i,a,w,m,s,t} selecting a CM or ICM, ISSE chain, MATCH, word model, MIX, SSE, or MIX2 respectively. pre and comp may be followed by a list of numeric arguments (arg) separated by periods or commas. For example:'
+      ''
+      #9'-method x6.3ci1'
+      ''
+      'selects a journaling archive (x), block size 2ˆ6 = 64 MiB, BWT transform (3), an order 0 ICM (c), and order 1 ISSE (i1). (zpaq normally selects this method for level 3 text compression). type is as follows.'
+      ''
+      'x - selects normal (journaling) mode. Files are split into fragments, deduplicated, packed into blocks, and compressed by the method described. The compressed blocks are preceded by a transaction header giving the date of the update. The blocks are followed by a list of fragment hashes and sizes and a list of files added, updated, or deleted. Each added or updated file lists the last-modifed date, attributes, and a list of fragment IDs.'
+      ''
+      's - selectes streaming mode for single-pass extraction and compatibility with zpaq versions prior to 6.00 (2012). Streaming archives do not support deduplication or rollback. Files are split into fragments of size 2ˆblocksize MiB - 4 KiB. Each file or fragment is compressed in a separate block with no attempt at deduplication. The file name, date, and attributes are stored in the header of the first fragment. The hashes are stored in the trailers of each block. There is no transaction block to allow rollback. Files are added to the previously dated update. Streaming mode with "-index" is an error.'
+      ''
+      ' pre[.min1.min2.depth.size[.lookahead]]'
+      ''
+      'pre selects a pre/post processing step before context modeling as follows.'
+      ''
+      '  0 = no preprocessing'
+      '  1 = Packed LZ77'
+      '  2 = Byte aligned LZ77'
+      '  3 = BWT (Burrows-Wheeler Transform)'
+      '  4 = E8E9'
+      '  5 = E8E9 + packed LZ77'
+      '  6 = E8E9 + byte aligned LZ77'
+      '  7 = E8E9 + BWT'
+      ''
+      'The E8E9 transform (4..7) improves the compression of x86 executable files (.exe or .dll). The transform scans backward for 5 byte patterns of the form (E8|E9 xx xx xx 00|FF) hex and adds the block offset to the three middle bytes. The E8 and E9 opcodes are CALL and JMP, respectively. The transform replaces relative addresses with absolute addresses. The transform is applied prior to LZ77 or BWT. Decompression reverses the transforms in the opposite order.'
+      ''
+      'LZ77 (1, 2, 5, 6) compresses by searching for matching strings using a hash table or suffix array and replacing them with pointers to the previous match. Types 1 and 2 select variable bit length coding or byte aligned coding respectively. Variable bit length encoding compresses better by itself, but byte aligned coding allows for further compression using a context model. Types 6 and 7 are the same as 1 and 2 respectively, except that the block is E8E9 transformed first.'
+      ''
+      'BWT (Burrows Wheeler Transform, 3 or 7), sorts the input block by context, which brings bytes with similar contexts together. It does not compress by itself, but makes the input suited to compression with a fast adapting low order context model.'
+      ''
+      'The remaining arguments apply only to LZ77. min1 selects the minimum match length, which must be at least 4 for packed LZ77 or 1 for byte aligned LZ77. min2 selects a longer minimum match length to try first, or is 0 to skip this step. The block is encoded by testing 2ˆdepth locations indexed by a hash table of 2ˆsize elements indexed by hashes of the next min2 and then min1 characters. If lookahead is specified and greater than 0, then, the search is repeated lookahead + 1 times to consider coding the next 0 to lookahead bytes as literals to find a longer match.'
+      ''
+      'If size = blocksize + 21, then matches are found using a suffix array instead of a hash table, scanning forward and backward 2ˆdepth elements to find the longest past match. min2 has no effect. A suffix array requires 4.5 x 2ˆblocksize MiB memory. A hash table requires 4 x 2ˆsize bytes memory. For example:'
+      ''
+      #9'-method x6.1.4.0.5.27.1'
+      ''
+      'specifies 64 MiB blocks (6), variable length LZ77 without E8E9 (1), minimum match length 4, no secondary search (0), search depth 2ˆ5 = 32 in each direction in the suffix array (27 = 6 + 21), and 1 byte lookahead.'
+      ''
+      'comp specifies a component of a context model. If this section is empty, then no further compression is performed. Otherwise the block is compressed by an array of components. Each component takes a context and possibly the outputs of earlier components, and outputs a prediction, a probability that the next bit of input is a 1. The final prediction is used to arithmetic code the bit. Components normally allocate memory equal to the block size, or less for smaller contexts as needed. Components are as follows:'
+      #9'c[.maxcount[.offset[.mask]...]]'
+      ''
+      'Specifies a context model (CM), or indirect context model (ICM). A CM maps a context hash to a prediction by looking up the context in a table, and then adjusts the prediction to reduce the coding error by 1/count, where count is bounded by maxcount x 4, and maxcount is in 1..255.'
+      ''
+      'If maxcount is 0, then specify an ICM. An ICM maps a context to a state representing two bit counts and the most recent bit. That state is mapped to a prediction and updated at a fixed rate. An ICM adapts faster to changing statistics. A CM with a high count compresses stationary data better. The default is 0 (ICM).'
+      ''
+      'If maxcount has the form 1000m + n, then the effect is the same as maxcount = n while reducing memory to 1/2ˆm of block size.'
+      ''
+      'The remaining arguments represent contexts, all of which are hashed together. If offset is 1..255, then the block offset mod offset is hashed in. If offset is 1000..1255, then the distance to the last occurrance of offset - 1000 is hashed in. For example, "c0.1010" specifies an ICM taking the text column number (distance back to the last linefeed = 10) as context. The default is 0 (no context).'
+      ''
+      'Each mask is ANDed with previous bytes. For example, "c0.0.255.255.255" is an ICM with order 3 context. A value in 256..511 specifies a context of mask - 256 hashed together with the byte aligned LZ77 parse state (whether a literal or match code is expected). For example, "-method x6.2.12.0.8.27c0.0.511.255" specifes block size 2ˆ6 MiB, byte aligned LZ77 (2), minimum match length 12, search depth 2ˆ8, suffix array search (27 = 6 + 21), an ICM (c0), no offset context (0), and order 2 context plus LZ77 state (511.255).'
+      ''
+      'A mask greater than 1000 is shorthand for mask - 1000 zeros. For example, the sparse context "c0.0.255.1003.255" is equivalent to "c0.0.255.0.0.0.255".'
+      ''
+      #9'm[size[.rate]]'
+      ''
+      'Specifies a MIX (mixer). A MIX computes a weighted average of the predictions of all previous components. (The averaging is in the logistic domain: log(p / (1 - p))). The weights are then adjusted in proportion to rate (0..255) to reduce the prediction error. A size bit context can be used to select a set of weights to be used. The first 8 bits of context are the previously coded bits of the current byte. The default is "m8.24". A MIX with n inputs requires 4n x 2ˆsize bytes of memory.'
+      ''
+      #9't[size[.rate]]'
+      ''
+      'Specifies a MIX2. A MIX2 is like a MIX except that it takes only the last 2 components as input, and its weights are constrained to add to 1. A MIX2 requires 4 x 2ˆsize bytes of memory. The default is "t8.24".'
+      ''
+      #9's[size[.mincount[.maxcount]]]'
+      ''
+      'Specifes a SSE (secondary symbol estimator). A SSE takes the last size bits of context and the quantized and interpolated prediction of the previous component as input to output an adjusted prediction. The output is adjusted to reduce the prediction error by 1/count, where the count is constrained between mincount and 4 x maxcount. The default is "s8.32.255".'
+      ''
+      #9'iorder[.increment]...'
+      ''
+      'Specifies an ISSE (indirect secondary symbol estimator) chain. An ISSE adjusts the predition of the previous component by mixing it with a constant 1. The pair of mixing weights is selected by a bit history state (like an ICM). The bit history is selected by a hash of the last order bytes hashed together with the context of the previous component. Each increment specifies an additional ISSE whose context order is increased by increment. For example, "ci1.1.2" specifies an order 0 ICM and order 1, 2, and 4 ISSEs.'
+      ''
+      #9'w[order[.A[.Z[.cap[.mul[.mem]]]]]]'
+      ''
+      'Specifies an ICM-ISSE chain of length order taking as contexts the hashes of the last 1, 2, 3..., order whole words. A word is defined as a sequence of characters in the range A to A + Z - 1, ANDed with cap before hashing. The hash H is updated by byte c as H := (H x mul + c) (mod 2ˆ(blocksize + 24 - mem)). Each component requires 2ˆ(blocksize - mem) MiB. The default is "w1.65.26.223.20.0", which defines a word as 65..90 (A..Z). ANDing with 223 converts to upper case before hashing. mul = 20 has the effect of shifting 2 bits left. For typical block sizes (28 or 30 bit H), the word hash depends on the last 14 or 15 letters.'
+      ''
+      #9'a[mul[.bmem][.hmem]]]'
+      ''
+      'Specifies a MATCH. A MATCH searches for a past matching context and predicts whatever bit came next. The search is done by updating a context hash H with byte c by H := H x mul + c (mod 2ˆ(blocksize + 18 - hmem)). A MATCH uses 2ˆ(blocksize - bmem) MiB history buffer and a 2ˆ(blocksize - hmem) MiB hash table. The default is a24.0.0. If blocksize is 6, then H is 24 bits. mul = 24 shifts 4 bits left, making the context hash effectively order 6.'
+    )
+    ParentFont = False
+    ReadOnly = True
+    ScrollBars = ssAutoBoth
+    TabOrder = 4
+    WantTabs = True
   end
   object btnCancel: TBitBtn
     AnchorSideTop.Control = btnOK
@@ -219,7 +334,7 @@ object DialogBox: TDialogBox
     AnchorSideRight.Control = btnOK
     Left = 142
     Height = 30
-    Top = 281
+    Top = 395
     Width = 97
     Anchors = [akTop, akRight]
     BorderSpacing.Right = 4
@@ -230,16 +345,16 @@ object DialogBox: TDialogBox
     Kind = bkCancel
     ModalResult = 2
     OnClick = ButtonClick
-    TabOrder = 5
+    TabOrder = 6
   end
   object btnOK: TBitBtn
-    AnchorSideTop.Control = gbCompr
+    AnchorSideTop.Control = Memo
     AnchorSideTop.Side = asrBottom
     AnchorSideRight.Control = gbCompr
     AnchorSideRight.Side = asrBottom
     Left = 243
     Height = 30
-    Top = 281
+    Top = 395
     Width = 97
     Anchors = [akTop, akRight]
     BorderSpacing.Top = 30
@@ -250,6 +365,6 @@ object DialogBox: TDialogBox
     Kind = bkOK
     ModalResult = 1
     OnClick = ButtonClick
-    TabOrder = 4
+    TabOrder = 5
   end
 end

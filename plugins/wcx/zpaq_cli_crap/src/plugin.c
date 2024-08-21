@@ -65,6 +65,28 @@ static char gHistoryFile[PATH_MAX] = "";
 static gchar *gOptWTF = NULL;
 gboolean gOptSkipInfo = TRUE;
 
+static void UpdatePreview(uintptr_t pDlg)
+{
+
+	int is_wtf = SendDlgMsg(pDlg, "cbWTF", DM_ENABLE, 1, 0);
+	SendDlgMsg(pDlg, "cbWTF", DM_ENABLE, is_wtf, 0);
+	char *value = (char*)SendDlgMsg(pDlg, "cbCompr", DM_GETTEXT, 0, 0);
+	char type = value[0];
+	char blocks[3] = "";
+	int index = SendDlgMsg(pDlg, "cbBlock", DM_LISTGETITEMINDEX, 0, 0);
+
+	if (index != -1)
+		snprintf(blocks, 3, "%d", index);
+
+	value = (char*)SendDlgMsg(pDlg, "cbWTF", DM_GETTEXT, 0, 0);
+
+	if (value[0] == '\0')
+		is_wtf = FALSE;
+
+	gchar *line = g_strdup_printf("%c%s%s%s", type, blocks, is_wtf ? "." : "", is_wtf ? value : "");
+	SendDlgMsg(pDlg, "lblPreview", DM_SETTEXT, (intptr_t)line, 0);
+	g_free(line);
+}
 
 intptr_t DCPCALL OptDlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr_t wParam, intptr_t lParam)
 {
@@ -137,6 +159,10 @@ intptr_t DCPCALL OptDlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, int
 			SendDlgMsg(pDlg, "cbWTF", DM_SETTEXT, (intptr_t)gOptWTF + 1, 0);
 		}
 
+		line = g_strdup_printf("%s%s", gOptMethod, gOptWTF ? gOptWTF : "");
+		SendDlgMsg(pDlg, "lblPreview", DM_SETTEXT, (intptr_t)line, 0);
+		g_free(line);
+
 		break;
 
 	case DN_CLICK:
@@ -166,37 +192,39 @@ intptr_t DCPCALL OptDlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, int
 				snprintf(gOptMethod + 1, 3, "%d", index);
 
 			int is_wtf = SendDlgMsg(pDlg, "cbWTF", DM_ENABLE, 1, 0);
-			value = (char*)SendDlgMsg(pDlg, "cbWTF", DM_GETTEXT, 0, 0);
-
-			if (value[0] != '\0' && (fp = fopen(gHistoryFile, "w")) != NULL)
-			{
-				char *wtf = strdup(value);
-				fprintf(fp, "%s\n", value);
-				size_t count = (size_t)SendDlgMsg(pDlg, "cbWTF", DM_LISTGETCOUNT, 0, 0);
-
-				for (i = 0; i < count; i++)
-				{
-					if (i > MAX_PATH)
-						break;
-
-					line = (char*)SendDlgMsg(pDlg, "cbWTF", DM_LISTGETITEM, i, 0);
-
-					if (line != NULL && line[0] != '\0' && (strcmp(wtf, line) != 0))
-						fprintf(fp, "%s\n", line);
-				}
-
-				free(wtf);
-				fclose(fp);
-			}
-
-			g_free(gOptWTF);
+			SendDlgMsg(pDlg, "cbWTF", DM_ENABLE, is_wtf, 0);
+			value = strdup((char*)SendDlgMsg(pDlg, "cbWTF", DM_GETTEXT, 0, 0));
 
 			if (value[0] != '\0' && is_wtf)
 			{
+				if ((fp = fopen(gHistoryFile, "w")) != NULL)
+				{
+					fprintf(fp, "%s\n", value);
+					size_t count = (size_t)SendDlgMsg(pDlg, "cbWTF", DM_LISTGETCOUNT, 0, 0);
+
+					for (i = 0; i < count; i++)
+					{
+						if (i > MAX_PATH)
+							break;
+
+						line = (char*)SendDlgMsg(pDlg, "cbWTF", DM_LISTGETITEM, i, 0);
+
+						if (line != NULL && line[0] != '\0' && (strcmp(value, line) != 0))
+							fprintf(fp, "%s\n", line);
+					}
+
+					fclose(fp);
+				}
+
+				g_free(gOptWTF);
+
 				gOptWTF = g_strdup_printf(".%s", value);
 			}
 			else
+			{
+				g_free(gOptWTF);
 				gOptWTF = NULL;
+			}
 
 			gOptSkipInfo = (gboolean)SendDlgMsg(pDlg, "chSkipInfo", DM_GETCHECK, 0, 0);
 		}
@@ -213,17 +241,28 @@ intptr_t DCPCALL OptDlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, int
 		else if (strcmp(DlgItemName, "chWTF") == 0)
 		{
 			SendDlgMsg(pDlg, "cbWTF", DM_ENABLE, wParam, 0);
+			UpdatePreview(pDlg);
 		}
 		else if (strcmp(DlgItemName, "cbCompr") == 0)
 		{
+/*
 			if (wParam < 2)
 				SendDlgMsg(pDlg, "cbBlock", DM_LISTSETITEMINDEX, 4, 0);
 			else
 				SendDlgMsg(pDlg, "cbBlock", DM_LISTSETITEMINDEX, 6, 0);
-
+*/
 
 			int is_wtf = (wParam > 5 || SendDlgMsg(pDlg, "chWTF", DM_GETCHECK, 0, 0));
 			SendDlgMsg(pDlg, "cbWTF", DM_ENABLE, is_wtf, 0);
+			UpdatePreview(pDlg);
+		}
+		else if (strcmp(DlgItemName, "cbWTF") == 0)
+		{
+			UpdatePreview(pDlg);
+		}
+		else if (strcmp(DlgItemName, "cbBlock") == 0)
+		{
+			UpdatePreview(pDlg);
 		}
 
 		break;
