@@ -1,0 +1,255 @@
+object DialogBox: TDialogBox
+  Left = 404
+  Height = 391
+  Top = 142
+  Width = 447
+  AutoSize = True
+  BorderStyle = bsDialog
+  Caption = 'Options'
+  ChildSizing.LeftRightSpacing = 20
+  ChildSizing.TopBottomSpacing = 20
+  ClientHeight = 391
+  ClientWidth = 447
+  OnClose = DialogBoxClose
+  OnShow = DialogBoxShow
+  Position = poOwnerFormCenter
+  LCLVersion = '3.0.0.3'
+  object chAll: TCheckBox
+    AnchorSideLeft.Control = Owner
+    AnchorSideTop.Control = edDigits
+    AnchorSideTop.Side = asrCenter
+    Left = 20
+    Height = 23
+    Top = 23
+    Width = 150
+    Caption = 'Show all file versions'
+    TabOrder = 0
+    OnChange = CheckBoxChange
+  end
+  object lblDigits: TLabel
+    AnchorSideLeft.Control = chAll
+    AnchorSideLeft.Side = asrBottom
+    AnchorSideTop.Control = edDigits
+    AnchorSideTop.Side = asrCenter
+    Left = 190
+    Height = 16
+    Top = 26
+    Width = 96
+    BorderSpacing.Left = 20
+    BorderSpacing.Right = 5
+    Caption = 'Number of digits'
+    Enabled = False
+  end
+  object edDigits: TEdit
+    AnchorSideLeft.Control = lblDigits
+    AnchorSideLeft.Side = asrBottom
+    AnchorSideTop.Control = Owner
+    AnchorSideRight.Side = asrBottom
+    Left = 291
+    Height = 28
+    Top = 20
+    Width = 49
+    Alignment = taRightJustify
+    BorderSpacing.Left = 5
+    Enabled = False
+    MaxLength = 3
+    TabOrder = 1
+    Text = '4'
+  end
+  object chSkipInfo: TCheckBox
+    AnchorSideLeft.Control = chAll
+    AnchorSideTop.Control = edDigits
+    AnchorSideTop.Side = asrBottom
+    Left = 20
+    Height = 23
+    Top = 48
+    Width = 234
+    Caption = 'Exclude info entities from the filelist'
+    Checked = True
+    Enabled = False
+    State = cbChecked
+    TabOrder = 2
+  end
+  object gbCompr: TGroupBox
+    AnchorSideLeft.Control = Owner
+    AnchorSideTop.Control = chSkipInfo
+    AnchorSideTop.Side = asrBottom
+    AnchorSideRight.Control = edDigits
+    AnchorSideRight.Side = asrBottom
+    Left = 20
+    Height = 160
+    Top = 91
+    Width = 320
+    Anchors = [akTop, akLeft, akRight]
+    AutoSize = True
+    BorderSpacing.Top = 20
+    Caption = 'Compression'
+    ChildSizing.LeftRightSpacing = 10
+    ChildSizing.TopBottomSpacing = 10
+    ChildSizing.HorizontalSpacing = 5
+    ChildSizing.VerticalSpacing = 5
+    ChildSizing.EnlargeHorizontal = crsHomogenousChildResize
+    ChildSizing.Layout = cclLeftToRightThenTopToBottom
+    ChildSizing.ControlsPerLine = 2
+    ClientHeight = 143
+    ClientWidth = 318
+    TabOrder = 3
+    object lblCompr: TLabel
+      AnchorSideTop.Side = asrCenter
+      Left = 10
+      Height = 26
+      Top = 10
+      Width = 181
+      Alignment = taCenter
+      Caption = 'Compress type'
+      Layout = tlCenter
+    end
+    object cbCompr: TComboBox
+      Left = 196
+      Height = 26
+      Top = 10
+      Width = 112
+      ItemHeight = 0
+      Items.Strings = (
+        '0 (fast)'
+        '1 (default)'
+        '2'
+        '3'
+        '4'
+        '5 (best)'
+        'journaling'
+        'streaming'
+      )
+      Style = csDropDownList
+      TabOrder = 0
+      OnChange = ComboBoxChange
+    end
+    object lblBlock: TLabel
+      Left = 10
+      Height = 26
+      Top = 41
+      Width = 181
+      Alignment = taCenter
+      Caption = 'Blocksize'
+      Layout = tlCenter
+    end
+    object cbBlock: TComboBox
+      Left = 196
+      Height = 26
+      Top = 41
+      Width = 112
+      ItemHeight = 0
+      Items.Strings = (
+        '1 MiB'
+        '2 MiB'
+        '4 MiB'
+        '8 MiB'
+        '16 MiB (default for type 0 and 1)'
+        '32 MiB'
+        '64 MiB (default otherwise)'
+        '128 MiB'
+        '256 MiB'
+        '512 MiB'
+        '1024 MiB'
+        '2048 MiB'
+      )
+      Style = csDropDownList
+      TabOrder = 1
+      OnChange = ComboBoxChange
+    end
+    object chWTF: TCheckBox
+      Left = 10
+      Height = 28
+      Hint = 'man zpaq'
+      Top = 72
+      Width = 181
+      BidiMode = bdRightToLeft
+      Caption = 'pre[.arg][comp[.arg]]...]'
+      Font.Style = [fsBold]
+      ParentFont = False
+      ParentShowHint = False
+      ParentBidiMode = False
+      ShowHint = True
+      TabOrder = 2
+      OnChange = CheckBoxChange
+    end
+    object cbWTF: TComboBox
+      Left = 196
+      Height = 28
+      Hint = 'man zpaq'
+      Top = 72
+      Width = 112
+      Enabled = False
+      ItemHeight = 0
+      ParentShowHint = False
+      ShowHint = True
+      TabOrder = 4
+      Text = '3ci1'
+    end
+    object lblThreads: TLabel
+      Left = 10
+      Height = 28
+      Hint = 'The default is 0, which uses the number of processor cores,'#10'except not more than 2 when when zpaq is compiled to 32-bit code.'
+      Top = 105
+      Width = 181
+      Alignment = taCenter
+      Caption = 'Thread count limit'
+      Layout = tlCenter
+      ParentShowHint = False
+      ShowHint = True
+    end
+    object edThreads: TEdit
+      Left = 196
+      Height = 28
+      Hint = 'The default is 0, which uses the number of processor cores,'#10'except not more than 2 when when zpaq is compiled to 32-bit code.'
+      Top = 105
+      Width = 112
+      Alignment = taRightJustify
+      MaxLength = 2
+      NumbersOnly = True
+      ParentShowHint = False
+      ShowHint = True
+      TabOrder = 3
+      Text = '0'
+    end
+  end
+  object btnCancel: TBitBtn
+    AnchorSideTop.Control = btnOK
+    AnchorSideTop.Side = asrCenter
+    AnchorSideRight.Control = btnOK
+    Left = 142
+    Height = 30
+    Top = 281
+    Width = 97
+    Anchors = [akTop, akRight]
+    BorderSpacing.Right = 4
+    Cancel = True
+    Constraints.MinHeight = 30
+    Constraints.MinWidth = 97
+    DefaultCaption = True
+    Kind = bkCancel
+    ModalResult = 2
+    OnClick = ButtonClick
+    TabOrder = 5
+  end
+  object btnOK: TBitBtn
+    AnchorSideTop.Control = gbCompr
+    AnchorSideTop.Side = asrBottom
+    AnchorSideRight.Control = gbCompr
+    AnchorSideRight.Side = asrBottom
+    Left = 243
+    Height = 30
+    Top = 281
+    Width = 97
+    Anchors = [akTop, akRight]
+    BorderSpacing.Top = 30
+    Constraints.MinHeight = 30
+    Constraints.MinWidth = 97
+    Default = True
+    DefaultCaption = True
+    Kind = bkOK
+    ModalResult = 1
+    OnClick = ButtonClick
+    TabOrder = 4
+  end
+end

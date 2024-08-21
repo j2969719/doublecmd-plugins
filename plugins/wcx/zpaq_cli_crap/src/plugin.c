@@ -4,6 +4,7 @@
 #include <gio/gio.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
+#include <ctype.h>
 #include <fcntl.h>
 #include <dirent.h>
 #include <dlfcn.h>
@@ -20,6 +21,7 @@
 #define RE_INFO "\\d+/\\s\\+\\d+\\s\\-\\d\\s\\->\\s\\d+"
 #define ZPAQ_ERRPASS "zpaq error: password incorrect"
 #define MSG_PASS "Enter password:"
+#define MSG_UNTIL "Rollback the archive to this version when adding these files?"
 #define ERRFILE "<ERROR>"
 #define HEADER "7kSt"
 #define HEADER_SIZE 4
@@ -41,6 +43,13 @@ typedef struct sArcData
 	tProcessDataProc ProcessDataProc;
 } tArcData;
 
+typedef struct sProgressData
+{
+	gint stdout;
+	int *progress;
+	gboolean *is_reading;
+} tProgressData;
+
 typedef tArcData* ArcData;
 typedef void *HINSTANCE;
 
@@ -48,10 +57,12 @@ tChangeVolProc gChangeVolProc  = NULL;
 tProcessDataProc gProcessDataProc = NULL;
 tExtensionStartupInfo* gExtensions = NULL;
 static char gOptVerNum[3] = "0";
-static char gOptMethod[3] = "1";
+static char gOptMethod[4] = "1";
 static char gOptThreads[3] = "0";
 static char gPass[MAX_PATH] = "";
 static char gPassLastFile[PATH_MAX] = "";
+static char gHistoryFile[PATH_MAX] = "";
+static gchar *gOptWTF = NULL;
 gboolean gOptSkipInfo = TRUE;
 
 
@@ -59,6 +70,11 @@ intptr_t DCPCALL OptDlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, int
 {
 	int index;
 	char *value;
+	FILE *fp;
+	size_t len = 0;
+	ssize_t read = 0;
+	int i = 0;
+	char *line = NULL;
 
 	switch (Msg)
 	{
@@ -71,8 +87,56 @@ intptr_t DCPCALL OptDlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, int
 
 		SendDlgMsg(pDlg, "chSkipInfo", DM_SETCHECK, (intptr_t)gOptSkipInfo, 0);
 		SendDlgMsg(pDlg, "edThreads", DM_SETTEXT, (intptr_t)gOptThreads, 0);
-		index = atoi(gOptMethod);
+
+		char compr = gOptMethod[0];
+
+		if (isdigit(compr))
+			index = (int)compr - 48;
+		else if (compr == 'x')
+			index = 6;
+		else if (compr == 's')
+			index = 7;
+
+		SendDlgMsg(pDlg, "chWTF", DM_SETCHECK, (index < 6 && gOptWTF), 0);
+
 		SendDlgMsg(pDlg, "cbCompr", DM_LISTSETITEMINDEX, (intptr_t)index, 0);
+
+		if (strlen(gOptMethod) > 1)
+		{
+			index = atoi(gOptMethod + 1);
+			SendDlgMsg(pDlg, "cbBlock", DM_LISTSETITEMINDEX, (intptr_t)index, 0);
+		}
+
+		if ((fp = fopen(gHistoryFile, "r")) != NULL)
+		{
+			while (((read = getline(&line, &len, fp)) != -1))
+			{
+				if (i > MAX_PATH)
+					break;
+
+				if (line[read - 1] == '\n')
+					line[read - 1] = '\0';
+
+				if (line != NULL && line[0] != '\0')
+				{
+					if (i == 0)
+						SendDlgMsg(pDlg, "cbWTF", DM_SETTEXT, (intptr_t)line, 0);
+
+					SendDlgMsg(pDlg, "cbWTF", DM_LISTADD, (intptr_t)line, 0);
+					i++;
+				}
+			}
+
+			free(line);
+			fclose(fp);
+		}
+
+		if (gOptWTF)
+		{
+			SendDlgMsg(pDlg, "cbWTF", DM_ENABLE, 1, 0);
+			SendDlgMsg(pDlg, "cbWTF", DM_SETTEXT, (intptr_t)gOptWTF + 1, 0);
+		}
+
 		break;
 
 	case DN_CLICK:
@@ -89,7 +153,51 @@ intptr_t DCPCALL OptDlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, int
 			value = (char*)SendDlgMsg(pDlg, "edThreads", DM_GETTEXT, 0, 0);
 			g_strlcpy(gOptThreads, value, 3);
 			index = SendDlgMsg(pDlg, "cbCompr", DM_LISTGETITEMINDEX, 0, 0);
-			snprintf(gOptMethod, 3, "%d", index);
+			snprintf(gOptMethod, 2, "%d", index);
+
+			if (index == 6)
+				sprintf(gOptMethod, "x");
+			else if (index == 7)
+				sprintf(gOptMethod, "s");
+
+			index = SendDlgMsg(pDlg, "cbBlock", DM_LISTGETITEMINDEX, 0, 0);
+
+			if (index != -1)
+				snprintf(gOptMethod + 1, 3, "%d", index);
+
+			int is_wtf = SendDlgMsg(pDlg, "cbWTF", DM_ENABLE, 1, 0);
+			value = (char*)SendDlgMsg(pDlg, "cbWTF", DM_GETTEXT, 0, 0);
+
+			if (value[0] != '\0' && (fp = fopen(gHistoryFile, "w")) != NULL)
+			{
+				char *wtf = strdup(value);
+				fprintf(fp, "%s\n", value);
+				size_t count = (size_t)SendDlgMsg(pDlg, "cbWTF", DM_LISTGETCOUNT, 0, 0);
+
+				for (i = 0; i < count; i++)
+				{
+					if (i > MAX_PATH)
+						break;
+
+					line = (char*)SendDlgMsg(pDlg, "cbWTF", DM_LISTGETITEM, i, 0);
+
+					if (line != NULL && line[0] != '\0' && (strcmp(wtf, line) != 0))
+						fprintf(fp, "%s\n", line);
+				}
+
+				free(wtf);
+				fclose(fp);
+			}
+
+			g_free(gOptWTF);
+
+			if (value[0] != '\0' && is_wtf)
+			{
+				gOptWTF = g_strdup_printf(".%s", value);
+			}
+			else
+				gOptWTF = NULL;
+
 			gOptSkipInfo = (gboolean)SendDlgMsg(pDlg, "chSkipInfo", DM_GETCHECK, 0, 0);
 		}
 
@@ -102,6 +210,21 @@ intptr_t DCPCALL OptDlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, int
 			SendDlgMsg(pDlg, "edDigits", DM_ENABLE, wParam, 0);
 			SendDlgMsg(pDlg, "chSkipInfo", DM_ENABLE, wParam, 0);
 		}
+		else if (strcmp(DlgItemName, "chWTF") == 0)
+		{
+			SendDlgMsg(pDlg, "cbWTF", DM_ENABLE, wParam, 0);
+		}
+		else if (strcmp(DlgItemName, "cbCompr") == 0)
+		{
+			if (wParam < 2)
+				SendDlgMsg(pDlg, "cbBlock", DM_LISTSETITEMINDEX, 4, 0);
+			else
+				SendDlgMsg(pDlg, "cbBlock", DM_LISTSETITEMINDEX, 6, 0);
+
+
+			int is_wtf = (wParam > 5 || SendDlgMsg(pDlg, "chWTF", DM_GETCHECK, 0, 0));
+			SendDlgMsg(pDlg, "cbWTF", DM_ENABLE, is_wtf, 0);
+		}
 
 		break;
 	}
@@ -109,7 +232,7 @@ intptr_t DCPCALL OptDlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, int
 	return 0;
 }
 
-static int parse_utcdate(char *string)
+static int ParseUtcDate(char *string)
 {
 	int result = 0;
 	struct tm tm = {0};
@@ -123,43 +246,94 @@ static int parse_utcdate(char *string)
 	return result;
 }
 
-int execute_archiver(char *workdir, char **argv, char *filename, tProcessDataProc process)
+static gpointer ReadOutput(gpointer userdata)
+{
+	gsize len, term;
+	gchar *line = NULL;
+	tProgressData *data = (tProgressData*)userdata;
+
+	GIOChannel *channel = g_io_channel_unix_new(data->stdout);
+
+	while (G_IO_STATUS_NORMAL == g_io_channel_read_line(channel, &line, &len, &term, NULL))
+	{
+
+		if (line)
+		{
+			int num = atoi(line);
+
+			if (num > 0 && num < 100)
+				*data->progress = num;
+
+		}
+
+		g_free(line);
+	}
+
+	g_io_channel_shutdown(channel, TRUE, NULL);
+	g_io_channel_unref(channel);
+	*data->is_reading = FALSE;
+	return NULL;
+}
+
+static int ExecuteArchiver(char *workdir, char **argv, char *filename, tProcessDataProc process, int bar)
 {
 	GPid pid;
+	gint stdout;
 	gint status = 0;
 	GError *err = NULL;
 	int result = E_SUCCESS;
+	int flags = G_SPAWN_SEARCH_PATH | G_SPAWN_DO_NOT_REAP_CHILD;
 
-	if (!g_spawn_async(workdir, argv, NULL, G_SPAWN_SEARCH_PATH, NULL, NULL, &pid, &err))
+	if (!g_spawn_async_with_pipes(workdir, argv, NULL, flags, NULL, NULL, &pid, NULL, &stdout, NULL, &err))
 	{
 		if (err)
 		{
 			MessageBox(err->message, PLUGNAME,  MB_OK | MB_ICONERROR);
-			g_error_free(err);
 		}
 
 		result = E_EABORTED;
 	}
 	else
 	{
-		while (process(filename, -50) != 0 && kill(pid, 0) == 0)
-			sleep(0.5);
+		tProgressData *data = g_new0(tProgressData, 1);
+		int progress = 0;
+		gboolean is_running = TRUE;
+		data->stdout = stdout;
+		data->progress = &progress;
+		data->is_reading = &is_running;
 
-		if (process(filename, -50) == 0 && kill(pid, 0) == 0)
+		GThread *thread = g_thread_new("ARCOP_PROGRESS", ReadOutput, data);
+
+		while (is_running)
 		{
-			kill(pid, SIGTERM);
-			result = E_EABORTED;
+			if (process(filename, bar - progress) == 0)
+			{
+				kill(pid, SIGTERM);
+				result = E_EABORTED;
+				break;
+			}
+
+			sleep(0.5);
 		}
 
+		g_thread_join(thread);
+		g_thread_unref(thread);
+		g_free(data);
+
 		waitpid(pid, &status, 0);
+
 		g_spawn_close_pid(pid);
 
-		if (result == E_SUCCESS && status != 0)
+		if (result == E_SUCCESS && WEXITSTATUS(status) != 0)
 			result = E_EWRITE;
 	}
 
+	if (err)
+		g_error_free(err);
+
 	return result;
 }
+
 
 HANDLE DCPCALL OpenArchive(tOpenArchiveData *ArchiveData)
 {
@@ -281,30 +455,28 @@ int DCPCALL ReadHeaderEx(HANDLE hArcData, tHeaderDataEx *HeaderDataEx)
 		{
 			if (data->re_info && gOptSkipInfo && g_regex_match(data->re_info, string, 0, NULL))
 			{
-				//g_free(string);
-				//g_match_info_next(data->match_info, NULL);
-				//continue;
 
 				char *p = strrchr(string, '/');
 
 				if (p)
+				{
 					*p = '\0';
+					//HeaderDataEx->CmtSize = (int)strlen(p + 2);
+					//g_strlcpy(HeaderDataEx->CmtBuf, p + 2, HeaderDataEx->CmtBufSize);
+				}
 
 				g_strlcpy(HeaderDataEx->FileName, string, sizeof(HeaderDataEx->FileName) - 1);
-
-				g_strlcpy(HeaderDataEx->CmtBuf, p + 1, HeaderDataEx->CmtBufSize);
-				HeaderDataEx->CmtSize = (int)strlen(p + 1);
 
 				g_free(string);
 
 				string = g_match_info_fetch_named(data->match_info, "date");
 
 				if (string)
-					HeaderDataEx->FileTime = parse_utcdate(string);
+					HeaderDataEx->FileTime = ParseUtcDate(string);
 
 				g_free(string);
 
-				HeaderDataEx->FileAttr = S_IFDIR | 0755;
+				HeaderDataEx->FileAttr = S_IFDIR | S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH;
 				return E_SUCCESS;
 			}
 
@@ -350,7 +522,7 @@ int DCPCALL ReadHeaderEx(HANDLE hArcData, tHeaderDataEx *HeaderDataEx)
 		string = g_match_info_fetch_named(data->match_info, "date");
 
 		if (string)
-			HeaderDataEx->FileTime = parse_utcdate(string);
+			HeaderDataEx->FileTime = ParseUtcDate(string);
 
 		g_free(string);
 
@@ -367,12 +539,13 @@ int DCPCALL ProcessFile(HANDLE hArcData, int Operation, char *DestPath, char *De
 
 	if (data->ProcessDataProc(DestName, -1000) == 0)
 		result = E_EABORTED;
-	else if (Operation == PK_EXTRACT)
+
+	else if (Operation != PK_SKIP)
 	{
+		gboolean is_test = (Operation == PK_TEST);
 		gchar *arc_path = g_match_info_fetch_named(data->match_info, "name");
 
-
-		if (!arc_path) // || arc_path[0] == '/')
+		if (!arc_path)
 		{
 			g_free(arc_path);
 			g_match_info_next(data->match_info, NULL);
@@ -386,7 +559,9 @@ int DCPCALL ProcessFile(HANDLE hArcData, int Operation, char *DestPath, char *De
 			return E_SUCCESS;
 		}
 
-		gchar *args = g_strdup_printf("zpaq\nx\n%s\n%s\n-all\n%s\n-threads\n%s\n-to\n%s\n-f", data->arc, arc_path, gOptVerNum, gOptThreads, DestName);
+		gchar *args = g_strdup_printf("zpaq\nx\n%s\n%s\n-all\n%s\n-threads\n%s\n%s%s\n-f",
+		                              data->arc, arc_path, gOptVerNum, gOptThreads,
+		                              is_test ? "-test" : "-to\n", is_test ? "" : DestName);
 
 		if (gPass[0] != '\0')
 		{
@@ -397,12 +572,20 @@ int DCPCALL ProcessFile(HANDLE hArcData, int Operation, char *DestPath, char *De
 
 		gchar **argv = g_strsplit(args, "\n", -1);
 		g_free(args);
-		result = execute_archiver(NULL, argv, DestName, data->ProcessDataProc);
+		result = ExecuteArchiver(NULL, argv, arc_path, data->ProcessDataProc, -1000);
 		g_strfreev(argv);
+		data->ProcessDataProc(arc_path, -1100);
 		g_free(arc_path);
 	}
-	else if (Operation == PK_TEST)
-		result = E_NOT_SUPPORTED;
+
+	gint pos;
+	size_t len = strlen(data->output);
+
+	if (len != 0 && g_match_info_fetch_pos(data->match_info, 0, &pos, NULL))
+	{
+		int progress = (int)(pos * 100 / len);
+		data->ProcessDataProc(DestName, -progress);
+	}
 
 	g_match_info_next(data->match_info, NULL);
 
@@ -429,6 +612,7 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 {
 	int result = E_SUCCESS;
 	gchar *filelist = AddList;
+	gint version = -1;
 	gchar *arcdir = NULL;
 
 	if (Flags & PK_PACK_MOVE_FILES || !(Flags & PK_PACK_SAVE_PATHS))
@@ -451,6 +635,7 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 
 		if (split)
 		{
+			version = atoi(split[0]);
 			arcdir = g_strjoinv("/", split + 1);
 			g_strfreev(split);
 		}
@@ -469,7 +654,7 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 		while (*filelist++);
 	}
 
-	if (arcdir)
+	if (arcdir && arcdir[0] != '\0')
 	{
 		filelist = AddList;
 		gchar *tmp = g_strdup_printf("%s\n-to", args);
@@ -486,7 +671,7 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 		}
 	}
 
-	gchar *tmp = g_strdup_printf("%s\n-m%s\n-t%s\n-f", args, gOptMethod, gOptThreads);
+	gchar *tmp = g_strdup_printf("%s\n-m%s%s\n-t%s\n-f", args, gOptMethod, gOptWTF ? gOptWTF : "", gOptThreads);
 	g_free(args);
 
 	if (gPass[0] != '\0')
@@ -497,13 +682,20 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 	else
 		args = tmp;
 
+	if (version > 0 && MessageBox(MSG_UNTIL, PLUGNAME, MB_YESNO | MB_ICONQUESTION | MB_DEFBUTTON2) == ID_YES)
+	{
+		gchar *tmp = g_strdup_printf("%s\n-until\n%d", args, version);
+		g_free(args);
+		args = tmp;
+	}
+
 	gchar **argv = g_strsplit(args, "\n", -1);
 	g_free(args);
 
-	result = execute_archiver(SrcPath, argv, PackedFile, gProcessDataProc);
+	result = ExecuteArchiver(SrcPath, argv, SrcPath, gProcessDataProc, 0);
 	g_strfreev(argv);
 
-	gProcessDataProc(PackedFile, -100);
+	gProcessDataProc(SrcPath, -100);
 	g_free(arcdir);
 
 	return result;
@@ -555,7 +747,7 @@ int DCPCALL DeleteFiles(char *PackedFile, char *DeleteList)
 		while (*filelist++);
 	}
 
-	tmp = g_strdup_printf("%s\n-m%s\n-t%s", args, gOptMethod, gOptThreads);
+	tmp = g_strdup_printf("%s\n-m%s%s\n-t%s", args, gOptMethod, gOptWTF ? gOptWTF : "", gOptThreads);
 	g_free(args);
 
 	if (gPass[0] != '\0')
@@ -569,7 +761,7 @@ int DCPCALL DeleteFiles(char *PackedFile, char *DeleteList)
 	gchar **argv = g_strsplit(args, "\n", -1);
 	g_free(args);
 
-	result = execute_archiver(NULL, argv, PackedFile, gProcessDataProc);
+	result = ExecuteArchiver(NULL, argv, PackedFile, gProcessDataProc, 0);
 	g_strfreev(argv);
 
 	gProcessDataProc(PackedFile, -100);
@@ -604,7 +796,7 @@ int DCPCALL GetPackerCaps(void)
 
 BOOL DCPCALL CanYouHandleThisFile(char *FileName)
 {
-	FILE *fp = fopen(FileName, "r");
+	FILE *fp = fopen(FileName, "rb");
 
 	if (!fp)
 		return FALSE;
@@ -613,7 +805,7 @@ BOOL DCPCALL CanYouHandleThisFile(char *FileName)
 	fread(head_block, 1, HEADER_SIZE, fp);
 	fclose(fp);
 
-	if (strcmp(head_block, HEADER) == 0)
+	if (memcmp(head_block, HEADER, HEADER_SIZE) == 0)
 		return TRUE;
 
 	return FALSE;
@@ -621,191 +813,18 @@ BOOL DCPCALL CanYouHandleThisFile(char *FileName)
 
 void DCPCALL ConfigurePacker(HWND Parent, HINSTANCE DllInstance)
 {
-	static char lfm_data[] = "object DialogBox: TDialogBox\n"
-	                         "  Left = 404\n"
-	                         "  Height = 391\n"
-	                         "  Top = 142\n"
-	                         "  Width = 447\n"
-	                         "  AutoSize = True\n"
-	                         "  BorderStyle = bsDialog\n"
-	                         "  Caption = 'Options'\n"
-	                         "  ChildSizing.LeftRightSpacing = 20\n"
-	                         "  ChildSizing.TopBottomSpacing = 20\n"
-	                         "  ClientHeight = 391\n"
-	                         "  ClientWidth = 447\n"
-	                         "  OnClose = DialogBoxClose\n"
-	                         "  OnShow = DialogBoxShow\n"
-	                         "  Position = poOwnerFormCenter\n"
-	                         "  LCLVersion = '3.0.0.3'\n"
-	                         "  object chAll: TCheckBox\n"
-	                         "    AnchorSideLeft.Control = Owner\n"
-	                         "    AnchorSideTop.Control = edDigits\n"
-	                         "    AnchorSideTop.Side = asrCenter\n"
-	                         "    Left = 20\n"
-	                         "    Height = 23\n"
-	                         "    Top = 23\n"
-	                         "    Width = 150\n"
-	                         "    Caption = 'Show all file versions'\n"
-	                         "    TabOrder = 0\n"
-	                         "    OnChange = CheckBoxChange\n"
-	                         "  end\n"
-	                         "  object lblDigits: TLabel\n"
-	                         "    AnchorSideLeft.Control = chAll\n"
-	                         "    AnchorSideLeft.Side = asrBottom\n"
-	                         "    AnchorSideTop.Control = edDigits\n"
-	                         "    AnchorSideTop.Side = asrCenter\n"
-	                         "    Left = 190\n"
-	                         "    Height = 16\n"
-	                         "    Top = 26\n"
-	                         "    Width = 96\n"
-	                         "    BorderSpacing.Left = 20\n"
-	                         "    BorderSpacing.Right = 5\n"
-	                         "    Caption = 'Number of digits'\n"
-	                         "    Enabled = False\n"
-	                         "  end\n"
-	                         "  object edDigits: TEdit\n"
-	                         "    AnchorSideLeft.Control = lblDigits\n"
-	                         "    AnchorSideLeft.Side = asrBottom\n"
-	                         "    AnchorSideTop.Control = Owner\n"
-	                         "    AnchorSideRight.Side = asrBottom\n"
-	                         "    Left = 291\n"
-	                         "    Height = 28\n"
-	                         "    Top = 20\n"
-	                         "    Width = 49\n"
-	                         "    Alignment = taRightJustify\n"
-	                         "    BorderSpacing.Left = 5\n"
-	                         "    Enabled = False\n"
-	                         "    MaxLength = 3\n"
-	                         "    TabOrder = 1\n"
-	                         "    Text = '4'\n"
-	                         "  end\n"
-	                         "  object chSkipInfo: TCheckBox\n"
-	                         "    AnchorSideLeft.Control = chAll\n"
-	                         "    AnchorSideTop.Control = edDigits\n"
-	                         "    AnchorSideTop.Side = asrBottom\n"
-	                         "    Left = 20\n"
-	                         "    Height = 23\n"
-	                         "    Top = 48\n"
-	                         "    Width = 277\n"
-	                         "    Caption = 'Exclude information entities from the filelist'\n"
-	                         "    Checked = True\n"
-	                         "    Enabled = False\n"
-	                         "    State = cbChecked\n"
-	                         "    TabOrder = 2\n"
-	                         "  end\n"
-	                         "  object gbCompr: TGroupBox\n"
-	                         "    AnchorSideLeft.Control = Owner\n"
-	                         "    AnchorSideTop.Control = chSkipInfo\n"
-	                         "    AnchorSideTop.Side = asrBottom\n"
-	                         "    AnchorSideRight.Control = edDigits\n"
-	                         "    AnchorSideRight.Side = asrBottom\n"
-	                         "    Left = 20\n"
-	                         "    Height = 96\n"
-	                         "    Top = 91\n"
-	                         "    Width = 320\n"
-	                         "    Anchors = [akTop, akLeft, akRight]\n"
-	                         "    AutoSize = True\n"
-	                         "    BorderSpacing.Top = 20\n"
-	                         "    Caption = 'Compression'\n"
-	                         "    ChildSizing.LeftRightSpacing = 10\n"
-	                         "    ChildSizing.TopBottomSpacing = 10\n"
-	                         "    ChildSizing.HorizontalSpacing = 5\n"
-	                         "    ChildSizing.VerticalSpacing = 5\n"
-	                         "    ChildSizing.EnlargeHorizontal = crsHomogenousChildResize\n"
-	                         "    ChildSizing.Layout = cclLeftToRightThenTopToBottom\n"
-	                         "    ChildSizing.ControlsPerLine = 2\n"
-	                         "    ClientHeight = 79\n"
-	                         "    ClientWidth = 318\n"
-	                         "    TabOrder = 3\n"
-	                         "    object lblCompr: TLabel\n"
-	                         "      AnchorSideTop.Side = asrCenter\n"
-	                         "      Left = 10\n"
-	                         "      Height = 26\n"
-	                         "      Top = 10\n"
-	                         "      Width = 142\n"
-	                         "      Alignment = taCenter\n"
-	                         "      Caption = 'Compress level'\n"
-	                         "      Layout = tlCenter\n"
-	                         "    end\n"
-	                         "    object cbCompr: TComboBox\n"
-	                         "      Left = 157\n"
-	                         "      Height = 26\n"
-	                         "      Top = 10\n"
-	                         "      Width = 151\n"
-	                         "      ItemHeight = 0\n"
-	                         "      Items.Strings = (\n"
-	                         "        '0 (fast)'\n"
-	                         "        '1 (default)'\n"
-	                         "        '2'\n"
-	                         "        '3'\n"
-	                         "        '4'\n"
-	                         "        '5 (best)'\n"
-	                         "      )\n"
-	                         "      Style = csDropDownList\n"
-	                         "      TabOrder = 0\n"
-	                         "    end\n"
-	                         "    object lblThreads: TLabel\n"
-	                         "      Left = 10\n"
-	                         "      Height = 28\n"
-	                         "      Top = 41\n"
-	                         "      Width = 142\n"
-	                         "      Alignment = taCenter\n"
-	                         "      Caption = 'Use threads'\n"
-	                         "      Layout = tlCenter\n"
-	                         "    end\n"
-	                         "    object edThreads: TEdit\n"
-	                         "      Left = 157\n"
-	                         "      Height = 28\n"
-	                         "      Top = 41\n"
-	                         "      Width = 151\n"
-	                         "      Alignment = taRightJustify\n"
-	                         "      MaxLength = 2\n"
-	                         "      TabOrder = 1\n"
-	                         "      Text = '0'\n"
-	                         "    end\n"
-	                         "  end\n"
-	                         "  object btnCancel: TBitBtn\n"
-	                         "    AnchorSideTop.Control = btnOK\n"
-	                         "    AnchorSideTop.Side = asrCenter\n"
-	                         "    AnchorSideRight.Control = btnOK\n"
-	                         "    Left = 142\n"
-	                         "    Height = 30\n"
-	                         "    Top = 217\n"
-	                         "    Width = 97\n"
-	                         "    Anchors = [akTop, akRight]\n"
-	                         "    BorderSpacing.Right = 4\n"
-	                         "    Cancel = True\n"
-	                         "    Constraints.MinHeight = 30\n"
-	                         "    Constraints.MinWidth = 97\n"
-	                         "    DefaultCaption = True\n"
-	                         "    Kind = bkCancel\n"
-	                         "    ModalResult = 2\n"
-	                         "    OnClick = ButtonClick\n"
-	                         "    TabOrder = 5\n"
-	                         "  end\n"
-	                         "  object btnOK: TBitBtn\n"
-	                         "    AnchorSideTop.Control = gbCompr\n"
-	                         "    AnchorSideTop.Side = asrBottom\n"
-	                         "    AnchorSideRight.Control = gbCompr\n"
-	                         "    AnchorSideRight.Side = asrBottom\n"
-	                         "    Left = 243\n"
-	                         "    Height = 30\n"
-	                         "    Top = 217\n"
-	                         "    Width = 97\n"
-	                         "    Anchors = [akTop, akRight]\n"
-	                         "    BorderSpacing.Top = 30\n"
-	                         "    Constraints.MinHeight = 30\n"
-	                         "    Constraints.MinWidth = 97\n"
-	                         "    Default = True\n"
-	                         "    DefaultCaption = True\n"
-	                         "    Kind = bkOK\n"
-	                         "    ModalResult = 1\n"
-	                         "    OnClick = ButtonClick\n"
-	                         "    TabOrder = 4\n"
-	                         "  end\n"
-	                         "end\n";
+	gchar *lfm_file = g_strdup_printf("%s/dialog.lfm", gExtensions->PluginDir);
+	gExtensions->DialogBoxLFMFile(lfm_file, OptDlgProc);
+	g_free(lfm_file);
+}
 
-	gExtensions->DialogBoxLFM((intptr_t)lfm_data, (unsigned long)strlen(lfm_data), OptDlgProc);
+void DCPCALL PackSetDefaultParams(PackDefaultParamStruct* dps)
+{
+	gchar *cfg_dir = g_path_get_dirname(dps->DefaultIniName);
+	gchar *filename = g_strdup_printf("%s/history_%s.txt", cfg_dir, PLUGNAME);
+	g_strlcpy(gHistoryFile, filename, PATH_MAX);
+	g_free(cfg_dir);
+	g_free(filename);
 }
 
 void DCPCALL ExtensionInitialize(tExtensionStartupInfo* StartupInfo)
@@ -823,4 +842,9 @@ void DCPCALL ExtensionFinalize(void* Reserved)
 		free(gExtensions);
 
 	gExtensions = NULL;
+
+	if (gOptWTF != NULL)
+		g_free(gOptWTF);
+
+	gOptWTF = NULL;
 }
