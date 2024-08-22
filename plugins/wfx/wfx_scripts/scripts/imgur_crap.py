@@ -93,9 +93,10 @@ def vfs_list(path):
 def vfs_getfile(src, dst):
 	data = obj[scr]['files'][os.path.basename(src)]
 	size = int(data['size'])
+	headers = { 'User-Agent': 'Mozilla/5.0', }
 	with open(dst, 'wb') as f:
 		try:
-			response = requests.get(data['link'], stream=True)
+			response = requests.get(data['link'], headers=headers, stream=True)
 		except Exception as e:
 			print(str(e))
 			sys.exit(1)
@@ -113,6 +114,7 @@ def vfs_getfile(src, dst):
 					sys.stdout.flush()
 		else:
 			print(str(response.status_code) + ": " + response.reason, file=sys.stderr)
+			sys.exit(1)
 		f.close()
 		sys.exit()
 	sys.exit(1)

@@ -97,6 +97,7 @@ def vfs_getfile(src, dst):
 					f.write(data)
 		else:
 			print(str(response.status_code) + ": " + response.reason, file=sys.stderr)
+			sys.exit(1)
 		f.close()
 		sys.exit()
 	sys.exit(1)

@@ -96,6 +96,7 @@ def vfs_getfile(src, dst):
 			print(data['verbose_msg'], file=sys.stderr)
 			sys.exit(1)
 	if not 'scans' in data:
+		print("the report is not available yet, try to wait", file=sys.stderr)
 		sys.exit(1)
 	with open(dst, 'w') as f:
 		f.write('Antivirus\tVersion\tUpdate\tDetected\n')

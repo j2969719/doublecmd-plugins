@@ -11,6 +11,8 @@ WFX_SCRIPT_STR_ACTS=Select action:
 WFX_SCRIPT_STR_CHANGEFILE=Open another JSON file
 WFX_SCRIPT_STR_CHANGERO=Change read/write mode
 WFX_SCRIPT_STR_USEPYJSON5=Pipe JSON5 data with pyjson5
+WFX_SCRIPT_STR_COMMA=Add commas after the last item in multi-line lists and objects?
+WFX_SCRIPT_STR_CHANGECOMMA=Change trailing commas mode (pyjson5)
 
 [ru_RU]
 WFX_SCRIPT_NAME=Кромсание JSON
@@ -25,3 +27,5 @@ WFX_SCRIPT_STR_ACTS=Выбери действие:
 WFX_SCRIPT_STR_CHANGEFILE=Открыть другой файл JSON
 WFX_SCRIPT_STR_CHANGERO=Переключить режим чтения/записи
 WFX_SCRIPT_STR_USEPYJSON5=Послать этот JSON5 по конвейеру с pyjson5
+WFX_SCRIPT_STR_COMMA=Добалять запятые в зад объектов и массивов?
+WFX_SCRIPT_STR_CHANGECOMMA=Переключить режим концевых запятых (pyjson5)
