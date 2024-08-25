@@ -371,9 +371,9 @@ int DCPCALL ListSearchText(HWND ListWin, char* SearchString, int SearchParameter
 		gtk_text_buffer_get_iter_at_mark(GTK_TEXT_BUFFER(sBuf), &iter, last_pos);
 
 #ifndef WLXSRCVW 
-	if ((SearchParameter & lcs_backwards) && (SearchParameter & lcs_matchcase))
+	if (SearchParameter & lcs_backwards)
 		found = gtk_text_iter_backward_search(&iter, SearchString, GTK_TEXT_SEARCH_TEXT_ONLY, &mend, &mstart, NULL);
-	else if (SearchParameter & lcs_matchcase)
+	else
 		found = gtk_text_iter_forward_search(&iter, SearchString, GTK_TEXT_SEARCH_TEXT_ONLY, &mstart, &mend, NULL);
 #else
 	if ((SearchParameter & lcs_backwards) && (SearchParameter & lcs_matchcase))

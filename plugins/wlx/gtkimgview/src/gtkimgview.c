@@ -381,8 +381,8 @@ void DCPCALL ListCloseWindow(HWND ListWin)
 
 	if (GDK_IS_PIXBUF_ANIMATION(anim))
 		g_object_unref(anim);
-	else if (GDK_IS_PIXBUF(pixbuf))
-		g_object_unref(pixbuf);
+	//else if (GDK_IS_PIXBUF(pixbuf))
+	//	g_object_unref(pixbuf);
 }
 
 int DCPCALL ListSendCommand(HWND ListWin, int Command, int Parameter)

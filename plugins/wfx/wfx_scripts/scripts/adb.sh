@@ -362,12 +362,13 @@ vfs_quote()
 {
     string="$1"
     path="/${2#/*/}"
-    [ "$path" == "/$2" ] && echo "Fs_RunTermKeep $string" ; exit 1
+    [ "$path" == "/$2" ] && echo "Fs_RunTermKeep $string" && exit 0
     command="cd \"$path\" && $string"
     devname=`echo "$2" | cut -d/ -f2`
     [ -z "$devname" ] || device="-s $devname"
 
     echo -e "Fs_LogInfo"
+    echo "$path> $string"
     adb $device shell "$command"
     exit $?
 }

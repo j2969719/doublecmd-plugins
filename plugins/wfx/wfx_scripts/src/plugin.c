@@ -60,6 +60,7 @@
 #define OPT_ACTS "Fs_PropsActs"
 #define OPT_PUSH "Fs_PushValue"
 #define OPT_CLR "Fs_ClearValue"
+#define OPT_REDIR "Fs_Redirect"
 #define OPT_EDIT "Fs_EditLine"
 #define OPT_TERM  "Fs_RunTerm"
 #define OPT_RUN  "Fs_RunAsync"
@@ -639,6 +640,27 @@ static void LoadPreview(uintptr_t pDlg, gchar * file)
 static gboolean IsValidOpt(gchar * str, gchar * opt)
 {
 	return (strncmp(str, opt, strlen(opt)) == 0 && strlen(str) > (strlen(opt) + 2));
+}
+
+static gboolean IsValidLocalDir(char *path, char *script)
+{
+	if (path[1] == '\0')
+	{
+		dprintf(gDebugFd, "ERR (%s): local path '/' is not supported", script);
+		return FALSE;
+	}
+
+	DIR *dir = opendir(path);
+
+	if (dir != NULL)
+	{
+		closedir(dir);
+		return TRUE;
+	}
+	else
+		dprintf(gDebugFd, "ERR (%s): failed to change dir to local path\n%s\n%s\n%s\n", script, EXEC_SEP, path, EXEC_SEP);
+
+	return FALSE;
 }
 
 static gchar* BuildPictureData(char *FileName, char *LinePrefix, char *Class)
@@ -2579,6 +2601,8 @@ static void ParseOpts(gchar *script, gchar *text, gboolean thread)
 
 					g_strfreev(res);
 				}
+				else if (IsValidOpt(*p, OPT_REDIR))
+					g_key_file_set_string(gCfg, script, OPT_REDIR, STRIP_OPT(*p, OPT_REDIR));
 				else if (IsValidOpt(*p, OPT_OPEN))
 				{
 					GError *err = NULL;
@@ -4103,6 +4127,9 @@ BOOL DCPCALL FsDeleteFile(char* RemoteName)
 
 			DeInitializeScript(script_name);
 
+			if (gNoise && gExtraNoise)
+				g_key_file_remove_key(gCfg, script_name, MARK_INUSE, NULL);
+
 			if (MessageBox("The script has been deinitialized, do you also want to reset the script settings?", script_name, MB_YESNO | MB_ICONQUESTION | MB_DEFBUTTON2) == ID_YES)
 			{
 				ExecuteScript(script_name, VERB_RESET, NULL, NULL, NULL, NULL);
@@ -4162,12 +4189,50 @@ int DCPCALL FsExecuteFile(HWND MainWin, char* RemoteName, char* Verb)
 				gchar *script_name = g_key_file_get_string(gCfg, "/", script, NULL);
 
 				if (!g_key_file_get_boolean(gCfg, script_name, MARK_INUSE, NULL))
+				{
 					InitializeScript(script_name);
 
+					if (!ExecuteScript(script_name, VERB_LIST, "/", NULL, NULL, NULL))
+					{
+						DeInitializeScript(script_name);
+
+						if (gNoise && gExtraNoise)
+							MessageBox("\"" VERB_LIST " /\" dosent work!", script, MB_OK | MB_ICONINFORMATION);
+
+						g_free(script_name);
+						g_free(script);
+						g_free(path);
+						return FS_EXEC_OK;
+					}
+				}
+
+				gchar *local = g_key_file_get_string(gCfg, script_name, OPT_REDIR, NULL);
+
+				if (local)
+				{
+					if (gNoise)
+						dprintf(gDebugFd, "INFO: Change dir to %s\n", local);
+
+					g_strlcpy(RemoteName, local, MAX_PATH);
+					g_free(local);
+
+					if (RemoteName[0] != '/' || !IsValidLocalDir(RemoteName, script_name))
+					{
+						DeInitializeScript(script_name);
+						g_free(script_name);
+						g_free(script);
+						g_free(path);
+						return FS_EXEC_OK;
+					}
+				}
+				else
+				{
+					gchar *remote = g_strdup_printf("/%s", script_name);
+					g_strlcpy(RemoteName, remote, MAX_PATH);
+					g_free(remote);
+				}
+
 				g_strlcpy(gScript, script_name, MAX_PATH);
-				gchar *remote = g_strdup_printf("/%s", script_name);
-				g_strlcpy(RemoteName, remote, MAX_PATH);
-				g_free(remote);
 				g_free(script_name);
 			}
 
@@ -4191,20 +4256,10 @@ int DCPCALL FsExecuteFile(HWND MainWin, char* RemoteName, char* Verb)
 					if (len > 0)
 						output[len - 1] = '\0';
 
-					if (output[0] == '/' && output[1] == '\0')
-						dprintf(gDebugFd, "ERR (%s): local path '/' is not supported", script);
-					else if (output[0] == '/')
+					if (output[0] == '/' && IsValidLocalDir(output, script))
 					{
-						DIR *dir = opendir(output);
-
-						if (dir != NULL)
-						{
-							closedir(dir);
-							g_strlcpy(RemoteName, output, MAX_PATH - 1);
-							result = FS_EXEC_SYMLINK;
-						}
-						else
-							dprintf(gDebugFd, "ERR (%s): failed to change dir to local path\n%s\n%s\n%s\n", script, EXEC_SEP, output, EXEC_SEP);
+						g_strlcpy(RemoteName, output, MAX_PATH - 1);
+						result = FS_EXEC_SYMLINK;
 					}
 					else if (output[0] == '.')
 					{

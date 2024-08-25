@@ -1,0 +1,100 @@
+Format of an AVFS Path
+----------------------
+
+(For a full explanation of the format see the file FORMAT)
+
+As you've seen, the '#' magic character makes a virtual file or
+directory from an ordinary file. Actually this is just a shorthand for
+the full specification of an AVFS path:
+
+  'tarfile.tgz#' is the same as 'tarfile.tgz#ugz#utar'
+
+Note, the short version will only work if the file-extension is
+recognized (most are), but you can always tell exactly what should be
+done with the file by using the second method.
+
+There are handlers which do not have a "base" file. The following
+handlers are like this: floppy, ftp, rsh, ssh, http, dav, avfsstat,
+volatile, rpms, ucftp.
+
+Examples
+
+  /#floppy:a                                 - a: drive
+  /#a                                        - a: drive (alias for /#floppy:a)
+  /#rsh:otherhost/foo/bar                    - /foo/bar on 'otherhost'
+  /#ssh:user@host/dir                        - /dir on 'host', login as 'user'
+  /#ftp:ftp.funet.fi/pub/Linux               - anonymous ftp
+  /#ftp:user@host.domain.org/home/xyz/file   - ftp with username 'user'
+  /#ftp_ctl:user@host.domain.org/password    - write the password to this file
+                                        (ftppass is a nice utility for this)
+  /#http:www.inf.bme.hu|~mszeredi|avfs|      - homepage of AVFS
+  /#http:ftp:||ftp.funet.fi|pub|Linux        - use HTTP to get an ftp URL
+                                        (useful if you use a HTTP-only proxy)
+  /#dav:http:host.domain.org/home/           - WebDAV
+
+The environment variable 'http_proxy' is used to set the default value
+of the proxy server. You can also set it's value by writing to the file
+
+   /#avfsstat/http_proxy
+
+
+The following "handlers" are available now:
+
+  name of handler    type of operation      notes
+  ---------------    -----------------      -----
+  #a                 first floppy drive     alias for #floppy:a
+  #avfsstat          meta information       builtin
+  #bz2               bzip2                  uses bzip2
+  #dav               webdav                 builtin
+  #dav_ctl           control dav sessions
+  #floppy            floppy                 uses mtools (mdir, mcopy, ...)
+  #ftp               ftp                    builtin
+  #ftp_ctl           control ftp sessions
+  #gz                gzip                   uses gzip
+  #iso9660           CD/DVD filesystem      no need to use mount -t iso9660!
+  #local             local filesysem        only for internal use
+  #rsh               rsh/rcp                only works if rsh needs no password
+  #ssh               ssh/scp                only works if ssh needs no password
+  #uar               un-ar                  builtin
+  #ubz2              bunzip2                builtin
+  #ubzip2            bunzip2                uses bzip2
+  #ucftp             ftp                    builtin (write support, no file cache)
+  #ucftp_ctl         control ftp sessions
+  #ugz               gunzip                 builtin (1)
+  #ugzip             gunzip                 uses gzip
+  #urar              unrar                  builtin list + uses rar to extract
+  #utar              untar                  builtin
+  #uxz               unxz/unlzma            builtin
+  #uxze              unxz/unlzma            uses xz
+  #uz                uncompress             uses gzip
+  #uzip              unzip                  builtin
+  #uzstd             uzstd                  builtin
+  #uzstde            uzstd                  uses zstd
+  #volatile          'memory fs'            mainly for testing
+
+
+(1) With the '-s' option (blala.gz#-s) the gunzip module will use the
+size stored at the end of the gzip file.  This will make some
+operations on a .gz file much faster, but it isn't usable for huge
+(>=4GByte) files, since the size is stored in 32 bits :(.
+
+The following handlers are available through Midnight Commanders
+'extfs'. These were not written by me, and could contain security
+holes. Nonetheless some of them are quite useful.  For documentation
+on these, see the files in /usr/lib/avfs/extfs.
+
+  name of handler    type of operation
+  ---------------    -----------------
+  #deb               debian packages
+  #ftplist           ?
+  #hp48              ?
+  #lslR              directory tree listings
+  #mailfs            ?
+  #patchfs           browse patch files
+  #rpm               rpm packages
+  #rpms              List of installed rpms
+  #trpm              Useful inside #rpms
+  #ucpio             cpio archives
+  #ulha              lha archives
+  #uzoo              zoo archives
+

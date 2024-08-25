@@ -516,8 +516,8 @@ void DCPCALL ListCloseWindow(HWND ListWin)
 	gtk_image_view_set_pixbuf(GTK_IMAGE_VIEW(view), NULL, FALSE);
 	gtk_widget_destroy(GTK_WIDGET(ListWin));
 
-	if (GDK_IS_PIXBUF(pixbuf))
-		g_object_unref(pixbuf);
+	//if (GDK_IS_PIXBUF(pixbuf))
+	//	g_object_unref(pixbuf);
 
 	g_key_file_free(cfg);
 
