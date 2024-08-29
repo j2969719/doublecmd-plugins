@@ -35,6 +35,7 @@
 #define SendDlgMsg gDialogApi->SendDlgMsg
 
 #define EXEC_SEP "< < < < < < < < < < < < < < < < < < < < < < < < < > > > > > > > > > > > > > > > > > > > > > > > > >"
+#define MSG_RESET "This action will reset the current script settings to default, are you sure you want to continue?"
 
 #define REGEXP_LIST "([0-9cbdflrstwxST\\-]+)\\s+(\\d{4}\\-?\\d{2}\\-?\\d{2}[\\stT]\\d{2}:?\\d{2}:?\\d?\\d?\\.?[0-9]*Z?)\\s+([0-9\\-]+)\\s+([^\\n]+)"
 #define REGEXP_ENVVAAR "^(" OPT_ENVVAR "[A-Z0-9_]+)\\s"
@@ -2873,10 +2874,10 @@ intptr_t DCPCALL DlgPropertiesProc(uintptr_t pDlg, char* DlgItemName, intptr_t M
 		{
 			DeInitializeScript(gScript);
 		}
-		else if (strcmp(DlgItemName, "btnReset") == 0)
+		else if (strcmp(DlgItemName, "btnReset") == 0 && MessageBox(MSG_RESET, gCaption, MB_YESNO | MB_ICONQUESTION | MB_DEFBUTTON2) == ID_YES)
 		{
-			g_key_file_remove_group(gCfg, gScript, NULL);
 			ExecuteScript(gScript, VERB_RESET, NULL, NULL, NULL, NULL);
+			g_key_file_remove_group(gCfg, gScript, NULL);
 		}
 		else if (strcmp(DlgItemName, "btnAct") == 0)
 		{
@@ -4118,27 +4119,24 @@ BOOL DCPCALL FsDeleteFile(char* RemoteName)
 		lseek(gDebugFd, 0, SEEK_SET);
 		result = TRUE;
 	}
-	else
+	else if (strcmp("/" MARK_LINK, RemoteName) != 0)
 	{
 		gchar *script_name = g_key_file_get_string(gCfg, "/", RemoteName + 1, NULL);
 
-		if (strcmp("/" MARK_LINK, RemoteName) != 0 && g_key_file_get_boolean(gCfg, script_name, MARK_INUSE, NULL))
+		if (g_key_file_get_boolean(gCfg, script_name, MARK_INUSE, NULL))
 		{
-
 			DeInitializeScript(script_name);
 
 			if (gNoise && gExtraNoise)
 				g_key_file_remove_key(gCfg, script_name, MARK_INUSE, NULL);
-
-			if (MessageBox("The script has been deinitialized, do you also want to reset the script settings?", script_name, MB_YESNO | MB_ICONQUESTION | MB_DEFBUTTON2) == ID_YES)
-			{
-				ExecuteScript(script_name, VERB_RESET, NULL, NULL, NULL, NULL);
-				g_key_file_remove_group(gCfg, script_name, NULL);
-			}
-
-			result = TRUE;
+		}
+		else if (MessageBox(MSG_RESET, RemoteName + 1, MB_YESNO | MB_ICONQUESTION | MB_DEFBUTTON2) == ID_YES)
+		{
+			ExecuteScript(script_name, VERB_RESET, NULL, NULL, NULL, NULL);
+			g_key_file_remove_group(gCfg, script_name, NULL);
 		}
 
+		result = TRUE;
 		g_free(script_name);
 	}
 
@@ -4524,7 +4522,7 @@ int DCPCALL FsContentGetValue(char* FileName, int FieldIndex, int UnitIndex, voi
 				}
 				else if (strcmp(file, res[0]) == 0)
 				{
-					GKeyFile *langs = OpenTranslations(gScript);
+					GKeyFile *langs = OpenTranslations(script);
 					gchar *string = TranslateString(langs, res[1]);
 					CloseTranslations(langs);
 					g_strlcpy((char*)FieldValue, string, maxlen - 1);
@@ -4552,7 +4550,7 @@ int DCPCALL FsContentGetValue(char* FileName, int FieldIndex, int UnitIndex, voi
 			if (len > 0)
 			{
 				output[len - 1] = '\0';
-				GKeyFile *langs = OpenTranslations(gScript);
+				GKeyFile *langs = OpenTranslations(script);
 				gchar *string = TranslateString(langs, output);
 				CloseTranslations(langs);
 				g_strlcpy((char*)FieldValue, string, maxlen - 1);

@@ -1,2 +1,25 @@
+[Default]
+WFX_SCRIPT_NAME=Creating multiple {sym}links
+WFX_SCRIPT_STR_DIR=Select directory
+WFX_SCRIPT_STR_TYPE=Select link type
+WFX_SCRIPT_STR_SYM=Symbolic
+WFX_SCRIPT_STR_REL=Symbolic (relative)
+WFX_SCRIPT_STR_HARD=Hard
+WFX_SCRIPT_STR_INFO=Copy the file(s) into the virtual panel to create a link(s).
+WFX_SCRIPT_STR_NOTLINK=This is not a symbolic link.
+WFX_SCRIPT_STR_LINK=The link points to
+WFX_SCRIPT_STR_INODE=Inode:
+WFX_SCRIPT_STR_NLINK=number of links:
+
 [ru_RU]
 WFX_SCRIPT_NAME=Создание пачки {сим}линков
+WFX_SCRIPT_STR_DIR=Выбери папку
+WFX_SCRIPT_STR_TYPE=Выбери тип ссылки
+WFX_SCRIPT_STR_SYM=Символьная
+WFX_SCRIPT_STR_REL=Символьная (относительная)
+WFX_SCRIPT_STR_HARD=Жесткая
+WFX_SCRIPT_STR_INFO=Кинь файл(ы) в панель для создания ссылок.
+WFX_SCRIPT_STR_NOTLINK=Это не символьная ссылка.
+WFX_SCRIPT_STR_LINK=Символьная ссылка на
+WFX_SCRIPT_STR_INODE=Инода:
+WFX_SCRIPT_STR_NLINK=число ссылок:

@@ -3,20 +3,12 @@
 vfs_init()
 {
     echo -e "Fs_PushValue WFX_SCRIPT_STR_DIR\t$HOME"
+    echo -e "Fs_PushValue WFX_SCRIPT_STR_MASK\t*"
+    echo -e 'Fs_PushValue WFX_SCRIPT_STR_VAL\tstat -c"%i" "$file"'
+
     echo -e "Fs_SelectDir WFX_SCRIPT_STR_DIR"
 
-    echo -e "Fs_Request_Options"
-    echo -e "Fs_PushValue WFX_SCRIPT_STR_MASK\t*"
-    echo -e "WFX_SCRIPT_STR_MASK"
-
-    echo -e "Fs_RequestOnce"
-    echo -e "Fs_YesNo_Message WFX_SCRIPT_STR_ASKOPT"
-
     echo -e "Fs_GetValue_Needed"
-#   echo -e "Fs_GetValues_Needed"
-    echo -e 'Fs_PushValue WFX_SCRIPT_STR_VAL\tstat -c"%i" "$file"'
-    echo -e "WFX_SCRIPT_STR_VAL"
-
 #   echo "Fs_StatusInfo_Needed"
 }
 
@@ -26,7 +18,8 @@ vfs_setopt()
     value="$2"
 
     case "$option" in
-        WFX_SCRIPT_STR_DIR) echo -e "Fs_Set_DC_WFX_SCRIPT_DIR $value" ;;
+        WFX_SCRIPT_STR_DIR) echo -e "Fs_Set_DC_WFX_SCRIPT_DIR $value\nFs_Request_Options\nWFX_SCRIPT_STR_MASK" && \
+                            echo -e "Fs_RequestOnce\nFs_YesNo_Message WFX_SCRIPT_STR_ASKOPT\nWFX_SCRIPT_STR_VAL" ;;
         WFX_SCRIPT_STR_MASK) echo -e "Fs_Set_DC_WFX_SCRIPT_MASK $value" ;;
         WFX_SCRIPT_STR_ASKOPT) [ "$value" == "Yes" ] && echo -e "Fs_Request_Options\nWFX_SCRIPT_STR_OPT" ;;
         WFX_SCRIPT_STR_OPT) echo -e "Fs_Set_DC_WFX_SCRIPT_OPT $value" ;;
@@ -42,6 +35,8 @@ vfs_setopt()
 
 vfs_list()
 {
+    [ -z "$DC_WFX_SCRIPT_DIR" ] && exit 1
+
     path="$DC_WFX_SCRIPT_DIR""$1"
 
     if [ -z "$DC_WFX_SCRIPT_MASK" ]; then

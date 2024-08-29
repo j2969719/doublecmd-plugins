@@ -1,18 +1,34 @@
 #!/bin/sh
 
-MPV_SERVER_SOCK="/tmp/mympvskt"
+init_fail()
+{
+    message="$1"
+
+    echo "Fs_Info_Message $message"
+    echo "Fs_Set_DC_WFX_SCRIPT_INITFAIL TRUE"
+    exit 1
+}
+
+launch_mpv()
+{
+    sock=`mktemp -u "/tmp/mpvpnlsckt.XXXXX"`
+
+    echo "Fs_Set_MPV_SERVER_SOCK $sock"
+    echo "Fs_RunAsync mpv --idle=yes --window-minimized=yes --input-ipc-server=$sock"
+}
 
 vfs_init()
 {
-    which mpv >/dev/null 2>&1 || echo "Fs_Info_Message WFX_SCRIPT_STR_INSTALL_MPV"
-    which socat >/dev/null 2>&1 || echo "Fs_Info_Message WFX_SCRIPT_STR_INSTALL_SOCAT"
+    which mpv >/dev/null 2>&1 && launch_mpv || init_fail WFX_SCRIPT_STR_INSTALL_MPV
+    which socat >/dev/null 2>&1 || init_fail WFX_SCRIPT_STR_INSTALL_SOCAT
     echo "Fs_GetValues_Needed"
-    echo "Fs_RunAsync mpv --idle=yes --force-window=yes --window-minimized=yes --input-ipc-server=$MPV_SERVER_SOCK"
     exit $?
 }
 
 vfs_list()
 {
+    [ -z "$DC_WFX_SCRIPT_INITFAIL" ] || exit 1
+
     path="$1"
 
     echo '{"command": ["get_property", "playlist"]}' | socat - $MPV_SERVER_SOCK | jq -r '.data[].filename' | sed 's#.*/##' | nl -v0 -w1 -s'|' | sed 's/^/lr-xr-xr-x  0000-00-00 00:00:00 - /'
@@ -75,7 +91,7 @@ vfs_getinfovalues()
 {
     path="$1"
 
-    echo '{"command": ["get_property", "playlist"]}' | socat - $MPV_SERVER_SOCK | jq -r '.data[] | select(.playing==true) | (.id|tonumber)-1, .filename' |tr '\n' '\t' | sed 's#\t/.*/#|#' | sed 's/$/*\n/'
+    echo '{"command": ["get_property", "playlist"]}' | socat - $MPV_SERVER_SOCK | jq -r '.data[] | "\(.filename) \(.playing)"' | nl -v0 -w1 -s'|' | grep -E ' true$'| sed 's#\([0-9]\+|\)/.\+/\([^/]\+\) true$#\1\2\t\*#'
 
     exit $?
 }
@@ -83,6 +99,7 @@ vfs_getinfovalues()
 vfs_deinit()
 {
     echo '{"command": ["quit"]}' | socat - $MPV_SERVER_SOCK
+    rm -f "$MPV_SERVER_SOCK"
 
     exit $?
 }

@@ -389,8 +389,9 @@ function fs_getvalue(file)
     elseif changed > 0 or added > 0 then
         if added > 0 then
             print(changed .. '+' .. added .. ' WFX_SCRIPT_STR_COUNT')
+        else
+            print(changed .. ' WFX_SCRIPT_STR_COUNT')
         end
-        print(changed .. ' WFX_SCRIPT_STR_COUNT')
     end
     os.exit()
 end

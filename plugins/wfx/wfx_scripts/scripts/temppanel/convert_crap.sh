@@ -3,12 +3,10 @@
 vfs_init()
 {
     echo -e "Fs_PushValue Path\t$HOME"
-    echo -e "Fs_SelectDir Path"
-
-    echo -e "Fs_Request_Options"
     echo -e "Fs_PushValue Mask\t*.jpg"
-    echo -e "Mask"
-    echo -e 'Fs_PushValue Commmand\tconvert "$src" "$dst.png"'
+    echo -e 'Fs_PushValue Commmand\tmagick "$src" "$dst.png"'
+
+    echo -e "Fs_SelectDir Path"
 
     echo "Fs_StatusInfo_Needed"
 }
@@ -19,7 +17,7 @@ vfs_setopt()
     value="$2"
 
     case "$option" in
-        "Path") echo -e "Fs_Set_DC_WFX_SCRIPT_DIR $value" ;;
+        "Path") echo -e "Fs_Set_DC_WFX_SCRIPT_DIR $value\nFs_Request_Options\nMask" ;;
         "Mask") echo -e "Fs_Set_DC_WFX_SCRIPT_MASK $value" ;;
         "Set path") echo -e "Fs_SelectDir Path" ;;
         "Set mask") echo -e "Fs_Request_Options\nMask" ;;
@@ -31,6 +29,8 @@ vfs_setopt()
 
 vfs_list()
 {
+    [ -z "$DC_WFX_SCRIPT_DIR" ] && exit 1
+
     path="$DC_WFX_SCRIPT_DIR""$1"
 
     if [ -z "$DC_WFX_SCRIPT_MASK" ]; then

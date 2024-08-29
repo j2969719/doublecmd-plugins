@@ -4,10 +4,8 @@
 
 vfs_init()
 {
-    echo -e "Fs_PushValue Select directory\t$HOME"
-    echo "Fs_SelectDir Select directory"
-    echo -e "Fs_MultiChoice Select link type\tSymbolic\tSymbolic (relative)\tHard"
-    echo "Fs_Info_Message Copy the file(s) into the virtual panel to create a link(s)."
+    echo -e "Fs_PushValue WFX_SCRIPT_STR_DIR\t$HOME"
+    echo "Fs_SelectDir WFX_SCRIPT_STR_DIR"
     echo "Fs_GetValue_Needed"
 }
 
@@ -17,14 +15,16 @@ vfs_setopt()
     value="$2"
 
     case "$option" in
-        "Select directory") echo "Fs_Set_DC_WFX_SCRIPT_DIR $value" ;;
-        "Select link type") echo "Fs_Set_DC_WFX_SCRIPT_TYPE $value" ;;
+        WFX_SCRIPT_STR_DIR) echo -e "Fs_Set_DC_WFX_SCRIPT_DIR $value\nFs_MultiChoice WFX_SCRIPT_STR_TYPE\tWFX_SCRIPT_STR_SYM\tWFX_SCRIPT_STR_REL\tWFX_SCRIPT_STR_HARD" ;;
+        WFX_SCRIPT_STR_TYPE) echo -e "Fs_Set_DC_WFX_SCRIPT_TYPE $value\nFs_Info_Message WFX_SCRIPT_STR_INFO" ;;
     esac
     exit 0
 }
 
 vfs_list()
 {
+    [ -z "$DC_WFX_SCRIPT_TYPE" ] && exit 1
+
     path="$DC_WFX_SCRIPT_DIR""$1"
 
     find "$path" -mindepth 1 -maxdepth 1 -name "*" -printf "%M %TF %TH:%TM:%TC %s %f\n"
@@ -44,13 +44,15 @@ vfs_copyin()
     src="$1"
     dst="$DC_WFX_SCRIPT_DIR""$2"
 
-    if [[ "$DC_WFX_SCRIPT_TYPE" == "Symbolic" ]]; then
+    [ "$src" == "$dst" ] && exit 1
+
+    if [[ "$DC_WFX_SCRIPT_TYPE" == "WFX_SCRIPT_STR_SYM" ]]; then
         ln -sf "$src" "$dst"
-    elif [[ "$DC_WFX_SCRIPT_TYPE" == "Symbolic (relative)" ]]; then
+    elif [[ "$DC_WFX_SCRIPT_TYPE" == "WFX_SCRIPT_STR_REL" ]]; then
         dstdir=`dirname "$dst"`
         relpath=`realpath -m --relative-to="$dstdir" "$src"`
         ln -sf "$relpath" "$dst"
-    elif [[ "$DC_WFX_SCRIPT_TYPE" == "Hard" ]]; then
+    elif [[ "$DC_WFX_SCRIPT_TYPE" == "WFX_SCRIPT_STR_HARD" ]]; then
         ln -f "$src" "$dst"
     else
         exit 1
@@ -94,8 +96,8 @@ vfs_properties()
 {
     file="$DC_WFX_SCRIPT_DIR""$1"
     path=`readlink "$file"`
-    inode=`stat --printf="Inode: %i, number of links: %h." "$file"`
-    [ -z "$path" ] && echo "Fs_Info_Message This is not a symbolic link. $inode" || echo 'Fs_Info_Message The link points to "'"$path"'".'
+    inode=`stat --printf="WFX_SCRIPT_STR_INODE %i, WFX_SCRIPT_STR_NLINK %h." "$file"`
+    [ -z "$path" ] && echo "Fs_Info_Message WFX_SCRIPT_STR_NOTLINK $inode" || echo 'Fs_Info_Message WFX_SCRIPT_STR_LINK "'"$path"'".'
     exit 0
 }
 

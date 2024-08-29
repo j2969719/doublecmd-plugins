@@ -1,18 +1,12 @@
 #!/bin/sh
 
-vfs_init()
+init_fail()
 {
-    which adb >/dev/null 2>&1 || echo "Fs_Info_Message WFX_SCRIPT_STR_INSTALL_ADB"
-    echo "Fs_CONNECT_Needed"
-    echo "Fs_StatusInfo_Needed"
-    echo "Fs_GetValue_Needed"
+    message="$1"
 
-    echo "Fs_DisableFakeDates"
-
-    echo "Fs_Set_DC_WFX_SCRIPT_STDERR 2>/dev/null"
-
-    echo "Fs_LogInfo"
-    adb start-server
+    echo "Fs_Info_Message $message"
+    echo "Fs_Set_DC_WFX_SCRIPT_INITFAIL TRUE"
+    exit 1
 }
 
 filedlg_show()
@@ -23,6 +17,19 @@ filedlg_show()
     dialog_mode="$4"
 
     echo -e "Fs_SelectFile $message\t$filter\t$default_ext\t$dialog_mode"
+}
+
+vfs_init()
+{
+    which adb >/dev/null 2>&1 || init_fail WFX_SCRIPT_STR_INSTALL_ADB
+    echo "Fs_CONNECT_Needed"
+    echo "Fs_StatusInfo_Needed"
+    echo "Fs_GetValue_Needed"
+    echo "Fs_DisableFakeDates"
+    echo "Fs_Set_DC_WFX_SCRIPT_STDERR 2>/dev/null"
+    echo "Fs_LogInfo"
+    adb start-server
+    exit 0
 }
 
 vfs_setopt()
@@ -69,6 +76,8 @@ vfs_setopt()
 
 vfs_list()
 {
+    [ -z "$DC_WFX_SCRIPT_INITFAIL" ] || exit 1
+
     if [ "$1" == "/" ]; then
         devinfo="dr-xr-xr-x 0000-00-00 00:00:00 -"
         adb devices | grep -G 'device$' | cut -d'	' -f1 | while read line; do echo "$devinfo $line"; done
@@ -95,7 +104,6 @@ vfs_list()
     [ "$path" == "/$1" ] && path=/
     command="cd \"$path\" && for file in *; do [ \"\$file\" != '*' ] && stat -c '%A %.19y %s %n' \"\$file\" $DC_WFX_SCRIPT_STDERR ; done"
     adb $device shell "$command"
-
     exit 0
 }
 

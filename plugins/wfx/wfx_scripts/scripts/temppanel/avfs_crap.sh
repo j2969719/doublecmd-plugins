@@ -2,10 +2,20 @@
 
 readme="`basename $0`_readme.txt"
 
+init_fail()
+{
+    message="$1"
+
+    echo "Fs_Info_Message $message"
+    echo "Fs_Set_DC_WFX_SCRIPT_INITFAIL TRUE"
+    exit 1
+}
+
 initdlg()
 {
     actions=(HELP INPUT FILE DIR TEMP)
     string=`printf '\tWFX_SCRIPT_STR_%s' "${actions[@]}"`
+
     echo -e "Fs_MultiChoice WFX_SCRIPT_STR_INIT$string"
     exit 0
 }
@@ -27,10 +37,15 @@ multichoice()
 vfs_init()
 {
     echo "Fs_Redirect nope"
-    mountavfs
-    echo -e "Fs_PushValue WFX_SCRIPT_STR_CUSTOM\t/#avfsstat"
-    echo -e "Fs_PushValue WFX_SCRIPT_STR_META\t#patchfs"
-    initdlg
+    mount=`which mountavfs`
+    if [ -z "$mount" ]; then
+        init_fail WFX_SCRIPT_STR_ERRAVFS
+    else
+        $mount
+        echo -e "Fs_PushValue WFX_SCRIPT_STR_CUSTOM\t/#avfsstat"
+        echo -e "Fs_PushValue WFX_SCRIPT_STR_META\t#patchfs"
+        initdlg
+    fi
     exit $?
 }
 
