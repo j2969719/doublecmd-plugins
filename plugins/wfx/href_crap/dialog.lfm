@@ -2,26 +2,26 @@ object DialogBox: TDialogBox
   Left = 404
   Height = 485
   Top = 142
-  Width = 719
+  Width = 826
   AutoSize = True
   BorderStyle = bsDialog
   Caption = 'Hypertext REFerence'
   ChildSizing.LeftRightSpacing = 10
   ChildSizing.TopBottomSpacing = 10
   ClientHeight = 485
-  ClientWidth = 719
+  ClientWidth = 826
   OnShow = DialogBoxShow
   Position = poOwnerFormCenter
   LCLVersion = '3.0.0.3'
   object gbCurrent: TGroupBox
-    AnchorSideLeft.Control = cbURL
+    AnchorSideLeft.Control = Owner
     AnchorSideTop.Control = Owner
-    AnchorSideRight.Control = cbURL
+    AnchorSideRight.Control = gbOptions
     AnchorSideRight.Side = asrBottom
-    Left = 16
-    Height = 108
+    Left = 10
+    Height = 107
     Top = 10
-    Width = 688
+    Width = 715
     Anchors = [akTop, akLeft, akRight]
     AutoSize = True
     BorderSpacing.Top = 10
@@ -32,7 +32,7 @@ object DialogBox: TDialogBox
     ChildSizing.VerticalSpacing = 5
     ChildSizing.ControlsPerLine = 2
     ClientHeight = 90
-    ClientWidth = 684
+    ClientWidth = 713
     ParentFont = False
     TabOrder = 0
     Visible = False
@@ -54,7 +54,7 @@ object DialogBox: TDialogBox
       Left = 59
       Height = 20
       Top = 10
-      Width = 615
+      Width = 644
       Anchors = [akTop, akLeft, akRight]
       BorderSpacing.Left = 10
       BorderStyle = bsNone
@@ -82,7 +82,7 @@ object DialogBox: TDialogBox
       Left = 59
       Height = 20
       Top = 35
-      Width = 584
+      Width = 613
       Anchors = [akTop, akLeft, akRight]
       BorderSpacing.Top = 5
       BorderStyle = bsNone
@@ -98,7 +98,7 @@ object DialogBox: TDialogBox
       AnchorSideTop.Side = asrCenter
       AnchorSideRight.Control = gbCurrent
       AnchorSideRight.Side = asrBottom
-      Left = 648
+      Left = 677
       Height = 26
       Hint = 'Open in Browser'
       Top = 32
@@ -167,7 +167,7 @@ object DialogBox: TDialogBox
       Left = 59
       Height = 20
       Top = 60
-      Width = 615
+      Width = 644
       Anchors = [akTop, akLeft, akRight]
       BorderSpacing.Top = 5
       BorderStyle = bsNone
@@ -177,16 +177,12 @@ object DialogBox: TDialogBox
     end
   end
   object lblURL: TLabel
-    AnchorSideLeft.Control = cbURL
     AnchorSideTop.Control = gbCurrent
     AnchorSideTop.Side = asrBottom
-    AnchorSideRight.Control = cbURL
-    AnchorSideRight.Side = asrBottom
     Left = 16
     Height = 16
-    Top = 133
-    Width = 688
-    Anchors = [akTop, akLeft, akRight]
+    Top = 132
+    Width = 31
     BorderSpacing.Top = 15
     Caption = 'URL:'
     ParentFont = False
@@ -194,11 +190,13 @@ object DialogBox: TDialogBox
   object cbURL: TComboBox
     AnchorSideTop.Control = lblURL
     AnchorSideTop.Side = asrBottom
-    AnchorSideRight.Control = btnBrowser
+    AnchorSideRight.Control = gbOptions
+    AnchorSideRight.Side = asrBottom
     Left = 16
-    Height = 26
-    Top = 154
-    Width = 688
+    Height = 28
+    Top = 153
+    Width = 709
+    Anchors = [akTop, akLeft, akRight]
     BorderSpacing.Top = 5
     ItemHeight = 0
     ParentFont = False
@@ -211,7 +209,7 @@ object DialogBox: TDialogBox
     AnchorSideTop.Side = asrCenter
     Left = 16
     Height = 23
-    Top = 187
+    Top = 188
     Width = 109
     Caption = 'Authentication'
     TabOrder = 2
@@ -219,13 +217,13 @@ object DialogBox: TDialogBox
   object btnSelected: TBitBtn
     AnchorSideTop.Control = btnBrowser
     AnchorSideRight.Control = btnRemove
-    Left = 275
+    Left = 306
     Height = 26
-    Top = 185
+    Top = 186
     Width = 188
     Anchors = [akTop, akRight]
     AutoSize = True
-    BorderSpacing.Right = 10
+    BorderSpacing.Right = 5
     Caption = 'Paste URL from Selected Link'
     Enabled = False
     OnClick = ButtonClick
@@ -234,13 +232,13 @@ object DialogBox: TDialogBox
   object btnRemove: TBitBtn
     AnchorSideTop.Control = btnBrowser
     AnchorSideRight.Control = btnBrowser
-    Left = 473
+    Left = 499
     Height = 26
-    Top = 185
+    Top = 186
     Width = 114
     Anchors = [akTop, akRight]
     AutoSize = True
-    BorderSpacing.Right = 10
+    BorderSpacing.Right = 5
     Caption = 'Remove from List'
     OnClick = ButtonClick
     TabOrder = 4
@@ -250,9 +248,9 @@ object DialogBox: TDialogBox
     AnchorSideTop.Side = asrBottom
     AnchorSideRight.Control = gbOptions
     AnchorSideRight.Side = asrBottom
-    Left = 597
+    Left = 618
     Height = 26
-    Top = 185
+    Top = 186
     Width = 107
     Anchors = [akTop, akRight]
     AutoSize = True
@@ -262,172 +260,173 @@ object DialogBox: TDialogBox
     TabOrder = 5
   end
   object gbOptions: TGroupBox
-    AnchorSideLeft.Control = cbURL
     AnchorSideTop.Control = btnBrowser
     AnchorSideTop.Side = asrBottom
-    AnchorSideRight.Control = cbURL
-    AnchorSideRight.Side = asrBottom
     Left = 16
-    Height = 150
-    Top = 226
-    Width = 688
-    Anchors = [akTop, akLeft, akRight]
+    Height = 159
+    Top = 227
+    Width = 709
     AutoSize = True
     BorderSpacing.Top = 15
     Caption = 'Options'
     ChildSizing.LeftRightSpacing = 10
     ChildSizing.TopBottomSpacing = 10
-    ChildSizing.HorizontalSpacing = 5
+    ChildSizing.HorizontalSpacing = 10
     ChildSizing.VerticalSpacing = 5
-    ClientHeight = 132
-    ClientWidth = 684
+    ChildSizing.EnlargeHorizontal = crsHomogenousChildResize
+    ChildSizing.ShrinkHorizontal = crsHomogenousSpaceResize
+    ChildSizing.Layout = cclLeftToRightThenTopToBottom
+    ChildSizing.ControlsPerLine = 2
+    ClientHeight = 142
+    ClientWidth = 707
+    ParentBidiMode = False
     ParentFont = False
     TabOrder = 6
     object ckSizes: TCheckBox
-      AnchorSideLeft.Control = gbOptions
-      AnchorSideTop.Control = edTimeout
-      AnchorSideTop.Side = asrCenter
       Left = 10
-      Height = 23
-      Top = 11
+      Height = 28
+      Top = 10
       Width = 408
       Caption = 'Request file sizes and dates from the server (freaking sloooooow)'
       ParentFont = False
       TabOrder = 0
     end
-    object lblTimeout: TLabel
-      AnchorSideTop.Control = edTimeout
-      AnchorSideTop.Side = asrCenter
-      AnchorSideRight.Control = edTimeout
-      Left = 571
-      Height = 16
-      Top = 14
-      Width = 51
-      Anchors = [akTop, akRight]
-      Caption = 'Timeout:'
-    end
-    object edTimeout: TEdit
-      AnchorSideTop.Control = gbOptions
-      AnchorSideRight.Control = gbOptions
-      AnchorSideRight.Side = asrBottom
-      Left = 627
-      Height = 24
+    object Panel1: TPanel
+      Left = 428
+      Height = 28
       Top = 10
-      Width = 47
+      Width = 269
       Alignment = taRightJustify
-      Anchors = [akTop, akRight]
-      MaxLength = 5
-      NumbersOnly = True
-      TabOrder = 1
+      AutoSize = True
+      BevelOuter = bvNone
+      ChildSizing.Layout = cclLeftToRightThenTopToBottom
+      ChildSizing.ControlsPerLine = 2
+      ClientHeight = 28
+      ClientWidth = 269
+      TabOrder = 5
+      object lblTimeout: TLabel
+        Left = 0
+        Height = 28
+        Top = 0
+        Width = 51
+        Caption = 'Timeout:'
+        Layout = tlCenter
+      end
+      object edTimeout: TEdit
+        Left = 51
+        Height = 28
+        Top = 0
+        Width = 30
+        Alignment = taRightJustify
+        Constraints.MaxWidth = 30
+        MaxLength = 5
+        NumbersOnly = True
+        TabOrder = 0
+      end
     end
     object ckFollow: TCheckBox
-      AnchorSideLeft.Control = ckSizes
-      AnchorSideTop.Control = edMaxRedir
-      AnchorSideTop.Side = asrCenter
+      Left = 10
+      Height = 28
+      Top = 43
+      Width = 408
+      Caption = 'Follow HTTP 3xx redirects'
+      ParentFont = False
+      TabOrder = 1
+    end
+    object Panel2: TPanel
+      Left = 428
+      Height = 28
+      Top = 43
+      Width = 269
+      BevelOuter = bvNone
+      ChildSizing.Layout = cclLeftToRightThenTopToBottom
+      ChildSizing.ControlsPerLine = 2
+      ClientHeight = 28
+      ClientWidth = 269
+      TabOrder = 6
+      object lblMaxRedir: TLabel
+        Left = 0
+        Height = 28
+        Top = 0
+        Width = 167
+        Caption = 'Number of redirects allowed:'
+        Layout = tlCenter
+      end
+      object edMaxRedir: TEdit
+        Left = 167
+        Height = 28
+        Top = 0
+        Width = 30
+        Alignment = taRightJustify
+        Constraints.MaxWidth = 30
+        MaxLength = 3
+        NumbersOnly = True
+        TabOrder = 0
+      end
+    end
+    object ckVerbose: TCheckBox
       Left = 10
       Height = 23
-      Top = 40
-      Width = 182
-      Caption = 'Follow HTTP 3xx redirects'
+      Top = 76
+      Width = 408
+      Caption = 'Spam a lot of verbose information about curl operations'
       ParentFont = False
       TabOrder = 2
     end
-    object lblMaxRedir: TLabel
-      AnchorSideTop.Control = edMaxRedir
-      AnchorSideTop.Side = asrCenter
-      AnchorSideRight.Control = edMaxRedir
-      Left = 455
-      Height = 16
-      Top = 43
-      Width = 167
-      Anchors = [akTop, akRight]
-      Caption = 'Number of redirects allowed:'
-    end
-    object edMaxRedir: TEdit
-      AnchorSideTop.Control = edTimeout
-      AnchorSideTop.Side = asrBottom
+    object ckFail: TCheckBox
       AnchorSideRight.Control = gbOptions
-      AnchorSideRight.Side = asrBottom
-      Left = 627
-      Height = 24
-      Top = 39
-      Width = 47
-      Alignment = taRightJustify
-      Anchors = [akTop, akRight]
-      MaxLength = 3
-      NumbersOnly = True
+      Left = 428
+      Height = 23
+      Top = 76
+      Width = 269
+      Caption = 'Fail on 4xx HTTP codes'
       TabOrder = 3
     end
-    object ckVerbose: TCheckBox
-      AnchorSideLeft.Control = ckSizes
-      AnchorSideTop.Control = edMaxRedir
-      AnchorSideTop.Side = asrBottom
-      Left = 10
-      Height = 23
-      Top = 68
-      Width = 347
-      Caption = 'Spam a lot of verbose information about curl operations'
-      ParentFont = False
-      TabOrder = 4
-    end
-    object ckFail: TCheckBox
-      AnchorSideTop.Control = ckVerbose
-      AnchorSideTop.Side = asrCenter
-      AnchorSideRight.Control = gbOptions
-      AnchorSideRight.Side = asrBottom
-      Left = 506
-      Height = 23
-      Top = 68
-      Width = 168
-      Anchors = [akTop, akRight]
-      Caption = 'Fail on 4xx HTTP codes'
-      TabOrder = 5
-    end
     object ckNoQuery: TCheckBox
-      AnchorSideLeft.Control = ckSizes
-      AnchorSideTop.Control = cbUserAgent
-      AnchorSideTop.Side = asrCenter
       Left = 10
-      Height = 23
-      Top = 98
-      Width = 172
+      Height = 28
+      Top = 104
+      Width = 408
       Caption = 'Skip URLs with query string'
       Checked = True
       State = cbChecked
+      TabOrder = 4
+    end
+    object Panel3: TPanel
+      Left = 428
+      Height = 28
+      Top = 104
+      Width = 269
+      AutoSize = True
+      BevelOuter = bvNone
+      ChildSizing.Layout = cclLeftToRightThenTopToBottom
+      ChildSizing.ControlsPerLine = 2
+      ClientHeight = 28
+      ClientWidth = 269
       TabOrder = 7
-    end
-    object lblUserAgent: TLabel
-      AnchorSideLeft.Control = ckNoQuery
-      AnchorSideLeft.Side = asrBottom
-      AnchorSideTop.Control = cbUserAgent
-      AnchorSideTop.Side = asrCenter
-      Left = 222
-      Height = 16
-      Top = 101
-      Width = 69
-      BorderSpacing.Left = 40
-      Caption = 'User Agent:'
-    end
-    object cbUserAgent: TComboBox
-      AnchorSideLeft.Control = lblUserAgent
-      AnchorSideLeft.Side = asrBottom
-      AnchorSideTop.Control = ckVerbose
-      AnchorSideTop.Side = asrBottom
-      AnchorSideRight.Control = gbOptions
-      AnchorSideRight.Side = asrBottom
-      Left = 296
-      Height = 26
-      Top = 96
-      Width = 378
-      Anchors = [akTop, akLeft, akRight]
-      ItemHeight = 0
-      Items.Strings = (
-        'Dark Secret Ninja/1.0'
-        'Mozilla/5.0 (iPad; U; CPU OS 3_2_1 like Mac OS X; en-us) AppleWebKit/531.21.10 (KHTML, like Gecko) Mobile/7B405'
-        'Googlebot/2.1 (+http://www.google.com/bot.html)'
-      )
-      MaxLength = 255
-      TabOrder = 6
+      object lblUserAgent: TLabel
+        Left = 0
+        Height = 28
+        Top = 0
+        Width = 69
+        Caption = 'User Agent:'
+        Layout = tlCenter
+      end
+      object cbUserAgent: TComboBox
+        Left = 69
+        Height = 28
+        Top = 0
+        Width = 200
+        Constraints.MinWidth = 200
+        ItemHeight = 0
+        Items.Strings = (
+          'Dark Secret Ninja/1.0'
+          'Mozilla/5.0 (iPad; U; CPU OS 3_2_1 like Mac OS X; en-us) AppleWebKit/531.21.10 (KHTML, like Gecko) Mobile/7B405'
+          'Googlebot/2.1 (+http://www.google.com/bot.html)'
+        )
+        MaxLength = 255
+        TabOrder = 0
+      end
     end
   end
   object lblInfo: TLabel
@@ -438,8 +437,8 @@ object DialogBox: TDialogBox
     AnchorSideRight.Side = asrBottom
     Left = 16
     Height = 16
-    Top = 396
-    Width = 688
+    Top = 406
+    Width = 709
     Anchors = [akTop, akLeft, akRight]
     BorderSpacing.Top = 20
     Caption = 'Please note that this dialog can always be invoked using the Alt + Enter keyboard shortcut.'
@@ -451,9 +450,9 @@ object DialogBox: TDialogBox
     AnchorSideRight.Control = btnOK
     AnchorSideBottom.Control = btnOK
     AnchorSideBottom.Side = asrBottom
-    Left = 502
+    Left = 523
     Height = 30
-    Top = 432
+    Top = 442
     Width = 96
     Anchors = [akTop, akRight, akBottom]
     AutoSize = True
@@ -471,11 +470,11 @@ object DialogBox: TDialogBox
   object btnOK: TBitBtn
     AnchorSideTop.Control = lblInfo
     AnchorSideTop.Side = asrBottom
-    AnchorSideRight.Control = cbURL
+    AnchorSideRight.Control = gbCurrent
     AnchorSideRight.Side = asrBottom
-    Left = 608
+    Left = 629
     Height = 30
-    Top = 432
+    Top = 442
     Width = 96
     Anchors = [akTop, akRight]
     AutoSize = True

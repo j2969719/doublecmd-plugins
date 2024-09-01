@@ -630,7 +630,7 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 	const char *ext = strrchr(PackedFile, '.');
 	int algo = get_algo_from_ext(ext);
 
-	if (gcry_md_test_algo(algo) != 0)
+	if (strcmp(gcry_md_algo_name(algo), "?") == 0) // wtf
 		return E_NOT_SUPPORTED;
 
 	if (access(PackedFile, F_OK) != -1)

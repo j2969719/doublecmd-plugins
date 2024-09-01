@@ -1,0 +1,10 @@
+[Default]
+WFX_SCRIPT_NAME=GuestFS Launcher
+WFX_SCRIPT_STR_FILE=VM Image file
+WFX_SCRIPT_STR_FS=Filesystems
+WFX_SCRIPT_STR_IMGMASK=VM Image Files
+WFX_SCRIPT_STR_ALLMASK=All Files
+WFX_SCRIPT_STR_ERRMOUNT=Failed to mount image.
+WFX_SCRIPT_STR_ERRFS=Failed to get list of filesystems.
+WFX_SCRIPT_STR_ERRNA=not installed!
+

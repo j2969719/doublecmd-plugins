@@ -1,5 +1,14 @@
 #!/bin/sh
 
+init_fail()
+{
+    message="$1"
+
+    echo "Fs_Info_Message $message"
+    echo "Fs_Set_DC_WFX_SCRIPT_INITFAIL TRUE"
+    exit 1
+}
+
 path_to_jsonpath()
 {
     sed 's#/\([^\[][^/]*\)#["\1"]#g' | sed 's#/\[#\[#g' | sed 's#^/\?#\.#'
@@ -62,7 +71,7 @@ prop_actions()
 
 vfs_init()
 {
-    which jq >/dev/null 2>&1 || echo "Fs_Info_Message WFX_SCRIPT_STR_INSTALL_JQ"
+    which jq >/dev/null 2>&1 || init_fail WFX_SCRIPT_STR_INSTALL_JQ
     echo "Fs_Set_DC_WFX_SCRIPT_COMMA --no-trailing-commas"
     jsonfile_select
     exit $?

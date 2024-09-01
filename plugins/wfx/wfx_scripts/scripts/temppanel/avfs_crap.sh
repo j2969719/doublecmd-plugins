@@ -70,6 +70,8 @@ vfs_setopt()
 
 vfs_list()
 {
+    [ -z "$DC_WFX_SCRIPT_INITFAIL" ] || exit 1
+
     exit 0
 }
 

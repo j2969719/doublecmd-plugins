@@ -19,8 +19,9 @@ launch_mpv()
 
 vfs_init()
 {
-    which mpv >/dev/null 2>&1 && launch_mpv || init_fail WFX_SCRIPT_STR_INSTALL_MPV
-    which socat >/dev/null 2>&1 || init_fail WFX_SCRIPT_STR_INSTALL_SOCAT
+    which jq >/dev/null 2>&1 || init_fail "\"jq\" WFX_SCRIPT_STR_DEPMISSING"
+    which socat >/dev/null 2>&1 || init_fail "\"socat\" WFX_SCRIPT_STR_DEPMISSING"
+    which mpv >/dev/null 2>&1 && launch_mpv || init_fail "\"mpv\" WFX_SCRIPT_STR_DEPMISSING"
     echo "Fs_GetValues_Needed"
     exit $?
 }

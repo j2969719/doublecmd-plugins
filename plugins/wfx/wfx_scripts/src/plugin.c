@@ -15,6 +15,7 @@
 #include "extension.h"
 
 #define MAX_SCRIPT_LINES 10
+#define MAX_BUTTON_TEXT 25
 #define PICTURE_MAX_SIZE 3000000
 
 #ifdef  TEMP_PANEL
@@ -32,6 +33,7 @@
 
 #define Int32x32To64(a,b) ((gint64)(a)*(gint64)(b))
 #define MessageBox gDialogApi->MessageBox
+#define MsgChoiceBox gDialogApi->MsgChoiceBox
 #define SendDlgMsg gDialogApi->SendDlgMsg
 
 #define EXEC_SEP "< < < < < < < < < < < < < < < < < < < < < < < < < > > > > > > > > > > > > > > > > > > > > > > > > >"
@@ -43,6 +45,7 @@
 
 #define STRIP_OPT(S, O) S + strlen(O) + 1
 
+#define OPT_REDIRFEEDBK "Fs_RedirFeedback_Needed"
 #define OPT_EXECFEEDBK "Fs_ExecFeedback_Needed"
 #define OPT_NOFAKEDATES "Fs_DisableFakeDates"
 #define OPT_STATUSINFO "Fs_StatusInfo_Needed"
@@ -1070,6 +1073,24 @@ static void SetOpt(gchar *script, gchar *opt, gchar *value)
 	output = NULL;
 }
 
+static void SetChoice(gchar *opt, gchar *value)
+{
+	if (value[0] != '\0')
+	{
+		SetOpt(gScript, opt, value);
+		g_key_file_set_string(gCfg, gScript, opt, value);
+
+		gchar *mark = g_strdup_printf(OPT_PUSH "_%s", opt);
+
+		if (g_key_file_has_key(gCfg, gScript, mark, NULL))
+			g_key_file_remove_key(gCfg, gScript, mark, NULL);
+
+		g_free(mark);
+	}
+	else
+		dprintf(gDebugFd, "ERR: empty argument selected.\n");
+}
+
 static void SaveHistory(uintptr_t pDlg, char *text, char *value)
 {
 	int count = (int)SendDlgMsg(pDlg, "lbHistory", DM_LISTGETCOUNT, 0, 0);
@@ -1112,7 +1133,6 @@ static void SaveHistory(uintptr_t pDlg, char *text, char *value)
 
 static void DlgRequestSetOption(uintptr_t pDlg)
 {
-	gchar *output = NULL;
 	char *text = g_strdup((char*)SendDlgMsg(pDlg, "mOption", DM_LISTGETITEM, 0, 0));
 	char *res = g_strdup((char*)SendDlgMsg(pDlg, "edValue", DM_GETTEXT, 0, 0));
 	SendDlgMsg(pDlg, "edValue", DM_SHOWDIALOG, 0, 0);
@@ -1120,12 +1140,7 @@ static void DlgRequestSetOption(uintptr_t pDlg)
 	if (res)
 	{
 		SaveHistory(pDlg, text, res);
-		ExecuteScript(gScript, VERB_SETOPT, text, res, &output, NULL);
-
-		if (output && output[0] != '\0')
-			ParseOpts(gScript, output, FALSE);
-
-		g_free(output);
+		SetOpt(gScript, text, res);
 	}
 
 	gchar *mark = g_strdup_printf(OPT_PUSH "_%s", text);
@@ -1834,31 +1849,13 @@ static void DlgMultiChoiceUpdLabel(uintptr_t pDlg)
 
 static void DlgMultiChoiceSetOption(uintptr_t pDlg)
 {
-	gchar *output = NULL;
 	char *text = g_strdup((char*)SendDlgMsg(pDlg, "lbDataStore", DM_LISTGETITEM, 0, 0));
 	int i = SendDlgMsg(pDlg, "lbChoice", DM_LISTGETITEMINDEX, 0, 0);
 	char *res = g_strdup((char*)SendDlgMsg(pDlg, "lbDataStore", DM_LISTGETITEM, ++i, 0));
-	g_key_file_set_string(gCfg, gScript, text, res);
 	SendDlgMsg(pDlg, "lbChoice", DM_SHOWDIALOG, 0, 0);
 
-	if (res && res[0] != '\0')
-	{
-		ExecuteScript(gScript, VERB_SETOPT, text, res, &output, NULL);
-
-		if (output && output[0] != '\0')
-			ParseOpts(gScript, output, FALSE);
-
-		g_free(output);
-	}
-	else
-		dprintf(gDebugFd, "ERR: empty argument selected.\n");
-
-	gchar *mark = g_strdup_printf(OPT_PUSH "_%s", text);
-
-	if (g_key_file_has_key(gCfg, gScript, mark, NULL))
-		g_key_file_remove_key(gCfg, gScript, mark, NULL);
-
-	g_free(mark);
+	if (res)
+		SetChoice(text, res);
 
 	g_free(text);
 	g_free(res);
@@ -2056,6 +2053,86 @@ static void ShowMultiChoiceDlg(char *text, gboolean request_once)
 {
 	if (!IsCanShowDlg(text, request_once))
 		return;
+
+	gChoice = g_strsplit(text, "\t", -1);
+	gsize len = g_strv_length(gChoice);
+
+	if (len == 2)
+	{
+		if (gNoise)
+			dprintf(gDebugFd, "ERR: " OPT_CHOICE " - there is no choice.\n");
+
+		SetChoice(gChoice[0], gChoice[1]);
+		g_strfreev(gChoice);
+		gChoice = NULL;
+
+		return;
+	}
+	else if (gDialogApi->VersionAPI > 3)
+	{
+		if (len > 2 && len <= 10)
+		{
+			int def_btn = -1;
+			gchar *captions = NULL;
+			gboolean is_choicebox = TRUE;
+			gchar *prev_choice = g_key_file_get_string(gCfg, gScript, gChoice[0], NULL);
+			GKeyFile *langs = OpenTranslations(gScript);
+			gchar *text = TranslateString(langs, gChoice[0]);
+
+			if (strlen(text) <= MAX_BUTTON_TEXT)
+				is_choicebox = FALSE;
+			else
+			{
+				for (int i = 1; i < len; i++)
+				{
+					gchar *string = TranslateString(langs, gChoice[i]);
+
+					if (strlen(string) > MAX_BUTTON_TEXT)
+					{
+						g_free(string);
+						is_choicebox = FALSE;
+						break;
+					}
+
+					if (!captions)
+						captions = string;
+					else
+					{
+						gchar *tmp = g_strdup_printf("%s\t%s", captions, string);
+						g_free(captions);
+						g_free(string);
+						captions = tmp;
+					}
+
+					if (prev_choice && g_strcmp0(gChoice[i], prev_choice) == 0)
+						def_btn = i - 1;
+				}
+			}
+
+			g_free(prev_choice);
+			CloseTranslations(langs);
+
+			if (is_choicebox)
+			{
+				gchar **buttons = g_strsplit(captions, "\t", -1);
+				int choice = MsgChoiceBox(text, gCaption ? gCaption : gScript, buttons, def_btn, -1);
+				g_strfreev(buttons);
+
+				if (choice != -1)
+					SetChoice(gChoice[0], gChoice[choice + 1]);
+			}
+
+			g_free(captions);
+			g_free(text);
+
+			if (is_choicebox)
+			{
+				g_strfreev(gChoice);
+				gChoice = NULL;
+				return;
+			}
+		}
+	}
 
 	GString *lfm_string = g_string_new(NULL);
 	g_string_append(lfm_string, "object MultichoiceDialogBox: TMultichoiceDialogBox\n"
@@ -2307,7 +2384,6 @@ static void ShowMultiChoiceDlg(char *text, gboolean request_once)
 	                "  end\n"
 	                "end\n");
 
-	gChoice = g_strsplit(text, "\t", -1);
 	gDialogApi->DialogBoxLFM((intptr_t)lfm_string->str, (unsigned long)strlen(lfm_string->str), DlgMultiChoiceProc);
 	g_string_free(lfm_string, TRUE);
 }
@@ -2369,6 +2445,8 @@ static void ParseOpts(gchar *script, gchar *text, gboolean thread)
 					g_key_file_set_boolean(gCfg, script, OPT_GETVALUES, TRUE);
 				else if (g_strcmp0(*p, OPT_EXECFEEDBK) == 0)
 					g_key_file_set_boolean(gCfg, script, OPT_EXECFEEDBK, TRUE);
+				else if (g_strcmp0(*p, OPT_REDIRFEEDBK) == 0)
+					g_key_file_set_boolean(gCfg, script, OPT_REDIRFEEDBK, TRUE);
 				else if (IsValidOpt(*p, OPT_ENVVAR))
 				{
 					StoreEnvVar(*p, script);
@@ -4204,7 +4282,15 @@ int DCPCALL FsExecuteFile(HWND MainWin, char* RemoteName, char* Verb)
 					}
 				}
 
+
 				gchar *local = g_key_file_get_string(gCfg, script_name, OPT_REDIR, NULL);
+
+				if (local && g_key_file_get_boolean(gCfg, script_name, OPT_REDIRFEEDBK, NULL))
+				{
+					SetOpt(script_name, OPT_REDIR, local);
+					g_free(local);
+					local = g_key_file_get_string(gCfg, script_name, OPT_REDIR, NULL);
+				}
 
 				if (local)
 				{
@@ -4626,6 +4712,7 @@ BOOL DCPCALL FsGetLocalName(char* RemoteName, int maxlen)
 
 	return result;
 }
+
 #endif
 
 void DCPCALL FsStatusInfo(char* RemoteDir, int InfoStartEnd, int InfoOperation)
