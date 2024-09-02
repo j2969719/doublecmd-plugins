@@ -1,7 +1,0 @@
-[Default]
-WFX_SCRIPT_NAME=SSH+SCP
-WFX_SCRIPT_STR_HOST=user@host
-WFX_SCRIPT_STR_STRICT=Strict HostKey Checking? ffff
-WFX_SCRIPT_STR_TERM=Use terminal?
-WFX_SCRIPT_STR_ACT_HOST=Change host
-WFX_SCRIPT_STR_ACT_TERM=Change commandline mode
