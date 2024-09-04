@@ -107,6 +107,8 @@ vfs_list()
     fi
 
     echo "$fake_attr 0000-00-00 00:00:00 - $ENV_WFX_SCRIPT_STR_DATA.json"
+    echo "0444 0000-00-00 00:00:00 - $ENV_WFX_SCRIPT_STR_DATA.txt"
+    echo "0444 0000-00-00 00:00:00 - jsonpath.txt"
 
     if [[ "$DC_WFX_SCRIPT_MULTIFILEOP" == "delete" ]] ; then
         exit 0
@@ -132,7 +134,10 @@ vfs_copyout()
     json_path=`dirname "$1" | path_to_jsonpath`
     dst="$2"
 
-    jq ''"$json_path"'' "$DC_WFX_SCRIPT_JSON" > "$dst"
+    [ "${1##*/}" == "jsonpath.txt" ] && echo "$json_path" > "$dst" && exit 0
+    [ "${1##*.}" != "json" ] && opt="-r"
+
+    jq $opt ''"$json_path"'' "$DC_WFX_SCRIPT_JSON" > "$dst"
     exit $?
 }
 
@@ -148,6 +153,7 @@ vfs_fileexists()
 vfs_copyin()
 {
     [ "$DC_WFX_SCRIPT_GUARD" == "Yes" ] && exit 1
+    [ "${1##*.}" != "json" ] && exit 1
     data=`cat "$1"`
     json_path=`dirname "$2" | path_to_jsonpath`
 
@@ -159,6 +165,7 @@ vfs_copyin()
 vfs_cp()
 {
     [ "$DC_WFX_SCRIPT_GUARD" == "Yes" ] && exit 1
+    [ "${1##*.}" != "json" ] && exit 1
     json_path=`dirname "$1" | path_to_jsonpath`
     data=`jq ''"$json_path"'' "$DC_WFX_SCRIPT_JSON"`
     json_path=`dirname "$2" | path_to_jsonpath`
@@ -171,6 +178,7 @@ vfs_cp()
 vfs_mv()
 {
     [ "$DC_WFX_SCRIPT_GUARD" == "Yes" ] && exit 1
+    [ "${1##*.}" != "json" ] && exit 1
     src=`dirname "$1" | path_to_jsonpath`
     data=`jq ''$src'' "$DC_WFX_SCRIPT_JSON"`
     json_path=`dirname "$2" | path_to_jsonpath`
@@ -185,6 +193,7 @@ vfs_mv()
 vfs_rm()
 {
     [ "$DC_WFX_SCRIPT_GUARD" == "Yes" ] && exit 1
+    [ "${1##*.}" != "json" ] && exit 1
     json_path=`dirname "$1" | path_to_jsonpath`
 
     new_data=`jq -r 'del('"$json_path"')' "$DC_WFX_SCRIPT_JSON"`

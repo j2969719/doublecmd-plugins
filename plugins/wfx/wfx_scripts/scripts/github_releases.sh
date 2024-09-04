@@ -1,5 +1,7 @@
 #!/bin/sh
 
+confname="j2969719.json"
+
 init_fail()
 {
     message="$1"
@@ -14,32 +16,86 @@ cleanup()
     test -f "$DC_WFX_SCRIPT_JSON" && rm "$DC_WFX_SCRIPT_JSON"
 }
 
+store_latest()
+{
+    repo="$DC_WFX_SCRIPT_REPO"
+    confdir=`dirname "$COMMANDER_INI"`
+    ver=`curl "https://api.github.com/repos/$repo/releases/latest" | jq '.name'`
+    [ -z "$ver" ] && echo "Fs_InfoMessage WFX_SCRIPT_STR_ERR_CURL" && exit 1
+    conf=`cat "$confdir/$confname"`
+    [ -z "$conf" ] && conf="{}"
+    echo "$conf" | jq --argjson ver "$ver" --argjson src "\"${0##*/}\"" --argjson repo "\"$repo\"" \
+        '.[$src][$repo] = $ver'
+    newconf=`echo "$conf" | jq --argjson ver "$ver" --argjson src "\"${0##*/}\"" --argjson repo "\"$repo\"" \
+        '.[$src][$repo] = $ver'`
+    [ -z "$newconf" ] && echo "Fs_InfoMessage WFX_SCRIPT_STR_ERR_CONF" || echo "$newconf" > "$confdir/$confname"
+}
+
+remove_latest()
+{
+    repo="$DC_WFX_SCRIPT_REPO"
+    confdir=`dirname "$COMMANDER_INI"`
+    newconf=`cat "$confdir/$confname" | jq --argjson src "\"${0##*/}\"" --argjson repo "\"$repo\"" 'del(.[$src][$repo])'`
+    [ -z "$newconf" ] && echo "Fs_InfoMessage WFX_SCRIPT_STR_ERR_CONF" || echo "$newconf" > "$confdir/$confname"
+}
+
+check_latest()
+{
+    repo="$1"
+    confdir=`dirname "$COMMANDER_INI"`
+    conf=`cat "$confdir/$confname"`
+    oldver=`echo "$conf" | jq --argjson src "\"${0##*/}\"" --argjson repo "\"$repo\"" '.[$src][$repo]'`
+    if [ ! -z "$oldver" ] && [ "$oldver" != "null" ] ; then
+        ver=`curl "https://api.github.com/repos/$repo/releases/latest" | jq '.name'`
+        if [ ! -z "$ver" ] && [ "$ver" != "null" ] && [ "$oldver" != "$ver" ] ; then
+            echo "Fs_Info_Message WFX_SCRIPT_STR_LATEST $ver"
+            newconf=`echo "$conf" | jq --argjson ver "$ver" --argjson src "\"${0##*/}\"" --argjson repo "\"$repo\"" \
+                '.[$src][$repo] = $ver'`
+            [ -z "$newconf" ] && echo "Fs_InfoMessage WFX_SCRIPT_STR_ERR_CONF" || echo "$newconf" > "$confdir/$confname"
+        fi
+    fi
+}
+
 get_json()
 {
     repo="$1"
 
+    [ -z "$DC_WFX_SCRIPT_TMP" ] && tmpdir=`mktemp -d /tmp/wfx_ghreleases.XXXXX` && echo "Fs_Set_DC_WFX_SCRIPT_TMP $tmpdir" ||\
+        tmpdir="$DC_WFX_SCRIPT_TMP"
+
     [ -z "$DC_WFX_SCRIPT_JSON" ] || cleanup
 
-    tmpfile=`mktemp /tmp/wfx_ghreleases.XXXXX`
+    tmpfile=`mktemp "$tmpdir/repo.XXXXX.json"`
     echo "Fs_Set_DC_WFX_SCRIPT_JSON $tmpfile"
+    echo "Fs_Set_DC_WFX_SCRIPT_REPO $repo"
     curl "https://api.github.com/repos/$repo/releases" > "$tmpfile" || init_fail WFX_SCRIPT_STR_ERR_CURL
     err=`cat "$tmpfile" | jq -r '"\(.status): \(.message)"'`
     [ -z "$err" ] || init_fail "$err"
+    check_latest "$repo"
+}
+
+get_version()
+{
+    ver="\"`dirname \"${1:1}\"`\""
+    [ "$ver" == "\".\"" ] && ver="\"`basename \"$1\"`\""
+    echo "$ver"
 }
 
 get_body()
 {
-    ver="\"`dirname \"${1:1}\"`\""
-
-    [ -z "$DC_WFX_SCRIPT_TMP" ] && tmpdir=`mktemp -d /tmp/wfx_ghreleases.XXXXX` && echo "Fs_Set_DC_WFX_SCRIPT_TMP $tmpdir" ||\
-        tmpdir="$DC_WFX_SCRIPT_TMP"
-
-    tmpfile=`mktemp "$tmpdir/notes.XXXXX"`
-
-    [ "$ver" == "\".\"" ] && ver="\"`basename \"$1\"`\""
-
+    ver=`get_version $1`
+    tmpfile=`mktemp "$DC_WFX_SCRIPT_TMP/notes.XXXXX.txt"`
     cat "$DC_WFX_SCRIPT_JSON" | jq -r --argjson ver "$ver" '.[] | select(.name == $ver) | .body' > "$tmpfile"
     test -s "$tmpfile" && echo "Fs_ShowOutput cat \"$tmpfile\"" || echo "Fs_InfoMessage WFX_SCRIPT_STR_ERR_BODY"
+}
+
+get_src()
+{
+    dst="$1"
+    arc="$2"
+    ver=`get_version "$DC_WFX_SCRIPT_REMOTENAME"`
+    link=`cat "$DC_WFX_SCRIPT_JSON" | jq -r --argjson ver "$ver" '.[] | select(.name == $ver) | '"$arc"''`
+    echo "Fs_RunTermKeep wget \"$link\" -O \"$dst\""
 }
 
 vfs_init()
@@ -64,6 +120,12 @@ vfs_setopt()
         "WFX_SCRIPT_STR_REPO") get_json "$value" ;;
         "WFX_SCRIPT_STR_BODY") get_body "$value" ;;
         "WFX_SCRIPT_STR_CHANGEREPO") echo -e "Fs_Request_Options\nWFX_SCRIPT_STR_REPO" ;;
+        "WFX_SCRIPT_STR_STORE") store_latest ;;
+        "WFX_SCRIPT_STR_REMOVE") remove_latest ;;
+        "WFX_SCRIPT_STR_GETZIP") echo -e "Fs_SelectFile WFX_SCRIPT_STR_ZIP\tWFX_SCRIPT_STR_ARC|*.zip\tzip\tsave" ;;
+        "WFX_SCRIPT_STR_GETTARBALL") echo -e "Fs_SelectFile WFX_SCRIPT_STR_TARBALL\tWFX_SCRIPT_STR_ARC|*.tar.gz;*.tgz\ttgz\tsave" ;;
+        "WFX_SCRIPT_STR_TARBALL") get_src "$value" ".tarball_url" ;;
+        "WFX_SCRIPT_STR_ZIP") get_src "$value" ".zipball_url" ;;
         *) exit 1 ;;
     esac
 
@@ -117,7 +179,9 @@ vfs_properties()
        [ "$pre" == "true" ] && echo -e "filetype\tWFX_SCRIPT_STR_PRERELEASE" || echo -e "filetype\tWFX_SCRIPT_STR_RELEASE"
     fi
 
-    echo -e "Fs_PropsActs WFX_SCRIPT_STR_BODY\tWFX_SCRIPT_STR_CHANGEREPO"
+    actions=(BODY STORE REMOVE GETTARBALL GETZIP CHANGEREPO)
+    string=`printf '\tWFX_SCRIPT_STR_%s' "${actions[@]}"`
+    echo -e "Fs_PropsActs $string"
 
     exit $?
 }
@@ -142,7 +206,7 @@ vfs_deinit()
 {
     cleanup
 
-    [ -z "$DC_WFX_SCRIPT_TMP" ] || rm -rf "$DC_WFX_SCRIPT_TMP"
+    [ -z "$DC_WFX_SCRIPT_TMP" ] || test -d "$DC_WFX_SCRIPT_TMP" && rm -rf "$DC_WFX_SCRIPT_TMP"
 
     exit 0
 }

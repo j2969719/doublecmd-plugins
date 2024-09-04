@@ -27,8 +27,8 @@ int DCPCALL ContentGetSupportedField(int FieldIndex, char* FieldName, char* Unit
 	if (FieldIndex < 0 || FieldIndex >= fieldcount)
 		return ft_nomorefields;
 
-	g_strlcpy(FieldName, fields[FieldIndex].name, maxlen-1);
-	g_strlcpy(Units, fields[FieldIndex].unit, maxlen-1);
+	g_strlcpy(FieldName, fields[FieldIndex].name, maxlen - 1);
+	g_strlcpy(Units, fields[FieldIndex].unit, maxlen - 1);
 	return fields[FieldIndex].type;
 }
 
@@ -36,7 +36,7 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 {
 	int width;
 	int height;
-	gchar *tmp;
+	gchar *string = NULL;
 
 	if (!g_file_test(FileName, G_FILE_TEST_IS_REGULAR))
 		return ft_fileerror;
@@ -57,30 +57,30 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 		break;
 
 	case 2:
-		tmp = g_strdup_printf("%dx%d", width, height);
+		string = g_strdup_printf("%dx%d", width, height);
 
-		if (tmp)
-			g_strlcpy((char*)FieldValue, tmp, maxlen-1);
+		if (string)
+			g_strlcpy((char *)FieldValue, string, maxlen - 1);
 		else
 			return ft_fieldempty;
 
 		break;
 
 	case 3:
-		tmp = gdk_pixbuf_format_get_name(fileinfo);
+		string = gdk_pixbuf_format_get_name(fileinfo);
 
-		if (tmp)
-			g_strlcpy((char*)FieldValue, tmp, maxlen-1);
+		if (string)
+			g_strlcpy((char *)FieldValue, string, maxlen - 1);
 		else
 			return ft_fieldempty;
 
 		break;
 
 	case 4:
-		tmp = gdk_pixbuf_format_get_description(fileinfo);
+		string = gdk_pixbuf_format_get_description(fileinfo);
 
-		if (tmp)
-			g_strlcpy((char*)FieldValue, tmp, maxlen-1);
+		if (string)
+			g_strlcpy((char *)FieldValue, string, maxlen - 1);
 		else
 			return ft_fieldempty;
 
@@ -89,6 +89,8 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 	default:
 		return ft_nosuchfield;
 	}
+
+	g_free(string);
 
 	return fields[FieldIndex].type;
 }
