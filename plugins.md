@@ -180,6 +180,10 @@ Validating FictionBook2 (FB2) files (first test can be used with ANY XML-based f
 Returns file or directory count and directory size (without scanning symbolic links to folders).<br>
 Only for columns set or tooltips!
 
+- [filecountbyextwdx.lua](plugins/wdx/scripts/filecountbyextwdx.lua) *(cross platform)*<br>
+Returns the number of files of the specified type (symbolic links to directories will be ignored).<br>
+No recursive search, for file search tool only!
+
 - [filenamewdx.lua](plugins/wdx/scripts/filenamewdx.lua) *(cross platform)*<br>
 Returns parts of full filename: Full name, Name, Base name, Extension, Path, Parent folder.
 
