@@ -3,6 +3,7 @@
 #include <glib.h>
 #include <gio/gio.h>
 #include <glib/gstdio.h>
+#include <gdk-pixbuf/gdk-pixbuf.h>
 #include <fcntl.h>
 #include <time.h>
 #include <signal.h>
@@ -667,22 +668,46 @@ static gboolean IsValidLocalDir(char *path, char *script)
 	return FALSE;
 }
 
-static gchar* BuildPictureData(char *FileName, char *LinePrefix, char *Class)
+static gchar* BuildPictureData(char *FileName, char *LinePrefix)
 {
+	char class[24] = "";
 	unsigned char buff[32];
 	struct stat buf;
 
 	if (stat(FileName, &buf) != 0 || buf.st_size == 0 || buf.st_size > PICTURE_MAX_SIZE)
 		return NULL;
 
-	ssize_t len = strlen(Class);
+	GdkPixbufFormat *fileinfo = gdk_pixbuf_get_file_info(FileName, NULL, NULL);
+
+	if (!fileinfo)
+		return NULL;
+
+	gchar *name = gdk_pixbuf_format_get_name(fileinfo);
+
+	if (g_strcmp0(name, "png") == 0)
+		snprintf(class, 24, "TPortableNetworkGraphic");
+	else if (g_strcmp0(name, "jpeg") == 0)
+		snprintf(class, 24, "TJpegImage");
+	else if (g_strcmp0(name, "gif") == 0)
+		snprintf(class, 24, "TGIFImage");
+	else if (g_strcmp0(name, "xpm") == 0)
+		snprintf(class, 24, "TPixmap");
+	else if (g_strcmp0(name, "ico") == 0)
+		snprintf(class, 24, "TIcon");
+
+	g_free(name);
+
+	if (class[0] == '\0')
+		return NULL;
+
+	ssize_t len = strlen(class);
 	unsigned char class_size = (unsigned char)len;
 	GString *data = g_string_new(NULL);
 	g_string_append(data, LinePrefix);
 	g_string_append_printf(data, "%02X", class_size);
 
 	for (int i = 0; i < len; i++)
-		g_string_append_printf(data, "%02X", Class[i]);
+		g_string_append_printf(data, "%02X", class[i]);
 
 	unsigned char size[4];
 	unsigned long s = (unsigned long)buf.st_size;
@@ -721,7 +746,7 @@ static gchar* BuildPictureData(char *FileName, char *LinePrefix, char *Class)
 		close(fd);
 	}
 
-	if (strlen(data->str) < strlen(LinePrefix) + strlen(Class) + 6)
+	if (strlen(data->str) < strlen(LinePrefix) + strlen(class) + 6)
 	{
 		g_string_free(data, TRUE);
 		return NULL;
@@ -792,7 +817,7 @@ static void AddPropLabels(GString *lfm_string)
 					                           "      end\n";
 
 					if (res[1][0] == '/')
-						picture = BuildPictureData(res[1], "      ", "TPortableNetworkGraphic");
+						picture = BuildPictureData(res[1], "      ");
 
 					/*else
 					{
