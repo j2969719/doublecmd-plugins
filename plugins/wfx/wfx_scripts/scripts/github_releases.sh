@@ -21,14 +21,14 @@ store_latest()
     repo="$DC_WFX_SCRIPT_REPO"
     confdir=`dirname "$COMMANDER_INI"`
     ver=`curl "https://api.github.com/repos/$repo/releases/latest" | jq '.name'`
-    [ -z "$ver" ] && echo "Fs_InfoMessage WFX_SCRIPT_STR_ERR_CURL" && exit 1
+    [ -z "$ver" ] && echo "Fs_Info_Message WFX_SCRIPT_STR_ERR_CURL" && exit 1
     conf=`cat "$confdir/$confname"`
     [ -z "$conf" ] && conf="{}"
     echo "$conf" | jq --argjson ver "$ver" --argjson src "\"${0##*/}\"" --argjson repo "\"$repo\"" \
         '.[$src][$repo] = $ver'
     newconf=`echo "$conf" | jq --argjson ver "$ver" --argjson src "\"${0##*/}\"" --argjson repo "\"$repo\"" \
         '.[$src][$repo] = $ver'`
-    [ -z "$newconf" ] && echo "Fs_InfoMessage WFX_SCRIPT_STR_ERR_CONF" || echo "$newconf" > "$confdir/$confname"
+    [ -z "$newconf" ] && echo "Fs_Info_Message WFX_SCRIPT_STR_ERR_CONF" || echo "$newconf" > "$confdir/$confname"
 }
 
 remove_latest()
@@ -36,7 +36,7 @@ remove_latest()
     repo="$DC_WFX_SCRIPT_REPO"
     confdir=`dirname "$COMMANDER_INI"`
     newconf=`cat "$confdir/$confname" | jq --argjson src "\"${0##*/}\"" --argjson repo "\"$repo\"" 'del(.[$src][$repo])'`
-    [ -z "$newconf" ] && echo "Fs_InfoMessage WFX_SCRIPT_STR_ERR_CONF" || echo "$newconf" > "$confdir/$confname"
+    [ -z "$newconf" ] && echo "Fs_Info_Message WFX_SCRIPT_STR_ERR_CONF" || echo "$newconf" > "$confdir/$confname"
 }
 
 check_latest()
@@ -51,7 +51,7 @@ check_latest()
             echo "Fs_Info_Message WFX_SCRIPT_STR_LATEST $ver"
             newconf=`echo "$conf" | jq --argjson ver "$ver" --argjson src "\"${0##*/}\"" --argjson repo "\"$repo\"" \
                 '.[$src][$repo] = $ver'`
-            [ -z "$newconf" ] && echo "Fs_InfoMessage WFX_SCRIPT_STR_ERR_CONF" || echo "$newconf" > "$confdir/$confname"
+            [ -z "$newconf" ] && echo "Fs_Info_Message WFX_SCRIPT_STR_ERR_CONF" || echo "$newconf" > "$confdir/$confname"
         fi
     fi
 }
@@ -83,10 +83,10 @@ get_version()
 
 get_body()
 {
-    ver=`get_version $1`
+    ver=`get_version "$1"`
     tmpfile=`mktemp "$DC_WFX_SCRIPT_TMP/notes.XXXXX.txt"`
     cat "$DC_WFX_SCRIPT_JSON" | jq -r --argjson ver "$ver" '.[] | select(.name == $ver) | .body' > "$tmpfile"
-    test -s "$tmpfile" && echo "Fs_ShowOutput cat \"$tmpfile\"" || echo "Fs_InfoMessage WFX_SCRIPT_STR_ERR_BODY"
+    test -s "$tmpfile" && echo "Fs_ShowOutput cat \"$tmpfile\"" || echo "Fs_Info_Message WFX_SCRIPT_STR_ERR_BODY"
 }
 
 get_src()
