@@ -3,22 +3,20 @@
 import os
 import sys
 import json
-import base64
 import requests
 import calendar
+import mimetypes
 import gi
 
 from datetime import datetime, timezone
-from base64 import b64encode
 
 gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk, Gdk
 
 verb = sys.argv[1]
 scr = os.path.basename(__file__)
-act_open = 'WFX_SCRIPT_STR_ACT_OPEN'
-act_copy = 'WFX_SCRIPT_STR_ACT_COPY'
 conf = os.path.join(os.path.dirname(os.environ['COMMANDER_INI']), 'j2969719.json')
+
 try:
 	with open(conf) as f:
 		obj = json.loads(f.read())
@@ -27,7 +25,7 @@ try:
 			obj[scr]['files'] = {}
 		f.close()
 except FileNotFoundError:
-	obj = json.loads('{ ' + scr + ' : { "files" : {}, "api_key" : null, "client_id" : null} }')
+	obj = json.loads('{ ' + scr + ' : { "files" : {} }')
 	with open(conf, 'w') as f:
 		json.dump(obj, f)
 		f.close()
@@ -47,31 +45,20 @@ def size_str(size):
 
 def vfs_init():
 	print('Fs_Request_Options')
-	if not 'api_key' in obj[scr] or obj[scr]['api_key'] is None:
-		print('WFX_SCRIPT_STR_APIKEY')
-	if not 'client_id' in obj[scr] or obj[scr]['client_id'] is None:
-		print('WFX_SCRIPT_STR_CLIENTID')
 	sys.exit()
 
 def vfs_setopt(option, value):
-	if value == '':
-		sys.exit(1)
-	elif option == 'WFX_SCRIPT_STR_CLIENTID':
-		obj[scr]['client_id'] = value
-		save_obj()
-		sys.exit()
-	elif option == 'WFX_SCRIPT_STR_APIKEY':
-		obj[scr]['api_key'] = value
-		save_obj()
-		sys.exit()
-	elif option == act_copy:
-		url = obj[scr]['files'][os.path.basename(value)]['link']
+	if option == 'WFX_SCRIPT_STR_ACT_COPY':
+		url = obj[scr]['files'][os.path.basename(value)]['url']
 		clipboard = Gtk.Clipboard.get(Gdk.SELECTION_CLIPBOARD)
 		clipboard.set_text(url, -1)
 		clipboard.store()
 		sys.exit()
-	elif option == act_open:
-		print('Fs_Open https://www.imgur.com/' + obj[scr]['files'][os.path.basename(value)]['id'])
+	elif option == 'WFX_SCRIPT_STR_ACT_KEY':
+		url = obj[scr]['files'][os.path.basename(value)]['key']
+		clipboard = Gtk.Clipboard.get(Gdk.SELECTION_CLIPBOARD)
+		clipboard.set_text(url, -1)
+		clipboard.store()
 		sys.exit()
 	sys.exit(1)
 
@@ -82,62 +69,63 @@ def vfs_list(path):
 				size = '-'
 			else:
 				size = str(obj[scr]['files'][name]['size'])
-			if not 'datetime' in obj[scr]['files'][name] or obj[scr]['files'][name]['datetime'] is None:
+			if not 'created' in obj[scr]['files'][name] or obj[scr]['files'][name]['created'] is None:
 				date = '0000-00-00 00:00:00'
 			else:
-				date = datetime.fromtimestamp(obj[scr]['files'][name]['datetime'], tz=timezone.utc).strftime('%Y-%m-%dT%TZ')
+				date = obj[scr]['files'][name]['created']
 			print('----------\t' + date +'\t' + size + '\t' + name)
 		sys.exit()
 	sys.exit(1)
 
 def vfs_getfile(src, dst):
 	data = obj[scr]['files'][os.path.basename(src)]
-	size = int(data['size'])
 	headers = { 'User-Agent': 'Mozilla/5.0', }
 	with open(dst, 'wb') as f:
 		try:
-			response = requests.get(data['link'], headers=headers, stream=True)
+			response = requests.get(data['url'], headers = headers, stream=True)
 		except Exception as e:
-			print(str(e))
+			print(str(e), file=sys.stderr)
 			sys.exit(1)
 		if response.status_code == 200:
 			total = response.headers.get('content-length')
 			if total is None:
 				f.write(response.content)
 			else:
-				downloaded = 0
 				for data in response.iter_content(chunk_size=4096):
-					downloaded += len(data)
 					f.write(data)
-					percent = int(downloaded * 100 / size)
-					print(percent)
-					sys.stdout.flush()
 		else:
 			print(str(response.status_code) + ": " + response.reason, file=sys.stderr)
+			if response.status_code == 404:
+				del obj[scr]['files'][os.path.basename(src)]
+				save_obj()
 			f.close()
 			sys.exit(1)
 		f.close()
 		sys.exit()
 	sys.exit(1)
 
+def vfs_exists(path):
+	if os.path.basename(path) in obj[scr]['files']:
+		sys.exit()
+	sys.exit(1)
+
 def vfs_putfile(src, dst):
-	url = 'https://api.imgur.com/3/upload.json'
-	headers = {"Authorization": "Client-ID " + obj[scr]['client_id']}
+	url = 'https://file.io/'
+	info = os.stat(src)
+	name = os.path.basename(dst)
+	headers = { 'User-Agent': 'Mozilla/5.0', }
 	try:
-		response = requests.post(url, headers = headers, data = {
-			'key': obj[scr]['api_key'], 
-			'image': b64encode(open(src, 'rb').read()),
-			'type': 'base64',
-			'name': os.path.basename(dst),
+		response = requests.post(url, headers = headers, files={
+			'file': open(src, 'rb').read(),
 		})
 	except Exception as e:
 			print(str(e), file=sys.stderr)
 			sys.exit(1)
 	if response.status_code == 200:
-			data = response.json()
-			name = os.path.basename(data['data']['link'])
-			data['data']['path'] = src
-			obj[scr]['files'][name]= data['data']
+			res = response.json()
+			obj[scr]['files'][name] = res
+			obj[scr]['files'][name]['path'] = src
+			obj[scr]['files'][name]['url'] = res['link']
 			save_obj()
 			sys.exit()
 	else:
@@ -151,33 +139,13 @@ def vfs_rmfile(path):
 
 def vfs_properties(path):
 	data = obj[scr]['files'][os.path.basename(path)]
-	if 'size' in data and not data['size'] is None:
-		print('WFX_SCRIPT_STR_SIZE\t' + size_str(data['size']))
-	if 'link' in data and not data['link'] is None:
-		print('url\t' + str(data['link']))
-	if 'datetime' in data and not data['datetime'] is None:
-		date = datetime.fromtimestamp(data['datetime']).strftime('%Y-%m-%d %T')
-		print('WFX_SCRIPT_STR_CREATED\t' + date)
-	if 'path' in data and not data['path'] is None:
-		print('path\t' + str(data['path']))
-	fields=['width', 'height']
+	print('path' + '\t' + str(data['path']))
+	print('url' + '\t' + str(data['url']))
+	fields=['size', 'created', 'expires', 'key', 'maxDownloads', 'autoDelete', 'id']
 	for field in fields:
 		if field in data and not data[field] is None:
 			print('WFX_SCRIPT_STR_' + field.upper() + '\t' + str(data[field]))
-	print('Fs_PropsActs ' + act_copy + '\t' + act_open)
-
-	url = 'https://api.imgur.com/3/image/' + data['id']
-	headers = {"Authorization": "Client-ID " + obj[scr]['client_id']}
-	try:
-		response = requests.get(url, headers = headers)
-	except:
-		pass
-	if response.status_code == 200:
-		data = response.json()['data']
-		fields=['views', 'description', 'section']
-		for field in fields:
-			if field in data and not data[field] is None:
-				print('WFX_SCRIPT_STR_' + field.upper() + '\t' + str(data[field]))
+	print('Fs_PropsActs WFX_SCRIPT_STR_ACT_COPY\tWFX_SCRIPT_STR_ACT_KEY')
 	sys.exit()
 
 if verb == 'init':
@@ -188,6 +156,8 @@ elif verb == 'list':
 	vfs_list(sys.argv[2])
 elif verb == 'copyout':
 	vfs_getfile(sys.argv[2], sys.argv[3])
+elif verb == 'exists':
+	vfs_exists(sys.argv[2])
 elif verb == 'copyin':
 	vfs_putfile(sys.argv[2], sys.argv[3])
 elif verb == 'rm':

@@ -15,7 +15,7 @@ from gi.repository import Gtk, Gdk
 
 verb = sys.argv[1]
 scr = os.path.basename(__file__)
-act_copy = 'Copy URL to Clipboard'
+act_copy = 'WFX_SCRIPT_STR_ACT_COPY'
 conf = os.path.join(os.path.dirname(os.environ['COMMANDER_INI']), 'j2969719.json')
 try:
 	with open(conf) as f:
@@ -46,13 +46,13 @@ def size_str(size):
 def vfs_init():
 	print('Fs_Request_Options')
 	if not 'api_dev_key' in obj[scr] or obj[scr]['api_dev_key'] is None:
-		print('api_dev_key')
+		print('WFX_SCRIPT_STR_APIKEY')
 	sys.exit()
 
 def vfs_setopt(option, value):
 	if value == '':
 		sys.exit(1)
-	elif option == 'api_dev_key':
+	elif option == 'WFX_SCRIPT_STR_APIKEY':
 		obj[scr]['api_dev_key'] = value
 		save_obj()
 		sys.exit()
@@ -70,7 +70,7 @@ def vfs_list(path):
 			if not 'size' in obj[scr]['files'][name] or obj[scr]['files'][name]['size'] is None:
 				size = '-'
 			else:
-				size = obj[scr]['files'][name]['size']
+				size = str(obj[scr]['files'][name]['size'])
 			if not 'date' in obj[scr]['files'][name] or obj[scr]['files'][name]['date'] is None:
 				date = '0000-00-00 00:00:00'
 			else:
@@ -143,10 +143,14 @@ def vfs_rmfile(path):
 
 def vfs_properties(path):
 	data = obj[scr]['files'][os.path.basename(path)]
-	fields=['path', 'url', 'size', 'date']
+	fields=['path', 'url']
 	for field in fields:
 		if field in data and not data[field] is None:
-			print(field.replace('_', ' ').capitalize() + '\t' + str(data[field]))
+			print(field + '\t' + str(data[field]))
+	fields=['size', 'date']
+	for field in fields:
+		if field in data and not data[field] is None:
+			print('WFX_SCRIPT_STR_' + field.upper() + '\t' + str(data[field]))
 	print('Fs_PropsActs ' + act_copy)
 	sys.exit()
 

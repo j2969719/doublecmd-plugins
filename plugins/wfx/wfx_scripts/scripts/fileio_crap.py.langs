@@ -1,0 +1,22 @@
+[Default]
+WFX_SCRIPT_NAME=Upload to File.io
+WFX_SCRIPT_STR_ACT_COPY=Copy URL to Clipboard
+WFX_SCRIPT_STR_ACT_KEY=Copy Key to Clipboard
+WFX_SCRIPT_STR_SIZE=Size
+WFX_SCRIPT_STR_CREATED=Created
+WFX_SCRIPT_STR_EXPIRES=Expires
+WFX_SCRIPT_STR_MAXDOWNLOADS=Max Downloads
+WFX_SCRIPT_STR_AUTODELETE=Autodelete
+WFX_SCRIPT_STR_ID=ID
+WFX_SCRIPT_STR_KEY=Key
+
+[ru_RU]
+WFX_SCRIPT_NAME=Загрузка на File.io
+WFX_SCRIPT_STR_ACT_COPY=Скопировать URL в буфер обмена
+WFX_SCRIPT_STR_ACT_KEY=Скопировать Key в буфер обмена
+WFX_SCRIPT_STR_SIZE=Размер
+WFX_SCRIPT_STR_CREATED=Создан
+WFX_SCRIPT_STR_EXPIRES=Истекает
+WFX_SCRIPT_STR_MAXDOWNLOADS=Максимальное число скачиваний
+WFX_SCRIPT_STR_AUTODELETE=Автоудаление
+

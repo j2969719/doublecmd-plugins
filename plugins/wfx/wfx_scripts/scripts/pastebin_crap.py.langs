@@ -1,2 +1,12 @@
 [Default]
 WFX_SCRIPT_NAME=Upload to Pastebin
+WFX_SCRIPT_STR_ACT_COPY=Copy URL to Clipboard
+WFX_SCRIPT_STR_APIKEY=api_dev_key
+WFX_SCRIPT_STR_SIZE=Size
+WFX_SCRIPT_STR_DATE=Created
+
+[ru_RU]
+WFX_SCRIPT_NAME=Загрузка на Pastebin
+WFX_SCRIPT_STR_ACT_COPY=Скопировать URL в буфер обмена
+WFX_SCRIPT_STR_SIZE=Paзмер
+WFX_SCRIPT_STR_DATE=Создан
