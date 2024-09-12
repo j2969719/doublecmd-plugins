@@ -9,7 +9,6 @@ from requests.exceptions import HTTPError
 
 verb = sys.argv[1]
 
-
 def get_jsonobj():
 	try:
 		with open(os.environ['DC_WFX_SCRIPT_JSON']) as f:
@@ -37,10 +36,42 @@ def get_dir_contents(obj, path):
 		response = requests.get('https://api.github.com/repos/' + obj['repo'] + '/contents' + path)
 	except Exception as e:
 		print(str(e), file=sys.stderr)
-		sys.exit(1)
+		return None
 	if response.status_code == 200:
 		obj['contents'][path] = response.json()
 		return obj
+	else:
+		print(str(response.status_code) + ": " + response.reason, file=sys.stderr)
+		return None
+
+def get_repo_root(value):
+	string = '{ "repo": "'+ str(value) +'", "contents" : {}}'
+	obj = json.loads(string)
+	obj = get_dir_contents(obj, '/')
+	if not obj:
+		print("Fs_Info_Message WFX_SCRIPT_STR_ERR_JSON")
+		sys.exit(1)
+	else:
+		save_jsonobj(obj)
+		sys.exit()
+
+def get_repo(value):
+	try:
+		response = requests.get('https://api.github.com/search/repositories', params = { 'q': value })
+	except Exception as e:
+		print("Fs_Info_Message " + str(e))
+		sys.exit(1)
+	if response.status_code == 200:
+		res = response.json()
+		choice = "Fs_MultiChoice WFX_SCRIPT_STR_REPO"
+		for item in res['items']:
+			choice = choice + '\t' + item['full_name']
+		if choice != "Fs_MultiChoice WFX_SCRIPT_STR_REPO":
+			print(choice)
+		else:
+			print('Fs_Info_Message \"' + value + '" WFX_SCRIPT_STR_ERR_NOTFOUND')
+			print('Fs_Request_Options')
+			print('WFX_SCRIPT_STR_SEARCH')
 	else:
 		print(str(response.status_code) + ": " + response.reason, file=sys.stderr)
 		sys.exit(1)
@@ -52,34 +83,34 @@ def vfs_init():
 	print('Fs_Set_DC_WFX_SCRIPT_JSON ' + filename)
 	print('Fs_CONNECT_Needed')
 	print('Fs_PushValue WFX_SCRIPT_STR_REPO\tdoublecmd/doublecmd')
-	print('Fs_Request_Options')
-	print('WFX_SCRIPT_STR_REPO')
+	print('Fs_YesNo_Message WFX_SCRIPT_STR_ASKSEARCH')
 	sys.exit()
 
 def vfs_setopt(option, value):
-	if option == 'WFX_SCRIPT_STR_REPO':
-		try:
-			response = requests.get('https://api.github.com/repos/' + value + '/contents/')
-		except Exception as e:
-			print(str(e), file=sys.stderr)
-			sys.exit(1)
-		if response.status_code == 200:
-			string = '{ "repo": "'+ str(value) +'", "contents" : {}}'
-			obj = json.loads(string)
-			obj['contents']['/'] = response.json()
-			save_jsonobj(obj)
-			sys.exit()
+	if option == 'WFX_SCRIPT_STR_ASKSEARCH':
+		print('Fs_Request_Options')
+		if value == "Yes":
+			print('WFX_SCRIPT_STR_SEARCH')
 		else:
-			print(str(response.status_code) + ": " + response.reason, file=sys.stderr)
-			print("Fs_Info_Message " + str(response.status_code) + ": " + response.reason)
-			print('Fs_Request_Options')
 			print('WFX_SCRIPT_STR_REPO')
+	elif option == 'WFX_SCRIPT_STR_SEARCH':
+		get_repo(value)
+	elif option == 'WFX_SCRIPT_STR_REPO':
+		get_repo_root(value)
+	elif option == 'WFX_SCRIPT_STR_NEWSEARCH':
+		print('Fs_Request_Options')
+		print('WFX_SCRIPT_STR_SEARCH')
+	elif option == 'WFX_SCRIPT_STR_CHANGEREPO':
+		print('Fs_Request_Options')
+		print('WFX_SCRIPT_STR_REPO')
 	sys.exit(1)
 
 def vfs_list(path):
 	obj = get_jsonobj()
 	if path not in obj['contents']:
 		obj = get_dir_contents(obj, path)
+		if not obj:
+			sys.exit(1)
 		save_jsonobj(obj)
 	for element in obj['contents'][path]:
 		if 'attrstr' not in element:
@@ -132,12 +163,13 @@ def vfs_properties(filename):
 	for element in obj['contents'][os.path.dirname(filename)]:
 		if element['name'] == os.path.basename(filename):
 			print('SHA\t' + element['sha'])
+			print('url\t' + element['html_url'])
+	print('Fs_PropsActs WFX_SCRIPT_STR_CHANGEREPO\tWFX_SCRIPT_STR_NEWSEARCH')
 	sys.exit()
 
 def vfs_deinit():
 	os.remove(os.environ['DC_WFX_SCRIPT_JSON'])
 	sys.exit()
-
 
 
 if verb == 'init':

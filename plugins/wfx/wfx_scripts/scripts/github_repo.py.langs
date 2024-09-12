@@ -1,7 +1,19 @@
 [Default]
 WFX_SCRIPT_NAME=View repository on GitHub
+WFX_SCRIPT_STR_ASKSEARCH=Search the repository by keyword?
 WFX_SCRIPT_STR_REPO=user/repo
+WFX_SCRIPT_STR_SEARCH=Search
+WFX_SCRIPT_STR_ERR_JSON=Failed to receive data from the server.
+WFX_SCRIPT_STR_ERR_NOTFOUND=not found!
+WFX_SCRIPT_STR_CHANGEREPO=Change repo
+WFX_SCRIPT_STR_NEWSEARCH=New search
 
 [ru_RU]
 WFX_SCRIPT_NAME=Просмотр репозитория на GitHub
+WFX_SCRIPT_STR_ASKSEARCH=Искать репозиторий по ключевому слову?
 WFX_SCRIPT_STR_REPO=пользователь/репозиторий
+WFX_SCRIPT_STR_SEARCH=Поиск
+WFX_SCRIPT_STR_ERR_JSON=Не удалось получить данные с сервера.
+WFX_SCRIPT_STR_ERR_NOTFOUND=не найден!
+WFX_SCRIPT_STR_CHANGEREPO=Сменить репозиторий
+WFX_SCRIPT_STR_NEWSEARCH=Новый поиск
