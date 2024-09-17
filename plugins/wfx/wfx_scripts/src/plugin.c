@@ -1098,11 +1098,71 @@ static void SetOpt(gchar *script, gchar *opt, gchar *value)
 	output = NULL;
 }
 
+static gchar* AddHistoryLine(gchar *string, gchar *key, gchar *value)
+{
+	gchar *oldvalue = g_key_file_get_string(gCfg, gScript, key, NULL);
+
+	if (!string)
+	{
+		if (strcmp(oldvalue, value) != 0)
+			return oldvalue;
+		else
+			return NULL;
+	}
+
+	gchar *result = string;
+
+	if (oldvalue && strcmp(oldvalue, value) != 0)
+	{
+		result = g_strdup_printf("%s\n%s", string, oldvalue);
+		g_free(string);
+	}
+
+	g_free(oldvalue);
+
+	return result;
+}
+
 static void SetChoice(gchar *opt, gchar *value)
 {
 	if (value[0] != '\0')
 	{
 		SetOpt(gScript, opt, value);
+		gchar *key = g_strdup_printf("%s_%s_0", MARK_PREV, opt);
+		gboolean history = g_key_file_has_key(gCfg, gScript, key, NULL);
+
+		if (history)
+		{
+			gchar *items = AddHistoryLine(NULL, opt, value);
+			int num = 0;
+
+			do
+			{
+				g_free(key);
+				key = g_strdup_printf("%s_%s_%d", MARK_PREV, opt, num++);
+				items = AddHistoryLine(items, key, value);
+			}
+			while (g_key_file_has_key(gCfg, gScript, key, NULL));
+
+			gchar **split = g_strsplit(items, "\n", -1);
+			guint len = g_strv_length(split);
+
+			for (guint i = 0; i < len; i++)
+			{
+				g_free(key);
+				key = g_strdup_printf("%s_%s_%d", MARK_PREV, opt, i);
+				g_key_file_set_string(gCfg, gScript, key, split[i]);
+			}
+
+			g_strfreev(split);
+			g_free(items);
+			g_free(key);
+			key = g_strdup_printf("%s_%s_%d", MARK_PREV, opt, len);
+			g_key_file_remove_key(gCfg, gScript, key, NULL);
+		}
+
+		g_free(key);
+
 		g_key_file_set_string(gCfg, gScript, opt, value);
 
 		gchar *mark = g_strdup_printf(OPT_PUSH "_%s", opt);
@@ -1488,7 +1548,7 @@ static void ShowSelectFileDlg(char *text, gboolean request_once)
 
 		CloseTranslations(langs);
 
-		if (g_strv_length(split) > 2)
+		if (len > 2)
 		{
 			for (guint i = 2; i < len; i++)
 			{

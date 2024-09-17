@@ -150,6 +150,50 @@ uintptr_t DialogBoxParam(void* Data, uint32_t DataSize, tDlgProc DlgProc, uint32
 ## Return value:
 Modal result
 
+# StartupInfo->SetProperty
+Set LCL control property
+```c
+typedef intptr_t (DCPCALL *tSetProperty)(uintptr_t pDlg, const char* DlgItemName, const char *PropName, void *PropValue, int PropType);
+```
+## Parameters:
+- `DlgItemName` - LCL control name or `NULL` for dialog itself
+- `PropName` - name of property
+- `PropValue` - value
+- `PropType` - value type
+
+#### Supported types
+- `TK_STRING`
+- `TK_FLOAT`
+- `TK_INT32`
+- `TK_INT64`
+- `TK_BOOL`
+
+## Return value:
+True/Fasle
+
+# StartupInfo->GetProperty
+Get LCL control property
+```c
+typedef intptr_t (DCPCALL *tGetProperty)(uintptr_t pDlg, const char* DlgItemName, const char *PropName, void *PropValue, int PropType, int PropSize);
+```
+## Parameters:
+- `DlgItemName` - LCL control name or `NULL` for dialog itself
+- `PropName` - property name
+- `PropValue` - pointer to property value
+- `PropType` - pointer to value type
+- `PropSize` - size of data
+
+#### Supported types
+- `TK_STRING`
+- `TK_FLOAT`
+- `TK_INT32`
+- `TK_INT64`
+- `TK_BOOL`
+
+## Return value:
+True/Fasle
+
+
 # Supported LCL controls
 
 - [TTimer](https://wiki.lazarus.freepascal.org/TTimer)

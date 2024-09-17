@@ -42,17 +42,22 @@ void DCPCALL ExtensionFinalize(void* Reserved);
 
 ```c
 typedef struct {
-	uint32_t StructSize;
-	char PluginDir[EXT_MAX_PATH];
-	char PluginConfDir[EXT_MAX_PATH];
-	tInputBoxProc InputBox;
-	tMessageBoxProc MessageBox;
-	tDialogBoxLFMProc DialogBoxLFM;
-	tDialogBoxLRSProc DialogBoxLRS;
-	tDialogBoxLFMFileProc DialogBoxLFMFile;
-	tDlgProc SendDlgMsg;
-	void *Translation;
-	tTranslateStringProc TranslateString;
-	unsigned char Reserved[4094 * sizeof(void *)];
+  uint32_t StructSize;
+  char PluginDir[EXT_MAX_PATH];
+  char PluginConfDir[EXT_MAX_PATH];
+  tInputBoxProc InputBox;
+  tMessageBoxProc MessageBox;
+  tDialogBoxLFMProc DialogBoxLFM;
+  tDialogBoxLRSProc DialogBoxLRS;
+  tDialogBoxLFMFileProc DialogBoxLFMFile;
+  tDlgProc SendDlgMsg;
+  void *Translation;
+  tTranslateStringProc TranslateString;
+  uintptr_t VersionAPI;
+  tMsgChoiceBoxProc MsgChoiceBox;
+  tDialogBoxParamProc DialogBoxParam;
+  tSetProperty SetProperty;
+  tGetProperty GetProperty;
+  unsigned char Reserved[4089 * sizeof(void *)];
 } tExtensionStartupInfo;
 ```
