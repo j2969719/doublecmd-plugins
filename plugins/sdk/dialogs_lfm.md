@@ -193,6 +193,21 @@ typedef intptr_t (DCPCALL *tGetProperty)(uintptr_t pDlg, const char* DlgItemName
 ## Return value:
 True/Fasle
 
+# StartupInfo->CreateComponent
+Get LCL control property
+```c
+typedef uintptr_t (DCPCALL *tCreateComponent)(uintptr_t pDlg, const char* Parent, const char* DlgItemName, const char* DlgItemClass, void* Reserved);
+```
+## Parameters:
+- `pDlg` - pointer to dialog
+- `Parent` - Parent LCL control name or `NULL` for dialog itself
+- `DlgItemName` - New LCL control name
+- `DlgItemClass` - LCL control class
+- `Reserved` - ...
+
+## Return value:
+0
+
 
 # Supported LCL controls
 
