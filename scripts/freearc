@@ -1,3 +1,0 @@
-#!/bin/bash
-wine /path/to/Arc.exe $* | iconv -f 866 -t UTF-8
-
