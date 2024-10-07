@@ -606,6 +606,7 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 		writer.setCompressionMethod((BitCompressionMethod)gComprMethod);
 		writer.setDictionarySize(gDictSize);
 		writer.setWordSize(gWordSize);
+		writer.setStoreSymbolicLinks(true);
 		writer.setSolidMode(gSolid);
 		writer.setVolumeSize(gVolumeSize);
 		writer.setThreadsCount(gThreadCount);

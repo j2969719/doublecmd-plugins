@@ -498,11 +498,7 @@ int DCPCALL ReadHeaderEx(HANDLE hArcData, tHeaderDataEx *HeaderDataEx)
 				char *p = strrchr(string, '/');
 
 				if (p)
-				{
 					*p = '\0';
-					//HeaderDataEx->CmtSize = (int)strlen(p + 2);
-					//g_strlcpy(HeaderDataEx->CmtBuf, p + 2, HeaderDataEx->CmtBufSize);
-				}
 
 				g_strlcpy(HeaderDataEx->FileName, string, sizeof(HeaderDataEx->FileName) - 1);
 

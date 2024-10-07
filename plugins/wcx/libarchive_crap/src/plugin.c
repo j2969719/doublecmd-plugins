@@ -1423,14 +1423,15 @@ int DCPCALL ReadHeaderEx(HANDLE hArcData, tHeaderDataEx *HeaderDataEx)
 
 				g_strlcpy(HeaderDataEx->FileName, filename, sizeof(HeaderDataEx->FileName) - 1);
 
+				HeaderDataEx->UnpSizeHigh = 0xFFFFFFFF;
+				HeaderDataEx->UnpSize = 0xFFFFFFFE;
+				HeaderDataEx->FileAttr = S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH;
+
 				if (stat(handle->arcname, &st) == 0)
 				{
 					HeaderDataEx->PackSizeHigh = (st.st_size & 0xFFFFFFFF00000000) >> 32;
 					HeaderDataEx->PackSize = st.st_size & 0x00000000FFFFFFFF;
-					HeaderDataEx->UnpSizeHigh = (st.st_size & 0xFFFFFFFF00000000) >> 32;
-					HeaderDataEx->UnpSize = st.st_size & 0x00000000FFFFFFFF;
 					HeaderDataEx->FileTime = st.st_mtime;
-					HeaderDataEx->FileAttr = S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH;
 				}
 			}
 			else
