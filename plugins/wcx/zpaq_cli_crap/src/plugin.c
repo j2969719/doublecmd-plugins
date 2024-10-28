@@ -25,6 +25,7 @@
 #define ERRFILE "<ERROR>"
 #define HEADER "7kSt"
 #define HEADER_SIZE 4
+#define E_HANDLED -32769
 #define PK_CAPS PK_CAPS_NEW | PK_CAPS_MODIFY | PK_CAPS_MULTIPLE | PK_CAPS_SEARCHTEXT |\
  PK_CAPS_DELETE | PK_CAPS_OPTIONS | PK_CAPS_ENCRYPT | PK_CAPS_BY_CONTENT;
 
@@ -36,11 +37,13 @@ typedef struct sArcData
 {
 	GRegex *re;
 	gchar *arc;
-	gchar *output;
+	gchar **lines;
+	guint cur;
+	guint count;
 	GRegex *re_info;
-	GMatchInfo *match_info;
 	tChangeVolProc ChangeVolProc;
 	tProcessDataProc ProcessDataProc;
+	char lastfile[PATH_MAX];
 } tArcData;
 
 typedef struct sProgressData
@@ -67,7 +70,6 @@ gboolean gOptSkipInfo = TRUE;
 
 static void UpdatePreview(uintptr_t pDlg)
 {
-
 	int is_wtf = SendDlgMsg(pDlg, "cbWTF", DM_ENABLE, 1, 0);
 	SendDlgMsg(pDlg, "cbWTF", DM_ENABLE, is_wtf, 0);
 	char *value = (char*)SendDlgMsg(pDlg, "cbCompr", DM_GETTEXT, 0, 0);
@@ -245,12 +247,12 @@ intptr_t DCPCALL OptDlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, int
 		}
 		else if (strcmp(DlgItemName, "cbCompr") == 0)
 		{
-/*
+		/*
 			if (wParam < 2)
 				SendDlgMsg(pDlg, "cbBlock", DM_LISTSETITEMINDEX, 4, 0);
 			else
 				SendDlgMsg(pDlg, "cbBlock", DM_LISTSETITEMINDEX, 6, 0);
-*/
+		*/
 
 			int is_wtf = (wParam > 5 || SendDlgMsg(pDlg, "chWTF", DM_GETCHECK, 0, 0));
 			SendDlgMsg(pDlg, "cbWTF", DM_ENABLE, is_wtf, 0);
@@ -302,7 +304,6 @@ static gpointer ReadOutput(gpointer userdata)
 
 			if (num > 0 && num < 100)
 				*data->progress = num;
-
 		}
 
 		g_free(line);
@@ -326,9 +327,7 @@ static int ExecuteArchiver(char *workdir, char **argv, char *filename, tProcessD
 	if (!g_spawn_async_with_pipes(workdir, argv, NULL, flags, NULL, NULL, &pid, NULL, &stdout, NULL, &err))
 	{
 		if (err)
-		{
 			MessageBox(err->message, PLUGNAME,  MB_OK | MB_ICONERROR);
-		}
 
 		result = E_EABORTED;
 	}
@@ -403,7 +402,7 @@ HANDLE DCPCALL OpenArchive(tOpenArchiveData *ArchiveData)
 
 		g_free(stdout);
 		g_free(stderr);
-		ArchiveData->OpenResult = E_EOPEN;
+		ArchiveData->OpenResult = E_HANDLED;
 		return E_SUCCESS;
 	}
 
@@ -454,20 +453,69 @@ HANDLE DCPCALL OpenArchive(tOpenArchiveData *ArchiveData)
 	if (stdout)
 	{
 		g_clear_error(&err);
-		data->arc = g_strdup(ArchiveData->ArcName);
-		data->output = stdout;
-		data->re = g_regex_new(RE_LIST, G_REGEX_MULTILINE, 0, &err);
+		data->lines = g_strsplit(stdout, "\n", -1);
+		data->count = g_strv_length(data->lines);
+
+		if (data->count < 3 || strncmp(data->lines[0], "zpaq v7.15 ", 11) != 0)
+		{
+			if (err)
+				g_error_free(err);
+
+			g_strfreev(data->lines);
+			g_free(stdout);
+			g_free(data);
+			if (data->count < 3)
+				ArchiveData->OpenResult = E_NO_FILES;
+			else
+			{
+				MessageBox("Only zpaq v7.15 is supported!", PLUGNAME,  MB_OK | MB_ICONERROR);
+				ArchiveData->OpenResult = E_HANDLED;
+			}
+
+			return E_SUCCESS;
+		}
+
+		data->re = g_regex_new(RE_LIST, 0, 0, &err);
 
 		if (data->re)
-			g_regex_match(data->re, data->output, 0, &data->match_info);
+		{
+			for (guint i = 3; i < data->count; i++)
+			{
+				if (g_regex_match(data->re, data->lines[i], 0, NULL))
+				{
+					data->cur = i;
+					break;
+				}
+			}
+		}
 		else
+		{
+			g_strfreev(data->lines);
+			g_free(stdout);
+			g_free(data);
+			ArchiveData->OpenResult = E_HANDLED;
 			MessageBox(err->message, PLUGNAME,  MB_OK | MB_ICONERROR);
+
+			if (err)
+				g_error_free(err);
+
+			return E_SUCCESS;
+		}
+
+		data->arc = g_strdup(ArchiveData->ArcName);
 
 		if (strcmp(gOptVerNum, "0") != 0)
 			data->re_info = g_regex_new(RE_INFO, 0, 0, NULL);
 	}
 	else
+	{
+		if (err)
+			g_error_free(err);
+
+		g_free(data);
 		ArchiveData->OpenResult = E_UNKNOWN_FORMAT;
+		return E_SUCCESS;
+	}
 
 	if (err)
 		g_error_free(err);
@@ -485,83 +533,90 @@ int DCPCALL ReadHeaderEx(HANDLE hArcData, tHeaderDataEx *HeaderDataEx)
 	ArcData data = (ArcData)hArcData;
 
 	gchar *string;
+	GMatchInfo *match_info;
 
-	while (g_match_info_matches(data->match_info))
+	while (data->cur < data->count - 3)
 	{
-		string = g_match_info_fetch_named(data->match_info, "name");
-
-		if (string)
+		if (g_regex_match(data->re, data->lines[data->cur++], 0, &match_info) && g_match_info_matches(match_info))
 		{
-			if (data->re_info && gOptSkipInfo && g_regex_match(data->re_info, string, 0, NULL))
+			string = g_match_info_fetch_named(match_info, "name");
+
+			if (string)
 			{
+				if (data->re_info && gOptSkipInfo && g_regex_match(data->re_info, string, 0, NULL))
+				{
+					char *p = strrchr(string, '/');
 
-				char *p = strrchr(string, '/');
+					if (p)
+						*p = '\0';
 
-				if (p)
-					*p = '\0';
+					g_strlcpy(HeaderDataEx->FileName, string, sizeof(HeaderDataEx->FileName) - 1);
 
-				g_strlcpy(HeaderDataEx->FileName, string, sizeof(HeaderDataEx->FileName) - 1);
+					g_free(string);
 
-				g_free(string);
+					string = g_match_info_fetch_named(match_info, "date");
 
-				string = g_match_info_fetch_named(data->match_info, "date");
+					if (string)
+						HeaderDataEx->FileTime = ParseUtcDate(string);
 
-				if (string)
-					HeaderDataEx->FileTime = ParseUtcDate(string);
+					g_free(string);
 
-				g_free(string);
+					HeaderDataEx->FileAttr = S_IFDIR | S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH;
+					data->lastfile[0] = '\0';
+					return E_SUCCESS;
+				}
 
-				HeaderDataEx->FileAttr = S_IFDIR | S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH;
-				return E_SUCCESS;
+				if (string[0] != '/')
+					g_strlcpy(HeaderDataEx->FileName, string, sizeof(HeaderDataEx->FileName) - 1);
+				else
+					g_strlcpy(HeaderDataEx->FileName, ERRFILE, sizeof(HeaderDataEx->FileName) - 1);
+
+				g_strlcpy(data->lastfile, string, PATH_MAX);
 			}
-
-			if (string[0] != '/')
-				g_strlcpy(HeaderDataEx->FileName, string, sizeof(HeaderDataEx->FileName) - 1);
 			else
 				g_strlcpy(HeaderDataEx->FileName, ERRFILE, sizeof(HeaderDataEx->FileName) - 1);
-		}
-		else
-			g_strlcpy(HeaderDataEx->FileName, ERRFILE, sizeof(HeaderDataEx->FileName) - 1);
 
-		g_free(string);
+			g_free(string);
 
-		string = g_match_info_fetch_named(data->match_info, "attr");
+			string = g_match_info_fetch_named(match_info, "attr");
 
-		if (string)
-		{
-			if (string[0] == 'd')
+			if (string)
 			{
-				HeaderDataEx->FileAttr = S_IFDIR;
-				HeaderDataEx->FileAttr |= strtol(string + 1, NULL, 8);
+				if (string[0] == 'd')
+				{
+					HeaderDataEx->FileAttr = S_IFDIR;
+					HeaderDataEx->FileAttr |= strtol(string + 1, NULL, 8);
+				}
+				else
+					HeaderDataEx->FileAttr = strtol(string, NULL, 8);
 			}
-			else
-				HeaderDataEx->FileAttr = strtol(string, NULL, 8);
+
+			g_free(string);
+
+			string = g_match_info_fetch_named(match_info, "size");
+
+			if (string)
+			{
+				gdouble filesize = g_ascii_strtod(string, NULL);
+				HeaderDataEx->UnpSizeHigh = ((int64_t)filesize & 0xFFFFFFFF00000000) >> 32;
+				HeaderDataEx->UnpSize = (int64_t)filesize & 0x00000000FFFFFFFF;
+			}
+
+			g_free(string);
+
+			HeaderDataEx->PackSizeHigh = 0xFFFFFFFF;
+			HeaderDataEx->PackSize = 0xFFFFFFFE;
+
+			string = g_match_info_fetch_named(match_info, "date");
+
+			if (string)
+				HeaderDataEx->FileTime = ParseUtcDate(string);
+
+			g_free(string);
+			g_match_info_free(match_info);
+
+			return E_SUCCESS;
 		}
-
-		g_free(string);
-
-		string = g_match_info_fetch_named(data->match_info, "size");
-
-		if (string)
-		{
-			gdouble filesize = g_ascii_strtod(string, NULL);
-			HeaderDataEx->UnpSizeHigh = ((int64_t)filesize & 0xFFFFFFFF00000000) >> 32;
-			HeaderDataEx->UnpSize = (int64_t)filesize & 0x00000000FFFFFFFF;
-		}
-
-		g_free(string);
-
-		HeaderDataEx->PackSizeHigh = 0xFFFFFFFF;
-		HeaderDataEx->PackSize = 0xFFFFFFFE;
-
-		string = g_match_info_fetch_named(data->match_info, "date");
-
-		if (string)
-			HeaderDataEx->FileTime = ParseUtcDate(string);
-
-		g_free(string);
-
-		return E_SUCCESS;
 	}
 
 	return E_END_ARCHIVE;
@@ -578,24 +633,12 @@ int DCPCALL ProcessFile(HANDLE hArcData, int Operation, char *DestPath, char *De
 	else if (Operation != PK_SKIP)
 	{
 		gboolean is_test = (Operation == PK_TEST);
-		gchar *arc_path = g_match_info_fetch_named(data->match_info, "name");
 
-		if (!arc_path)
-		{
-			g_free(arc_path);
-			g_match_info_next(data->match_info, NULL);
-			return E_NOT_SUPPORTED;
-		}
-
-		if (data->re_info && !gOptSkipInfo && g_regex_match(data->re_info, arc_path, 0, NULL))
-		{
-			g_free(arc_path);
-			g_match_info_next(data->match_info, NULL);
+		if (data->lastfile[0] == '\0')
 			return E_SUCCESS;
-		}
 
 		gchar *args = g_strdup_printf("zpaq\nx\n%s\n%s\n-all\n%s\n-threads\n%s\n%s%s\n-f",
-		                              data->arc, arc_path, gOptVerNum, gOptThreads,
+		                              data->arc, data->lastfile, gOptVerNum, gOptThreads,
 		                              is_test ? "-test" : "-to\n", is_test ? "" : DestName);
 
 		if (gPass[0] != '\0')
@@ -607,22 +650,13 @@ int DCPCALL ProcessFile(HANDLE hArcData, int Operation, char *DestPath, char *De
 
 		gchar **argv = g_strsplit(args, "\n", -1);
 		g_free(args);
-		result = ExecuteArchiver(NULL, argv, arc_path, data->ProcessDataProc, -1000);
+		result = ExecuteArchiver(NULL, argv, data->lastfile, data->ProcessDataProc, -1000);
 		g_strfreev(argv);
-		data->ProcessDataProc(arc_path, -1100);
-		g_free(arc_path);
+		data->ProcessDataProc(data->lastfile, -1100);
 	}
 
-	gint pos;
-	size_t len = strlen(data->output);
-
-	if (len != 0 && g_match_info_fetch_pos(data->match_info, 0, &pos, NULL))
-	{
-		int progress = (int)(pos * 100 / len);
-		data->ProcessDataProc(DestName, -progress);
-	}
-
-	g_match_info_next(data->match_info, NULL);
+	int progress = (int)(data->cur * 100 / data->count);
+	data->ProcessDataProc(DestName, -progress);
 
 	return result;
 }
@@ -634,9 +668,8 @@ int DCPCALL CloseArchive(HANDLE hArcData)
 	if (data->re_info)
 		g_regex_unref(data->re_info);
 
-	g_match_info_free(data->match_info);
 	g_regex_unref(data->re);
-	g_free(data->output);
+	g_strfreev(data->lines);
 	g_free(data->arc);
 	g_free(data);
 
