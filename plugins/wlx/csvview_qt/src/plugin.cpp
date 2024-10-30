@@ -49,7 +49,7 @@ static QStringList parse_line(QByteArray line, char *enc, char separator)
 	if (rawlist.isEmpty())
 		return rawlist;
 
-	if (rawlist.last().back() == '\n')
+	if (!rawlist.last().isEmpty() && rawlist.last().back() == '\n')
 		rawlist.last().remove(-1, 1);
 
 	if (!gQuoted || separator == '\t')
