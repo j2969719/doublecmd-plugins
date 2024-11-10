@@ -1,2 +1,0 @@
-#!/bin/bash
-unshield $*  | tr ' ' '_' | tr '>' '_' | tr '<' '_' | sed 's/^_*//g'

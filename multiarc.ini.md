@@ -9,7 +9,6 @@ Also some separate files can be found [here](multiarc) (use *Options* > *Archive
 - [AppImage](#appimage)
 - [Base64](#b64)
 - [cmdTotal + Wine](#cmdtotal)
-- [InstallShield](#unshield)
 - [TC WCX Test + Wine](#wcxtest)
 - [UUEncode](#uue)
 
@@ -50,24 +49,6 @@ Add=%P -eb %AQ %FQ
 Script [base64uue](scripts/base64uue), [forum](https://doublecmd.sourceforge.io/forum/viewtopic.php?p=24877#p24877)
 
 ---
-<a name="unshield"><h3>InstallShield</h3></a>
-```ini
-[InstallShield]
-Archiver=$COMMANDER_PATH/scripts/unshield
-Description=installshield
-ID=49 53 63 28
-IDPos=0
-IDSeekRange=0
-Start=^Cabinet
-End=^--------
-Format0=z+__n+
-List=%P l %AQ
-Extract=%P x %AQ
-FormMode=6
-```
-Script [unshield](scripts/unshield)
-
----
 <a name="uue"><h3>UUEncode</h3></a>
 ```ini
 [UUEncode]
@@ -84,26 +65,49 @@ Script [base64uue](scripts/base64uue), [forum](https://doublecmd.sourceforge.io/
 ---
 <a name="wcxtest"><h3>TC WCX Test + Wine</h3></a>
 ```ini
-[wcxtest]
-Archiver=$COMMANDER_PATH/scripts/wcxtest
-Description=TC WCX Test - https://totalcmd.net/plugring/WCXTest.html
+[MhtUnPack]
+Archiver=$HOME/.local/share/doublecmd/scripts/multiarc/wcx/wcxtest
+Description=wcxtest + MhtUnPack.wcx
+Extension=mht,mhtml,msg,xxe
 Start=^---------
-Format0=$z+$yyyy?tt?dd hh?mm?ss$aaaaaa$n+
-List=%PQU -l %AQ
-Extract=%PQU -x %AQ %LQU
-FormMode=10
+Format0=zzzzzzzzz  yyyy tt dd hh mm ss  aaaaaa	n+
+List=%P -l MhtUnPack.wcx %AQ
+Extract=%P -x MhtUnPack.wcx %AQ .
+ExtractWithoutPath=
+Test=%P -t MhtUnPack.wcx %AQ
+Flags=2
 ```
-Script [wcxtest](scripts/wcxtest)
+Script [wcxtest](scripts/multiarc/wcx/wcxtest)
 
 ---
 <a name="cmdtotal"><h3>cmdTotal + Wine</h3></a>
 ```ini
-[cmdtotal]
-Archiver=$COMMANDER_PATH/scripts/cmdtotal
-Description=cmdTotal - http://totalcmd.net/plugring/cmdtotal.html
-Format0=$?? n+
-List=%PQU l %AQ
-Extract=%PQU x %AQ %LQU
+[TotalObserver]
+Archiver=$HOME/.local/share/doublecmd/scripts/multiarc/wcx/cmdTotal
+Description=cmdTotal + TotalObserver.wcx
+Extension=cab,msi
+Start=^Target directory:
+Format0=???????n+
+List=%P TotalObserver.wcx l %AQ
+Extract=%P TotalObserver.wcx x %AQ .
+ExtractWithoutPath=
+Test=%P TotalObserver.wcx t %AQ
+Flags=2
 FormMode=2
 ```
-Script [cmdtotal](scripts/cmdtotal)
+
+```ini
+[wcres]
+Archiver=$HOME/.local/share/doublecmd/scripts/multiarc/wcx/cmdTotal
+Description=cmdTotal + wcres.wcx
+Extension=exe,dll,icl
+Start=^Target directory:
+Format0=???????n+
+List=%P wcres.wcx l %AQ
+Extract=%P wcres.wcx x %AQ .
+ExtractWithoutPath=
+Test=%P TotalObserver.wcx t %AQ
+Flags=2
+FormMode=2
+```
+Script [cmdtotal](scripts/multiarc/wcx/cmdtotal)

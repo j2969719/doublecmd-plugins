@@ -1,0 +1,31 @@
+#!/bin/bash
+
+exe=`basename "$0"`".exe"
+srcdir=`dirname "$0"`
+exe="$srcdir/bin/$exe"
+
+
+cmd=("${exe}")
+
+if [ $# -gt 0 ] ; then
+  cmd+=("${1}")
+fi
+
+if [ $# -gt 1 ] ; then
+  path=`winepath -w "$srcdir/bin/$2"`
+  cmd+=("${path}")
+fi
+
+if [ $# -gt 2 ] ; then
+  path=`winepath -w "$3"`
+  cmd+=("${path}")
+fi
+
+if [ $# -eq 3 ] ; then
+  path=`winepath -w "$PWD"`
+  cmd+=("${path}")
+fi
+
+export WINEDEBUG=-all
+
+wine "${cmd[@]}"

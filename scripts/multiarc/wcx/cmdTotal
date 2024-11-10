@@ -1,0 +1,24 @@
+#!/bin/bash
+
+exe=`basename "$0"`".exe"
+srcdir=`dirname "$0"`
+exe="$srcdir/bin/$exe"
+
+cmd=("${exe}")
+
+for arg in "${@}" ; do
+  chr=${arg:0:1}
+  if [ "$chr" == "/" ] || [ -e "$arg" ] ; then
+    arg=`winepath -w "$arg"`
+  fi
+  cmd+=("${arg}")
+done
+
+if [ $# -eq 3 ] ; then
+  path=`winepath -w "$PWD"`
+  cmd+=("${path}")
+fi
+
+export WINEDEBUG=-all
+
+wine "${cmd[@]}"
