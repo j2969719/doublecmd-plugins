@@ -1,5 +1,5 @@
 -- SaveClipboardToFileCtrlV.lua (cross-platform)
--- 2022.01.27
+-- 2024.11.16
 --[[
 Replacing the action of the Ctrl+V keys:
 script will save text from clipboard (if exists) or call cm_PasteFromClipboard.
@@ -17,11 +17,17 @@ local params = {...}
 
 local d = Clipbrd.GetAsText()
 if string.len(d) > 0 then
-  local tf = params[1] .. SysUtils.PathDelim .. "Clipboard Text.txt"
+  local tp, tf
+  if (SysUtils.PathDelim == "\\") and (string.len(params[1]) == 3) and (string.sub(params[1], 2, 3) == ":\\") then
+    tp = string.sub(params[1], 1, 2)
+  else
+    tp = params[1]
+  end
+  tf = tp .. SysUtils.PathDelim .. "Clipboard Text.txt"
   if SysUtils.FileExists(tf) == true then
     local c = 2
     while true do
-      tf = params[1] .. SysUtils.PathDelim .. "Clipboard Text(" .. c .. ").txt"
+      tf = tp .. SysUtils.PathDelim .. "Clipboard Text(" .. c .. ").txt"
       if SysUtils.FileExists(tf) == false then
         break
       end

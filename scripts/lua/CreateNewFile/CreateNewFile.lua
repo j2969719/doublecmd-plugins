@@ -1,5 +1,5 @@
 -- CreateNewFile.lua (cross-platform)
--- 2020.11.02
+-- 2024.11.16
 --
 -- Create new file using the template(s)
 -- Params:
@@ -24,7 +24,7 @@ DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
 
 local params = {...}
 local items = {}
-local hd, fd, rt, st, i, ba, tf, bp, h, ct
+local hd, fd, rt, st, i, ba, tp, tf, bp, h, ct
 local mode = 'wb'
 local sn = 'new'
 
@@ -50,7 +50,12 @@ if #items >= 1 then
   while i ~= 1 do
     ba, sn = Dialogs.InputQuery('Type: ' .. st, 'Enter filename:', false, sn)
     if ba == false then return end
-    tf = params[1] .. SysUtils.PathDelim .. string.gsub(st, '(.+)(%.[^%.]+)$', sn .. '%2')
+    if (SysUtils.PathDelim == "\\") and (string.len(params[1]) == 3) and (string.sub(params[1], 2, 3) == ":\\") then
+      tp = string.sub(params[1], 1, 2)
+    else
+      tp = params[1]
+    end
+    tf = tp .. SysUtils.PathDelim .. string.gsub(st, '(.+)(%.[^%.]+)$', sn .. '%2')
     if SysUtils.FileExists(tf) == false then break end
     bp = Dialogs.MessageBox('File "' .. tf .. '" already exists!\n\nOverwrite?', 'Create new file', 0x0003 + 0x0030 + 0x0100)
     if bp == 0x0006 then

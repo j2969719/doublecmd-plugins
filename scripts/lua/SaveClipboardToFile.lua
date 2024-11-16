@@ -1,5 +1,5 @@
 -- SaveClipboardToFile.lua (cross-platform)
--- 2020.11.02
+-- 2024.11.16
 --[[
 Save clipboard contents to text file
 File extension is "txt" by default.
@@ -33,11 +33,16 @@ if (fc == nil) or (fc == '') then
   return
 end
 
-local fn, ba, bp, nn
+local tp, fn, ba, bp, nn
 while true do
   ba, nn = Dialogs.InputQuery(sn, 'Enter filename:', false, 'new')
   if ba == false then return end
-  fn = params[1] .. SysUtils.PathDelim .. nn .. '.txt'
+  if (SysUtils.PathDelim == "\\") and (string.len(params[1]) == 3) and (string.sub(params[1], 2, 3) == ":\\") then
+    tp = string.sub(params[1], 1, 2)
+  else
+    tp = params[1]
+  end
+  fn = tp .. SysUtils.PathDelim .. nn .. '.txt'
   if SysUtils.FileExists(fn) == false then break end
   bp = Dialogs.MessageBox('File "' .. nn .. '.txt" already exists!\n\nOverwrite?', sn, 0x0003 + 0x0030 + 0x0100)
   if bp == 0x0006 then

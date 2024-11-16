@@ -1,5 +1,5 @@
 -- MakeDir.lua (cross-platform)
--- 2024.03.24
+-- 2024.11.16
 --
 -- Creating directory(ies) with additional features.
 --[[
@@ -156,11 +156,16 @@ local lst = {}
 local res = {}
 local r = {}
 local n1, n2, c1, c2, c3, t
+if (SysUtils.PathDelim == "\\") and (string.len(params[1]) == 3) and (string.sub(params[1], 2, 3) == ":\\") then
+  t = string.sub(params[1], 1, 2)
+else
+  t = params[1]
+end
 for l in string.gmatch(dn, "[^|]+") do
   if PathIsAbsolute(l) then
     table.insert(lst, l)
   else
-    table.insert(lst, params[1] .. SysUtils.PathDelim .. l)
+    table.insert(lst, t .. SysUtils.PathDelim .. l)
   end
 end
 for i = 1, #lst do
