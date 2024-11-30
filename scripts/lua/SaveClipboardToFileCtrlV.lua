@@ -1,5 +1,5 @@
 -- SaveClipboardToFileCtrlV.lua (cross-platform)
--- 2024.11.16
+-- 2024.11.30
 --[[
 Replacing the action of the Ctrl+V keys:
 script will save text from clipboard (if exists) or call cm_PasteFromClipboard.
@@ -33,18 +33,18 @@ if string.len(d) > 0 then
       end
       c = c + 1
     end
-    local h = io.open(tf, "wb")
-    if h == nil then
-      Dialogs.MessageBox("Unknown error.", "Save text from clipboard", 0x0030)
-      return
-    end
-    h:write(d)
-    h:close()
-    if (#params == 2) and (params[2] == "--move-cursor") then
-      DC.ExecuteCommand("cm_Refresh")
-      DC.ExecuteCommand("cm_QuickSearch", "search=on", "direction=first", "matchbeginning=on", "matchending=off", "casesensitive=on", "files=on", "directories=off", "text=" .. SysUtils.ExtractFileName(tf))
-      DC.ExecuteCommand("cm_QuickSearch", "search=off")
-    end
+  end
+  local h = io.open(tf, "wb")
+  if h == nil then
+    Dialogs.MessageBox("Unknown error.", "Save text from clipboard", 0x0030)
+    return
+  end
+  h:write(d)
+  h:close()
+  if (#params == 2) and (params[2] == "--move-cursor") then
+    DC.ExecuteCommand("cm_Refresh")
+    DC.ExecuteCommand("cm_QuickSearch", "search=on", "direction=first", "matchbeginning=on", "matchending=off", "casesensitive=on", "files=on", "directories=off", "text=" .. SysUtils.ExtractFileName(tf))
+    DC.ExecuteCommand("cm_QuickSearch", "search=off")
   end
 else
   DC.ExecuteCommand("cm_PasteFromClipboard")
