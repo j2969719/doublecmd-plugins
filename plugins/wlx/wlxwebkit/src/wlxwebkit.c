@@ -57,6 +57,12 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	gtk_container_add(GTK_CONTAINER((GtkWidget*)(ParentWin)), gFix);
 	webView = webkit_web_view_new();
 
+	// looks like scripts are broken with webkitgtk2 from aur so..
+/*
+	WebKitWebSettings *settings = webkit_web_view_get_settings(WEBKIT_WEB_VIEW(webView));
+	g_object_set(G_OBJECT(settings), "enable-scripts", FALSE, NULL);
+	webkit_web_view_set_settings(WEBKIT_WEB_VIEW(webView), settings);
+*/
 	// https://doublecmd.sourceforge.io/forum/viewtopic.php?f=8&t=4106&start=72#p22156
 	WebKitFaviconDatabase *database = webkit_get_favicon_database();
 	webkit_favicon_database_set_path(database, NULL);

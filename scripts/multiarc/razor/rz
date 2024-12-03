@@ -12,7 +12,6 @@ for arg in "${@}" ; do
     arg=`winepath -w "$arg"`
   elif [ "$chr" == "@" ] ; then
     arg=@`winepath -w "${arg:1}"`
-    echo "$arg"
   fi
   cmd+=("${arg}")
 done
