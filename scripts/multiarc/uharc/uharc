@@ -4,7 +4,7 @@ exe="UHARC.EXE"
 srcdir=`dirname "$0"`
 exe="$srcdir/bin/$exe"
 
-cmd=("${exe}")
+cmd=(wine "${exe}")
 
 for arg in "${@}" ; do
   chr=${arg:0:1}
@@ -17,5 +17,5 @@ for arg in "${@}" ; do
 done
 
 export WINEDEBUG=-all
-
-wine "${cmd[@]}"
+# scriptkid lvl over 9000
+script --return -qfc "`printf "%q " "${cmd[@]}"`" /dev/null | sed -e "s/\x1B\[?25[hl]//g" | tr -d '\r'

@@ -10,6 +10,7 @@ Also some separate files can be found [here](multiarc) (use *Options* > *Archive
 - [Base64](#b64)
 - [cmdTotal + Wine](#cmdtotal)
 - [TC WCX Test + Wine](#wcxtest)
+- [UHARC + Wine](#uharc)
 - [UUEncode](#uue)
 
 
@@ -76,6 +77,7 @@ Extract=%P -x MhtUnPack.wcx %AQ .
 ExtractWithoutPath=
 Test=%P -t MhtUnPack.wcx %AQ
 Flags=2
+FallBackArchivers=$HOME/.local/share/doublecmd/scripts/multiarc/wcx/wcxtest,$COMMANDER_PATH/scripts/multiarc/wcx/wcxtest
 ```
 Script [wcxtest](scripts/multiarc/wcx/wcxtest)
 
@@ -94,6 +96,7 @@ ExtractWithoutPath=
 Test=%P TotalObserver.wcx t %AQ
 Flags=2
 FormMode=2
+FallBackArchivers=$HOME/.local/share/doublecmd/scripts/multiarc/wcx/cmdTotal,$COMMANDER_PATH/scripts/multiarc/wcx/cmdTotal
 ```
 
 ```ini
@@ -109,5 +112,30 @@ ExtractWithoutPath=
 Test=%P TotalObserver.wcx t %AQ
 Flags=2
 FormMode=2
+FallBackArchivers=$HOME/.local/share/doublecmd/scripts/multiarc/wcx/cmdTotal,$COMMANDER_PATH/scripts/multiarc/wcx/cmdTotal
 ```
 Script [cmdtotal](scripts/multiarc/wcx/cmdtotal)
+
+---
+<a name="uharc"><h3>UHARC + Wine</h3></a>
+```ini
+[UHARC]
+Archiver=$HOME/.local/share/doublecmd/scripts/multiarc/uharc/uharc
+Description=UHARC 0.6b
+ID=55 48 41 06
+IDPos=0
+IDSeekRange=0
+Extension=uha
+Start=^--------
+End=^--------
+Format0=n+
+Format1=                         zzzzzzzzzzzzzzz  dd TTT yyyy  hh mm ss  aaaa  *
+List=%P l -d2 -y {-pw%W} %AQ
+Extract=%P x -y %AQ {-pw%W} @%LQ
+ExtractWithoutPath=%P e -y %AQ {-pw%W} @%LQ
+Test=%P t -y -idle{ %S} %AQ
+Add=%P a -y {%S} -ed+ {-pw%W} %AQ @%LQ
+FormMode=10
+FallBackArchivers=$HOME/.local/share/doublecmd/scripts/multiarc/uharc/uharc,$COMMANDER_PATH/scripts/multiarc/uharc/uharc,%ProgramFiles%\UHARC\UHARC.EXE
+```
+Script [uharc](scripts/multiarc/uharc/uharc)
