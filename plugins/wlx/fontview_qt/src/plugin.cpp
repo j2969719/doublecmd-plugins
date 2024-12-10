@@ -46,10 +46,11 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 	if (gItalic)
 		italic->setCheckState(Qt::Checked);
 
-	QObject::connect(usertext, &QLineEdit::textChanged, [preview](QString text)
+	QObject::connect(usertext, &QLineEdit::textChanged, [preview, usertext](QString text)
 	{
 		gText = text;
 		preview->setText(text);
+		usertext->setToolTip(text);
 	});
 
 	QObject::connect(families, &QComboBox::currentTextChanged, [families, bold, italic, fontsize, preview](QString text)
@@ -62,7 +63,11 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 		preview->setFont(font);
 	});
 
+#if QT_VERSION >= 0x060000
+	QObject::connect(bold, &QCheckBox::checkStateChanged, [preview](int state)
+#else
 	QObject::connect(bold, &QCheckBox::stateChanged, [preview](int state)
+#endif
 	{
 		gBold = (state == Qt::Checked);
 		QFont font = preview->font();
@@ -70,7 +75,11 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 		preview->setFont(font);
 	});
 
+#if QT_VERSION >= 0x060000
+	QObject::connect(italic, &QCheckBox::checkStateChanged, [preview](int state)
+#else
 	QObject::connect(italic, &QCheckBox::stateChanged, [preview](int state)
+#endif
 	{
 		gItalic = (state == Qt::Checked);
 		QFont font = preview->font();
