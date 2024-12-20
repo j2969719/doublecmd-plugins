@@ -1,0 +1,408 @@
+<UniHighlighter version="1.8.1">
+  <Info>
+    <General Name="QMake*" Extensions="PRO"/>
+    <Author Name="Skif_off" Email="" Web="" Copyright="" Company="" Remark=""/>
+    <Version Version="0" Revision="1" Date="45646,4224631829"/>
+    <History>
+    </History>
+    <Sample>
+      <S>#     qmake INSTALL_PREFIX=/usr/local</S>
+      <S></S>
+      <S>CONFIG += opengl</S>
+      <S>SUBDIRS  = src doc</S>
+    </Sample>
+  </Info>
+  <Scheme File="" Name=""/>
+  <Range Name="Root" Attributes="0,16777215;False:False." Style="" CaseSensitive="True"
+         Delimiters="!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^`{|}~">
+    <Rule/>
+    <Keywords Name="Operators and other" Attributes="128,16777215;False:False." Style="">
+      <word value="+="/>
+      <word value="-="/>
+      <word value="*="/>
+      <word value="~="/>
+      <word value="="/>
+      <word value="!"/>
+      <word value="|"/>
+      <word value=":"/>
+      <word value="/"/>
+      <word value="$"/>
+      <word value="("/>
+      <word value=")"/>
+      <word value="["/>
+      <word value="]"/>
+      <word value="{"/>
+      <word value="}"/>
+    </Keywords>
+    <Keywords Name="Keys" Attributes="128,16777215;False:False." Style="">
+      <word value=".combine"/>
+      <word value=".commands"/>
+      <word value=".dep_existing_only"/>
+      <word value=".dep_lines"/>
+      <word value=".depend_command"/>
+      <word value=".dependency_type"/>
+      <word value=".depends"/>
+      <word value=".explicit_dependencies"/>
+      <word value=".input"/>
+      <word value=".name"/>
+      <word value=".no_link"/>
+      <word value=".output"/>
+      <word value=".output_function"/>
+      <word value=".recurse"/>
+      <word value=".recurse_target"/>
+      <word value=".target"/>
+      <word value=".target_predeps"/>
+      <word value=".variable_out"/>
+      <word value=".variables"/>
+    </Keywords>
+    <Keywords Name="Conditions" Attributes="16711680,16777215;False:False." Style="">
+      <word value="else"/>
+    </Keywords>
+    <Keywords Name="Built-in properties" Attributes="8388736,16777215;False:False." Style="">
+      <word value="QMAKE_SPEC"/>
+      <word value="QMAKE_VERSION"/>
+      <word value="QMAKE_XSPEC"/>
+      <word value="QT_HOST_BINS"/>
+      <word value="QT_HOST_DATA"/>
+      <word value="QT_HOST_LIBEXECS"/>
+      <word value="QT_HOST_LIBS"/>
+      <word value="QT_HOST_PREFIX"/>
+      <word value="QT_INSTALL_ARCHDATA"/>
+      <word value="QT_INSTALL_BINS"/>
+      <word value="QT_INSTALL_CONFIGURATION"/>
+      <word value="QT_INSTALL_DATA"/>
+      <word value="QT_INSTALL_DOCS"/>
+      <word value="QT_INSTALL_EXAMPLES"/>
+      <word value="QT_INSTALL_HEADERS"/>
+      <word value="QT_INSTALL_LIBEXECS"/>
+      <word value="QT_INSTALL_LIBS"/>
+      <word value="QT_INSTALL_PLUGINS"/>
+      <word value="QT_INSTALL_PREFIX"/>
+      <word value="QT_INSTALL_QML"/>
+      <word value="QT_INSTALL_TESTS"/>
+      <word value="QT_INSTALL_TRANSLATIONS"/>
+      <word value="QT_SYSROOT"/>
+      <word value="QT_VERSION"/>
+    </Keywords>
+    <Keywords Name="Variables" Attributes="8388736,16777215;False:False." Style="">
+      <word value="_PRO_FILE_"/>
+      <word value="_PRO_FILE_PWD_"/>
+      <word value="ANDROID_ABI"/>
+      <word value="ANDROID_ABIS"/>
+      <word value="ANDROID_API_VERSION"/>
+      <word value="ANDROID_APPLICATION_ARGUMENTS"/>
+      <word value="ANDROID_BUNDLED_JAR_DEPENDENCIES"/>
+      <word value="ANDROID_DEPLOYMENT_DEPENDENCIES"/>
+      <word value="ANDROID_DEPLOYMENT_SETTINGS_FILE"/>
+      <word value="ANDROID_EXTRA_LIBS"/>
+      <word value="ANDROID_EXTRA_PLUGINS"/>
+      <word value="ANDROID_FEATURES"/>
+      <word value="ANDROID_LIB_DEPENDENCIES"/>
+      <word value="ANDROID_MIN_SDK_VERSION"/>
+      <word value="ANDROID_PACKAGE_SOURCE_DIR"/>
+      <word value="ANDROID_PERMISSIONS"/>
+      <word value="ANDROID_TARGET_SDK_VERSION"/>
+      <word value="ANDROID_VERSION_CODE"/>
+      <word value="ANDROID_VERSION_NAME"/>
+      <word value="CONFIG"/>
+      <word value="DEF_FILE"/>
+      <word value="DEFINES"/>
+      <word value="DEFINES_DEBUG"/>
+      <word value="DEFINES_RELEASE"/>
+      <word value="DEPENDPATH"/>
+      <word value="DESTDIR"/>
+      <word value="DISTFILES"/>
+      <word value="DLLDESTDIR"/>
+      <word value="EXTRA_TRANSLATIONS"/>
+      <word value="FORMS"/>
+      <word value="GUID"/>
+      <word value="HEADERS"/>
+      <word value="ICON"/>
+      <word value="IDLSOURCES"/>
+      <word value="INCLUDEPATH"/>
+      <word value="INSTALLS"/>
+      <word value="JAVA_HOME"/>
+      <word value="LEXIMPLS"/>
+      <word value="LEXOBJECTS"/>
+      <word value="LEXSOURCES"/>
+      <word value="LIBS"/>
+      <word value="LIBS_PRIVATE"/>
+      <word value="LITERAL_HASH"/>
+      <word value="MAKEFILE"/>
+      <word value="MAKEFILE_GENERATOR"/>
+      <word value="MOC_DIR"/>
+      <word value="OBJECTIVE_HEADERS"/>
+      <word value="OBJECTIVE_SOURCES"/>
+      <word value="OBJECTS"/>
+      <word value="OBJECTS_DIR"/>
+      <word value="OUT_PWD"/>
+      <word value="POST_TARGETDEPS"/>
+      <word value="PRE_TARGETDEPS"/>
+      <word value="PRECOMPILED_HEADER"/>
+      <word value="PWD"/>
+      <word value="QM_FILES_INSTALL_PATH"/>
+      <word value="QM_FILES_RESOURCE_PREFIX"/>
+      <word value="QMAKE"/>
+      <word value="QMAKE_APPLE_DEVICE_ARCHS"/>
+      <word value="QMAKE_AR_CMD"/>
+      <word value="QMAKE_BUNDLE_DATA"/>
+      <word value="QMAKE_BUNDLE_EXTENSION"/>
+      <word value="QMAKE_CC"/>
+      <word value="QMAKE_CFLAGS"/>
+      <word value="QMAKE_CFLAGS_DEBUG"/>
+      <word value="QMAKE_CFLAGS_RELEASE"/>
+      <word value="QMAKE_CFLAGS_RELEASE_WITH_DEBUGINFO"/>
+      <word value="QMAKE_CFLAGS_SHLIB"/>
+      <word value="QMAKE_CFLAGS_THREAD"/>
+      <word value="QMAKE_CFLAGS_WARN_OFF"/>
+      <word value="QMAKE_CFLAGS_WARN_ON"/>
+      <word value="QMAKE_CLEAN"/>
+      <word value="QMAKE_CXX"/>
+      <word value="QMAKE_CXXFLAGS"/>
+      <word value="QMAKE_CXXFLAGS_DEBUG"/>
+      <word value="QMAKE_CXXFLAGS_RELEASE"/>
+      <word value="QMAKE_CXXFLAGS_RELEASE_WITH_DEBUGINFO"/>
+      <word value="QMAKE_CXXFLAGS_SHLIB"/>
+      <word value="QMAKE_CXXFLAGS_THREAD"/>
+      <word value="QMAKE_CXXFLAGS_WARN_OFF"/>
+      <word value="QMAKE_CXXFLAGS_WARN_ON"/>
+      <word value="QMAKE_DEVELOPMENT_TEAM"/>
+      <word value="QMAKE_DISTCLEAN"/>
+      <word value="QMAKE_EXT_CPP"/>
+      <word value="QMAKE_EXT_H"/>
+      <word value="QMAKE_EXT_LEX"/>
+      <word value="QMAKE_EXT_MOC"/>
+      <word value="QMAKE_EXT_OBJ"/>
+      <word value="QMAKE_EXT_PRL"/>
+      <word value="QMAKE_EXT_UI"/>
+      <word value="QMAKE_EXT_YACC"/>
+      <word value="QMAKE_EXTENSION_SHLIB"/>
+      <word value="QMAKE_EXTENSION_STATICLIB"/>
+      <word value="QMAKE_EXTRA_COMPILERS"/>
+      <word value="QMAKE_EXTRA_TARGETS"/>
+      <word value="QMAKE_FAILED_REQUIREMENTS"/>
+      <word value="QMAKE_FRAMEWORK_BUNDLE_NAME"/>
+      <word value="QMAKE_FRAMEWORK_VERSION"/>
+      <word value="QMAKE_HOST"/>
+      <word value="QMAKE_INCDIR"/>
+      <word value="QMAKE_INCDIR_EGL"/>
+      <word value="QMAKE_INCDIR_OPENGL"/>
+      <word value="QMAKE_INCDIR_OPENGL_ES2"/>
+      <word value="QMAKE_INCDIR_OPENVG"/>
+      <word value="QMAKE_INCDIR_X11"/>
+      <word value="QMAKE_INFO_PLIST"/>
+      <word value="QMAKE_IOS_DEPLOYMENT_TARGET"/>
+      <word value="QMAKE_IOS_LAUNCH_SCREEN"/>
+      <word value="QMAKE_LFLAGS"/>
+      <word value="QMAKE_LFLAGS_APP"/>
+      <word value="QMAKE_LFLAGS_CONSOLE"/>
+      <word value="QMAKE_LFLAGS_DEBUG"/>
+      <word value="QMAKE_LFLAGS_PLUGIN"/>
+      <word value="QMAKE_LFLAGS_REL_RPATH"/>
+      <word value="QMAKE_LFLAGS_RELEASE"/>
+      <word value="QMAKE_LFLAGS_RELEASE_WITH_DEBUGINFO"/>
+      <word value="QMAKE_LFLAGS_RPATH"/>
+      <word value="QMAKE_LFLAGS_RPATHLINK"/>
+      <word value="QMAKE_LFLAGS_SHLIB"/>
+      <word value="QMAKE_LFLAGS_SONAME"/>
+      <word value="QMAKE_LFLAGS_THREAD"/>
+      <word value="QMAKE_LFLAGS_WINDOWS"/>
+      <word value="QMAKE_LIB_FLAG"/>
+      <word value="QMAKE_LIBDIR"/>
+      <word value="QMAKE_LIBDIR_EGL"/>
+      <word value="QMAKE_LIBDIR_FLAGS"/>
+      <word value="QMAKE_LIBDIR_OPENGL"/>
+      <word value="QMAKE_LIBDIR_OPENVG"/>
+      <word value="QMAKE_LIBDIR_POST"/>
+      <word value="QMAKE_LIBDIR_X11"/>
+      <word value="QMAKE_LIBS"/>
+      <word value="QMAKE_LIBS_EGL"/>
+      <word value="QMAKE_LIBS_OPENGL"/>
+      <word value="QMAKE_LIBS_OPENGL_ES1"/>
+      <word value="QMAKE_LIBS_OPENGL_ES2"/>
+      <word value="QMAKE_LIBS_OPENVG"/>
+      <word value="QMAKE_LIBS_PRIVATE"/>
+      <word value="QMAKE_LIBS_THREAD"/>
+      <word value="QMAKE_LIBS_X11"/>
+      <word value="QMAKE_LINK"/>
+      <word value="QMAKE_LINK_SHLIB_CMD"/>
+      <word value="QMAKE_LN_SHLIB"/>
+      <word value="QMAKE_LRELEASE_FLAGS"/>
+      <word value="QMAKE_MAC_SDK"/>
+      <word value="QMAKE_MACOSX_DEPLOYMENT_TARGET"/>
+      <word value="QMAKE_MAKEFILE"/>
+      <word value="QMAKE_MANIFEST"/>
+      <word value="QMAKE_OBJECTIVE_CFLAGS"/>
+      <word value="QMAKE_POST_LINK"/>
+      <word value="QMAKE_PRE_LINK"/>
+      <word value="QMAKE_PROJECT_NAME"/>
+      <word value="QMAKE_PROVISIONING_PROFILE"/>
+      <word value="QMAKE_QMAKE"/>
+      <word value="QMAKE_REL_RPATH_BASE"/>
+      <word value="QMAKE_RESOURCE_FLAGS"/>
+      <word value="QMAKE_RPATHDIR"/>
+      <word value="QMAKE_RPATHLINKDIR"/>
+      <word value="QMAKE_RUN_CC"/>
+      <word value="QMAKE_RUN_CC_IMP"/>
+      <word value="QMAKE_RUN_CXX"/>
+      <word value="QMAKE_RUN_CXX_IMP"/>
+      <word value="QMAKE_SONAME_PREFIX"/>
+      <word value="QMAKE_TARGET"/>
+      <word value="QMAKE_TARGET_COMMENTS"/>
+      <word value="QMAKE_TARGET_COMPANY"/>
+      <word value="QMAKE_TARGET_COPYRIGHT"/>
+      <word value="QMAKE_TARGET_DESCRIPTION"/>
+      <word value="QMAKE_TARGET_INTERNALNAME"/>
+      <word value="QMAKE_TARGET_ORIGINAL_FILENAME"/>
+      <word value="QMAKE_TARGET_PRODUCT"/>
+      <word value="QMAKE_TARGET_TRADEMARKS"/>
+      <word value="QMAKE_TVOS_DEPLOYMENT_TARGET"/>
+      <word value="QMAKE_UIC_FLAGS"/>
+      <word value="QMAKE_WATCHOS_DEPLOYMENT_TARGET"/>
+      <word value="QMAKESPEC"/>
+      <word value="QML_FOREIGN_METATYPES"/>
+      <word value="QML_IMPORT_MAJOR_VERSION"/>
+      <word value="QML_IMPORT_MINOR_VERSION"/>
+      <word value="QML_IMPORT_NAME"/>
+      <word value="QML_IMPORT_PATH"/>
+      <word value="QML_IMPORT_VERSION"/>
+      <word value="QMLPATHS"/>
+      <word value="QT"/>
+      <word value="QT_MAJOR_VERSION"/>
+      <word value="QT_MINOR_VERSION"/>
+      <word value="QT_PATCH_VERSION"/>
+      <word value="QT_VERSION"/>
+      <word value="QTPLUGIN"/>
+      <word value="RC_CODEPAGE"/>
+      <word value="RC_DEFINES"/>
+      <word value="RC_FILE"/>
+      <word value="RC_ICONS"/>
+      <word value="RC_INCLUDEPATH"/>
+      <word value="RC_LANG"/>
+      <word value="RCC_DIR"/>
+      <word value="REQUIRES"/>
+      <word value="RES_FILE"/>
+      <word value="RESOURCES"/>
+      <word value="SOURCES"/>
+      <word value="SUBDIRS"/>
+      <word value="TARGET"/>
+      <word value="TARGET_EXT"/>
+      <word value="TEMPLATE"/>
+      <word value="TR_EXCLUDE"/>
+      <word value="TRANSLATIONS"/>
+      <word value="UI_DIR"/>
+      <word value="VER_MAJ"/>
+      <word value="VER_MIN"/>
+      <word value="VER_PAT"/>
+      <word value="VERSION"/>
+      <word value="VERSION_PE_HEADER"/>
+      <word value="VPATH"/>
+      <word value="WINDOWS_TARGET_PLATFORM_MIN_VERSION"/>
+      <word value="WINDOWS_TARGET_PLATFORM_VERSION"/>
+      <word value="WINRT_MANIFEST"/>
+      <word value="YACCSOURCES"/>
+    </Keywords>
+    <Keywords Name="Replace functions" Attributes="8388608,16777215;False:False." Style="">
+      <word value="absolute_path"/>
+      <word value="basename"/>
+      <word value="cat"/>
+      <word value="clean_path"/>
+      <word value="dirname"/>
+      <word value="enumerate_vars"/>
+      <word value="escape_expand"/>
+      <word value="files"/>
+      <word value="find"/>
+      <word value="first"/>
+      <word value="format_number"/>
+      <word value="fromfile"/>
+      <word value="getenv"/>
+      <word value="join"/>
+      <word value="last"/>
+      <word value="list"/>
+      <word value="lower"/>
+      <word value="member"/>
+      <word value="num_add"/>
+      <word value="prompt"/>
+      <word value="quote"/>
+      <word value="re_escape"/>
+      <word value="read_registry"/>
+      <word value="relative_path"/>
+      <word value="replace"/>
+      <word value="resolve_depends"/>
+      <word value="reverse"/>
+      <word value="section"/>
+      <word value="shadowed"/>
+      <word value="shell_path"/>
+      <word value="shell_quote"/>
+      <word value="size"/>
+      <word value="sort_depends"/>
+      <word value="sorted"/>
+      <word value="split"/>
+      <word value="sprintf"/>
+      <word value="str_member"/>
+      <word value="str_size"/>
+      <word value="system"/>
+      <word value="system_path"/>
+      <word value="system_quote"/>
+      <word value="take_first"/>
+      <word value="take_last"/>
+      <word value="unique"/>
+      <word value="upper"/>
+      <word value="val_escape"/>
+    </Keywords>
+    <Keywords Name="Test functions" Attributes="8388608,16777215;False:False." Style="">
+      <word value="cache"/>
+      <word value="contains"/>
+      <word value="count"/>
+      <word value="debug"/>
+      <word value="defined"/>
+      <word value="equals"/>
+      <word value="error"/>
+      <word value="eval"/>
+      <word value="exists"/>
+      <word value="export"/>
+      <word value="for"/>
+      <word value="greaterThan"/>
+      <word value="if"/>
+      <word value="include"/>
+      <word value="infile"/>
+      <word value="isActiveConfig"/>
+      <word value="isEmpty"/>
+      <word value="isEqual"/>
+      <word value="lessThan"/>
+      <word value="load"/>
+      <word value="log"/>
+      <word value="message"/>
+      <word value="mkpath"/>
+      <word value="packagesExist"/>
+      <word value="prepareRecursiveTarget"/>
+      <word value="qtCompileTest"/>
+      <word value="qtHaveModule"/>
+      <word value="requires"/>
+      <word value="system"/>
+      <word value="touch"/>
+      <word value="unset"/>
+      <word value="versionAtLeast"/>
+      <word value="versionAtMost"/>
+      <word value="warning"/>
+      <word value="write_file"/>
+    </Keywords>
+    <Range Name="Comment" Attributes="32768,16777215;False:False." Style="" CaseSensitive="True"
+           Delimiters="!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^`{|}~">
+      <Rule OpenSymbol="#" OpenSymbolStartLine="NonSpace" CloseOnEol="True"/>
+    </Range>
+    <Range Name="Accessing1" Attributes="255,16777215;False:False." Style="" CaseSensitive="True"
+           Delimiters="!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^`{|}~">
+      <Rule OpenSymbol="$$(" CloseSymbol=")"/>
+    </Range>
+    <Range Name="Accessing2" Attributes="255,16777215;False:False." Style="" CaseSensitive="True"
+           Delimiters="!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^`{|}~">
+      <Rule OpenSymbol="$$]" CloseSymbol="]"/>
+    </Range>
+    <Range Name="Strings &quot;..&quot;" Attributes="6908265,-2147483643;False:True." Style="" CaseSensitive="True"
+           Delimiters="!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^`{|}~">
+      <Rule OpenSymbol="&quot;" OpenSymbolPartOfTerm="Right" CloseSymbol="&quot;" CloseSymbolPartOfTerm="Right" CloseOnEol="True"/>
+    </Range>
+  </Range>
+  <CopyRight>Rule file for UniHighlighter Delphi component (Copyright(C) Fantasist(walking_in_the_sky@yahoo.com), Vit(nevzorov@yahoo.com), Vitalik(vetal-x@mail.ru), 2002-2004)</CopyRight>
+</UniHighlighter>
