@@ -1,0 +1,221 @@
+object DialogBox: TDialogBox
+  Left = 195
+  Height = 391
+  Top = 90
+  Width = 447
+  AutoSize = True
+  BorderStyle = bsDialog
+  Caption = 'Options'
+  ChildSizing.LeftRightSpacing = 10
+  ChildSizing.TopBottomSpacing = 10
+  ClientHeight = 391
+  ClientWidth = 447
+  Position = poOwnerFormCenter
+  LCLVersion = '4.0.0.1'
+  OnClose = DialogBoxClose
+  OnShow = DialogBoxShow
+  inline seCheatSheet: TSynEdit
+    AnchorSideLeft.Control = Owner
+    AnchorSideTop.Control = Owner
+    AnchorSideRight.Control = Owner
+    AnchorSideRight.Side = asrBottom
+    Cursor = crDefault
+    Left = 10
+    Height = 150
+    Top = 10
+    Width = 427
+    Anchors = [akTop, akLeft, akRight]
+    Color = clWindow
+    Font.Color = clWindowText
+    Font.Height = -15
+    Font.Name = 'Courier New'
+    Font.Pitch = fpFixed
+    Font.Quality = fqAntialiased
+    Font.Style = [fsBold]
+    ParentColor = False
+    ParentFont = False
+    TabOrder = 0
+    TabStop = False
+    Visible = False
+    Gutter.AutoSize = False
+    Gutter.Visible = False
+    Gutter.Width = 57
+    Gutter.MouseActions = <>
+    RightGutter.AutoSize = False
+    RightGutter.Width = 0
+    RightGutter.MouseActions = <>
+    Keystrokes = <>
+    MouseActions = <>
+    MouseTextActions = <>
+    MouseSelActions = <>
+    Options = [eoScrollPastEol, eoTrimTrailingSpaces]
+    Options2 = []
+    VisibleSpecialChars = []
+    ReadOnly = True
+    RightEdge = -1
+    ScrollBars = ssAutoBoth
+    SelectedColor.BackPriority = 50
+    SelectedColor.ForePriority = 50
+    SelectedColor.FramePriority = 50
+    SelectedColor.BoldPriority = 50
+    SelectedColor.ItalicPriority = 50
+    SelectedColor.UnderlinePriority = 50
+    SelectedColor.StrikeOutPriority = 50
+    BracketHighlightStyle = sbhsBoth
+    BracketMatchColor.Background = clNone
+    BracketMatchColor.Foreground = clNone
+    BracketMatchColor.Style = [fsBold]
+    FoldedCodeColor.Background = clNone
+    FoldedCodeColor.Foreground = clGray
+    FoldedCodeColor.FrameColor = clGray
+    MouseLinkColor.Background = clNone
+    MouseLinkColor.Foreground = clBlue
+    LineHighlightColor.Background = clNone
+    LineHighlightColor.Foreground = clNone
+    inline SynLeftGutterPartList1: TSynGutterPartList
+      object SynGutterMarks1: TSynGutterMarks
+        Width = 24
+        MouseActions = <>
+        MaxExtraMarksColums = 0
+        Options = [sgmoDeDuplicateMarksOnOverflow]
+      end
+      object SynGutterLineNumber1: TSynGutterLineNumber
+        Width = 19
+        MouseActions = <>
+        MarkupInfo.Background = clBtnFace
+        MarkupInfo.Foreground = clNone
+        DigitCount = 2
+        ShowOnlyLineNumbersMultiplesOf = 1
+        ZeroStart = False
+        LeadingZeros = False
+      end
+      object SynGutterChanges1: TSynGutterChanges
+        Width = 4
+        MouseActions = <>
+        ModifiedColor = 59900
+        SavedColor = clGreen
+      end
+      object SynGutterSeparator1: TSynGutterSeparator
+        Width = 2
+        MouseActions = <>
+        MarkupInfo.Background = clWhite
+        MarkupInfo.Foreground = clGray
+      end
+      object SynGutterCodeFolding1: TSynGutterCodeFolding
+        Width = 0
+        MouseActions = <>
+        MarkupInfo.Background = clNone
+        MarkupInfo.Foreground = clGray
+        MouseActionsExpanded = <>
+        MouseActionsCollapsed = <>
+      end
+    end
+  end
+  object lblOpts: TLabel
+    AnchorSideLeft.Control = seCheatSheet
+    AnchorSideTop.Control = seCheatSheet
+    AnchorSideTop.Side = asrBottom
+    Left = 10
+    Height = 16
+    Top = 165
+    Width = 45
+    BorderSpacing.Top = 5
+    Caption = 'Options'
+  end
+  object edOpts: TEdit
+    AnchorSideLeft.Control = lblOpts
+    AnchorSideTop.Control = lblOpts
+    AnchorSideTop.Side = asrBottom
+    AnchorSideRight.Side = asrBottom
+    Left = 10
+    Height = 28
+    Top = 181
+    Width = 424
+    TabOrder = 1
+    OnKeyUp = EditKeyUp
+  end
+  object lblDescr: TLabel
+    AnchorSideLeft.Control = lblOpts
+    AnchorSideTop.Control = edOpts
+    AnchorSideTop.Side = asrBottom
+    Left = 10
+    Height = 16
+    Top = 214
+    Width = 114
+    BorderSpacing.Top = 5
+    Caption = 'Comment (optional)'
+  end
+  object edDescr: TEdit
+    AnchorSideLeft.Control = lblDescr
+    AnchorSideTop.Control = lblDescr
+    AnchorSideTop.Side = asrBottom
+    AnchorSideRight.Control = edOpts
+    AnchorSideRight.Side = asrBottom
+    Left = 10
+    Height = 28
+    Top = 230
+    Width = 424
+    Anchors = [akTop, akLeft, akRight]
+    TabOrder = 3
+    OnKeyUp = EditKeyUp
+  end
+  object lbAskHistory: TListBox
+    AnchorSideLeft.Control = lblDescr
+    AnchorSideTop.Control = edDescr
+    AnchorSideTop.Side = asrBottom
+    AnchorSideRight.Control = edOpts
+    AnchorSideRight.Side = asrBottom
+    Left = 10
+    Height = 80
+    Top = 263
+    Width = 424
+    Anchors = [akTop, akLeft, akRight]
+    BorderSpacing.Top = 5
+    ItemHeight = 0
+    TabOrder = 2
+    TopIndex = -1
+    Visible = False
+    OnKeyUp = ListBoxKeyUp
+    OnSelectionChange = ListBoxSelectionChange
+  end
+  object btnCancel: TBitBtn
+    AnchorSideTop.Control = btnOK
+    AnchorSideRight.Control = btnOK
+    Left = 235
+    Height = 30
+    Top = 362
+    Width = 97
+    Anchors = [akTop, akRight]
+    AutoSize = True
+    BorderSpacing.Right = 5
+    Cancel = True
+    Constraints.MinHeight = 30
+    Constraints.MinWidth = 97
+    DefaultCaption = True
+    Kind = bkCancel
+    ModalResult = 2
+    TabOrder = 5
+    OnClick = ButtonClick
+  end
+  object btnOK: TBitBtn
+    AnchorSideTop.Control = lbAskHistory
+    AnchorSideTop.Side = asrBottom
+    AnchorSideRight.Control = edOpts
+    AnchorSideRight.Side = asrBottom
+    Left = 337
+    Height = 30
+    Top = 362
+    Width = 97
+    Anchors = [akTop, akRight]
+    AutoSize = True
+    BorderSpacing.Top = 19
+    Constraints.MinHeight = 30
+    Constraints.MinWidth = 97
+    Default = True
+    DefaultCaption = True
+    Kind = bkOK
+    ModalResult = 1
+    TabOrder = 4
+    OnClick = ButtonClick
+  end
+end

@@ -1,0 +1,21 @@
+#!/bin/bash
+
+exe="UHARC.EXE"
+srcdir=`dirname "$0"`
+exe="$srcdir/bin/$exe"
+
+cmd=(wine "${exe}")
+
+for arg in "${@}" ; do
+  chr=${arg:0:1}
+  if [ "$chr" == "/" ] || [ -e "$arg" ] ; then
+    arg=`winepath -w "$arg"`
+  elif [ "$chr" == "@" ] ; then
+    arg=@`winepath -w "${arg:1}"`
+  fi
+  cmd+=("${arg}")
+done
+
+export WINEDEBUG=-all
+# scriptkid lvl over 9000
+script --return -qfc "`printf "%q " "${cmd[@]}"`" /dev/null | sed -e "s/\x1B\[?25[hl]//g" | tr -d '\r'

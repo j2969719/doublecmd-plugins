@@ -1,0 +1,111 @@
+object DialogBox: TDialogBox
+  Left = 328
+  Height = 391
+  Top = 165
+  Width = 447
+  AutoSize = True
+  BorderStyle = bsDialog
+  Caption = 'Import Addons'
+  ChildSizing.LeftRightSpacing = 10
+  ChildSizing.TopBottomSpacing = 10
+  ClientHeight = 391
+  ClientWidth = 447
+  Position = poOwnerFormCenter
+  LCLVersion = '4.0.0.1'
+  OnClose = DialogBoxClose
+  OnShow = DialogBoxShow
+  object edFileName: TFileNameEdit
+    AnchorSideLeft.Control = Owner
+    AnchorSideTop.Control = Owner
+    Left = 10
+    Height = 28
+    Top = 10
+    Width = 352
+    Filter = 'Addons|*.addon;*.ini|All Files|*'
+    FilterIndex = 0
+    HideDirectories = False
+    ButtonWidth = 23
+    NumGlyphs = 1
+    MaxLength = 0
+    TabOrder = 0
+  end
+  object btnLoad: TButton
+    AnchorSideLeft.Control = edFileName
+    AnchorSideLeft.Side = asrBottom
+    AnchorSideTop.Control = edFileName
+    AnchorSideBottom.Control = edFileName
+    AnchorSideBottom.Side = asrBottom
+    Left = 362
+    Height = 28
+    Top = 10
+    Width = 75
+    Anchors = [akTop, akLeft, akBottom]
+    AutoSize = True
+    Caption = 'Load'
+    Constraints.MinWidth = 75
+    TabOrder = 1
+    OnClick = ButtonClick
+  end
+  object mContent: TMemo
+    AnchorSideLeft.Control = edFileName
+    AnchorSideTop.Control = edFileName
+    AnchorSideTop.Side = asrBottom
+    AnchorSideRight.Control = btnLoad
+    AnchorSideRight.Side = asrBottom
+    Left = 10
+    Height = 116
+    Top = 43
+    Width = 427
+    Anchors = [akTop, akLeft, akRight]
+    BorderSpacing.Top = 5
+    ReadOnly = True
+    ScrollBars = ssAutoBoth
+    TabOrder = 2
+    WordWrap = False
+  end
+  object lblSelected: TLabel
+    AnchorSideLeft.Control = mContent
+    AnchorSideTop.Control = mContent
+    AnchorSideTop.Side = asrBottom
+    Left = 10
+    Height = 16
+    Top = 169
+    Width = 100
+    BorderSpacing.Top = 10
+    Caption = 'Available Addons'
+  end
+  object lbAddons: TListBox
+    AnchorSideLeft.Control = mContent
+    AnchorSideTop.Control = lblSelected
+    AnchorSideTop.Side = asrBottom
+    AnchorSideRight.Control = mContent
+    AnchorSideRight.Side = asrBottom
+    Left = 10
+    Height = 80
+    Top = 185
+    Width = 427
+    Anchors = [akTop, akLeft, akRight]
+    ItemHeight = 0
+    TabOrder = 3
+    TopIndex = -1
+    OnSelectionChange = ListBoxSelectionChange
+  end
+  object btnImport: TButton
+    AnchorSideTop.Control = lbAddons
+    AnchorSideTop.Side = asrBottom
+    AnchorSideRight.Control = lbAddons
+    AnchorSideRight.Side = asrBottom
+    Left = 362
+    Height = 26
+    Top = 275
+    Width = 75
+    Anchors = [akTop, akRight]
+    AutoSize = True
+    BorderSpacing.Top = 10
+    Caption = 'Import'
+    Constraints.MinWidth = 75
+    Enabled = False
+    TabOrder = 4
+    OnClick = ButtonClick
+  end
+end

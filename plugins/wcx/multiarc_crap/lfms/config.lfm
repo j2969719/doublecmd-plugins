@@ -1,0 +1,497 @@
+object DialogBox: TDialogBox
+  Left = 540
+  Height = 520
+  Top = 132
+  Width = 519
+  AutoSize = True
+  BorderStyle = bsDialog
+  Caption = 'Options'
+  ChildSizing.LeftRightSpacing = 10
+  ChildSizing.TopBottomSpacing = 10
+  ClientHeight = 520
+  ClientWidth = 519
+  Position = poOwnerFormCenter
+  LCLVersion = '4.0.0.1'
+  OnClose = DialogBoxClose
+  OnShow = DialogBoxShow
+  object lblDescr: TLabel
+    AnchorSideLeft.Control = Owner
+    AnchorSideTop.Control = Owner
+    AnchorSideRight.Control = edExt
+    AnchorSideRight.Side = asrBottom
+    Left = 10
+    Height = 20
+    Top = 10
+    Width = 499
+    Alignment = taCenter
+    Anchors = [akTop, akLeft, akRight]
+    Caption = ' '
+    Constraints.MinHeight = 20
+    WordWrap = True
+  end
+  object lblAddon: TLabel
+    AnchorSideTop.Control = lblDescr
+    AnchorSideTop.Side = asrBottom
+    Left = 10
+    Height = 16
+    Top = 35
+    Width = 37
+    BorderSpacing.Top = 5
+    Caption = 'Addon'
+  end
+  object cmbAddon: TComboBox
+    AnchorSideLeft.Control = lblAddon
+    AnchorSideTop.Control = lblAddon
+    AnchorSideTop.Side = asrBottom
+    Left = 10
+    Height = 30
+    Top = 51
+    Width = 100
+    ItemHeight = 0
+    Style = csDropDownList
+    TabOrder = 0
+    OnChange = ComboBoxChange
+  end
+  object lblExt: TLabel
+    AnchorSideLeft.Control = edExt
+    AnchorSideTop.Control = lblAddon
+    Left = 110
+    Height = 16
+    Top = 35
+    Width = 126
+    Caption = 'Supported extensions'
+  end
+  object edExt: TEdit
+    AnchorSideLeft.Control = cmbAddon
+    AnchorSideLeft.Side = asrBottom
+    AnchorSideTop.Control = cmbAddon
+    AnchorSideRight.Control = gbFlags
+    AnchorSideRight.Side = asrBottom
+    AnchorSideBottom.Control = cmbAddon
+    AnchorSideBottom.Side = asrBottom
+    Left = 110
+    Height = 30
+    Top = 51
+    Width = 399
+    Anchors = [akTop, akLeft, akRight, akBottom]
+    Enabled = False
+    ReadOnly = True
+    TabOrder = 1
+  end
+  object lblExe: TLabel
+    AnchorSideLeft.Control = Owner
+    AnchorSideTop.Control = cmbAddon
+    AnchorSideTop.Side = asrBottom
+    Left = 10
+    Height = 16
+    Top = 81
+    Width = 65
+    Caption = 'Executable'
+  end
+  object lblWine: TLabel
+    AnchorSideLeft.Control = edExe
+    AnchorSideLeft.Side = asrCenter
+    AnchorSideTop.Control = lblExe
+    AnchorSideTop.Side = asrCenter
+    Left = 229
+    Height = 16
+    Top = 81
+    Width = 30
+    Caption = 'Wine'
+    Visible = False
+  end
+  object lblExeError: TLabel
+    AnchorSideTop.Control = lblExe
+    AnchorSideRight.Control = btnSet
+    AnchorSideRight.Side = asrBottom
+    AnchorSideBottom.Control = lblExe
+    AnchorSideBottom.Side = asrBottom
+    Left = 354
+    Height = 16
+    Top = 81
+    Width = 155
+    Anchors = [akTop, akRight, akBottom]
+    Caption = 'Executable file not found'
+    Font.Style = [fsBold, fsItalic]
+    ParentFont = False
+    Visible = False
+  end
+  object edExe: TFileNameEdit
+    AnchorSideLeft.Control = lblExe
+    AnchorSideTop.Control = lblExe
+    AnchorSideTop.Side = asrBottom
+    AnchorSideRight.Control = btnSet
+    Left = 10
+    Height = 28
+    Top = 97
+    Width = 469
+    FilterIndex = 0
+    HideDirectories = False
+    ButtonWidth = 23
+    NumGlyphs = 1
+    Anchors = [akTop, akLeft, akRight]
+    Enabled = False
+    MaxLength = 0
+    TabOrder = 2
+  end
+  object btnSet: TButton
+    AnchorSideTop.Control = edExe
+    AnchorSideRight.Control = edExt
+    AnchorSideRight.Side = asrBottom
+    AnchorSideBottom.Control = edExe
+    AnchorSideBottom.Side = asrBottom
+    Left = 479
+    Height = 28
+    Top = 97
+    Width = 30
+    Anchors = [akTop, akRight, akBottom]
+    AutoSize = True
+    Caption = 'Set'
+    Enabled = False
+    TabOrder = 3
+    OnClick = ButtonClick
+  end
+  object cbDebug: TCheckBox
+    AnchorSideLeft.Control = gbAskOpts
+    AnchorSideLeft.Side = asrCenter
+    AnchorSideTop.Control = edExe
+    AnchorSideTop.Side = asrBottom
+    AnchorSideRight.Control = cbDisable
+    Left = 294
+    Height = 23
+    Top = 130
+    Width = 100
+    Anchors = [akTop, akRight]
+    BorderSpacing.Top = 5
+    Caption = 'Debug Mode'
+    Enabled = False
+    TabOrder = 4
+    OnChange = CheckBoxChange
+  end
+  object cbDisable: TCheckBox
+    AnchorSideTop.Control = cbDebug
+    AnchorSideTop.Side = asrCenter
+    AnchorSideRight.Control = btnSet
+    AnchorSideRight.Side = asrBottom
+    Left = 394
+    Height = 23
+    Top = 130
+    Width = 110
+    Anchors = [akTop, akRight]
+    BorderSpacing.Right = 5
+    Caption = 'Disable Addon'
+    Enabled = False
+    TabOrder = 5
+    OnChange = CheckBoxChange
+  end
+  object gbAskOpts: TGroupBox
+    AnchorSideLeft.Control = Owner
+    AnchorSideTop.Control = cbDebug
+    AnchorSideTop.Side = asrBottom
+    Left = 10
+    Height = 249
+    Top = 153
+    Width = 232
+    AutoSize = True
+    Caption = 'Ask for params'
+    ChildSizing.Layout = cclLeftToRightThenTopToBottom
+    ChildSizing.ControlsPerLine = 1
+    ClientHeight = 232
+    ClientWidth = 230
+    TabOrder = 6
+    object cbAskPack: TCheckBox
+      Left = 0
+      Height = 23
+      Top = 0
+      Width = 230
+      Caption = 'When packing'
+      Enabled = False
+      TabOrder = 0
+      OnChange = CheckBoxChange
+    end
+    object cbAskExtract: TCheckBox
+      Left = 0
+      Height = 23
+      Top = 23
+      Width = 230
+      Caption = 'When extracting'
+      Enabled = False
+      TabOrder = 1
+      OnChange = CheckBoxChange
+    end
+    object cbAskList: TCheckBox
+      Left = 0
+      Height = 23
+      Top = 46
+      Width = 230
+      Caption = 'When getting a list of files'
+      Enabled = False
+      TabOrder = 2
+      OnChange = CheckBoxChange
+    end
+    object cbAskDelete: TCheckBox
+      Left = 0
+      Height = 23
+      Top = 69
+      Width = 230
+      Caption = 'When deleting'
+      Enabled = False
+      TabOrder = 3
+      OnChange = CheckBoxChange
+    end
+    object cbAskTest: TCheckBox
+      Left = 0
+      Height = 23
+      Top = 92
+      Width = 230
+      Caption = 'When testing archive'
+      Enabled = False
+      TabOrder = 4
+      OnChange = CheckBoxChange
+    end
+    object cbAskOnce: TCheckBox
+      Left = 0
+      Height = 23
+      Top = 120
+      Width = 230
+      BorderSpacing.Top = 5
+      Caption = 'Show the dialog once'
+      Enabled = False
+      TabOrder = 5
+      OnChange = CheckBoxChange
+    end
+    object cbAskListPass: TCheckBox
+      Left = 0
+      Height = 23
+      Top = 148
+      Width = 230
+      BorderSpacing.Top = 5
+      Caption = 'Show password prompt on opening'
+      Enabled = False
+      TabOrder = 8
+      OnChange = CheckBoxChange
+    end
+    object cbAskMultiVolume: TCheckBox
+      AnchorSideTop.Side = asrBottom
+      Left = 0
+      Height = 23
+      Top = 181
+      Width = 230
+      BorderSpacing.Top = 10
+      Caption = 'Multi-volume archive'
+      Enabled = False
+      TabOrder = 6
+      OnChange = CheckBoxChange
+    end
+    object cmbVolumeSize: TComboBox
+      AnchorSideLeft.Control = cbAskMultiVolume
+      AnchorSideTop.Control = cbAskMultiVolume
+      AnchorSideTop.Side = asrBottom
+      AnchorSideRight.Control = gbAskOpts
+      AnchorSideRight.Side = asrBottom
+      Left = 0
+      Height = 28
+      Top = 204
+      Width = 230
+      Anchors = [akTop, akLeft, akRight]
+      Enabled = False
+      ItemHeight = 0
+      TabOrder = 7
+      Visible = False
+      OnChange = ComboBoxChange
+    end
+  end
+  object gbFlags: TGroupBox
+    AnchorSideLeft.Control = gbAskOpts
+    AnchorSideLeft.Side = asrBottom
+    AnchorSideTop.Control = gbAskOpts
+    AnchorSideRight.Side = asrBottom
+    Left = 252
+    Height = 247
+    Top = 163
+    Width = 257
+    AutoSize = True
+    BorderSpacing.Left = 10
+    BorderSpacing.Top = 10
+    Caption = 'Suppored flags'
+    ChildSizing.Layout = cclLeftToRightThenTopToBottom
+    ClientHeight = 230
+    ClientWidth = 255
+    TabOrder = 7
+    object cbPK_CAPS_NEW: TCheckBox
+      Left = 0
+      Height = 23
+      Top = 0
+      Width = 255
+      Caption = 'Can create new archi&ves'
+      Enabled = False
+      TabOrder = 0
+    end
+    object cbPK_CAPS_MODIFY: TCheckBox
+      Left = 0
+      Height = 23
+      Top = 23
+      Width = 255
+      Caption = 'Can &modify existing archives'
+      Enabled = False
+      TabOrder = 1
+    end
+    object cbPK_CAPS_MULTIPLE: TCheckBox
+      Left = 0
+      Height = 23
+      Top = 46
+      Width = 255
+      Caption = '&Archive can contain multiple files'
+      Enabled = False
+      TabOrder = 2
+    end
+    object cbPK_CAPS_DELETE: TCheckBox
+      Left = 0
+      Height = 23
+      Top = 69
+      Width = 255
+      Caption = 'Can de&lete files'
+      Enabled = False
+      TabOrder = 3
+    end
+    object cbPK_CAPS_OPTIONS: TCheckBox
+      Left = 0
+      Height = 23
+      Top = 92
+      Width = 255
+      Caption = 'S&upports the options dialogbox'
+      Checked = True
+      Enabled = False
+      State = cbChecked
+      TabOrder = 4
+      Visible = False
+    end
+    object cbPK_CAPS_MEMPACK: TCheckBox
+      Left = 0
+      Height = 23
+      Top = 115
+      Width = 255
+      Caption = 'Supports pac&king in memory'
+      Enabled = False
+      Font.Style = [fsStrikeOut]
+      ParentFont = False
+      TabOrder = 5
+      Visible = False
+    end
+    object cbPK_CAPS_BY_CONTENT: TCheckBox
+      Left = 0
+      Height = 23
+      Top = 138
+      Width = 255
+      Caption = 'De&tect archive type by content'
+      Enabled = False
+      TabOrder = 6
+    end
+    object cbPK_CAPS_SEARCHTEXT: TCheckBox
+      Left = 0
+      Height = 23
+      Top = 161
+      Width = 255
+      Caption = 'Allow searchin&g for text in archives'
+      Enabled = False
+      TabOrder = 7
+    end
+    object cbPK_CAPS_HIDE: TCheckBox
+      Left = 0
+      Height = 23
+      Top = 184
+      Width = 255
+      Caption = 'Sho&w as normal files (hide packer icon)'
+      Enabled = False
+      TabOrder = 8
+    end
+    object cbPK_CAPS_ENCRYPT: TCheckBox
+      Left = 0
+      Height = 23
+      Top = 207
+      Width = 255
+      Caption = 'Supports e&ncryption'
+      Enabled = False
+      TabOrder = 9
+    end
+  end
+  object btnLog: TButton
+    AnchorSideTop.Control = btnEdit
+    AnchorSideRight.Control = btnTrimLog
+    Left = 167
+    Height = 26
+    Top = 430
+    Width = 68
+    Anchors = [akTop, akRight]
+    AutoSize = True
+    BorderSpacing.Right = 5
+    Caption = 'Show Log'
+    TabOrder = 8
+    OnClick = ButtonClick
+  end
+  object btnTrimLog: TButton
+    AnchorSideTop.Control = btnEdit
+    AnchorSideRight.Control = btnImport
+    Left = 240
+    Height = 26
+    Top = 430
+    Width = 61
+    Anchors = [akTop, akRight]
+    AutoSize = True
+    BorderSpacing.Right = 10
+    Caption = 'Trim Log'
+    TabOrder = 9
+    OnClick = ButtonClick
+  end
+  object btnImport: TButton
+    AnchorSideTop.Control = btnEdit
+    AnchorSideRight.Control = btnEdit
+    Left = 311
+    Height = 26
+    Top = 430
+    Width = 118
+    Anchors = [akTop, akRight]
+    AutoSize = True
+    BorderSpacing.Right = 5
+    Caption = 'Import New Addon'
+    TabOrder = 10
+    OnClick = ButtonClick
+  end
+  object btnEdit: TButton
+    AnchorSideTop.Control = gbFlags
+    AnchorSideTop.Side = asrBottom
+    AnchorSideRight.Control = gbFlags
+    AnchorSideRight.Side = asrBottom
+    Left = 434
+    Height = 26
+    Top = 430
+    Width = 75
+    Anchors = [akTop, akRight]
+    AutoSize = True
+    BorderSpacing.Top = 20
+    Caption = 'Edit Config'
+    TabOrder = 11
+    OnClick = ButtonClick
+  end
+  object btnClose: TBitBtn
+    AnchorSideTop.Control = btnEdit
+    AnchorSideTop.Side = asrBottom
+    AnchorSideRight.Control = gbFlags
+    AnchorSideRight.Side = asrBottom
+    Left = 420
+    Height = 34
+    Top = 476
+    Width = 89
+    Anchors = [akTop, akRight]
+    AutoSize = True
+    BorderSpacing.Top = 20
+    BorderSpacing.InnerBorder = 2
+    BorderSpacing.CellAlignHorizontal = ccaCenter
+    Cancel = True
+    DefaultCaption = True
+    Kind = bkClose
+    ModalResult = 11
+    TabOrder = 12
+    OnClick = ButtonClick
+  end
+end

@@ -1,0 +1,13 @@
+m<0..3,x,z> Set cmp.mode (0 = STORE, 1..3 = ALZ:fast..best, x = PPM, z = LZP)
+md<n>       Set dictionary size in KByte (must be power of 2 : 1 .. 32768)
+mm[-,+]     Disable/enable built-in multimedia detection/compression
+p<-,r,f,e>  Store (- = no, r = relative, f = full, e = excluded) pathnames
+ph[-,+]     Archive header encryption
+pw[passwd]  Set password
+r[-,+]      Recurse subdirectories
+vm[-,+]     Set virtual memory usage
+ac[-,+]     Clear file archive attr
+ae<attr>    Set attr exclusion mask
+b<n>        Set max filebuffer size
+ed[-,+]     Store empty directories
+lg<file>    Log output to <file>
