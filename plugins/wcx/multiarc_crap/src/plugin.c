@@ -925,7 +925,7 @@ static void destroy_pattern_item(gpointer data)
 	g_free(item);
 }
 
-static gboolean set_regex_from_string(gchar *string, tListPattern *item, ArcData data)
+static gboolean set_regex_from_string(gchar *string, tListPattern *item, gboolean debug)
 {
 	GError *err = NULL;
 	gboolean result = FALSE;
@@ -961,7 +961,7 @@ static gboolean set_regex_from_string(gchar *string, tListPattern *item, ArcData
 		}
 	}
 
-	if (data->debug && compile_flags != G_REGEX_DEFAULT)
+	if (debug && compile_flags != G_REGEX_DEFAULT)
 	{
 		dprintf(gDebugFd, "regex compile_flags (%s): ", pattern);
 
@@ -1107,7 +1107,7 @@ static gboolean set_listform(gchar *addon, ArcData data)
 
 		if (is_re)
 		{
-			if (!set_regex_from_string(value, item, data))
+			if (!set_regex_from_string(value, item, data->debug))
 			{
 				g_free(item);
 				g_free(data->units);
@@ -1154,7 +1154,7 @@ static gboolean set_listform(gchar *addon, ArcData data)
 
 		if (is_re)
 		{
-			if (!set_regex_from_string(value, item, data))
+			if (!set_regex_from_string(value, item, data->debug))
 			{
 				g_free(item);
 				continue;
@@ -1177,7 +1177,7 @@ static gboolean set_listform(gchar *addon, ArcData data)
 		{
 			tListPattern item = {NULL, NULL};
 
-			if (set_regex_from_string(data->list_start, &item, data))
+			if (set_regex_from_string(data->list_start, &item, data->debug))
 			{
 				data->list_start = item.pattern;
 				data->list_start_re = item.re;
@@ -1195,7 +1195,7 @@ static gboolean set_listform(gchar *addon, ArcData data)
 		{
 			tListPattern item = {NULL, NULL};
 
-			if (set_regex_from_string(data->list_end, &item, data))
+			if (set_regex_from_string(data->list_end, &item, data->debug))
 			{
 				data->list_end = item.pattern;
 				data->list_end_re = item.re;
@@ -1211,7 +1211,7 @@ static gboolean set_listform(gchar *addon, ArcData data)
 		{
 			tListPattern item = {NULL, NULL};
 
-			if (set_regex_from_string(basedir_re, &item, data))
+			if (set_regex_from_string(basedir_re, &item, data->debug))
 			{
 				g_free(item.pattern);
 				data->basedir_re = item.re;
@@ -4072,7 +4072,6 @@ static int ExecuteArchiver(char *workdir, char **argv, int encoding, char *pass_
 	gchar **envp = NULL;
 	GError *err = NULL;
 	int progress = 0;
-	char num[4] = "";
 	char display_name[MAX_PATH] = "";
 
 	if (proc_name)
@@ -4131,13 +4130,25 @@ static int ExecuteArchiver(char *workdir, char **argv, int encoding, char *pass_
 		ssize_t prev_eline = -1;
 
 		ssize_t pwstrlen = -1;
-		ssize_t masklen = -1;
 
 		if (pass_str)
 			pwstrlen = strlen(pass_str);
 
-		if (mask)
-			masklen = strlen(mask);
+		GRegex *percent_re = NULL;
+
+		if (mask && proc != NULL)
+		{
+			if (check_if_pattern_regex(mask, strlen(mask)))
+			{
+				tListPattern item = {NULL, NULL};
+
+				if (set_regex_from_string(mask, &item, debug))
+				{
+					g_free(item.pattern);
+					percent_re = item.re;
+				}
+			}
+		}
 
 		int outlen = 0;
 		int errlen = 0;
@@ -4220,7 +4231,6 @@ static int ExecuteArchiver(char *workdir, char **argv, int encoding, char *pass_
 				{
 					if (buff[i] == '\n')
 					{
-
 						errline[errlen] = '\0';
 						errlen = 0;
 
@@ -4265,13 +4275,37 @@ static int ExecuteArchiver(char *workdir, char **argv, int encoding, char *pass_
 						if (out)
 							g_ptr_array_add(*out, (gpointer)string_convert_encoding(g_strdup(outline), encoding));
 
-						int p = atoi(num);
+						if (percent_re)
+						{
+							GMatchInfo *match_info;
 
-						if (p > progress && p <= 100)
-							p = progress;
+							if (g_regex_match(percent_re, outline, 0, &match_info) && g_match_info_matches(match_info))
+							{
+								gchar *string = g_match_info_fetch_named(match_info, "name");
+
+								if (string)
+								{
+									g_strlcpy(display_name, string, MAX_PATH);
+									g_free(string);
+								}
+
+								string = g_match_info_fetch_named(match_info, "percent");
+
+								if (string)
+								{
+									int p = atoi(string);
+
+									if (p > progress && p <= 100)
+										p = progress;
+
+									g_free(string);
+								}
+
+								g_match_info_free(match_info);
+							}
+						}
 
 						memset(outline, 0, sizeof(outline));
-						memset(num, 0, sizeof(num));
 					}
 					else if (buff[i] != '\r')
 					{
@@ -4279,14 +4313,6 @@ static int ExecuteArchiver(char *workdir, char **argv, int encoding, char *pass_
 						{
 							outline[outlen] = buff[i];
 							outlen++;
-						}
-
-						if (mask && proc)
-						{
-							if (masklen > outlen && mask[outlen] == 'p')
-							{
-								append_char(buff[i], APPEND_DST(num));
-							}
 						}
 					}
 				}
@@ -4504,7 +4530,7 @@ static int ProcessBatch(gchar *addon, int op_type, gchar *exe, gchar *archive, g
 	g_free(templ);
 
 	gchar *pass_str = ADDON_GET_STRING(addon, "PasswordQuery");
-	gchar *progress_mask = ADDON_GET_STRING(addon, "AddonProgressMask");
+	gchar *progress_mask = ADDON_GET_STRING(addon, "ProgressRegEx");
 	gboolean debug = g_key_file_get_boolean(gCfg, addon, "Debug", NULL);
 
 	while (proc_items < all_items)
@@ -5210,6 +5236,7 @@ HANDLE DCPCALL OpenArchive(tOpenArchiveData *ArchiveData)
 		data->error_level = error_level;
 		data->st = st;
 		data->batch = g_key_file_get_boolean(gCfg, addon, "BatchUnpack", NULL);
+		data->progress_mask = ADDON_GET_STRING(addon, "ProgressRegEx");
 
 		if (g_key_file_get_boolean(gCfg, addon, "SearchForUglyDirs", NULL))
 		{
@@ -5306,6 +5333,7 @@ int DCPCALL CloseArchive(HANDLE hArcData)
 	g_free(data->list_start);
 	g_free(data->list_end);
 	g_free(data->units_cache);
+	g_free(data->progress_mask);
 	g_free(data);
 
 	dprintf(gDebugFd, "OpenArchive>{ReadHeaderEx+ProcessFile}>CloseArchive time %.2fs", (double)(clock() - clock_start) / CLOCKS_PER_SEC);
@@ -5329,7 +5357,7 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 
 	if (Flags & PK_PACK_ENCRYPT)
 	{
-		if (InputBox(addon, MSG_PASSWD, TRUE, pass, MAX_PATH) == TRUE)
+		if (InputBox(addon, MSG_PASSWD, TRUE, pass, MAX_PATH) != FALSE)
 			g_key_file_set_string(gCache, "Passwords", PackedFile, pass);
 	}
 
