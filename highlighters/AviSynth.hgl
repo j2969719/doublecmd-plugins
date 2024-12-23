@@ -2,14 +2,14 @@
   <Info>
     <General Name="AviSynth*" Extensions="AVS"/>
     <Author Name="Skif_off" Email="" Web="" Copyright="" Company="" Remark="Fast/simple, thanks http://avisynth.nl/"/>
-    <Version Version="0" Revision="1" Date="45648,9042132523"/>
+    <Version Version="0" Revision="2" Date="45649,6231281829"/>
     <History>
     </History>
     <Sample>
     </Sample>
   </Info>
   <Scheme File="" Name=""/>
-  <Range Name="Root" Attributes="0,16777215;False:False." Style="" CaseSensitive="True"
+  <Range Name="Root" Attributes="0,16777215;False:False." Style=""
          Delimiters="!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^`{|}~">
     <Rule/>
     <Keywords Name="Operators and other" Attributes="128,16777215;False:False." Style="">
