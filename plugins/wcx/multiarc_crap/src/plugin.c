@@ -38,6 +38,7 @@
 #define LFM_IMPORT "/lfms/import.lfm"
 #define MSG_PASSWD "Enter password"
 #define MSG_TIMEOUT "Timeout expired, kill process?"
+#define MSG_LFM_MISSIND "LFM file is missing."
 
 enum
 {
@@ -568,9 +569,6 @@ static gboolean clone_file(gchar *filename, gchar *srcdir, gchar *tempdir, gchar
 		{
 			if (errsv != 0)
 				result = FALSE;
-
-			g_free(src);
-			g_free(dst);
 		}
 	}
 
@@ -712,7 +710,7 @@ static gchar* make_tempdir(gchar *basedir, gchar *archive)
 	return g_mkdtemp(templ);
 }
 
-static gchar* make_tree_temp_copy(char *srcdir, char *subdir, gchar **src_list, gchar **dst_list, gchar *archive)
+static gchar* make_tree_temp_copy(char *srcdir, char *subdir, gchar **src_list, gchar *archive)
 {
 	gchar *result = NULL;
 
@@ -1485,7 +1483,8 @@ intptr_t DCPCALL AskDlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, int
 					if (archiver && check_if_win_exe(archiver))
 					{
 						gchar *tmp = archiver;
-						archiver = g_strdup_printf("wine %s", archiver);
+						archiver = g_strdup_printf("env WINEPREFIX='%s' %s '%s/wine' '%s'",
+						                           gWinePrefix, gWineArchWin32 ? "WINEARCH=win32" : "", gWineBin, archiver);
 						g_free(tmp);
 					}
 
@@ -1538,6 +1537,7 @@ intptr_t DCPCALL AskDlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, int
 
 			gchar *comment = g_strdup((char*)SendDlgMsg(pDlg, "edDescr", DM_GETTEXT, 0, 0));
 			gchar *opts = g_strdup((char*)SendDlgMsg(pDlg, "edOpts", DM_GETTEXT, 0, 0));
+
 			if (strcmp(data->key_prefix, "AskHistory") == 0)
 				g_key_file_set_value(gCache, "Options", data->addon, opts);
 
@@ -1711,9 +1711,20 @@ static gchar* prepare_command(gchar *addon, int cmd, gint *err_lvl, gint *enc, g
 
 	if (is_wine)
 	{
-		gchar *tmp = result;
-		result = g_strdup_printf("%s/wine %s", gWineBin, tmp);
-		g_free(tmp);
+		gchar *pos = strstr(result, "%P ");
+
+		if (pos)
+		{
+			gchar *wine_templ = g_strdup_printf("%s/wine %%P ", gWineBin);
+			result = replace_substring(result, "%P ", wine_templ);
+			g_free(wine_templ);
+		}
+		else
+		{
+			gchar *tmp = result;
+			result = g_strdup_printf("%s/wine %s", gWineBin, tmp);
+			g_free(tmp);
+		}
 	}
 
 
@@ -1832,10 +1843,39 @@ static gchar* prepare_command(gchar *addon, int cmd, gint *err_lvl, gint *enc, g
 
 static gchar* get_winepath(gchar *filename)
 {
+	gchar *result = NULL;
 	replace_nix_sep(filename);
-	gchar *result = g_strdup_printf("%s%s%s", gWineDrive, (filename[0] != '\\') ? "\\" : "", filename);
-	g_free(filename);
+
+	gboolean is_quoted = value_is_quoted(filename, '"', strlen(filename) - 1);
+
+	if (is_quoted)
+		filename = unquote_value(filename, '"');
+
+	if (filename[0] != '\\')
+		result = filename;
+	else
+	{
+		result = g_strdup_printf("%s%s", gWineDrive, filename);
+		g_free(filename);
+	}
+
+	if (is_quoted)
+		result = quote_and_free(result);
+
 	return result;
+}
+
+static gboolean check_if_dir(gchar *filename)
+{
+	if (!filename)
+		return FALSE;
+
+	size_t len = strlen(filename);
+
+	if (len == 0)
+		return FALSE;
+
+	return (filename[len - 1] == '/');
 }
 
 static gchar* filename_apply_modifiers(gchar *filename, int flags)
@@ -1844,13 +1884,9 @@ static gchar* filename_apply_modifiers(gchar *filename, int flags)
 		return NULL;
 
 	size_t len = strlen(filename);
-
-	if (flags & ARG_FILEONLY && filename[len - 1] == '/')
-		return NULL;
-
 	gchar *result = g_strdup(filename);
 
-	if (flags & ARG_ALLNONE || flags & ARG_ALLUNIX)
+	if ((flags & ARG_ALLNONE || flags & ARG_ALLUNIX) && len > 3)
 	{
 		char mask[5];
 		g_strlcpy(mask, result + (len - 4), 5);
@@ -1874,8 +1910,8 @@ static gchar* filename_apply_modifiers(gchar *filename, int flags)
 		g_free(tmp);
 	}
 
-	//if (flags & ARG_QUOTEALL || (flags & ARG_QUOTESPC && strchr(result, ' ') != NULL))
-	//	result = quote_and_free(result);
+	if (flags & ARG_QUOTEALL || (flags & ARG_QUOTESPC && strchr(result, ' ') != NULL))
+		result = quote_and_free(result);
 
 	return result;
 }
@@ -1935,7 +1971,7 @@ static gchar* chomp_modifiers(gchar *string, int *arg_flags, guint *max_files)
 	return string;
 }
 
-static gchar* replace_arg_template(gchar *string, gchar *exe, gchar *archive, gchar **src_list, gchar **dst_list, gchar **tmpfile, gboolean is_wine, guint *items_got, guint *max_files)
+static gchar* replace_arg_template(gchar *string, gchar *exe, gchar *archive, gchar **src_list, gchar **dst_list, gchar **tmpfile, gboolean is_wine, guint *items_got, guint *current, guint *max_files)
 {
 	gchar *new_string = NULL;
 	guint got = *items_got;
@@ -1974,15 +2010,36 @@ static gchar* replace_arg_template(gchar *string, gchar *exe, gchar *archive, gc
 			{
 				end = chomp_modifiers(next + 1, &flags, max_files);
 
-				if (src_list)
-					filename = filename_apply_modifiers(src_list[got++], flags);
+				if (src_list && src_list[got])
+				{
+					if (flags & ARG_FILEONLY)
+					{
+						while (src_list[got])
+						{
+							if (!check_if_dir(src_list[got]))
+								break;
+
+							got++;
+						}
+
+						*current = got;
+
+						if (src_list[got])
+							filename = filename_apply_modifiers(src_list[got++], flags);
+					}
+					else
+					{
+						*current = got;
+						filename = filename_apply_modifiers(src_list[got++], flags);
+					}
+				}
 			}
 			else if (*next == 'D')
 			{
 				end = chomp_modifiers(next + 1, &flags, NULL);
 
-				if (dst_list)
-					filename = filename_apply_modifiers(dst_list[got], flags);
+				if (dst_list && dst_list[*current])
+					filename = filename_apply_modifiers(dst_list[*current], flags);
 			}
 			else if (*next == 'L' || *next == 'l')
 			{
@@ -2022,15 +2079,15 @@ static gchar* replace_arg_template(gchar *string, gchar *exe, gchar *archive, gc
 
 						for (guint i = 0; i < count; i++)
 						{
+							if (flags & ARG_FILEONLY && check_if_dir(src_list[i]))
+								continue;
+
 							gchar *line = filename_apply_modifiers(src_list[i], flags);
 
 							if (line)
 							{
 								if (is_wine && !(flags & ARG_UNIXSEP))
 									replace_nix_sep(line);
-
-								if (flags & ARG_QUOTEALL || (flags & ARG_QUOTESPC && strchr(line, ' ') != NULL))
-									line = quote_and_free(line);
 
 								if (flags & ARG_ANSIENC)
 									line = string_convert_encoding(line, ENC_ANSI);
@@ -2082,6 +2139,7 @@ static gchar** build_argv_from_template(gchar *templ, gchar *exe, gchar *archive
 	GError *err = NULL;
 	guint maxfiles = -1;
 	guint items_added = 0;
+	guint current = 0;
 
 	if (!templ || templ[0] == '\0')
 		return NULL;
@@ -2142,7 +2200,7 @@ static gchar** build_argv_from_template(gchar *templ, gchar *exe, gchar *archive
 		else
 		{
 			argv[i] = unquote_value(replace_arg_template(oldarg, exe, archive, src_list,
-			                        dst_list, tmpfile, is_wine, &items_added, &maxfiles), '"');
+			                        dst_list, tmpfile, is_wine, &items_added, &current, &maxfiles), '"');
 		}
 	}
 
@@ -2195,9 +2253,12 @@ static gchar** build_argv_from_template(gchar *templ, gchar *exe, gchar *archive
 
 				for (int j = 0; j < r_count; j++)
 				{
-					gchar *line = replace_arg_template(g_strdup(r_argv[j]), exe, archive, src_list, dst_list, tmpfile, is_wine, &items_added, &maxfiles);
+					gchar *line = replace_arg_template(g_strdup(r_argv[j]), exe, archive, src_list, dst_list,
+					                                   tmpfile, is_wine, &items_added, &current, &maxfiles);
 					append_args++;
-					new_args = string_add_line(new_args, line, "\n");
+
+					if (line)
+						new_args = string_add_line(new_args, line, "\n");
 				}
 
 				if (append_args >= max_args)
@@ -2207,7 +2268,8 @@ static gchar** build_argv_from_template(gchar *templ, gchar *exe, gchar *archive
 					break;
 				}
 
-				arg_lines = string_add_line(arg_lines, new_args, "\n");
+				if (new_args)
+					arg_lines = string_add_line(arg_lines, new_args, "\n");
 			}
 
 		}
@@ -3037,7 +3099,7 @@ intptr_t DCPCALL OptDlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, int
 		else if (strcmp(DlgItemName, "cbDisable") == 0)
 		{
 			char *addon = (char*)SendDlgMsg(pDlg, "cmbAddon", DM_GETTEXT, 0, 0);
-			g_key_file_set_integer(gCfg, addon, "DisableAddon", !wParam);
+			g_key_file_set_integer(gCfg, addon, "Enabled", !wParam);
 		}
 		else if (strncmp(DlgItemName, "cbAsk", 5) == 0)
 		{
@@ -3197,6 +3259,7 @@ static void FillHeaderDate(ArcData data, tHeaderDataEx *HeaderDataEx)
 	else
 	{
 		char *timesep = strchr(data->cur_year, ':');
+
 		if (data->form_caps & FORM_YEARTIME && timesep != NULL)
 		{
 			*timesep = '\0';
@@ -4428,13 +4491,13 @@ static int ProcessBatch(gchar *addon, int op_type, gchar *exe, gchar *archive, g
 
 	if (op_type != OP_DELETE)
 	{
-		if (subdir && subdir[0] != '\0' && strstr(templ, "%R") == NULL)
+		if (subdir && subdir[0] != '\0' && strstr(templ, "%R") == NULL && strstr(templ, "%D") == NULL)
 		{
-			tmpdir = make_tree_temp_copy(workdir, subdir, src_list, dst_list, arcname);
+			tmpdir = make_tree_temp_copy(workdir, subdir, src_list, arcname);
 			set_list_subdir(src_list, subdir);
 		}
 		else if (strstr(templ, "%F") == NULL && strstr(templ, "%L") == NULL)
-			tmpdir = make_tree_temp_copy(workdir, NULL, src_list, dst_list, arcname);
+			tmpdir = make_tree_temp_copy(workdir, NULL, src_list, arcname);
 	}
 
 	gchar *command = command_set_dirs(templ, subdir, tmpdir);
@@ -4942,7 +5005,7 @@ int DCPCALL ProcessFile(HANDLE hArcData, int Operation, char *DestPath, char *De
 				data->itemlist = string_add_line(data->itemlist, g_strdup(data->lastitem), "\n");
 
 				if (DestName && DestName[0] != '\0')
-					data->filelist = string_add_line(data->filelist, g_strdup(DestName), "\n");
+					data->filelist = string_add_line(data->filelist, g_strdup_printf("%s%s", DestPath ? DestPath : "", DestName), "\n");
 			}
 		}
 		else if (data->command)
@@ -5266,14 +5329,18 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 
 	if (Flags & PK_PACK_ENCRYPT)
 	{
-		if (InputBox(addon, MSG_PASSWD, TRUE, pass, MAX_PATH) != FALSE)
+		if (InputBox(addon, MSG_PASSWD, TRUE, pass, MAX_PATH) == TRUE)
 			g_key_file_set_string(gCache, "Passwords", PackedFile, pass);
 	}
 
 	while (*AddList)
 	{
 		lines = string_add_line(lines, g_strdup(AddList), "\n");
-		dst_lines = string_add_line(dst_lines, g_strdup_printf("%s/%s", SrcPath, AddList), "\n");
+
+		if (SubPath)
+			dst_lines = string_add_line(dst_lines, g_strdup_printf("%s/%s", SubPath, AddList), "\n");
+		else
+			dst_lines = string_add_line(dst_lines, g_strdup(AddList), "\n");
 
 		while (*AddList++);
 	}
@@ -5371,7 +5438,10 @@ BOOL DCPCALL CanYouHandleThisFile(char *FileName)
 
 void DCPCALL ConfigurePacker(HWND Parent, HINSTANCE DllInstance)
 {
-	gExtensions->DialogBoxLFMFile(gLFMCfg, OptDlgProc);
+	if (g_file_test(gLFMCfg, G_FILE_TEST_EXISTS))
+		gExtensions->DialogBoxLFMFile(gLFMCfg, OptDlgProc);
+	else
+		MessageBox(MSG_LFM_MISSIND, PLUGNAME, MB_OK | MB_ICONERROR);
 }
 
 void DCPCALL ExtensionInitialize(tExtensionStartupInfo* StartupInfo)
@@ -5515,22 +5585,23 @@ void DCPCALL ExtensionInitialize(tExtensionStartupInfo* StartupInfo)
 
 void DCPCALL ExtensionFinalize(void* Reserved)
 {
-	g_key_file_save_to_file(gCfg, gConfName, NULL);
-
 	if (gExtensions != NULL)
 		free(gExtensions);
 
 	gExtensions = NULL;
 
+	if (gCfg != NULL)
+	{
+		g_key_file_save_to_file(gCfg, gConfName, NULL);
+		g_key_file_free(gCfg);
+	}
+
+	gCfg = NULL;
+
 	if (gConfName != NULL)
 		g_free(gConfName);
 
 	gConfName = NULL;
-
-	if (gCfg != NULL)
-		g_key_file_free(gCfg);
-
-	gCfg = NULL;
 
 	if (gCache != NULL)
 		g_key_file_free(gCache);
