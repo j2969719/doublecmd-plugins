@@ -152,7 +152,6 @@ typedef struct sArcData
 	gchar **units;
 	gchar *units_cache;
 	gchar *pass_str;
-	gchar *progress_mask;
 	gboolean tarball;
 
 	gchar *itemlist;
@@ -182,6 +181,7 @@ typedef struct sArcData
 	GRegex *list_start_re;
 	GRegex *list_end_re;
 	GRegex *basedir_re;
+	GRegex *percent_re;
 	gboolean process_lines;
 
 	char cur_name[1024];
@@ -4061,7 +4061,7 @@ static gboolean CheckLine(gchar *line, gchar *pattern)
 	return FALSE;
 }
 
-static int ExecuteArchiver(char *workdir, char **argv, int encoding, char *pass_str, tProcessDataProc proc, char *proc_name, char *mask, GPtrArray **out, gboolean debug, char *addon)
+static int ExecuteArchiver(char *workdir, char **argv, int encoding, char *pass_str, tProcessDataProc proc, char *proc_name, GRegex *percent_re, GPtrArray **out, gboolean debug, char *addon)
 {
 	GPid pid;
 	gint in_fd;
@@ -4133,22 +4133,6 @@ static int ExecuteArchiver(char *workdir, char **argv, int encoding, char *pass_
 
 		if (pass_str)
 			pwstrlen = strlen(pass_str);
-
-		GRegex *percent_re = NULL;
-
-		if (mask && proc != NULL)
-		{
-			if (check_if_pattern_regex(mask, strlen(mask)))
-			{
-				tListPattern item = {NULL, NULL};
-
-				if (set_regex_from_string(mask, &item, debug))
-				{
-					g_free(item.pattern);
-					percent_re = item.re;
-				}
-			}
-		}
 
 		int outlen = 0;
 		int errlen = 0;
@@ -4296,7 +4280,7 @@ static int ExecuteArchiver(char *workdir, char **argv, int encoding, char *pass_
 									int p = atoi(string);
 
 									if (p > progress && p <= 100)
-										p = progress;
+										progress = /*-1000*/ - p;
 
 									g_free(string);
 								}
@@ -4398,7 +4382,7 @@ static int ExtractWithoutPath(gchar **src_list, gchar **dst_list, gchar *dest_pa
 	                                        src_list, dst_list, &tmpfile, data->wine, FALSE, &items);
 	gchar *workdir = g_path_get_dirname(dst_list[0]);
 	int status = ExecuteArchiver(workdir, argv, data->enc, data->pass_str, data->ProcessDataProc,
-	                             src_list[0], data->progress_mask, NULL, data->debug, data->addon);
+	                             src_list[0], data->percent_re, NULL, data->debug, data->addon);
 	g_free(workdir);
 
 	if (tmpfile)
@@ -4456,7 +4440,7 @@ static int ExtractWithPath(gchar **src_list, gchar **dst_list, gchar *dest_path,
 		                                        src_list + proc_items, dst_list ? dst_list + proc_items : NULL,
 		                                        &tmpfile, data->wine, data->batch, &items);
 		status = ExecuteArchiver(workdir, argv, data->enc, data->pass_str, data->ProcessDataProc,
-		                         arcname, data->progress_mask, NULL, data->debug, data->addon);
+		                         arcname, data->percent_re, NULL, data->debug, data->addon);
 		proc_items = proc_items + items;
 
 		if (items == 0)
@@ -4501,7 +4485,8 @@ static int ProcessBatch(gchar *addon, int op_type, gchar *exe, gchar *archive, g
 	guint items = 0;
 	guint proc_items = 0;
 	int result = E_SUCCESS;
-	int encoding, error_level;
+	int encoding = ENC_DEF;
+	int error_level = g_key_file_get_integer(gCfg, addon, "Errorlevel", NULL);
 	gboolean is_wine = check_if_win_exe(exe);
 	guint all_items = g_strv_length(src_list);
 	gchar *tmpfile = NULL;
@@ -4530,8 +4515,24 @@ static int ProcessBatch(gchar *addon, int op_type, gchar *exe, gchar *archive, g
 	g_free(templ);
 
 	gchar *pass_str = ADDON_GET_STRING(addon, "PasswordQuery");
-	gchar *progress_mask = ADDON_GET_STRING(addon, "ProgressRegEx");
+	gchar *progress = ADDON_GET_STRING(addon, "ProgressRegEx");
 	gboolean debug = g_key_file_get_boolean(gCfg, addon, "Debug", NULL);
+
+	GRegex *percent_re = NULL;
+
+	if (progress)
+	{
+		if (check_if_pattern_regex(progress, strlen(progress)))
+		{
+			tListPattern item = {NULL, NULL};
+
+			if (set_regex_from_string(progress, &item, debug))
+			{
+				g_free(item.pattern);
+				percent_re = item.re;
+			}
+		}
+	}
 
 	while (proc_items < all_items)
 	{
@@ -4539,7 +4540,7 @@ static int ProcessBatch(gchar *addon, int op_type, gchar *exe, gchar *archive, g
 		                                        src_list + proc_items, dst_list ? dst_list + proc_items : NULL,
 		                                        &tmpfile, is_wine, TRUE, &items);
 		status = ExecuteArchiver(tmpdir ? tmpdir : workdir, argv, encoding, pass_str,
-		                         gProcessDataProc, arcname, progress_mask, NULL, debug, addon);
+		                         gProcessDataProc, arcname, percent_re, NULL, debug, addon);
 		proc_items = proc_items + items;
 
 		if (items == 0)
@@ -4560,7 +4561,9 @@ static int ProcessBatch(gchar *addon, int op_type, gchar *exe, gchar *archive, g
 		g_free(tmpfile);
 	}
 
-	g_free(progress_mask);
+	if (percent_re)
+		g_regex_unref(percent_re);
+
 	g_free(pass_str);
 	g_free(command);
 
@@ -5233,10 +5236,24 @@ HANDLE DCPCALL OpenArchive(tOpenArchiveData *ArchiveData)
 		data->lines = lines;
 		data->count = lines->len;
 		data->wine = is_wine;
-		data->error_level = error_level;
+		data->error_level = g_key_file_get_integer(gCfg, addon, "Errorlevel", NULL);
 		data->st = st;
 		data->batch = g_key_file_get_boolean(gCfg, addon, "BatchUnpack", NULL);
-		data->progress_mask = ADDON_GET_STRING(addon, "ProgressRegEx");
+		gchar *progress = ADDON_GET_STRING(addon, "ProgressRegEx");
+
+		if (progress)
+		{
+			if (check_if_pattern_regex(progress, strlen(progress)))
+			{
+				tListPattern item = {NULL, NULL};
+
+				if (set_regex_from_string(progress, &item, debug))
+				{
+					g_free(item.pattern);
+					data->percent_re = item.re;
+				}
+			}
+		}
 
 		if (g_key_file_get_boolean(gCfg, addon, "SearchForUglyDirs", NULL))
 		{
@@ -5309,6 +5326,9 @@ int DCPCALL CloseArchive(HANDLE hArcData)
 	if (data->basedir_re)
 		g_regex_unref(data->basedir_re);
 
+	if (data->percent_re)
+		g_regex_unref(data->percent_re);
+
 	if (data->lines)
 		g_ptr_array_free(data->lines, TRUE);
 
@@ -5333,7 +5353,6 @@ int DCPCALL CloseArchive(HANDLE hArcData)
 	g_free(data->list_start);
 	g_free(data->list_end);
 	g_free(data->units_cache);
-	g_free(data->progress_mask);
 	g_free(data);
 
 	dprintf(gDebugFd, "OpenArchive>{ReadHeaderEx+ProcessFile}>CloseArchive time %.2fs", (double)(clock() - clock_start) / CLOCKS_PER_SEC);
