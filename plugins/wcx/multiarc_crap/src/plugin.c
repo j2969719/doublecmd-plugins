@@ -2078,10 +2078,9 @@ static gchar* replace_arg_template(gchar *string, gchar *exe, gchar *archive, gc
 								dprintf(fd, "%s%s", line, is_wine ? "\r\n" : "\n");
 								g_free(line);
 							}
-
-							got++;
 						}
 
+						got = count;
 						close(fd);
 					}
 				}
@@ -4501,6 +4500,7 @@ static int ProcessBatch(gchar *addon, int op_type, gchar *exe, gchar *archive, g
 	gchar *progress = ADDON_GET_STRING(addon, "ProgressRegEx");
 	gboolean debug = g_key_file_get_boolean(gCfg, addon, "Debug", NULL);
 	gboolean ignore_err = g_key_file_get_boolean(gCfg, addon, "IgnoreErrors", NULL);
+	gboolean is_no_modify = g_key_file_get_boolean(gCfg, addon, "AddonCannotModify", NULL);
 
 	GRegex *percent_re = NULL;
 
@@ -4543,6 +4543,9 @@ static int ProcessBatch(gchar *addon, int op_type, gchar *exe, gchar *archive, g
 			break;
 
 		if (items == 0)
+			break;
+
+		if (is_no_modify)
 			break;
 	}
 
@@ -5700,4 +5703,3 @@ void DCPCALL ExtensionFinalize(void* Reserved)
 		g_free(gDebugFileName);
 	}
 }
-
