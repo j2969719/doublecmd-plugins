@@ -1877,7 +1877,7 @@ static gchar* prepare_command(gchar *addon, int cmd, gint *err_lvl, gint *enc, g
 		{
 			gchar *end = chomp_modifiers(pos + 2, &flags, NULL);
 
-			if (is_wine && !(flags & ARG_UNIXSEP))
+			if (quoted_subdir && is_wine && !(flags & ARG_UNIXSEP))
 				replace_nix_sep(quoted_subdir);
 
 			strcpy(pos + 2, end);
