@@ -134,6 +134,7 @@ typedef struct sAskData
 	char *addon;
 	char *key_prefix;
 	int mode;
+	int number;
 	gboolean show_cheatsheet;
 	char opts[MAX_PATH];
 } tAskData;
@@ -352,6 +353,44 @@ static void replace_char(gchar *string, char wut, char with)
 	}
 }
 
+static gchar* quote_and_free(gchar *string)
+{
+	gchar *result = g_strdup_printf("\"%s\"", string);
+	g_free(string);
+	return result;
+}
+
+static gboolean value_is_quoted(gchar *string, char chr, size_t last)
+{
+	if (last < 2)
+		return FALSE;
+
+	return (string[0] == chr && string[last] == chr);
+}
+
+static gchar* unquote_value(gchar *string, char chr)
+{
+	gchar *result = NULL;
+
+	if (!string)
+		return NULL;
+
+	g_strchomp(string);
+
+	size_t last = strlen(string) - 1;
+
+	if (value_is_quoted(string, chr, last))
+	{
+		string[last] = '\0';
+		result = g_strdup(string + 1);
+		g_free(string);
+	}
+	else
+		result = string;
+
+	return result;
+}
+
 static void replace_win_sep(gchar *filename)
 {
 	replace_char(filename, '\\', '/');
@@ -360,6 +399,30 @@ static void replace_win_sep(gchar *filename)
 static void replace_nix_sep(gchar *filename)
 {
 	replace_char(filename, '/', '\\');
+}
+
+static gchar* get_winepath(gchar *filename)
+{
+	gchar *result = NULL;
+	replace_nix_sep(filename);
+
+	gboolean is_quoted = value_is_quoted(filename, '"', strlen(filename) - 1);
+
+	if (is_quoted)
+		filename = unquote_value(filename, '"');
+
+	if (filename[0] != '\\')
+		result = filename;
+	else
+	{
+		result = g_strdup_printf("%s%s", gWineDrive, filename);
+		g_free(filename);
+	}
+
+	if (is_quoted)
+		result = quote_and_free(result);
+
+	return result;
 }
 
 static unsigned char* id_to_uchar(char* str, size_t *res_size)
@@ -500,52 +563,17 @@ static void remove_target(const char *filename)
 	}
 }
 
-static gchar* get_dirname_from_list(gchar **list)
+static gboolean check_if_trailing_slash(gchar *filename)
 {
-	if (!list)
-		return NULL;
+	if (!filename)
+		return FALSE;
 
-	guint len = g_strv_length(list);
+	size_t len = strlen(filename);
 
-	if (len == 1)
-		return g_path_get_dirname(list[0]);
+	if (len == 0)
+		return FALSE;
 
-	gchar *result = NULL;
-	gchar *first = g_strdup(list[0]);
-	size_t first_len = strlen(first);
-
-	for (guint i = 1; i < len; i++)
-	{
-		size_t pos = 0;
-		gchar *path = list[i];
-
-		while (*path != '\0')
-		{
-			if (first_len == pos)
-				break;
-
-			if (*path != first[pos])
-				first[pos] = '\0';
-
-			pos++;
-			path++;
-		}
-	}
-
-	first_len = strlen(first);
-
-	if (first[first_len - 1] == '/')
-	{
-		first[first_len - 1] = '\0';
-		result = first;
-	}
-	else
-	{
-		result = g_path_get_dirname(first);
-		g_free(first);
-	}
-
-	return result;
+	return (filename[len - 1] == '/');
 }
 
 static gboolean clone_file(gchar *filename, gchar *srcdir, gchar *tempdir, gchar *subdir)
@@ -556,9 +584,9 @@ static gboolean clone_file(gchar *filename, gchar *srcdir, gchar *tempdir, gchar
 	gchar *dst = NULL;
 
 	if (subdir)
-		dst = g_strdup_printf("%s%s/%s", tempdir, subdir, filename);
+		dst = g_strdup_printf("%s%s%s/%s", tempdir, check_if_trailing_slash(tempdir) ? "" : "/", subdir, filename);
 	else
-		dst = g_strdup_printf("%s/%s", tempdir, filename);
+		dst = g_strdup_printf("%s%s%s", tempdir, check_if_trailing_slash(tempdir) ? "" : "/", filename);
 
 	if (link(src, dst) == -1)
 	{
@@ -706,7 +734,7 @@ static void set_list_subdir(gchar **list, gchar *subdir)
 
 static gchar* make_tempdir(gchar *basedir, gchar *archive)
 {
-	gchar *templ = g_strdup_printf("%s/%.30s_XXXXXX", basedir, archive);
+	gchar *templ = g_strdup_printf("%s%s%.30s_XXXXXX", basedir, check_if_trailing_slash(basedir) ? "" : "/", archive);
 	return g_mkdtemp(templ);
 }
 
@@ -717,7 +745,14 @@ static gchar* make_tree_temp_copy(char *srcdir, char *subdir, gchar **src_list, 
 	result = make_tempdir(srcdir, archive);
 
 	if (result)
-		build_temp_tree(result, src_list, srcdir, subdir);
+	{
+		if (!build_temp_tree(result, src_list, srcdir, subdir))
+		{
+			remove_target(result);
+			g_free(result);
+			result = NULL;
+		}
+	}
 
 	return result;
 }
@@ -830,44 +865,6 @@ static int month_to_num(ArcData data)
 	}
 
 	return month;
-}
-
-static gboolean value_is_quoted(gchar *string, char chr, size_t last)
-{
-	if (last < 2)
-		return FALSE;
-
-	return (string[0] == chr && string[last] == chr);
-}
-
-static gchar* quote_and_free(gchar *string)
-{
-	gchar *result = g_strdup_printf("\"%s\"", string);
-	g_free(string);
-	return result;
-}
-
-static gchar* unquote_value(gchar *string, char chr)
-{
-	gchar *result = NULL;
-
-	if (!string)
-		return NULL;
-
-	g_strchomp(string);
-
-	size_t last = strlen(string) - 1;
-
-	if (value_is_quoted(string, chr, last))
-	{
-		string[last] = '\0';
-		result = g_strdup(string + 1);
-		g_free(string);
-	}
-	else
-		result = string;
-
-	return result;
 }
 
 static gchar* string_convert_encoding(gchar *string, int encoding)
@@ -1217,6 +1214,8 @@ static gboolean set_listform(gchar *addon, ArcData data)
 				data->basedir_re = item.re;
 			}
 		}
+		else
+			g_free(basedir_re);
 	}
 
 	if (result)
@@ -1609,7 +1608,7 @@ intptr_t DCPCALL AskDlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, int
 	return 0;
 }
 
-static gchar* show_ask_dialog(gchar *addon, int mode)
+static gchar* show_ask_dialog(gchar *addon, int mode, int number)
 {
 	gchar *result = NULL;
 
@@ -1626,7 +1625,7 @@ static gchar* show_ask_dialog(gchar *addon, int mode)
 
 		g_free(opts);
 
-		tAskData userdata = { addon, "AskHistory", mode, TRUE, "" };
+		tAskData userdata = { addon, "AskHistory", mode, TRUE, number, "" };
 
 		if (gExtensions->DialogBoxParam(gLFMAsk, strlen(gLFMAsk), AskDlgProc, DB_FILENAME, (void *)&userdata, NULL) != 0)
 		{
@@ -1644,239 +1643,6 @@ static gchar* show_ask_dialog(gchar *addon, int mode)
 	return result;
 }
 
-static gchar* command_set_dirs(gchar *command, char *subdir, char *tmpdir)
-{
-	if (!command)
-		return NULL;
-
-	gchar *brackets = NULL;
-	gchar *result = g_strdup(command);
-	gchar *quoted_subdir = NULL;
-	gchar *quoted_tmpdir = NULL;
-
-	if (subdir)
-		quoted_subdir = g_shell_quote(subdir);
-
-	if (tmpdir)
-		quoted_tmpdir = g_shell_quote(tmpdir);
-
-	while ((brackets = get_substring(result, "{", '}', FALSE)) != NULL)
-	{
-		gchar *data = get_substring(brackets, "{", '}', TRUE);
-
-		if (strstr(data, "%R") != NULL)
-			result = replace_optional(result, "%R", quoted_subdir, brackets, data);
-		else if (strstr(data, "%T") != NULL)
-			result = replace_optional(result, "%T", quoted_tmpdir, brackets, data);
-
-		g_free(brackets);
-	}
-
-	if (strstr(result, "%R") != NULL)
-		result = replace_substring(result, "%R", quoted_subdir ? quoted_subdir : "");
-
-	if (strstr(result, "%T") != NULL)
-		result = replace_substring(result, "%T", quoted_tmpdir ? quoted_tmpdir : "");
-
-	g_free(quoted_subdir);
-	g_free(quoted_tmpdir);
-
-	return result;
-}
-
-static gchar* prepare_command(gchar *addon, int cmd, gint *err_lvl, gint *enc, gboolean is_wine, gchar *pass)
-{
-	const char *keys[] =
-	{
-		"List",
-		"ExtractWithoutPath",
-		"Extract",
-		"Add",
-		"AddSelfExtract",
-		"Move",
-		"Delete",
-		"Test",
-	};
-
-	if (cmd >= OP_LAST)
-		return NULL;
-
-	gchar *result = ADDON_GET_STRING(addon, keys[cmd]);
-
-	if (!result || result[0] == '\0')
-	{
-		g_free(result);
-		return NULL;
-	}
-
-	if (is_wine)
-	{
-		gchar *pos = strstr(result, "%P ");
-
-		if (pos)
-		{
-			gchar *wine_templ = g_strdup_printf("%s/wine %%P ", gWineBin);
-			result = replace_substring(result, "%P ", wine_templ);
-			g_free(wine_templ);
-		}
-		else
-		{
-			gchar *tmp = result;
-			result = g_strdup_printf("%s/wine %s", gWineBin, tmp);
-			g_free(tmp);
-		}
-	}
-
-
-	gboolean is_askopts = FALSE;
-	int mode = g_key_file_get_integer(gCache, "AskMode", addon, NULL);
-
-	switch (cmd)
-	{
-	case OP_LIST:
-		is_askopts = (mode & ASK_LIST);
-		break;
-
-	case OP_UNPACK:
-	case OP_UNPACK_PATH:
-		is_askopts = (mode & ASK_UNPACK);
-		break;
-
-	case OP_PACK:
-	case OP_SFX:
-	case OP_MOVE:
-		is_askopts = (mode & ASK_PACK);
-		break;
-
-	case OP_DELETE:
-		is_askopts = (mode & ASK_DELETE);
-		break;
-
-	case OP_TEST:
-		is_askopts = (mode & ASK_TEST);
-		break;
-	};
-
-	gchar *brackets = NULL;
-
-	gchar volume[20] = "";
-
-	gchar *opts = NULL;
-
-	if (is_askopts)
-		opts = show_ask_dialog(addon, mode);
-
-	if (mode & ASK_MULTIVOL && strstr(result, "%V") != NULL)
-	{
-		tAskData userdata = { addon, "VolumeSize", mode, FALSE, "" };
-
-		if (gExtensions->DialogBoxParam(gLFMAsk, strlen(gLFMAsk), AskDlgProc, DB_FILENAME, (void *)&userdata, NULL) != 0)
-			g_strlcpy(volume, userdata.opts, sizeof(volume));
-	}
-
-	while ((brackets = get_substring(result, "{", '}', FALSE)) != NULL)
-	{
-		gchar *data = get_substring(brackets, "{", '}', TRUE);
-
-		if (strstr(data, "%S") != NULL)
-			result = replace_optional(result, "%S", opts, brackets, data);
-		else if (strstr(data, "%W") != NULL)
-			result = replace_optional(result, "%W", pass, brackets, data);
-		else if (strstr(data, "%V") != NULL)
-		{
-			result = replace_optional(result, "%V", volume, brackets, data);
-		}
-		else if (strstr(data, "%T") == NULL && strstr(data, "%R") != NULL)
-		{
-			dprintf(gDebugFd, "[%s]: \"%s\" is not supported!\n", result, data);
-			result = replace_substring(result, brackets, "");
-			g_free(data);
-		}
-
-		g_free(brackets);
-	}
-
-	if (strstr(result, "%S") != NULL)
-		result = replace_substring(result, "%S", opts ? opts : "");
-
-	if (strstr(result, "%V") != NULL)
-		result = replace_substring(result, "%V", volume);
-
-	if (strstr(result, "%W") != NULL)
-		result = replace_substring(result, "%W", pass ? pass : "");
-
-	g_free(opts);
-
-	gchar *string = get_substring(result, "%E", ' ', FALSE);
-
-	if (string)
-	{
-		gchar *value = get_substring(string, "%E", ' ', TRUE);
-
-		if (value)
-		{
-			*err_lvl = atoi(value);
-			g_free(value);
-		}
-
-		result = replace_substring(result, string, "");
-		g_free(string);
-	}
-
-	string = get_substring(result, "%O", ' ', FALSE);
-
-	if (string)
-	{
-		if (string[2] == 'A')
-			*enc = ENC_ANSI;
-		else if (string[2] == 'O')
-			*enc = ENC_OEM;
-		else
-			*enc = ENC_OEM;
-
-		result = replace_substring(result, string, "");
-		g_free(string);
-	}
-
-	return result;
-}
-
-static gchar* get_winepath(gchar *filename)
-{
-	gchar *result = NULL;
-	replace_nix_sep(filename);
-
-	gboolean is_quoted = value_is_quoted(filename, '"', strlen(filename) - 1);
-
-	if (is_quoted)
-		filename = unquote_value(filename, '"');
-
-	if (filename[0] != '\\')
-		result = filename;
-	else
-	{
-		result = g_strdup_printf("%s%s", gWineDrive, filename);
-		g_free(filename);
-	}
-
-	if (is_quoted)
-		result = quote_and_free(result);
-
-	return result;
-}
-
-static gboolean check_if_dir(gchar *filename)
-{
-	if (!filename)
-		return FALSE;
-
-	size_t len = strlen(filename);
-
-	if (len == 0)
-		return FALSE;
-
-	return (filename[len - 1] == '/');
-}
 
 static gchar* filename_apply_modifiers(gchar *filename, int flags)
 {
@@ -1971,6 +1737,221 @@ static gchar* chomp_modifiers(gchar *string, int *arg_flags, guint *max_files)
 	return string;
 }
 
+static gchar* get_command_template(gchar *addon, int cmd)
+{
+	const char *keys[] =
+	{
+		"List",
+		"ExtractWithoutPath",
+		"Extract",
+		"Add",
+		"AddSelfExtract",
+		"Move",
+		"Delete",
+		"Test",
+	};
+
+	if (cmd >= OP_LAST)
+		return NULL;
+
+	return ADDON_GET_STRING(addon, keys[cmd]);
+}
+
+static gchar* prepare_command(gchar *addon, int cmd, gint *err_lvl, gint *enc, gboolean is_wine, gchar *subdir, gchar *tmpdir, gchar *pass)
+{
+	gchar *result = get_command_template(addon, cmd);
+
+	if (!result || result[0] == '\0')
+	{
+		g_free(result);
+		return NULL;
+	}
+
+	if (is_wine)
+	{
+		gchar *pos = strstr(result, "%P ");
+
+		if (!pos)
+			pos = strstr(result, "%p ");
+
+		if (pos)
+		{
+			gchar *wine_templ = g_strdup_printf("%s/wine %%P ", gWineBin);
+			result = replace_substring(result, "%P ", wine_templ);
+			g_free(wine_templ);
+		}
+		else
+		{
+			gchar *tmp = result;
+			result = g_strdup_printf("%s/wine %s", gWineBin, tmp);
+			g_free(tmp);
+		}
+	}
+
+
+	gboolean is_askopts = FALSE;
+	int mode = g_key_file_get_integer(gCache, "AskMode", addon, NULL);
+
+	switch (cmd)
+	{
+	case OP_LIST:
+		is_askopts = (mode & ASK_LIST);
+		break;
+
+	case OP_UNPACK:
+	case OP_UNPACK_PATH:
+		is_askopts = (mode & ASK_UNPACK);
+		break;
+
+	case OP_PACK:
+	case OP_SFX:
+	case OP_MOVE:
+		is_askopts = (mode & ASK_PACK);
+		break;
+
+	case OP_DELETE:
+		is_askopts = (mode & ASK_DELETE);
+		break;
+
+	case OP_TEST:
+		is_askopts = (mode & ASK_TEST);
+		break;
+	};
+
+	gchar *brackets = NULL;
+
+	guint ask_num = -1;
+
+	gchar volume[20] = "";
+
+	gchar *opts = NULL;
+
+	if (is_askopts)
+		opts = show_ask_dialog(addon, mode, ask_num);
+
+	if (mode & ASK_MULTIVOL && strstr(result, "%V") != NULL)
+	{
+		tAskData userdata = { addon, "VolumeSize", mode, 0, FALSE, "" };
+
+		if (gExtensions->DialogBoxParam(gLFMAsk, strlen(gLFMAsk), AskDlgProc, DB_FILENAME, (void *)&userdata, NULL) != 0)
+			g_strlcpy(volume, userdata.opts, sizeof(volume));
+	}
+
+	gchar *quoted_subdir = NULL;
+	gchar *quoted_tmpdir = NULL;
+
+	if (subdir)
+		quoted_subdir = g_shell_quote(subdir);
+
+	if (tmpdir)
+	{
+		if (is_wine)
+		{
+			gchar *winepath = get_winepath(g_strdup(tmpdir));
+			quoted_tmpdir = g_shell_quote(winepath);
+			g_free(winepath);
+		}
+		else
+			quoted_tmpdir = g_shell_quote(tmpdir);
+	}
+
+	while ((brackets = get_substring(result, "{", '}', FALSE)) != NULL)
+	{
+		gchar *data = get_substring(brackets, "{", '}', TRUE);
+
+		int flags = 0;
+		char *pos = NULL;
+
+		if (strstr(data, "%S") != NULL)
+		{
+			ask_num++;
+			result = replace_optional(result, "%S", opts, brackets, data);
+		}
+		else if (strstr(data, "%W") != NULL)
+			result = replace_optional(result, "%W", pass, brackets, data);
+		else if (strstr(data, "%V") != NULL)
+		{
+			result = replace_optional(result, "%V", volume, brackets, data);
+		}
+		else if ((pos = strstr(data, "%R")) != NULL)
+		{
+			gchar *end = chomp_modifiers(pos + 2, &flags, NULL);
+
+			if (is_wine && !(flags & ARG_UNIXSEP))
+				replace_nix_sep(quoted_subdir);
+
+			strcpy(pos + 2, end);
+			result = replace_optional(result, "%R", quoted_subdir, brackets, data);
+		}
+		else if (strstr(data, "%T") != NULL)
+		{
+			gchar *end = chomp_modifiers(pos + 2, &flags, NULL);
+			strcpy(pos + 2, end);
+			result = replace_optional(result, "%T", quoted_tmpdir, brackets, data);
+		}
+		else
+		{
+			dprintf(gDebugFd, "[%s]: \"%s\" is not supported!\n", result, data);
+			result = replace_substring(result, brackets, "");
+			g_free(data);
+		}
+
+		g_free(brackets);
+	}
+
+	if (strstr(result, "%S") != NULL)
+		result = replace_substring(result, "%S", opts ? opts : "");
+
+	if (strstr(result, "%V") != NULL)
+		result = replace_substring(result, "%V", volume);
+
+	if (strstr(result, "%W") != NULL)
+		result = replace_substring(result, "%W", pass ? pass : "");
+
+	if (strstr(result, "%R") != NULL)
+		result = replace_substring(result, "%R", quoted_subdir ? quoted_subdir : "");
+
+	if (strstr(result, "%T") != NULL)
+		result = replace_substring(result, "%T", quoted_tmpdir ? quoted_tmpdir : "");
+
+	g_free(quoted_subdir);
+	g_free(quoted_tmpdir);
+	g_free(opts);
+
+	gchar *string = get_substring(result, "%E", ' ', FALSE);
+
+	if (string)
+	{
+		gchar *value = get_substring(string, "%E", ' ', TRUE);
+
+		if (value)
+		{
+			*err_lvl = atoi(value);
+			g_free(value);
+		}
+
+		result = replace_substring(result, string, "");
+		g_free(string);
+	}
+
+	string = get_substring(result, "%O", ' ', FALSE);
+
+	if (string)
+	{
+		if (string[2] == 'A')
+			*enc = ENC_ANSI;
+		else if (string[2] == 'O')
+			*enc = ENC_OEM;
+		else
+			*enc = ENC_OEM;
+
+		result = replace_substring(result, string, "");
+		g_free(string);
+	}
+
+	return result;
+}
+
 static gchar* replace_arg_template(gchar *string, gchar *exe, gchar *archive, gchar **src_list, gchar **dst_list, gchar **tmpfile, gboolean is_wine, guint *items_got, guint *current, guint *max_files)
 {
 	gchar *new_string = NULL;
@@ -2016,7 +1997,7 @@ static gchar* replace_arg_template(gchar *string, gchar *exe, gchar *archive, gc
 					{
 						while (src_list[got])
 						{
-							if (!check_if_dir(src_list[got]))
+							if (!check_if_trailing_slash(src_list[got]))
 								break;
 
 							got++;
@@ -2079,7 +2060,7 @@ static gchar* replace_arg_template(gchar *string, gchar *exe, gchar *archive, gc
 
 						for (guint i = 0; i < count; i++)
 						{
-							if (flags & ARG_FILEONLY && check_if_dir(src_list[i]))
+							if (flags & ARG_FILEONLY && check_if_trailing_slash(src_list[i]))
 								continue;
 
 							gchar *line = filename_apply_modifiers(src_list[i], flags);
@@ -4376,9 +4357,7 @@ static int ExtractWithoutPath(gchar **src_list, gchar **dst_list, gchar *dest_pa
 	gchar *tmpfile = NULL;
 	int result = E_SUCCESS;
 
-	gchar *command = command_set_dirs(data->command, dest_path, NULL);
-
-	gchar **argv = build_argv_from_template(command, data->archiver, data->archive,
+	gchar **argv = build_argv_from_template(data->command, data->archiver, data->archive,
 	                                        src_list, dst_list, &tmpfile, data->wine, FALSE, &items);
 	gchar *workdir = g_path_get_dirname(dst_list[0]);
 	int status = ExecuteArchiver(workdir, argv, data->enc, data->pass_str, data->ProcessDataProc,
@@ -4413,47 +4392,44 @@ static int ExtractWithPath(gchar **src_list, gchar **dst_list, gchar *dest_path,
 	guint proc_items = 0;
 	int result = E_SUCCESS;
 	guint all_items = g_strv_length(src_list);
-	gchar *workdir = NULL;
 	gchar *tmpfile = NULL;
-	gchar *arcname = g_path_get_basename(data->archive);
 
-	if (dst_list)
-	{
-		gchar *basedir = get_dirname_from_list(dst_list);
-		workdir = make_tempdir(basedir, arcname);
-		g_free(basedir);
-	}
-
-	if (!workdir || !build_temp_tree(workdir, src_list, NULL, NULL))
+	if (data->tempdir && !build_temp_tree(data->tempdir, src_list, NULL, NULL))
 	{
 		MessageBox("Error creating temporary folder.", data->addon, MB_OK | MB_ICONERROR);
-		g_free(arcname);
-		g_free(workdir);
-		result = E_EABORTED;
+		return E_EABORTED;
 	}
-
-	gchar *command = command_set_dirs(data->command, dest_path, workdir);
 
 	while (proc_items < all_items)
 	{
-		gchar **argv = build_argv_from_template(command, data->archiver, data->archive,
+		gchar **argv = build_argv_from_template(data->command, data->archiver, data->archive,
 		                                        src_list + proc_items, dst_list ? dst_list + proc_items : NULL,
 		                                        &tmpfile, data->wine, data->batch, &items);
-		status = ExecuteArchiver(workdir, argv, data->enc, data->pass_str, data->ProcessDataProc,
-		                         arcname, data->percent_re, NULL, data->debug, data->addon);
+		status = ExecuteArchiver(data->tempdir, argv, data->enc, data->pass_str, data->ProcessDataProc,
+		                         data->archive, data->percent_re, NULL, data->debug, data->addon);
 		proc_items = proc_items + items;
+
+		if (status == E_HANDLED)
+			result = E_EABORTED;
+		else if (!data->ignore_err && status > data->error_level)
+		{
+			if (data->debug)
+				dprintf(gDebugFd, "ERROR: exitstatus = %d (error level = %d)\n", status, data->error_level);
+
+			result = E_EWRITE;
+		}
+
+		if (result != E_SUCCESS)
+			break;
 
 		if (items == 0)
 			break;
 	}
 
-	g_free(command);
-
-	if (workdir)
+	if (data->tempdir)
 	{
-		move_files(workdir, src_list, dst_list, data->form_caps & FORM_WINSEP);
-		remove_target(workdir);
-		g_free(workdir);
+		move_files(data->tempdir, src_list, dst_list, data->form_caps & FORM_WINSEP);
+		remove_target(data->tempdir);
 	}
 
 	if (tmpfile)
@@ -4462,18 +4438,6 @@ static int ExtractWithPath(gchar **src_list, gchar **dst_list, gchar *dest_path,
 			remove_target(tmpfile);
 
 		g_free(tmpfile);
-	}
-
-	g_free(arcname);
-
-	if (status == E_HANDLED)
-		result = E_EABORTED;
-	else if (!data->ignore_err && status > data->error_level)
-	{
-		if (data->debug)
-			dprintf(gDebugFd, "ERROR: exitstatus = %d (error level = %d)\n", status, data->error_level);
-
-		result = E_EWRITE;
 	}
 
 	return result;
@@ -4492,31 +4456,51 @@ static int ProcessBatch(gchar *addon, int op_type, gchar *exe, gchar *archive, g
 	gchar *tmpfile = NULL;
 	gchar *tmpdir = NULL;
 	gchar *arcname = g_path_get_basename(archive);
-	gchar *templ = prepare_command(addon, op_type, &error_level, &encoding, is_wine, pass);
 
-	if (!templ)
+	if (op_type != OP_DELETE)
+	{
+		gchar *templ = get_command_template(addon, op_type);
+
+		if (subdir && subdir[0] != '\0' && strstr(templ, "%R") == NULL && strstr(templ, "%D") == NULL)
+		{
+			tmpdir = make_tree_temp_copy(workdir, subdir, src_list, arcname);
+
+			if (!tmpdir)
+			{
+				g_free(templ);
+				g_free(arcname);
+				return E_EWRITE;
+			}
+
+			set_list_subdir(src_list, subdir);
+		}
+		else if (strstr(templ, "%F") == NULL && strstr(templ, "%L") == NULL)
+		{
+			tmpdir = make_tree_temp_copy(workdir, NULL, src_list, arcname);
+
+			if (!tmpdir)
+			{
+				g_free(templ);
+				g_free(arcname);
+				return E_EWRITE;
+			}
+		}
+
+		g_free(templ);
+	}
+
+	gchar *command = prepare_command(addon, op_type, &error_level, &encoding, is_wine, subdir, tmpdir, pass);
+
+	if (!command)
 	{
 		g_free(arcname);
 		return E_NOT_SUPPORTED;
 	}
 
-	if (op_type != OP_DELETE)
-	{
-		if (subdir && subdir[0] != '\0' && strstr(templ, "%R") == NULL && strstr(templ, "%D") == NULL)
-		{
-			tmpdir = make_tree_temp_copy(workdir, subdir, src_list, arcname);
-			set_list_subdir(src_list, subdir);
-		}
-		else if (strstr(templ, "%F") == NULL && strstr(templ, "%L") == NULL)
-			tmpdir = make_tree_temp_copy(workdir, NULL, src_list, arcname);
-	}
-
-	gchar *command = command_set_dirs(templ, subdir, tmpdir);
-	g_free(templ);
-
 	gchar *pass_str = ADDON_GET_STRING(addon, "PasswordQuery");
 	gchar *progress = ADDON_GET_STRING(addon, "ProgressRegEx");
 	gboolean debug = g_key_file_get_boolean(gCfg, addon, "Debug", NULL);
+	gboolean ignore_err = g_key_file_get_boolean(gCfg, addon, "IgnoreErrors", NULL);
 
 	GRegex *percent_re = NULL;
 
@@ -4532,6 +4516,8 @@ static int ProcessBatch(gchar *addon, int op_type, gchar *exe, gchar *archive, g
 				percent_re = item.re;
 			}
 		}
+		else
+			g_free(progress);
 	}
 
 	while (proc_items < all_items)
@@ -4542,6 +4528,19 @@ static int ProcessBatch(gchar *addon, int op_type, gchar *exe, gchar *archive, g
 		status = ExecuteArchiver(tmpdir ? tmpdir : workdir, argv, encoding, pass_str,
 		                         gProcessDataProc, arcname, percent_re, NULL, debug, addon);
 		proc_items = proc_items + items;
+
+		if (status == E_HANDLED)
+			result = E_EABORTED;
+		else if (!ignore_err && status > error_level)
+		{
+			if (debug)
+				dprintf(gDebugFd, "ERROR: exitstatus = %d (error level = %d)\n", status, error_level);
+
+			result = E_EWRITE;
+		}
+
+		if (result != E_SUCCESS)
+			break;
 
 		if (items == 0)
 			break;
@@ -4568,17 +4567,6 @@ static int ProcessBatch(gchar *addon, int op_type, gchar *exe, gchar *archive, g
 	g_free(command);
 
 	g_free(arcname);
-
-
-	if (status == E_HANDLED)
-		result = E_EABORTED;
-	else if (!g_key_file_get_boolean(gCfg, addon, "IgnoreErrors", NULL) && status > error_level)
-	{
-		if (debug)
-			dprintf(gDebugFd, "ERROR: exitstatus = %d (error level = %d)\n", status, error_level);
-
-		result = E_EWRITE;
-	}
 
 	return result;
 }
@@ -4989,20 +4977,36 @@ int DCPCALL ProcessFile(HANDLE hArcData, int Operation, char *DestPath, char *De
 			{
 				if (data->batch)
 				{
-					data->command = prepare_command(data->addon, OP_UNPACK_PATH, &data->error_level, &data->enc, data->wine, data->pass);
+					gchar *arcname = g_path_get_basename(data->archive);
+
+					if (!DestPath || DestPath[0] == '\0')
+					{
+						gchar *basedir = g_path_get_dirname(DestName);
+						data->tempdir = make_tempdir(basedir, arcname);
+						g_free(basedir);
+					}
+					else
+						data->tempdir = make_tempdir(DestPath, arcname);
+
+					g_free(arcname);
+
+					data->command = prepare_command(data->addon, OP_UNPACK_PATH, &data->error_level, &data->enc, data->wine, NULL, NULL, data->pass);
 
 					if (!data->command)
 					{
 						dprintf(gDebugFd, "WARNING: BatchUnpack is disabled\n");
 						data->batch = FALSE;
 						data->op_type = OP_UNPACK;
+						remove_target(data->tempdir);
+						g_free(data->tempdir);
+						data->tempdir = NULL;
 					}
 					else
 						data->op_type = OP_UNPACK_PATH;
 				}
 				else
 				{
-					data->command = prepare_command(data->addon, OP_UNPACK, &data->error_level, &data->enc, data->wine, data->pass);
+					data->command = prepare_command(data->addon, OP_UNPACK, &data->error_level, &data->enc, data->wine, NULL, NULL, data->pass);
 
 					if (!data->command)
 						data->op_type = OP_UNPACK_PATH;
@@ -5015,12 +5019,13 @@ int DCPCALL ProcessFile(HANDLE hArcData, int Operation, char *DestPath, char *De
 		}
 
 		if (!data->command)
-			data->command = prepare_command(data->addon, data->op_type, &data->error_level, &data->enc, data->wine, data->pass);
+			data->command = prepare_command(data->addon, data->op_type, &data->error_level, &data->enc, data->wine, NULL, NULL, data->pass);
 
 		if (!data->command)
 			return E_NOT_SUPPORTED;
 		else if (data->batch)
 		{
+/*
 			if (DestPath)
 			{
 				g_strlcpy(data->destpath, DestPath, sizeof(data->destpath));
@@ -5030,6 +5035,8 @@ int DCPCALL ProcessFile(HANDLE hArcData, int Operation, char *DestPath, char *De
 					data->filelist = string_add_line(data->filelist, g_strdup(DestName), "\n");
 			}
 			else if (data->destpath[0] == '\0')
+*/
+			if (!DestPath)
 			{
 				data->itemlist = string_add_line(data->itemlist, g_strdup(data->lastitem), "\n");
 
@@ -5141,9 +5148,7 @@ HANDLE DCPCALL OpenArchive(tOpenArchiveData *ArchiveData)
 
 	int error_level = g_key_file_get_integer(gCfg, addon, "Errorlevel", NULL), encoding = ENC_DEF;
 	gboolean is_wine = check_if_win_exe(archiver);
-	gchar *templ = prepare_command(addon, OP_LIST, &error_level, &encoding, is_wine, pass);
-	gchar *command = command_set_dirs(templ, NULL, NULL);
-	g_free(templ);
+	gchar *command = prepare_command(addon, OP_LIST, &error_level, &encoding, is_wine, NULL, NULL, pass);
 	argv = build_argv_from_template(command, archiver, ArchiveData->ArcName, NULL, NULL, NULL, is_wine, FALSE, NULL);
 	g_free(command);
 
@@ -5253,6 +5258,8 @@ HANDLE DCPCALL OpenArchive(tOpenArchiveData *ArchiveData)
 					data->percent_re = item.re;
 				}
 			}
+			else
+				g_free(progress);
 		}
 
 		if (g_key_file_get_boolean(gCfg, addon, "SearchForUglyDirs", NULL))
@@ -5353,6 +5360,7 @@ int DCPCALL CloseArchive(HANDLE hArcData)
 	g_free(data->list_start);
 	g_free(data->list_end);
 	g_free(data->units_cache);
+	g_free(data->tempdir);
 	g_free(data);
 
 	dprintf(gDebugFd, "OpenArchive>{ReadHeaderEx+ProcessFile}>CloseArchive time %.2fs", (double)(clock() - clock_start) / CLOCKS_PER_SEC);
