@@ -3865,11 +3865,12 @@ static gboolean ParseLine(gchar *line, ArcData data, tHeaderDataEx *HeaderDataEx
 		{
 			dprintf(gDebugFd, "WARNING: format with '(' or ')' chars is not supported!");
 		}
-		else if (c == '.')
+		else if (c == '.' && !data->cur_dot && i > 0 && form[i - 1] == 'n')
 		{
 			g_strchomp(data->cur_name);
 			append_char('.', APPEND_DST(data->cur_name));
 			data->cur_dot = TRUE;
+			line_pos++;
 
 			if (data->debug)
 				dprintf(gDebugFd, "%c", c);
