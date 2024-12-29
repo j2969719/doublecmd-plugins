@@ -880,7 +880,7 @@ static gchar* string_convert_encoding(gchar *string, int encoding)
 		else
 			enc_string = gEncodingOEM;
 
-		result = g_convert_with_fallback(string, -1, enc_string, "UTF-8", NULL, NULL, NULL, NULL);
+		result = g_convert_with_fallback(string, -1, "UTF-8", enc_string, NULL, NULL, NULL, NULL);
 	}
 
 	if (result == NULL)
@@ -4097,6 +4097,7 @@ static int ExecuteArchiver(char *workdir, char **argv, int encoding, char *pass_
 	if (!err)
 	{
 		clock_t clock_start = clock();
+		clock_t actual_start = clock_start;
 		clock_t hup_clock_start = -1;
 		char buff[BUFSIZE];
 		char outline[MAX_LINEBUF] = "";
@@ -4341,7 +4342,7 @@ static int ExecuteArchiver(char *workdir, char **argv, int encoding, char *pass_
 			result = WEXITSTATUS(status);
 
 		dprintf(gDebugFd, "PID %d, exec time %.2fs, WIFEXITED %d WEXITSTATUS %d\n",
-		        pid, (double)(clock() - clock_start) / CLOCKS_PER_SEC, WIFEXITED(status), WEXITSTATUS(status));
+		        pid, (double)(clock() - actual_start) / CLOCKS_PER_SEC, WIFEXITED(status), WEXITSTATUS(status));
 	}
 
 	if (err)
