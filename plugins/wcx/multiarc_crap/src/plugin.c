@@ -112,6 +112,12 @@ enum
 
 enum
 {
+	ENC_CONVERT_FROM,
+	ENC_CONVERT_TO,
+};
+
+enum
+{
 	OP_LIST,
 	OP_UNPACK,
 	OP_UNPACK_PATH,
@@ -235,6 +241,7 @@ static gchar gWineDrive[3] = "Z:";
 static gchar *gWinePrefix = NULL;
 static gchar *gWineBin = NULL;
 gboolean gWineArchWin32 = FALSE;
+gboolean gStartWineServer = FALSE;
 gboolean gWineServerCalled = FALSE;
 
 
@@ -867,7 +874,7 @@ static int month_to_num(ArcData data)
 	return month;
 }
 
-static gchar* string_convert_encoding(gchar *string, int encoding)
+static gchar* string_convert_encoding(gchar *string, int encoding, int mode)
 {
 	gchar *result = NULL;
 
@@ -880,7 +887,10 @@ static gchar* string_convert_encoding(gchar *string, int encoding)
 		else
 			enc_string = gEncodingOEM;
 
-		result = g_convert_with_fallback(string, -1, "UTF-8", enc_string, NULL, NULL, NULL, NULL);
+		if (mode == ENC_CONVERT_FROM)
+			result = g_convert_with_fallback(string, -1, "UTF-8", enc_string, NULL, NULL, NULL, NULL);
+		else
+			result = g_convert_with_fallback(string, -1, enc_string, "UTF-8", NULL, NULL, NULL, NULL);
 	}
 
 	if (result == NULL)
@@ -1769,25 +1779,12 @@ static gchar* prepare_command(gchar *addon, int cmd, gint *err_lvl, gint *enc, g
 
 	if (is_wine)
 	{
-		gchar *pos = strstr(result, "%P ");
-
-		if (!pos)
-			pos = strstr(result, "%p ");
-
-		if (pos)
-		{
-			gchar *wine_templ = g_strdup_printf("%s/wine %%P ", gWineBin);
-			result = replace_substring(result, "%P ", wine_templ);
-			g_free(wine_templ);
-		}
-		else
-		{
-			gchar *tmp = result;
-			result = g_strdup_printf("%s/wine %s", gWineBin, tmp);
-			g_free(tmp);
-		}
+		gchar *tmp = result;
+		result = g_strdup_printf("%s/wine %s", gWineBin, tmp);
+		g_free(tmp);
 	}
-
+	else if (g_key_file_get_boolean(gCfg, addon, "ForceWine", NULL))
+		is_wine = TRUE;
 
 	gboolean is_askopts = FALSE;
 	int mode = g_key_file_get_integer(gCache, "AskMode", addon, NULL);
@@ -2071,9 +2068,9 @@ static gchar* replace_arg_template(gchar *string, gchar *exe, gchar *archive, gc
 									replace_nix_sep(line);
 
 								if (flags & ARG_ANSIENC)
-									line = string_convert_encoding(line, ENC_ANSI);
-								else if (flags & ARG_OEMENC)
-									line = string_convert_encoding(line, ENC_OEM);
+									line = string_convert_encoding(line, ENC_ANSI, ENC_CONVERT_TO);
+								else if (flags & ARG_OEMENC || (is_wine && !(flags & ARG_UTFENC)))
+									line = string_convert_encoding(line, ENC_OEM, ENC_CONVERT_TO);
 
 								dprintf(fd, "%s%s", line, is_wine ? "\r\n" : "\n");
 								g_free(line);
@@ -2772,6 +2769,43 @@ intptr_t DCPCALL ImpDlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, int
 
 static void FillAddonsComboBox(uintptr_t pDlg)
 {
+	SendDlgMsg(pDlg, "lblDescr", DM_SETTEXT, 0, 0);
+	SendDlgMsg(pDlg, "edExt", DM_SETTEXT, 0, 0);
+	SendDlgMsg(pDlg, "edExe", DM_SETTEXT, 0, 0);
+	SendDlgMsg(pDlg, "lblExeError", DM_SHOWITEM, 0, 0);
+	SendDlgMsg(pDlg, "lblWine", DM_SHOWITEM, 0, 0);
+	SendDlgMsg(pDlg, "edExt", DM_ENABLE, 0, 0);
+	SendDlgMsg(pDlg, "edExe", DM_ENABLE, 0, 0);
+	SendDlgMsg(pDlg, "cbDebug", DM_ENABLE, 0, 0);
+	SendDlgMsg(pDlg, "cbDisable", DM_ENABLE, 0, 0);
+	SendDlgMsg(pDlg, "gbAskOpts", DM_ENABLE, 0, 0);
+	SendDlgMsg(pDlg, "btnSet", DM_ENABLE, 0, 0);
+	SendDlgMsg(pDlg, "cbAskPack", DM_SETCHECK, 0, 0);
+	SendDlgMsg(pDlg, "cbAskExtract", DM_SETCHECK, 0, 0);
+	SendDlgMsg(pDlg, "cbAskList", DM_SETCHECK, 0, 0);
+	SendDlgMsg(pDlg, "cbAskDelete", DM_SETCHECK, 0, 0);
+	SendDlgMsg(pDlg, "cbAskTest", DM_SETCHECK, 0, 0);
+	SendDlgMsg(pDlg, "cbAskOnce", DM_SETCHECK, 0, 0);
+	SendDlgMsg(pDlg, "cbAskListPass", DM_SETCHECK, 0, 0);
+	SendDlgMsg(pDlg, "cbMultiVolume", DM_SETCHECK, 0, 0);
+	SendDlgMsg(pDlg, "cmbVolumeSize", DM_SETTEXT, 0, 0);
+	SendDlgMsg(pDlg, "cbAskPack", DM_ENABLE, 0, 0);
+	SendDlgMsg(pDlg, "cbAskExtract", DM_ENABLE, 0, 0);
+	SendDlgMsg(pDlg, "cbAskList", DM_ENABLE, 0, 0);
+	SendDlgMsg(pDlg, "cbAskDelete", DM_ENABLE, 0, 0);
+	SendDlgMsg(pDlg, "cbAskTest", DM_ENABLE, 0, 0);
+	SendDlgMsg(pDlg, "cbAskOnce", DM_ENABLE, 0, 0);
+	SendDlgMsg(pDlg, "cbAskListPass", DM_ENABLE, 0, 0);
+	SendDlgMsg(pDlg, "cbAskMultiVolume", DM_ENABLE, 0, 0);
+	SendDlgMsg(pDlg, "cbPK_CAPS_NEW", DM_SETCHECK, 0, 0);
+	SendDlgMsg(pDlg, "cbPK_CAPS_MODIFY", DM_SETCHECK, 0, 0);
+	SendDlgMsg(pDlg, "cbPK_CAPS_MULTIPLE", DM_SETCHECK, 0, 0);
+	SendDlgMsg(pDlg, "cbPK_CAPS_DELETE", DM_SETCHECK, 0, 0);
+	SendDlgMsg(pDlg, "cbPK_CAPS_BY_CONTENT", DM_SETCHECK, 0, 0);
+	SendDlgMsg(pDlg, "cbPK_CAPS_SEARCHTEXT", DM_SETCHECK, 0, 0);
+	SendDlgMsg(pDlg, "cbPK_CAPS_HIDE", DM_SETCHECK, 0, 0);
+	SendDlgMsg(pDlg, "cbPK_CAPS_ENCRYPT", DM_SETCHECK, 0, 0);
+
 	SendDlgMsg(pDlg, "cmbAddon", DM_LISTCLEAR, 0, 0);
 	gchar **groups = g_key_file_get_groups(gCfg, NULL);
 
@@ -4238,7 +4272,7 @@ static int ExecuteArchiver(char *workdir, char **argv, int encoding, char *pass_
 							dprintf(gDebugFd, "STDOUT:%s\n", outline);
 
 						if (out)
-							g_ptr_array_add(*out, (gpointer)string_convert_encoding(g_strdup(outline), encoding));
+							g_ptr_array_add(*out, (gpointer)string_convert_encoding(g_strdup(outline), encoding, ENC_CONVERT_FROM));
 
 						if (percent_re)
 						{
@@ -4496,6 +4530,9 @@ static int ProcessBatch(gchar *addon, int op_type, gchar *exe, gchar *archive, g
 		g_free(arcname);
 		return E_NOT_SUPPORTED;
 	}
+
+	if (!is_wine && g_key_file_get_boolean(gCfg, addon, "ForceWine", NULL))
+		is_wine = TRUE;
 
 	gchar *pass_str = ADDON_GET_STRING(addon, "PasswordQuery");
 	gchar *progress = ADDON_GET_STRING(addon, "ProgressRegEx");
@@ -4804,6 +4841,20 @@ static gchar* FindAddon(char *archive)
 					continue;
 				}
 
+				if (gStartWineServer && !gWineServerCalled &&
+				                (g_key_file_get_boolean(gCfg, *addon, "ForceWine", NULL) || check_if_win_exe(exe)))
+				{
+					gchar *command = g_strdup_printf("env WINEPREFIX='%s' %s '%s/wineserver' -p",
+					                                 gWinePrefix, gWineArchWin32 ? "WINEARCH=win32" : "", gWineBin);
+					gWineServerCalled = g_spawn_command_line_async(command, NULL);
+
+					if (gWineServerCalled)
+						dprintf(gDebugFd, "Starting persistent wineserver:\n%s\n%s\n",
+						        command, gWineServerCalled ? "OK" : "FAIL");
+
+					g_free(command);
+				}
+
 				g_key_file_set_string(gCache, "Archivers", *addon, exe);
 				g_free(exe);
 			}
@@ -5025,27 +5076,22 @@ int DCPCALL ProcessFile(HANDLE hArcData, int Operation, char *DestPath, char *De
 		if (!data->command)
 			data->command = prepare_command(data->addon, data->op_type, &data->error_level, &data->enc, data->wine, NULL, NULL, data->pass);
 
+		if (!data->wine && data->command)
+		{
+			if (g_key_file_get_boolean(gCfg, data->addon, "ForceWine", NULL))
+				data->wine = TRUE;
+		}
+
 		if (!data->command)
 			return E_NOT_SUPPORTED;
 		else if (data->batch)
 		{
-/*
-			if (DestPath)
-			{
-				g_strlcpy(data->destpath, DestPath, sizeof(data->destpath));
-				data->itemlist = string_add_line(data->itemlist, g_strdup(data->lastitem), "\n");
-
-				if (DestName && DestName[0] != '\0')
-					data->filelist = string_add_line(data->filelist, g_strdup(DestName), "\n");
-			}
-			else if (data->destpath[0] == '\0')
-*/
 			if (!DestPath)
 			{
 				data->itemlist = string_add_line(data->itemlist, g_strdup(data->lastitem), "\n");
 
 				if (DestName && DestName[0] != '\0')
-					data->filelist = string_add_line(data->filelist, g_strdup_printf("%s%s", DestPath ? DestPath : "", DestName), "\n");
+					data->filelist = string_add_line(data->filelist, g_strdup(DestName), "\n");
 			}
 		}
 		else if (data->command)
@@ -5153,7 +5199,12 @@ HANDLE DCPCALL OpenArchive(tOpenArchiveData *ArchiveData)
 	int error_level = g_key_file_get_integer(gCfg, addon, "Errorlevel", NULL), encoding = ENC_DEF;
 	gboolean is_wine = check_if_win_exe(archiver);
 	gchar *command = prepare_command(addon, OP_LIST, &error_level, &encoding, is_wine, NULL, NULL, pass);
-	argv = build_argv_from_template(command, archiver, ArchiveData->ArcName, NULL, NULL, NULL, is_wine, FALSE, NULL);
+
+	if (!is_wine && g_key_file_get_boolean(gCfg, addon, "ForceWine", NULL))
+		argv = build_argv_from_template(command, archiver, ArchiveData->ArcName, NULL, NULL, NULL, TRUE, FALSE, NULL);
+	else
+		argv = build_argv_from_template(command, archiver, ArchiveData->ArcName, NULL, NULL, NULL, is_wine, FALSE, NULL);
+
 	g_free(command);
 
 	if (!argv)
@@ -5623,19 +5674,7 @@ void DCPCALL ExtensionInitialize(tExtensionStartupInfo* StartupInfo)
 		}
 
 		gWineArchWin32 = g_key_file_get_boolean(gCfg, "MultiArc", "WineArchWin32", NULL);
-		gboolean is_persistent = g_key_file_get_boolean(gCfg, "MultiArc", "WineServerPersistent", NULL);
-
-		if (is_persistent)
-		{
-			gchar *command = g_strdup_printf("env WINEPREFIX='%s' %s '%s/wineserver' -p",
-			                                 gWinePrefix, gWineArchWin32 ? "WINEARCH=win32" : "", gWineBin);
-			gWineServerCalled = g_spawn_command_line_async(command, NULL);
-
-			if (gWineServerCalled)
-				dprintf(gDebugFd, "Starting persistent wineserver:\n%s\n%s\n", command, gWineServerCalled ? "OK" : "FAIL");
-
-			g_free(command);
-		}
+		gStartWineServer = g_key_file_get_boolean(gCfg, "MultiArc", "WineServerPersistent", NULL);
 
 		if (is_cfg_update)
 			g_key_file_save_to_file(gCfg, gConfName, NULL);
