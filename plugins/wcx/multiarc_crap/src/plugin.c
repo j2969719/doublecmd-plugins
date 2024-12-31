@@ -901,17 +901,16 @@ static gchar* string_convert_encoding(gchar *string, int encoding, int mode)
 	return result;
 }
 
-static gchar* string_add_line(gchar *string, gchar *line, gchar *sep)
+static gchar* string_add_line(gchar *string, gchar *line)
 {
 	gchar *result = NULL;
 
 	if (!string)
-		result = line;
+		result = g_strdup(line);
 	else
 	{
-		result = g_strdup_printf("%s%s%s", string, sep, line);
+		result = g_strconcat(string, "\n", line, NULL);
 		g_free(string);
-		g_free(line);
 	}
 
 	return result;
@@ -1767,7 +1766,7 @@ static gchar* get_command_template(gchar *addon, int cmd)
 	return ADDON_GET_STRING(addon, keys[cmd]);
 }
 
-static gchar* prepare_command(gchar *addon, int cmd, gint *err_lvl, gint *enc, gboolean is_wine, gchar *subdir, gchar *tmpdir, gchar *pass)
+static gchar* prepare_command(gchar *addon, int cmd, gint *err_lvl, gint *enc, gboolean *is_wine, gchar *subdir, gchar *tmpdir, gchar *pass)
 {
 	gchar *result = get_command_template(addon, cmd);
 
@@ -1777,14 +1776,14 @@ static gchar* prepare_command(gchar *addon, int cmd, gint *err_lvl, gint *enc, g
 		return NULL;
 	}
 
-	if (is_wine)
+	if (*is_wine == TRUE)
 	{
 		gchar *tmp = result;
 		result = g_strdup_printf("%s/wine %s", gWineBin, tmp);
 		g_free(tmp);
 	}
 	else if (g_key_file_get_boolean(gCfg, addon, "ForceWine", NULL))
-		is_wine = TRUE;
+		*is_wine = TRUE;
 
 	gboolean is_askopts = FALSE;
 	int mode = g_key_file_get_integer(gCache, "AskMode", addon, NULL);
@@ -1842,7 +1841,7 @@ static gchar* prepare_command(gchar *addon, int cmd, gint *err_lvl, gint *enc, g
 
 	if (tmpdir)
 	{
-		if (is_wine)
+		if (*is_wine == TRUE)
 		{
 			gchar *winepath = get_winepath(g_strdup(tmpdir));
 			quoted_tmpdir = g_shell_quote(winepath);
@@ -1874,7 +1873,7 @@ static gchar* prepare_command(gchar *addon, int cmd, gint *err_lvl, gint *enc, g
 		{
 			gchar *end = chomp_modifiers(pos + 2, &flags, NULL);
 
-			if (quoted_subdir && is_wine && !(flags & ARG_UNIXSEP))
+			if (quoted_subdir && *is_wine && !(flags & ARG_UNIXSEP))
 				replace_nix_sep(quoted_subdir);
 
 			strcpy(pos + 2, end);
@@ -2235,7 +2234,10 @@ static gchar** build_argv_from_template(gchar *templ, gchar *exe, gchar *archive
 					append_args++;
 
 					if (line)
-						new_args = string_add_line(new_args, line, "\n");
+					{
+						new_args = string_add_line(new_args, line);
+						g_free(line);
+					}
 				}
 
 				if (append_args >= max_args)
@@ -2246,7 +2248,10 @@ static gchar** build_argv_from_template(gchar *templ, gchar *exe, gchar *archive
 				}
 
 				if (new_args)
-					arg_lines = string_add_line(arg_lines, new_args, "\n");
+				{
+					arg_lines = string_add_line(arg_lines, new_args);
+					g_free(new_args);
+				}
 			}
 
 		}
@@ -2255,7 +2260,8 @@ static gchar** build_argv_from_template(gchar *templ, gchar *exe, gchar *archive
 			for (guint i = 1; i < src_count; i++)
 			{
 				gchar *filename = filename_apply_modifiers(src_list[i], filemods);
-				arg_lines = string_add_line(arg_lines, filename, "\n");
+				arg_lines = string_add_line(arg_lines, filename);
+				g_free(filename);
 				append_args++;
 				items_added++;
 
@@ -2268,7 +2274,9 @@ static gchar** build_argv_from_template(gchar *templ, gchar *exe, gchar *archive
 		{
 			gchar *prev_args = g_strjoinv("\n", argv);
 			g_strfreev(argv);
-			arg_lines = string_add_line(prev_args, arg_lines, "\n");
+			gchar *tmp = arg_lines;
+			arg_lines = string_add_line(prev_args, tmp);
+			g_free(tmp);
 			argv = g_strsplit(arg_lines, "\n", -1);
 			g_free(arg_lines);
 		}
@@ -2486,8 +2494,12 @@ static void ConvertAddon(GKeyFile *key_file, gchar *addon)
 	if (is_dc_addon || is_far_addon)
 	{
 		string = g_key_file_get_value(gCfg, addon, "Extract", NULL);
-		g_key_file_set_integer(gCfg, addon, "BatchUnpack", (strstr(string, "%F") == NULL) ? 1 : 0);
-		g_free(string);
+
+		if (string)
+		{
+			g_key_file_set_integer(gCfg, addon, "BatchUnpack", (strstr(string, "%F") == NULL) ? 1 : 0);
+			g_free(string);
+		}
 	}
 
 	if (is_dc_addon)
@@ -3443,7 +3455,9 @@ static gboolean FillHeader(ArcData data, tHeaderDataEx *HeaderDataEx)
 			if (data->form_caps & FORM_WINSEP)
 				replace_win_sep(data->cur_name);
 
-			data->dirlst = string_add_line(data->dirlst, g_path_get_dirname(data->cur_name), "\n");
+			gchar *dir = g_path_get_dirname(data->cur_name);
+			data->dirlst = string_add_line(data->dirlst, dir);
+			g_free(dir);
 			ClearParsedCache(data);
 			return TRUE;
 		}
@@ -3971,11 +3985,13 @@ static gboolean ParseLine(gchar *line, ArcData data, tHeaderDataEx *HeaderDataEx
 					line_pos = append_digit(line[line_pos], line_pos, data->debug, APPEND_DST(data->cur_hour));
 				else if (c == 'H')
 				{
+					char whitelist[] = "aAmM ";
+
 					if (line[line_pos] == 'p' || line[line_pos] == 'P')
 					{
 						data->cur_pm = TRUE;
 					}
-					else if (line[line_pos] != 'a' && line[line_pos] != 'A' && !isblank(line[line_pos]))
+					else if (strchr(whitelist, line[line_pos]) == NULL)
 					{
 						if (data->debug)
 							dprintf(gDebugFd, "\nRejected! (position %ld: '%c' received while parsing am/pm)", line_pos, line[line_pos]);
@@ -4509,7 +4525,7 @@ static int ProcessBatch(gchar *addon, int op_type, gchar *exe, gchar *archive, g
 
 			set_list_subdir(src_list, subdir);
 		}
-		else if (strstr(templ, "%F") == NULL && strstr(templ, "%L") == NULL)
+		else if (strstr(templ, "%F") == NULL && strstr(templ, "%L") == NULL && strstr(templ, "%l") == NULL)
 		{
 			tmpdir = make_tree_temp_copy(workdir, NULL, src_list, arcname);
 
@@ -4524,16 +4540,13 @@ static int ProcessBatch(gchar *addon, int op_type, gchar *exe, gchar *archive, g
 		g_free(templ);
 	}
 
-	gchar *command = prepare_command(addon, op_type, &error_level, &encoding, is_wine, subdir, tmpdir, pass);
+	gchar *command = prepare_command(addon, op_type, &error_level, &encoding, &is_wine, subdir, tmpdir, pass);
 
 	if (!command)
 	{
 		g_free(arcname);
 		return E_NOT_SUPPORTED;
 	}
-
-	if (!is_wine && g_key_file_get_boolean(gCfg, addon, "ForceWine", NULL))
-		is_wine = TRUE;
 
 	gchar *pass_str = ADDON_GET_STRING(addon, "PasswordQuery");
 	gchar *progress = ADDON_GET_STRING(addon, "ProgressRegEx");
@@ -4847,12 +4860,9 @@ static gchar* FindAddon(char *archive)
 				{
 					gchar *command = g_strdup_printf("env WINEPREFIX='%s' %s '%s/wineserver' -p",
 					                                 gWinePrefix, gWineArchWin32 ? "WINEARCH=win32" : "", gWineBin);
+					dprintf(gDebugFd, "Starting persistent wineserver:\n%s\n", command);
 					gWineServerCalled = g_spawn_command_line_async(command, NULL);
-
-					if (gWineServerCalled)
-						dprintf(gDebugFd, "Starting persistent wineserver:\n%s\n%s\n",
-						        command, gWineServerCalled ? "OK" : "FAIL");
-
+					dprintf(gDebugFd, "Result: %s\n", gWineServerCalled ? "OK" : "FAIL");
 					g_free(command);
 				}
 
@@ -5046,7 +5056,8 @@ int DCPCALL ProcessFile(HANDLE hArcData, int Operation, char *DestPath, char *De
 
 					g_free(arcname);
 
-					data->command = prepare_command(data->addon, OP_UNPACK_PATH, &data->error_level, &data->enc, data->wine, NULL, NULL, data->pass);
+					data->command = prepare_command(data->addon, OP_UNPACK_PATH,
+					                                &data->error_level, &data->enc, &data->wine, NULL, NULL, data->pass);
 
 					if (!data->command)
 					{
@@ -5062,7 +5073,8 @@ int DCPCALL ProcessFile(HANDLE hArcData, int Operation, char *DestPath, char *De
 				}
 				else
 				{
-					data->command = prepare_command(data->addon, OP_UNPACK, &data->error_level, &data->enc, data->wine, NULL, NULL, data->pass);
+					data->command = prepare_command(data->addon, OP_UNPACK,
+					                                &data->error_level, &data->enc, &data->wine, NULL, NULL, data->pass);
 
 					if (!data->command)
 						data->op_type = OP_UNPACK_PATH;
@@ -5075,13 +5087,7 @@ int DCPCALL ProcessFile(HANDLE hArcData, int Operation, char *DestPath, char *De
 		}
 
 		if (!data->command)
-			data->command = prepare_command(data->addon, data->op_type, &data->error_level, &data->enc, data->wine, NULL, NULL, data->pass);
-
-		if (!data->wine && data->command)
-		{
-			if (g_key_file_get_boolean(gCfg, data->addon, "ForceWine", NULL))
-				data->wine = TRUE;
-		}
+			data->command = prepare_command(data->addon, data->op_type, &data->error_level, &data->enc, &data->wine, NULL, NULL, data->pass);
 
 		if (!data->command)
 			return E_NOT_SUPPORTED;
@@ -5089,10 +5095,10 @@ int DCPCALL ProcessFile(HANDLE hArcData, int Operation, char *DestPath, char *De
 		{
 			if (!DestPath)
 			{
-				data->itemlist = string_add_line(data->itemlist, g_strdup(data->lastitem), "\n");
+				data->itemlist = string_add_line(data->itemlist, data->lastitem);
 
 				if (DestName && DestName[0] != '\0')
-					data->filelist = string_add_line(data->filelist, g_strdup(DestName), "\n");
+					data->filelist = string_add_line(data->filelist, DestName);
 			}
 		}
 		else if (data->command)
@@ -5199,12 +5205,8 @@ HANDLE DCPCALL OpenArchive(tOpenArchiveData *ArchiveData)
 
 	int error_level = g_key_file_get_integer(gCfg, addon, "Errorlevel", NULL), encoding = ENC_DEF;
 	gboolean is_wine = check_if_win_exe(archiver);
-	gchar *command = prepare_command(addon, OP_LIST, &error_level, &encoding, is_wine, NULL, NULL, pass);
-
-	if (!is_wine && g_key_file_get_boolean(gCfg, addon, "ForceWine", NULL))
-		argv = build_argv_from_template(command, archiver, ArchiveData->ArcName, NULL, NULL, NULL, TRUE, FALSE, NULL);
-	else
-		argv = build_argv_from_template(command, archiver, ArchiveData->ArcName, NULL, NULL, NULL, is_wine, FALSE, NULL);
+	gchar *command = prepare_command(addon, OP_LIST, &error_level, &encoding, &is_wine, NULL, NULL, pass);
+	argv = build_argv_from_template(command, archiver, ArchiveData->ArcName, NULL, NULL, NULL, is_wine, FALSE, NULL);
 
 	g_free(command);
 
@@ -5290,17 +5292,19 @@ HANDLE DCPCALL OpenArchive(tOpenArchiveData *ArchiveData)
 	data->archiver = archiver;
 	data->clock_start = clock_start;
 
-
 	if (set_listform(addon, data))
 	{
 		data->archive = g_strdup(ArchiveData->ArcName);
 		data->lines = lines;
 		data->count = lines->len;
-		data->wine = is_wine;
+		data->wine = check_if_win_exe(archiver);
 		data->error_level = g_key_file_get_integer(gCfg, addon, "Errorlevel", NULL);
 		data->st = st;
 		data->batch = g_key_file_get_boolean(gCfg, addon, "BatchUnpack", NULL);
 		gchar *progress = ADDON_GET_STRING(addon, "ProgressRegEx");
+
+		if (is_wine && g_key_file_get_integer(gCfg, addon, "FormMode", NULL) == 0)
+			data->form_caps |= FORM_WINSEP;
 
 		if (progress)
 		{
@@ -5446,12 +5450,16 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 
 	while (*AddList)
 	{
-		lines = string_add_line(lines, g_strdup(AddList), "\n");
+		lines = string_add_line(lines, AddList);
 
 		if (SubPath)
-			dst_lines = string_add_line(dst_lines, g_strdup_printf("%s/%s", SubPath, AddList), "\n");
+		{
+			gchar *dst = g_strdup_printf("%s/%s", SubPath, AddList);
+			dst_lines = string_add_line(dst_lines, dst);
+			g_free(dst);
+		}
 		else
-			dst_lines = string_add_line(dst_lines, g_strdup(AddList), "\n");
+			dst_lines = string_add_line(dst_lines, AddList);
 
 		while (*AddList++);
 	}
@@ -5493,7 +5501,7 @@ int DCPCALL DeleteFiles(char *PackedFile, char *DeleteList)
 
 	while (*DeleteList)
 	{
-		lines = string_add_line(lines, g_strdup(DeleteList), "\n");
+		lines = string_add_line(lines, DeleteList);
 
 		while (*DeleteList++);
 	}
