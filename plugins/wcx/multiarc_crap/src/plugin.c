@@ -2527,7 +2527,7 @@ static void ConvertAddon(GKeyFile *key_file, gchar *addon)
 	{
 		for (int i = 0; i < MAX_MULTIKEYS; i++)
 		{
-			gchar *key = g_strdup_printf("Form%d", i);
+			gchar *key = g_strdup_printf("Format%d", i);
 			string = ADDON_GET_STRING(addon, key);
 
 			if (!string)
