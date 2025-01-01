@@ -462,9 +462,10 @@ static void debug_dump_char(char c, size_t bak_pos, size_t line_pos)
 	size_t len = line_pos - bak_pos;
 
 	if (len > 0)
-
+	{
 		for (size_t i = 0; i < len; i++)
 			dprintf(gDebugFd, "%c", c);
+	}
 }
 
 static int copy_local_file(char *src, char *dst, tProcessDataProc ProcessDataProc)
@@ -3875,9 +3876,44 @@ static gboolean ParseLine(gchar *line, ArcData data, tHeaderDataEx *HeaderDataEx
 				line_pos++;
 			}
 		}
-		else if (c == '(' || c == ')')
+		else if (c == '(')
 		{
-			dprintf(gDebugFd, "WARNING: format with '(' or ')' chars is not supported!");
+			gboolean is_invalid = FALSE;
+
+			while (form[++i] && form[i] != ')')
+			{
+				if (isdigit(line[line_pos]))
+				{
+					c = form[i];
+
+					if (data->debug)
+						dprintf(gDebugFd, "%c", c);
+
+					if (c == 'd')
+						append_char(line[line_pos], APPEND_DST(data->cur_day));
+					else if (c == 't')
+						append_char(line[line_pos], APPEND_DST(data->cur_month));
+					else if (c == 'y')
+						append_char(line[line_pos], APPEND_DST(data->cur_year));
+					else if (c == 'h')
+						append_char(line[line_pos], APPEND_DST(data->cur_hour));
+					else if (c == 'm')
+						append_char(line[line_pos], APPEND_DST(data->cur_min));
+					else if (c == 's')
+						append_char(line[line_pos], APPEND_DST(data->cur_sec));
+					else if (c == 'z')
+						append_char(line[line_pos], APPEND_DST(data->cur_size));
+					else if (c == 'p')
+						append_char(line[line_pos], APPEND_DST(data->cur_pksize));
+					else if (!is_invalid)
+						is_invalid = TRUE;
+
+					line_pos++;
+				}
+			}
+
+			if (data->debug && is_invalid)
+				dprintf(gDebugFd, "\nWARNING: form (%c) is not supported!\n", c);
 		}
 		else if (c == '.' && !data->cur_dot && i > 0 && form[i - 1] == 'n')
 		{
