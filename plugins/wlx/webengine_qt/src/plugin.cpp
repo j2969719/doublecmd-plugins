@@ -1,10 +1,14 @@
 #include <QUrl>
 #include <QWebEngineView>
+#include <QWebEngineSettings>
 #include "wlxplugin.h"
 
 HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 {
 	QWebEngineView *view = new QWebEngineView((QWidget*)ParentWin);
+
+	//qt 6.5+
+	//view->settings()->setAttribute(QWebEngineSettings::ForceDarkMode, true);
 
 	view->load(QUrl::fromLocalFile(FileToLoad));
 	view->show();
