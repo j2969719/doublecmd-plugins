@@ -445,7 +445,9 @@ void DCPCALL FsStatusInfo(char* RemoteDir, int InfoStartEnd, int InfoOperation)
 	{
 		if (gLogString)
 		{
-			MessageBox(gLogString->str, NULL, MB_OK);
+			if (gLogString->str[0] != '\0')
+				MessageBox(gLogString->str, NULL, MB_OK);
+
 			g_string_free(gLogString, TRUE);
 			gLogString = NULL;
 		}
