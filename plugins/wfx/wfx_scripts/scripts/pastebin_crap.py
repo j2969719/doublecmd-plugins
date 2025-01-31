@@ -25,7 +25,7 @@ try:
 			obj[scr]['files'] = {}
 		f.close()
 except FileNotFoundError:
-	obj = json.loads('{ ' + scr + ' : { "files" : {}, "api_dev_key" : null }')
+	obj = json.loads('{ "' + scr + '" : { "files" : {}, "api_dev_key" : null }')
 	with open(conf, 'w') as f:
 		json.dump(obj, f)
 		f.close()
@@ -87,6 +87,7 @@ def vfs_getfile(src, dst):
 			response = requests.get(raw, stream=True)
 		except Exception as e:
 			print(str(e))
+			f.close()
 			sys.exit(1)
 		if response.status_code == 200:
 			total = response.headers.get('content-length')
@@ -97,6 +98,7 @@ def vfs_getfile(src, dst):
 					f.write(data)
 		else:
 			print(str(response.status_code) + ": " + response.reason, file=sys.stderr)
+			f.close()
 			sys.exit(1)
 		f.close()
 		sys.exit()

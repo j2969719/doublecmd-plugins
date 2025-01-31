@@ -27,7 +27,7 @@ try:
 			obj[scr]['files'] = {}
 		f.close()
 except FileNotFoundError:
-	obj = json.loads('{ ' + scr + ' : { "files" : {}, "api_key" : null, "client_id" : null} }')
+	obj = json.loads('{ "' + scr + '" : { "files" : {}, "api_key" : null, "client_id" : null} }')
 	with open(conf, 'w') as f:
 		json.dump(obj, f)
 		f.close()

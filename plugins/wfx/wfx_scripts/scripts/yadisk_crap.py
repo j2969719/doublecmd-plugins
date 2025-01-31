@@ -30,7 +30,7 @@ try:
 			obj[scr]['connections'] = {}
 		f.close()
 except FileNotFoundError:
-	obj = json.loads('{ ' + scr + ' : { "connections" : {}, "app_id" : null, "secret" : null } }')
+	obj = json.loads('{ "' + scr + '" : { "connections" : {}, "app_id" : null, "secret" : null } }')
 	with open(conf, 'w') as f:
 		json.dump(obj, f)
 		f.close()
