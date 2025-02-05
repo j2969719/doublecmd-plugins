@@ -2,5 +2,11 @@ https://github.com/rikyoz/bit7z
 
 mkdir build
 cd build
-cmake ../ -DCMAKE_BUILD_TYPE=Release -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DBIT7Z_AUTO_FORMAT=ON -DBIT7Z_USE_LEGACY_IUNKNOWN=ON
+
+# p7zip or 7-zip v22.01 and earlier
+# cmake ../ -DCMAKE_BUILD_TYPE=Release -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DBIT7Z_AUTO_FORMAT=ON -DBIT7Z_USE_LEGACY_IUNKNOWN=ON
+
+# 7zip
+cmake ../ -DCMAKE_BUILD_TYPE=Release -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DBIT7Z_AUTO_FORMAT=ON
+
 cmake --build . -j --config Release

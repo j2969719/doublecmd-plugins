@@ -4,7 +4,8 @@
 
 using namespace bit7z;
 
-Bit7zLibrary gBit7zLib;
+// Bit7zLibrary gBit7zLib { "/usr/lib/p7zip/7z.so" };
+Bit7zLibrary gBit7zLib { "/usr/lib/7zip/7z.so" };
 
 HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 {

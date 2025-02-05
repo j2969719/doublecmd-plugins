@@ -11,10 +11,6 @@
 #include "wcxplugin.h"
 #include "extension.h"
 
-#ifndef BIT7Z_AUTO_FORMAT
-#include <glib.h>
-#endif
-
 using namespace std;
 using namespace bit7z;
 
@@ -29,6 +25,12 @@ using namespace bit7z;
 #define InputBox gExtensions->InputBox
 #define LIST_ITEMS(L) (sizeof(L)/sizeof(tListItem))
 #define ARRAY_SIZE(A) (sizeof(A)/sizeof(A[0]))
+
+#ifdef BIT7Z_AUTO_FORMAT
+#define BITFORMAT BitFormat::Auto
+#else
+#define BITFORMAT BitFormat::SevenZip
+#endif
 
 typedef struct sArcData
 {
@@ -59,7 +61,9 @@ tPkCryptProc gPkCryptProc  = nullptr;
 tChangeVolProc gChangeVolProc  = nullptr;
 tProcessDataProc gProcessDataProc = nullptr;
 tExtensionStartupInfo* gExtensions = nullptr;
-Bit7zLibrary gBit7zLib;
+
+// Bit7zLibrary gBit7zLib { "/usr/lib/p7zip/7z.so" };
+Bit7zLibrary gBit7zLib { "/usr/lib/7zip/7z.so" };
 
 char gPass[PATH_MAX];
 uint64_t gTotalSize = 0;
@@ -75,28 +79,23 @@ int gWordSize = 0;
 uint64_t gVolumeSize = 0;
 int gThreadCount = 0;
 
-#ifndef BIT7Z_AUTO_FORMAT
-GKeyFile *gCfg = nullptr;
-gchar *gPWDPath = nullptr;
-#endif
-
 tListItem gComprLevels[] =
 {
-	{"None", (int)BitCompressionLevel::None},
-	{"Fastest",	(int)BitCompressionLevel::Fastest},
-	{"Fast", (int)BitCompressionLevel::Fast},
-	{"Normal", (int)BitCompressionLevel::Normal},
-	{"Max", (int)BitCompressionLevel::Max},
-	{"Ultra", (int)BitCompressionLevel::Ultra},
+	{"None",       (int)BitCompressionLevel::None},
+	{"Fastest", (int)BitCompressionLevel::Fastest},
+	{"Fast",       (int)BitCompressionLevel::Fast},
+	{"Normal",   (int)BitCompressionLevel::Normal},
+	{"Max", 	(int)BitCompressionLevel::Max},
+	{"Ultra",     (int)BitCompressionLevel::Ultra},
 };
 
 tListItem gComprMethods[] =
 {
-	{"Copy", (int)BitCompressionMethod::Copy},
-	{"BZip2",	(int)BitCompressionMethod::BZip2},
-	{"Lzma", (int)BitCompressionMethod::Lzma},
-	{"Lzma2",	(int)BitCompressionMethod::Lzma2},
-	{"Ppmd", (int)BitCompressionMethod::Ppmd},
+	{"Copy",   (int)BitCompressionMethod::Copy},
+	{"BZip2", (int)BitCompressionMethod::BZip2},
+	{"Lzma",   (int)BitCompressionMethod::Lzma},
+	{"Lzma2", (int)BitCompressionMethod::Lzma2},
+	{"Ppmd",   (int)BitCompressionMethod::Ppmd},
 
 };
 
@@ -151,7 +150,7 @@ tListItem gVolumeSizes[] =
 
 static char *ask_password(void)
 {
-	if (!InputBox(nullptr, gPassMsg, true, gPass, PATH_MAX))
+	if (!InputBox((char *)PLUGNAME, gPassMsg, true, gPass, PATH_MAX))
 		gPass[0] = '\0';
 
 	return gPass;
@@ -166,13 +165,13 @@ static bool show_progress(uint64_t size)
 
 	return (gProcessDataProc(gProcFile, progress) != 0);
 }
-
+/*
 static void show_ratio(uint64_t input, uint64_t output)
 {
 	if (input > 0)
 		gProcessDataProc(gProcFile, -1000 - output * 100 / input);
 }
-
+*/
 static void set_totalsize(uint64_t size)
 {
 	gTotalSize = size;
@@ -215,7 +214,7 @@ static bool extract_single(tArcData *data, uint32_t index, char *DestName)
 	catch (const bit7z::BitException& ex)
 	{
 		if (ex.posixCode() != ECANCELED)
-			MessageBox((char*)ex.what(), nullptr,  MB_OK | MB_ICONERROR);
+			MessageBox((char *)ex.what(), nullptr,  MB_OK | MB_ICONERROR);
 
 		result = false;
 	}
@@ -239,7 +238,7 @@ intptr_t DCPCALL OptionsDlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg,
 			SendDlgMsg(pDlg, (char*)"cbLevel", DM_LISTADD, (intptr_t)gComprLevels[index].text, (intptr_t)gComprLevels[index].data);
 
 			if (gComprLevel == gComprLevels[index].data)
-				SendDlgMsg(pDlg, (char *)"cbLevel", DM_LISTSETITEMINDEX, index, 0);
+				SendDlgMsg(pDlg, (char*)"cbLevel", DM_LISTSETITEMINDEX, index, 0);
 		}
 
 		for (index = 0; index < (int)LIST_ITEMS(gComprMethods); index++)
@@ -247,7 +246,7 @@ intptr_t DCPCALL OptionsDlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg,
 			SendDlgMsg(pDlg, (char*)"cbMethod", DM_LISTADD, (intptr_t)gComprMethods[index].text, (intptr_t)gComprMethods[index].data);
 
 			if (gComprMethod == gComprMethods[index].data)
-				SendDlgMsg(pDlg, (char *)"cbMethod", DM_LISTSETITEMINDEX, index, 0);
+				SendDlgMsg(pDlg, (char*)"cbMethod", DM_LISTSETITEMINDEX, index, 0);
 		}
 
 		for (index = 0; index < (int)LIST_ITEMS(gDictSizes); index++)
@@ -255,7 +254,7 @@ intptr_t DCPCALL OptionsDlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg,
 			SendDlgMsg(pDlg, (char*)"cbDictionarySize", DM_LISTADD, (intptr_t)gDictSizes[index].text, (intptr_t)gDictSizes[index].data);
 
 			if (gDictSize == gDictSizes[index].data)
-				SendDlgMsg(pDlg, (char *)"cbDictionarySize", DM_LISTSETITEMINDEX, index, 0);
+				SendDlgMsg(pDlg, (char*)"cbDictionarySize", DM_LISTSETITEMINDEX, index, 0);
 		}
 
 		for (index = 0; index < (int)ARRAY_SIZE(gWordSizes); index++)
@@ -263,20 +262,20 @@ intptr_t DCPCALL OptionsDlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg,
 			SendDlgMsg(pDlg, (char*)"cbWordSize", DM_LISTADD, (intptr_t)to_string(gWordSizes[index]).c_str(), (intptr_t)gWordSizes[index]);
 
 			if (gWordSize == gWordSizes[index])
-				SendDlgMsg(pDlg, (char *)"cbWordSize", DM_LISTSETITEMINDEX, index, 0);
+				SendDlgMsg(pDlg, (char*)"cbWordSize", DM_LISTSETITEMINDEX, index, 0);
 		}
 
 		for (index = 0; index < (int)LIST_ITEMS(gVolumeSizes); index++)
-			SendDlgMsg(pDlg, (char *)"cbVolumeSize", DM_LISTADD, (intptr_t)gVolumeSizes[index].text, (intptr_t)gVolumeSizes[index].data);
+			SendDlgMsg(pDlg, (char*)"cbVolumeSize", DM_LISTADD, (intptr_t)gVolumeSizes[index].text, (intptr_t)gVolumeSizes[index].data);
 
 		if (gVolumeSize > 0)
-			SendDlgMsg(pDlg, (char *)"cbVolumeSize", DM_SETTEXT, (intptr_t)to_string(gVolumeSize).c_str(), 0);
+			SendDlgMsg(pDlg, (char*)"cbVolumeSize", DM_SETTEXT, (intptr_t)to_string(gVolumeSize).c_str(), 0);
 
 		for (index = 1; index < 5; index++)
-			SendDlgMsg(pDlg, (char *)"cbThreadsCount", DM_LISTADD, (intptr_t)to_string(index).c_str(), index);
+			SendDlgMsg(pDlg, (char*)"cbThreadsCount", DM_LISTADD, (intptr_t)to_string(index).c_str(), index);
 
 		if (gThreadCount > 0)
-			SendDlgMsg(pDlg, (char *)"cbThreadsCount", DM_LISTSETITEMINDEX, gThreadCount, 0);
+			SendDlgMsg(pDlg, (char*)"cbThreadsCount", DM_LISTSETITEMINDEX, gThreadCount, 0);
 
 		SendDlgMsg(pDlg, (char*)"ckSolid", DM_SETCHECK, (intptr_t)gSolid, 0);
 		SendDlgMsg(pDlg, (char*)"ckCryptHeaders", DM_SETCHECK, (intptr_t)gCryptHeaders, 0);
@@ -289,7 +288,7 @@ intptr_t DCPCALL OptionsDlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg,
 			index = (int)SendDlgMsg(pDlg, (char*)"cbLevel", DM_LISTGETITEMINDEX, 0, 0);
 
 			if (index != -1)
-				gComprLevel = (int)SendDlgMsg(pDlg, (char *)"cbLevel", DM_LISTGETDATA, index, 0);
+				gComprLevel = (int)SendDlgMsg(pDlg, (char*)"cbLevel", DM_LISTGETDATA, index, 0);
 
 			index = (int)SendDlgMsg(pDlg, (char*)"cbMethod", DM_LISTGETITEMINDEX, 0, 0);
 
@@ -299,12 +298,12 @@ intptr_t DCPCALL OptionsDlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg,
 			index = (int)SendDlgMsg(pDlg, (char*)"cbDictionarySize", DM_LISTGETITEMINDEX, 0, 0);
 
 			if (index != -1)
-				gDictSize = (int)SendDlgMsg(pDlg, (char *)"cbDictionarySize", DM_LISTGETDATA, index, 0);
+				gDictSize = (int)SendDlgMsg(pDlg, (char*)"cbDictionarySize", DM_LISTGETDATA, index, 0);
 
 			index = (int)SendDlgMsg(pDlg, (char*)"cbWordSize", DM_LISTGETITEMINDEX, 0, 0);
 
 			if (index != -1)
-				gWordSize = (int)SendDlgMsg(pDlg, (char *)"cbWordSize", DM_LISTGETDATA, index, 0);
+				gWordSize = (int)SendDlgMsg(pDlg, (char*)"cbWordSize", DM_LISTGETDATA, index, 0);
 
 			char *text = (char*)SendDlgMsg(pDlg, (char*)"cbVolumeSize", DM_GETTEXT, 0, 0);
 			gVolumeSize = (int64_t)strtoll(text, nullptr, 10);
@@ -312,7 +311,7 @@ intptr_t DCPCALL OptionsDlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg,
 			index = (int)SendDlgMsg(pDlg, (char*)"cbThreadsCount", DM_LISTGETITEMINDEX, 0, 0);
 
 			if (index != -1)
-				gThreadCount = (int)SendDlgMsg(pDlg, (char *)"cbThreadsCount", DM_LISTGETDATA, index, 0);
+				gThreadCount = (int)SendDlgMsg(pDlg, (char*)"cbThreadsCount", DM_LISTGETDATA, index, 0);
 
 			gSolid = (bool)SendDlgMsg(pDlg, (char*)"ckSolid", DM_GETCHECK, 0, 0);
 			gCryptHeaders = (bool)SendDlgMsg(pDlg, (char*)"ckCryptHeaders", DM_GETCHECK, 0, 0);
@@ -365,57 +364,75 @@ HANDLE DCPCALL OpenArchive(tOpenArchiveData *ArchiveData)
 
 	memset(data, 0, sizeof(tArcData));
 
-#ifndef BIT7Z_AUTO_FORMAT
-	char pass[PATH_MAX] = "";
-
-	if (ArchiveData->OpenMode == PK_OM_LIST)
-		g_key_file_load_from_file(gCfg, gPWDPath, G_KEY_FILE_NONE, NULL);
-
-	if (g_key_file_has_key(gCfg, "wcx_7z", ArchiveData->ArcName, NULL))
-		gPkCryptProc(gCryptoNr, PK_CRYPT_LOAD_PASSWORD, ArchiveData->ArcName, pass, PATH_MAX);
-
-#endif
-
 	try
 	{
-#ifdef BIT7Z_AUTO_FORMAT
-		data->reader = new BitArchiveReader { gBit7zLib, ArchiveData->ArcName, BitFormat::Auto};
-#else
-		data->reader = new BitArchiveReader { gBit7zLib, ArchiveData->ArcName, BitFormat::SevenZip, pass };
-#endif
-		data->reader->setPasswordCallback(ask_password);
-		data->reader->setTotalCallback([data](uint64_t size)
+		try
 		{
-			data->total = size;
-		});
-		data->reader->setFileCallback([data](string filename)
+			data->reader = new BitArchiveReader { gBit7zLib, std::filesystem::path(ArchiveData->ArcName), BITFORMAT };
+		}
+		catch (const bit7z::BitException& ex)
 		{
-			snprintf(data->procfile, PATH_MAX, "%s", filename.c_str());
-		});
-		data->reader->setProgressCallback([data](uint64_t size)
-		{
-			int progress = 0;
-			int mode = data->solid ? 0 : -1000;
+			char pass[PATH_MAX] = "";
 
-			if (data->total > 0)
-				progress = mode - size * 100 / data->total;
-
-			return (data->ProcessDataProc(data->procfile, progress) != 0);
-		});
-		data->count = data->reader->itemsCount();
-		data->items = data->reader->items();
-
-		if (ArchiveData->OpenMode == PK_OM_EXTRACT)
-		{
-			data->solid = data->reader->isSolid();
-
-			if (data->solid)
+			if (ex.posixCode() == 1)
 			{
-				data->dst_names = new map<uint32_t, string>;
-				snprintf(data->procfile, PATH_MAX, "%s", ArchiveData->ArcName);
+				if (!gCryptoFlags & PK_CRYPTOPT_MASTERPASS_SET)
+				{
+					int ret = gPkCryptProc(gCryptoNr, PK_CRYPT_LOAD_PASSWORD_NO_UI, ArchiveData->ArcName, pass, PATH_MAX);
+
+					if (ret != 0 && ArchiveData->OpenMode == PK_OM_LIST)
+						ret = gPkCryptProc(gCryptoNr, PK_CRYPT_LOAD_PASSWORD, ArchiveData->ArcName, pass, PATH_MAX);
+				}
+
+				if (pass[0] != '\0' || InputBox((char*)PLUGNAME, (char*)ex.what(), true, pass, PATH_MAX))
+					data->reader = new BitArchiveReader { gBit7zLib, ArchiveData->ArcName, BITFORMAT, pass };
 			}
 		}
 
+		if (data->reader)
+		{
+			data->reader->setPasswordCallback(ask_password);
+			data->reader->setTotalCallback([data](uint64_t size)
+			{
+				data->total = size;
+			});
+
+			data->reader->setFileCallback([data](string filename)
+			{
+				snprintf(data->procfile, PATH_MAX, "%s", filename.c_str());
+			});
+
+			data->reader->setProgressCallback([data](uint64_t size)
+			{
+				int progress = 0;
+				int mode = data->solid ? 0 : -1000;
+
+				if (data->total > 0)
+					progress = mode - size * 100 / data->total;
+
+				return (data->ProcessDataProc(data->procfile, progress) != 0);
+			});
+
+			data->count = data->reader->itemsCount();
+			data->items = data->reader->items();
+
+			if (ArchiveData->OpenMode == PK_OM_EXTRACT)
+			{
+				data->solid = data->reader->isSolid();
+
+				if (data->solid)
+				{
+					data->dst_names = new map<uint32_t, string>;
+					snprintf(data->procfile, PATH_MAX, "%s", ArchiveData->ArcName);
+				}
+			}
+		}
+		else
+		{
+			free(data);
+			ArchiveData->OpenResult = E_EOPEN;
+			return E_SUCCESS;
+		}
 	}
 	catch (const bit7z::BitException& ex)
 	{
@@ -493,7 +510,7 @@ int DCPCALL ProcessFile(HANDLE hArcData, int Operation, char *DestPath, char *De
 		catch (const bit7z::BitException& ex)
 		{
 			if (ex.posixCode() != ECANCELED)
-				MessageBox((char*)ex.what(), nullptr,  MB_OK | MB_ICONERROR);
+				MessageBox((char*)ex.what(), (char*)PLUGNAME,  MB_OK | MB_ICONERROR);
 		}
 	}
 
@@ -514,12 +531,12 @@ int DCPCALL CloseArchive(HANDLE hArcData)
 			{
 				vector<uint32_t> indices;
 				std::filesystem::path p(data->dst_names->begin()->second);
-				char *tmppath = tempnam(p.parent_path().c_str(), "unpk_");
-				string outdir(tmppath);
-				free(tmppath);
+				string outdir = string(p.parent_path()) + "/unpk_XXXXXX";
+				char *tmppath = mkdtemp((char*)outdir.c_str());
 
-				if (fs::create_directory(outdir) == true)
+				if (tmppath != nullptr)
 				{
+					outdir = string(tmppath);
 
 					for (auto i = data->dst_names->begin(); i != data->dst_names->end(); i++)
 						indices.push_back(i->first);
@@ -540,7 +557,7 @@ int DCPCALL CloseArchive(HANDLE hArcData)
 							}
 							catch (fs::filesystem_error& ex)
 							{
-								int ret = MessageBox((char*)ex.what(), nullptr,  MB_OKCANCEL | MB_ICONERROR);
+								int ret = MessageBox((char*)ex.what(), (char*)PLUGNAME,  MB_OKCANCEL | MB_ICONERROR);
 
 								if (ret == ID_CANCEL)
 									break;
@@ -550,21 +567,21 @@ int DCPCALL CloseArchive(HANDLE hArcData)
 					catch (const bit7z::BitException& ex)
 					{
 						if (ex.posixCode() != ECANCELED)
-							MessageBox((char*)ex.what(), nullptr,  MB_OK | MB_ICONERROR);
+							MessageBox((char*)ex.what(), (char*)PLUGNAME,  MB_OK | MB_ICONERROR);
 					}
 
 					fs::remove_all(outdir);
 				}
 				else
-					MessageBox((char*)"Cannot create a temp directory", nullptr,  MB_OK | MB_ICONERROR);
+					MessageBox((char*)"Cannot create a temp directory", (char*)PLUGNAME,  MB_OK | MB_ICONERROR);
 			}
 			catch (fs::filesystem_error& ex)
 			{
-				MessageBox((char*)ex.what(), nullptr,  MB_OK | MB_ICONERROR);
+				MessageBox((char*)ex.what(), (char*)PLUGNAME,  MB_OK | MB_ICONERROR);
 			}
 		}
 		else if (data->dst_names->size() == 1)
-			extract_single(data, data->dst_names->begin()->first, (char *)data->dst_names->begin()->second.c_str());
+			extract_single(data, data->dst_names->begin()->first, (char*)data->dst_names->begin()->second.c_str());
 
 		delete data->dst_names;
 	}
@@ -584,18 +601,6 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 		return E_NOT_SUPPORTED;
 
 	char pass[PATH_MAX] = "";
-
-#ifndef BIT7Z_AUTO_FORMAT
-
-	if (access(PackedFile, F_OK) == 0)
-	{
-		g_key_file_load_from_file(gCfg, gPWDPath, G_KEY_FILE_NONE, NULL);
-
-		if (g_key_file_has_key(gCfg, "wcx_7z", PackedFile, NULL))
-			gPkCryptProc(gCryptoNr, PK_CRYPT_LOAD_PASSWORD, PackedFile, pass, PATH_MAX);
-	}
-
-#endif
 
 	try
 	{
@@ -617,7 +622,7 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 		gProcFile[0] = '\0';
 		writer.setTotalCallback(set_totalsize);
 		writer.setFileCallback(set_filename);
-		writer.setRatioCallback(show_ratio);
+		//writer.setRatioCallback(show_ratio);
 
 		if (Flags & PK_PACK_ENCRYPT)
 		{
@@ -674,7 +679,7 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 	catch (const bit7z::BitException& ex)
 	{
 		if (ex.posixCode() != ECANCELED)
-			MessageBox((char*)ex.what(), nullptr,  MB_OK | MB_ICONERROR);
+			MessageBox((char*)ex.what(), (char*)PLUGNAME,  MB_OK | MB_ICONERROR);
 
 		return E_EABORTED;
 	}
@@ -685,18 +690,6 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 int DCPCALL DeleteFiles(char *PackedFile, char *DeleteList)
 {
 	char pass[PATH_MAX] = "";
-
-#ifndef BIT7Z_AUTO_FORMAT
-
-	if (access(PackedFile, F_OK) == 0)
-	{
-		g_key_file_load_from_file(gCfg, gPWDPath, G_KEY_FILE_NONE, NULL);
-
-		if (g_key_file_has_key(gCfg, "wcx_7z", PackedFile, NULL))
-			gPkCryptProc(gCryptoNr, PK_CRYPT_LOAD_PASSWORD, PackedFile, pass, PATH_MAX);
-	}
-
-#endif
 
 	try
 	{
@@ -740,7 +733,7 @@ int DCPCALL DeleteFiles(char *PackedFile, char *DeleteList)
 				if (ex.posixCode() != ECANCELED)
 				{
 					string msg = target + ": " + ex.what();
-					MessageBox((char*)msg.c_str(), nullptr,  MB_OK | MB_ICONERROR);
+					MessageBox((char*)msg.c_str(), (char*)PLUGNAME,  MB_OK | MB_ICONERROR);
 				}
 			}
 
@@ -752,7 +745,7 @@ int DCPCALL DeleteFiles(char *PackedFile, char *DeleteList)
 	catch (const bit7z::BitException& ex)
 	{
 		if (ex.posixCode() != ECANCELED)
-			MessageBox((char*)ex.what(), nullptr,  MB_OK | MB_ICONERROR);
+			MessageBox((char*)ex.what(), (char*)PLUGNAME,  MB_OK | MB_ICONERROR);
 
 		return E_EABORTED;
 	}
@@ -764,11 +757,7 @@ BOOL DCPCALL CanYouHandleThisFile(char *FileName)
 {
 	try
 	{
-#ifdef BIT7Z_AUTO_FORMAT
-		BitArchiveReader reader { gBit7zLib, FileName, BitFormat::Auto };
-#else
-		BitArchiveReader reader { gBit7zLib, FileName, BitFormat::SevenZip };
-#endif
+		BitArchiveReader reader { gBit7zLib, FileName, BITFORMAT };
 	}
 	catch (const bit7z::BitException& ex)
 	{
@@ -817,16 +806,6 @@ void DCPCALL ConfigurePacker(HWND Parent, HINSTANCE DllInstance)
 	gExtensions->DialogBoxLFMFile((char*)lfmpath.c_str(), OptionsDlgProc);
 }
 
-#ifndef BIT7Z_AUTO_FORMAT
-void DCPCALL PackSetDefaultParams(PackDefaultParamStruct* dps)
-{
-	gCfg = g_key_file_new();
-	gchar *cfg_dir = g_path_get_dirname(dps->DefaultIniName);
-	gPWDPath = g_strdup_printf("%s/pwd.ini", cfg_dir);
-	g_free(cfg_dir);
-}
-#endif
-
 void DCPCALL ExtensionInitialize(tExtensionStartupInfo* StartupInfo)
 {
 	if (gExtensions == nullptr)
@@ -843,18 +822,10 @@ void DCPCALL ExtensionFinalize(void* Reserved)
 		free(gExtensions);
 	}
 
-#ifndef BIT7Z_AUTO_FORMAT
-
-	if (gCfg != nullptr)
-	{
-		g_key_file_free(gCfg);
-		g_free(gPWDPath);
-	}
-
-#endif
 	gExtensions = nullptr;
 }
 
 #ifdef __cplusplus
 }
+
 #endif

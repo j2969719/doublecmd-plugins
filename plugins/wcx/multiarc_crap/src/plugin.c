@@ -4816,8 +4816,16 @@ static gchar* FindAddon(char *archive)
 
 	if (result)
 	{
-		dprintf(gDebugFd, "\n[%s] assigned to the archive %s\n", result, archive);
-		return result;
+		if (g_key_file_get_boolean(gCfg, result, "Enabled", NULL))
+		{
+			dprintf(gDebugFd, "\n[%s] assigned to the archive %s\n", result, archive);
+			return result;
+		}
+		else
+		{
+			g_free(result);
+			result = NULL;
+		}
 	}
 
 	gchar **addon = NULL;

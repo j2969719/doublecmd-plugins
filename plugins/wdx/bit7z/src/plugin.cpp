@@ -29,7 +29,9 @@ tField gFields[] =
 	{"Error Flags",		ft_numeric_32,	""},
 };
 
-Bit7zLibrary gBit7zLib;
+// Bit7zLibrary gBit7zLib { "/usr/lib/p7zip/7z.so" };
+Bit7zLibrary gBit7zLib { "/usr/lib/7zip/7z.so" };
+
 string gLastFile;
 bool gLastFileRead = false;
 map< BitProperty, BitPropVariant > gProps;
