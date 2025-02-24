@@ -131,6 +131,9 @@ Getting some information from CRASH-files on Debian/Ubuntu and Debian/Ubuntu-bas
 - [archivecommentwdx.lua](plugins/wdx/scripts/archivecommentwdx.lua)<br>
 Reading comment from ZIP and RAR files.
 
+- [arcrootdirwdx.lua](plugins/wdx/scripts/arcrootdirwdx.lua)<br>
+Displays amount of folders and or files found in root directory of archives.
+
 - [attachedpicwdx.lua](plugins/wdx/scripts/attachedpicwdx.lua)<br>
 Getting some information about attached pictures: MP3 (ID3v2.3 & ID3v2.4) and FLAC.
 
