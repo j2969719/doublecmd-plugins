@@ -63,7 +63,7 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 		preview->setFont(font);
 	});
 
-#if QT_VERSION >= 0x060000
+#if QT_VERSION >= 0x060700
 	QObject::connect(bold, &QCheckBox::checkStateChanged, [preview](int state)
 #else
 	QObject::connect(bold, &QCheckBox::stateChanged, [preview](int state)
@@ -75,7 +75,7 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 		preview->setFont(font);
 	});
 
-#if QT_VERSION >= 0x060000
+#if QT_VERSION >= 0x060700
 	QObject::connect(italic, &QCheckBox::checkStateChanged, [preview](int state)
 #else
 	QObject::connect(italic, &QCheckBox::stateChanged, [preview](int state)
