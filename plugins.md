@@ -249,6 +249,9 @@ Getting some information from Windows shell link (shortcut) file. Requires `lnki
 - [lslockswdx.lua](plugins/wdx/scripts/lslockswdx.lua)<br>
 List local system locks.
 
+- [maffwdx.lua](plugins/wdx/scripts/maffwdx.lua)<br>
+Getting some information from MAFF files. See details in the beginning of script.
+
 - [marker](scripts/lua/marker) *(cross platform)*<br>
 Marker for file highlighting like in *Colors* > *File types*, but "on the fly". See readme.md.
 
