@@ -28,3 +28,4 @@ Not all but most of additions for Linux only.
 - [A WCX plugin (Total Commander, Double Commander etc) that aims to handle all Atari ST (etc) floppy and hard disk ](https://github.com/ggnkua/Jacknife)<br>
 - [Double/Total Commander plugin to access kubernetes resources ](https://github.com/calinrc/k8s_wfx)<br>
 - [Torrent Viewer WLX plugin for Double Commander](https://github.com/Kolcha/dc-torrent-view)<br>
+- [nix archive (*.nar) packer plugin (unpack only)](https://github.com/xBZZZZ/nix-archive-doublecmd)<br>
