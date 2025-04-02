@@ -464,7 +464,7 @@ Displays various information about file using command line utilities. Detection 
 Media player plugin. Requires `mpv`.
 
 - [mpv_alt](plugins/wlx/mpv_alt)<br>
-Yet another media player plugin. Requires `mpv`.
+Yet another media player plugin. Requires `libmpv`.
 
 - [nfoview](plugins/wlx/nfoview)<br>
 Displays NFO, DIZ.
@@ -550,7 +550,7 @@ This plugin allows you to view Markdown files.
 This plugin allows you to view Markdown files.
 
 - [mpv_alt](plugins/wlx/mpv_alt)<br>
-Yet another media player plugin. Requires `mpv`.
+Yet another media player plugin. Requires `libmpv`.
 
 - [pdf_crap_qml_qt](plugins/wlx/pdf_crap_qml_qt)<br>
 PDF Viewer.
