@@ -6,9 +6,9 @@ CXXFLAGS = -shared -fPIC -Wl,--no-as-needed
 libs :=
 includes := -I../../../sdk
 
-gtk2_libs := `pkg-config --cflags --libs gtk+-2.0 mpv`
-qt5_libs := `pkg-config --cflags --libs Qt5Widgets mpv`
-qt6_libs := `pkg-config --cflags --libs Qt6Widgets Qt6Core Qt6Gui mpv`
+gtk2_libs := `pkg-config --cflags --libs gtk+-2.0`
+qt5_libs := `pkg-config --cflags --libs Qt5Widgets`
+qt6_libs := `pkg-config --cflags --libs Qt6Widgets Qt6Core Qt6Gui`
 
 plugdir := $(shell basename '$(realpath ..)')
 plugtype := $(shell basename '$(realpath ../..)')
