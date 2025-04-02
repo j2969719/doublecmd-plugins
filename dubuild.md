@@ -283,7 +283,7 @@ Requires md4c >= 0.4.4.
 `apt install build-essential libgtk2.0-dev`
 
 - [mpv_alt](plugins/wlx/mpv_alt)<br>
-`apt install build-essential libgtk2.0-dev libmpv-dev`
+`apt install build-essential libgtk2.0-dev`
 
 - [nfoview](plugins/wlx/nfoview)<br>
 `apt install build-essential libgtk2.0-dev`
@@ -390,8 +390,8 @@ Qt5: `apt install build-essential pkg-config qtbase5-dev libqt5webkit5-dev libmd
 Requires md4c >= 0.4.4.
 
 - [mpv_alt](plugins/wlx/mpv_alt)<br>
-Qt5: `apt install build-essential pkg-config qtbase5-dev libmpv-dev`<br>
-Qt6: `apt install build-essential pkg-config qt6-base-dev libgl-dev libmpv-dev`
+Qt5: `apt install build-essential pkg-config qtbase5-dev`<br>
+Qt6: `apt install build-essential pkg-config qt6-base-dev libgl-dev`
 
 - [pdf_crap_qml_qt](plugins/wlx/pdf_crap_qml_qt)<br>
 Qt5: `apt install build-essential pkg-config qtbase5-dev qtdeclarative5-dev`<br>
