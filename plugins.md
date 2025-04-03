@@ -99,6 +99,9 @@ Mount points: name, FS type and other.
 - [libarchive_crap](plugins/wdx/libarchive_crap)<br>
 Getting some information from archives. Requires `libarchive`.
 
+- [mediainfo_crap](plugins/wdx/mediainfo_crap)<br>
+Getting some information from video files. Requires `libmediainfo`.
+
 - [poppler_info](plugins/wdx/poppler_info)<br>
 Basic information about PDF.
 
@@ -464,7 +467,7 @@ Displays various information about file using command line utilities. Detection 
 Media player plugin. Requires `mpv`.
 
 - [mpv_alt](plugins/wlx/mpv_alt)<br>
-Yet another media player plugin. Requires `libmpv`.
+Yet another media player plugin. Requires `mpv`.
 
 - [nfoview](plugins/wlx/nfoview)<br>
 Displays NFO, DIZ.
@@ -550,7 +553,7 @@ This plugin allows you to view Markdown files.
 This plugin allows you to view Markdown files.
 
 - [mpv_alt](plugins/wlx/mpv_alt)<br>
-Yet another media player plugin. Requires `libmpv`.
+Yet another media player plugin. Requires `mpv`.
 
 - [pdf_crap_qml_qt](plugins/wlx/pdf_crap_qml_qt)<br>
 PDF Viewer.
