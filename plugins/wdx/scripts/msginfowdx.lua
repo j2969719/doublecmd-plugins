@@ -1,5 +1,5 @@
 -- msginfowdx.lua (cross-platform)
--- 2021.04.18
+-- 2025.04.06
 --[[
 Getting info from headers of saved email messages.
 Supported formats: *.eml, *.msg and MH format (Sylpheed, Claws Mail and other).
@@ -43,7 +43,8 @@ local fields = {
 {"X-Priority",      "x-priority:",  "", 8},
 {"X-Sender",        "x-sender:",    "", 8},
 {"DKIM Signature",  "dkim-signature:",   "", 6},
-{"Unsubscribe",     "list-unsubscribe:", "", 6}
+{"Unsubscribe",     "list-unsubscribe:", "", 6},
+{"Content-Base",    "content-base:",     "", 8}
 }
 local all = {}
 local d = {
@@ -69,7 +70,7 @@ function ContentGetDetectString()
 end
 
 function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
-  if FieldIndex > 21 then return nil end
+  if FieldIndex > 22 then return nil end
   if filename ~= FileName then
     local e = string.lower(SysUtils.ExtractFileExt(FileName))
     if (e ~= '.eml') and (e ~= '.msg') and (e ~= '') then return nil end
