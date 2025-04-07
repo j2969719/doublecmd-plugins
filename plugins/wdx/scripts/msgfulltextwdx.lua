@@ -1,5 +1,5 @@
 -- msgfulltextwdx.lua (cross-platform)
--- 2021.04.18
+-- 2025.04.07
 --[[
 For Find files with plugins only!
 
@@ -60,7 +60,7 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
     local body = {}
     for l in h:lines() do
       if c == 0 then
-        if str_match(l, '^([A-Za-z0-9%-]+)[\t ]*:') == nil then
+        if str_match(l, '^([A-Za-z][A-Za-z0-9%-]+)[\t ]*:') == nil then
           break
         else
           head[hc] = l
