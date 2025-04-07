@@ -29,6 +29,33 @@ local str_lower = string.lower
 local str_match = string.match
 local str_sub = string.sub
 
+local encoding = {
+['windows-1250'] = 'cp1250',
+['windows-1251'] = 'cp1251',
+['windows-1252'] = 'cp1252',
+['windows-1253'] = 'cp1253',
+['windows-1254'] = 'cp1254',
+['windows-1255'] = 'cp1255',
+['windows-1256'] = 'cp1256',
+['windows-1257'] = 'cp1257',
+['windows-1258'] = 'cp1258',
+['iso-8859-1'] = 'iso88591',
+['iso-8859-2'] = 'iso88592',
+['iso-8859-3'] = 'iso88593',
+['iso-8859-4'] = 'iso88594',
+['iso-8859-5'] = 'iso88595',
+['iso-8859-7'] = 'iso88597',
+['iso-8859-9'] = 'iso88599',
+['iso-8859-10'] = 'iso885910',
+['iso-8859-13'] = 'iso885913',
+['iso-8859-14'] = 'iso885914',
+['iso-8859-15'] = 'iso885915',
+['iso-8859-16'] = 'iso885916',
+['koi8-r'] = 'koi8r',
+['mac'] = 'macintosh',
+['macintosh'] = 'macintosh'
+}
+
 function ContentGetSupportedField(FieldIndex)
   if FieldIndex == 0 then
     return "Full text (body)", "", 9
@@ -392,23 +419,7 @@ function DecodeQuotedPrintable(s)
 end
 
 function EncodeToUTF8(s, e)
-  local l = {
-   ['windows-1250'] = 'cp1250',
-   ['windows-1251'] = 'cp1251',
-   ['windows-1252'] = 'cp1252',
-   ['windows-1253'] = 'cp1253',
-   ['windows-1254'] = 'cp1254',
-   ['windows-1255'] = 'cp1255',
-   ['windows-1256'] = 'cp1256',
-   ['windows-1257'] = 'cp1257',
-   ['windows-1258'] = 'cp1258',
-   ['iso-8859-1'] = 'iso88591',
-   ['iso-8859-2'] = 'iso88592',
-   ['iso-8859-15'] = 'iso885915',
-   ['koi8-r'] = 'koi8',
-   ['mac'] = 'macintosh',
-   ['macintosh'] = 'macintosh'
-  }
-  if l[e] ~= nil then return LazUtf8.ConvertEncoding(s, l[e], 'utf8') end
+  local t = encoding[e]
+  if t ~= nil then return LazUtf8.ConvertEncoding(s, t, 'utf8') end
   return s
 end

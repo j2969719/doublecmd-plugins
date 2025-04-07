@@ -21,19 +21,19 @@ local units = '';
 local encoding = {
 --[[
 List of supported encoding values:
-
- Default system encoding (depends on user locale): "default",
- Default ANSI (Windows) encoding (depends on user locale): "ansi",
- Default OEM (DOS) encoding (depends on user locale): "oem",
- ANSI (Windows): "cp1250", "cp1251", "cp1252", "cp1253", "cp1254", "cp1255", "cp1256", "cp1257", "cp1258",
- OEM (DOS): "cp437", "cp850", "cp852", "cp866", "cp874", "cp932", "cp936", "cp949", "cp950",
- ISO 8859: "iso88591", "iso88592", "iso885915",
- Other: "macintosh", "koi8",
+ Default system encoding (depends on the system locale): "default".
+ Default ANSI (Windows) encoding (depends on the system locale): "ansi".
+ Default OEM (DOS) encoding (depends on the system locale): "oem".
+ Unicode: "utf8", "utf8bom", "ucs2le", "ucs2be".
+ ANSI (Windows): "cp1250", "cp1251", "cp1252", "cp1253", "cp1254", "cp1255", "cp1256", "cp1257", "cp1258".
+ OEM (DOS): "cp437", "cp850", "cp852", "cp865", "cp866", "cp874", "cp932", "cp936", "cp949", "cp950".
+ ISO 8859: "iso88591", "iso88592", "iso88593", "iso88594", "iso88595", "iso88597", "iso88599", "iso885910", "iso885913", "iso885914", "iso885915", "iso885916".
+ Other: "macintosh", "koi8r", "koi8u", "koi8ru".
 http://doublecmd.github.io/doc/en/lua.html#libraryutf8
 ]]
     "ansi",
     "oem",
-    "koi8",
+    "koi8r",
 }
 if LazUtf8 then
     convert = LazUtf8.ConvertEncoding;
