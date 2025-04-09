@@ -1,5 +1,5 @@
 -- msginfowdx.lua (cross-platform)
--- 2025.04.07
+-- 2025.04.09
 --[[
 Getting info from headers of saved email messages.
 Supported formats: *.eml, *.msg and MH format (Sylpheed, Claws Mail and other).
@@ -188,7 +188,7 @@ end
 
 function GetEMAIL(s)
   -- full string | email(s) only | name(s) only
-  local u = {nil, nil, nil}
+  local u = {'', '', ''}
   local n1, n2, t
   n1 = string.find(s, ',', 1, true)
   if n1 == nil then
@@ -227,7 +227,7 @@ function GetEMAIL(s)
 end
 
 function AddValue(v, s)
-  if v == nil then return s else return v .. ', ' .. s end
+  if v == '' then return s else return v .. ', ' .. s end
 end
 
 function TrimSpaces(s)
