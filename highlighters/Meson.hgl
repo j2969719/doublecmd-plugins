@@ -1,0 +1,142 @@
+<UniHighlighter version="1.8.1">
+  <Info>
+    <General Name="Meson*" Extensions="BUILD"/>
+    <Author Name="" Email="" Web="" Copyright="" Company="" Remark=""/>
+    <Version Version="1" Revision="0" Date="45772,5009428935"/>
+    <History>
+    </History>
+    <Sample>
+      <S>pkgconfig = import('pkgconfig')</S>
+      <S>i18n = import('i18n')</S>
+    </Sample>
+  </Info>
+  <Scheme File="" Name=""/>
+  <Range Name="Root" Attributes="0,16777215;False:False." Style="" CaseSensitive="True"
+         Delimiters="!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^`{|}~">
+    <Rule/>
+    <Keywords Name="Keywords" Attributes="16711680,16777215;False:False.B" Style="">
+      <word value="and"/>
+      <word value="elif"/>
+      <word value="else"/>
+      <word value="endforeach"/>
+      <word value="endif"/>
+      <word value="foreach"/>
+      <word value="if"/>
+      <word value="in"/>
+      <word value="not"/>
+      <word value="or"/>
+    </Keywords>
+    <Keywords Name="Symbols" Attributes="8388736,16777215;False:False." Style="">
+      <word value="-"/>
+      <word value="!"/>
+      <word value="%"/>
+      <word value="("/>
+      <word value=")"/>
+      <word value="*"/>
+      <word value=","/>
+      <word value="/"/>
+      <word value=":"/>
+      <word value="?"/>
+      <word value="["/>
+      <word value="]"/>
+      <word value="{"/>
+      <word value="}"/>
+      <word value="+"/>
+      <word value="&lt;"/>
+      <word value="="/>
+      <word value="&gt;"/>
+    </Keywords>
+    <Keywords Name="Boolean" Attributes="150,16777215;False:False." Style="">
+      <word value="false"/>
+      <word value="true"/>
+    </Keywords>
+    <Keywords Name="Functions" Attributes="8388608,16777215;False:False.B" Style="">
+      <word value=".contains"/>
+      <word value=".endswith"/>
+      <word value=".format"/>
+      <word value=".join"/>
+      <word value=".replace"/>
+      <word value=".split"/>
+      <word value=".startswith"/>
+      <word value=".strip"/>
+      <word value=".substring"/>
+      <word value=".to_int"/>
+      <word value=".to_lower"/>
+      <word value=".to_upper"/>
+      <word value=".underscorify"/>
+      <word value=".version_compare"/>
+      <word value="add_global_arguments"/>
+      <word value="add_global_link_arguments"/>
+      <word value="add_languages"/>
+      <word value="add_project_arguments"/>
+      <word value="add_project_dependencies"/>
+      <word value="add_project_link_arguments"/>
+      <word value="add_test_setup"/>
+      <word value="alias_target"/>
+      <word value="assert"/>
+      <word value="benchmark"/>
+      <word value="both_libraries"/>
+      <word value="build_target"/>
+      <word value="configuration_data"/>
+      <word value="configure_file"/>
+      <word value="custom_target"/>
+      <word value="debug"/>
+      <word value="declare_dependency"/>
+      <word value="dependency"/>
+      <word value="disabler"/>
+      <word value="environment"/>
+      <word value="error"/>
+      <word value="executable"/>
+      <word value="files"/>
+      <word value="find_program"/>
+      <word value="generator"/>
+      <word value="get_option"/>
+      <word value="get_variable"/>
+      <word value="import"/>
+      <word value="include_directories"/>
+      <word value="install_data"/>
+      <word value="install_emptydir"/>
+      <word value="install_headers"/>
+      <word value="install_man"/>
+      <word value="install_subdir"/>
+      <word value="install_symlink"/>
+      <word value="is_disabler"/>
+      <word value="is_variable"/>
+      <word value="jar"/>
+      <word value="join_paths"/>
+      <word value="library"/>
+      <word value="message"/>
+      <word value="project"/>
+      <word value="range"/>
+      <word value="run_command"/>
+      <word value="run_target"/>
+      <word value="set_variable"/>
+      <word value="shared_library"/>
+      <word value="shared_module"/>
+      <word value="splitlines"/>
+      <word value="static_library"/>
+      <word value="structured_sources"/>
+      <word value="subdir"/>
+      <word value="subdir_done"/>
+      <word value="subproject"/>
+      <word value="summary"/>
+      <word value="test"/>
+      <word value="unset_variable"/>
+      <word value="vcs_tag"/>
+      <word value="warning"/>
+    </Keywords>
+    <Range Name="Strings '..'" Attributes="255,16777215;False:False." Style="" CaseSensitive="True"
+           Delimiters="!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^`{|}~">
+      <Rule OpenSymbol="'" CloseSymbol="'"/>
+    </Range>
+    <Range Name="Comments" Attributes="32768,16777215;False:False." Style="" CaseSensitive="True"
+           Delimiters="!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^`{|}~">
+      <Rule OpenSymbol="#" CloseOnEol="True"/>
+    </Range>
+    <Range Name="Strings &quot;..&quot;" Attributes="255,16777215;False:False." Style="" CaseSensitive="True"
+           Delimiters="!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^`{|}~">
+      <Rule OpenSymbol="&quot;" CloseSymbol="&quot;"/>
+    </Range>
+  </Range>
+  <CopyRight>Rule file for UniHighlighter Delphi component (Copyright(C) Fantasist(walking_in_the_sky@yahoo.com), Vit(nevzorov@yahoo.com), Vitalik(vetal-x@mail.ru), 2002-2004)</CopyRight>
+</UniHighlighter>
