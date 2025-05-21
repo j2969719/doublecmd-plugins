@@ -18,6 +18,7 @@ enum
 	PRE_FLOAT_BPS,
 	PRE_UNITS_BPS,
 	PRE_APROX_BPS,
+	PRE_CLEAR_KHZ,
 };
 
 typedef struct sfield
@@ -113,6 +114,7 @@ tfield gFields[] =
 	{"Audio: Bit rate mode",			  ft_string,			    "", "Audio;%BitRate_Mode%",		     PRE_NONE, nullptr},
 	{"Audio: Channel(s)",				  ft_numeric_64,		    "", "Audio;%Channel(s)%",		     PRE_NONE, nullptr},
 	{"Audio: Sampling rate, KHz",			  ft_string,			    "", "Audio;%SamplingRate/String%",	     PRE_NONE, nullptr},
+	{"Audio: Sampling rate, KHz (float)",		  ft_numeric_floating,		    "", "Audio;%SamplingRate/String%",	     PRE_CLEAR_KHZ, nullptr},
 	{"Audio: Bit depth",				  ft_numeric_64,		    "", "Audio;%BitDepth%",		     PRE_NONE, nullptr},
 	{"Audio: Delay in the stream",			  ft_numeric_64,		    "", "Audio;%Delaykfq%",		     PRE_NONE, nullptr},
 	{"Audio: Title",				  ft_string,			    "", "Audio;%Title%",		     PRE_NONE, nullptr},
@@ -258,6 +260,13 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 						gFields[i].value = strdup(bps);
 					}
 				}
+				else if (gFields[i].pre == PRE_CLEAR_KHZ)
+				{
+					pos = strrchr(gFields[i].value, ' ');
+
+					if (pos)
+						*pos = '\0';
+				}
 			}
 		}
 
@@ -374,4 +383,9 @@ int DCPCALL ContentGetDetectString(char* DetectString, int maxlen)
 {
 	snprintf(DetectString, maxlen - 1, "%s", DETECT_STRING);
 	return 0;
+}
+
+void DCPCALL ContentSetDefaultParams(ContentDefaultParamStruct* dps)
+{
+	setlocale(LC_NUMERIC, "C");
 }
