@@ -78,6 +78,9 @@ Getting files/folders emblems.
 - [emptydir](plugins/wdx/emptydir)<br>
 Plugin for checking whether directory is empty. Can be used for highlighting or searching.
 
+- [exiftoolwdx_c](plugins/wdx/exiftoolwdx_c)<br>
+C-alternative to the `exiftoolwdx.lua` plugin.
+
 - [fewfiles](plugins/wdx/fewfiles)<br>
 Shows a few files/folders located in some selected folder. Can be used to customize folder tooltips.
 

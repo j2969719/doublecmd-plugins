@@ -1,0 +1,167 @@
+FieldName	FieldType	MultiChoice
+Machine Type	ft_multiplechoice	Intel 386 or later, and compatibles|AMD AMD64
+Time Stamp	ft_string	
+PE Type	ft_string	
+OS Version	ft_numeric_floating	
+Subsystem	ft_string	
+Subsystem Version	ft_string	
+File Version Number	ft_string	
+Product Name	ft_string	
+Product Version Number	ft_string	
+Company Name	ft_string	
+File Description	ft_string	
+Internal Name	ft_string	
+File Version	ft_string	
+Comments	ft_string	
+Original File Name	ft_string	
+File OS	ft_string	
+Object File Type	ft_string	
+CPU Architecture	ft_string	
+CPU Type	ft_string	
+CPU Byte Order	ft_string	
+File Subtype	ft_string	
+File Flags	ft_string	
+File Flags Mask	ft_string	
+Linker Version	ft_string	
+Code Size	ft_string	
+Initialized Data Size	ft_string	
+Uninitialized Data Size	ft_string	
+Entry Point	ft_string	
+Language Code	ft_string	
+Character Set	ft_string	
+Legal Copyright	ft_string	
+Legal Trademarks	ft_string	
+Private Build	ft_string	
+Product Version	ft_string	
+Special Build	ft_string	
+Image Version	ft_string	
+Title	ft_string	
+Subject	ft_string	
+Author	ft_string	
+Keywords	ft_string	
+Last Modified By	ft_string	
+Create Date	ft_datetime	
+Modify Date	ft_datetime	
+Metadata Date	ft_datetime	
+Date	ft_datetime	
+Last Printed	ft_datetime	
+Revision Number	ft_string	
+Total Edit Time	ft_string	
+Pages	ft_numeric_32	
+Words	ft_numeric_64	
+Characters	ft_numeric_64	
+Lines	ft_numeric_64	
+Paragraphs	ft_numeric_64	
+Characters With Spaces	ft_numeric_64	
+Char Count With Spaces	ft_numeric_64	
+Internal Version Number	ft_numeric_64	
+Company	ft_string	
+Software	ft_string	
+Application	ft_string	
+App Version	ft_string	
+Code Page	ft_string	
+Title Of Parts	ft_string	
+Heading Pairs	ft_string	
+Security	ft_string	
+Scale Crop	ft_boolean	
+Links Up To Date	ft_boolean	
+Shared Doc	ft_boolean	
+Tag PID GUID	ft_string	
+Comp Obj User Type	ft_string	
+PDF Version	ft_numeric_floating	
+Page Count	ft_numeric_32	
+Producer	ft_string	
+Creator	ft_string	
+JFIF Version	ft_string	
+GIF Version	ft_string	
+SVG Version	ft_string	
+Resolution Unit	ft_string	
+X Resolution	ft_numeric_32	
+Y Resolution	ft_numeric_32	
+Image Width	ft_numeric_32	
+Image Height	ft_numeric_32	
+Color Resolution Depth	ft_numeric_32	
+Bit Depth	ft_numeric_32	
+Bits Per Sample	ft_numeric_32	
+Color Components	ft_numeric_32	
+Frame Count	ft_numeric_32	
+Encoding Process	ft_string	
+Y Cb Cr Sub Sampling	ft_string	
+Image Size	ft_string	
+Megapixels	ft_numeric_floating	
+Background Color	ft_string	
+Animation Iterations	ft_string	
+XMP Toolkit	ft_string	
+Creator Tool	ft_string	
+Has Color Map	ft_boolean	
+Instance ID	ft_string	
+Document ID	ft_string	
+Derived From Instance ID	ft_string	
+Derived From Document ID	ft_string	
+Color Type	ft_string	
+Compression	ft_string	
+Filter	ft_string	
+Interlace	ft_string	
+Pixel Units	ft_string	
+Pixels Per Unit X	ft_string	
+Pixels Per Unit Y	ft_string	
+Publisher	ft_string	
+Comment	ft_string	
+Xmlns	ft_string	
+Volume Name	ft_string	
+Volume Block Count	ft_numeric_32	
+Volume Block Size	ft_numeric_64	
+Root Directory Create Date	ft_datetime	
+Data Preparer	ft_string	
+Volume Create Date	ft_datetime	
+Volume Modify Date	ft_datetime	
+Boot System	ft_string	
+Volume Size	ft_string	
+Artist	ft_string	
+Album	ft_string	
+Track Number	ft_numeric_32	
+Genre	ft_string	
+Duration	ft_time	
+MPEG Audio Version	ft_numeric_32	
+Audio Layer	ft_numeric_32	
+Audio Bitrate	ft_string	
+Sample Rate	ft_numeric_32	
+Channel Mode	ft_string	
+MS Stereo	ft_string	
+Intensity Stereo	ft_string	
+Copyright Flag	ft_string	
+Original Media	ft_numeric_64	
+Emphasis	ft_string	
+ID3 Size	ft_string	
+Opus Version	ft_string	
+Output Gain	ft_string	
+Audio Channels	ft_string	
+Encoder	ft_string	
+Vendor	ft_string	
+Description	ft_string	
+Contributor	ft_string	
+Language	ft_string	
+Identifier	ft_string	
+Compressed Size	ft_numeric_64	
+Uncompressed Size	ft_numeric_64	
+Zip Compressed Size	ft_numeric_64	
+Zip Uncompressed Size	ft_numeric_64	
+Operating System	ft_string	
+Packing Method	ft_string	
+Zip Required Version	ft_string	
+Zip Bit Flag	ft_string	
+Zip Compression	ft_string	
+Zip CRC	ft_string	
+Flags	ft_string	
+Extra Flags	ft_string	
+File Attributes	ft_string	
+Target File Size	ft_numeric_64	
+Run Window	ft_string	
+Hot Key	ft_string	
+Target File DOS Name	ft_string	
+Relative Path	ft_string	
+Local Base Path	ft_string	
+Working Directory	ft_string	
+Command Line Arguments	ft_string	
+Icon File Name	ft_string	
+Page Number	ft_string	
