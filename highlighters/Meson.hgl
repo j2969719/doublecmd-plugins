@@ -2,7 +2,7 @@
   <Info>
     <General Name="Meson*" Extensions="BUILD"/>
     <Author Name="" Email="" Web="" Copyright="" Company="" Remark=""/>
-    <Version Version="1" Revision="0" Date="45772,5009428935"/>
+    <Version Version="1" Revision="1" Date="45811,3207977199"/>
     <History>
     </History>
     <Sample>
@@ -16,6 +16,8 @@
     <Rule/>
     <Keywords Name="Keywords" Attributes="16711680,16777215;False:False.B" Style="">
       <word value="and"/>
+      <word value="break"/>
+      <word value="continue"/>
       <word value="elif"/>
       <word value="else"/>
       <word value="endforeach"/>
