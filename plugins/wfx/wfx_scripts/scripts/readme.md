@@ -122,7 +122,7 @@ Operations **init**, **deinit**, **setopt**, **mkdir**, **quote** and **statusin
 |`Fs_RunAsync`|executes the command asynchronously|`OK`, `Error`|`Fs_RunAsync mousepad`|`setopt` `Fs_RunAsync mousepad` `Error`|
 |`Fs_ShowOutput`|executes the command and shows a dialog with the received stdout|`Error`|`Fs_ShowOutput man fish`|`setopt` `Fs_ShowOutput man fish` `Error`|
 |`Fs_Set_`ENVVAR|informs that in subsequent calls to the script the environment variable ENVVAR must be set to the specified value|-|`Fs_Set_DC_WFX_SCRIPTDATA myvalue`|-|
-
+|`Fs_Redirect`|with **init** call allows redirection to a local directory instead of vfs|-|`Fs_Redirect /path/to/local/dir`|-|
 
 **run** operation can expect a line that contains path to the directory to change to. If the output to stduot starts with Fs_, it will be processed in the same way as for operations abowe.
 

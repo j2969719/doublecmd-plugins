@@ -1,0 +1,33 @@
+[Default]
+WFX_SCRIPT_NAME=Search and Download from YouTube
+WFX_SCRIPT_STR_SEARCH=Search
+WFX_SCRIPT_STR_TITLE=Title
+WFX_SCRIPT_STR_DURATION=Duration
+WFX_SCRIPT_STR_PUBLTIME=Published Time
+WFX_SCRIPT_STR_VIEWS=Views
+WFX_SCRIPT_STR_MODE=Download filetype
+WFX_SCRIPT_STR_ACTSEARCH=New Search
+WFX_SCRIPT_STR_ACTMODE=Reset search
+WFX_SCRIPT_STR_1080P=mp4 1080p
+WFX_SCRIPT_STR_720P=mp4 720p
+WFX_SCRIPT_STR_480P=mp4 480p
+WFX_SCRIPT_STR_360P=mp4 360p
+WFX_SCRIPT_STR_240P=mp4 240p
+WFX_SCRIPT_STR_128ABR=m4a 128kbps
+WFX_SCRIPT_STR_48ABR=m4a 48kbps
+WFX_SCRIPT_STR_32ABR=m4a 32kbps
+ENV_WFX_SCRIPT_STR_ERRSTREAM=The required stream couldnt be obtained. Fallback to different stream
+
+[ru_RU]
+WFX_SCRIPT_NAME=Поиск и скачивание с YouTube
+WFX_SCRIPT_STR_SEARCH=Найти
+WFX_SCRIPT_STR_TITLE=Название
+WFX_SCRIPT_STR_DURATION=Длительность
+WFX_SCRIPT_STR_PUBLTIME=Опубликовано
+WFX_SCRIPT_STR_VIEWS=Просмотры
+WFX_SCRIPT_STR_MODE=Тип скачиваемого файла
+WFX_SCRIPT_STR_ACTSEARCH=Новый поиск
+WFX_SCRIPT_STR_ACTMODE=Сбросить поиск
+ENV_WFX_SCRIPT_STR_ERRSTREAM=Неудалось получить нужный поток. Откатываюсь на другой
+
+

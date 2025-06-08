@@ -10,3 +10,6 @@ WFX_SCRIPT_STR_HELP=Show Readme
 WFX_SCRIPT_STR_SETMETA=Specify handler manually?
 WFX_SCRIPT_STR_META=Handler
 WFX_SCRIPT_STR_ERRAVFS=mountavfs not found!
+
+[ru_RU]
+WFX_SCRIPT_NAME=Запускалка avfs

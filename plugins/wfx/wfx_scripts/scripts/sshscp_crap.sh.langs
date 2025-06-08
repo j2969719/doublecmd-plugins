@@ -1,0 +1,40 @@
+[Default]
+WFX_SCRIPT_NAME=SSH+SCP
+WFX_SCRIPT_STR_HOST=user@host
+WFX_SCRIPT_STR_STRICT=Strict HostKey Checking? *you must choose, but choose wisely*
+WFX_SCRIPT_STR_SO_STRICT=he chose.. poorly. at least accept fingerprints from terminal for sshpass to work and press ok
+WFX_SCRIPT_STR_TERM=Use terminal?
+WFX_SCRIPT_STR_ACT_HOST=Change host
+WFX_SCRIPT_STR_ACT_TERM=Change commandline mode
+WFX_SCRIPT_STR_ERRNA=not installed!
+WFX_SCRIPT_STR_INFO=Info
+WFX_SCRIPT_STR_TYPE=Object
+WFX_SCRIPT_STR_SIZE=Size
+WFX_SCRIPT_STR_PERM=Permissions
+WFX_SCRIPT_STR_MTIME=Modification
+WFX_SCRIPT_STR_BTIME=Birth
+WFX_SCRIPT_STR_ATIME=Access
+WFX_SCRIPT_STR_CTIME=Status change
+WFX_SCRIPT_STR_OWNER=User
+WFX_SCRIPT_STR_GROUP=Group
+WFX_SCRIPT_STR_INODE=Inode
+WFX_SCRIPT_STR_NLINKS=Number of links
+
+
+[ru_RU]
+WFX_SCRIPT_NAME=Передача файлов по SSH+SCP
+WFX_SCRIPT_STR_TERM=Юзать-таки терминал?
+WFX_SCRIPT_STR_ACT_HOST=Шатал хост
+WFX_SCRIPT_STR_ACT_TERM=Шатал командную строку
+WFX_SCRIPT_STR_ERRNA=не установлен!
+WFX_SCRIPT_STR_INFO=Инфо
+WFX_SCRIPT_STR_TYPE=Объект
+WFX_SCRIPT_STR_SIZE=Размер
+WFX_SCRIPT_STR_PERM=Доступ
+WFX_SCRIPT_STR_MTIME=Изменен
+WFX_SCRIPT_STR_BTIME=Создан
+WFX_SCRIPT_STR_ATIME=Доступ
+WFX_SCRIPT_STR_CTIME=Статус
+WFX_SCRIPT_STR_OWNER=Владелец
+WFX_SCRIPT_STR_GROUP=Группа
+WFX_SCRIPT_STR_NLINKS=Ссылки

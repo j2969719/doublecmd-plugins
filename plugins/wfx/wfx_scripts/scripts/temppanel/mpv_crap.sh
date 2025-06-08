@@ -73,7 +73,7 @@ vfs_properties()
     file="$1"
     id=`echo ${1:1} | sed 's/|.*//'`
 
-    echo '{"command": ["expand-text", "${playlist/'$id'}"]}' | socat - /tmp/mympvskt | jq -r '.data' | sed 's/^filename=/path=/'| sed 's/=/\t/'
+    echo '{"command": ["expand-text", "${playlist/'$id'}"]}' | socat - $MPV_SERVER_SOCK | jq -r '.data' | sed 's/^filename=/path=/'| sed 's/=/\t/'
     exit 0
 }
 

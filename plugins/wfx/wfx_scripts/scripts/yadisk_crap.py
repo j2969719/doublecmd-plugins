@@ -34,10 +34,9 @@ except FileNotFoundError:
 	with open(conf, 'w') as f:
 		json.dump(obj, f)
 		f.close()
-try:
-	y = YaDisk(id=obj[scr]['app_id'], secret=obj[scr]['secret'], token=auth_token)
-except:
-	pass
+
+y = YaDisk(id=obj[scr]['app_id'], secret=obj[scr]['secret'], token=auth_token)
+
 
 def save_obj():
 	with open(conf, 'w') as f:

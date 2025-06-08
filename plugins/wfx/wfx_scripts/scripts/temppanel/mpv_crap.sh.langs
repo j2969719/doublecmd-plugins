@@ -1,3 +1,6 @@
 [Default]
 WFX_SCRIPT_NAME=MPV panel
 WFX_SCRIPT_STR_DEPMISSING=is not installed, the script will not work correctly!
+
+[ru_RU]
+WFX_SCRIPT_NAME=Панель mpv

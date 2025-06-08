@@ -1,2 +1,5 @@
 [Default]
 WFX_SCRIPT_NAME=Report from VirusTotal
+
+[ru_RU]
+WFX_SCRIPT_NAME=Загрузка на VirusTotal

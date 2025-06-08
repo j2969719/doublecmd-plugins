@@ -1,0 +1,15 @@
+[Default]
+WFX_SCRIPT_NAME=Temp Panel (bookmarks)
+WFX_SCRIPT_STR_SIZE=Size
+WFX_SCRIPT_STR_MODE=Permissions
+WFX_SCRIPT_STR_MTIME=Modification
+WFX_SCRIPT_STR_CTIME=Link created
+WFX_SCRIPT_STR_MISSING=not found
+
+[ru_RU]
+WFX_SCRIPT_NAME=Временная панель (закладки)
+WFX_SCRIPT_STR_SIZE=Размер
+WFX_SCRIPT_STR_MODE=Доступ
+WFX_SCRIPT_STR_MTIME=Изменен
+WFX_SCRIPT_STR_CTIME=Ссылка создана
+WFX_SCRIPT_STR_MISSING=не найден

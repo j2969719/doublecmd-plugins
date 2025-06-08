@@ -5,3 +5,9 @@ WFX_SCRIPT_STR_ERRREPLY=no reply
 WFX_SCRIPT_STR_MANUAL=manual run
 WFX_SCRIPT_STR_RUNTERM=run in term?
 WFX_SCRIPT_STR_URI=uri (e.g. fish://user@host:port)
+
+[ru_RU]
+WFX_SCRIPT_NAME=Запускалка kio-fuse
+WFX_SCRIPT_STR_ERREXEC='kio-fuse' не найден!
+
+WFX_SCRIPT_STR_URI=uri (напр. fish://user@host:port)

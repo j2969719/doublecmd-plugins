@@ -1,2 +1,5 @@
 [Default]
 WFX_SCRIPT_NAME=Systemd Services
+
+[ru_RU]
+WFX_SCRIPT_NAME=Сервисы systemd

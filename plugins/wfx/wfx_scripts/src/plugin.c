@@ -3840,6 +3840,7 @@ static gboolean SetFindData(tVFSDirData * dirdata, WIN32_FIND_DATAA * FindData)
 
 			gchar *formats[] =
 			{
+				"%Y-%m-%d %H:%M:%S",
 				"%Y-%m-%d %R",
 				"%Y-%m-%dT%R",
 				"%Y-%m-%dt%R",

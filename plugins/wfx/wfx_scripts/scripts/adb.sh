@@ -115,7 +115,7 @@ vfs_copyout()
     devname=`echo "$1" | cut -d/ -f2`
     [ -z "$devname" ] || device="-s $devname"
 
-    adb $device pull "$src" "$dst"
+    adb $device pull -q "$src" "$dst"
     exit $?
 }
 
@@ -139,7 +139,7 @@ vfs_copyin()
     devname=`echo "$2" | cut -d/ -f2`
     [ -z "$devname" ] || device="-s $devname"
 
-    adb $device push "$src" "$dst"
+    adb $device push -q "$src" "$dst"
     exit $?
 }
 

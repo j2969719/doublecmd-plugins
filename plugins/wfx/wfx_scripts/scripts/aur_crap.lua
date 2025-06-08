@@ -11,11 +11,14 @@
 ]]
 
 args = {...}
+url = "https://aur.archlinux.org/pkgbase.gz"
 temp_file = "/tmp/doublecmd-aur.lst"
 update_msg = "WFX_SCRIPT_STR_UPDPKG"
+err_msg = "Fs_Info_Message WFX_SCRIPT_STR_ERR"
 
 function fs_init()
-    os.execute("curl -sS https://aur.archlinux.org/pkgbase.gz | gzip -cd > " .. temp_file)
+    cmd = "curl -sS " .. url .. ' | gzip -cd > "' .. temp_file .. '" || echo ' .. err_msg
+    os.execute(cmd)
     os.exit()
 end
 

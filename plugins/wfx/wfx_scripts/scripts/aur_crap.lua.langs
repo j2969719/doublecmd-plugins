@@ -1,7 +1,9 @@
 [Default]
 WFX_SCRIPT_NAME=Download PKGBUILDs from AUR
 WFX_SCRIPT_STR_UPDPKG=Update package list?
+WFX_SCRIPT_STR_ERR=Failed to receive data from the server.
 
 [ru_RU]
 WFX_SCRIPT_NAME=Скачать PKGBUILDы c AUR
 WFX_SCRIPT_STR_UPDPKG=Обновить список пакетов?
+WFX_SCRIPT_STR_ERR=Не удалось получить данные с сервера.

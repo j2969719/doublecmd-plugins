@@ -9,7 +9,7 @@ from datetime import datetime, timezone
 from shutil import copyfile
 
 verb = sys.argv[1]
-conf = 'tmppanel.json'
+conf = 'timepanel.json'
 env_var = 'DC_WFX_TP_SCRIPT_DATA'
 
 
@@ -83,8 +83,6 @@ def vfs_init():
 		except FileNotFoundError:
 			pass
 	print('Fs_Set_'+ env_var +' ' + filename)
-	#print('Fs_StatusInfo_Needed')
-	#print('Fs_GetValue_Needed')
 	sys.exit()
 
 def vfs_setopt(option, value):
@@ -100,9 +98,9 @@ def vfs_list(path):
 		if not 'dir' in obj[path][name]:
 			try:
 				info = os.stat(obj[path][name]['localname'])
-				print(stat.filemode(info.st_mode) + '\t' + datetime.fromtimestamp(info.st_mtime, tz=timezone.utc).strftime('%Y-%m-%dT%TZ') + '\t' + str(info.st_size) + '\t' + name)
+				print(stat.filemode(info.st_mode) + '\t' + obj[path][name]['created'] + '\t' + str(info.st_size) + '\t' + name)
 			except:
-				print('----------\t0000-00-00 00:00:00\t-\t' + name)
+				print('----------\t' + obj[path][name]['created'] + '\t-\t' + name)
 		else:
 			print('drwxr-xr-x\t' + obj[path][name]['created'] + '\t-\t' + name)
 	sys.exit()
@@ -147,21 +145,25 @@ def vfs_cpfile(src, dst):
 
 def vfs_mvfile(src, dst):
 	obj = get_jsonobj()
+	name = os.path.basename(dst)
+	olddir = os.path.dirname(src)
+	newdir = os.path.dirname(dst)
+	oldname = os.path.basename(src)
 	localname = get_localname(obj, src)
+	localdir = os.path.dirname(localname)
 	if not localname is None:
+		newlocalname = localdir + '/' + name
+		os.rename(localname, newlocalname)
 		add_fileobj(obj, localname, dst)
 		rm_fileobj(obj, src)
+		obj[newdir][name]['localname'] = newlocalname
 	else:
 		obj[dst] = obj[src]
-		olddirname = os.path.dirname(src)
-		oldname = os.path.basename(src)
-		dirname = os.path.dirname(dst)
-		name = os.path.basename(dst)
-		if not dirname in obj:
-			obj[dirname] = {}
-		obj[dirname][name] = {}
-		obj[dirname][name] = obj[olddirname][oldname]
-		del obj[olddirname][oldname]
+		if not newdir in obj:
+			obj[newdir] = {}
+		obj[newdir][name] = {}
+		obj[newdir][name] = obj[olddir][oldname]
+		del obj[olddir][oldname]
 		del obj[src]
 	save_jsonobj(obj)
 	sys.exit()
@@ -222,9 +224,6 @@ def vfs_utime(filename, newdate):
 		os.utime(localname, (modtime, modtime))
 	sys.exit()
 
-def vfs_quote(string, path):
-	sys.exit(1)
-
 def vfs_localname(filename):
 	obj = get_jsonobj()
 	localname = get_localname(obj, filename)
@@ -233,17 +232,7 @@ def vfs_localname(filename):
 		sys.exit()
 	sys.exit(1)
 
-def vfs_getvalue(filename):
-	vfs_localname(filename)
-	sys.exit()
-
 def vfs_deinit():
-	sys.exit()
-
-def vfs_statusinfo(operation, path):
-	sys.exit(1)
-
-def vfs_reset():
 	dc_ini = os.environ['COMMANDER_INI']
 	filename = os.path.join(os.path.dirname(dc_ini), conf)
 	os.remove(filename)
@@ -278,19 +267,9 @@ elif verb == 'properties':
 	vfs_properties(sys.argv[2])
 elif verb == 'chmod':
 	vfs_chmod(sys.argv[2], sys.argv[3])
-elif verb == 'modtime':
-	vfs_utime(sys.argv[2], sys.argv[3])
-elif verb == 'quote':
-	vfs_quote(sys.argv[2], sys.argv[3])
 elif verb == 'localname':
 	vfs_localname(sys.argv[2])
-elif verb == 'statusinfo':
-	vfs_statusinfo(sys.argv[2], sys.argv[3])
-elif verb == 'getvalue':
-	vfs_getvalue(sys.argv[2])
 elif verb == 'deinit':
 	vfs_deinit()
-elif verb == 'reset':
-	vfs_reset()
 
 sys.exit(1)
