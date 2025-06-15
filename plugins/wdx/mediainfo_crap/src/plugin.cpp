@@ -30,13 +30,13 @@ typedef struct sfield
 	char *value;
 } tfield;
 
-typedef struct saproxbps
+typedef struct sappoxbps
 {
 	const char *text;
 	double value;
 	double delta;
 	int64_t unit;
-} taproxbps;
+} tappoxbps;
 
 #define ARRAY_SIZE(arr) (int)(sizeof(arr) / sizeof((arr)[0]))
 #define FIELDCOUNT ARRAY_SIZE(gFields)
@@ -44,7 +44,7 @@ typedef struct saproxbps
 #define ONE_MEGA 1000000
 #define ONE_GIGA 1000000000 //CHAD
 
-taproxbps gBpsChoices[] =
+tappoxbps gBpsChoices[] =
 {
 	// name,	value	+/-	unit
 	{"16 KBps",	 16,	  2,	ONE_KILO},
@@ -77,12 +77,12 @@ tfield gFields[] =
 	{"General: Format",				  ft_string,			    "", "General;%Format%",		     PRE_NONE, nullptr},
 //	{"General: Duration, ms",			  ft_numeric_64,		    "", "General;%Duration%",		     PRE_NONE, nullptr},
 	{"General: Duration, s", 			  ft_numeric_32,		    "", "General;%Duration%",		   PRE_TO_SEC, nullptr},
-	{"General: Duration, HH:MM:SS",			  ft_time,			    "", "General;%Duration%",		   PRE_TO_SEC, nullptr},
-//	{"General: Duration, HH:MM:SS",			  ft_string,			    "", "General;%Duration/String3%",  PRE_SHORT_TIME, nullptr},
+//	{"General: Duration, HH:MM:SS",			  ft_time,			    "", "General;%Duration%",		   PRE_TO_SEC, nullptr},
+	{"General: Duration, HH:MM:SS",			  ft_string,			    "", "General;%Duration/String3%",  PRE_SHORT_TIME, nullptr},
 	{"General: Duration, HH:MM:SS.MMM",		  ft_string,			    "", "General;%Duration/String3%",	     PRE_NONE, nullptr},
 	{"General: Overall bit rate",			  ft_numeric_floating, "Bps|KBps|MBps", "General;%OverallBitRate%",	PRE_UNITS_BPS, nullptr},
 	{"General: Overall bit rate, auto Bps/KBps/MBps", ft_string,			    "", "General;%OverallBitRate%",	PRE_FLOAT_BPS, nullptr},
-	{"General: Overall bit rate, aprox",		  ft_multiplechoice,		    "", "General;%OverallBitRate%",	PRE_APROX_BPS, nullptr},
+	{"General: Overall bit rate, appoximate",	  ft_multiplechoice,		    "", "General;%OverallBitRate%",	PRE_APROX_BPS, nullptr},
 	{"General: Count of streams",			  ft_numeric_64,		    "", "General;%StreamCount%",	     PRE_NONE, nullptr},
 	{"General: Number of audio streams",		  ft_numeric_64,		    "", "General;%AudioCount%",		     PRE_NONE, nullptr},
 	{"General: Number of text streams",		  ft_numeric_64,		    "", "General;%TextCount%",		     PRE_NONE, nullptr},
@@ -96,7 +96,7 @@ tfield gFields[] =
 	{"Video: Streamsize in bytes",			  ft_numeric_64,		    "", "Video;%StreamSize%",		     PRE_NONE, nullptr},
 	{"Video: Bit rate",				  ft_numeric_floating, "Bps|KBps|MBps", "Video;%BitRate%",	        PRE_UNITS_BPS, nullptr},
 	{"Video: Bit rate, auto Bps/KBps/MBps",		  ft_string,			    "", "Video;%BitRate%",	        PRE_FLOAT_BPS, nullptr},
-	{"Video: Bit rate, aprox",			  ft_multiplechoice,		    "", "Video;%BitRate%",	        PRE_APROX_BPS, nullptr},
+	{"Video: Bit rate, appoximate",			  ft_multiplechoice,		    "", "Video;%BitRate%",	        PRE_APROX_BPS, nullptr},
 	{"Video: Width",				  ft_numeric_64,		    "", "Video;%Width%",		     PRE_NONE, nullptr},
 	{"Video: Height",				  ft_numeric_64,		    "", "Video;%Height%", 		     PRE_NONE, nullptr},
 	{"Video: Resolution",				  ft_string,			    "", "Video;%Width%x%Height%", 	     PRE_NONE, nullptr},
@@ -115,7 +115,7 @@ tfield gFields[] =
 	{"Audio: Streamsize in bytes",			  ft_numeric_64,		    "", "Audio;%StreamSize%",		     PRE_NONE, nullptr},
 	{"Audio: Bit rate",				  ft_numeric_floating, "Bps|KBps|MBps", "Audio;%BitRate%",		PRE_UNITS_BPS, nullptr},
 	{"Audio: Bit rate, auto Bps/KBps/MBps",		  ft_string,			    "", "Audio;%BitRate%", 		PRE_FLOAT_BPS, nullptr},
-	{"Audio: Bit rate, aprox",			  ft_multiplechoice,		    "", "Audio;%BitRate%",		PRE_APROX_BPS, nullptr},
+	{"Audio: Bit rate, appoximate",			  ft_multiplechoice,		    "", "Audio;%BitRate%",		PRE_APROX_BPS, nullptr},
 	{"Audio: Bit rate mode",			  ft_string,			    "", "Audio;%BitRate_Mode%",		     PRE_NONE, nullptr},
 	{"Audio: Channel(s)",				  ft_numeric_64,		    "", "Audio;%Channel(s)%",		     PRE_NONE, nullptr},
 	{"Audio: Sampling rate, KHz",			  ft_numeric_floating,		    "", "Audio;%SamplingRate/String%",	     PRE_NONE, nullptr},
@@ -305,12 +305,12 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 	case ft_numeric_32:
 		if (gFields[FieldIndex].pre == PRE_TO_SEC)
 		{
-			num = strtod(gFields[FieldIndex].value, &end);
+			num = strtod_l(gFields[FieldIndex].value, &end, gNumericC);
 			*(int*)FieldValue = (int)floor(num / 1000);
 		}
 		else if (gFields[FieldIndex].pre == PRE_UNITS_BPS && UnitIndex > 0)
 		{
-			num = strtod(gFields[FieldIndex].value, &end);
+			num = strtod_l(gFields[FieldIndex].value, &end, gNumericC);
 
 			if (UnitIndex == 1)
 				*(int *)FieldValue = (int)floor(num / ONE_KILO);
@@ -328,9 +328,9 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 		if (gFields[FieldIndex].pre == PRE_UNITS_BPS && UnitIndex > 0)
 		{
 			if (UnitIndex == 1)
-				*(int64_t *)FieldValue = (int64_t)floor(num / ONE_KILO);
+				*(int64_t*)FieldValue = (int64_t)floor(num / ONE_KILO);
 			else if (UnitIndex == 2)
-				*(int64_t *)FieldValue = (int64_t)floor(num / ONE_MEGA);
+				*(int64_t*)FieldValue = (int64_t)floor(num / ONE_MEGA);
 		}
 		else
 			*(int64_t*)FieldValue = (int64_t)num;
@@ -343,9 +343,9 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 		if (gFields[FieldIndex].pre == PRE_UNITS_BPS && UnitIndex > 0)
 		{
 			if (UnitIndex == 1)
-				*(double *)FieldValue = num / ONE_KILO;
+				*(double*)FieldValue = num / ONE_KILO;
 			else if (UnitIndex == 2)
-				*(double *)FieldValue = num / ONE_MEGA;
+				*(double*)FieldValue = num / ONE_MEGA;
 		}
 		else
 			*(double*)FieldValue = num;
