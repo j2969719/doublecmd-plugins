@@ -58,6 +58,8 @@ typedef struct {
   tDialogBoxParamProc DialogBoxParam;
   tSetProperty SetProperty;
   tGetProperty GetProperty;
-  unsigned char Reserved[4089 * sizeof(void *)];
+  tCreateComponent CreateComponent;
+  char LanguageID[16];
+  unsigned char Reserved[4086 * sizeof(void *)];
 } tExtensionStartupInfo;
 ```

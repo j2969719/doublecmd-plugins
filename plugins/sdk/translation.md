@@ -21,3 +21,10 @@ int TranslateString(void *Translation, const char *Identifier, const char *Origi
 - `OutLen` - output buffer length
 ### Return value:
 String lenght
+
+## StartupInfo->LanguageID
+ID of selected language file in the settings eg `.pt_BR` for `doublecmd.pt_BR.po`
+
+```c
+char LanguageID[16];
+```
