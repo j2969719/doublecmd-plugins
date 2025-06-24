@@ -898,6 +898,34 @@ int DCPCALL FsContentGetValue(char* FileName, int FieldIndex, int UnitIndex, voi
 	return result;
 }
 
+int DCPCALL FsExtractCustomIcon(char* RemoteName, int ExtractFlags, PWfxIcon TheIcon)
+{
+	char addaction[MAX_PATH];
+	g_strlcpy(addaction, NEWFILE, MAX_PATH);
+	Translate(NEWFILE, addaction, sizeof(addaction));
+
+	if (strcmp(RemoteName + 1, addaction) == 0)
+		g_strlcpy(RemoteName, "list-add", MAX_PATH);
+	else
+	{
+		GDesktopAppInfo *info = g_desktop_app_info_new(RemoteName + 1);
+
+		if (info)
+		{
+			char *string = g_desktop_app_info_get_string(info, "Icon");
+			g_strlcpy(RemoteName, string, MAX_PATH);
+			g_free(string);
+			g_object_unref(info);
+		}
+		else
+			return FS_ICON_USEDEFAULT;
+	}
+
+	TheIcon->Format = FS_ICON_FORMAT_FILE;
+	return FS_ICON_EXTRACTED;
+}
+
+
 BOOL DCPCALL FsContentGetDefaultView(char* ViewContents, char* ViewHeaders, char* ViewWidths, char* ViewOptions, int maxlen)
 {
 	Translate("GeneticName\\nHidden\\nNoDisplay\\nCustom", ViewHeaders, maxlen - 1);

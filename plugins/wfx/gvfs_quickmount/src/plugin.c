@@ -589,6 +589,18 @@ void DCPCALL FsSetDefaultParams(FsDefaultParamStruct* dps)
 	}
 }
 
+int DCPCALL FsExtractCustomIcon(char* RemoteName, int ExtractFlags, PWfxIcon TheIcon)
+{
+	if (strcmp(RemoteName, "/!ReadMe.txt") != 0)
+	{
+		g_strlcpy(RemoteName, "folder-remote", MAX_PATH);
+		TheIcon->Format = FS_ICON_FORMAT_FILE;
+		return FS_ICON_EXTRACTED;
+	}
+
+	return FS_ICON_USEDEFAULT;
+}
+
 void DCPCALL ExtensionInitialize(tExtensionStartupInfo* StartupInfo)
 {
 	if (gExtensions == NULL)

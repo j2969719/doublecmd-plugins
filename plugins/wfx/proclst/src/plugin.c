@@ -259,6 +259,7 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 		GetProcStatus(pDlg);
 
 		break;
+
 	case DN_CHANGE:
 		if (strcmp(DlgItemName, "edPpid") == 0)
 		{
@@ -526,6 +527,24 @@ BOOL DCPCALL FsContentGetDefaultView(char* ViewContents, char* ViewHeaders, char
 	strncpy(ViewWidths, "100,0,55,-40,-30,-35", maxlen - 1);
 	strncpy(ViewOptions, "-1|0", maxlen - 1);
 	return true;
+}
+
+int DCPCALL FsExtractCustomIcon(char* RemoteName, int ExtractFlags, PWfxIcon TheIcon)
+{
+	if (strchr(RemoteName + 1, '/') == NULL)
+	{
+		char *dot = strrchr(RemoteName, '.');
+
+		if (dot)
+			*dot = '\0';
+
+		strlcpy(RemoteName, RemoteName + 1, MAX_PATH);
+	}
+	else
+		strlcpy(RemoteName, "application-x-executable", MAX_PATH);
+
+	TheIcon->Format = FS_ICON_FORMAT_FILE;
+	return FS_ICON_EXTRACTED;
 }
 
 void DCPCALL FsGetDefRootName(char* DefRootName, int maxlen)

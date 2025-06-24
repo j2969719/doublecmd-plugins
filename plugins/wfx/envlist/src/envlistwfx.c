@@ -211,6 +211,15 @@ BOOL DCPCALL FsContentGetDefaultView(char* ViewContents, char* ViewHeaders, char
 	return TRUE;
 }
 
+int DCPCALL FsExtractCustomIcon(char* RemoteName, int ExtractFlags, PWfxIcon TheIcon)
+{
+
+	g_strlcpy(RemoteName, "utilities-terminal-symbolic", MAX_PATH);
+	TheIcon->Format = FS_ICON_FORMAT_FILE;
+	return FS_ICON_EXTRACTED;
+}
+
+
 void DCPCALL FsGetDefRootName(char* DefRootName, int maxlen)
 {
 	g_strlcpy(DefRootName, "Environment variables", maxlen-1);

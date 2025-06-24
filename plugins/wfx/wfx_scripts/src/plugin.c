@@ -4956,6 +4956,18 @@ void DCPCALL FsSetCryptCallback(tCryptProc pCryptProc, int CryptoNr, int Flags)
 	gCryptProc = pCryptProc;
 }
 
+int DCPCALL FsExtractCustomIcon(char* RemoteName, int ExtractFlags, PWfxIcon TheIcon)
+{
+	if (strcmp(RemoteName + 1, MARK_LINK) == 0)
+	{
+		g_strlcpy(RemoteName, "applications-development", MAX_PATH);
+		TheIcon->Format = FS_ICON_FORMAT_FILE;
+		return FS_ICON_EXTRACTED;
+	}
+
+	return FS_ICON_USEDEFAULT;
+}
+
 int DCPCALL FsGetBackgroundFlags(void)
 {
 	return BG_DOWNLOAD | BG_UPLOAD;
