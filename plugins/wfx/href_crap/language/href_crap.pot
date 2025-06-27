@@ -88,3 +88,7 @@ msgstr ""
 #: DialogBox.ckNoQuery.Сaption
 msgid "Skip URLs with query string"
 msgstr ""
+
+#: str.filename.parent
+msgid "<Parent Directory>"
+msgstr ""
