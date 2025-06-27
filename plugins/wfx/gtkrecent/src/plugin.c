@@ -11,14 +11,38 @@
 #define SendDlgMsg gExtensions->SendDlgMsg
 #define MessageBox gExtensions->MessageBox
 #define InputBox gExtensions->InputBox
-
+#define ARRAY_SIZE(arr) (int)(sizeof(arr) / sizeof((arr)[0]))
+#define FIELDCOUNT ARRAY_SIZE(gFields)
 #define PICTURE_MAX_SIZE 3000000
 
 typedef struct sVFSDirData
 {
 	GList *list;
+	time_t now;
 } tVFSDirData;
 
+typedef struct sField
+{
+	char *name;
+	int type;
+	char *unit;
+} tField;
+
+tField gFields[] =
+{
+	{"Basename",		ft_string,	""},
+	{"BasenameNoExt",	ft_string,	""},
+	{"Dirname",		ft_string,	""},
+	{"Path",		ft_string,	""},
+};
+
+enum
+{
+	NAME_MODE0   = 1 << 0,
+	NAME_MODE1   = 1 << 1,
+	NAME_MODE2   = 1 << 2,
+	NAME_DIFFNOW = 1 << 3,
+};
 
 int gPluginNr;
 tProgressProc gProgressProc = NULL;
@@ -29,7 +53,8 @@ tExtensionStartupInfo* gExtensions = NULL;
 GtkRecentManager *gManager = NULL;
 GList *gItems = NULL;
 GData *gFileList;
-
+int gNameOpts = 0;
+gboolean gOptsInit = FALSE;
 
 gboolean UnixTimeToFileTime(unsigned long mtime, LPFILETIME ft)
 {
@@ -73,7 +98,7 @@ static gchar* ArrayToString(gchar **array)
 	if (data->str)
 	{
 		char *pos = strrchr(data->str, '\n');
-		
+
 		if (pos)
 			*pos = '\0';
 	}
@@ -161,8 +186,25 @@ static gchar* BuildPictureData(char *FileName, char *LinePrefix, char *Class)
 	return g_string_free(data, FALSE);
 }
 
+gboolean Translate(const char *string, char *output, int maxlen)
+{
+	char id[256];
+
+	if (gExtensions->Translation != NULL)
+	{
+		snprintf(id, sizeof(id) - 1, "#: MiscStr.%s", string);
+
+		if (gExtensions->TranslateString(gExtensions->Translation, id, string, output, maxlen - 1) > 0)
+			return TRUE;
+	}
+
+	g_strlcpy(output, string, maxlen - 1);
+	return FALSE;
+}
+
 static void AddPropLabels(GString *lfm_string, int Num, gchar *PropName, gchar *Value)
 {
+	char loc_buf[PATH_MAX];
 	const char label_body[] =  "    object lbl%s%d: TLabel\n"
 	                           "      Left = 208\n"
 	                           "      Height = 17\n"
@@ -181,10 +223,103 @@ static void AddPropLabels(GString *lfm_string, int Num, gchar *PropName, gchar *
 		gchar *tmp = string;
 		string = ReplaceString(tmp, "\n", "'#10'");
 		g_free(tmp);
-		g_string_append_printf(lfm_string, label_body, "Prop", Num, "taRightJustify", PropName);
+		Translate(PropName, loc_buf, sizeof(loc_buf) - 1);
+		char *p = strchr(loc_buf, '\'');
+
+		if (p)
+		{
+			g_print("%s: PropName: \"%s\", Translation: \"%s\", contains ' char, string truncated", PLUGNAME, PropName, loc_buf);
+			*p = '\0';
+		}
+
+		g_string_append_printf(lfm_string, label_body, "Prop", Num, "taRightJustify", loc_buf);
 		g_string_append_printf(lfm_string, label_body, "Value", Num, "taLeftJustify", string);
 		g_free(string);
-	}	
+	}
+}
+
+gchar* MakeFileName(gchar *name, gchar *ext, time_t atime, int num)
+{
+	char dupl[16] = "";
+	gchar *filename = NULL;
+
+	if (num > 0)
+		snprintf(dupl, sizeof(dupl) - 1, " (#%d)", num);
+
+	if (gNameOpts & NAME_MODE1)
+		filename = g_strdup_printf("[%ld] %s%s.%s", atime, name, dupl, ext ? ext : "");
+	else if (gNameOpts & NAME_MODE2)
+		filename = g_strdup_printf("%s [%ld]%s.%s", name, atime, dupl, ext ? ext : "");
+	else
+		filename = g_strdup_printf("%s%s.%s", name, dupl, ext ? ext : "");
+
+	return filename;
+}
+
+void MakeTestPreview(uintptr_t pDlg)
+{
+	time_t atime = 1751003394;
+
+	if (gNameOpts & NAME_DIFFNOW)
+		atime = time(0) - atime;
+
+	gchar *filename1 = MakeFileName("readme", "txt", atime, 0);
+	gchar *filename2 = MakeFileName("readme", "txt", atime, 1);
+	gchar *test = g_strdup_printf("%s\n%s", filename1, filename2);
+	g_free(filename1);
+	g_free(filename2);
+	SendDlgMsg(pDlg, "lblTest", DM_SETTEXT, (intptr_t)test, 0);
+	g_free(test);
+}
+
+intptr_t DCPCALL OptionsDlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr_t wParam, intptr_t lParam)
+{
+	switch (Msg)
+	{
+	case DN_INITDIALOG:
+		gOptsInit = TRUE;
+
+		if (gNameOpts & NAME_DIFFNOW)
+			SendDlgMsg(pDlg, "chkDiffNow", DM_SETCHECK, 1, 0);
+
+		if (gNameOpts & NAME_MODE1)
+			SendDlgMsg(pDlg, "cbForm", DM_LISTSETITEMINDEX, 1, 0);
+		else if (gNameOpts & NAME_MODE2)
+			SendDlgMsg(pDlg, "cbForm", DM_LISTSETITEMINDEX, 2, 0);
+		else
+		{
+			SendDlgMsg(pDlg, "cbForm", DM_LISTSETITEMINDEX, 0, 0);
+			SendDlgMsg(pDlg, "chkDiffNow", DM_ENABLE, 0, 0);
+		}
+
+		MakeTestPreview(pDlg);
+		gOptsInit = FALSE;
+		break;
+
+	case DN_CHANGE:
+		if (!gOptsInit)
+		{
+			gNameOpts = 0;
+			gboolean form = (gboolean)SendDlgMsg(pDlg, "chkDiffNow", DM_GETCHECK, 0, 0);
+			int index = (int)SendDlgMsg(pDlg, "cbForm", DM_LISTGETITEMINDEX, 0, 0);
+
+			if (index == 1)
+				gNameOpts = NAME_MODE1;
+			else if (index == 2)
+				gNameOpts = NAME_MODE2;
+
+			if (form)
+				gNameOpts |= NAME_DIFFNOW;
+
+			SendDlgMsg(pDlg, "chkDiffNow", DM_ENABLE, (index != 0), 0);
+			MakeTestPreview(pDlg);
+		}
+
+		break;
+
+	}
+
+	return 0;
 }
 
 intptr_t DCPCALL PropertiesDlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr_t wParam, intptr_t lParam)
@@ -192,35 +327,131 @@ intptr_t DCPCALL PropertiesDlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t M
 	return 0;
 }
 
+static BOOL OptionsDioalog()
+{
+	const char lfm_string[] = "object DialogBox: TOptDialogBox\n"
+	                          "  Left = 472\n"
+	                          "  Height = 194\n"
+	                          "  Top = 372\n"
+	                          "  Width = 411\n"
+	                          "  AutoSize = True\n"
+	                          "  BorderStyle = bsDialog\n"
+	                          "  Caption = 'Options'\n"
+	                          "  ChildSizing.LeftRightSpacing = 10\n"
+	                          "  ChildSizing.TopBottomSpacing = 10\n"
+	                          "  ChildSizing.VerticalSpacing = 5\n"
+	                          "  ClientHeight = 194\n"
+	                          "  ClientWidth = 411\n"
+	                          "  Position = poOwnerFormCenter\n"
+	                          "  LCLVersion = '4.0.0.4'\n"
+	                          "  OnClose = DialogBoxClose\n"
+	                          "  OnShow = DialogBoxShow\n"
+	                          "  object lblForm: TLabel\n"
+	                          "    Left = 32\n"
+	                          "    Height = 16\n"
+	                          "    Top = 16\n"
+	                          "    Width = 91\n"
+	                          "    Caption = 'File name form:'\n"
+	                          "  end\n"
+	                          "  object cbForm: TComboBox\n"
+	                          "    AnchorSideLeft.Control = lblForm\n"
+	                          "    AnchorSideTop.Control = lblForm\n"
+	                          "    AnchorSideTop.Side = asrBottom\n"
+	                          "    Left = 32\n"
+	                          "    Height = 30\n"
+	                          "    Top = 37\n"
+	                          "    Width = 352\n"
+	                          "    ItemHeight = 0\n"
+	                          "    Items.Strings = (\n"
+	                          "      'filename.ext'\n"
+	                          "      '[unixtime] filename.ext'\n"
+	                          "      'filename [unixtime].ext'\n"
+	                          "    )\n"
+	                          "    Style = csDropDownList\n"
+	                          "    TabOrder = 0\n"
+	                          "    OnChange = ComboBoxChange\n"
+	                          "  end\n"
+	                          "  object chkDiffNow: TCheckBox\n"
+	                          "    AnchorSideLeft.Control = cbForm\n"
+	                          "    AnchorSideTop.Control = cbForm\n"
+	                          "    AnchorSideTop.Side = asrBottom\n"
+	                          "    Left = 32\n"
+	                          "    Height = 23\n"
+	                          "    Top = 77\n"
+	                          "    Width = 304\n"
+	                          "    BorderSpacing.Top = 10\n"
+	                          "    Caption = '[unixtime] is the difference from the current time'\n"
+	                          "    TabOrder = 1\n"
+	                          "    OnChange = CheckBoxChange\n"
+	                          "  end\n"
+	                          "  object lblTest: TLabel\n"
+	                          "    AnchorSideLeft.Control = cbForm\n"
+	                          "    AnchorSideTop.Control = chkDiffNow\n"
+	                          "    AnchorSideTop.Side = asrBottom\n"
+	                          "    AnchorSideRight.Control = cbForm\n"
+	                          "    AnchorSideRight.Side = asrBottom\n"
+	                          "    Left = 32\n"
+	                          "    Height = 16\n"
+	                          "    Top = 110\n"
+	                          "    Width = 352\n"
+	                          "    Alignment = taCenter\n"
+	                          "    Anchors = [akTop, akLeft, akRight]\n"
+	                          "    BorderSpacing.Top = 10\n"
+	                          "    Caption = 'Test'\n"
+	                          "    Font.Style = [fsBold]\n"
+	                          "    ParentFont = False\n"
+	                          "  end\n"
+	                          "  object btnClose: TBitBtn\n"
+	                          "    AnchorSideTop.Control = lblTest\n"
+	                          "    AnchorSideTop.Side = asrBottom\n"
+	                          "    AnchorSideRight.Control = cbForm\n"
+	                          "    AnchorSideRight.Side = asrBottom\n"
+	                          "    Left = 288\n"
+	                          "    Height = 30\n"
+	                          "    Top = 141\n"
+	                          "    Width = 96\n"
+	                          "    Anchors = [akTop, akRight]\n"
+	                          "    BorderSpacing.Top = 15\n"
+	                          "    DefaultCaption = True\n"
+	                          "    Kind = bkClose\n"
+	                          "    ModalResult = 11\n"
+	                          "    TabOrder = 2\n"
+	                          "    OnClick = ButtonClick\n"
+	                          "  end\n"
+	                          "end\n";
+
+	return gExtensions->DialogBoxLFM((intptr_t)lfm_string, (unsigned long)strlen(lfm_string), OptionsDlgProc);
+}
+
 static BOOL PropertiesDialog(char *FileName, GtkRecentInfo *info)
 {
 	GString *lfm_string = g_string_new(NULL);
 
 	g_string_append(lfm_string, "object PropsDialogbox: TPropsDialogbox\n"
-	                "  Left = 509\n"
-	                "  Height = 547\n"
-	                "  Top = 230\n"
-	                "  Width = 681\n"
-	                "  AutoSize = True\n"
-	                "  BorderStyle = bsDialog\n"
-	                "  Caption = 'Properties'\n"
-	                "  ChildSizing.LeftRightSpacing = 10\n"
-	                "  ChildSizing.TopBottomSpacing = 10\n"
-	                "  ChildSizing.HorizontalSpacing = 5\n"
-	                "  ChildSizing.VerticalSpacing = 5\n"
-	                "  ClientHeight = 547\n"
-	                "  ClientWidth = 681\n"
-	                "  DesignTimePPI = 100\n"
-	                "  LCLVersion = '2.2.4.0'\n"
-	                "  Position = poOwnerFormCenter\n"
-	                "  object Image: TImage\n"
-	                "    AnchorSideLeft.Control = Owner\n"
-	                "    AnchorSideTop.Control = Owner\n"
-	                "    Left = 10\n"
-	                "    Height = 48\n"
-	                "    Top = 10\n"
-	                "    Width = 48\n"
-	                "    Center = True\n");
+	                            "  Left = 509\n"
+	                            "  Height = 547\n"
+	                            "  Top = 230\n"
+	                            "  Width = 681\n"
+	                            "  AutoSize = True\n"
+	                            "  BorderStyle = bsDialog\n"
+	                            "  Caption = 'Properties'\n"
+	                            "  ChildSizing.LeftRightSpacing = 10\n"
+	                            "  ChildSizing.TopBottomSpacing = 10\n"
+	                            "  ChildSizing.HorizontalSpacing = 5\n"
+	                            "  ChildSizing.VerticalSpacing = 5\n"
+	                            "  ClientHeight = 547\n"
+	                            "  ClientWidth = 681\n"
+	                            "  DesignTimePPI = 100\n"
+	                            "  LCLVersion = '2.2.4.0'\n"
+	                            "  Position = poOwnerFormCenter\n"
+	                            "  object Image: TImage\n"
+	                            "    AnchorSideLeft.Control = Owner\n"
+	                            "    AnchorSideTop.Control = Owner\n"
+	                            "    Left = 10\n"
+	                            "    Height = 48\n"
+	                            "    Top = 10\n"
+	                            "    Width = 48\n"
+	                            "    Center = True\n");
 
 	GdkPixbuf *pixbuf = gtk_recent_info_get_icon(info, 48);
 
@@ -247,59 +478,59 @@ static BOOL PropertiesDialog(char *FileName, GtkRecentInfo *info)
 	}
 
 	g_string_append(lfm_string, "    Proportional = True\n"
-	                "    Stretch = True\n"
-	                "  end\n"
-	                "  object edName: TEdit\n"
-	                "    AnchorSideLeft.Control = Image\n"
-	                "    AnchorSideLeft.Side = asrBottom\n"
-	                "    AnchorSideTop.Control = Image\n"
-	                "    AnchorSideTop.Side = asrCenter\n"
-	                "    AnchorSideRight.Control = ScrollBox\n"
-	                "    AnchorSideRight.Side = asrBottom\n"
-	                "    Left = 63\n"
-	                "    Height = 36\n"
-	                "    Top = 16\n"
-	                "    Width = 361\n"
-	                "    Alignment = taCenter\n"
-	                "    Anchors = [akTop, akLeft, akRight]\n"
-	                "    BorderStyle = bsNone\n"
-	                "    Color = clForm\n"
-	                "    Font.Style = [fsBold]\n"
-	                "    ParentFont = False\n"
-	                "    ReadOnly = True\n"
-	                "    TabStop = False\n"
-	                "    TabOrder = 0\n"
-	                "    Text = '");
+	                            "    Stretch = True\n"
+	                            "  end\n"
+	                            "  object edName: TEdit\n"
+	                            "    AnchorSideLeft.Control = Image\n"
+	                            "    AnchorSideLeft.Side = asrBottom\n"
+	                            "    AnchorSideTop.Control = Image\n"
+	                            "    AnchorSideTop.Side = asrCenter\n"
+	                            "    AnchorSideRight.Control = ScrollBox\n"
+	                            "    AnchorSideRight.Side = asrBottom\n"
+	                            "    Left = 63\n"
+	                            "    Height = 36\n"
+	                            "    Top = 16\n"
+	                            "    Width = 361\n"
+	                            "    Alignment = taCenter\n"
+	                            "    Anchors = [akTop, akLeft, akRight]\n"
+	                            "    BorderStyle = bsNone\n"
+	                            "    Color = clForm\n"
+	                            "    Font.Style = [fsBold]\n"
+	                            "    ParentFont = False\n"
+	                            "    ReadOnly = True\n"
+	                            "    TabStop = False\n"
+	                            "    TabOrder = 0\n"
+	                            "    Text = '");
 
 	g_string_append(lfm_string, FileName);
 
 	g_string_append(lfm_string, "'\n"
-	                "  end\n"
-	                "  object ScrollBox: TScrollBox\n"
-	                "    AnchorSideLeft.Control = Owner\n"
-	                "    AnchorSideTop.Control = Image\n"
-	                "    AnchorSideTop.Side = asrBottom\n"
-	                "    Left = 10\n"
-	                "    Height = 281\n"
-	                "    Top = 63\n"
-	                "    Width = 414\n"
-	                "    HorzScrollBar.Increment = 4\n"
-	                "    HorzScrollBar.Page = 47\n"
-	                "    HorzScrollBar.Smooth = True\n"
-	                "    HorzScrollBar.Tracking = True\n"
-	                "    VertScrollBar.Increment = 1\n"
-	                "    VertScrollBar.Page = 17\n"
-	                "    VertScrollBar.Smooth = True\n"
-	                "    VertScrollBar.Tracking = True\n"
-	                "    BorderSpacing.Top = 5\n"
-	                "    ChildSizing.HorizontalSpacing = 5\n"
-	                "    ChildSizing.VerticalSpacing = 5\n"
-	                "    ChildSizing.EnlargeHorizontal = crsHomogenousChildResize\n"
-	                "    ChildSizing.Layout = cclLeftToRightThenTopToBottom\n"
-	                "    ChildSizing.ControlsPerLine = 2\n"
-	                "    ClientHeight = 277\n"
-	                "    ClientWidth = 410\n"
-	                "    TabOrder = 1\n");
+	                            "  end\n"
+	                            "  object ScrollBox: TScrollBox\n"
+	                            "    AnchorSideLeft.Control = Owner\n"
+	                            "    AnchorSideTop.Control = Image\n"
+	                            "    AnchorSideTop.Side = asrBottom\n"
+	                            "    Left = 10\n"
+	                            "    Height = 281\n"
+	                            "    Top = 63\n"
+	                            "    Width = 414\n"
+	                            "    HorzScrollBar.Increment = 4\n"
+	                            "    HorzScrollBar.Page = 47\n"
+	                            "    HorzScrollBar.Smooth = True\n"
+	                            "    HorzScrollBar.Tracking = True\n"
+	                            "    VertScrollBar.Increment = 1\n"
+	                            "    VertScrollBar.Page = 17\n"
+	                            "    VertScrollBar.Smooth = True\n"
+	                            "    VertScrollBar.Tracking = True\n"
+	                            "    BorderSpacing.Top = 5\n"
+	                            "    ChildSizing.HorizontalSpacing = 5\n"
+	                            "    ChildSizing.VerticalSpacing = 5\n"
+	                            "    ChildSizing.EnlargeHorizontal = crsHomogenousChildResize\n"
+	                            "    ChildSizing.Layout = cclLeftToRightThenTopToBottom\n"
+	                            "    ChildSizing.ControlsPerLine = 2\n"
+	                            "    ClientHeight = 277\n"
+	                            "    ClientWidth = 410\n"
+	                            "    TabOrder = 1\n");
 
 	int i = 1;
 	gsize length;
@@ -336,38 +567,47 @@ static BOOL PropertiesDialog(char *FileName, GtkRecentInfo *info)
 	string = UnixTimeToISO8601String(gtk_recent_info_get_visited(info));
 	AddPropLabels(lfm_string, i++, "Visited", string);
 	g_free(string);
-	string = g_strdup_printf("%d day(s) elapsed since the last update of the resource", gtk_recent_info_get_age(info));
-	AddPropLabels(lfm_string, i++, "Age", string);
+
+	char loc_days[256];
+	char loc_true[16];
+	char loc_false[16];
+	Translate("days ago", loc_days, sizeof(loc_days) - 1);
+	Translate("True", loc_true, sizeof(loc_true) - 1);
+	Translate("False", loc_false, sizeof(loc_false) - 1);
+
+	string = g_strdup_printf("%d %s", gtk_recent_info_get_age(info), loc_days);
+	AddPropLabels(lfm_string, i++, "Last update", string);
 	g_free(string);
-	AddPropLabels(lfm_string, i++, "Local", gtk_recent_info_is_local(info) ? "True" : "False");
-	AddPropLabels(lfm_string, i++, "Private", gtk_recent_info_get_private_hint(info) ? "True" : "False");
-	AddPropLabels(lfm_string, i++, "Exists", gtk_recent_info_exists(info) ? "True" : "False");
+	AddPropLabels(lfm_string, i++, "Local", gtk_recent_info_is_local(info) ? loc_true : loc_false);
+	AddPropLabels(lfm_string, i++, "Private", gtk_recent_info_get_private_hint(info) ? loc_true : loc_false);
+	AddPropLabels(lfm_string, i++, "Exists", gtk_recent_info_exists(info) ? loc_true : loc_false);
 
 	g_string_append(lfm_string, "  end\n"
-	                "  object btnClose: TBitBtn\n"
-	                "    AnchorSideTop.Control = ScrollBox\n"
-	                "    AnchorSideTop.Side = asrBottom\n"
-	                "    AnchorSideRight.Control = ScrollBox\n"
-	                "    AnchorSideRight.Side = asrBottom\n"
-	                "    Left = 323\n"
-	                "    Height = 31\n"
-	                "    Top = 349\n"
-	                "    Width = 101\n"
-	                "    Anchors = [akTop, akRight]\n"
-	                "    Cancel = True\n"
-	                "    AutoSize = True\n"
-	                "    Constraints.MinHeight = 31\n"
-	                "    Constraints.MinWidth = 101\n"
-	                "    DefaultCaption = True\n"
-	                "    Kind = bkClose\n"
-	                "    ModalResult = 11\n"
-	                "    TabOrder = 2\n"
-	                "  end\n"
-	                "end\n");
+	                            "  object btnClose: TBitBtn\n"
+	                            "    AnchorSideTop.Control = ScrollBox\n"
+	                            "    AnchorSideTop.Side = asrBottom\n"
+	                            "    AnchorSideRight.Control = ScrollBox\n"
+	                            "    AnchorSideRight.Side = asrBottom\n"
+	                            "    Left = 323\n"
+	                            "    Height = 31\n"
+	                            "    Top = 349\n"
+	                            "    Width = 101\n"
+	                            "    Anchors = [akTop, akRight]\n"
+	                            "    Cancel = True\n"
+	                            "    AutoSize = True\n"
+	                            "    Constraints.MinHeight = 31\n"
+	                            "    Constraints.MinWidth = 101\n"
+	                            "    DefaultCaption = True\n"
+	                            "    Kind = bkClose\n"
+	                            "    ModalResult = 11\n"
+	                            "    TabOrder = 2\n"
+	                            "  end\n"
+	                            "end\n");
 
 	//g_print("%s", lfm_string->str);
-	return gExtensions->DialogBoxLFM((intptr_t)lfm_string->str, (unsigned long)strlen(lfm_string->str), PropertiesDlgProc);
+	BOOL ret = gExtensions->DialogBoxLFM((intptr_t)lfm_string->str, (unsigned long)strlen(lfm_string->str), PropertiesDlgProc);
 	g_string_free(lfm_string, TRUE);
+	return ret;
 }
 
 gboolean SetFindData(tVFSDirData *dirdata, WIN32_FIND_DATAA *FindData)
@@ -388,7 +628,32 @@ gboolean SetFindData(tVFSDirData *dirdata, WIN32_FIND_DATAA *FindData)
 			gchar *file = gtk_recent_info_get_short_name(list->data);
 			atime = (unsigned long)gtk_recent_info_get_visited(list->data);
 			UnixTimeToFileTime(atime, &FindData->ftLastWriteTime);
-			filename = g_strdup_printf("[%ld] %s", atime, file);
+
+			if (gNameOpts & NAME_DIFFNOW)
+				atime = dirdata->now - atime;
+
+			int num = 0;
+			char *ext = NULL;
+			char *dot = strrchr(file, '.');
+
+			if (file[0] != '\0' && dot)
+			{
+				*dot = '\0';
+
+				if (file[0] == '\0')
+					file[0] = '.';
+				else
+					ext = dot + 1;
+			}
+
+			do
+			{
+				g_free(filename);
+				filename = MakeFileName(file, ext, atime, num);
+				num++;
+			}
+			while ((gchar *)g_datalist_get_data(&gFileList, filename) != NULL);
+
 			path = g_filename_from_uri(gtk_recent_info_get_uri(list->data), NULL, NULL);
 			g_datalist_set_data(&gFileList, filename, (gpointer)gtk_recent_info_get_uri(list->data));
 			g_free(file);
@@ -471,6 +736,7 @@ HANDLE DCPCALL FsFindFirst(char* Path, WIN32_FIND_DATAA *FindData)
 	FreeDataArrays();
 	gItems = gtk_recent_manager_get_items(gManager);
 	dirdata->list = gItems;
+	dirdata->now = time(0);
 	g_datalist_init(&gFileList);
 
 
@@ -539,7 +805,14 @@ int DCPCALL FsPutFile(char* LocalName, char* RemoteName, int CopyFlags)
 int DCPCALL FsExecuteFile(HWND MainWin, char* RemoteName, char* Verb)
 {
 	int result = FS_EXEC_ERROR;
-	gchar *uri = (gchar*)g_datalist_get_data(&gFileList, g_basename(RemoteName));
+
+	if (strcmp(Verb, "properties") == 0 && (RemoteName[1] == '\0' || strcmp(RemoteName, "/..") == 0))
+	{
+		OptionsDioalog();
+		return FS_EXEC_OK;
+	}
+
+	gchar *uri = (gchar*)g_datalist_get_data(&gFileList, RemoteName + 1);
 
 	if (!uri)
 		return result;
@@ -581,7 +854,7 @@ BOOL DCPCALL FsLinksToLocalFiles(void)
 
 BOOL DCPCALL FsGetLocalName(char* RemoteName, int maxlen)
 {
-	gchar *uri = (gchar*)g_datalist_get_data(&gFileList, g_basename(RemoteName));
+	gchar *uri = (gchar*)g_datalist_get_data(&gFileList, RemoteName + 1);
 
 	if (uri)
 	{
@@ -598,9 +871,83 @@ BOOL DCPCALL FsGetLocalName(char* RemoteName, int maxlen)
 	return FALSE;
 }
 
+int DCPCALL FsContentGetSupportedField(int FieldIndex, char* FieldName, char* Units, int maxlen)
+{
+	if (FieldIndex < 0 || FieldIndex >= FIELDCOUNT)
+		return ft_nomorefields;
+
+	g_strlcpy(FieldName, gFields[FieldIndex].name, maxlen - 1);
+	g_strlcpy(Units, gFields[FieldIndex].unit, maxlen - 1);
+	return gFields[FieldIndex].type;
+}
+
+int DCPCALL FsContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void* FieldValue, int maxlen, int flags)
+{
+	int result = ft_fieldempty;
+
+	gchar *uri = (gchar*)g_datalist_get_data(&gFileList, FileName + 1);
+
+	if (uri)
+	{
+		gchar *path = g_filename_from_uri(uri, NULL, NULL);
+
+		if (path)
+		{
+			if (FieldIndex == 0 || FieldIndex == 1)
+			{
+				gchar *name = g_path_get_basename(path);
+
+				if (name)
+				{
+					if (FieldIndex == 0)
+						g_strlcpy((char *)FieldValue, name, maxlen - 1);
+					else
+					{
+						char *dot = strrchr(name, '.');
+
+						if (name[0] != '\0' && dot)
+						{
+							*dot = '\0';
+
+							if (name[0] == '\0')
+								name[0] = '.';
+						}
+
+						g_strlcpy((char*)FieldValue, name, maxlen - 1);
+					}
+
+					result = ft_string;
+					g_free(name);
+				}
+			}
+			else if (FieldIndex == 2)
+			{
+				gchar *dir = g_path_get_dirname(path);
+				g_strlcpy((char*)FieldValue, dir, maxlen - 1);
+				g_free(dir);
+				result = ft_string;
+			}
+			else if (FieldIndex == 3)
+			{
+				g_strlcpy((char*)FieldValue, path, maxlen - 1);
+				result = ft_string;
+			}
+
+			g_free(path);
+		}
+	}
+
+	return result;
+}
+
+BOOL DCPCALL FsContentGetDefaultView(char* ViewContents, char* ViewHeaders, char* ViewWidths, char* ViewOptions, int maxlen)
+{
+	return FALSE;
+}
+
 void DCPCALL FsGetDefRootName(char* DefRootName, int maxlen)
 {
-	g_strlcpy(DefRootName, "GTKRecent", maxlen - 1);
+	Translate("Recent", DefRootName, maxlen - 1);
 }
 
 void DCPCALL ExtensionInitialize(tExtensionStartupInfo * StartupInfo)
@@ -609,6 +956,15 @@ void DCPCALL ExtensionInitialize(tExtensionStartupInfo * StartupInfo)
 	{
 		gExtensions = malloc(sizeof(tExtensionStartupInfo));
 		memcpy(gExtensions, StartupInfo, sizeof(tExtensionStartupInfo));
+
+		GKeyFile *cfg = g_key_file_new();
+		gchar *filename = g_strdup_printf("%s/j2969719.ini", gExtensions->PluginConfDir);
+
+		if (g_key_file_load_from_file(cfg, filename, G_KEY_FILE_KEEP_COMMENTS, NULL))
+			gNameOpts = g_key_file_get_integer(cfg, PLUGNAME, "Options", NULL);
+
+		g_free(filename);
+		g_key_file_free(cfg);
 	}
 
 	if (gtk_main_level() == 0)
@@ -618,7 +974,20 @@ void DCPCALL ExtensionInitialize(tExtensionStartupInfo * StartupInfo)
 void DCPCALL ExtensionFinalize(void* Reserved)
 {
 	if (gExtensions != NULL)
+	{
+		GKeyFile *cfg = g_key_file_new();
+		gchar *filename = g_strdup_printf("%s/j2969719.ini", gExtensions->PluginConfDir);
+
+		if (g_key_file_load_from_file(cfg, filename, G_KEY_FILE_KEEP_COMMENTS, NULL))
+		{
+			g_key_file_set_integer(cfg, PLUGNAME, "Options", gNameOpts);
+			g_key_file_save_to_file(cfg, filename, NULL);
+		}
+
+		g_free(filename);
+		g_key_file_free(cfg);
 		free(gExtensions);
+	}
 
 	gExtensions = NULL;
 

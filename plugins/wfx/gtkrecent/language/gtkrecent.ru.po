@@ -1,0 +1,83 @@
+#, fuzzy
+msgid ""
+msgstr "Content-Type: text/plain; charset=UTF-8\n"
+
+#: TOptDialogBox.Сaption
+msgid "Options"
+msgstr "Настройки"
+
+#: TOptDialogBox.lblForm.Сaption
+msgid "File name form:"
+msgstr "Форма имени файла:"
+
+#: TOptDialogBox.chkDiffNow.Сaption
+msgid "[unixtime] is the difference from the current time"
+msgstr "[unixtime] - это разница от текущего времени"
+
+#: TPropDialogBox.Сaption
+msgid "Properties"
+msgstr "Свойства"
+
+#: MiscStr.Recent
+msgid "Recent"
+msgstr "Недавние"
+
+#: MiscStr.True
+msgid "True"
+msgstr "Да"
+
+#: MiscStr.False
+msgid "False"
+msgstr "Нет"
+
+#: MiscStr.Name
+msgid "Name"
+msgstr "Имя"
+
+#: MiscStr.Description
+msgid "Description"
+msgstr "Описание"
+
+#: MiscStr.Apps
+msgid "Apps"
+msgstr "Приложения"
+
+#: MiscStr.Last App
+msgid "Last App"
+msgstr "Последнее приложение"
+
+#: MiscStr.Gropus
+msgid "Gropus"
+msgstr "Группы"
+
+#: MiscStr.Added
+msgid "Added"
+msgstr "Добавлен"
+
+#: MiscStr.Modified
+msgid "Modified"
+msgstr "Модифицирован"
+
+#: MiscStr.Visited
+msgid "Visited"
+msgstr "Посещен"
+
+#: MiscStr.Last update
+msgid "Last update"
+msgstr "Обновлен"
+
+#: MiscStr.days ago
+msgid "days ago"
+msgstr "дней назад"
+
+#: MiscStr.Local
+msgid "Local"
+msgstr "Локальный"
+
+#: MiscStr.Private
+msgid "Private"
+msgstr "Приватный"
+
+#: MiscStr.Exists
+msgid "Exists"
+msgstr "Существует"

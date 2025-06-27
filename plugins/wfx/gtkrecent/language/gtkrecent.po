@@ -1,0 +1,83 @@
+#, fuzzy
+msgid ""
+msgstr "Content-Type: text/plain; charset=UTF-8\n"
+
+#: TOptDialogBox.Сaption
+msgid "Options"
+msgstr ""
+
+#: TOptDialogBox.lblForm.Сaption
+msgid "File name form:"
+msgstr ""
+
+#: TOptDialogBox.chkDiffNow.Сaption
+msgid "[unixtime] is the difference from the current time"
+msgstr ""
+
+#: TPropDialogBox.Сaption
+msgid "Properties"
+msgstr ""
+
+#: MiscStr.Recent
+msgid "Recent"
+msgstr ""
+
+#: MiscStr.True
+msgid "True"
+msgstr ""
+
+#: MiscStr.False
+msgid "False"
+msgstr ""
+
+#: MiscStr.Name
+msgid "Name"
+msgstr ""
+
+#: MiscStr.Description
+msgid "Description"
+msgstr ""
+
+#: MiscStr.Apps
+msgid "Apps"
+msgstr ""
+
+#: MiscStr.Last App
+msgid "Last App"
+msgstr ""
+
+#: MiscStr.Gropus
+msgid "Gropus"
+msgstr ""
+
+#: MiscStr.Added
+msgid "Added"
+msgstr ""
+
+#: MiscStr.Modified
+msgid "Modified"
+msgstr ""
+
+#: MiscStr.Visited
+msgid "Visited"
+msgstr ""
+
+#: MiscStr.Last update
+msgid "Last update"
+msgstr ""
+
+#: MiscStr.days ago
+msgid "days ago"
+msgstr ""
+
+#: MiscStr.Local
+msgid "Local"
+msgstr ""
+
+#: MiscStr.Private
+msgid "Private"
+msgstr ""
+
+#: MiscStr.Exists
+msgid "Exists"
+msgstr ""
