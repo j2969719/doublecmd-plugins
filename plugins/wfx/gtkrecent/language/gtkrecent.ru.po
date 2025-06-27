@@ -81,3 +81,7 @@ msgstr "Приватный"
 #: MiscStr.Exists
 msgid "Exists"
 msgstr "Существует"
+
+#: MiscStr.Size
+msgid "Size"
+msgstr "Размер"

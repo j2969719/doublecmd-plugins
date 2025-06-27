@@ -34,6 +34,14 @@ tField gFields[] =
 	{"BasenameNoExt",	ft_string,	""},
 	{"Dirname",		ft_string,	""},
 	{"Path",		ft_string,	""},
+	{"Description",		ft_string,	""},
+	{"Apps",		ft_string,	""},
+	{"LastApp",		ft_string,	""},
+	{"Groups",		ft_string,	""},
+	{"Visited",		ft_datetime,	""},
+	{"Added",		ft_datetime,	""},
+	{"Exists",		ft_boolean,	""},
+	{"Private",		ft_boolean,	""},
 };
 
 enum
@@ -247,11 +255,11 @@ gchar* MakeFileName(gchar *name, gchar *ext, time_t atime, int num)
 		snprintf(dupl, sizeof(dupl) - 1, " (#%d)", num);
 
 	if (gNameOpts & NAME_MODE1)
-		filename = g_strdup_printf("[%ld] %s%s.%s", atime, name, dupl, ext ? ext : "");
+		filename = g_strdup_printf("[%ld] %s%s%s%s", atime, name, dupl, ext ? "." : "", ext ? ext : "");
 	else if (gNameOpts & NAME_MODE2)
-		filename = g_strdup_printf("%s [%ld]%s.%s", name, atime, dupl, ext ? ext : "");
+		filename = g_strdup_printf("%s [%ld]%s%s%s", name, atime, dupl, ext ? "." : "", ext ? ext : "");
 	else
-		filename = g_strdup_printf("%s%s.%s", name, dupl, ext ? ext : "");
+		filename = g_strdup_printf("%s%s%s%s", name, dupl, ext ? "." : "", ext ? ext : "");
 
 	return filename;
 }
@@ -458,7 +466,7 @@ static BOOL PropertiesDialog(char *FileName, GtkRecentInfo *info)
 	if (pixbuf)
 	{
 		gchar *tmpdir = g_dir_make_tmp("gtkrecent_XXXXXX", NULL);
-		gchar *icon = g_strdup_printf("%s/icon,png", tmpdir);
+		gchar *icon = g_strdup_printf("%s/icon.png", tmpdir);
 		gdk_pixbuf_save(pixbuf, icon, "png", NULL, NULL);
 		g_object_unref(pixbuf);
 		gchar *picture = BuildPictureData(icon, "      ", "TPortableNetworkGraphic");
@@ -677,11 +685,13 @@ gboolean SetFindData(tVFSDirData *dirdata, WIN32_FIND_DATAA *FindData)
 			FindData->nFileSizeHigh = (buf.st_size & 0xFFFFFFFF00000000) >> 32;
 			FindData->nFileSizeLow = buf.st_size & 0x00000000FFFFFFFF;
 
+			FindData->dwFileAttributes |= FILE_ATTRIBUTE_UNIX_MODE;
+			FindData->dwReserved0 = buf.st_mode;
+
 			if (!S_ISDIR(buf.st_mode))
-			{
-				FindData->dwFileAttributes |= FILE_ATTRIBUTE_UNIX_MODE;
 				FindData->dwReserved0 = buf.st_mode;
-			}
+			else
+				FindData->dwReserved0 = buf.st_mode & ~S_IFDIR;
 		}
 		else
 		{
@@ -889,51 +899,108 @@ int DCPCALL FsContentGetValue(char* FileName, int FieldIndex, int UnitIndex, voi
 
 	if (uri)
 	{
-		gchar *path = g_filename_from_uri(uri, NULL, NULL);
-
-		if (path)
+		if (FieldIndex < 4)
 		{
-			if (FieldIndex == 0 || FieldIndex == 1)
+			gchar *path = g_filename_from_uri(uri, NULL, NULL);
+
+			if (path)
 			{
-				gchar *name = g_path_get_basename(path);
-
-				if (name)
+				if (FieldIndex == 0 || FieldIndex == 1)
 				{
-					if (FieldIndex == 0)
-						g_strlcpy((char *)FieldValue, name, maxlen - 1);
-					else
+					gchar *name = g_path_get_basename(path);
+
+					if (name)
 					{
-						char *dot = strrchr(name, '.');
-
-						if (name[0] != '\0' && dot)
+						if (FieldIndex == 0)
+							g_strlcpy((char *)FieldValue, name, maxlen - 1);
+						else
 						{
-							*dot = '\0';
+							char *dot = strrchr(name, '.');
 
-							if (name[0] == '\0')
-								name[0] = '.';
+							if (name[0] != '\0' && dot)
+							{
+								*dot = '\0';
+
+								if (name[0] == '\0')
+									name[0] = '.';
+							}
+
+							g_strlcpy((char*)FieldValue, name, maxlen - 1);
 						}
 
-						g_strlcpy((char*)FieldValue, name, maxlen - 1);
+						result = ft_string;
+						g_free(name);
 					}
-
-					result = ft_string;
-					g_free(name);
 				}
+				else if (FieldIndex == 2)
+				{
+					gchar *dir = g_path_get_dirname(path);
+					g_strlcpy((char*)FieldValue, dir, maxlen - 1);
+					g_free(dir);
+					result = ft_string;
+				}
+				else if (FieldIndex == 3)
+				{
+					g_strlcpy((char*)FieldValue, path, maxlen - 1);
+					result = ft_string;
+				}
+
+				g_free(path);
 			}
-			else if (FieldIndex == 2)
+		}
+		else
+		{
+			GtkRecentInfo *info = gtk_recent_manager_lookup_item(gManager, uri, NULL);
+
+			if (FieldIndex == 4)
 			{
-				gchar *dir = g_path_get_dirname(path);
-				g_strlcpy((char*)FieldValue, dir, maxlen - 1);
-				g_free(dir);
+				const char *string = gtk_recent_info_get_description(info);
+				g_strlcpy((char*)FieldValue, string, maxlen - 1);
 				result = ft_string;
 			}
-			else if (FieldIndex == 3)
+			else if (FieldIndex == 5)
 			{
-				g_strlcpy((char*)FieldValue, path, maxlen - 1);
+				gchar *string = ArrayToString(gtk_recent_info_get_applications(info, NULL));
+				g_strlcpy((char*)FieldValue, string, maxlen - 1);
 				result = ft_string;
+				g_free(string);
+			}
+			else if (FieldIndex == 6)
+			{
+				gchar *string = gtk_recent_info_last_application(info);
+				g_strlcpy((char*)FieldValue, string, maxlen - 1);
+				result = ft_string;
+				g_free(string);
+			}
+			else if (FieldIndex == 7)
+			{
+				gchar *string = ArrayToString(gtk_recent_info_get_groups(info, NULL));
+				g_strlcpy((char*)FieldValue, string, maxlen - 1);
+				result = ft_string;
+				g_free(string);
+			}
+			else if (FieldIndex == 8)
+			{
+				if (UnixTimeToFileTime(gtk_recent_info_get_visited(info), (FILETIME*)FieldValue))
+					result = ft_datetime;
+			}
+			else if (FieldIndex == 9)
+			{
+				if (UnixTimeToFileTime(gtk_recent_info_get_added(info), (FILETIME*)FieldValue))
+					result = ft_datetime;
+			}
+			else if (FieldIndex == 10)
+			{
+				*(int*)FieldValue = (int)gtk_recent_info_exists(info);
+				result = ft_boolean;
+			}
+			else if (FieldIndex == 11)
+			{
+				*(int*)FieldValue = (int)gtk_recent_info_get_private_hint(info);
+				result = ft_boolean;
 			}
 
-			g_free(path);
+			gtk_recent_info_unref(info);
 		}
 	}
 
@@ -942,7 +1009,59 @@ int DCPCALL FsContentGetValue(char* FileName, int FieldIndex, int UnitIndex, voi
 
 BOOL DCPCALL FsContentGetDefaultView(char* ViewContents, char* ViewHeaders, char* ViewWidths, char* ViewOptions, int maxlen)
 {
-	return FALSE;
+	char buff[MAX_PATH];
+	GString *headers = g_string_new(NULL);
+	Translate("Size", buff, MAX_PATH);
+	g_string_append(headers, buff);
+	g_string_append(headers, "\\n");
+	Translate("Visited", buff, MAX_PATH);
+	g_string_append(headers, buff);
+	g_string_append(headers, "\\n");
+	Translate("Last App", buff, MAX_PATH);
+	g_string_append(headers, buff);
+	g_string_append(headers, "\\n");
+	Translate("Exists", buff, MAX_PATH);
+	g_string_append(headers, buff);
+	g_string_append(headers, "\\n");
+	g_strlcpy(ViewHeaders, headers->str, maxlen - 1);
+	g_string_free(headers, TRUE);
+	g_strlcpy(ViewContents, "[DC().GETFILESIZE{}]\\n[Plugin(FS).Visited{}]\\n[Plugin(FS).LastApp{}]\\n[Plugin(FS).Exists{}]", maxlen - 1);
+	g_strlcpy(ViewWidths, "100,20,-30,45,60,-15", maxlen - 1);
+	g_strlcpy(ViewOptions, "-1|0", maxlen - 1);
+	return TRUE;
+}
+
+int DCPCALL FsExtractCustomIcon(char* RemoteName, int ExtractFlags, PWfxIcon TheIcon)
+{
+	int result = FS_ICON_USEDEFAULT;
+	gchar *uri = (gchar*)g_datalist_get_data(&gFileList, RemoteName + 1);
+	GtkRecentInfo *info = gtk_recent_manager_lookup_item(gManager, uri, NULL);
+	GdkPixbuf *pixbuf = gtk_recent_info_get_icon(info, 48);
+
+	if (pixbuf)
+	{
+		gchar *tmpdir = g_dir_make_tmp(PLUGNAME "_XXXXXX", NULL);
+		gchar *icon = g_strdup_printf("%s/icon.png", tmpdir);
+		gdk_pixbuf_save(pixbuf, icon, "png", NULL, NULL);
+		g_object_unref(pixbuf);
+		gsize len;
+		gchar *data = NULL;
+		if (g_file_get_contents(icon, &data, &len, NULL))
+		{
+			TheIcon->Pointer = (void*)data;
+			TheIcon->Size = (uintptr_t)len;
+			TheIcon->Format = FS_ICON_FORMAT_BINARY;
+			TheIcon->Free = (tFreeProc)g_free;
+			result = FS_ICON_EXTRACTED_DESTROY;
+		}
+		remove(icon);
+		remove(tmpdir);
+		g_free(tmpdir);
+		g_free(icon);
+	}
+
+	gtk_recent_info_unref(info);
+	return result;
 }
 
 void DCPCALL FsGetDefRootName(char* DefRootName, int maxlen)

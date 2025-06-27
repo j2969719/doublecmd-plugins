@@ -81,3 +81,7 @@ msgstr ""
 #: MiscStr.Exists
 msgid "Exists"
 msgstr ""
+
+#: MiscStr.Size
+msgid "Size"
+msgstr ""
