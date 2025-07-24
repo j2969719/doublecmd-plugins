@@ -5,18 +5,55 @@
 #include <string.h>
 #include "wlxplugin.h"
 
-#define _tmpl "_dc-hx.XXXXXX"
-#define _bin "%s/redist/exsimple"
-#define _cfg "%s/redist/default.cfg"
-#define _out "%s/output_%s.html"
+#define TEMPLATE "_dc-hx.XXXXXX"
+#define EXE_NAME "/redist/exsimple"
+#define CFG_NAME "/redist/default.cfg"
 
-gchar *path = "";
+gchar gConfigPath[PATH_MAX] = "";
+gchar gExecutablePath[PATH_MAX] = "";
 
 static GtkWidget *getFirstChild(GtkWidget *w)
 {
 	GList *list = gtk_container_get_children(GTK_CONTAINER(w));
 	GtkWidget *result = GTK_WIDGET(list->data);
 	g_list_free(list);
+
+	return result;
+}
+
+static void remove_target(gchar *path)
+{
+	if (path)
+	{
+		gchar *quoted = g_shell_quote(path);
+		g_free(path);
+		gchar *command = g_strdup_printf("rm -r %s", quoted);
+		g_free(quoted);
+		system(command);
+		g_free(command);
+	}
+}
+
+static gchar* export_html(gchar *tmpdir, gchar *filename)
+{
+	gchar *result = NULL;
+
+	gchar *output = g_strdup_printf("%s/output.html", tmpdir, filename);
+	gchar *quoted_output = g_shell_quote(output);
+	gchar *quoted_file = g_shell_quote(filename);
+	gchar *command = g_strdup_printf("%s %s %s %s", gExecutablePath, quoted_file,
+	                                 quoted_output, gConfigPath);
+	g_free(quoted_output);
+	g_free(quoted_file);
+
+	if (system(command) != 0 || !g_file_test(output, G_FILE_TEST_EXISTS))
+		remove_target(tmpdir);
+	else
+		result = g_filename_to_uri(output, NULL, NULL);
+
+	g_free(command);
+	g_free(output);
+
 	return result;
 }
 
@@ -24,45 +61,21 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 {
 	GtkWidget *gFix;
 	GtkWidget *webView;
-	gchar *exsimple;
-	gchar *config;
-	gchar *tmpdir;
-	gchar *command;
-	gchar *output;
-	gchar *fileUri;
 
-	if (!path || path == "")
+	gchar *tmpdir = g_dir_make_tmp(TEMPLATE, NULL);
+	gchar *fileUri = export_html(tmpdir, FileToLoad);
+
+	if (!fileUri)
 		return NULL;
-
-	tmpdir = g_dir_make_tmp(_tmpl, NULL);
-	exsimple = g_strdup_printf(_bin, path);
-	config = g_strdup_printf(_cfg, path);
-	output = g_strdup_printf(_out, tmpdir, g_path_get_basename(FileToLoad));
-	fileUri = g_filename_to_uri(output, NULL, NULL);
-	command = g_strdup_printf("%s %s %s %s", g_shell_quote(exsimple), g_shell_quote(FileToLoad),
-	                          g_shell_quote(output), g_shell_quote(config));
-	g_free(exsimple);
-	g_free(config);
-
-	if (system(command) != 0)
-	{
-		system(g_strdup_printf("rm -r %s", g_shell_quote(tmpdir)));
-		return NULL;
-	}
-
-	if (!g_file_test(output, G_FILE_TEST_EXISTS))
-	{
-		system(g_strdup_printf("rm -r %s", g_shell_quote(tmpdir)));
-		return NULL;
-	}
-
-	g_free(output);
-	g_free(command);
 
 	gFix = gtk_scrolled_window_new(NULL, NULL);
 	gtk_container_add(GTK_CONTAINER((GtkWidget*)(ParentWin)), gFix);
 	g_object_set_data(G_OBJECT(gFix), "tmpdir", tmpdir);
 	webView = webkit_web_view_new();
+
+	WebKitWebSettings *settings = webkit_web_view_get_settings(WEBKIT_WEB_VIEW(webView));
+	g_object_set(G_OBJECT(settings), "enable-scripts", FALSE, NULL);
+	webkit_web_view_set_settings(WEBKIT_WEB_VIEW(webView), settings);
 
 	// https://doublecmd.sourceforge.io/forum/viewtopic.php?f=8&t=4106&start=72#p22156
 	WebKitFaviconDatabase *database = webkit_get_favicon_database();
@@ -71,51 +84,29 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	webkit_web_view_load_uri(WEBKIT_WEB_VIEW(webView), fileUri);
 	gtk_container_add(GTK_CONTAINER(gFix), webView);
 	gtk_widget_show_all(gFix);
+
 	return gFix;
 }
 
 int DCPCALL ListLoadNext(HWND ParentWin, HWND PluginWin, char* FileToLoad, int ShowFlags)
 {
-	gchar *exsimple;
-	gchar *config;
-	gchar *tmpdir;
-	gchar *command;
-	gchar *output;
-	gchar *fileUri;
-
-	tmpdir = g_object_get_data(G_OBJECT(PluginWin), "tmpdir");
+	gchar *tmpdir = g_object_get_data(G_OBJECT(PluginWin), "tmpdir");
 
 	if (tmpdir)
-		system(g_strdup_printf("rm -r %s", g_shell_quote(tmpdir)));
+		remove_target(tmpdir);
 
-	tmpdir = g_dir_make_tmp(_tmpl, NULL);
+	tmpdir = g_dir_make_tmp(TEMPLATE, NULL);
 	g_object_set_data(G_OBJECT(PluginWin), "tmpdir", tmpdir);
-	exsimple = g_strdup_printf(_bin, path);
-	config = g_strdup_printf(_cfg, path);
-	output = g_strdup_printf(_out, tmpdir, g_path_get_basename(FileToLoad));
-	fileUri = g_filename_to_uri(output, NULL, NULL);
-	command = g_strdup_printf("%s %s %s %s", g_shell_quote(exsimple), g_shell_quote(FileToLoad),
-	                          g_shell_quote(output), g_shell_quote(config));
+	gchar *fileUri = export_html(tmpdir, FileToLoad);
 
-	g_free(exsimple);
-	g_free(config);
-
-	if (system(command) != 0)
+	if (!fileUri)
 	{
-		system(g_strdup_printf("rm -r %s", g_shell_quote(tmpdir)));
+		g_object_set_data(G_OBJECT(PluginWin), "tmpdir", NULL);
 		return LISTPLUGIN_ERROR;
 	}
-
-	if (!g_file_test(output, G_FILE_TEST_EXISTS))
-	{
-		system(g_strdup_printf("rm -r %s", g_shell_quote(tmpdir)));
-		return LISTPLUGIN_ERROR;
-	}
-
-	g_free(output);
-	g_free(command);
 
 	webkit_web_view_load_uri(WEBKIT_WEB_VIEW(getFirstChild(PluginWin)), fileUri);
+
 	return LISTPLUGIN_OK;
 }
 
@@ -123,12 +114,7 @@ void DCPCALL ListCloseWindow(HWND ListWin)
 {
 	gchar *tmpdir = g_object_get_data(G_OBJECT(ListWin), "tmpdir");
 	gtk_widget_destroy(GTK_WIDGET(ListWin));
-
-	if (tmpdir)
-	{
-		system(g_strdup_printf("rm -r %s", g_shell_quote(tmpdir)));
-		g_free(tmpdir);
-	}
+	remove_target(tmpdir);
 }
 
 int DCPCALL ListSearchText(HWND ListWin, char* SearchString, int SearchParameter)
@@ -172,8 +158,28 @@ void DCPCALL ListSetDefaultParams(ListDefaultParamStruct* dps)
 	Dl_info dlinfo;
 	memset(&dlinfo, 0, sizeof(dlinfo));
 
-	if (dladdr(path, &dlinfo) != 0)
-		path = g_path_get_dirname(dlinfo.dli_fname);
+	if (dladdr(gExecutablePath, &dlinfo) != 0)
+	{
+		g_strlcpy(gExecutablePath, dlinfo.dli_fname, PATH_MAX);
+		char *pos = strrchr(gExecutablePath, '/');
+
+		if (pos)
+			strcpy(pos, EXE_NAME);
+
+		gchar *quoted = g_shell_quote(gExecutablePath);
+		g_strlcpy(gExecutablePath, quoted, PATH_MAX);
+		g_free(quoted);
+
+		g_strlcpy(gConfigPath, dlinfo.dli_fname, PATH_MAX);
+		pos = strrchr(gConfigPath, '/');
+
+		if (pos)
+			strcpy(pos, CFG_NAME);
+
+		quoted = g_shell_quote(gConfigPath);
+		g_strlcpy(gConfigPath, quoted, PATH_MAX);
+		g_free(quoted);
+	}
 }
 
 int DCPCALL ListPrint(HWND ListWin, char* FileToPrint, char* DefPrinter, int PrintFlags, RECT* Margins)
