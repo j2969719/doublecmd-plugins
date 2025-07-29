@@ -18,6 +18,8 @@
 #define MPV_ERROR_SUCCESS 0
 #define MPV_FORMAT_INT64  4
 #define LUA_SCRIPT "plugload.lua"
+#define CONF_NAME  "j2969719.ini"
+#define MSG_ERRLIB PLUGNAME ": Failed to open " LIB_PATH "! Check if its installed or the settings in the $DC_CONFIG_PATH/" CONF_NAME " file."
 
 typedef struct mpv_handle mpv_handle;
 typedef mpv_handle* (*mpv_create_t)(void);
@@ -35,13 +37,28 @@ static char gScriptPath[PATH_MAX];
 extern "C" {
 #endif
 
+
 HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 {
 	int64_t wid;
 	setlocale(LC_NUMERIC, "C");
 
 	if (gLibHandle == NULL)
+	{
+		if (ShowFlags & lcp_forceshow)
+		{
+#ifdef GTKPLUG
+			GtkWidget *dialog = gtk_message_dialog_new(GTK_WINDOW(gtk_widget_get_toplevel(GTK_WIDGET(ParentWin))),
+		                    GTK_DIALOG_MODAL, GTK_MESSAGE_ERROR, GTK_BUTTONS_OK, MSG_ERRLIB);
+			gtk_dialog_run(GTK_DIALOG(dialog));
+			gtk_widget_destroy(dialog);
+#else
+			QMessageBox::critical((QWidget*)ParentWin, PLUGNAME, MSG_ERRLIB);
+#endif
+		}
+
 		return NULL;
+	}
 
 	mpv_create_t mpv_create = (mpv_create_t)dlsym(gLibHandle, "mpv_create");
 	mpv_initialize_t mpv_initialize = (mpv_initialize_t)dlsym(gLibHandle, "mpv_initialize");
@@ -122,7 +139,7 @@ void DCPCALL ListCloseWindow(HANDLE ListWin)
 {
 	mpv_handle *mpv = NULL;
 #ifdef GTKPLUG
-	mpv = (void*)g_object_get_data(G_OBJECT(ListWin), "mpv");
+	mpv = (mpv_handle*)g_object_get_data(G_OBJECT(ListWin), "mpv");
 #else
 	QLabel *view = (QLabel*)ListWin;
 	mpv = (mpv_handle*)view->property("mpv").value<uintptr_t>();
@@ -178,7 +195,7 @@ void DCPCALL ListSetDefaultParams(ListDefaultParamStruct* dps)
 	char *pos = strrchr(cfg_path, '/');
 
 	if (pos)
-		strcpy(pos + 1, "j2969719.ini");
+		strcpy(pos + 1, CONF_NAME);
 
 	GKeyFile *cfg = g_key_file_new();
 
@@ -198,7 +215,7 @@ void DCPCALL ListSetDefaultParams(ListDefaultParamStruct* dps)
 	g_key_file_free(cfg);
 #else
 	QFileInfo defini(QString::fromStdString(dps->DefaultIniName));
-	QString cfg = defini.absolutePath() + "/j2969719.ini";
+	QString cfg = defini.absolutePath() + "/" CONF_NAME;
 	QSettings settings(cfg, QSettings::IniFormat);
 	QString path = settings.value(PLUGNAME "/libpath").toString();
 
