@@ -1,7 +1,8 @@
 -- attachedpicwdx.lua (cross-platform)
--- 2021.09.17
+-- 2025.07.30
 --[[
 Getting some information about attached pictures: MP3 (ID3v2.3 & ID3v2.4) and FLAC.
+(For MP3 without ID3v2, the script returns 0 and "false".)
 Supported fields: see table "fields".
 
 P.S.
@@ -120,7 +121,8 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
       ar[1] = c
     else
       h:close()
-      return nil
+      -- MP3 without ID3v2:
+      if BinToNumBE(d, 1, 2) ~= 0xfffb then return nil end
     end
     filename = FileName
   end
