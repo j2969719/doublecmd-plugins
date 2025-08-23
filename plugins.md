@@ -374,6 +374,9 @@ Just a list of the current environment variables (DC 1.1+).
 - [fnmatch_crap](plugins/wfx/fnmatch_crap)<br>
 Filter files by Unix pattern (DC 1.1+).
 
+- [gtk3bookmarks_crap](plugins/wfx/gtk3bookmarks_crap)<br>
+Access to bookmarks (RO) from `~/.config/gtk-3.0/bookmarks`.
+
 - [gtkrecent](plugins/wfx/gtkrecent)<br>
 View list of recently used files (also support: open, view or delete any entry). (for GTK2-version of DC only)
 
