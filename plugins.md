@@ -285,6 +285,10 @@ Getting some information from PSD files.
 - [quasiexpanderwdx.lua](plugins/wdx/scripts/quasiexpanderwdx.lua) *(cross platform)*<br>
 Returns part of file name (by delimiter).
 
+- [searchbydependswdx.lua](plugins/wdx/scripts/searchbydependswdx.lua)<br>
+Search by dependencies in ELF (from the .dynamic section). Requires: `ldd`.<br>
+Only for searching with plugins.
+
 - [selinuxfilelabelswdx.lua](plugins/wdx/scripts/selinuxfilelabelswdx.lua)<br>
 Getting SELinux file labels.
 
