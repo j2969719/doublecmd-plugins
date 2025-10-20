@@ -7,6 +7,9 @@
 #else
 #include <QtWidgets>
 #endif
+#ifdef DRAWAREA
+#include <gdk/gdkx.h>
+#endif
 //#include <mpv/client.h>
 #include <dlfcn.h>
 #include <limits.h>
@@ -19,7 +22,8 @@
 #define MPV_FORMAT_INT64  4
 #define LUA_SCRIPT "plugload.lua"
 #define CONF_NAME  "j2969719.ini"
-#define MSG_ERRLIB PLUGNAME ": Failed to open " LIB_PATH "! Check if its installed or the settings in the $DC_CONFIG_PATH/" CONF_NAME " file."
+//#define MSG_ERRLIB PLUGNAME ": Failed to open " LIB_PATH "! Check if its installed or the settings in the $DC_CONFIG_PATH/" CONF_NAME " file."
+#define MSG_ERRLIB PLUGNAME ": Failed to open " LIB_PATH "! Check if its installed or correct the contents of the libmpv.txt file in the plugin folder."
 
 typedef struct mpv_handle mpv_handle;
 typedef mpv_handle* (*mpv_create_t)(void);
@@ -27,7 +31,7 @@ typedef void (*mpv_initialize_t)(mpv_handle*);
 typedef void (*mpv_request_log_messages_t)(mpv_handle*, const char*);
 typedef void (*mpv_set_option_t)(mpv_handle*, const char*, int, int64_t*);
 typedef void (*mpv_set_option_string_t)(mpv_handle*, const char*, const char*);
-typedef int  (*mpv_command_t)(mpv_handle*, const char**);
+typedef int (*mpv_command_t)(mpv_handle*, const char**);
 typedef void (*mpv_destroy_t)(mpv_handle*);
 
 void *gLibHandle = NULL;
@@ -49,13 +53,15 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 		{
 #ifdef GTKPLUG
 			GtkWidget *dialog = gtk_message_dialog_new(GTK_WINDOW(gtk_widget_get_toplevel(GTK_WIDGET(ParentWin))),
-		                    GTK_DIALOG_MODAL, GTK_MESSAGE_ERROR, GTK_BUTTONS_OK, MSG_ERRLIB);
+			                    GTK_DIALOG_MODAL, GTK_MESSAGE_ERROR, GTK_BUTTONS_OK, MSG_ERRLIB);
 			gtk_dialog_run(GTK_DIALOG(dialog));
 			gtk_widget_destroy(dialog);
 #else
 			QMessageBox::critical((QWidget*)ParentWin, PLUGNAME, MSG_ERRLIB);
 #endif
 		}
+		else
+			fprintf(stderr, "%s\n", MSG_ERRLIB);
 
 		return NULL;
 	}
@@ -71,10 +77,23 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 	mpv_handle *mpv = mpv_create();
 	mpv_initialize(mpv);
 #ifdef GTKPLUG
+
+#ifdef DRAWAREA
+	GtkWidget *view = gtk_drawing_area_new();
+#else
 	GtkWidget *view = gtk_socket_new();
+#endif
+
 	gtk_container_add(GTK_CONTAINER(GTK_WIDGET(ParentWin)), view);
 	gtk_widget_show_all(view);
+
+#ifdef DRAWAREA
+	gtk_widget_realize(view);
+	wid = (int64_t)GDK_WINDOW_XID(gtk_widget_get_window(view));
+#else
 	wid = (int64_t)gtk_socket_get_id(GTK_SOCKET(view));
+#endif
+
 	g_object_set_data(G_OBJECT(view), "mpv", (gpointer)mpv);
 #else
 	QLabel *view = new QLabel((QWidget*)ParentWin);
@@ -175,7 +194,7 @@ int DCPCALL ListSendCommand(HWND ListWin, int Command, int Parameter)
 void DCPCALL ListSetDefaultParams(ListDefaultParamStruct* dps)
 {
 	Dl_info dlinfo;
-	char libpath[PATH_MAX];
+	char libpath[PATH_MAX] = LIB_PATH;
 
 	memset(&dlinfo, 0, sizeof(dlinfo));
 
@@ -185,9 +204,35 @@ void DCPCALL ListSetDefaultParams(ListDefaultParamStruct* dps)
 		char *pos = strrchr(gScriptPath, '/');
 
 		if (pos)
+			strcpy(pos + 1, "libmpv.txt");
+
+		FILE *fp;
+		char *line = NULL;
+		size_t len = 0;
+		ssize_t lread;
+
+		if (!gLibHandle && (fp = fopen(gScriptPath, "r")) != NULL)
+		{
+			while ((lread = getline(&line, &len, fp)) != -1)
+			{
+				if (lread >= strlen(LIB_PATH) && line[0] != '#')
+				{
+					if (line[lread - 1] == '\n')
+						line[lread - 1] = '\0';
+
+					snprintf(libpath, PATH_MAX, "%s", line);
+					break;
+				}
+			}
+
+			free(line);
+			fclose(fp);
+		}
+
+		if (pos)
 			strcpy(pos + 1, LUA_SCRIPT);
 	}
-
+/*
 #ifdef GTKPLUG
 	char cfg_path[PATH_MAX];
 	g_strlcpy(cfg_path, dps->DefaultIniName, PATH_MAX);
@@ -226,11 +271,15 @@ void DCPCALL ListSetDefaultParams(ListDefaultParamStruct* dps)
 	}
 	else
 		snprintf(libpath, PATH_MAX, "%s", path.toStdString().c_str());
+
 #endif
+*/
+
 	if (!gLibHandle)
 		gLibHandle = dlopen(libpath, RTLD_LAZY | RTLD_DEEPBIND);
 }
 
 #ifdef __cplusplus
 }
+
 #endif

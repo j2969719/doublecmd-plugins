@@ -9,12 +9,11 @@ Media player plugin.
 
 ## Notes
 Requires `libmpv`.
-The plugin uses the `dlopen` function instead of dynamic linking. By default, the plugin will try to use the file `libmpv.so` You can specify the library name in `j2969719.ini` in the folder with the Double Commander configuration files (see [Location of configuration files](https://doublecmd.github.io/doc/en/configuration.html#ConfigDC)):
-```ini
-[PluginName]
-libpath=libmpv.so
-```
-Usually the library name is `libmpv.so.2` (mpv 0.35+) or `libmpv.so.1` (mpv <= 0.34).
+The plugin uses the `dlopen` function instead of dynamic linking.
+By default, the plugin will try to use the file `libmpv.so`. You can specify the library name in `libmpv.txt` in the plugin folder: usually the library name is `libmpv.so.2` (mpv 0.35+) or `libmpv.so.1` (mpv <= 0.34).
+
+`mpv_alt_gtk2.wlx` vs. `mpv_alt_gtk2_drawing_area.wlx`
+`mpv_alt_gtk2_drawing_area.wlx` uses a different way to connect the `libmpv` window, use this version if you have a problem with `mpv_alt_gtk2.wlx` (possible in Debian and derivatives with mpv >= 0.40).
 
 ## Previous version
 [Previous version](https://github.com/j2969719/doublecmd-plugins/tree/8b89e4f9ae886bb3029fd4103a19c6bb1d343dc7/plugins/wlx/mpv_alt) is dynamically linked to the `libmpv` library and it has a problem with the Lua library, see [WLX Plugin mpv_alt liblua conflict #43](https://github.com/j2969719/doublecmd-plugins/issues/43).

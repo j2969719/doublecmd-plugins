@@ -1,0 +1,3 @@
+# below is the library file that will be loaded
+
+libmpv.so
