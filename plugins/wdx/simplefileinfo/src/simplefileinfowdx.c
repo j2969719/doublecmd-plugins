@@ -14,7 +14,7 @@
 #include <magic.h>
 #include "wdxplugin.h"
 
-#define _detectstring "EXT=\"*\""
+#define LONGCAT 50
 
 typedef struct _field
 {
@@ -79,7 +79,7 @@ int DCPCALL ContentGetSupportedField(int FieldIndex, char* FieldName, char* Unit
 
 int DCPCALL ContentGetDetectString(char* DetectString, int maxlen)
 {
-	strncpy(DetectString, _detectstring, maxlen - 1);
+	strncpy(DetectString, DETECT_STRING, maxlen - 1);
 	return 0;
 }
 
@@ -561,13 +561,13 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 	{
 		if (magic_cookie == NULL)
 		{
-			printf("unable to initialize magic library\n");
+			fprintf(stderr, "%s: unable to initialize magic library\n", PLUGNAME);
 			return ft_fileerror;
 		}
 
 		if (magic_load(magic_cookie, NULL) != 0)
 		{
-			printf("cannot load magic database - %s\n", magic_error(magic_cookie));
+			fprintf(stderr, "%s: cannot load magic database - %s\n", PLUGNAME, magic_error(magic_cookie));
 			magic_close(magic_cookie);
 			return ft_fileerror;
 		}
@@ -575,7 +575,38 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 		magic_full = magic_file(magic_cookie, FileName);
 
 		if (magic_full)
+		{
 			strncpy((char*)FieldValue, magic_full, maxlen - 1);
+
+			if (FieldIndex == 0)
+			{
+				char *pos = NULL;
+				char *text = (char*)FieldValue;
+
+				size_t count = 0;
+				size_t len = strlen(text);
+
+				for (size_t i = 0; i < len; i++)
+				//for (size_t i = len; i != -1; i--)
+				{
+					if (count++ > LONGCAT && text[i] == ' ')// && text[i - 1] == ',')
+					{
+						text[i] = '\n';
+						count = 0;
+					}
+				}
+
+				while ((pos = strstr(text, "\\012- ")) != NULL)
+				{
+					len = strlen(pos);
+
+					for (size_t i = 1; i < len; i++)
+						pos[i] = pos[i + 5];
+
+					pos[0] = '\n';
+				}
+			}
+		}
 		else
 			return ft_fieldempty;
 
