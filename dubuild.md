@@ -142,6 +142,9 @@ Previous versions: `apt install build-essential libglib2.0-dev libgdk-pixbuf2.0-
 - [skipdotfiles](plugins/wdx/skipdotfiles)<br>
 `apt install build-essential`
 
+- [texttooltip](plugins/wdx/texttooltip)<br>
+`apt install build-essential pkg-config libenca-dev libmagic-dev`
+
 
 ---
 <a name="wfx"><h3>WFX plugins</h3></a>
