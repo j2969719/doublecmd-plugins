@@ -1,7 +1,7 @@
 CC = gcc
 CFLAGS = -shared -fPIC -Wl,--no-as-needed
 
-libs := -lmagic
+libs := -lmagic -lc `pkg-config --cflags --libs enca`
 includes := -I/usr/include/magic -I../../../sdk
 
 plugdir := $(shell basename '$(realpath ..)')

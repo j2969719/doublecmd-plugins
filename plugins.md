@@ -117,6 +117,9 @@ A small wdx-plugin for Double Commander which provides additional information ab
 - [skipdotfiles](plugins/wdx/skipdotfiles)<br>
 Excludes files/folders with a leading dot (hidden on unix-like) from search results.
 
+- [texttooltip](plugins/wdx/texttooltip)<br>
+Returns one or more lines of files, detects text encoding.
+
 
 ---
 <a name="wdx-lua"><h3>WDX: Lua scripts</h3></a>
