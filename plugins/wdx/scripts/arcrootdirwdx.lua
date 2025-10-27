@@ -1,7 +1,11 @@
 local cached_file = nil
 local root_dirs_count = 0
 local root_files_count = 0
+local z7cmd = '7z'
 
+function ContentSetDefaultParams(IniFileName, PlugApiVerHi, PlugApiVerLow)
+  z7cmd = get_output("sh -c 'which 7zz || which 7z' 2>/dev/null"):sub(1, -2)
+end
 
 function ContentGetDetectString()
     return 'EXT="7Z" | EXT="ZIP" | EXT="RAR" | EXT="XZ" | EXT="GZ" | EXT="Z" | EXT="LZMA" | EXT="BZ2" | EXT="TAR" | EXT="ZIPX" | EXT="ZST"'
@@ -23,17 +27,16 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
         return nil
     end
     if FileName ~= cached_file then
-        local arc_cmd = "7z l -slt"
+        local command = z7cmd .. " l -slt " .. FileName:gsub(' ', '\\ ') .. " -p 2>/dev/null"
         local prefix = "^Path = "
         if FileName:find("%.tar%.?") then
-            arc_cmd = "tar -tf"
+            command = "tar -tf " .. FileName:gsub(' ', '\\ ') .. " 2>/dev/null"
             prefix = '^'
         end
-        local handle = io.popen(arc_cmd .. ' "' .. FileName:gsub('"', '\\"') .. '"', 'r');
-        local output = handle:read("*a");
-        handle:close();
+        local output = get_output(command)
+        print(command, output)
         if output == '' or output == nil then
-            return nil;
+            return nil
         end
         local root_dirs = {}
         local root_files = {}
@@ -73,4 +76,14 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
         return root_files_count
     end
     return nil
+end
+
+function get_output(command)
+  if not command then
+    return ''
+  end
+  local handle = io.popen(command, 'r')
+  local output = handle:read("*a")
+  handle:close()
+  return output
 end

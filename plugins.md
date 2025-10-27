@@ -140,6 +140,9 @@ Getting some information from CRASH-files on Debian/Ubuntu and Debian/Ubuntu-bas
 - [archivecommentwdx.lua](plugins/wdx/scripts/archivecommentwdx.lua)<br>
 Reading comment from ZIP and RAR files.
 
+- [arcreadmewdx.lua](plugins/wdx/scripts/arcreadmewdx.lua)<br>
+Returns one or more lines from any `README*` file (first) inside archives. `tar` and 7-Zip are used.
+
 - [arcrootdirwdx.lua](plugins/wdx/scripts/arcrootdirwdx.lua)<br>
 Displays amount of folders and or files found in root directory of archives.
 

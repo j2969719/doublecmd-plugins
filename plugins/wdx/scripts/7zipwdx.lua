@@ -1,9 +1,8 @@
 -- 7zipwdx.lua
 
-local cmd = "7z l"
-local params = "-p 2>&1"
+local z7cmd = "7z l"
 local output = ''
-local filename = ''
+local cached_file = ''
 
 local fields = {
     {"Type",         8, "\nType%s=%s([^\n]+)",                    false},
@@ -28,52 +27,65 @@ local fields = {
     {"Encrypted",    6, ":%sCan%snot%sopen%s(encrypted)%sarchive", true},
 }
 
+function ContentSetDefaultParams(IniFileName, PlugApiVerHi, PlugApiVerLow)
+  z7cmd = get_output("sh -c 'which 7zz || which 7z' 2>/dev/null"):sub(1, -2)
+end
+
 function ContentGetSupportedField(FieldIndex)
     if (fields[FieldIndex + 1] ~= nil ) then
-        return fields[FieldIndex + 1][1], "", fields[FieldIndex + 1][2];
+        return fields[FieldIndex + 1][1], "", fields[FieldIndex + 1][2]
     end
-    return '', '', 0; -- ft_nomorefields
+    return '', '', 0 -- ft_nomorefields
 end
 
 function ContentGetDetectString()
-    return 'EXT="7Z" | EXT="ZIP" | EXT="RAR" | EXT="XZ" | EXT="GZ" | EXT="Z" | EXT="LZMA" | EXT="BZ2" | EXT="TAR" | EXT="ZIPX"';
+    return 'EXT="7Z" | EXT="ZIP" | EXT="RAR" | EXT="XZ" | EXT="GZ" | EXT="Z" | EXT="LZMA" | EXT="BZ2" | EXT="TAR" | EXT="ZIPX"'
 end
 
 function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
-    if (filename ~= FileName) then
-        local attr = SysUtils.FileGetAttr(FileName);
+    if (cached_file ~= FileName) then
+        local attr = SysUtils.FileGetAttr(FileName)
         if (attr < 0) or (math.floor(attr / 0x00000004) % 2 ~= 0) or (math.floor(attr / 0x00000010) % 2 ~= 0) then
-            return nil;
+            output = ''
+            return nil
         end
-        local handle = io.popen(cmd .. ' "' .. FileName:gsub('"', '\\"') .. '" ' .. params, 'r');
-        output = handle:read("*a");
-        handle:close();
-        filename = FileName;
+        output = get_output(z7cmd .. " l " .. FileName:gsub(' ', '\\ ') .. " -p 2>/dev/null")
+        cached_file = FileName
     end
 
-    if (output ~= nil) then
-        local target = output;
-        local result = '';
+    if (output ~= '') then
+        local target = output
+        local result = ''
         if (fields[FieldIndex + 1][4] == true) then
-            target = output:match("%-([%w%s%-:,]+)\n$");
+            target = output:match("%-([%w%s%-:,]+)\n$")
         end
         if (target ~= nil) and (fields[FieldIndex + 1][3] ~= nil) then
-            result = target:match(fields[FieldIndex + 1][3]);
+            result = target:match(fields[FieldIndex + 1][3])
         else
-            return nil;
+            return nil
         end
         if (fields[FieldIndex + 1][2] == 6) then
             if (result == nil) then
-                return false;
+                return false
             else
-                return true;
+                return true
             end
         elseif (fields[FieldIndex + 1][2] == 2) and (result == nil) then
             if (FieldIndex == 12) or (FieldIndex == 13) then
-                return 0;
+                return 0
             end
         end
-        return result;
+        return result
     end
-    return nil; -- invalid
+    return nil -- invalid
+end
+
+function get_output(command)
+  if not command then
+    return ''
+  end
+  local handle = io.popen(command, 'r')
+  local output = handle:read("*a")
+  handle:close()
+  return output
 end
