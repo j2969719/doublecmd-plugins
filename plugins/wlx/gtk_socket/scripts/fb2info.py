@@ -22,10 +22,17 @@ data = ""
 html = '<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"><html><head><title>View description</title><meta http-equiv="Content-Type" content="text/html; charset='
 
 def CheckFile(d):
+    b = 0
+    if d[:3] == b"\xef\xbb\xbf":
+        d = d[3:]
+        b = 1
     s = d.decode("ascii")
     n1 = s.find("<?xml", 0)
     if n1 == -1:
         return "none"
+    else:
+        if b == 1:
+            return "utf-8-sig"
     n2 = s.find("encoding=", n1)
     n1 = s.find('"', n2 + 11)
     t = s[n2 + 10:n1]
@@ -68,9 +75,9 @@ def GetAutors(s):
 
 def GetGenres(s):
     l = []
-    c = 1
+    c = 0
     n3 = 1
-    while c > 0:
+    while c > -1:
         n1 = s.find("<genre>", n3)
         if n1 == -1:
             break
@@ -79,7 +86,9 @@ def GetGenres(s):
             l.append(s[n1 + 7:n2])
             c = c + 1
         n3 = n2
-    if c == 1:
+    if c == 0:
+        return "no"
+    elif c == 1:
         return l[0]
     else:
         return ', '.join(l)
@@ -189,7 +198,7 @@ tmp = GetAutors(data[tb + 12:te])
 html = html + "<h3>" + tmp + "</h3>"
 
 tmp = GetGenres(data[tb + 12:te])
-html = html + "<p>" + tmp + "</p>"
+html = html + "<p>Genres: " + tmp + "</p>"
 
 n1 = data.find("<sequence", tb, te)
 if n1 != -1:
