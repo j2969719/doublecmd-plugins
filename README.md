@@ -29,3 +29,4 @@ Not all but most of additions for Linux only.
 - [Double/Total Commander plugin to access kubernetes resources ](https://github.com/calinrc/k8s_wfx)<br>
 - [Torrent Viewer WLX plugin for Double Commander](https://github.com/Kolcha/dc-torrent-view)<br>
 - [nix archive (*.nar) packer plugin (unpack only)](https://github.com/xBZZZZ/nix-archive-doublecmd)<br>
+- [Double Commander OOITV Lister Plugin](https://github.com/halfhope/doublecmd_ooitv_wlx_viewer_plugin)<br>
