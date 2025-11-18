@@ -7,7 +7,7 @@ Plugins
 
 - [WFX plugins](#wfx)
 
-- WLX plugins: [GTK2](#wlxgtk) (for GTK2-version of DC only), [Qt5](#wlxqt5) (for Qt5-version of DC only)
+- WLX plugins: [GTK2](#wlxgtk) (for GTK2-version of DC only), [Qt5/Qt6](#wlxqt) (for Qt5 or Qt6 version of DC only)
 
 - [DSX plugins](#dsx)
 
@@ -512,7 +512,7 @@ Displays PDF, DjVu, PostScipt, CBR. Requires `zathura`.
 
 
 ---
-<a name="wlxqt5"><h3>WLX plugins (Qt5)</h3></a>
+<a name="wlxqt"><h3>WLX plugins (Qt5/Qt6)</h3></a>
 
 - [bit7z_qt_crap](plugins/wlx/bit7z_qt_crap)<br>
 Archive item props. (useless)
