@@ -34,7 +34,7 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
             prefix = '^'
         end
         local output = get_output(command)
-        print(command, output)
+        --print(command, output)
         if output == '' or output == nil then
             return nil
         end
