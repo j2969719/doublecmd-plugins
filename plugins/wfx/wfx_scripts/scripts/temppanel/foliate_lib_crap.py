@@ -54,12 +54,15 @@ def vfs_init():
 			print(e, file=sys.stderr)
 			sys.exit(1)
 		author = ''
-		if 'creator' in info['metadata'] and not info['metadata']['creator'] is None:
+		if 'creator' in info['metadata'] and type(info['metadata']['creator']) is str:
 			author = info['metadata']['creator']
 		elif 'author' in info['metadata']:
-			for name in info['metadata']['author']:
-				author = author + name['name'] + ', '
-			author = author[:-2]
+			if type(info['metadata']['author']) is str:
+				author = author + info['metadata']['author']
+			elif hasattr(info['metadata']['author'], '__len__'):
+				for name in info['metadata']['author']:
+					author = author + name['name'] + ', '
+				author = author[:-2]
 		creator = author
 		if len(author) > 80:
 			author = author[:80] + '...'

@@ -145,7 +145,15 @@ static GdkPixbuf *load_pixbuf(char *filename)
 	size_t width = MagickGetImageWidth(magick_wand);
 	size_t height = MagickGetImageHeight(magick_wand);
 	size_t depth = MagickGetImageDepth(magick_wand);
+
 	GdkPixbuf *pixbuf = gdk_pixbuf_new(GDK_COLORSPACE_RGB, TRUE, depth, width, height);
+
+	if (!pixbuf)
+	{
+		magick_wand = DestroyMagickWand(magick_wand);
+		MagickWandTerminus();
+		return NULL;
+	}
 	const guint8 *pixels = gdk_pixbuf_get_pixels(pixbuf);
 	int rowstride = gdk_pixbuf_get_rowstride(pixbuf);
 

@@ -27,6 +27,9 @@ tField gFields[] =
 	{"Method",		ft_string,	""},
 	{"Characts",		ft_string,	""},
 	{"Error Flags",		ft_numeric_32,	""},
+	{"Type",		ft_string,	""},
+	{"Encrypted Items",	ft_boolean,	""},
+	{"Encrypted",		ft_boolean,	""},
 };
 
 // Bit7zLibrary gBit7zLib { "/usr/lib/p7zip/7z.so" };
@@ -37,6 +40,7 @@ bool gLastFileRead = false;
 map< BitProperty, BitPropVariant > gProps;
 int gItems = 0, gFiles = 0, gFolders = 0;
 int64_t gSize = 0, gPackedSize = 0;
+bool gEncrypted, gHasEncryptedItems;
 
 
 char* strlcpy(char* p, const char* p2, int maxlen)
@@ -79,6 +83,8 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 			gFolders = reader.foldersCount();
 			gSize = (int64_t)reader.size();
 			gPackedSize = (int64_t)reader.packSize();
+			gHasEncryptedItems = reader.hasEncryptedItems();
+			gEncrypted = reader.isEncrypted();
 		}
 		catch (const bit7z::BitException& ex)
 		{
@@ -87,8 +93,7 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 			return ft_fileerror;
 		}
 
-		gLastFileRead = true
-		                ;
+		gLastFileRead = true;
 	}
 
 	if (!gLastFileRead)
@@ -160,6 +165,15 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 		{
 			return ft_fieldempty;
 		}
+		break;
+	case 11:
+		strlcpy((char*)FieldValue, gProps[BitProperty::Type].toString().c_str(), maxlen - 1);
+		break;
+	case 12:
+		*(int*)FieldValue = (int)gHasEncryptedItems;
+		break;
+	case 13:
+		*(int*)FieldValue = (int)gEncrypted;
 		break;
 
 	default:

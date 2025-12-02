@@ -275,6 +275,8 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 								strcpy((char*)FieldValue, enc);
 								return ft_multiplechoice;
 							}
+							else if (enc[4] != '8')
+								return ft_fileerror;
 							else
 								is_detect = false;
 						}
@@ -339,8 +341,8 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 					if (enc[0] != '\0' && strcmp(enc, "ASCII") != 0 && strcmp(enc, "UTF-8") != 0)
 						conv = iconv_open("UTF-8", enc);
 
-					if (conv != (iconv_t) -1)
-						printf("%s (%s): charset %s (lang %s)\n", PLUGNAME, FileName, enc, gLang);
+					//if (conv != (iconv_t) -1)
+					//	printf("%s (%s): charset %s (lang %s)\n", PLUGNAME, FileName, enc, gLang);
 
 					while ((lread = getline(&line, &len, fp)) != -1)
 					{

@@ -15,6 +15,7 @@
 #define InputBox gExtensions->InputBox
 
 #define UDISK_BLOCKDEV_PATH "/org/freedesktop/UDisks2/block_devices"
+#define FAKEFILE "wtf is this?.txt"
 #define ANNOYANCE "to setup loopdev, copy *.img or *.iso file to the panel (it dosent matter where). to mount, press enter on the partition in \"subdir\" of the loopdev."
 
 typedef struct sVFSDirData
@@ -131,8 +132,8 @@ int DCPCALL FsInit(int PluginNr, tProgressProc pProgressProc, tLogProc pLogProc,
 			MessageBox(err->message, NULL,  MB_OK | MB_ICONERROR);
 			g_error_free(err);
 		}
-		else
-			MessageBox(ANNOYANCE, NULL, MB_OK | MB_ICONINFORMATION);
+		//else
+		//	MessageBox(ANNOYANCE, NULL, MB_OK | MB_ICONINFORMATION);
 	}
 
 	return 0;
@@ -185,6 +186,7 @@ HANDLE DCPCALL FsFindFirst(char* Path, WIN32_FIND_DATAA *FindData)
 
 	if (!SetFindData(dirdata, FindData))
 	{
+		/*
 		if (dirdata->list)
 		{
 			g_list_foreach(dirdata->list, (GFunc) g_object_unref, NULL);
@@ -193,6 +195,24 @@ HANDLE DCPCALL FsFindFirst(char* Path, WIN32_FIND_DATAA *FindData)
 
 		g_free(dirdata);
 		return (HANDLE)(-1);
+		*/
+		if (Path[1] != '\0')
+		{
+			g_free(dirdata);
+			return (HANDLE)(-1);
+		}
+
+		memset(FindData, 0, sizeof(WIN32_FIND_DATAA));
+
+		FindData->ftCreationTime.dwHighDateTime = 0xFFFFFFFF;
+		FindData->ftCreationTime.dwLowDateTime = 0xFFFFFFFE;
+		FindData->ftLastAccessTime.dwHighDateTime = 0xFFFFFFFF;
+		FindData->ftLastAccessTime.dwLowDateTime = 0xFFFFFFFE;
+		FindData->ftLastWriteTime.dwHighDateTime = 0xFFFFFFFF;
+		FindData->ftLastWriteTime.dwLowDateTime = 0xFFFFFFFE;
+		FindData->nFileSizeHigh = 0xFFFFFFFF;
+		FindData->nFileSizeLow = 0xFFFFFFFE;
+		g_strlcpy(FindData->cFileName, FAKEFILE, MAX_PATH);
 	}
 
 	return (HANDLE)dirdata;
@@ -224,6 +244,12 @@ int DCPCALL FsExecuteFile(HWND MainWin, char* RemoteName, char* Verb)
 {
 	if (!gUdisksClient)
 		return FS_EXEC_ERROR;
+
+	if (strcmp(RemoteName, "/" FAKEFILE) == 0)
+	{
+		MessageBox(ANNOYANCE, NULL, MB_OK | MB_ICONINFORMATION);
+		return FS_EXEC_OK;
+	}
 
 	GError *err = NULL;
 
@@ -419,6 +445,12 @@ int DCPCALL FsContentGetValue(char* FileName, int FieldIndex, int UnitIndex, voi
 	if (!gUdisksClient)
 		return ft_fileerror;
 
+	if (strcmp(FileName, "/" FAKEFILE) == 0)
+	{
+		g_strlcpy((char*)FieldValue, ANNOYANCE, maxlen);
+		return ft_string;
+	}
+
 	UDisksObject *object = GetUDisksObjectFromPath(FileName);
 
 	if (object)
@@ -469,6 +501,21 @@ BOOL DCPCALL FsContentGetDefaultView(char* ViewContents, char* ViewHeaders, char
 	g_strlcpy(ViewWidths, "100,0,200", maxlen - 1);
 	g_strlcpy(ViewOptions, "-1|0", maxlen - 1);
 	return TRUE;
+}
+
+int DCPCALL FsExtractCustomIcon(char* RemoteName, int ExtractFlags, PWfxIcon TheIcon)
+{
+	if (strcmp(RemoteName, "/" FAKEFILE) == 0)
+		g_strlcpy(RemoteName, "help-about", MAX_PATH);
+	else if (strrchr(RemoteName, '/') == RemoteName)
+		g_strlcpy(RemoteName, "drive-multidisk", MAX_PATH);
+	else
+		g_strlcpy(RemoteName, "drive-harddisk", MAX_PATH);
+
+	TheIcon->Format = FS_ICON_FORMAT_FILE;
+	return FS_ICON_EXTRACTED;
+
+
 }
 
 void DCPCALL ExtensionInitialize(tExtensionStartupInfo* StartupInfo)

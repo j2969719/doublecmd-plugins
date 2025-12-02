@@ -81,17 +81,17 @@ vfs_list()
     if [ "$1" == "/" ]; then
         devinfo="dr-xr-xr-x 0000-00-00 00:00:00 -"
         adb devices | grep -G 'device$' | cut -d'	' -f1 | while read line; do echo "$devinfo $line"; done
-        echo "-r-xr-xr-x 0000-00-00 00:00:00 - >$ENV_WFX_SCRIPT_STR_USB<.sh"
-        echo "-r-xr-xr-x 0000-00-00 00:00:00 - >$ENV_WFX_SCRIPT_STR_TCP<.sh"
-        echo "-r-xr-xr-x 0000-00-00 00:00:00 - >$ENV_WFX_SCRIPT_STR_ROOT<.sh"
-        echo "-r-xr-xr-x 0000-00-00 00:00:00 - >$ENV_WFX_SCRIPT_STR_UNROOT<.sh"
-        echo "-r-xr-xr-x 0000-00-00 00:00:00 - >$ENV_WFX_SCRIPT_STR_OFFLINE<.sh"
-        echo "-r-xr-xr-x 0000-00-00 00:00:00 - >$ENV_WFX_SCRIPT_STR_LOG<.sh"
+        echo "---x--x--x 0000-00-00 00:00:00 - >$ENV_WFX_SCRIPT_STR_USB<.sh"
+        echo "---x--x--x 0000-00-00 00:00:00 - >$ENV_WFX_SCRIPT_STR_TCP<.sh"
+        echo "---x--x--x 0000-00-00 00:00:00 - >$ENV_WFX_SCRIPT_STR_ROOT<.sh"
+        echo "---x--x--x 0000-00-00 00:00:00 - >$ENV_WFX_SCRIPT_STR_UNROOT<.sh"
+        echo "---x--x--x 0000-00-00 00:00:00 - >$ENV_WFX_SCRIPT_STR_OFFLINE<.sh"
+        echo "---x--x--x 0000-00-00 00:00:00 - >$ENV_WFX_SCRIPT_STR_LOG<.sh"
 
         if [ -z "$DC_WFX_SCRIPT_STDERR" ]; then
-            echo "-r-xr-xr-x 0000-00-00 00:00:00 - >$ENV_WFX_SCRIPT_STR_STDERROFF<.sh"
+            echo "---x--x--x 0000-00-00 00:00:00 - >$ENV_WFX_SCRIPT_STR_STDERROFF<.sh"
         else
-            echo "-r-xr-xr-x 0000-00-00 00:00:00 - >$ENV_WFX_SCRIPT_STR_STDERRON<.sh"
+            echo "---x--x--x 0000-00-00 00:00:00 - >$ENV_WFX_SCRIPT_STR_STDERRON<.sh"
         fi
 
         exit 0
@@ -102,7 +102,7 @@ vfs_list()
     [ -z "$devname" ] || device="-s $devname"
     path="/${1#/*/}"
     [ "$path" == "/$1" ] && path=/
-    command="cd \"$path\" && for file in *; do [ \"\$file\" != '*' ] && stat -c '%A %.19y %s %n' \"\$file\" $DC_WFX_SCRIPT_STDERR ; done"
+    command="cd \"$path\" && for file in * .*; do [ \"\$file\" != '*' ] && stat -c '%A %.19y %s %n' \"\$file\" $DC_WFX_SCRIPT_STDERR ; done"
     adb $device shell "$command"
     exit 0
 }

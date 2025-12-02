@@ -4,16 +4,16 @@
 
 int DCPCALL ContentGetSupportedField(int FieldIndex, char* FieldName, char* Units, int maxlen)
 {
-	g_strlcpy(Units, "", maxlen - 1);
-
 	if (FieldIndex == 0)
 	{
 		g_strlcpy(FieldName, "description", maxlen - 1);
+		g_strlcpy(Units, "default|follow symlink", maxlen - 1);
 		return ft_string;
 	}
 	else if (FieldIndex == 1)
 	{
 		g_strlcpy(FieldName, "content type", maxlen - 1);
+		Units[0] == '\0';
 		return ft_string;
 	}
 	else if (FieldIndex == 2)
@@ -43,7 +43,12 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 	if (!gfile)
 		return ft_fileerror;
 
-	GFileInfo *fileinfo = g_file_query_info(gfile, G_FILE_ATTRIBUTE_STANDARD_CONTENT_TYPE, G_FILE_QUERY_INFO_NOFOLLOW_SYMLINKS, NULL, NULL);
+	int query_flags = G_FILE_QUERY_INFO_NOFOLLOW_SYMLINKS;
+
+	if (FieldIndex == 0 && UnitIndex == 1)
+		query_flags = 0;
+
+	GFileInfo *fileinfo = g_file_query_info(gfile, G_FILE_ATTRIBUTE_STANDARD_CONTENT_TYPE, query_flags, NULL, NULL);
 
 	if (!fileinfo)
 	{

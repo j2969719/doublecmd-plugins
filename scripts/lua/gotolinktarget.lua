@@ -39,6 +39,7 @@ local MB_ICONWARNING     = 0x0030
 local MB_ICONINFORMATION = 0x0040
 
 local params = {...}
+local search_delay = 1000 --[[ ms delay before putting cursor on target file (for DC older than v1.1.30) ]] / 10
 
 if #params == 0 then
   Dialogs.MessageBox("Required parameters are missing, please check the button settings.", DIALOG_TITLE, MB_ICONERROR)
@@ -64,7 +65,6 @@ local is_newtab    = false
 local is_inactive  = false
 local is_onlydir   = false
 local is_recursive = false
-local is_case      = "on"
 
 if #params > 1 then
   local user_options = table.concat(params, ";", 2)
@@ -82,12 +82,14 @@ if link_target == "" then
 end
 
 local is_absolute = false
+local search_opts = "search=on", "direction=first", "matchbeginning=off", "files=on", "directories=off"
 
 if SysUtils.PathDelim == "/" then
   is_absolute = (link_target:sub(1, 1) == "/")
+  search_opts = search_opts, "casesensitive=on"
 else
   is_absolute = (link_target:sub(2, 3) == ":\\")
-  is_case = "off"
+  search_opts = search_opts, "casesensitive=off"
 end
 
 if not is_absolute then
@@ -118,7 +120,11 @@ elseif is_onlydir then
 else
   if not pcall(DC.GoToFile, link_target, true) then
     DC.ExecuteCommand("cm_ChangeDir", SysUtils.ExtractFileDir(link_target))
-    DC.ExecuteCommand("cm_QuickSearch", "search=on", "direction=first", "matchbeginning=off", "matchending=off", "casesensitive=" .. is_case, "files=on", "directories=off", "text=" .. SysUtils.ExtractFileName(link_target))
+    for _ = 1, search_delay do
+      SysUtils.Sleep(10)
+      DC.ExecuteCommand("")
+    end
+    DC.ExecuteCommand("cm_QuickSearch", search_opts, "text=" .. SysUtils.ExtractFileName(link_target))
     DC.ExecuteCommand("cm_QuickSearch", "search=off")
   end
 end

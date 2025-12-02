@@ -12,19 +12,21 @@
 
 #define MessageBox gExtensions->MessageBox
 #define ROOTNAME "NULL"
-#define BUFSIZE 8192
 
 int gPluginNr;
 tProgressProc gProgressProc = NULL;
 tLogProc gLogProc = NULL;
 tRequestProc gRequestProc = NULL;
 tExtensionStartupInfo* gExtensions = NULL;
+bool gConnected = false;
+bool gQuiet = true;
 
 
-static void LogDialog(void)
+static void ErrDialog(void)
 {
-	if (gLogProc && MessageBox("Do you want to see the log?", NULL, MB_YESNO | MB_ICONQUESTION) ==  ID_YES)
-		gLogProc(gPluginNr, MSGTYPE_CONNECT, "CONNECT /dev/null");
+	int flags = MB_YESNO | MB_ICONQUESTION | gQuiet ? MB_DEFBUTTON1 : MB_DEFBUTTON2;
+	char msg[] = "Do not show read error dialogs?";
+	gQuiet = (MessageBox(msg, NULL, flags) ==  ID_YES);
 }
 
 static void LogError(char *Info, char *FileName, int err)
@@ -42,13 +44,17 @@ int DCPCALL FsInit(int PluginNr, tProgressProc pProgressProc, tLogProc pLogProc,
 	gLogProc = pLogProc;
 	gRequestProc = pRequestProc;
 
-	LogDialog();
-
 	return 0;
 }
 
 HANDLE DCPCALL FsFindFirst(char* Path, WIN32_FIND_DATAA *FindData)
 {
+	if (!gConnected)
+	{
+		gLogProc(gPluginNr, MSGTYPE_CONNECT, "CONNECT /");
+		gConnected = true;
+	}
+
 	return (HANDLE)(-1);
 }
 
@@ -66,7 +72,7 @@ int DCPCALL FsPutFile(char* LocalName, char* RemoteName, int CopyFlags)
 {
 	int fd, done;
 	ssize_t len, total = 0;
-	char buff[BUFSIZE];
+	char *buff;
 	struct stat buf;
 	int result = FS_FILE_OK;
 
@@ -77,7 +83,7 @@ int DCPCALL FsPutFile(char* LocalName, char* RemoteName, int CopyFlags)
 	{
 		int errsv = errno;
 		LogError("stat", LocalName, errsv);
-		return FS_FILE_READERROR;
+		return gQuiet ? FS_FILE_OK : FS_FILE_READERROR;
 	}
 
 	fd = open(LocalName, O_RDONLY);
@@ -86,10 +92,12 @@ int DCPCALL FsPutFile(char* LocalName, char* RemoteName, int CopyFlags)
 	{
 		int errsv = errno;
 		LogError("open", LocalName, errsv);
-		return FS_FILE_READERROR;
+		return gQuiet ? FS_FILE_OK : FS_FILE_READERROR;
 	}
 
-	while ((len = read(fd, buff, sizeof(buff))) > 0)
+	buff = malloc(buf.st_blksize * sizeof(char));
+
+	while ((len = read(fd, buff, buf.st_blksize)) > 0)
 	{
 		total += len;
 
@@ -108,18 +116,20 @@ int DCPCALL FsPutFile(char* LocalName, char* RemoteName, int CopyFlags)
 		}
 	}
 
+	free(buff);
+
 	if (len == -1)
 	{
 		int errsv = errno;
 		LogError("read", LocalName, errsv);
-		result = FS_FILE_READERROR;
+		result = gQuiet ? FS_FILE_OK : FS_FILE_READERROR;
 	}
 
 	if (close(fd) == -1)
 	{
 		int errsv = errno;
 		LogError("close", LocalName, errsv);
-		result = FS_FILE_READERROR;
+		result = gQuiet ? FS_FILE_OK : FS_FILE_READERROR;
 	}
 
 	return result;
@@ -134,7 +144,7 @@ int DCPCALL FsExecuteFile(HWND MainWin, char* RemoteName, char* Verb)
 {
 	if (strcmp(Verb, "properties") == 0)
 	{
-		LogDialog();
+		ErrDialog();
 		return FS_EXEC_OK;
 	}
 
@@ -143,7 +153,8 @@ int DCPCALL FsExecuteFile(HWND MainWin, char* RemoteName, char* Verb)
 
 BOOL DCPCALL FsDisconnect(char* DisconnectRoot)
 {
-	gLogProc(gPluginNr, MSGTYPE_DISCONNECT, "DISCONNECT /dev/null");
+	gLogProc(gPluginNr, MSGTYPE_DISCONNECT, "DISCONNECT /");
+	gConnected = false;
 	return true;
 }
 
