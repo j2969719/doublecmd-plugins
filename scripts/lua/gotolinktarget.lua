@@ -14,6 +14,7 @@ Optional params:
   onlydir   - if the target object is a file, only the parent directory will be opened.
   recursive - if the link points to a link then it's resolved recursively until a valid
               file name that is not a link is found.
+  delay NNN - NNN ms delay before putting cursor on target file (for DC older than v1.1.30)
 
 Button example:
 
@@ -39,7 +40,6 @@ local MB_ICONWARNING     = 0x0030
 local MB_ICONINFORMATION = 0x0040
 
 local params = {...}
-local search_delay = 1000 --[[ ms delay before putting cursor on target file (for DC older than v1.1.30) ]] / 10
 
 if #params == 0 then
   Dialogs.MessageBox("Required parameters are missing, please check the button settings.", DIALOG_TITLE, MB_ICONERROR)
@@ -65,6 +65,7 @@ local is_newtab    = false
 local is_inactive  = false
 local is_onlydir   = false
 local is_recursive = false
+local search_delay = 10
 
 if #params > 1 then
   local user_options = table.concat(params, ";", 2)
@@ -72,6 +73,9 @@ if #params > 1 then
   is_inactive  = (user_options:find("inactive") ~= nil)
   is_onlydir   = (user_options:find("onlydir") ~= nil)
   is_recursive = (user_options:find("recursive") ~= nil)
+  if user_options:find("delay %d+") ~= nil then
+    search_delay = user_options:match("delay (%d+)") / 10
+  end
 end
 
 local link_target = SysUtils.ReadSymbolicLink(filename, is_recursive)
