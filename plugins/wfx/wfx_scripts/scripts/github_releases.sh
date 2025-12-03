@@ -172,7 +172,7 @@ vfs_copyout()
         '.[] | select(.tag_name == $ver) | .assets[] | select(.name == $asset) | .browser_download_url'`
     dst="$2"
 
-    wget "$url" -O "$dst"
+    wget "$url" -O "$dst" 2>/dev/null
 
     exit $?
 }

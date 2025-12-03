@@ -1,6 +1,7 @@
 #!/bin/sh
 
 pling_url="https://www.appimagehub.com" # branch of yellowyoutube.com
+tags=appimage
 
 init_fail()
 {
@@ -31,7 +32,7 @@ get_xml()
     echo "Fs_Set_DC_WFX_SCRIPT_XML $tmpfile"
     echo "Fs_Set_DC_WFX_SCRIPT_PAGE 0"
     echo "Fs_Set_DC_WFX_SCRIPT_STR $string"
-    curl --get --data-urlencode "search=$string" --data-urlencode "sortmode=new" --data-urlencode "pagesize=$pagesize" \
+    curl --get --data-urlencode "search=$string" --data-urlencode "sortmode=new" --data-urlencode "tags=$tags" --data-urlencode "pagesize=$pagesize" \
         "$pling_url/ocs/v1/content/data" > "$tmpfile" || init_fail WFX_SCRIPT_STR_ERR_CURL
     err=`xmllint --xpath '//status/text()' "$tmpfile"`
     [ ! -z "$err" ] && [ "$err" != "ok"] init_fail `xmllint --xpath '//message/text()' "$tmpfile"`
@@ -146,7 +147,7 @@ vfs_copyout()
     xpath=`build_xpath_iter "$src" "downloadlink"`
     url=`xmllint --xpath "$xpath" "$DC_WFX_SCRIPT_XML"`
 
-    wget "$url" -O "$dst"
+    wget "$url" -O "$dst" 2>/dev/null
 
     exit $?
 }
