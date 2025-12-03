@@ -9,7 +9,7 @@ DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
     <Command>cm_ExecuteScript</Command>
     <Param>$DC_CONFIG_PATH/scripts/lua/filelistfromcmds.lua</Param>
     <Param>git modified: cd %D &amp;&amp; git ls-files -m</Param>
-    <Param>git conflicts: cd %D &amp;&amp; git diff --name-only --diff-filter=U</Param>
+    <Param>git conflicts: cd %D &amp;&amp; git diff --name-only --diff-filter=U --relative</Param>
     <Param>git untracked: cd %D &amp;&amp; git ls-files -o</Param>
     <Param>rejected patches: find %D \( -name \*.rej -o -name \*.orig \) -print</Param>
   </Command>
