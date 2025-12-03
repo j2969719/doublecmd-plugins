@@ -27,6 +27,15 @@ langs.en = {
   MSG_ARG_MISSING = 'Required parameters are missing, please check the button settings.',
   MSG_CMD_EMPTY   = 'Unable to find command to execute.',
   MSG_CMD_SELECT  = 'Select command',
+  MSG_DC_TOO_OLD  = 'This script requires a newer version of Double Commander.',
+}
+
+langs.ru = {
+  DIALOG_TITLE    = "Внешняя панельизация",
+  MSG_ARG_MISSING = 'Отсутствуют обязательные параметры, проверьте настройки кнопки.',
+  MSG_CMD_EMPTY   = 'Не удалось найти команду для выполнения.',
+  MSG_CMD_SELECT  = 'Выберите команду',
+  MSG_DC_TOO_OLD  = 'Этому скрипту нужна более новая версия Double Commander.',
 }
 
 local lang = os.getenv("LANG")
@@ -68,6 +77,11 @@ local function write_to_file(text, filename)
     file:write(text)
     file:close()
   end
+end
+
+if not DC.ExpandVar then
+  Dialogs.MessageBox(gettext("MSG_DC_TOO_OLD"), gettext("DIALOG_TITLE"), MB_ICONINFORMATION)
+  return  
 end
 
 local args = {...}
