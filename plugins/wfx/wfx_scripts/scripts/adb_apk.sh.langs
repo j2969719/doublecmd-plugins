@@ -1,0 +1,29 @@
+[Default]
+WFX_SCRIPT_NAME=Android packages
+WFX_SCRIPT_STR_TCPPORT=Port
+WFX_SCRIPT_STR_ERRNA=not implemented!
+WFX_SCRIPT_STR_INSTALL_ADB=adb is not installed, the script will not work correctly!
+
+WFX_SCRIPT_STR_ACT_SHELL=Open shell
+WFX_SCRIPT_STR_ACT_CLEAR=Deletes all data associated with a package
+WFX_SCRIPT_STR_ACT_HIDE=Hide
+WFX_SCRIPT_STR_ACT_UNHIDE=Unhide
+WFX_SCRIPT_STR_ACT_SETINSTLOC=Change the default install location
+
+ENV_WFX_SCRIPT_STR_USB=Restart adbd listening on USB
+ENV_WFX_SCRIPT_STR_TCP=Restart adbd listening on TCP
+ENV_WFX_SCRIPT_STR_ROOT=Restart adbd with root permissions
+ENV_WFX_SCRIPT_STR_UNROOT=Restart adbd without root permissions
+ENV_WFX_SCRIPT_STR_OFFLINE=Reset offline or unauthorized devices to force reconnect
+ENV_WFX_SCRIPT_STR_LSALL=List all packages
+ENV_WFX_SCRIPT_STR_LSSYS=List system packages
+ENV_WFX_SCRIPT_STR_LSUSR=List third party packages
+ENV_WFX_SCRIPT_STR_INST=(INSTALL) Don't replace existing application
+ENV_WFX_SCRIPT_STR_INSTR=(INSTALL) Replace existing application
+ENV_WFX_SCRIPT_STR_UNINST=(UNINSTALL) Don't keep the data and cache after package removal
+ENV_WFX_SCRIPT_STR_UNINSTK=(UNINSTALL) Keep the data and cache after package removal
+ENV_WFX_SCRIPT_STR_LSAPK=Show apk files
+ENV_WFX_SCRIPT_STR_LSLOG=Show dumps
+
+[Default]
+WFX_SCRIPT_NAME=Установка APK на Ведроид
