@@ -76,9 +76,11 @@ bool SetFindData(DIR *cur, char *path, WIN32_FIND_DATAA *FindData)
 		{
 			if (S_ISDIR(buf.st_mode))
 				FindData->dwFileAttributes = FILE_ATTRIBUTE_DIRECTORY;
-
-			FindData->nFileSizeHigh = (buf.st_size & 0xFFFFFFFF00000000) >> 32;
-			FindData->nFileSizeLow = buf.st_size & 0x00000000FFFFFFFF;
+			else
+			{
+				FindData->nFileSizeHigh = (buf.st_size & 0xFFFFFFFF00000000) >> 32;
+				FindData->nFileSizeLow = buf.st_size & 0x00000000FFFFFFFF;
+			}
 
 			UnixTimeToFileTime(buf.st_mtime, &FindData->ftLastWriteTime);
 			UnixTimeToFileTime(buf.st_atime, &FindData->ftLastAccessTime);
