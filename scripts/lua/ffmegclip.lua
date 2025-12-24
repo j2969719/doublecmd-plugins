@@ -10,7 +10,7 @@ DOUBLECMD#TOOLBAR#XMLDATA<?xml version="1.0" encoding="UTF-8"?>
     <Hint>ffmpeg clip</Hint>
     <Command>cm_ExecuteScript</Command>
     <Param>$DC_CONFIG_PATH/scripts/lua/ffmegclip.lua</Param>
-    <Param>ffmpeg -i 'OLDFILE' -vcodec copy -acodec copy -ss %[Start;00:00:00] -to %[End;00:00:42] 'NEWFILE'</Param>
+    <Param>ffmpeg -i "$OLDFILE" -vcodec copy -acodec copy -ss %[Start;00:00:00] -to %[End;00:00:42] "$NEWFILE"</Param>
     <Param>%"0%p0</Param>
     <Param>_clip</Param>
   </Command>
@@ -52,9 +52,7 @@ else
   end
 end
 if newfile ~= '' then
-  oldfile = oldfile:gsub("'", "\\'")
-  newfile = newfile:gsub("'", "\\'")
-  command = command:gsub("OLDFILE", oldfile)
-  command = command:gsub("NEWFILE", newfile)
+  os.setenv("OLDFILE", oldfile)
+  os.setenv("NEWFILE", newfile)
   os.execute(command)
 end
