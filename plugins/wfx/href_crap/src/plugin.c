@@ -12,8 +12,12 @@
 #include "wfxplugin.h"
 #include "extension.h"
 
+#define SendDlgMsg gExtensions->SendDlgMsg
+#define MessageBox gExtensions->MessageBox
+#define InputBox   gExtensions->InputBox
 #define Int32x32To64(a,b) ((gint64)(a)*(gint64)(b))
-#define DEFAULT_URL "https://vc.kiev.ua/download/"
+#define DEFAULT_URL "https://vc.vvv.kyiv.ua/download/"
+#define ROOTNAME    "Hypertext REFerence"
 
 typedef struct sVFSDirData
 {
@@ -59,7 +63,7 @@ int gPluginNr;
 tProgressProc gProgressProc = NULL;
 tLogProc gLogProc = NULL;
 tRequestProc gRequestProc = NULL;
-tExtensionStartupInfo* gDialogApi = NULL;
+tExtensionStartupInfo* gExtensions = NULL;
 xmlDocPtr gDoc = NULL;
 CURL *gCurl = NULL;
 clock_t gClock;
@@ -89,14 +93,14 @@ static void SetCurrentFileTime(LPFILETIME ft)
 static void errmsg(char *msg)
 {
 	gLogProc(gPluginNr, MSGTYPE_IMPORTANTERROR, msg);
-	g_print("%s\n", msg);
+	//g_print("%s\n", msg);
 }
 /*
 static void errmsg_dialog(char *msg)
 {
 
-	if (gDialogApi)
-		gDialogApi->MessageBox(msg, "Double Commander", MB_OK | MB_ICONERROR);
+	if (gExtensions)
+		MessageBox(msg, ROOTNAME, MB_OK | MB_ICONERROR);
 	else if (gRequestProc)
 		gRequestProc(gPluginNr, RT_MsgOK, NULL, msg, NULL, 0);
 	else
@@ -603,7 +607,7 @@ static xmlNodePtr get_links(gchar *url)
 
 			if (node->next && node->next->type == XML_TEXT_NODE)
 			{
-				xmlNewProp(link, (xmlChar*)"extra", (xmlChar*)g_strstrip((char *)node->next->content));
+				xmlNewProp(link, (xmlChar*)"extra", (xmlChar*)g_strstrip((char*)node->next->content));
 				parse_fileinfo((char*)node->next->content, link, tmpdoc);
 			}
 			else if (node->parent)
@@ -625,7 +629,7 @@ static xmlNodePtr get_links(gchar *url)
 							{
 								if (extra2->children && extra2->children->type == XML_TEXT_NODE)
 								{
-									gchar *temp = g_strjoin(" ", (char *)extra1->children->content, (char *)extra2->children->content, NULL);
+									gchar *temp = g_strjoin(" ", (char*)extra1->children->content, (char*)extra2->children->content, NULL);
 									xmlNewProp(link, (xmlChar*)"extra", (xmlChar*)g_strstrip(temp));
 									parse_fileinfo(temp, link, tmpdoc);
 									extra2_is_text = TRUE;
@@ -636,7 +640,7 @@ static xmlNodePtr get_links(gchar *url)
 
 							if (!extra2_is_text)
 							{
-								xmlNewProp(link, (xmlChar*)"extra", (xmlChar*)g_strstrip((char *)extra1->children->content));
+								xmlNewProp(link, (xmlChar*)"extra", (xmlChar*)g_strstrip((char*)extra1->children->content));
 								parse_fileinfo((char*)extra1->children->content, link, tmpdoc);
 							}
 						}
@@ -675,7 +679,7 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 	case DN_INITDIALOG:
 
 		if (!gSettings.init)
-			gDialogApi->SendDlgMsg(pDlg, "lblInfo", DM_SHOWITEM, 0, 0);
+			SendDlgMsg(pDlg, "lblInfo", DM_SHOWITEM, 0, 0);
 
 		if ((fp = fopen(gHistoryFile, "r")) != NULL)
 		{
@@ -686,7 +690,7 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 
 				if (strlen(line) > 0)
 				{
-					gDialogApi->SendDlgMsg(pDlg, "cbURL", DM_LISTADD, (intptr_t)line, 0);
+					SendDlgMsg(pDlg, "cbURL", DM_LISTADD, (intptr_t)line, 0);
 					count++;
 				}
 			}
@@ -696,72 +700,72 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 		}
 
 		if (count == 0 && gSettings.url[0] != '\0')
-			gDialogApi->SendDlgMsg(pDlg, "cbURL", DM_LISTADD, (intptr_t)gSettings.url, 0);
+			SendDlgMsg(pDlg, "cbURL", DM_LISTADD, (intptr_t)gSettings.url, 0);
 
-		if (gDialogApi->SendDlgMsg(pDlg, "cbURL", DM_LISTGETCOUNT, 0, 0) == 0)
-			gDialogApi->SendDlgMsg(pDlg, "btnRemove", DM_ENABLE, 0, 0);
+		if (SendDlgMsg(pDlg, "cbURL", DM_LISTGETCOUNT, 0, 0) == 0)
+			SendDlgMsg(pDlg, "btnRemove", DM_ENABLE, 0, 0);
 
 		if (gSettings.url[0] == '\0')
-			gDialogApi->SendDlgMsg(pDlg, "btnBrowser", DM_ENABLE, 0, 0);
+			SendDlgMsg(pDlg, "btnBrowser", DM_ENABLE, 0, 0);
 
-		gDialogApi->SendDlgMsg(pDlg, "cbURL", DM_SETTEXT, (intptr_t)gSettings.url, 0);
+		SendDlgMsg(pDlg, "cbURL", DM_SETTEXT, (intptr_t)gSettings.url, 0);
 
 		if (gSelectedFile[0] != '\0' && strcmp("/", gSelectedFile) != 0 && strcmp("..", gSelectedFile) != 0)
 		{
-			gDialogApi->SendDlgMsg(pDlg, "gbCurrent", DM_SHOWITEM, 1, 0);
-			gDialogApi->SendDlgMsg(pDlg, "edName", DM_SETTEXT, (intptr_t)gSelectedFile, 0);
+			SendDlgMsg(pDlg, "gbCurrent", DM_SHOWITEM, 1, 0);
+			SendDlgMsg(pDlg, "edName", DM_SETTEXT, (intptr_t)gSelectedFile, 0);
 			xmlChar *url = name_to_url(gSelectedFile, gDoc);
-			gDialogApi->SendDlgMsg(pDlg, "edURL", DM_SETTEXT, (intptr_t)url, 0);
-			gDialogApi->SendDlgMsg(pDlg, "btnSelected", DM_ENABLE, 1, 0);
+			SendDlgMsg(pDlg, "edURL", DM_SETTEXT, (intptr_t)url, 0);
+			SendDlgMsg(pDlg, "btnSelected", DM_ENABLE, 1, 0);
 			xmlFree(url);
 			char extra[256];
 
-			if (FsContentGetValue(gSelectedFile, 1, 0, (void*)extra, 256, 0) == ft_string)
-				gDialogApi->SendDlgMsg(pDlg, "edExtra", DM_SETTEXT, (intptr_t)extra, 0);
+			if (FsContentGetValue(gSelectedFile, 1, 0, (void *)extra, 256, 0) == ft_string)
+				SendDlgMsg(pDlg, "edExtra", DM_SETTEXT, (intptr_t)extra, 0);
 			else
 			{
-				gDialogApi->SendDlgMsg(pDlg, "edExtra", DM_SHOWITEM, 0, 0);
-				gDialogApi->SendDlgMsg(pDlg, "lblExtra", DM_SHOWITEM, 0, 0);
+				SendDlgMsg(pDlg, "edExtra", DM_SHOWITEM, 0, 0);
+				SendDlgMsg(pDlg, "lblExtra", DM_SHOWITEM, 0, 0);
 			}
 
 		}
 		else
-			gDialogApi->SendDlgMsg(pDlg, "gbCurrent", DM_SHOWITEM, 0, 0);
+			SendDlgMsg(pDlg, "gbCurrent", DM_SHOWITEM, 0, 0);
 
-		gDialogApi->SendDlgMsg(pDlg, "ckSizes", DM_SETCHECK, (intptr_t)gSettings.ask_sizes, 0);
-		gDialogApi->SendDlgMsg(pDlg, "ckFollow", DM_SETCHECK, (intptr_t)gSettings.follow, 0);
-		gDialogApi->SendDlgMsg(pDlg, "ckVerbose", DM_SETCHECK, (intptr_t)gSettings.verbose, 0);
-		gDialogApi->SendDlgMsg(pDlg, "ckFail", DM_SETCHECK, (intptr_t)gSettings.fail, 0);
-		gDialogApi->SendDlgMsg(pDlg, "ckNoQuery", DM_SETCHECK, (intptr_t)gSettings.noquery, 0);
-		gDialogApi->SendDlgMsg(pDlg, "ckAuth", DM_SETCHECK, (intptr_t)gSettings.auth, 0);
+		SendDlgMsg(pDlg, "ckSizes", DM_SETCHECK, (intptr_t)gSettings.ask_sizes, 0);
+		SendDlgMsg(pDlg, "ckFollow", DM_SETCHECK, (intptr_t)gSettings.follow, 0);
+		SendDlgMsg(pDlg, "ckVerbose", DM_SETCHECK, (intptr_t)gSettings.verbose, 0);
+		SendDlgMsg(pDlg, "ckFail", DM_SETCHECK, (intptr_t)gSettings.fail, 0);
+		SendDlgMsg(pDlg, "ckNoQuery", DM_SETCHECK, (intptr_t)gSettings.noquery, 0);
+		SendDlgMsg(pDlg, "ckAuth", DM_SETCHECK, (intptr_t)gSettings.auth, 0);
 
 		gchar *num = g_strdup_printf("%ld", gSettings.max_redir);
-		gDialogApi->SendDlgMsg(pDlg, "edMaxRedir", DM_SETTEXT, (intptr_t)num, 0);
+		SendDlgMsg(pDlg, "edMaxRedir", DM_SETTEXT, (intptr_t)num, 0);
 		g_free(num);
 
 		num = g_strdup_printf("%ld", gSettings.timeout);
-		gDialogApi->SendDlgMsg(pDlg, "edTimeout", DM_SETTEXT, (intptr_t)num, 0);
+		SendDlgMsg(pDlg, "edTimeout", DM_SETTEXT, (intptr_t)num, 0);
 		g_free(num);
 
-		gDialogApi->SendDlgMsg(pDlg, "cbUserAgent", DM_SETTEXT, (intptr_t)gSettings.user_agent, 0);
+		SendDlgMsg(pDlg, "cbUserAgent", DM_SETTEXT, (intptr_t)gSettings.user_agent, 0);
 
 		break;
 
 	case DN_CLICK:
 		if (strcmp(DlgItemName, "btnOK") == 0)
 		{
-			g_strlcpy(gSettings.url, (char*)gDialogApi->SendDlgMsg(pDlg, "cbURL", DM_GETTEXT, 0, 0), PATH_MAX);
+			g_strlcpy(gSettings.url, (char*)SendDlgMsg(pDlg, "cbURL", DM_GETTEXT, 0, 0), PATH_MAX);
 
 			if ((fp = fopen(gHistoryFile, "w")) != NULL)
 			{
 				if (gSettings.url[0] != '\0')
 					fprintf(fp, "%s\n", gSettings.url);
 
-				count = (int)gDialogApi->SendDlgMsg(pDlg, "cbURL", DM_LISTGETCOUNT, 0, 0);
+				count = (int)SendDlgMsg(pDlg, "cbURL", DM_LISTGETCOUNT, 0, 0);
 
 				for (int i = 0; i < count; i++)
 				{
-					line = (char*)gDialogApi->SendDlgMsg(pDlg, "cbURL", DM_LISTGETITEM, i, 0);
+					line = (char*)SendDlgMsg(pDlg, "cbURL", DM_LISTGETITEM, i, 0);
 
 					if (line && (strcmp(gSettings.url, line) != 0))
 						fprintf(fp, "%s\n", line);
@@ -771,20 +775,20 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 				fclose(fp);
 			}
 
-			gSettings.ask_sizes = (gboolean)gDialogApi->SendDlgMsg(pDlg, "ckSizes", DM_GETCHECK, 0, 0);
-			gSettings.follow = (gboolean)gDialogApi->SendDlgMsg(pDlg, "ckFollow", DM_GETCHECK, 0, 0);
-			gSettings.verbose = (gboolean)gDialogApi->SendDlgMsg(pDlg, "ckVerbose", DM_GETCHECK, 0, 0);
-			gSettings.fail = (gboolean)gDialogApi->SendDlgMsg(pDlg, "ckFail", DM_GETCHECK, 0, 0);
-			gSettings.noquery = (gboolean)gDialogApi->SendDlgMsg(pDlg, "ckNoQuery", DM_GETCHECK, 0, 0);
-			gSettings.auth = (gboolean)gDialogApi->SendDlgMsg(pDlg, "ckAuth", DM_GETCHECK, 0, 0);
+			gSettings.ask_sizes = (gboolean)SendDlgMsg(pDlg, "ckSizes", DM_GETCHECK, 0, 0);
+			gSettings.follow = (gboolean)SendDlgMsg(pDlg, "ckFollow", DM_GETCHECK, 0, 0);
+			gSettings.verbose = (gboolean)SendDlgMsg(pDlg, "ckVerbose", DM_GETCHECK, 0, 0);
+			gSettings.fail = (gboolean)SendDlgMsg(pDlg, "ckFail", DM_GETCHECK, 0, 0);
+			gSettings.noquery = (gboolean)SendDlgMsg(pDlg, "ckNoQuery", DM_GETCHECK, 0, 0);
+			gSettings.auth = (gboolean)SendDlgMsg(pDlg, "ckAuth", DM_GETCHECK, 0, 0);
 
-			line = (char*)gDialogApi->SendDlgMsg(pDlg, "edMaxRedir", DM_GETTEXT, 0, 0);
+			line = (char*)SendDlgMsg(pDlg, "edMaxRedir", DM_GETTEXT, 0, 0);
 			gSettings.max_redir = (long)g_ascii_strtod((char*)line, NULL);
 
-			line = (char*)gDialogApi->SendDlgMsg(pDlg, "edTimeout", DM_GETTEXT, 0, 0);
+			line = (char*)SendDlgMsg(pDlg, "edTimeout", DM_GETTEXT, 0, 0);
 			gSettings.timeout = (long)g_ascii_strtod((char*)line, NULL);
 
-			line = (char*)gDialogApi->SendDlgMsg(pDlg, "cbUserAgent", DM_GETTEXT, 0, 0);
+			line = (char*)SendDlgMsg(pDlg, "cbUserAgent", DM_GETTEXT, 0, 0);
 			g_strlcpy(gSettings.user_agent, line, MAX_PATH);
 
 			if (gSettings.init)
@@ -792,18 +796,18 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 
 			gLogProc(gPluginNr, MSGTYPE_CONNECT, "CONNECT /");
 			gLogProc(gPluginNr, MSGTYPE_DETAILS, gSettings.url);
-			gDialogApi->SendDlgMsg(pDlg, DlgItemName, DM_CLOSE, ID_OK, 0);
+			SendDlgMsg(pDlg, DlgItemName, DM_CLOSE, ID_OK, 0);
 		}
 		else if (strcmp(DlgItemName, "btnCancel") == 0)
 		{
 			if (gSettings.init)
 				gSettings.url[0] = '\0';
 
-			gDialogApi->SendDlgMsg(pDlg, DlgItemName, DM_CLOSE, ID_CANCEL, 0);
+			SendDlgMsg(pDlg, DlgItemName, DM_CLOSE, ID_CANCEL, 0);
 		}
 		else if (strcmp(DlgItemName, "btnGo") == 0)
 		{
-			line = (char*)gDialogApi->SendDlgMsg(pDlg, "edURL", DM_GETTEXT, 0, 0);
+			line = (char*)SendDlgMsg(pDlg, "edURL", DM_GETTEXT, 0, 0);
 
 			if (line && line[0] != '\0')
 			{
@@ -813,7 +817,7 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 		}
 		else if (strcmp(DlgItemName, "btnBrowser") == 0)
 		{
-			line = (char*)gDialogApi->SendDlgMsg(pDlg, "cbURL", DM_GETTEXT, 0, 0);
+			line = (char*)SendDlgMsg(pDlg, "cbURL", DM_GETTEXT, 0, 0);
 
 			if (line && line[0] != '\0')
 			{
@@ -823,28 +827,28 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 		}
 		else if (strcmp(DlgItemName, "btnSelected") == 0)
 		{
-			line = (char*)gDialogApi->SendDlgMsg(pDlg, "edURL", DM_GETTEXT, 0, 0);
+			line = (char*)SendDlgMsg(pDlg, "edURL", DM_GETTEXT, 0, 0);
 
 			if (line && line[0] != '\0')
 			{
-				gDialogApi->SendDlgMsg(pDlg, "cbURL", DM_SETTEXT, (intptr_t)line, 0);
+				SendDlgMsg(pDlg, "cbURL", DM_SETTEXT, (intptr_t)line, 0);
 			}
 		}
 		else if (strcmp(DlgItemName, "btnRemove") == 0)
 		{
-			int i = (int)gDialogApi->SendDlgMsg(pDlg, "cbURL", DM_LISTGETITEMINDEX, 0, 0);
+			int i = (int)SendDlgMsg(pDlg, "cbURL", DM_LISTGETITEMINDEX, 0, 0);
 
 			if (i != -1)
-				gDialogApi->SendDlgMsg(pDlg, "cbURL", DM_LISTDELETE, (intptr_t)i, 0);
+				SendDlgMsg(pDlg, "cbURL", DM_LISTDELETE, (intptr_t)i, 0);
 
-			count = (int)gDialogApi->SendDlgMsg(pDlg, "cbURL", DM_LISTGETCOUNT, 0, 0);
+			count = (int)SendDlgMsg(pDlg, "cbURL", DM_LISTGETCOUNT, 0, 0);
 
 			if (count > 0)
-				gDialogApi->SendDlgMsg(pDlg, "cbURL", DM_LISTSETITEMINDEX, 0, 0);
+				SendDlgMsg(pDlg, "cbURL", DM_LISTSETITEMINDEX, 0, 0);
 			else
 			{
-				gDialogApi->SendDlgMsg(pDlg, "btnBrowser", DM_ENABLE, 0, 0);
-				gDialogApi->SendDlgMsg(pDlg, "btnRemove", DM_ENABLE, 0, 0);
+				SendDlgMsg(pDlg, "btnBrowser", DM_ENABLE, 0, 0);
+				SendDlgMsg(pDlg, "btnRemove", DM_ENABLE, 0, 0);
 			}
 		}
 
@@ -853,19 +857,19 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 	case DN_CHANGE:
 		if (strcmp(DlgItemName, "cbURL") == 0)
 		{
-			line = (char*)gDialogApi->SendDlgMsg(pDlg, "cbURL", DM_GETTEXT, 0, 0);
+			line = (char*)SendDlgMsg(pDlg, "cbURL", DM_GETTEXT, 0, 0);
 
 			if (strncmp(line, "http", 4) != 0)
-				gDialogApi->SendDlgMsg(pDlg, "btnBrowser", DM_ENABLE, 0, 0);
+				SendDlgMsg(pDlg, "btnBrowser", DM_ENABLE, 0, 0);
 			else
-				gDialogApi->SendDlgMsg(pDlg, "btnBrowser", DM_ENABLE, 1, 0);
+				SendDlgMsg(pDlg, "btnBrowser", DM_ENABLE, 1, 0);
 
-			if (gDialogApi->SendDlgMsg(pDlg, "cbURL", DM_LISTGETITEMINDEX, 0, 0) == -1)
-				gDialogApi->SendDlgMsg(pDlg, "btnRemove", DM_ENABLE, 0, 0);
+			if (SendDlgMsg(pDlg, "cbURL", DM_LISTGETITEMINDEX, 0, 0) == -1)
+				SendDlgMsg(pDlg, "btnRemove", DM_ENABLE, 0, 0);
 			else
-				gDialogApi->SendDlgMsg(pDlg, "btnRemove", DM_ENABLE, 1, 0);
+				SendDlgMsg(pDlg, "btnRemove", DM_ENABLE, 1, 0);
 
-			gDialogApi->SendDlgMsg(pDlg, "ckAuth", DM_SETCHECK, 0, 0);
+			SendDlgMsg(pDlg, "ckAuth", DM_SETCHECK, 0, 0);
 			gSettings.user[0] = '\0';
 			gSettings.passwd[0] = '\0';
 		}
@@ -878,12 +882,12 @@ intptr_t DCPCALL DlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr
 
 static void ShowCfgURLDlg(void)
 {
-	if (gDialogApi)
+	if (gExtensions)
 	{
 		if (g_file_test(gLFMPath, G_FILE_TEST_EXISTS))
-			gDialogApi->DialogBoxLFMFile(gLFMPath, DlgProc);
+			gExtensions->DialogBoxLFMFile(gLFMPath, DlgProc);
 		else
-			gDialogApi->InputBox("Double Commander", "URL:", FALSE, gSettings.url, PATH_MAX);
+			InputBox(ROOTNAME, "URL:", FALSE, gSettings.url, PATH_MAX);
 	}
 
 	else if (gRequestProc)
@@ -1209,7 +1213,7 @@ BOOL DCPCALL FsDisconnect(char* DisconnectRoot)
 
 void DCPCALL FsGetDefRootName(char* DefRootName, int maxlen)
 {
-	g_strlcpy(DefRootName, "Hypertext REFerence", maxlen - 1);
+	g_strlcpy(DefRootName, ROOTNAME, maxlen - 1);
 }
 
 void DCPCALL FsSetDefaultParams(FsDefaultParamStruct* dps)
@@ -1298,6 +1302,20 @@ int DCPCALL FsContentGetValue(char* FileName, int FieldIndex, int UnitIndex, voi
 	return result;
 }
 
+int DCPCALL FsExtractCustomIcon(char* RemoteName, int ExtractFlags, PWfxIcon TheIcon)
+{
+	xmlChar *url = name_to_url(RemoteName + 1, gDoc);
+
+	if (url && is_reparse_point((char*)url))
+	{
+		g_strlcpy(RemoteName, "folder", MAX_PATH);
+		TheIcon->Format = FS_ICON_FORMAT_FILE;
+		return FS_ICON_EXTRACTED;
+	}
+
+	return FS_ICON_USEDEFAULT;
+}
+
 BOOL DCPCALL FsContentGetDefaultView(char* ViewContents, char* ViewHeaders, char* ViewWidths, char* ViewOptions, int maxlen)
 {
 	return FALSE;
@@ -1305,11 +1323,11 @@ BOOL DCPCALL FsContentGetDefaultView(char* ViewContents, char* ViewHeaders, char
 
 void DCPCALL ExtensionInitialize(tExtensionStartupInfo* StartupInfo)
 {
-	if (gDialogApi == NULL)
+	if (gExtensions == NULL)
 	{
 		gSettings.init = TRUE;
-		gDialogApi = malloc(sizeof(tExtensionStartupInfo));
-		memcpy(gDialogApi, StartupInfo, sizeof(tExtensionStartupInfo));
+		gExtensions = malloc(sizeof(tExtensionStartupInfo));
+		memcpy(gExtensions, StartupInfo, sizeof(tExtensionStartupInfo));
 	}
 }
 
@@ -1326,8 +1344,8 @@ void DCPCALL ExtensionFinalize(void* Reserved)
 		curl_global_cleanup();
 	}
 
-	if (gDialogApi != NULL)
-		free(gDialogApi);
+	if (gExtensions != NULL)
+		free(gExtensions);
 
-	gDialogApi = NULL;
+	gExtensions = NULL;
 }
