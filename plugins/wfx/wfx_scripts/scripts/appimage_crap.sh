@@ -32,7 +32,7 @@ vfs_init()
 {
     which jq >/dev/null 2>&1 || init_fail "\"jq\" WFX_SCRIPT_STR_ERR_NA"
     which curl >/dev/null 2>&1 || init_fail "\"curl\" WFX_SCRIPT_STR_ERR_NA"
-    which wget >/dev/null 2>&1 || init_fail "\"wget\" WFX_SCRIPT_STR_ERR_NA"
+    #which wget >/dev/null 2>&1 || init_fail "\"wget\" WFX_SCRIPT_STR_ERR_NA"
     echo "Fs_GetValues_Needed"
     get_json
     exit $?
@@ -49,14 +49,23 @@ vfs_list()
             '.items[] | select(.links[1].url != null) | "dr-xr-xr-x " + $jsondate + " - \(.name)"'
             #         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
     else
-        name="${1:1}"
+        tag=`basename "${1:1}"`
+        name=`dirname "${1:1}"`
+        [ "$name" == "." ] && name="$tag" && tag=""
         repo=`cat "$DC_WFX_SCRIPT_JSON" | jq -r --argjson name "\"$name\"" \
             '.items[] | select(.name == $name) | .links[] | select(.type == "GitHub") | .url'`
         [ -z "$repo" ] && exit 1
-        test -f "$DC_WFX_SCRIPT_TMP/$name.json" || curl -L "https://api.github.com/repos/$repo/releases/latest" > "$DC_WFX_SCRIPT_TMP/$name.json"
+        test -f "$DC_WFX_SCRIPT_TMP/$name.json" || curl -L \
+            "https://api.github.com/repos/$repo/releases" > "$DC_WFX_SCRIPT_TMP/$name.json"
         if [[ -s "$DC_WFX_SCRIPT_TMP/$name.json" ]] ; then
-            cat "$DC_WFX_SCRIPT_TMP/$name.json" | jq -r '.assets[] | select(.name | test("appimage$"; "i")) | "0755 \(.updated_at) \(.size) \(.name)"'
-        else                                                                       #contains("AppImage")
+            if [ -z "$tag" ] ; then
+                cat "$DC_WFX_SCRIPT_TMP/$name.json" | jq -r \
+                    '.[] | "dr-xr-xr-x \(.published_at) - \(.tag_name)"'
+            else
+                cat "$DC_WFX_SCRIPT_TMP/$name.json" | jq -r --argjson tag "\"$tag\""\
+                    '.[] | select(.tag_name == $tag) | .assets[] | select(.name | test("appimage$"; "i")) | "0755 \(.updated_at) \(.size) \(.name)"'
+            fi
+        else
             rm "$DC_WFX_SCRIPT_TMP/$name.json"
         fi
     fi
@@ -65,28 +74,41 @@ vfs_list()
 
 vfs_copyout()
 {
-    app="`dirname \"${1:1}\"`"
-    asset="\"${1#/*/}\""
-    url=`cat "$DC_WFX_SCRIPT_TMP/$app.json" | jq -r --argjson asset "$asset" \
-        '.assets[] | select(.name == $asset) | .browser_download_url'`
+    tag=$(basename $(dirname "${1:1}"))
+    app=$(dirname $(dirname "${1:1}"))
+    asset="\"`basename \"$1\"`\""
+    url=`cat "$DC_WFX_SCRIPT_TMP/$app.json" | jq -r --argjson asset "$asset" --argjson tag "\"$tag\""\
+        '.[] | select(.tag_name == $tag) | .assets[] | select(.name == $asset) | .browser_download_url'`
     dst="$2"
-
+    echo "$asset"
     trap 'pkill --signal SIGTERM --parent $$' EXIT
-    wget "$url" -O "$dst" 2>&1 && chmod 755 "$dst"
-    #curl -L "$url" --output "$dst" 2>&1 && chmod 755 "$dst"
-                                      #  ^^^^^^^^^^^^^^^^^^^ so safe, much secure
+    #wget "$url" -O "$dst" 2>&1 && chmod 755 "$dst"
+    curl -L "$url" --output "$dst" 2>&1 && chmod 755 "$dst"
+                                     #  ^^^^^^^^^^^^^^^^^^^ so safe, much secure
     exit $?
 }
 
 vfs_properties()
 {
-    app="`dirname \"${1:1}\"`"
+    tag=$(basename $(dirname "${1:1}"))
+    app=$(dirname $(dirname "${1:1}"))
+
+    echo "$tag"
+    echo "$app"
 
     if [ "$app" != "." ] ; then
         asset="\"`basename \"$1\"`\""
-        cat "$DC_WFX_SCRIPT_TMP/$app.json" | jq -r --argjson asset "$asset"  \
-            ' .assets[] | select(.name == $asset) | "WFX_SCRIPT_STR_AUTHOR|\(.uploader.login)", "WFX_SCRIPT_STR_CTIME|\(.created_at)", "WFX_SCRIPT_STR_PTIME|\(.updated_at)", "WFX_SCRIPT_STR_DLOAD|\(.download_count)", "WFX_SCRIPT_STR_SIZE|\(.size)", "url|\(.browser_download_url)"'|\
+        cat "$DC_WFX_SCRIPT_TMP/$app.json" | jq -r --argjson asset "$asset" --argjson tag "\"$tag\""\
+            '.[] | select(.tag_name == $tag) | .assets[] | select(.name == $asset) | "WFX_SCRIPT_STR_AUTHOR|\(.uploader.login)", "WFX_SCRIPT_STR_CTIME|\(.created_at)", "WFX_SCRIPT_STR_PTIME|\(.updated_at)", "WFX_SCRIPT_STR_DLOAD|\(.download_count)", "WFX_SCRIPT_STR_SIZE|\(.size)", "url|\(.browser_download_url)"'|\
             tr '|' '\t'
+    elif [ "$tag" != "." ] ; then
+        app="$tag"
+        tag="\"`basename \"$1\"`\""
+        cat "$DC_WFX_SCRIPT_TMP/$app.json" | jq -r --argjson tag "$tag"  \
+            '.[] | select(.tag_name == $tag) | "WFX_SCRIPT_STR_NAME|\(.name)", "WFX_SCRIPT_STR_AUTHOR|\(.author.login)", "WFX_SCRIPT_STR_CTIME|\(.created_at)", "WFX_SCRIPT_STR_PTIME|\(.published_at)", "url|\(.html_url)"'|\
+            tr '|' '\t'
+        pre=`cat "$DC_WFX_SCRIPT_JSON" | jq --argjson tag "$tag" '.[] | select(.tag_name == $tag) | .prerelease'`
+        [ "$pre" == "true" ] && echo -e "filetype\tWFX_SCRIPT_STR_PRERELEASE" || echo -e "filetype\tWFX_SCRIPT_STR_RELEASE"
     else
         name=`basename "$1"`
         app="\"$name\""
@@ -109,8 +131,6 @@ vfs_properties()
         test -f "$src" || curl "https://appimage.github.io/database/"$icon --output "$src"
         test -f "$dst" || convert -resize 400x "$src" "$dst"
         test -f "$dst" && echo -e "png: \t$dst"
-
-        #echo "$json" > "$DC_WFX_SCRIPT_TMP/"$name"_slice.json"
     fi
 
     exit $?
@@ -118,13 +138,18 @@ vfs_properties()
 
 vfs_getinfovalues()
 {
-    if [ "$1" != "/" ] ; then
-        app="`basename \"$1\"`"
-        ver="\"`cat "$DC_WFX_SCRIPT_TMP/$app.json" | jq -r '.tag_name'`\""
-        cat "$DC_WFX_SCRIPT_TMP/$app.json" | jq -r --argjson ver "$ver" \
-            '.assets[] | "\(.name)|" + $ver + "    ⬇ \(.download_count)"' | tr '|' '\t'
-    else
+    tag=`basename "${1:1}"`
+    name=`dirname "${1:1}"`
+    [ "$name" == "." ] && name="$tag" && tag=""
+
+    if [ "$1" == "/" ] ; then
         cat "$DC_WFX_SCRIPT_JSON" | jq -r '.items[] | "\(.name)|\(.categories[0])"' | tr '|' '\t'
+    elif [ -z "$tag" ] ; then
+        cat "$DC_WFX_SCRIPT_TMP/$name.json" | jq -r \
+            '.[] | "\(.tag_name)|" + if .prerelease == true then "!" else "*" end + "   \(.name)"' | tr '|' '\t'
+    else
+        cat "$DC_WFX_SCRIPT_TMP/$name.json" | jq -r --argjson tag "\"$tag\""\
+            '.[] | select(.tag_name == $tag) | .assets[] | "\(.name)|⬇ \(.download_count)"' | tr '|' '\t'
     fi
 
     exit $?
