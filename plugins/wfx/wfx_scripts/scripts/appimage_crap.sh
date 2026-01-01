@@ -80,11 +80,10 @@ vfs_copyout()
     url=`cat "$DC_WFX_SCRIPT_TMP/$app.json" | jq -r --argjson asset "$asset" --argjson tag "\"$tag\""\
         '.[] | select(.tag_name == $tag) | .assets[] | select(.name == $asset) | .browser_download_url'`
     dst="$2"
-    echo "$asset"
+
     trap 'pkill --signal SIGTERM --parent $$' EXIT
     #wget "$url" -O "$dst" 2>&1 && chmod 755 "$dst"
     curl -L "$url" --output "$dst" 2>&1 && chmod 755 "$dst"
-                                     #  ^^^^^^^^^^^^^^^^^^^ so safe, much secure
     exit $?
 }
 
@@ -92,9 +91,6 @@ vfs_properties()
 {
     tag=$(basename $(dirname "${1:1}"))
     app=$(dirname $(dirname "${1:1}"))
-
-    echo "$tag"
-    echo "$app"
 
     if [ "$app" != "." ] ; then
         asset="\"`basename \"$1\"`\""
