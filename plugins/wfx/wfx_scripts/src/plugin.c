@@ -43,6 +43,7 @@
 #define REGEXP_LIST "([0-9cbdflrstwxST\\-]+)\\s+(\\d{4}\\-?\\d{2}\\-?\\d{2}[\\stT]\\d{2}:?\\d{2}:?\\d?\\d?\\.?[0-9]*Z?)\\s+([0-9\\-]+)\\s+([^\\n]+)"
 #define REGEXP_ENVVAAR "^(" OPT_ENVVAR "[A-Z0-9_]+)\\s"
 #define REGEXP_STRING "E?N?V?_?WFX_SCRIPT_STR_[A-Z0-9_]+"
+#define REGEXP_PRCNT "([\\d]{1,3})\\s?%||^[\\s]{0,2}([\\d]{1,3})\\s||^([\\d]{1,3})$"
 
 #define STRIP_OPT(S, O) S + strlen(O) + 1
 
@@ -391,8 +392,14 @@ static gboolean ExecuteScript(gchar * script_name, gchar * verb, char *arg1, cha
 			g_free(pids);
 		}
 
+		GRegex *regex = NULL;
+		GMatchInfo *match_info = NULL;
+
 		if (data)
+		{
 			*data->pid = (int)pid;
+			regex = g_regex_new(REGEXP_PRCNT, 0, 0, NULL);
+		}
 
 		GIOChannel *stdout_chan = g_io_channel_unix_new(stdout_fp);
 		GString *lines = g_string_new(NULL);
@@ -409,14 +416,33 @@ static gboolean ExecuteScript(gchar * script_name, gchar * verb, char *arg1, cha
 
 				if (data)
 				{
-					gint64 ret = g_ascii_strtoll(line, NULL, 0);
+					if (g_regex_match(regex, line, G_REGEX_MATCH_NOTEMPTY, &match_info))
+					{
+						while (g_match_info_matches(match_info))
+						{
+							gchar *prcnt = g_match_info_fetch(match_info, 0);
+							gint64 ret = g_ascii_strtoll(prcnt, NULL, 0);
+							g_free(prcnt);
 
-					if (ret >= 0 || ret <= 100)
-						*data->progress = (int)ret;
+							if (ret > 0 && ret <= 100)
+								*data->progress = (int)ret;
+
+							g_match_info_next(match_info, NULL);
+						}
+					}
 				}
 
 				g_free(line);
 			}
+		}
+
+		if (data)
+		{
+			if (match_info)
+				g_match_info_free(match_info);
+
+			if (regex)
+				g_regex_unref(regex);
 		}
 
 		if (err)

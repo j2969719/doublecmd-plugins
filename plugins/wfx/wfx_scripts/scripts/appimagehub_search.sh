@@ -1,6 +1,6 @@
 #!/bin/sh
 
-pling_url="https://www.appimagehub.com" # branch of yellowyoutube.com
+pling_url="https://api.appimagehub.com" # branch of yellowyoutube.com
 tags=appimage
 
 init_fail()
@@ -32,7 +32,7 @@ get_xml()
     echo "Fs_Set_DC_WFX_SCRIPT_XML $tmpfile"
     echo "Fs_Set_DC_WFX_SCRIPT_PAGE 0"
     echo "Fs_Set_DC_WFX_SCRIPT_STR $string"
-    curl --get --data-urlencode "search=$string" --data-urlencode "sortmode=new" --data-urlencode "tags=$tags" --data-urlencode "pagesize=$pagesize" \
+    curl --get --data-urlencode "search=$string" --data-urlencode "sortmode=new"  --data-urlencode "pagesize=$pagesize" \
         "$pling_url/ocs/v1/content/data" > "$tmpfile" || init_fail WFX_SCRIPT_STR_ERR_CURL
     err=`xmllint --xpath '//status/text()' "$tmpfile"`
     [ ! -z "$err" ] && [ "$err" != "ok"] init_fail `xmllint --xpath '//message/text()' "$tmpfile"`
@@ -85,7 +85,7 @@ vfs_init()
 {
     which xmllint >/dev/null 2>&1 || init_fail "\"xmllint\" WFX_SCRIPT_STR_ERR_NA"
     which curl >/dev/null 2>&1 || init_fail "\"curl\" WFX_SCRIPT_STR_ERR_NA"
-    which wget >/dev/null 2>&1 || init_fail "\"wget\" WFX_SCRIPT_STR_ERR_NA"
+    #which wget >/dev/null 2>&1 || init_fail "\"wget\" WFX_SCRIPT_STR_ERR_NA"
     echo "Fs_GetValue_Needed"
     echo "Fs_DisableFakeDates"
     echo "Fs_Request_Options"
@@ -134,7 +134,7 @@ vfs_list()
         xpath=`build_xpath "$name" "created"`
         echo $mtime
         mtime=`xmllint --xpath "$xpath" "$DC_WFX_SCRIPT_XML" 2>/dev/null | tail -n 1 | sed -r 's/^([0-9\-]+T[0-9:]+).+/\1/'`
-        echo -e "0444\t$mtime\t"$size"000\t$name"
+        echo -e "0755\t$mtime\t"$size"000\t$name"
     done
 
     exit $?
@@ -147,7 +147,9 @@ vfs_copyout()
     xpath=`build_xpath_iter "$src" "downloadlink"`
     url=`xmllint --xpath "$xpath" "$DC_WFX_SCRIPT_XML"`
 
-    wget "$url" -O "$dst" 2>/dev/null
+    trap 'pkill --signal SIGTERM --parent $$' EXIT
+    # wget "$url" -O "$dst" 2>&1 && chmod 755 "$dst"
+    curl -L "$url" --output "$dst" 2>&1 && chmod 755 "$dst"
 
     exit $?
 }

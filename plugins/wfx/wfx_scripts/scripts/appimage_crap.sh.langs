@@ -1,0 +1,27 @@
+[Default]
+WFX_SCRIPT_NAME=Search on appimage.github.io
+WFX_SCRIPT_STR_ERR_NA=not installed!
+WFX_SCRIPT_STR_ERR_CURL=Failed to receive data from the server.
+WFX_SCRIPT_STR_ERR_NOTFOUND=not found!
+WFX_SCRIPT_STR_INFO=Description
+WFX_SCRIPT_STR_LIC=License
+WFX_SCRIPT_STR_NAME=Name
+WFX_SCRIPT_STR_AUTHOR=Author
+WFX_SCRIPT_STR_CTIME=Created
+WFX_SCRIPT_STR_PTIME=Published
+WFX_SCRIPT_STR_DLOAD=Downloads
+WFX_SCRIPT_STR_SIZE=Size
+
+[ru_RU]
+WFX_SCRIPT_NAME=Поиск на appimage.github.io
+WFX_SCRIPT_STR_ERR_NA=не установлен!
+WFX_SCRIPT_STR_ERR_CURL=Не удалось получить данные с сервера.
+WFX_SCRIPT_STR_ERR_NOTFOUND=не найден!
+WFX_SCRIPT_STR_INFO=Описание
+WFX_SCRIPT_STR_LIC=Лицензия
+WFX_SCRIPT_STR_NAME=Название
+WFX_SCRIPT_STR_AUTHOR=Автор
+WFX_SCRIPT_STR_CTIME=Создан
+WFX_SCRIPT_STR_PTIME=Опубликован
+WFX_SCRIPT_STR_DLOAD=Скачан
+WFX_SCRIPT_STR_SIZE=Размер
