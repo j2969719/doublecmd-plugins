@@ -78,7 +78,8 @@ void DCPCALL StartSearch(int PluginNr, tDsxSearchRecord* pSearchRec)
 {
 	gchar *argv[7];
 	gchar *line = NULL, *dppath = NULL;
-	gchar locate_opts[7] = "-q";
+//	gchar locate_opts[7] = "-q"; // plocate doesnt support this switch
+	gchar locate_opts[7] = "";
 	gsize len, term, i;
 	GPid pid;
 	gint fp;
@@ -89,6 +90,9 @@ void DCPCALL StartSearch(int PluginNr, tDsxSearchRecord* pSearchRec)
 
 	i = strlen(locate_opts);
 
+	if (i == 0)
+		locate_opts[i++] = '-';
+
 	if (g_key_file_get_boolean(gCfg, PLUGNAME, "Basename", NULL) == TRUE)
 		locate_opts[i++] = 'b';
 
@@ -98,8 +102,9 @@ void DCPCALL StartSearch(int PluginNr, tDsxSearchRecord* pSearchRec)
 	if (g_key_file_get_boolean(gCfg, PLUGNAME, "Existing", NULL) == TRUE)
 		locate_opts[i++] = 'e';
 
-	if (g_key_file_get_boolean(gCfg, PLUGNAME, "NoFolow", NULL) == TRUE)
-		locate_opts[i++] = 'P';
+// plocate doesnt support this switch
+//	if (g_key_file_get_boolean(gCfg, PLUGNAME, "NoFolow", NULL) == TRUE)
+//		locate_opts[i++] = 'P';
 
 	startpath = g_key_file_get_boolean(gCfg, PLUGNAME, "StartPath", NULL);
 	dppath = g_key_file_get_string(gCfg, PLUGNAME, "DBPath", NULL);
