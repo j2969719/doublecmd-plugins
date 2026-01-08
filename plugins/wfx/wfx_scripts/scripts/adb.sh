@@ -53,6 +53,7 @@ vfs_setopt()
         WFX_SCRIPT_STR_BUG) echo "Fs_RunTerm cd \"$value\" && adb $device bugreport" ;;
         WFX_SCRIPT_STR_TCPPORT) echo "Fs_LogInfo" && adb tcpip "$value" ;;
         WFX_SCRIPT_STR_LOGOPT) echo -e "Fs_Set_DC_WFX_SCRIPT_LOGOPT $value" ;;
+        WFX_SCRIPT_STR_CONNECT) echo "Fs_LogInfo" && adb connect "$value" ;;
 
 
         WFX_SCRIPT_STR_ACT_APK) filedlg_show "WFX_SCRIPT_STR_APK" "Android package|*.apk" "apk" ;;
@@ -87,6 +88,7 @@ vfs_list()
         echo "---x--x--x 0000-00-00 00:00:00 - >$ENV_WFX_SCRIPT_STR_UNROOT<.sh"
         echo "---x--x--x 0000-00-00 00:00:00 - >$ENV_WFX_SCRIPT_STR_OFFLINE<.sh"
         echo "---x--x--x 0000-00-00 00:00:00 - >$ENV_WFX_SCRIPT_STR_LOG<.sh"
+        echo "---x--x--x 0000-00-00 00:00:00 - >$ENV_WFX_SCRIPT_STR_CONNECT<.sh"
 
         if [ -z "$DC_WFX_SCRIPT_STDERR" ]; then
             echo "---x--x--x 0000-00-00 00:00:00 - >$ENV_WFX_SCRIPT_STR_STDERROFF<.sh"
@@ -246,6 +248,8 @@ vfs_openfile()
             ">$ENV_WFX_SCRIPT_STR_TCP<.sh") echo -e "Fs_PushValue WFX_SCRIPT_STR_TCPPORT\t5555" &&\
                                             echo -e "Fs_Request_Options\nWFX_SCRIPT_STR_TCPPORT" ;;
             ">$ENV_WFX_SCRIPT_STR_LOG<.sh") echo -e "Fs_Request_Options\nWFX_SCRIPT_STR_LOGOPT" ;;
+            ">$ENV_WFX_SCRIPT_STR_CONNECT<.sh") ip=`adb shell "ip addr show wlan0 | grep -e wlan0$ | cut -d\" \" -f 6 | cut -d/ -f 1"`
+                                                echo -e "Fs_PushValue WFX_SCRIPT_STR_CONNECT\t$ip:5555\nFs_Request_Options\nWFX_SCRIPT_STR_CONNECT" ;;
 
             ">$ENV_WFX_SCRIPT_STR_ROOT<.sh") adb root ;;
             ">$ENV_WFX_SCRIPT_STR_UNROOT<.sh") adb unroot ;;
