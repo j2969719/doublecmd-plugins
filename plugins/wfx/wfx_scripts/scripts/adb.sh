@@ -48,6 +48,10 @@ vfs_setopt()
         WFX_SCRIPT_STR_ACT_REBOOT) echo "Fs_LogInfo" && adb $device reboot ;;
         WFX_SCRIPT_STR_ACT_REBOOTREC) echo "Fs_LogInfo" && adb $device reboot recovery ;;
         WFX_SCRIPT_STR_ACT_REBOOTBL) echo "Fs_LogInfo" && adb $device reboot bootloader ;;
+        WFX_SCRIPT_STR_ACT_GETIP) ip=`adb $device shell "ip addr show wlan0 | grep -e wlan0$ | cut -d\" \" -f 6 | cut -d/ -f 1"`
+                                  echo "Fs_RunAsync sh -c \"echo $ip | xclip -selection clipboard\""
+                                  echo "Fs_LogInfo"
+                                  echo "$devname IP: $ip";;
 
         WFX_SCRIPT_STR_SCRPNG) adb $device exec-out "screencap -p" > "$value" ;;
         WFX_SCRIPT_STR_BUG) echo "Fs_RunTerm cd \"$value\" && adb $device bugreport" ;;
@@ -248,8 +252,7 @@ vfs_openfile()
             ">$ENV_WFX_SCRIPT_STR_TCP<.sh") echo -e "Fs_PushValue WFX_SCRIPT_STR_TCPPORT\t5555" &&\
                                             echo -e "Fs_Request_Options\nWFX_SCRIPT_STR_TCPPORT" ;;
             ">$ENV_WFX_SCRIPT_STR_LOG<.sh") echo -e "Fs_Request_Options\nWFX_SCRIPT_STR_LOGOPT" ;;
-            ">$ENV_WFX_SCRIPT_STR_CONNECT<.sh") ip=`adb shell "ip addr show wlan0 | grep -e wlan0$ | cut -d\" \" -f 6 | cut -d/ -f 1"`
-                                                echo -e "Fs_PushValue WFX_SCRIPT_STR_CONNECT\t$ip:5555\nFs_Request_Options\nWFX_SCRIPT_STR_CONNECT" ;;
+            ">$ENV_WFX_SCRIPT_STR_CONNECT<.sh") echo -e "Fs_Request_Options\nWFX_SCRIPT_STR_CONNECT" ;;
 
             ">$ENV_WFX_SCRIPT_STR_ROOT<.sh") adb root ;;
             ">$ENV_WFX_SCRIPT_STR_UNROOT<.sh") adb unroot ;;
@@ -302,8 +305,8 @@ vfs_properties()
             prop=`adb -s "${1:1}" get-devpath 2>/dev/null`
             [ -z "$prop" ] || echo -e "WFX_SCRIPT_STR_DEVPATH\t$prop"
 
-            # actions=(SHELL SCRPNG SCRCPY LOGCAT APK ATTACH DETACH BUG REBOOT REBOOTREC REBOOTBL REBOOTSL REBOOTSLA BACKUP RESTORE)
-            actions=(SHELL SCRPNG SCRCPY LOGCAT BUG REBOOT REBOOTREC)
+            # actions=(SHELL GETIP SCRPNG SCRCPY LOGCAT APK ATTACH DETACH BUG REBOOT REBOOTREC REBOOTBL REBOOTSL REBOOTSLA BACKUP RESTORE)
+            actions=(SHELL GETIP SCRPNG SCRCPY LOGCAT BUG REBOOT REBOOTREC)
             string=`printf '\tWFX_SCRIPT_STR_ACT_%s' "${actions[@]}"`
             echo -e "Fs_PropsActs$string"
         else
