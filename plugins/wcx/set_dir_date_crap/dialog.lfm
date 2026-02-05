@@ -1,0 +1,135 @@
+object DialogBox: TDialogBox
+  Left = 540
+  Height = 222
+  Top = 132
+  Width = 539
+  AutoSize = True
+  BorderStyle = bsDialog
+  Caption = 'Options'
+  ChildSizing.LeftRightSpacing = 10
+  ChildSizing.TopBottomSpacing = 10
+  ClientHeight = 222
+  ClientWidth = 539
+  Position = poOwnerFormCenter
+  LCLVersion = '4.5.0.0'
+  OnClose = DialogBoxClose
+  OnShow = DialogBoxShow
+  object gbOpts: TGroupBox
+    Left = 16
+    Height = 143
+    Top = 8
+    Width = 531
+    AutoSize = True
+    Caption = 'Options'
+    ChildSizing.LeftRightSpacing = 10
+    ChildSizing.TopBottomSpacing = 10
+    ChildSizing.HorizontalSpacing = 10
+    ChildSizing.VerticalSpacing = 10
+    ChildSizing.EnlargeHorizontal = crsHomogenousChildResize
+    ChildSizing.EnlargeVertical = crsHomogenousChildResize
+    ChildSizing.Layout = cclLeftToRightThenTopToBottom
+    ChildSizing.ControlsPerLine = 2
+    ClientHeight = 124
+    ClientWidth = 531
+    TabOrder = 0
+    object lblTime: TLabel
+      Left = 10
+      Height = 28
+      Top = 10
+      Width = 351
+      Caption = 'Set date to directories'
+      Layout = tlCenter
+    end
+    object cbTime: TComboBox
+      Left = 371
+      Height = 28
+      Top = 10
+      Width = 150
+      Constraints.MinWidth = 150
+      ItemHeight = 23
+      ItemIndex = 0
+      Items.Strings = (
+        'Newest'
+        'Oldest'
+      )
+      Style = csDropDownList
+      TabOrder = 0
+      Text = 'Newest'
+      OnChange = ComboBoxChange
+    end
+    object lblFiletype: TLabel
+      Left = 10
+      Height = 28
+      Top = 48
+      Width = 351
+      Caption = 'Get new date using'
+      Layout = tlCenter
+    end
+    object cbType: TComboBox
+      Left = 371
+      Height = 28
+      Top = 48
+      Width = 150
+      Constraints.MinWidth = 150
+      ItemHeight = 23
+      ItemIndex = 0
+      Items.Strings = (
+        'Only for regular files'
+        'Directory pointed to by the symlink as well'
+        'Any file pointed to by the symlink as well'
+        'Only regular files and the symlinks themselves'
+        'Any filetype'
+      )
+      Style = csDropDownList
+      TabOrder = 1
+      Text = 'Only for regular files'
+      OnChange = ComboBoxChange
+    end
+    object lblDirs: TLabel
+      Left = 10
+      Height = 28
+      Top = 86
+      Width = 351
+      Caption = 'Behavior for dates of the encountered directories themselves'
+      Layout = tlCenter
+    end
+    object cbDirs: TComboBox
+      Left = 371
+      Height = 28
+      Top = 86
+      Width = 150
+      Constraints.MinWidth = 150
+      ItemHeight = 23
+      ItemIndex = 0
+      Items.Strings = (
+        'Ignore'
+        'Take into account only empty ones'
+        'Take everything into account'
+      )
+      Style = csDropDownList
+      TabOrder = 2
+      Text = 'Ignore'
+      OnChange = ComboBoxChange
+    end
+  end
+  object btnClose: TBitBtn
+    AnchorSideTop.Control = gbOpts
+    AnchorSideTop.Side = asrBottom
+    AnchorSideRight.Side = asrBottom
+    Left = 432
+    Height = 31
+    Top = 171
+    Width = 97
+    Anchors = [akTop, akRight]
+    AutoSize = True
+    BorderSpacing.Top = 20
+    BorderSpacing.InnerBorder = 2
+    BorderSpacing.CellAlignHorizontal = ccaCenter
+    Cancel = True
+    DefaultCaption = True
+    Kind = bkClose
+    ModalResult = 11
+    TabOrder = 1
+    OnClick = ButtonClick
+  end
+end
