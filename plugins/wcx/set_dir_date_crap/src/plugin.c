@@ -217,7 +217,12 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 				strcpy(root, path);
 				len = strlen(root);
 				if (access(root, R_OK | W_OK | X_OK) != 0)
-					return E_NOT_SUPPORTED;
+				{
+					snprintf(path, PATH_MAX, "u cant touch this %s", AddList);
+
+					if (MessageBox(path, PLUGNAME, MB_OKCANCEL | MB_ICONERROR) == ID_CANCEL)
+						return E_EABORTED;
+				}
 				else
 					SetTime(root, NULL);
 			}
