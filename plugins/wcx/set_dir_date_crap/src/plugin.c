@@ -216,7 +216,10 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 			{
 				strcpy(root, path);
 				len = strlen(root);
-				SetTime(root, NULL);
+				if (access(root, R_OK | W_OK | X_OK) != 0)
+					return E_NOT_SUPPORTED;
+				else
+					SetTime(root, NULL);
 			}
 		}
 
