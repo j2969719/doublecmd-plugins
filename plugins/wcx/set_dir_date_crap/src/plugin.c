@@ -18,6 +18,7 @@ typedef void *HINSTANCE;
 
 #define SendDlgMsg gExtensions->SendDlgMsg
 #define MessageBox gExtensions->MessageBox
+#define BUMP_TIME(A, B) ((gOptTime == OPT_TIME_OLDEST && A < B) || (gOptTime == OPT_TIME_NEWWEST && A > B))
 
 enum
 {
@@ -47,6 +48,7 @@ enum
 int gOptTime = 0; 
 int gOptType = 0; 
 int gOptDirs = 0;
+BOOL gOptOnlyRoot = FALSE;
 tProcessDataProc gProcessDataProc = NULL;
 tExtensionStartupInfo* gExtensions = NULL;
 static char gLFMPath[EXT_MAX_PATH + 12] = "";
@@ -61,6 +63,7 @@ intptr_t DCPCALL OptionsDlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg,
 		SendDlgMsg(pDlg, "cbDirs", DM_LISTSETITEMINDEX, (intptr_t)gOptDirs, 0);
 		SendDlgMsg(pDlg, "lblDirs", DM_ENABLE, (gOptType == OPT_TYPE_ALL), 0);
 		SendDlgMsg(pDlg, "cbDirs", DM_ENABLE, (gOptType == OPT_TYPE_ALL), 0);
+		SendDlgMsg(pDlg, "chOnlyRoot", DM_SETCHECK, (intptr_t)gOptOnlyRoot, 0);
 		break;
 	case DN_CHANGE:
 		if (strcmp(DlgItemName, "cbTime") == 0)
@@ -73,6 +76,8 @@ intptr_t DCPCALL OptionsDlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg,
 		}
 		else if (strcmp(DlgItemName, "cbDirs") == 0)
 			gOptDirs = (int)SendDlgMsg(pDlg, "cbDirs", DM_LISTGETITEMINDEX, 0, 0);
+		else if (strcmp(DlgItemName, "chOnlyRoot") == 0)
+			gOptOnlyRoot = (wParam != FALSE);
 		break;
 	}
 	return 0;
@@ -82,33 +87,26 @@ static BOOL SetTime(const char *path, time_t *unixtime);
 static BOOL UpdValue(char *file, unsigned char d_type, time_t *value)
 {
 	struct stat buf;
-	BOOL result = FALSE;
 
 	if (gOptType < OPT_TYPE_ALL && d_type != DT_REG && d_type != DT_LNK)
-		return result;
+		return FALSE;
 
 	if (gOptType == OPT_TYPE_REG && d_type != DT_REG)
-		return result;
+		return FALSE;
 
 	if (stat(file, &buf) == 0)
 	{
-		if (d_type == DT_LNK && S_ISDIR(buf.st_mode))
-		{
-			if (SetTime(file, value))
-				result = TRUE;
-		}
+		if (d_type == DT_LNK && gOptType == OPT_TYPE_LNKSELF && lstat(file, &buf) != 0)
+			return FALSE;
+		else if (d_type == DT_LNK && S_ISDIR(buf.st_mode))
+			return SetTime(file, value);
 		else if (d_type == DT_LNK && gOptType < OPT_TYPE_ALLLNK)
-			return result;
-		else if (d_type == DT_LNK && gOptType == OPT_TYPE_LNKSELF && lstat(file, &buf) != 0)
-			return result;
-		else if ((gOptTime == OPT_TIME_OLDEST && buf.st_mtime < *value) || (gOptTime == OPT_TIME_NEWWEST && buf.st_mtime > *value))
-		{
+			return FALSE;
+		else if (BUMP_TIME(buf.st_mtime, *value))
 			*value = buf.st_mtime;
-			result = TRUE;
-		}
 	}
 
-	return result;
+	return TRUE;
 }
 
 static BOOL SetTime(const char *path, time_t *unixtime)
@@ -118,14 +116,13 @@ static BOOL SetTime(const char *path, time_t *unixtime)
 	char file[PATH_MAX];
 	time_t value = -1;
 	BOOL result = FALSE;
+	char frmt_path[] = "%s/%s";
 
-	if (!unixtime)
-	{
-		if (gOptTime == OPT_TIME_OLDEST)
-			value = time(0);
-	}
-	else
-		value = *unixtime;
+	if (path[strlen(path) - 1] == '/')
+		strcpy(frmt_path, "%s%s");
+
+	if (gOptTime == OPT_TIME_OLDEST)
+		value = time(0);
 
 	if ((dir = opendir(path)) != NULL)
 	{
@@ -133,7 +130,7 @@ static BOOL SetTime(const char *path, time_t *unixtime)
 		{
 			if ((strcmp(ent->d_name, ".") != 0) && (strcmp(ent->d_name, "..") != 0))
 			{
-				snprintf(file, PATH_MAX, "%s/%s", path, ent->d_name);
+				snprintf(file, PATH_MAX, frmt_path, path, ent->d_name);
 
 				if (ent->d_type != DT_DIR)
 				{
@@ -145,16 +142,26 @@ static BOOL SetTime(const char *path, time_t *unixtime)
 					if (gOptDirs == OPT_DIR_ALL && UpdValue(file, ent->d_type, &value))
 						result = TRUE;
 
-					if (SetTime(file, &value))
-						result = TRUE;
-					else if (gOptDirs == OPT_DIR_EMPTY && UpdValue(file, ent->d_type, &value))
-						result = TRUE;
-					
+					if (access(file, R_OK | W_OK | X_OK) == 0)
+					{
+						if (SetTime(file, &value))
+							result = TRUE;
+						else if (gOptDirs == OPT_DIR_EMPTY && UpdValue(file, ent->d_type, &value))
+							result = TRUE;
+					}
+					else
+						printf("%s: cant access dir %s", PLUGNAME, path);
 				}
 			}
 		}
 
-		if (result)
+		closedir(dir);
+	}
+
+
+	if (result)
+	{
+		if (!gOptOnlyRoot || (gOptOnlyRoot && unixtime == NULL))
 		{
 			struct utimbuf ubuf;
 			ubuf.actime = time(0);
@@ -162,11 +169,9 @@ static BOOL SetTime(const char *path, time_t *unixtime)
 			utime(path, &ubuf);
 		}
 
-		closedir(dir);
+		if (unixtime != NULL && BUMP_TIME(value, *unixtime))
+			*unixtime = value;
 	}
-
-	if (result && unixtime != NULL)
-		*unixtime = value;
 
 	return result;
 }

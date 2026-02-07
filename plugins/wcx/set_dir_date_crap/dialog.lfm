@@ -16,11 +16,10 @@ object DialogBox: TDialogBox
   OnShow = DialogBoxShow
   object gbOpts: TGroupBox
     Left = 16
-    Height = 143
+    Height = 161
     Top = 8
-    Width = 531
+    Width = 455
     AutoSize = True
-    Caption = 'Options'
     ChildSizing.LeftRightSpacing = 10
     ChildSizing.TopBottomSpacing = 10
     ChildSizing.HorizontalSpacing = 10
@@ -29,19 +28,19 @@ object DialogBox: TDialogBox
     ChildSizing.EnlargeVertical = crsHomogenousChildResize
     ChildSizing.Layout = cclLeftToRightThenTopToBottom
     ChildSizing.ControlsPerLine = 2
-    ClientHeight = 124
-    ClientWidth = 531
+    ClientHeight = 158
+    ClientWidth = 455
     TabOrder = 0
     object lblTime: TLabel
       Left = 10
       Height = 28
       Top = 10
-      Width = 351
+      Width = 275
       Caption = 'Set date to directories'
       Layout = tlCenter
     end
     object cbTime: TComboBox
-      Left = 371
+      Left = 295
       Height = 28
       Top = 10
       Width = 150
@@ -57,46 +56,61 @@ object DialogBox: TDialogBox
       Text = 'Newest'
       OnChange = ComboBoxChange
     end
+    object lblPlaceholder: TLabel
+      Left = 10
+      Height = 24
+      Top = 48
+      Width = 275
+    end
+    object chOnlyRoot: TCheckBox
+      Left = 295
+      Height = 24
+      Top = 48
+      Width = 150
+      Caption = 'Set for top level only'
+      TabOrder = 1
+      OnChange = CheckBoxChange
+    end
     object lblFiletype: TLabel
       Left = 10
       Height = 28
-      Top = 48
-      Width = 351
+      Top = 82
+      Width = 275
       Caption = 'Get new date using'
       Layout = tlCenter
     end
     object cbType: TComboBox
-      Left = 371
+      Left = 295
       Height = 28
-      Top = 48
+      Top = 82
       Width = 150
       Constraints.MinWidth = 150
       ItemHeight = 23
       ItemIndex = 0
       Items.Strings = (
-        'Only for regular files'
-        'Directory pointed to by the symlink as well'
+        'Only regular files'
+        'Regular files from directory pointed to by the symlink as well'
         'Any file pointed to by the symlink as well'
         'Only regular files and the symlinks themselves'
         'Any filetype'
       )
       Style = csDropDownList
-      TabOrder = 1
-      Text = 'Only for regular files'
+      TabOrder = 2
+      Text = 'Only regular files'
       OnChange = ComboBoxChange
     end
     object lblDirs: TLabel
       Left = 10
       Height = 28
-      Top = 86
-      Width = 351
-      Caption = 'Behavior for dates of the encountered directories themselves'
+      Top = 120
+      Width = 275
+      Caption = 'Behavior for dates of the directories themselves'
       Layout = tlCenter
     end
     object cbDirs: TComboBox
-      Left = 371
+      Left = 295
       Height = 28
-      Top = 86
+      Top = 120
       Width = 150
       Constraints.MinWidth = 150
       ItemHeight = 23
@@ -107,7 +121,7 @@ object DialogBox: TDialogBox
         'Take everything into account'
       )
       Style = csDropDownList
-      TabOrder = 2
+      TabOrder = 3
       Text = 'Ignore'
       OnChange = ComboBoxChange
     end
@@ -118,7 +132,7 @@ object DialogBox: TDialogBox
     AnchorSideRight.Side = asrBottom
     Left = 432
     Height = 31
-    Top = 171
+    Top = 189
     Width = 97
     Anchors = [akTop, akRight]
     AutoSize = True
