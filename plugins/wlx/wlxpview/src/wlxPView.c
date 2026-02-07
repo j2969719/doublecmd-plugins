@@ -35,7 +35,6 @@
 #include <locale.h>
 #define GETTEXT_PACKAGE "plugins"
 
-#define _detectstring "EXT=\"PDF\""
 #define page_padding 25
 
 typedef struct _CustomData
@@ -173,6 +172,37 @@ static void tb_forward_clicked(GtkToolItem *toolbtn, CustomData *data)
 	gtk_spin_button_spin(GTK_SPIN_BUTTON(data->btn_spin), GTK_SPIN_STEP_FORWARD, 1);
 }
 
+static void go_spin_changed(GtkSpinButton *spin_button, CustomData *data)
+{
+	
+	gtk_spin_button_set_value(GTK_SPIN_BUTTON(data->btn_spin), gtk_spin_button_get_value_as_int(spin_button));
+}
+
+static void tb_go_clicked(GtkToolItem *toolbtn, CustomData *data)
+{
+	GtkWidget *dialog = gtk_dialog_new_with_buttons (_("Go to..."),
+	                    NULL,
+	                    GTK_DIALOG_MODAL,
+	                    GTK_STOCK_CLOSE,
+	                    GTK_RESPONSE_NONE,
+	                    NULL);
+	GtkWidget *controls = gtk_hbox_new (FALSE, 0);
+	GtkWidget *spin = gtk_spin_button_new_with_range(1, (gdouble)data->total_pages, 1);
+	gtk_spin_button_set_value(GTK_SPIN_BUTTON(spin), data->current_page + 1);
+	g_signal_connect(G_OBJECT(spin), "value-changed", G_CALLBACK(go_spin_changed), data);
+	gtk_box_pack_start (GTK_BOX (controls), gtk_label_new (_("Page number to go to:")), TRUE, TRUE, 2);
+	gtk_box_pack_start (GTK_BOX (controls), spin, FALSE, FALSE, 2);
+	gchar *total_pages = g_strdup_printf(" / %d", data->total_pages);
+	gtk_box_pack_end (GTK_BOX (controls), gtk_label_new (total_pages), FALSE, FALSE, 2);
+	g_free(total_pages);
+	gtk_container_add (GTK_CONTAINER (GTK_DIALOG(dialog)->vbox), controls);
+	gtk_window_set_resizable(GTK_WINDOW(dialog), FALSE);
+	gtk_container_border_width(GTK_CONTAINER(controls), 10);
+	g_signal_connect_swapped (dialog, "response", G_CALLBACK (gtk_widget_destroy), dialog);
+
+	gtk_widget_show_all (dialog);
+}
+
 static void tb_fit_clicked(GtkToggleToolButton *toolbtn, CustomData *data)
 {
 	if (gtk_toggle_tool_button_get_active(toolbtn))
@@ -225,6 +255,11 @@ gboolean on_key_press(GtkWidget *widget, GdkEventKey *event, CustomData *data)
 
 	case GDK_End:
 		tb_last_clicked(NULL, data);
+		return TRUE;
+
+	case 'g':
+		if (event->state & GDK_CONTROL_MASK)
+			tb_go_clicked(NULL, data);
 		return TRUE;
 
 	case GDK_Page_Up:
@@ -331,6 +366,7 @@ static GtkWidget *create_ui(HWND ParentWin, CustomData *data)
 	GtkToolItem *tb_forward;
 	GtkToolItem *tb_first;
 	GtkToolItem *tb_last;
+	GtkToolItem *tb_go;
 	GtkToolItem *tb_text;
 	GtkToolItem *tb_info;
 	GtkToolItem *tb_pages;
@@ -371,71 +407,79 @@ static GtkWidget *create_ui(HWND ParentWin, CustomData *data)
 	g_signal_connect(G_OBJECT(data->canvas), "expose_event",
 	                 G_CALLBACK(canvas_expose_event), data);
 
+	int pos = 0;
+
 	tb_first = gtk_tool_button_new_from_stock(GTK_STOCK_GOTO_FIRST);
-	gtk_toolbar_insert(GTK_TOOLBAR(toolbar), tb_first, 0);
+	gtk_toolbar_insert(GTK_TOOLBAR(toolbar), tb_first, pos++);
 	gtk_tool_button_set_label(GTK_TOOL_BUTTON(tb_first), _("First page"));
 	gtk_widget_set_tooltip_text(GTK_WIDGET(tb_first), _("First page"));
 	g_signal_connect(G_OBJECT(tb_first), "clicked", G_CALLBACK(tb_first_clicked), data);
 
 	tb_back = gtk_tool_button_new_from_stock(GTK_STOCK_GO_BACK);
-	gtk_toolbar_insert(GTK_TOOLBAR(toolbar), tb_back, 1);
+	gtk_toolbar_insert(GTK_TOOLBAR(toolbar), tb_back, pos++);
 	gtk_tool_button_set_label(GTK_TOOL_BUTTON(tb_back), _("Previous page"));
 	gtk_widget_set_tooltip_text(GTK_WIDGET(tb_back), _("Previous page"));
 	g_signal_connect(G_OBJECT(tb_back), "clicked", G_CALLBACK(tb_back_clicked), data);
 
 	tb_forward = gtk_tool_button_new_from_stock(GTK_STOCK_GO_FORWARD);
-	gtk_toolbar_insert(GTK_TOOLBAR(toolbar), tb_forward, 2);
+	gtk_toolbar_insert(GTK_TOOLBAR(toolbar), tb_forward, pos++);
 	gtk_tool_button_set_label(GTK_TOOL_BUTTON(tb_forward), _("Next page"));
 	gtk_widget_set_tooltip_text(GTK_WIDGET(tb_forward), _("Next page"));
 	g_signal_connect(G_OBJECT(tb_forward), "clicked", G_CALLBACK(tb_forward_clicked), data);
 
 	tb_last = gtk_tool_button_new_from_stock(GTK_STOCK_GOTO_LAST);
-	gtk_toolbar_insert(GTK_TOOLBAR(toolbar), tb_last, 3);
+	gtk_toolbar_insert(GTK_TOOLBAR(toolbar), tb_last, pos++);
 	gtk_tool_button_set_label(GTK_TOOL_BUTTON(tb_last), _("Last page"));
 	gtk_widget_set_tooltip_text(GTK_WIDGET(tb_last), _("Last page"));
 	g_signal_connect(G_OBJECT(tb_last), "clicked", G_CALLBACK(tb_last_clicked), data);
+
+	tb_go = gtk_tool_button_new_from_stock(GTK_STOCK_JUMP_TO);
+	gtk_toolbar_insert(GTK_TOOLBAR(toolbar), tb_go, pos++);
+	gtk_tool_button_set_label(GTK_TOOL_BUTTON(tb_go), _("Go to..."));
+	gtk_widget_set_tooltip_text(GTK_WIDGET(tb_go), _("Go to..."));
+	g_signal_connect(G_OBJECT(tb_go), "clicked", G_CALLBACK(tb_go_clicked), data);
 
 	tb_selector = gtk_tool_item_new();
 	data->btn_spin = gtk_spin_button_new_with_range(1, (gdouble)data->total_pages, 1);
 	gtk_editable_set_editable(GTK_EDITABLE(data->btn_spin), FALSE);
 	gtk_widget_set_can_focus(data->btn_spin, FALSE);
 	gtk_container_add(GTK_CONTAINER(tb_selector), data->btn_spin);
-	gtk_toolbar_insert(GTK_TOOLBAR(toolbar), tb_selector, 4);
+	gtk_toolbar_insert(GTK_TOOLBAR(toolbar), tb_selector, pos++);
 	g_signal_connect(G_OBJECT(data->btn_spin), "value-changed",
 	                 G_CALLBACK(tb_spin_changed), data);
 
 	tb_pages = gtk_tool_item_new();
 	data->lbl_info = gtk_label_new(NULL);
 	gtk_container_add(GTK_CONTAINER(tb_pages), data->lbl_info);
-	gtk_toolbar_insert(GTK_TOOLBAR(toolbar), tb_pages, 5);
+	gtk_toolbar_insert(GTK_TOOLBAR(toolbar), tb_pages, pos++);
 
 	tb_checkbox = gtk_tool_item_new();
 	data->btn_scale = gtk_check_button_new();
 	gtk_widget_set_can_focus(data->btn_scale, FALSE);
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(data->btn_scale), TRUE);
 	gtk_container_add(GTK_CONTAINER(tb_checkbox), data->btn_scale);
-	gtk_toolbar_insert(GTK_TOOLBAR(toolbar), tb_checkbox, 6);
+	gtk_toolbar_insert(GTK_TOOLBAR(toolbar), tb_checkbox, pos++);
 	g_signal_connect(G_OBJECT(data->btn_scale), "toggled",
 	                 G_CALLBACK(tb_checkbox_changed), data);
 
 	gtk_toolbar_insert(GTK_TOOLBAR(toolbar), gtk_separator_tool_item_new(), 7);
 
 	data->btn_fit = gtk_toggle_tool_button_new_from_stock(GTK_STOCK_ZOOM_FIT);
-	gtk_toolbar_insert(GTK_TOOLBAR(toolbar), data->btn_fit, 8);
+	gtk_toolbar_insert(GTK_TOOLBAR(toolbar), data->btn_fit, pos++);
 	gtk_tool_button_set_label(GTK_TOOL_BUTTON(data->btn_fit), _("Fit"));
 	gtk_widget_set_tooltip_text(GTK_WIDGET(data->btn_fit), _("Fit"));
 	g_signal_connect(G_OBJECT(data->btn_fit), "toggled", G_CALLBACK(tb_fit_clicked), data);
 
-	gtk_toolbar_insert(GTK_TOOLBAR(toolbar), gtk_separator_tool_item_new(), 9);
+	gtk_toolbar_insert(GTK_TOOLBAR(toolbar), gtk_separator_tool_item_new(), pos++);
 
 	tb_text = gtk_tool_button_new_from_stock(GTK_STOCK_SELECT_ALL);
-	gtk_toolbar_insert(GTK_TOOLBAR(toolbar), tb_text, 10);
+	gtk_toolbar_insert(GTK_TOOLBAR(toolbar), tb_text, pos++);
 	gtk_tool_button_set_label(GTK_TOOL_BUTTON(tb_text), _("Text"));
 	gtk_widget_set_tooltip_text(GTK_WIDGET(tb_text), _("Text"));
 	g_signal_connect(G_OBJECT(tb_text), "clicked", G_CALLBACK(tb_text_clicked), data);
 
 	tb_info = gtk_tool_button_new_from_stock(GTK_STOCK_INFO);
-	gtk_toolbar_insert(GTK_TOOLBAR(toolbar), tb_info, 11);
+	gtk_toolbar_insert(GTK_TOOLBAR(toolbar), tb_info, pos++);
 	gtk_tool_button_set_label(GTK_TOOL_BUTTON(tb_info), _("Info"));
 	gtk_widget_set_tooltip_text(GTK_WIDGET(tb_info), _("Info"));
 	g_signal_connect(G_OBJECT(tb_info), "clicked", G_CALLBACK(tb_info_clicked), data);
@@ -510,7 +554,7 @@ void DCPCALL ListCloseWindow(HWND ListWin)
 
 void DCPCALL ListGetDetectString(char* DetectString, int maxlen)
 {
-	g_strlcpy(DetectString, _detectstring, maxlen - 1);
+	g_strlcpy(DetectString, DETECT_STRING, maxlen - 1);
 }
 
 int DCPCALL ListSearchDialog(HWND ListWin, int FindNext)

@@ -10,7 +10,7 @@ plugname := wlxPView.wlx
 plugdescr := `grep '$(plugtype)/$(plugdir))' ../../../../plugins.md -1 | tail -1 | sed 's/[[]//' | sed 's/[]][\(][^\)]\+.//' | sed 's/\s[\(].\+[\)]//'`
 plugfiles := $(filter-out $(wildcard ../*.$(plugtype)), $(wildcard ../*))
 
-detectstring :=
+detectstring := EXT=\"PDF\"
 
 
 all:

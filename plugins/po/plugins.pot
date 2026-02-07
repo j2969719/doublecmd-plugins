@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-04-09 00:25+0300\n"
+"POT-Creation-Date: 2026-02-07 23:08+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -24,10 +24,10 @@ msgid "libarchive: failed to read %s"
 msgstr ""
 
 #: ../wlx/libarchive_cat_crap/src/plugin.c:196
-#: ../wlx/libarchive_cat_qt_crap/src/plugin.cpp:146
+#: ../wlx/libarchive_cat_qt_crap/src/plugin.cpp:147
 #: ../wlx/md4c_qt/src/plugin.cpp:97 ../wlx/fileinfo_qt/src/plugin.cpp:97
 #: ../wlx/htmlconv_qt_crap/src/plugin.cpp:118
-#: ../wlx/wlxwebkit/src/wlxwebkit.c:117
+#: ../wlx/wlxwebkit/src/wlxwebkit.c:128
 #: ../wlx/yet_another_vte_plugin/src/plugin.c:288
 #: ../wlx/gtksourceview/src/gtksourceview.c:720
 #: ../wlx/sqlview_qt/src/plugin.cpp:273
@@ -43,43 +43,43 @@ msgstr ""
 msgid "\"%s\" not found!"
 msgstr ""
 
-#: ../wlx/imagemagick/src/wlximagemagick.c:207
+#: ../wlx/imagemagick/src/wlximagemagick.c:215
 #: ../wlx/gtkimgview_crap/src/gtkimgview.c:371
 #: ../wlx/qtpdfview_qt/src/plugin.cpp:161
 #: ../wlx/gtkimgview/src/gtkimgview.c:222
 msgid "Zoom In"
 msgstr ""
 
-#: ../wlx/imagemagick/src/wlximagemagick.c:212
+#: ../wlx/imagemagick/src/wlximagemagick.c:220
 #: ../wlx/gtkimgview_crap/src/gtkimgview.c:376
 #: ../wlx/qtpdfview_qt/src/plugin.cpp:172
 #: ../wlx/gtkimgview/src/gtkimgview.c:227
 msgid "Zoom Out"
 msgstr ""
 
-#: ../wlx/imagemagick/src/wlximagemagick.c:217
+#: ../wlx/imagemagick/src/wlximagemagick.c:225
 #: ../wlx/gtkimgview_crap/src/gtkimgview.c:381
 #: ../wlx/qtpdfview_qt/src/plugin.cpp:183
 #: ../wlx/gtkimgview/src/gtkimgview.c:232
 msgid "Original Size"
 msgstr ""
 
-#: ../wlx/imagemagick/src/wlximagemagick.c:222
-#: ../wlx/wlxpview/src/wlxPView.c:425 ../wlx/wlxpview/src/wlxPView.c:426
+#: ../wlx/imagemagick/src/wlximagemagick.c:230
+#: ../wlx/wlxpview/src/wlxPView.c:469 ../wlx/wlxpview/src/wlxPView.c:470
 #: ../wlx/gtkimgview_crap/src/gtkimgview.c:386
 #: ../wlx/qtpdfview_qt/src/plugin.cpp:196
 #: ../wlx/gtkimgview/src/gtkimgview.c:237
 msgid "Fit"
 msgstr ""
 
-#: ../wlx/imagemagick/src/wlximagemagick.c:229
+#: ../wlx/imagemagick/src/wlximagemagick.c:237
 #: ../wlx/gtkimgview_crap/src/gtkimgview.c:393
 #: ../wlx/gtkimgview/src/gtkimgview.c:244
 msgid "Copy to Clipboard"
 msgstr ""
 
-#: ../wlx/imagemagick/src/wlximagemagick.c:232
-#: ../wlx/imagemagick/src/wlximagemagick.c:235
+#: ../wlx/imagemagick/src/wlximagemagick.c:240
+#: ../wlx/imagemagick/src/wlximagemagick.c:243
 #: ../wlx/gtkimgview_crap/src/gtkimgview.c:396
 #: ../wlx/gtkimgview_crap/src/gtkimgview.c:399
 #: ../wlx/gtkimgview/src/gtkimgview.c:247
@@ -87,8 +87,8 @@ msgstr ""
 msgid "Rotate"
 msgstr ""
 
-#: ../wlx/imagemagick/src/wlximagemagick.c:238
-#: ../wlx/imagemagick/src/wlximagemagick.c:241
+#: ../wlx/imagemagick/src/wlximagemagick.c:246
+#: ../wlx/imagemagick/src/wlximagemagick.c:249
 #: ../wlx/gtkimgview_crap/src/gtkimgview.c:402
 #: ../wlx/gtkimgview_crap/src/gtkimgview.c:405
 #: ../wlx/gtkimgview/src/gtkimgview.c:253
@@ -96,8 +96,8 @@ msgstr ""
 msgid "Rotate Clockwise"
 msgstr ""
 
-#: ../wlx/imagemagick/src/wlximagemagick.c:244
-#: ../wlx/imagemagick/src/wlximagemagick.c:247
+#: ../wlx/imagemagick/src/wlximagemagick.c:252
+#: ../wlx/imagemagick/src/wlximagemagick.c:255
 #: ../wlx/gtkimgview_crap/src/gtkimgview.c:408
 #: ../wlx/gtkimgview_crap/src/gtkimgview.c:411
 #: ../wlx/gtkimgview/src/gtkimgview.c:259
@@ -105,8 +105,8 @@ msgstr ""
 msgid "Flip Horizontally"
 msgstr ""
 
-#: ../wlx/imagemagick/src/wlximagemagick.c:250
-#: ../wlx/imagemagick/src/wlximagemagick.c:253
+#: ../wlx/imagemagick/src/wlximagemagick.c:258
+#: ../wlx/imagemagick/src/wlximagemagick.c:261
 #: ../wlx/gtkimgview_crap/src/gtkimgview.c:414
 #: ../wlx/gtkimgview_crap/src/gtkimgview.c:417
 #: ../wlx/gtkimgview/src/gtkimgview.c:265
@@ -122,21 +122,30 @@ msgstr ""
 msgid "Size"
 msgstr ""
 
-#: ../wlx/wlxpview/src/wlxPView.c:140
+#: ../wlx/wlxpview/src/wlxPView.c:139
 msgid "Scale ~x"
 msgstr ""
 
-#: ../wlx/wlxpview/src/wlxPView.c:261 ../wlx/wlxpview/src/wlxPView.c:433
-#: ../wlx/wlxpview/src/wlxPView.c:434
+#: ../wlx/wlxpview/src/wlxPView.c:183 ../wlx/wlxpview/src/wlxPView.c:438
+#: ../wlx/wlxpview/src/wlxPView.c:439 ../wlx/qtpdfview_qt/src/plugin.cpp:140
+msgid "Go to..."
+msgstr ""
+
+#: ../wlx/wlxpview/src/wlxPView.c:193 ../wlx/qtpdfview_qt/src/plugin.cpp:148
+msgid "Page number to go to:"
+msgstr ""
+
+#: ../wlx/wlxpview/src/wlxPView.c:296 ../wlx/wlxpview/src/wlxPView.c:477
+#: ../wlx/wlxpview/src/wlxPView.c:478
 msgid "Text"
 msgstr ""
 
-#: ../wlx/wlxpview/src/wlxPView.c:289 ../wlx/wlxpview/src/wlxPView.c:439
-#: ../wlx/wlxpview/src/wlxPView.c:440 ../wlx/qtpdfview_qt/src/plugin.cpp:222
+#: ../wlx/wlxpview/src/wlxPView.c:324 ../wlx/wlxpview/src/wlxPView.c:483
+#: ../wlx/wlxpview/src/wlxPView.c:484 ../wlx/qtpdfview_qt/src/plugin.cpp:222
 msgid "Info"
 msgstr ""
 
-#: ../wlx/wlxpview/src/wlxPView.c:293
+#: ../wlx/wlxpview/src/wlxPView.c:328
 #, c-format
 msgid ""
 "Title: %s\n"
@@ -148,36 +157,28 @@ msgid ""
 "Version: %s"
 msgstr ""
 
-#: ../wlx/wlxpview/src/wlxPView.c:311
+#: ../wlx/wlxpview/src/wlxPView.c:346
 msgid "metadata not found"
 msgstr ""
 
-#: ../wlx/wlxpview/src/wlxPView.c:376 ../wlx/wlxpview/src/wlxPView.c:377
+#: ../wlx/wlxpview/src/wlxPView.c:414 ../wlx/wlxpview/src/wlxPView.c:415
 #: ../wlx/qtpdfview_qt/src/plugin.cpp:60
 msgid "First page"
 msgstr ""
 
-#: ../wlx/wlxpview/src/wlxPView.c:382 ../wlx/wlxpview/src/wlxPView.c:383
+#: ../wlx/wlxpview/src/wlxPView.c:420 ../wlx/wlxpview/src/wlxPView.c:421
 #: ../wlx/qtpdfview_qt/src/plugin.cpp:72
 msgid "Previous page"
 msgstr ""
 
-#: ../wlx/wlxpview/src/wlxPView.c:388 ../wlx/wlxpview/src/wlxPView.c:389
+#: ../wlx/wlxpview/src/wlxPView.c:426 ../wlx/wlxpview/src/wlxPView.c:427
 #: ../wlx/qtpdfview_qt/src/plugin.cpp:87
 msgid "Next page"
 msgstr ""
 
-#: ../wlx/wlxpview/src/wlxPView.c:394 ../wlx/wlxpview/src/wlxPView.c:395
+#: ../wlx/wlxpview/src/wlxPView.c:432 ../wlx/wlxpview/src/wlxPView.c:433
 #: ../wlx/qtpdfview_qt/src/plugin.cpp:102
 msgid "Last page"
-msgstr ""
-
-#: ../wlx/qtpdfview_qt/src/plugin.cpp:140
-msgid "Go to..."
-msgstr ""
-
-#: ../wlx/qtpdfview_qt/src/plugin.cpp:148
-msgid "Page number to go to:"
 msgstr ""
 
 #: ../wlx/qtpdfview_qt/src/plugin.cpp:208
@@ -219,8 +220,8 @@ msgid "Modification Date"
 msgstr ""
 
 #: ../wlx/qtpdfview_qt/src/plugin.cpp:255
-#: ../wlx/qmediaplayer_qt/src/plugin.cpp:422
-#: ../wlx/qmediaplayer_qt/src/plugin.cpp:478
+#: ../wlx/qmediaplayer_qt/src/plugin.cpp:468
+#: ../wlx/qmediaplayer_qt/src/plugin.cpp:524
 msgid "no suitable info available"
 msgstr ""
 
@@ -472,8 +473,8 @@ msgstr ""
 msgid "Date"
 msgstr ""
 
-#: ../wlx/qmediaplayer_qt/src/plugin.cpp:402
-#: ../wlx/qmediaplayer_qt/src/plugin.cpp:462
+#: ../wlx/qmediaplayer_qt/src/plugin.cpp:448
+#: ../wlx/qmediaplayer_qt/src/plugin.cpp:508
 #, c-format
 msgid "%'d bps"
 msgstr ""
@@ -543,7 +544,7 @@ msgstr ""
 
 #: ../dsx/git_untracked/src/plugin.c:60
 #: ../dsx/tracker_textsearch/src/plugin.c:84
-#: ../dsx/recollq_crap/src/plugin.c:108 ../dsx/locate_crap/src/plugin.c:129
+#: ../dsx/recollq_crap/src/plugin.c:108 ../dsx/locate_crap/src/plugin.c:134
 #: ../dsx/gtkrecent/src/plugin.c:56 ../dsx/lslocks/src/plugin.c:61
 #: ../dsx/tracker3_crap/src/plugin.c:104 ../dsx/git_ignored/src/plugin.c:60
 #: ../dsx/git_modified/src/plugin.c:61
