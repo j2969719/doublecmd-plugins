@@ -259,8 +259,10 @@ gboolean on_key_press(GtkWidget *widget, GdkEventKey *event, CustomData *data)
 
 	case 'g':
 		if (event->state & GDK_CONTROL_MASK)
+		{
 			tb_go_clicked(NULL, data);
-		return TRUE;
+			return TRUE;
+		}
 
 	case GDK_Page_Up:
 		tb_back_clicked(NULL, data);

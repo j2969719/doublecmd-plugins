@@ -145,7 +145,7 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 		int cur = pdfView->navigator()->currentPage() + 1;
 
 		bool ret;
-		int page = QInputDialog::getInt(pdfView, "", _("Page number to go to:"), cur, 1, pages, 1, &ret);
+		int page = QInputDialog::getInt(pdfView, _("Go to..."), _("Page number to go to:"), cur, 1, pages, 1, &ret);
 
 		if (ret)
 #if QT_VERSION >= 0x060000
