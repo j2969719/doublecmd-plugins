@@ -84,7 +84,7 @@ intptr_t DCPCALL OptionsDlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg,
 }
 
 static BOOL SetTime(const char *path, time_t *unixtime);
-static BOOL UpdValue(char *file, unsigned char d_type, time_t *value)
+static BOOL CheckTime(char *file, unsigned char d_type, time_t *value)
 {
 	struct stat buf;
 
@@ -134,23 +134,23 @@ static BOOL SetTime(const char *path, time_t *unixtime)
 
 				if (ent->d_type != DT_DIR)
 				{
-					if (UpdValue(file, ent->d_type, &value))
+					if (CheckTime(file, ent->d_type, &value))
 						result = TRUE;
 				}
 				else
 				{
-					if (gOptDirs == OPT_DIR_ALL && UpdValue(file, ent->d_type, &value))
+					if (gOptDirs == OPT_DIR_ALL && CheckTime(file, ent->d_type, &value))
 						result = TRUE;
 
 					if (access(file, R_OK | W_OK | X_OK) == 0)
 					{
 						if (SetTime(file, &value))
 							result = TRUE;
-						else if (gOptDirs == OPT_DIR_EMPTY && UpdValue(file, ent->d_type, &value))
+						else if (gOptDirs == OPT_DIR_EMPTY && CheckTime(file, ent->d_type, &value))
 							result = TRUE;
 					}
 					else
-						printf("%s: cant access dir %s", PLUGNAME, path);
+						printf("%s: cant access %s\n", PLUGNAME, file);
 				}
 			}
 		}
