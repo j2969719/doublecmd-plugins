@@ -50,6 +50,9 @@ Creates m3u8 files (Files -> Pack Files...).
 - [mozlz4json_crap](plugins/wcx/mozlz4json_crap)<br>
 View lz4 json from Mozilla.
 
+- [set_dir_date_crap](plugins/wcx/set_dir_date_crap)<br>
+Sets the date of directories to the date of the newest or oldest file inside.
+
 - [zpaq_cli_crap](plugins/wcx/zpaq_cli_crap)<br>
 Wierd packer plugin for zpaq (cli executable).
 
