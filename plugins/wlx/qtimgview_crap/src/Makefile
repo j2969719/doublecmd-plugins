@@ -1,5 +1,5 @@
 CXX = g++
-CXXFLAGS = -shared -fPIC -Wl,--no-as-needed -g -Wall -pedantic
+CXXFLAGS = -shared -fPIC -Wl,--no-as-needed
 
 libs :=
 includes := -I../../../sdk
