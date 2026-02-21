@@ -583,6 +583,12 @@ Very primitive media player.
 - [qtermwidget_qt_crap](plugins/wlx/qtermwidget_qt_crap)<br>
 Embeds `qtermwidget` and runs command line utilities (see `settings.ini`).
 
+- [qtimgview](plugins/wlx/qtimgview)<br>
+Image viewer plugin.
+
+- [qtimgview_crap](plugins/wlx/qtimgview_crap)<br>
+Like `qtimgview` but for any files if you can convert it to image (see `settings.ini`).
+
 - [qtpdfview_qt](plugins/wlx/qtpdfview_qt)<br>
 PDF Viewer.
 
