@@ -354,15 +354,7 @@ extern "C" {
 
 HANDLE DCPCALL OpenArchive(tOpenArchiveData *ArchiveData)
 {
-	tArcData *data = (tArcData *)malloc(sizeof(tArcData));
-
-	if (data == NULL)
-	{
-		ArchiveData->OpenResult = E_NO_MEMORY;
-		return E_SUCCESS;
-	}
-
-	memset(data, 0, sizeof(tArcData));
+	tArcData *data = new tArcData{};
 
 	try
 	{
@@ -429,7 +421,7 @@ HANDLE DCPCALL OpenArchive(tOpenArchiveData *ArchiveData)
 		}
 		else
 		{
-			free(data);
+			delete data;
 			ArchiveData->OpenResult = E_EOPEN;
 			return E_SUCCESS;
 		}
@@ -438,7 +430,7 @@ HANDLE DCPCALL OpenArchive(tOpenArchiveData *ArchiveData)
 	{
 		printf("%s (%s): %s\n", PLUGNAME, ArchiveData->ArcName, ex.what());
 
-		free(data);
+		delete data;
 
 		ArchiveData->OpenResult = E_EOPEN;
 		return E_SUCCESS;
@@ -587,7 +579,7 @@ int DCPCALL CloseArchive(HANDLE hArcData)
 	}
 
 	delete data->reader;
-	free(data);
+	delete data;
 
 	return E_SUCCESS;
 }
