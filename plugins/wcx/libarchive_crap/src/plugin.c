@@ -2086,8 +2086,6 @@ int DCPCALL DeleteFiles(char *PackedFile, char *DeleteList)
 
 HANDLE DCPCALL StartMemPack(int Options, char *FileName)
 {
-	printf("StartMemPack\n");
-
 	int ret;
 	const char *ext = strrchr(FileName, '.');
 
@@ -2146,7 +2144,6 @@ HANDLE DCPCALL StartMemPack(int Options, char *FileName)
 
 int DCPCALL PackToMem(HANDLE hMemPack, char* BufIn, int InLen, int* Taken, char* BufOut, int OutLen, int* Written, int SeekBy)
 {
-	printf("PackToMem\n");
 	ArcData handle = (ArcData)hMemPack;
 
 	if (!handle)
@@ -2159,9 +2156,6 @@ int DCPCALL PackToMem(HANDLE hMemPack, char* BufIn, int InLen, int* Taken, char*
 
 	if (available > 0)
 	{
-		if (!BufIn)
-			printf("anybody home? here some extra for you (%ld)\n", available);
-
 		if (OutLen > available)
 			*Written = available;
 		else
@@ -2210,7 +2204,6 @@ int DCPCALL PackToMem(HANDLE hMemPack, char* BufIn, int InLen, int* Taken, char*
 
 int DCPCALL DoneMemPack(HANDLE hMemPack)
 {
-	printf("DoneMemPack\n");
 	ArcData handle = (ArcData)hMemPack;
 
 	if (handle)
