@@ -174,33 +174,32 @@ static void tb_forward_clicked(GtkToolItem *toolbtn, CustomData *data)
 
 static void go_spin_changed(GtkSpinButton *spin_button, CustomData *data)
 {
-	
 	gtk_spin_button_set_value(GTK_SPIN_BUTTON(data->btn_spin), gtk_spin_button_get_value_as_int(spin_button));
 }
 
 static void tb_go_clicked(GtkToolItem *toolbtn, CustomData *data)
 {
-	GtkWidget *dialog = gtk_dialog_new_with_buttons (_("Go to..."),
+	GtkWidget *dialog = gtk_dialog_new_with_buttons(_("Go to..."),
 	                    NULL,
 	                    GTK_DIALOG_MODAL,
 	                    GTK_STOCK_CLOSE,
 	                    GTK_RESPONSE_NONE,
 	                    NULL);
-	GtkWidget *controls = gtk_hbox_new (FALSE, 0);
+	GtkWidget *controls = gtk_hbox_new(FALSE, 0);
 	GtkWidget *spin = gtk_spin_button_new_with_range(1, (gdouble)data->total_pages, 1);
 	gtk_spin_button_set_value(GTK_SPIN_BUTTON(spin), data->current_page + 1);
 	g_signal_connect(G_OBJECT(spin), "value-changed", G_CALLBACK(go_spin_changed), data);
-	gtk_box_pack_start (GTK_BOX (controls), gtk_label_new (_("Page number to go to:")), TRUE, TRUE, 2);
-	gtk_box_pack_start (GTK_BOX (controls), spin, FALSE, FALSE, 2);
+	gtk_box_pack_start(GTK_BOX(controls), gtk_label_new(_("Page number to go to:")), TRUE, TRUE, 2);
+	gtk_box_pack_start(GTK_BOX(controls), spin, FALSE, FALSE, 2);
 	gchar *total_pages = g_strdup_printf(" / %d", data->total_pages);
-	gtk_box_pack_end (GTK_BOX (controls), gtk_label_new (total_pages), FALSE, FALSE, 2);
+	gtk_box_pack_end(GTK_BOX(controls), gtk_label_new(total_pages), FALSE, FALSE, 2);
 	g_free(total_pages);
-	gtk_container_add (GTK_CONTAINER (GTK_DIALOG(dialog)->vbox), controls);
+	gtk_container_add(GTK_CONTAINER(GTK_DIALOG(dialog)->vbox), controls);
 	gtk_window_set_resizable(GTK_WINDOW(dialog), FALSE);
 	gtk_container_border_width(GTK_CONTAINER(controls), 10);
-	g_signal_connect_swapped (dialog, "response", G_CALLBACK (gtk_widget_destroy), dialog);
+	g_signal_connect_swapped(dialog, "response", G_CALLBACK(gtk_widget_destroy), dialog);
 
-	gtk_widget_show_all (dialog);
+	gtk_widget_show_all(dialog);
 }
 
 static void tb_fit_clicked(GtkToggleToolButton *toolbtn, CustomData *data)

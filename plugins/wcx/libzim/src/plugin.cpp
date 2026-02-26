@@ -176,16 +176,19 @@ int DCPCALL CloseArchive(HANDLE hArcData)
 
 BOOL DCPCALL CanYouHandleThisFile(char *FileName)
 {
+	bool result = false;
 	ifstream file(FileName, ios::binary);
 	unsigned char header[sizeof(FILE_MAGIC)];
 
 	if (!file.is_open())
-		return false;
+		return result;
 
 	if (file.read(reinterpret_cast<char*>(header), sizeof(FILE_MAGIC)))
-		return (memcmp(header, FILE_MAGIC, sizeof(FILE_MAGIC)) == 0);
+		result = (memcmp(header, FILE_MAGIC, sizeof(FILE_MAGIC)) == 0);
 
-	return false;
+	file.close();
+
+	return result;
 }
 
 void DCPCALL SetProcessDataProc(HANDLE hArcData, tProcessDataProc pProcessDataProc)
