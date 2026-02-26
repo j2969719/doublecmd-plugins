@@ -29,7 +29,12 @@ typedef struct sArcData
 {
 	struct archive *archive;
 	struct archive_entry *entry;
-	char arcname[PATH_MAX + 1];
+	char arcname[PATH_MAX];
+	unsigned char *buf;
+	size_t buf_size;
+	size_t capacity;
+	size_t offset;
+	bool is_finished;
 	tChangeVolProc gChangeVolProc;
 	tProcessDataProc gProcessDataProc;
 } tArcData;
@@ -38,6 +43,7 @@ typedef tArcData* ArcData;
 typedef void *HINSTANCE;
 
 #define BUFF_SIZE 8192
+#define DC_OUTBUFF_SIZE 524288
 
 tChangeVolProc gChangeVolProc  = NULL;
 tProcessDataProc gProcessDataProc = NULL;
@@ -65,6 +71,54 @@ static bool gSharFormatDump = false;
 GKeyFile *gCfg;
 gchar *gCfgPath = NULL;
 
+
+static ssize_t archive_memory_write_cb(struct archive *a, void *client_data, const void *buff, size_t length)
+{
+	ArcData handle = (ArcData)client_data;
+
+	if (handle->capacity < handle->buf_size + length)
+	{
+		size_t capacity = handle->buf_size + length + DC_OUTBUFF_SIZE;
+		unsigned char *buf = realloc(handle->buf, capacity);
+
+		if (!buf)
+			return -1;
+
+		handle->buf = buf;
+		handle->capacity = capacity;
+	}
+
+	memcpy(handle->buf + handle->buf_size, buff, length);
+	handle->buf_size += length;
+	return length;
+}
+
+char* tempnam_at_home(const char *origPath, const char *prefix)
+{
+	char *result = (char*)malloc(strlen(origPath) + strlen(prefix) + 10);
+
+	if (!result)
+		return NULL;
+
+	strcpy(result, origPath);
+	char *pos = strrchr(result, '/');
+
+	if (pos)
+		sprintf(pos + 1, "%s_XXXXXX", prefix);
+	else
+		sprintf(result, "%s_XXXXXX", prefix);
+
+	int fd = mkstemp(result);
+
+	if (fd == -1)
+	{
+		free(result);
+		return NULL;
+	}
+
+	close(fd);
+	return result;
+}
 
 static void config_get_options(void)
 {
@@ -484,7 +538,7 @@ int archive_repack_existing(struct archive *a, char* filename, char** tmpfn, int
 	else
 	{
 		g_strlcpy(infile, filename, PATH_MAX);
-		*tmpfn = tempnam(dirname(infile), "arc_");
+		*tmpfn = tempnam_at_home(dirname(infile), "arc_");
 
 		if (gOptions[0] != '\0')
 		{
@@ -2028,4 +2082,146 @@ int DCPCALL DeleteFiles(char *PackedFile, char *DeleteList)
 		free(tmpfn);
 
 	return result;
+}
+
+HANDLE DCPCALL StartMemPack(int Options, char *FileName)
+{
+	printf("StartMemPack\n");
+
+	int ret;
+	const char *ext = strrchr(FileName, '.');
+
+	if (!ext)
+		return NULL;
+
+	tArcData *handle = malloc(sizeof(tArcData));
+
+	if (handle == NULL)
+		return NULL;
+
+	memset(handle, 0, sizeof(tArcData));
+
+	handle->archive = archive_write_new();
+
+	if ((ret = archive_set_format_filter(handle->archive, ext)) == ARCHIVE_WARN)
+	{
+		printf("libarchive: %s\n", archive_error_string(handle->archive));
+	}
+	else if (ret < ARCHIVE_OK)
+	{
+		errmsg(archive_error_string(handle->archive), MB_OK | MB_ICONERROR);
+		archive_write_free(handle->archive);
+		free(handle);
+		return NULL;
+	}
+
+	archive_write_set_bytes_per_block(handle->archive, 0);
+	handle->buf = malloc(DC_OUTBUFF_SIZE);
+
+	if (archive_write_open(handle->archive, handle, NULL, archive_memory_write_cb, NULL) != ARCHIVE_OK)
+	{
+		errmsg(archive_error_string(handle->archive), MB_OK | MB_ICONERROR);
+		archive_write_free(handle->archive);
+		free(handle);
+		return NULL;
+	}
+
+	struct archive_entry *entry = archive_entry_new();
+	archive_entry_set_pathname(entry, "data");
+	archive_entry_set_filetype(entry, AE_IFREG);
+
+	if (archive_write_header(handle->archive, entry) != ARCHIVE_OK)
+	{
+		errmsg(archive_error_string(handle->archive), MB_OK | MB_ICONERROR);
+		archive_entry_free(entry);
+		archive_write_free(handle->archive);
+		free(handle);
+		return NULL;
+	}
+
+	archive_entry_free(entry);
+
+	return (HANDLE)handle;
+}
+
+int DCPCALL PackToMem(HANDLE hMemPack, char* BufIn, int InLen, int* Taken, char* BufOut, int OutLen, int* Written, int SeekBy)
+{
+	printf("PackToMem\n");
+	ArcData handle = (ArcData)hMemPack;
+
+	if (!handle)
+		return E_ECREATE;
+
+	*Taken = 0;
+	*Written = 0;
+
+	size_t available = handle->buf_size - handle->offset;
+
+	if (available > 0)
+	{
+		if (!BufIn)
+			printf("anybody home? here some extra for you (%ld)\n", available);
+
+		if (OutLen > available)
+			*Written = available;
+		else
+			*Written = OutLen;
+
+		memcpy(BufOut, handle->buf + handle->offset, *Written);
+		handle->offset += *Written;
+
+		if (handle->offset == handle->buf_size)
+		{
+			handle->offset = 0;
+			handle->buf_size = 0;
+		}
+
+		return MEMPACK_OK;
+	}
+
+	if (InLen > 0)
+	{
+		*Taken = archive_write_data(handle->archive, BufIn, (size_t)InLen);
+
+		if (*Taken < 0)
+		{
+			errmsg(archive_error_string(handle->archive), MB_OK | MB_ICONERROR);
+			return E_EWRITE;
+		}
+
+		return MEMPACK_OK;
+	}
+
+	if (InLen == 0 && !handle->is_finished)
+	{
+		if (archive_write_close(handle->archive) != ARCHIVE_OK)
+			return E_EWRITE;
+
+		handle->is_finished = true;
+
+		return PackToMem(hMemPack, NULL, 0, Taken, BufOut, OutLen, Written, SeekBy);
+	}
+
+	if (handle->is_finished && handle->buf_size == 0)
+		return MEMPACK_DONE;
+
+	return MEMPACK_OK;
+}
+
+int DCPCALL DoneMemPack(HANDLE hMemPack)
+{
+	printf("DoneMemPack\n");
+	ArcData handle = (ArcData)hMemPack;
+
+	if (handle)
+	{
+		archive_write_free(handle->archive);
+
+		if (handle->buf)
+			free(handle->buf);
+
+		free(handle);
+	}
+
+	return E_SUCCESS;
 }
