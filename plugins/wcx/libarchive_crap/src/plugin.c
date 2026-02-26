@@ -358,13 +358,22 @@ static bool mtree_opts_nodata(void)
 	return result;
 }
 
-static int archive_set_format_filter(struct archive *a, const char*ext)
+static int archive_set_tar_or_raw(struct archive *a, bool is_tar)
+{
+	if (is_tar)
+		return archive_write_set_format(a, gTarFormat);
+	else
+		return archive_write_set_format_raw(a);
+}
+
+
+static int archive_set_format_filter(struct archive *a, const char*ext, bool is_tar)
 {
 	int ret;
 
 	if (g_key_file_has_key(gCfg, ext, "write_cmd", NULL))
 	{
-		ret = archive_write_set_format_raw(a);
+		ret = archive_set_tar_or_raw(a, is_tar);
 		gchar *cmd = g_key_file_get_string(gCfg, ext, "write_cmd", NULL);
 
 		if (cmd)
@@ -380,7 +389,7 @@ static int archive_set_format_filter(struct archive *a, const char*ext)
 	}
 	else if (strcasecmp(ext, ".zst") == 0)
 	{
-		ret = archive_write_set_format_raw(a);
+		ret = archive_set_tar_or_raw(a, is_tar);
 		ret = archive_write_add_filter_zstd(a);
 	}
 	else if (strcasecmp(ext, ".mtree") == 0)
@@ -392,62 +401,62 @@ static int archive_set_format_filter(struct archive *a, const char*ext)
 	}
 	else if (strcasecmp(ext, ".lz4") == 0)
 	{
-		ret = archive_write_set_format_raw(a);
+		ret = archive_set_tar_or_raw(a, is_tar);
 		ret = archive_write_add_filter_lz4(a);
 	}
 	else if (strcasecmp(ext, ".lz") == 0)
 	{
-		ret = archive_write_set_format_raw(a);
+		ret = archive_set_tar_or_raw(a, is_tar);
 		ret = archive_write_add_filter_lzip(a);
 	}
 	else if (strcasecmp(ext, ".lzo") == 0)
 	{
-		ret = archive_write_set_format_raw(a);
+		ret = archive_set_tar_or_raw(a, is_tar);
 		ret = archive_write_add_filter_lzop(a);
 	}
 	else if (strcasecmp(ext, ".lrz") == 0)
 	{
-		ret = archive_write_set_format_raw(a);
+		ret = archive_set_tar_or_raw(a, is_tar);
 		ret = archive_write_add_filter_lrzip(a);
 	}
 	else if (strcasecmp(ext, ".grz") == 0)
 	{
-		ret = archive_write_set_format_raw(a);
+		ret = archive_set_tar_or_raw(a, is_tar);
 		ret = archive_write_add_filter_grzip(a);
 	}
 	else if (strcasecmp(ext, ".lzma") == 0)
 	{
-		ret = archive_write_set_format_raw(a);
+		ret = archive_set_tar_or_raw(a, is_tar);
 		ret = archive_write_add_filter_lzma(a);
 	}
 	else if (strcasecmp(ext, ".b64u") == 0)
 	{
-		ret = archive_write_set_format_raw(a);
+		ret = archive_set_tar_or_raw(a, is_tar);
 		ret = archive_write_add_filter_b64encode(a);
 	}
 	else if (strcasecmp(ext, ".uue") == 0)
 	{
-		ret = archive_write_set_format_raw(a);
+		ret = archive_set_tar_or_raw(a, is_tar);
 		ret = archive_write_add_filter_uuencode(a);
 	}
 	else if (strcasecmp(ext, ".gz") == 0)
 	{
-		ret = archive_write_set_format_raw(a);
+		ret = archive_set_tar_or_raw(a, is_tar);
 		ret = archive_write_add_filter_gzip(a);
 	}
 	else if (strcasecmp(ext, ".xz") == 0)
 	{
-		ret = archive_write_set_format_raw(a);
+		ret = archive_set_tar_or_raw(a, is_tar);
 		ret = archive_write_add_filter_xz(a);
 	}
 	else if (strcasecmp(ext, ".z") == 0)
 	{
-		ret = archive_write_set_format_raw(a);
+		ret = archive_set_tar_or_raw(a, is_tar);
 		ret = archive_write_add_filter_compress(a);
 	}
 	else if (strcasecmp(ext, ".bz2") == 0)
 	{
-		ret = archive_write_set_format_raw(a);
+		ret = archive_set_tar_or_raw(a, is_tar);
 		ret = archive_write_add_filter_bzip2(a);
 	}
 	else if (strcasecmp(ext, ".warc") == 0)
@@ -538,7 +547,7 @@ int archive_repack_existing(struct archive *a, char* filename, char** tmpfn, int
 	else
 	{
 		g_strlcpy(infile, filename, PATH_MAX);
-		*tmpfn = tempnam_at_home(dirname(infile), "arc_");
+		*tmpfn = tempnam_at_home(infile, "arc_");
 
 		if (gOptions[0] != '\0')
 		{
@@ -573,7 +582,7 @@ int archive_repack_existing(struct archive *a, char* filename, char** tmpfn, int
 	else
 	{
 
-		if (*tmpfn == NULL || access(*tmpfn, F_OK) != -1)
+		if (*tmpfn == NULL) // || access(*tmpfn, F_OK) != -1)
 			result = E_EWRITE;
 		else if ((ofd = open(*tmpfn, O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)) == -1)
 			result = E_EWRITE;
@@ -1715,7 +1724,7 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 
 	struct archive *a = archive_write_new();
 
-	if ((ret = archive_set_format_filter(a, ext)) == ARCHIVE_WARN)
+	if ((ret = archive_set_format_filter(a, ext, (strstr(PackedFile, ".tar.") != NULL))) == ARCHIVE_WARN)
 	{
 		printf("libarchive: %s\n", archive_error_string(a));
 	}
@@ -2055,7 +2064,7 @@ int DCPCALL DeleteFiles(char *PackedFile, char *DeleteList)
 
 	struct archive *a = archive_write_new();
 
-	if ((ret = archive_set_format_filter(a, ext)) == ARCHIVE_WARN)
+	if ((ret = archive_set_format_filter(a, ext, (strstr(PackedFile, ".tar.") != NULL))) == ARCHIVE_WARN)
 	{
 		printf("libarchive: %s\n", archive_error_string(a));
 	}
@@ -2101,7 +2110,7 @@ HANDLE DCPCALL StartMemPack(int Options, char *FileName)
 
 	handle->archive = archive_write_new();
 
-	if ((ret = archive_set_format_filter(handle->archive, ext)) == ARCHIVE_WARN)
+	if ((ret = archive_set_format_filter(handle->archive, ext, FALSE)) == ARCHIVE_WARN)
 	{
 		printf("libarchive: %s\n", archive_error_string(handle->archive));
 	}
