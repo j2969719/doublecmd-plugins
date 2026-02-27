@@ -25,7 +25,12 @@ qt5:
 		$(RM) plugin.moc
 
 qt6:
-		/lib/$@/moc $(DEFINES) $(includes) -i plugin.cpp -o plugin.moc
+		@if [ -f /lib/$@/libexec/moc ]; then \
+			/lib/$@/libexec/moc $(DEFINES) $(includes) -i plugin.cpp -o plugin.moc ; \
+		else \
+			/lib/$@/moc $(DEFINES) $(includes) -i plugin.cpp -o plugin.moc ; \
+		fi
+
 		$(CXX) $(CXXFLAGS) -o '../$(plugdir)_$@.$(plugtype)' plugin.cpp $(libs) $($@_libs) $(includes) -D'PLUGNAME="'$(plugdir)_$@.$(plugtype)'"' -D'DETECT_STRING="$(detectstring)"' -D'PLUGTARGET="$@"' || echo '$(plugdir)_$@.$(plugtype)' >> ../../../dist/.build_fail.lst
 		$(RM) plugin.moc
 
