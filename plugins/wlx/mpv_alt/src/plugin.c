@@ -4,6 +4,9 @@
 #include <stdint.h>
 #ifdef GTKPLUG
 #include <gtk/gtk.h>
+#ifdef GTK3PLUG
+#include <gtk/gtkx.h>
+#endif
 #else
 #include <QtWidgets>
 #endif

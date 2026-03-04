@@ -8,6 +8,7 @@ includes := -I../../../sdk
 
 gtk2_libs := `pkg-config --cflags --libs gtk+-2.0`
 gtk2_drawing_area_libs := `pkg-config --cflags --libs gtk+-2.0`
+gtk3_libs := `pkg-config --cflags --libs gtk+-3.0`
 qt5_libs := `pkg-config --cflags --libs Qt5Widgets`
 qt6_libs := `pkg-config --cflags --libs Qt6Widgets Qt6Core Qt6Gui`
 
@@ -20,13 +21,16 @@ plugfiles := $(filter-out $(wildcard ../*.$(plugtype)), $(wildcard ../*))
 detectstring := (EXT=\"AVI\")|(EXT=\"MKV\")|(EXT=\"FLV\")|(EXT=\"MPG\")|(EXT=\"MPEG\")|(EXT=\"MP4\")|(EXT=\"3GP\")|(EXT=\"MP3\")|(EXT=\"OGG\")|(EXT=\"WMA\")|(EXT=\"BIK\")|(EXT=\"VOC\")|(EXT=\"WAV\")|(EXT=\"WEBM\")|(EXT=\"VOB\")|(EXT=\"ROQ\")|(EXT=\"IVF\")|(EXT=\"MOV\")|(EXT=\"FLAC\")|(EXT=\"WMV\")|(EXT=\"M4A\")|(EXT=\"AIF\")|(EXT=\"AIFF\")|(EXT=\"OPUS\")
 
 
-all: gtk2 gtk2_drawing_area qt5 qt6
+all: gtk2 gtk2_drawing_area gtk3 qt5 qt6
 
 gtk2:
 		$(CC) $(CFLAGS) -o '../$(plugdir)_$@.$(plugtype)' plugin.c $(libs) $($@_libs) $(includes) -D'PLUGNAME="'$(plugdir)_$@.$(plugtype)'"' -D'DETECT_STRING="$(detectstring)"' -DGTKPLUG || echo '$(plugdir)_$@.$(plugtype)' >> ../../../dist/.build_fail.lst
 
 gtk2_drawing_area:
 		$(CC) $(CFLAGS) -o '../$(plugdir)_$@.$(plugtype)' plugin.c $(libs) $($@_libs) $(includes) -D'PLUGNAME="'$(plugdir)_$@.$(plugtype)'"' -D'DETECT_STRING="$(detectstring)"' -DGTKPLUG -DDRAWAREA || echo '$(plugdir)_$@.$(plugtype)' >> ../../../dist/.build_fail.lst
+
+gtk3:
+		$(CC) $(CFLAGS) -o '../$(plugdir)_$@.$(plugtype)' plugin.c $(libs) $($@_libs) $(includes) -D'PLUGNAME="'$(plugdir)_$@.$(plugtype)'"' -D'DETECT_STRING="$(detectstring)"' -DGTKPLUG -DGTK3PLUG -DDRAWAREA || echo '$(plugdir)_$@.$(plugtype)' >> ../../../dist/.build_fail.lst
 
 qt5:
 		$(CXX) $(CXXFLAGS) -o '../$(plugdir)_$@.$(plugtype)' plugin.c $(libs) $($@_libs) $(includes) -D'PLUGNAME="'$(plugdir)_$@.$(plugtype)'"' -D'DETECT_STRING="$(detectstring)"' -D'PLUGTARGET="$@"' || echo '$(plugdir)_$@.$(plugtype)' >> ../../../dist/.build_fail.lst
