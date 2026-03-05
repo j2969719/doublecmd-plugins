@@ -45,9 +45,15 @@ dist:
 			rm ../pluginst.inf || echo $(plugdir)_gtk2.$(plugtype) >> ../../../dist/.missing.log
 
 		test -f '../$(plugdir)_gtk2_drawing_area.$(plugtype)' && \
-			echo -e "[plugininstall]\ndescription=$(plugdescr)\ntype=$(plugtype)\nfile=$(plugdir)_gtk2.$(plugtype)\ndefaultdir=$(plugdir)" > ../pluginst.inf && \
-			tar --exclude=../src -h -cvzf '../../../dist/$(plugtype)_$(plugdir)_gtk2_$(shell date +%y.%m.%d).tar.gz' ../pluginst.inf '../$(plugdir)_gtk2.$(plugtype)' $(plugfiles) && \
-			rm ../pluginst.inf || echo $(plugdir)_gtk2.$(plugtype) >> ../../../dist/.missing.log
+			echo -e "[plugininstall]\ndescription=$(plugdescr)\ntype=$(plugtype)\nfile=$(plugdir)_gtk2_drawing_area.$(plugtype)\ndefaultdir=$(plugdir)" > ../pluginst.inf && \
+			tar --exclude=../src -h -cvzf '../../../dist/$(plugtype)_$(plugdir)_gtk2_drawing_area_$(shell date +%y.%m.%d).tar.gz' ../pluginst.inf '../$(plugdir)_gtk2_drawing_area.$(plugtype)' $(plugfiles) && \
+			rm ../pluginst.inf || echo $(plugdir)_gtk2_drawing_area.$(plugtype) >> ../../../dist/.missing.log
+
+		test -f '../$(plugdir)_gtk3.$(plugtype)' && \
+			echo -e "[plugininstall]\ndescription=$(plugdescr)\ntype=$(plugtype)\nfile=$(plugdir)_gtk3.$(plugtype)\ndefaultdir=$(plugdir)" > ../pluginst.inf && \
+			tar --exclude=../src -h -cvzf '../../../dist/$(plugtype)_$(plugdir)_gtk3_$(shell date +%y.%m.%d).tar.gz' ../pluginst.inf '../$(plugdir)_gtk3.$(plugtype)' $(plugfiles) && \
+			rm ../pluginst.inf || echo $(plugdir)_gtk3.$(plugtype) >> ../../../dist/.missing.log
+
 
 		test -f '../$(plugdir)_qt5.$(plugtype)' && \
 			echo -e "[plugininstall]\ndescription=$(plugdescr)\ntype=$(plugtype)\nfile=$(plugdir)_qt5.$(plugtype)\ndefaultdir=$(plugdir)" > ../pluginst.inf && \

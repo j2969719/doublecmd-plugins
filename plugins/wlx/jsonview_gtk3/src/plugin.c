@@ -1,0 +1,1 @@
+../../jsonview_gtk2/src/plugin.c

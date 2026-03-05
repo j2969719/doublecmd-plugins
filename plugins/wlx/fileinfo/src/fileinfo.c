@@ -29,6 +29,13 @@
 #include <locale.h>
 #define GETTEXT_PACKAGE "plugins"
 
+#ifdef GTK3PLUG
+#define GDK_k GDK_KEY_k
+#define GDK_d GDK_KEY_d
+#define GDK_r GDK_KEY_r
+#endif
+
+
 #define _enc_default "UTF-8"
 #define _enc_ansi "CP1251"
 #define _enc_dos "866"
@@ -143,7 +150,12 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 		return NULL;
 	}
 
+//#ifndef GTK3PLUG
 	gFix = gtk_vbox_new(FALSE, 5);
+//#else
+//	gFix = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5);
+//	gtk_box_set_homogeneous(GTK_BOX(gFix), FALSE);
+//#endif
 	gtk_container_add(GTK_CONTAINER((GtkWidget*)(ParentWin)), gFix);
 
 	scroll = gtk_scrolled_window_new(NULL, NULL);
@@ -179,7 +191,11 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 #else
 	tView = gtk_source_view_new_with_buffer(tBuf);
 #endif
+//#ifndef GTK3PLUG
 	gtk_widget_modify_font(tView, pango_font_description_from_string(font));
+//#else
+//	gtk_widget_override_font(tView, pango_font_description_from_string(font));
+//#endif
 	gtk_text_view_set_editable(GTK_TEXT_VIEW(tView), FALSE);
 	g_signal_connect(G_OBJECT(tView), "key_press_event", G_CALLBACK(on_key_press), (gpointer)gFix);
 
