@@ -1,4 +1,4 @@
-jsonview_gtk2
+jsonview_gtk3
 ========
 Very primitive JSON Viewer.
 

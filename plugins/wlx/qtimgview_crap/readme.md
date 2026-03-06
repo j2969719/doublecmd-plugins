@@ -1,4 +1,4 @@
-qtimgview
+qtimgview_crap
 ========
 Like [qtimgview](../qtimgview) but for any files if you can convert it to image (see `settings.ini`).
 

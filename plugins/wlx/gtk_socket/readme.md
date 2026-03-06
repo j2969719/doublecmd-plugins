@@ -6,6 +6,7 @@ Plugin-wrapper for embed window of different scripts and utilities, used GtkSock
 
 ## Compatibility
 - `doublecmd-gtk2`
+- `doublecmd-gtk3`
 
 ## Notes
 Works with file extensions and MIME types, see `settings.ini`.

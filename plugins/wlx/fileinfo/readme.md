@@ -6,6 +6,7 @@ Displays various information about file using command line utilities.
 
 ## Compatibility
 - `doublecmd-gtk2`
+- `doublecmd-gtk3`
 
 ## Notes
 Requires `gtksourceview-2.0` ([original](https://github.com/doublecmd/doublecmd/wiki/Plugins#fileinfo)).

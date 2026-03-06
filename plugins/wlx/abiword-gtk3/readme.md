@@ -1,4 +1,4 @@
-abiword-gtk2
+abiword-gtk3
 ========
 Displays DOC, RTF, DOT, ABW, AWT, ZABW.
 

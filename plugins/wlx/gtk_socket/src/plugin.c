@@ -1,5 +1,8 @@
 #define _GNU_SOURCE
 #include <gtk/gtk.h>
+#ifdef GTK3PLUG
+#include <gtk/gtkx.h>
+#endif
 #include <gdk/gdkx.h>
 #include <dlfcn.h>
 #include <magic.h>
@@ -8,7 +11,12 @@
 #include <string.h>
 #include "wlxplugin.h"
 
-#define _plgname "gtk_socket.wlx"
+#ifdef GTK3PLUG
+#define GDK_Escape GDK_KEY_Escape
+#define KEY_EVENT "key-press-event"
+#else
+#define KEY_EVENT "key_press_event"
+#endif
 
 static char cfg_path[PATH_MAX];
 static char plug_path[PATH_MAX];
@@ -160,7 +168,7 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	GtkWidget *socket;
 	GtkWidget *wspin;
 	gchar *file_ext, *mime_type;
-	gchar *command;
+	gchar *command = NULL;
 	gchar *group = NULL;
 	gboolean noquote;
 	gboolean insensitive;
@@ -170,10 +178,10 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	cfg = g_key_file_new();
 
 	if (!g_key_file_load_from_file(cfg, cfg_path, G_KEY_FILE_KEEP_COMMENTS, &err))
-		g_print("%s (%s): %s\n", _plgname, cfg_path, (err)->message);
+		g_print("%s (%s): %s\n", PLUGNAME, cfg_path, (err)->message);
 	else
 	{
-		if (g_key_file_get_boolean(cfg, _plgname, "uselibmagic", NULL))
+		if (g_key_file_get_boolean(cfg, PLUGNAME, "uselibmagic", NULL))
 			mime_type = get_mime_type_magic(FileToLoad);
 		else
 			mime_type = get_mime_type(FileToLoad);
@@ -184,22 +192,24 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 		{
 			group = cfg_chk_redirect(cfg, file_ext);
 			command = cfg_get_command(cfg, group);
+			g_free(file_ext);
 		}
 
-		if (mime_type && (!file_ext || !command))
+		if (!command && mime_type)
 		{
+			if (group)
+				g_free(group);
+
 			group = cfg_chk_redirect(cfg, mime_type);
 			command = cfg_get_command(cfg, group);
 			g_free(mime_type);
 		}
-		else if (file_ext)
-			g_free(file_ext);
 
 		noquote = g_key_file_get_boolean(cfg, group, "noquote", NULL);
 		insensitive = g_key_file_get_boolean(cfg, group, "insensitive", NULL);
 		crapgrab = g_key_file_get_boolean(cfg, group, "grab", NULL);
 
-		nospinner = g_key_file_get_boolean(cfg, _plgname, "nospinner", NULL);
+		nospinner = g_key_file_get_boolean(cfg, PLUGNAME, "nospinner", NULL);
 
 		if (!nospinner)
 			nospinner = g_key_file_get_boolean(cfg, group, "nospinner", NULL);
@@ -217,31 +227,45 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	if (!command)
 		return NULL;
 
+#ifndef GTK3PLUG
 	gFix = gtk_vbox_new(FALSE, 5);
+#else
+	gFix =gtk_box_new(GTK_ORIENTATION_VERTICAL, 5);
+	gtk_widget_set_no_show_all(gFix, TRUE);
+#endif
 	gtk_container_add(GTK_CONTAINER(GTK_WIDGET(ParentWin)), gFix);
 	socket = gtk_socket_new();
 
 	if (!nospinner)
 	{
 		wspin = gtk_spinner_new();
-		gtk_spinner_start(GTK_SPINNER(wspin));
-		gtk_box_pack_start(GTK_BOX(gFix), wspin, TRUE, FALSE, 0);
 		gtk_widget_show(wspin);
+		gtk_spinner_start(GTK_SPINNER(wspin));
+		gtk_box_pack_start(GTK_BOX(gFix), wspin, TRUE, TRUE, 0);
 		g_signal_connect(socket, "plug-added", G_CALLBACK(plug_added), (gpointer)wspin);
 	}
 	else
 		gtk_widget_show(socket);
 
+#ifndef GTK3PLUG
 	gtk_container_add(GTK_CONTAINER(gFix), socket);
+#else
+	gtk_box_pack_end(GTK_BOX(gFix), socket, TRUE, TRUE, 0);
+
+	if (!nospinner)
+		gtk_widget_hide(socket);
+#endif
 
 	if (crapgrab)
 	{
 		gtk_grab_add(socket);
-		g_signal_connect(G_OBJECT(socket), "key_press_event", G_CALLBACK(key_press_crap), NULL);
+		g_signal_connect(G_OBJECT(socket), KEY_EVENT, G_CALLBACK(key_press_crap), NULL);
 	}
-
+#ifndef GTK3PLUG
 	GdkNativeWindow id = gtk_socket_get_id(GTK_SOCKET(socket));
-
+#else
+	Window id = gtk_socket_get_id(GTK_SOCKET(socket));
+#endif
 	command = str_replace(command, "$FILE", noquote ? g_strdup(FileToLoad) : g_shell_quote(FileToLoad));
 	command = str_replace(command, "$XID", g_strdup_printf("%d", id));
 	g_print("%s\n", command);
@@ -257,7 +281,11 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 		const gchar *role = gtk_window_get_role(GTK_WINDOW(gtk_widget_get_toplevel(GTK_WIDGET(ParentWin))));
 
 		if (g_strcmp0(role, "TfrmViewer") != 0)
+#ifndef GTK3PLUG
 			gtk_widget_set_state(socket, GTK_STATE_INSENSITIVE);
+#else
+			gtk_widget_set_sensitive(socket, FALSE);
+#endif
 	}
 
 	gtk_widget_show(gFix);
@@ -293,8 +321,8 @@ void DCPCALL ListSetDefaultParams(ListDefaultParamStruct* dps)
 
 	if (dladdr(cfg_path, &dlinfo) != 0)
 	{
-		strncpy(cfg_path, dlinfo.dli_fname, PATH_MAX);
-		strncpy(plug_path, g_path_get_dirname(cfg_path), PATH_MAX);
+		g_strlcpy(cfg_path, dlinfo.dli_fname, PATH_MAX);
+		g_strlcpy(plug_path, g_path_get_dirname(cfg_path), PATH_MAX);
 		char *pos = strrchr(cfg_path, '/');
 
 		if (pos)

@@ -1,4 +1,4 @@
-sqlview_gtk2
+sqlview_gtk3
 ========
 Very primitive SQL Viewer.
 
