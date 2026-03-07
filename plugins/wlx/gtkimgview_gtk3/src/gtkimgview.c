@@ -49,7 +49,11 @@ int DCPCALL ListLoadNext(HWND ParentWin, HWND PluginWin, char* FileToLoad, int S
 
 void DCPCALL ListCloseWindow(HWND ListWin)
 {
+	GtkWidget *view = (GtkWidget*)g_object_get_data(G_OBJECT(ListWin), "imageview");
+	GdkPixbuf *pixbuf = gdk_pixbuf_new(GDK_COLORSPACE_RGB, TRUE, 8, 1, 1);
+	gtk_image_view_set_pixbuf(GTK_IMAGE_VIEW(view), pixbuf, 1.0);
 	gtk_widget_destroy(GTK_WIDGET(ListWin));
+	g_object_unref(pixbuf);
 }
 /*
 int DCPCALL ListSendCommand(HWND ListWin, int Command, int Parameter)
