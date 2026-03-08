@@ -11,4 +11,4 @@ This plugin allows you to view HTML/XHTML files. It is based on webkit2gtk engin
 Requires version of `webkit` compiled with GTK3 support.
 
 ## Dependencies
-![arch](https://wiki.archlinux.org/favicon.ico) pacman -S webkit2gtk
+![arch](https://wiki.archlinux.org/favicon.ico) `pacman -S webkit2gtk`

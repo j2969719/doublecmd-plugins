@@ -6,6 +6,7 @@ Displays file content with `libarchive` ([supported formats](https://github.com/
 
 ## Compatibility
 - `doublecmd-gtk2`
+- `doublecmd-gtk3`
 
 ## Notes
 Requires `libarchive` library.

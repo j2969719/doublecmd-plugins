@@ -117,9 +117,6 @@ Plugin is able to calculate and display hash values for any file. Can be used to
 - [simplefileinfo](plugins/wdx/simplefileinfo)<br>
 A small wdx-plugin for Double Commander which provides additional information about the file via libmagic and stat.
 
-- [skipdotfiles](plugins/wdx/skipdotfiles)<br>
-Excludes files/folders with a leading dot (hidden on unix-like) from search results.
-
 - [texttooltip](plugins/wdx/texttooltip)<br>
 Returns one or more lines of files, detects text encoding.
 
@@ -155,9 +152,6 @@ Getting some information about attached pictures: MP3 (ID3v2.3 & ID3v2.4) and FL
 - [bintstwdx.lua](plugins/wdx/scripts/bintstwdx.lua)<br>
 Checking: binary or Unicode text file (encoding UTF-8, UTF-16 or UTF-32 and byte order, detection by BOM).
 
-- [caseduplwdx.lua](plugins/wdx/scripts/caseduplwdx.lua) *(cross platform)*<br>
-Search for duplicates with the same name but with a different case.
-
 - [changecasewdx.lua](plugins/wdx/scripts/changecasewdx.lua) *(cross platform)*<br>
 Changing the case of letters, see description in the beginning of script.
 
@@ -169,9 +163,6 @@ Check filename limitations and recommendations, path lenght and other, see descr
 
 - [checkthumbswdx.lua](plugins/wdx/scripts/checkthumbswdx.lua) *(cross platform)*<br>
 Getting some information from thumbnails files: created by Double Commander (Windows or Linux) or the system generator of thumbnails (Linux).
-
-- [descriptionwdx.lua](plugins/wdx/scripts/descriptionwdx.lua)<br>
-Script reads file descriptions from `descript.ion`.
 
 - [djvuwdx.lua](plugins/wdx/scripts/djvuwdx.lua)<br>
 Getting some information from DjVu files and searching text. Requires `djvused`.
@@ -208,9 +199,6 @@ Returns parts of full filename: Full name, Name, Base name, Extension, Path, Par
 - [filenamechrstatwdx.lua](plugins/wdx/scripts/filenamechrstatwdx.lua) *(cross platform)*<br>
 Returns count of characters in file name: total, alphanumeric, spaces, letters (all, lower case or upper case letters), digits and punctuation characters. You can choose the full path, path, file name or file extension.
 
-- [filenamematchwdx.lua](plugins/wdx/scripts/filenamematchwdx.lua) *(cross platform)*<br>
-Returns part of file name for sorting (getting title, volume, chapter, etc).
-
 - [filenamereplacewdx.lua](plugins/wdx/scripts/filenamereplacewdx.lua) *(cross platform)*<br>
 Returns new file name after replacing total or part of file name by the list (see and edit `RplFiles` in the beginning of script).
 
@@ -243,7 +231,7 @@ Getting some information from local copy of Git repository. Requires `git`.
 - [groupswdx.lua](plugins/wdx/scripts/groupswdx.lua)<br>
 Returns the group name by the file mask.
 
-- [hexdecheaderwdx.lua](plugins/wdx/scripts/hexdecheaderwdx.lua) and [hexheaderwdx.lua](plugins/wdx/scripts/hexheaderwdx.lua) *(cross platform)*<br>
+- [hexdecheaderwdx.lua](plugins/wdx/scripts/hexdecheaderwdx.lua) *(cross platform)*<br>
 Examples: search by hex value. Now Double Commander can do it itself.
 
 - [icalendarwdx.lua](plugins/wdx/scripts/icalendarwdx.lua) *(cross platform)*<br>
@@ -308,9 +296,6 @@ For "Find files" dialog.
 - [somefilesindirwdx.lua](plugins/wdx/scripts/somefilesindirwdx.lua) *(cross platform)*<br>
 Like script above but for columns set or tooltips.
 
-- [stringmatchwdx.lua](plugins/wdx/scripts/stringmatchwdx.lua)<br>
-Plugin-example: search text in files, fields will create with patterns.
-
 - [svginfowdx.lua](plugins/wdx/scripts/svginfowdx.lua) *(cross platform)*<br>
 Getting some information from SVG files.
 
@@ -356,9 +341,6 @@ Getting some information from zsync-files.
 
 ---
 <a name="wfx"><h3>WFX plugins</h3></a>
-
-- [aur_crap](plugins/wfx/aur_crap)<br>
-List of packages in [AUR](https://aur.archlinux.org/). (slow, pretty useless)
 
 - [avfs_crap](plugins/wfx/avfs_crap)<br>
 Simple wfx plugin for [AVFS](http://avf.sourceforge.net/).
@@ -436,9 +418,6 @@ Displays PDF, DjVu, TIFF, PostScipt, CBR, CBZ, XPS. Requires Atril 2 (GTK2 versi
 - [csvview_gtk2](plugins/wlx/csvview_gtk2)<br>
 Very primitive CSV viewer.
 
-- ~[dirsize_crap](plugins/wlx/dirsize_crap)<br>
-Display folder and file sizes in quick view.~ (kinda useless and unfinished).
-
 - [evince2](plugins/wlx/evince2)<br>
 Displays PDF, DjVu, TIFF, PostScipt, CBR. Requires Evince 2 (GTK2 version).
 
@@ -472,9 +451,6 @@ If you have ImageMagick 6 (for example, Debian/Ubuntu-based distributions) then 
 
 - [libarchive_crap](plugins/wlx/libarchive_crap)<br>
 Displays file content with `libarchive` ([supported formats](https://github.com/libarchive/libarchive#supported-formats)).
-
-- [libarchive_cat_crap](plugins/wlx/libarchive_cat_crap)<br>
-Displays decompress data with `libarchive`.
 
 - [md4c_webkit](plugins/wlx/md4c_webkit)<br>
 This plugin allows you to view Markdown files.
@@ -561,9 +537,6 @@ Very primitive JSON Viewer.
 
 - [libarchive_qt_crap](plugins/wlx/libarchive_qt_crap)<br>
 Displays file content with `libarchive` ([supported formats](https://github.com/libarchive/libarchive#supported-formats)).
-
-- [libarchive_cat_qt_crap](plugins/wlx/libarchive_cat_qt_crap)<br>
-Displays decompress data with `libarchive`.
 
 - [md4c_qt](plugins/wlx/md4c_qt)<br>
 This plugin allows you to view Markdown files.

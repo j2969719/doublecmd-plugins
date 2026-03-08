@@ -6,7 +6,7 @@
 #include <QtWidgets>
 #include "wlxplugin.h"
 
-#define COMMENT_CMD "7z l %s -y | pcregrep -M -o1 \"(?s)(?<=Comment\\s=\\s)(.*?)\n\n\\s+Date\""
+#define COMMENT_CMD "7z l %s -y | pcregrep -M -o1 \"(?s)(?<=Comment\\s=\\s)[\n{]*(.*?)[}\n]*\n\\s+Date\""
 
 static QMimeDatabase db;
 

@@ -43,24 +43,22 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 	else
 		return NULL;
 
-	GtkWidget *plug_vbox = gtk_vbox_new(FALSE, 5);
-	gtk_container_add(GTK_CONTAINER(GTK_WIDGET(ParentWin)), plug_vbox);
 	GtkWidget *scroll_win = gtk_scrolled_window_new(NULL, NULL);
-	gtk_container_add(GTK_CONTAINER(plug_vbox), scroll_win);
+	gtk_container_add(GTK_CONTAINER(GTK_WIDGET(ParentWin)), scroll_win);
 	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scroll_win), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
 	GtkWidget *label = gtk_label_new(NULL);
 	gtk_label_set_selectable(GTK_LABEL(label), TRUE);
 	gtk_label_set_line_wrap(GTK_LABEL(label), FALSE);
 	gtk_label_set_justify(GTK_LABEL(label), GTK_JUSTIFY_CENTER);
-	gtk_widget_modify_font(label, pango_font_description_from_string("momo 13"));
+	gtk_widget_modify_font(label, pango_font_description_from_string("mono 13"));
 	gtk_label_set_text(GTK_LABEL(label), text);
 	g_free(text);
-	g_object_set_data(G_OBJECT(plug_vbox), "label", label);
-	gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(scroll_win), label);
-	gtk_widget_show_all(plug_vbox);
+	g_object_set_data(G_OBJECT(scroll_win), "label", label);
+	gtk_container_add(GTK_CONTAINER(scroll_win), label);
+	gtk_widget_show_all(scroll_win);
 
 
-	return plug_vbox;
+	return scroll_win;
 }
 
 void DCPCALL ListCloseWindow(HANDLE ListWin)
@@ -78,7 +76,10 @@ int DCPCALL ListSendCommand(HWND ListWin, int Command, int Parameter)
 	GtkWidget *view = (GtkWidget*)g_object_get_data(G_OBJECT(ListWin), "label");
 
 	if (Command == lc_copy)
+#ifdef GTK3PLUG
+		g_signal_emit_by_name(G_OBJECT(view), "copy-clipboard", NULL);
+#else
 		gtk_signal_emitv_by_name(GTK_OBJECT(view), "copy-clipboard", NULL);
-
+#endif
 	return LISTPLUGIN_OK;
 }

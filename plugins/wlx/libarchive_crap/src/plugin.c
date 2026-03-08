@@ -6,7 +6,7 @@
 #include <string.h>
 #include "wlxplugin.h"
 
-#define COMMENT_CMD "7z l %s -y | pcregrep -M -o1 \"(?s)(?<=Comment\\s=\\s)(.*?)\n\n\\s+Date\""
+#define COMMENT_CMD "7z l %s -y | pcregrep -M -o1 \"(?s)(?<=Comment\\s=\\s)[\n{]*(.*?)[}\n]*\n\\s+Date\""
 
 static gchar *get_owner_str(struct archive_entry *entry)
 {
@@ -227,7 +227,7 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 		}
 
 		if (filters)
-			info = g_strdup_printf("%s (filter(s): %s), %d file(s)", (gchar*)archive_format_name(a), filters, archive_file_count(a));
+			info = g_strdup_printf("%s (filter(s): %s), %d file(s)", (gchar *)archive_format_name(a), filters, archive_file_count(a));
 		else
 			info = g_strdup_printf("%s, %d file(s)", (gchar*)archive_format_name(a), archive_file_count(a));
 
@@ -239,8 +239,11 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 
 	archive_read_close(a);
 	archive_read_free(a);
-
+#ifdef GTK3PLUG
+	gFix = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5);
+#else
 	gFix = gtk_vbox_new(FALSE, 5);
+#endif
 	gtk_container_add(GTK_CONTAINER(GTK_WIDGET(ParentWin)), gFix);
 
 	infolabel = gtk_label_new(info);
@@ -249,7 +252,7 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	if (info)
 		g_free(info);
 
-	if (r == ARCHIVE_OK)
+	if (r == ARCHIVE_EOF)
 	{
 		gchar *comment = NULL;
 		gchar *comment_content[] =
@@ -393,7 +396,11 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scroll), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
 	versions = gtk_label_new(archive_version_details());
 	gtk_box_pack_start(GTK_BOX(gFix), versions, FALSE, FALSE, 1);
+#ifdef GTK3PLUG
+	gtk_label_set_xalign(GTK_LABEL(versions), GTK_ALIGN_END);
+#else
 	gtk_misc_set_alignment(GTK_MISC(versions), 1, 0.5);
+#endif
 	gtk_widget_show_all(gFix);
 	return gFix;
 }
