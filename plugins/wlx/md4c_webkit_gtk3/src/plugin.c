@@ -46,6 +46,7 @@ static gboolean decide_policy_cb(WebKitWebView *webView, WebKitPolicyDecision *d
 	{
 		gchar *path = g_strdup_printf("%s/%s", dir, uri);
 		gchar *html = md_to_html(path);
+		g_free(path);
 
 		if (html)
 		{
@@ -54,8 +55,6 @@ static gboolean decide_policy_cb(WebKitWebView *webView, WebKitPolicyDecision *d
 			webkit_policy_decision_ignore(decision);
 			return TRUE;
 		}
-
-		g_free(path);
 	}
 
 	return FALSE;
