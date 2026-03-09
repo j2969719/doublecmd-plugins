@@ -32,6 +32,35 @@ static gchar* md_to_html(char* FileToLoad)
 	return g_string_free(html, FALSE);
 }
 
+static gboolean decide_policy_cb(WebKitWebView *webView, WebKitPolicyDecision *decision, WebKitPolicyDecisionType type, gpointer user_data)
+{
+	if (type != WEBKIT_POLICY_DECISION_TYPE_NAVIGATION_ACTION)
+		return FALSE;
+
+	WebKitNavigationPolicyDecision *nav_decision = WEBKIT_NAVIGATION_POLICY_DECISION(decision);
+	WebKitNavigationAction *action = webkit_navigation_policy_decision_get_navigation_action(nav_decision);
+	const gchar *uri = webkit_uri_request_get_uri(webkit_navigation_action_get_request(action));
+	gchar *dir = (gchar*)g_object_get_data(G_OBJECT(webView), "dirname");
+
+	if (!g_strrstr(uri, "://") && g_str_has_suffix(uri, ".md"))
+	{
+		gchar *path = g_strdup_printf("%s/%s", dir, uri);
+		gchar *html = md_to_html(path);
+
+		if (html)
+		{
+			webkit_web_view_load_html(webView, html, NULL);
+			g_free(html);
+			webkit_policy_decision_ignore(decision);
+			return TRUE;
+		}
+
+		g_free(path);
+	}
+
+	return FALSE;
+}
+
 
 HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 {
@@ -49,11 +78,13 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	WebKitSettings *settings = webkit_settings_new();
 	webkit_settings_set_default_charset(settings, "utf-8");
 	GtkWidget *webView = webkit_web_view_new_with_settings(settings);
+	g_object_set_data(G_OBJECT(webView), "dirname", g_path_get_dirname(FileToLoad));
+	g_signal_connect(webView, "decide-policy", G_CALLBACK(decide_policy_cb), NULL);
 	webkit_web_view_load_html(WEBKIT_WEB_VIEW(webView), html, NULL);
 	g_free(html);
 
 	gtk_container_add(GTK_CONTAINER(scroll), webView);
-	g_object_set_data(G_OBJECT(scroll), "webkit", WEBKIT_WEB_VIEW(webView)); 
+	g_object_set_data(G_OBJECT(scroll), "webkit", WEBKIT_WEB_VIEW(webView));
 
 	gtk_widget_show_all(scroll);
 	return scroll;
@@ -67,6 +98,9 @@ int DCPCALL ListLoadNext(HWND ParentWin, HWND PluginWin, char* FileToLoad, int S
 		return LISTPLUGIN_ERROR;
 
 	WebKitWebView *webView = (WebKitWebView*)g_object_get_data(G_OBJECT(PluginWin), "webkit");
+	gchar *dir = (gchar*)g_object_get_data(G_OBJECT(webView), "dirname");
+	g_free(dir);
+	g_object_set_data(G_OBJECT(webView), "dirname", g_path_get_dirname(FileToLoad));
 	webkit_web_view_load_html(WEBKIT_WEB_VIEW(webView), html, NULL);
 	g_free(html);
 
@@ -75,6 +109,9 @@ int DCPCALL ListLoadNext(HWND ParentWin, HWND PluginWin, char* FileToLoad, int S
 
 void DCPCALL ListCloseWindow(HWND ListWin)
 {
+	WebKitWebView *webView = (WebKitWebView*)g_object_get_data(G_OBJECT(ListWin), "webkit");
+	gchar *dir = (gchar*)g_object_get_data(G_OBJECT(webView), "dirname");
+	g_free(dir);
 	gtk_widget_destroy(GTK_WIDGET(ListWin));
 }
 
