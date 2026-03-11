@@ -9,6 +9,17 @@
 #define _(STRING) gettext(STRING)
 #define GETTEXT_PACKAGE "plugins"
 
+#define ZOOM_IN_FACTOR  1.1
+#define ZOOM_OUT_FACTOR  0.9
+#define ZOOM_IN_MAX  5.0
+#define ZOOM_OUT_MAX 0.1
+
+#define RECT_SIZE 16
+//#define RECT1_COLOR 0.65, 0.65, 0.65
+//#define RECT2_COLOR 0.85, 0.85, 0.85
+#define RECT1_COLOR 0.3, 0.3, 0.3
+#define RECT2_COLOR 0.4, 0.4, 0.4
+
 class ImageViewer : public QWidget
 {
 		Q_OBJECT
@@ -24,11 +35,11 @@ class ImageViewer : public QWidget
 			QToolBar *toolbar = new QToolBar(this);
 			toolbar->addAction(QIcon::fromTheme("zoom-in"), _("Zoom In"), [this]()
 			{
-				scaleImage(1.1);
+				scaleImage(ZOOM_IN_FACTOR);
 			});
 			toolbar->addAction(QIcon::fromTheme("zoom-out"), _("Zoom Out"), [this]()
 			{
-				scaleImage(0.9);
+				scaleImage(ZOOM_OUT_FACTOR);
 			});
 			toolbar->addAction(QIcon::fromTheme("zoom-original"), _("Original Size"), [this]()
 			{
@@ -81,6 +92,7 @@ class ImageViewer : public QWidget
 			m_mamkimCanvas->setAlignment(Qt::AlignCenter);
 
 			m_movie = new QMovie(this);
+			m_pal.setBrush(QPalette::Window, QBrush(createShashechki()));
 
 			connect(m_movie, &QMovie::frameChanged, this, [this](int)
 			{
@@ -166,7 +178,7 @@ class ImageViewer : public QWidget
 		{
 			if (event->modifiers() & Qt::ControlModifier)
 			{
-				scaleImage(event->angleDelta().y() > 0 ? 1.1 : 0.9);
+				scaleImage(event->angleDelta().y() > 0 ? ZOOM_IN_FACTOR : ZOOM_OUT_FACTOR);
 				event->accept();
 			}
 			else
@@ -216,7 +228,7 @@ class ImageViewer : public QWidget
 		void scaleImage(double factor)
 		{
 			m_isFit = false;
-			m_zoomFactor = qBound(0.01, m_zoomFactor * factor, 20.0);
+			m_zoomFactor = qBound(ZOOM_OUT_MAX, m_zoomFactor * factor, ZOOM_IN_MAX);
 			updateZoom();
 		}
 
@@ -258,6 +270,9 @@ class ImageViewer : public QWidget
 			trans.scale(m_isFlipH ? -1 : 1, m_isFlipV ? -1 : 1);
 			trans.rotate(m_rotation);
 
+			m_mamkimCanvas->setPalette(m_pal);
+			m_mamkimCanvas->setAutoFillBackground(true);
+
 			if (m_isStatic)
 			{
 				QPixmap pix = m_staticPixmap.scaled(scaledSize, Qt::KeepAspectRatio, Qt::SmoothTransformation);
@@ -286,6 +301,22 @@ class ImageViewer : public QWidget
 			m_lblSize->setText(text);
 		}
 
+		QPixmap createShashechki()
+		{
+			QPixmap tile(RECT_SIZE * 2, RECT_SIZE * 2);
+			QPainter bobRoss(&tile);
+
+			QColor color1 = QColor::fromRgbF(RECT1_COLOR);
+			QColor color2 = QColor::fromRgbF(RECT2_COLOR);
+			bobRoss.fillRect(0, 0, RECT_SIZE, RECT_SIZE, color1);
+			bobRoss.fillRect(RECT_SIZE, RECT_SIZE, RECT_SIZE, RECT_SIZE, color1);
+			bobRoss.fillRect(RECT_SIZE, 0, RECT_SIZE, RECT_SIZE, color2);
+			bobRoss.fillRect(0, RECT_SIZE, RECT_SIZE, RECT_SIZE, color2);
+
+			return tile;
+		}
+
+		QPalette m_pal;
 		int m_rotation;
 		QSize m_orgSize;
 		QMovie *m_movie;
