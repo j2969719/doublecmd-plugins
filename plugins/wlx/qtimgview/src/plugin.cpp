@@ -87,6 +87,7 @@ class ImageViewer : public QWidget
 			m_scrollArea = new QScrollArea(this);
 			m_scrollArea->setAlignment(Qt::AlignCenter);
 			m_scrollArea->setWidgetResizable(false);
+			m_scrollArea->viewport()->installEventFilter(this);
 
 			m_mamkimCanvas = new QLabel;
 			m_mamkimCanvas->setAlignment(Qt::AlignCenter);
@@ -116,6 +117,7 @@ class ImageViewer : public QWidget
 			m_isFlipH = false;
 			m_isFlipV = false;
 			m_isStatic = false;
+			m_isTransparent = false;
 			m_mamkimCanvas->setMovie(nullptr);
 
 			if (reader.supportsAnimation() && reader.imageCount() > 1)
@@ -139,6 +141,7 @@ class ImageViewer : public QWidget
 
 				m_mamkimCanvas->setMovie(nullptr);
 				m_orgSize = m_staticPixmap.size();
+				m_isTransparent = m_staticPixmap.hasAlpha();
 			}
 
 			m_isFit = true;
@@ -173,7 +176,7 @@ class ImageViewer : public QWidget
 			if (m_isFit)
 				fitToParent();
 		}
-
+/*
 		void wheelEvent(QWheelEvent *event) override
 		{
 			if (event->modifiers() & Qt::ControlModifier)
@@ -183,6 +186,66 @@ class ImageViewer : public QWidget
 			}
 			else
 				QWidget::wheelEvent(event);
+		}
+*/
+
+		bool eventFilter(QObject *obj, QEvent *event) override
+		{
+			if (obj == m_scrollArea->viewport())
+			{
+				switch (event->type())
+				{
+					case QEvent::MouseButtonPress:
+					{
+						QMouseEvent *mouseEvent = static_cast<QMouseEvent*>(event);
+
+						if (mouseEvent->button() == Qt::LeftButton)
+						{
+							m_lastMousePos = mouseEvent->pos();
+							return true;
+						}
+
+						break;
+					}
+
+					case QEvent::MouseMove:
+					{
+						QMouseEvent *mouseEvent = static_cast<QMouseEvent*>(event);
+
+						if (mouseEvent->buttons() & Qt::LeftButton)
+						{
+							QPoint drag = mouseEvent->pos() - m_lastMousePos;
+							m_lastMousePos = mouseEvent->pos();
+							auto barH = m_scrollArea->horizontalScrollBar();
+							auto barV = m_scrollArea->verticalScrollBar();
+							barH->setValue(barH->value() - drag.x());
+							barV->setValue(barV->value() - drag.y());
+
+							return true;
+						}
+
+						break;
+					}
+
+					case QEvent::Wheel:
+					{
+						QWheelEvent *wheel = static_cast<QWheelEvent*>(event);
+
+						if (wheel->modifiers() & Qt::ControlModifier)
+						{
+							scaleImage(wheel->angleDelta().y() > 0 ? 1.1 : 0.9);
+							return true;
+						}
+
+						break;
+					}
+
+					default:
+						break;
+				}
+			}
+
+			return QObject::eventFilter(obj, event);
 		}
 
 	private:
@@ -270,11 +333,14 @@ class ImageViewer : public QWidget
 			trans.scale(m_isFlipH ? -1 : 1, m_isFlipV ? -1 : 1);
 			trans.rotate(m_rotation);
 
-			m_mamkimCanvas->setPalette(m_pal);
-			m_mamkimCanvas->setAutoFillBackground(true);
-
 			if (m_isStatic)
 			{
+				if (m_isTransparent)
+				{
+					m_mamkimCanvas->setPalette(m_pal);
+					m_mamkimCanvas->setAutoFillBackground(true);
+				}
+
 				QPixmap pix = m_staticPixmap.scaled(scaledSize, Qt::KeepAspectRatio, Qt::SmoothTransformation);
 				m_mamkimCanvas->setPixmap(pix.transformed(trans, Qt::SmoothTransformation));
 			}
@@ -291,6 +357,12 @@ class ImageViewer : public QWidget
 				displaySize.transpose();
 
 			m_mamkimCanvas->setFixedSize(displaySize);
+
+			int newH = (m_mamkimCanvas->width() - m_scrollArea->viewport()->width()) / 2;
+			int newV = (m_mamkimCanvas->height() - m_scrollArea->viewport()->height()) / 2;
+
+			m_scrollArea->horizontalScrollBar()->setValue(newH);
+			m_scrollArea->verticalScrollBar()->setValue(newV);
 
 			QString text = QString("%1x%2").arg(m_orgSize.width()).arg(m_orgSize.height());
 
@@ -321,6 +393,8 @@ class ImageViewer : public QWidget
 		QSize m_orgSize;
 		QMovie *m_movie;
 		double m_zoomFactor;
+		bool m_isTransparent;
+		QPoint m_lastMousePos;
 		QPixmap m_staticPixmap;
 		QAction *m_actPlayPause;
 		QScrollArea *m_scrollArea;

@@ -574,7 +574,7 @@ static GtkWidget *create_ui(GtkWidget *ParentWin, CustomData *data)
 
 	data->scroll = gtk_scrolled_window_new(NULL, NULL);
 	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(data->scroll),
-	                                GTK_POLICY_AUTOMATIC,  GTK_POLICY_AUTOMATIC);
+	                                GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
 	data->canvas = gtk_drawing_area_new();
 	gtk_widget_add_events(data->canvas, GDK_BUTTON_PRESS_MASK | GDK_POINTER_MOTION_MASK);
 	//gtk_widget_set_halign(data->canvas, GTK_ALIGN_CENTER);
