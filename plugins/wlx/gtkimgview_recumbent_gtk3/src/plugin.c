@@ -36,6 +36,7 @@ typedef struct
 	cairo_surface_t *surf;
 	cairo_pattern_t *shashechki;
 	gboolean is_fit_only_large;
+	gboolean is_transparent;
 	gboolean is_playing;
 	gboolean is_static;
 	gboolean is_fit;
@@ -145,7 +146,12 @@ static gboolean load_file(CustomData **data, const char *FileToLoad)
 	(*data)->surf = gdk_cairo_surface_create_from_pixbuf(pixbuf, 1, NULL);
 
 	if ((*data)->is_static == FALSE)
+	{
 		(*data)->iter = gdk_pixbuf_animation_get_iter(new_anim, NULL);
+		(*data)->is_transparent = FALSE;
+	}
+	else
+		(*data)->is_transparent = gdk_pixbuf_get_has_alpha(pixbuf);
 
 	(*data)->width = gdk_pixbuf_get_width(pixbuf);
 	(*data)->height = gdk_pixbuf_get_height(pixbuf);
@@ -238,10 +244,23 @@ static gboolean draw_cb(GtkWidget *widget, cairo_t *cr, CustomData* data)
 	GtkAllocation alloc;
 	gtk_widget_get_allocation(widget, &alloc);
 
-	cairo_set_antialias(cr, CAIRO_ANTIALIAS_NONE);
-	cairo_set_source(cr, data->shashechki);
-	cairo_paint(cr);
-	cairo_set_antialias(cr, CAIRO_ANTIALIAS_DEFAULT);
+	GtkStyleContext *context = gtk_widget_get_style_context(widget);
+	gtk_render_background(context, cr, 0, 0, alloc.width, alloc.height);
+
+	if (data->is_transparent)
+	{
+		GtkAllocation zoom_size;
+		get_image_size(data, &zoom_size, TRUE);
+		cairo_rectangle(cr, (alloc.width - zoom_size.width) / 2.0,
+				(alloc.height - zoom_size.height) / 2.0,
+				zoom_size.width, zoom_size.height);
+		cairo_clip(cr);
+
+		cairo_set_antialias(cr, CAIRO_ANTIALIAS_NONE);
+		cairo_set_source(cr, data->shashechki);
+		cairo_paint(cr);
+		cairo_set_antialias(cr, CAIRO_ANTIALIAS_DEFAULT);
+	}
 
 	cairo_save(cr);
 	cairo_translate(cr, ALLOC_CENTER);
@@ -260,7 +279,7 @@ static gboolean draw_cb(GtkWidget *widget, cairo_t *cr, CustomData* data)
 	}
 
 	//cairo_pattern_set_filter(cairo_get_source(cr), data->zoom < 0.5 ? CAIRO_FILTER_FAST : CAIRO_FILTER_BILINEAR);
-	//cairo_pattern_set_filter(cairo_get_source(cr), data->zoom < 0.5 ? CAIRO_FILTER_FAST : CAIRO_FILTER_GOOD);
+	cairo_pattern_set_filter(cairo_get_source(cr), data->zoom < 0.7 ? CAIRO_FILTER_FAST : CAIRO_FILTER_GOOD);
 
 	cairo_paint(cr);
 	cairo_restore(cr);
@@ -323,9 +342,8 @@ static void resize_cb(GtkWidget *w, GtkAllocation *al, CustomData *data)
 		data->widget_width = al->width;
 		data->widget_height = al->height;
 
-		// WHAT THE FLYING FUUUUUUUU
-		//if (data->is_fit)
-		//	do_fit(data);
+		if (data->is_fit)
+			do_fit(data);
 	}
 }
 
@@ -507,8 +525,8 @@ static GtkWidget *create_ui(GtkWidget *ParentWin, CustomData *data)
 	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(data->scroll),
 	                               GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
 	data->canvas = gtk_drawing_area_new();
-	gtk_widget_set_halign(data->canvas, GTK_ALIGN_CENTER);
-	gtk_widget_set_valign(data->canvas, GTK_ALIGN_CENTER);
+	//gtk_widget_set_halign(data->canvas, GTK_ALIGN_CENTER);
+	//gtk_widget_set_valign(data->canvas, GTK_ALIGN_CENTER);
 	gtk_container_add(GTK_CONTAINER(data->scroll), data->canvas);
 
 	gtk_box_pack_start(GTK_BOX(main_box), mtb, FALSE, FALSE, 2);
