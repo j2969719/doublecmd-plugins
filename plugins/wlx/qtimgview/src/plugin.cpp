@@ -58,10 +58,20 @@ class ImageViewer : public QWidget
 			toolbar->addAction(QIcon::fromTheme("object-rotate-left"), _("Rotate"), [this]()
 			{
 				rotate(-90);
+
+				if (m_isFit)
+					fitToParent();
+				else
+					updateZoom();
 			});
 			toolbar->addAction(QIcon::fromTheme("object-rotate-right"), _("Rotate Clockwise"), [this]()
 			{
 				rotate(90);
+
+				if (m_isFit)
+					fitToParent();
+				else
+					updateZoom();
 			});
 			toolbar->addAction(QIcon::fromTheme("object-flip-horizontal"), _("Flip Horizontally"), [this]()
 			{
@@ -279,13 +289,10 @@ class ImageViewer : public QWidget
 
 		void rotate(int delta)
 		{
-			m_isFit = false;
 			m_rotation = (m_rotation + delta) % 360;
 
 			if (m_rotation < 0)
 				m_rotation += 360;
-
-			updateZoom();
 		}
 
 		void scaleImage(double factor)

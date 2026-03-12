@@ -353,12 +353,10 @@ static gboolean canvas_motion_cb(GtkWidget *w, GdkEventMotion *e, CustomData *da
 {
 	if (e->state & GDK_BUTTON1_MASK)
 	{
-		g_print("canvas LMB motion event");
 		double drag_x = e->x_root - data->drag_x;
 		double drag_y = e->y_root - data->drag_y;
 		GtkAdjustment *h = gtk_scrolled_window_get_hadjustment(GTK_SCROLLED_WINDOW(data->scroll));
 		GtkAdjustment *v = gtk_scrolled_window_get_vadjustment(GTK_SCROLLED_WINDOW(data->scroll));
-		g_print(" h = %f v = %f\n", gtk_adjustment_get_value(h), gtk_adjustment_get_value(v));
 		gtk_adjustment_set_value(h, gtk_adjustment_get_value(h) - drag_x);
 		gtk_adjustment_set_value(v, gtk_adjustment_get_value(v) - drag_y);
 		data->drag_x = e->x_root; 
@@ -374,7 +372,6 @@ static gboolean canvas_button_press_cb(GtkWidget *w, GdkEventButton *e, CustomDa
 {
 	if (e->button == GDK_BUTTON_PRIMARY)
 	{ 
-		g_print("canvas LMB press event\n");
 		data->drag_x = e->x_root; 
 		data->drag_y = e->y_root; 
 		return TRUE;
@@ -433,13 +430,21 @@ static void tb_copy_clicked(GtkToolItem *item, CustomData *data)
 static void tb_rotare_clicked(GtkToolItem *item, CustomData *data)
 {
 	data->angle = (data->angle - 90) % 360;
-	refresh_ui(data);
+
+	if (data->is_fit)
+		do_fit(data);
+	else
+		refresh_ui(data);
 }
 
 static void tb_rotare1_clicked(GtkToolItem *item, CustomData *data)
 {
 	data->angle = (data->angle + 90) % 360;
-	refresh_ui(data);
+
+	if (data->is_fit)
+		do_fit(data);
+	else
+		refresh_ui(data);
 }
 
 static void tb_hflip_clicked(GtkToolItem *item, CustomData *data)
