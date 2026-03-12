@@ -46,11 +46,14 @@ typedef struct
 	guint widget_width;
 	guint widget_height;
 	double zoom;
+	double drag_x;
+	double drag_y;
 	int angle;
 	int hflip;
 	int vflip;
 } CustomData;
 
+gboolean gInit = FALSE;
 gboolean gHideToolbar = TRUE;
 
 static void clear_data(CustomData *data)
@@ -202,6 +205,17 @@ void refresh_ui(CustomData *data)
 
 	gtk_widget_set_visible(GTK_WIDGET(data->tb_play), !data->is_static);
 	gtk_widget_set_visible(GTK_WIDGET(data->tb_stop), !data->is_static);
+
+	// welp
+	GtkAdjustment *h = gtk_scrolled_window_get_hadjustment(GTK_SCROLLED_WINDOW(data->scroll));
+	GtkAdjustment *v = gtk_scrolled_window_get_vadjustment(GTK_SCROLLED_WINDOW(data->scroll));
+	gtk_adjustment_set_upper(h, canvas_size.width);
+	gtk_adjustment_set_upper(v, canvas_size.height);
+	double new_h = (canvas_size.width / 2.0) - (gtk_adjustment_get_page_size(h) / 2.0);
+	double new_v = (canvas_size.height / 2.0) - (gtk_adjustment_get_page_size(v) / 2.0);
+	gtk_adjustment_set_value(h, new_h);
+	gtk_adjustment_set_value(v, new_v);
+
 }
 
 void do_fit(CustomData *data)
@@ -335,6 +349,40 @@ static gboolean scroll_cb(GtkWidget *w, GdkEventScroll *e, CustomData* data)
 	return FALSE;
 }
 
+static gboolean canvas_motion_cb(GtkWidget *w, GdkEventMotion *e, CustomData *data)
+{
+	if (e->state & GDK_BUTTON1_MASK)
+	{
+		g_print("canvas LMB motion event");
+		double drag_x = e->x_root - data->drag_x;
+		double drag_y = e->y_root - data->drag_y;
+		GtkAdjustment *h = gtk_scrolled_window_get_hadjustment(GTK_SCROLLED_WINDOW(data->scroll));
+		GtkAdjustment *v = gtk_scrolled_window_get_vadjustment(GTK_SCROLLED_WINDOW(data->scroll));
+		g_print(" h = %f v = %f\n", gtk_adjustment_get_value(h), gtk_adjustment_get_value(v));
+		gtk_adjustment_set_value(h, gtk_adjustment_get_value(h) - drag_x);
+		gtk_adjustment_set_value(v, gtk_adjustment_get_value(v) - drag_y);
+		data->drag_x = e->x_root; 
+		data->drag_y = e->y_root; 
+
+		return TRUE;
+	} 
+
+	return FALSE;
+}
+
+static gboolean canvas_button_press_cb(GtkWidget *w, GdkEventButton *e, CustomData *data)
+{
+	if (e->button == GDK_BUTTON_PRIMARY)
+	{ 
+		g_print("canvas LMB press event\n");
+		data->drag_x = e->x_root; 
+		data->drag_y = e->y_root; 
+		return TRUE;
+	}
+
+	return FALSE;
+} 
+
 static void resize_cb(GtkWidget *w, GtkAllocation *al, CustomData *data)
 {
 	if (data->widget_width != al->width || data->widget_height != al->height)
@@ -343,8 +391,8 @@ static void resize_cb(GtkWidget *w, GtkAllocation *al, CustomData *data)
 		data->widget_height = al->height;
 
 		// WHAT THE FLYING FUUUUUUUU
-		//if (data->is_fit)
-		//	do_fit(data);
+		if (data->is_fit)
+			do_fit(data);
 	}
 }
 
@@ -518,14 +566,17 @@ static GtkWidget *create_ui(GtkWidget *ParentWin, CustomData *data)
 	gtk_toolbar_insert(GTK_TOOLBAR(mtb), gtk_separator_tool_item_new(), tb_pos++);
 
 	data->info_label = gtk_label_new(NULL);
+	gtk_label_set_xalign(GTK_LABEL(data->info_label), 0.0);
 	tb_size = gtk_tool_item_new();
+	gtk_tool_item_set_expand(tb_size, TRUE);
 	gtk_container_add(GTK_CONTAINER(tb_size), data->info_label);
 	gtk_toolbar_insert(GTK_TOOLBAR(mtb), tb_size, tb_pos++);
 
 	data->scroll = gtk_scrolled_window_new(NULL, NULL);
 	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(data->scroll),
-	                               GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
+	                                GTK_POLICY_AUTOMATIC,  GTK_POLICY_AUTOMATIC);
 	data->canvas = gtk_drawing_area_new();
+	gtk_widget_add_events(data->canvas, GDK_BUTTON_PRESS_MASK | GDK_POINTER_MOTION_MASK);
 	//gtk_widget_set_halign(data->canvas, GTK_ALIGN_CENTER);
 	//gtk_widget_set_valign(data->canvas, GTK_ALIGN_CENTER);
 	gtk_container_add(GTK_CONTAINER(data->scroll), data->canvas);
@@ -539,8 +590,10 @@ static GtkWidget *create_ui(GtkWidget *ParentWin, CustomData *data)
 
 	g_signal_connect(data->scroll, "size-allocate", G_CALLBACK(resize_cb), data);
 	g_signal_connect(data->canvas, "draw", G_CALLBACK(draw_cb), data);
+	g_signal_connect(data->canvas, "motion-notify-event", G_CALLBACK(canvas_motion_cb), data);
+	g_signal_connect(data->canvas, "button-press-event", G_CALLBACK(canvas_button_press_cb), data);
 	g_signal_connect(data->scroll, "scroll-event", G_CALLBACK(scroll_cb), data);
-	g_signal_connect(main_box, "scroll-event", G_CALLBACK(scroll_cb), data);
+	//g_signal_connect(main_box, "scroll-event", G_CALLBACK(scroll_cb), data);
 
 	const gchar *role = gtk_window_get_role(GTK_WINDOW(gtk_widget_get_toplevel(GTK_WIDGET(ParentWin))));
 
@@ -551,7 +604,6 @@ static GtkWidget *create_ui(GtkWidget *ParentWin, CustomData *data)
 		update_anim(data);
 
 	//refresh_ui(data);
-	g_timeout_add(500, (GSourceFunc)do_fit, data);
 
 	return main_box;
 }
@@ -619,7 +671,11 @@ static void wlxplug_atexit(void)
 
 void DCPCALL ListSetDefaultParams(ListDefaultParamStruct* dps)
 {
+	if (gInit)
+		return;
+
 	atexit(wlxplug_atexit);
+	gInit = TRUE;
 
 	Dl_info dlinfo;
 	const gchar* dir_f = "%s/langs";
