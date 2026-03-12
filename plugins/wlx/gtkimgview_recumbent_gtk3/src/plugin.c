@@ -342,8 +342,9 @@ static void resize_cb(GtkWidget *w, GtkAllocation *al, CustomData *data)
 		data->widget_width = al->width;
 		data->widget_height = al->height;
 
-		if (data->is_fit)
-			do_fit(data);
+		// WHAT THE FLYING FUUUUUUUU
+		//if (data->is_fit)
+		//	do_fit(data);
 	}
 }
 
