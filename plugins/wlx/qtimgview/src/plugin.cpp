@@ -145,21 +145,6 @@ class ImageViewer : public QWidget
 			mainLayout->addWidget(m_tabs);
 		}
 
-		void getExif()
-		{
-			QProcess proc;
-			QStringList params;
-			params << "-t" << m_filename;
-			proc.start("exiftool", params);
-			proc.waitForFinished();
-			QString output(proc.readAllStandardOutput());
-			proc.close();
-			QRegularExpression re("^([^\\t]+)\\t(.*)$", QRegularExpression::MultilineOption);
-			output.replace(re, "<b>\\1:</b> \\2<br>");
-			m_lblExif->setText(output);
-			m_isExifSet = true;
-		}
-
 		bool loadFile(const QString &filename)
 		{
 			QImageReader reader(filename);
@@ -310,6 +295,21 @@ class ImageViewer : public QWidget
 		}
 
 	private:
+		void getExif()
+		{
+			QProcess proc;
+			QStringList params;
+			params << "-t" << m_filename;
+			proc.start("exiftool", params);
+			proc.waitForFinished();
+			QString output(proc.readAllStandardOutput());
+			proc.close();
+			QRegularExpression re("^([^\\t]+)\\t(.*)$", QRegularExpression::MultilineOption);
+			output.replace(re, "<b>\\1:</b> \\2<br>");
+			m_lblExif->setText(output);
+			m_isExifSet = true;
+		}
+
 		void togglePlayPause()
 		{
 			if (!m_isStatic)
@@ -404,8 +404,10 @@ class ImageViewer : public QWidget
 			}
 			else
 			{
-				m_movie->setScaledSize(scaledSize);
-				QPixmap frame = m_movie->currentPixmap().transformed(trans, Qt::SmoothTransformation);
+				//m_movie->setScaledSize(scaledSize);
+				//QPixmap frame = m_movie->currentPixmap().transformed(trans, Qt::SmoothTransformation);
+				QPixmap frame = m_movie->currentPixmap().scaled(scaledSize, Qt::KeepAspectRatio,
+				                Qt::SmoothTransformation).transformed(trans, Qt::SmoothTransformation);
 				m_canvas->setPixmap(frame);
 			}
 
