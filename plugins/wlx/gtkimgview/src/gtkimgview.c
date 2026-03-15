@@ -12,12 +12,16 @@
 #include <locale.h>
 #define GETTEXT_PACKAGE "plugins"
 
-gboolean gHideToolbar = TRUE;
+#define EXIFTOOL_PAGE 1
 
-const gchar *anims[] =
+gboolean gInit = FALSE;
+gboolean gHideToolbar = TRUE;
+gboolean gTheresExiftool = FALSE;
+const gchar *gAnims[] =
 {
 	"image/gif",
 	"application/x-navi-animation",
+	NULL
 };
 
 static void tb_zoom_in_clicked(GtkToolItem *item, GtkWidget *view)
@@ -150,6 +154,41 @@ static void zoom_changed_cb(GtkWidget *view, GtkWidget *label)
 	g_free(str);
 }
 
+static gboolean switch_page_cb(GtkNotebook *notebook, GtkWidget *page, guint page_num, GtkWidget *ListWin)
+{
+	gchar *filename = (gchar*)g_object_get_data(G_OBJECT(ListWin), "filename");
+	gboolean is_exif_set = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(ListWin), "is_exif_set"));
+	GtkWidget *exif_label = (GtkWidget*)g_object_get_data(G_OBJECT(ListWin), "exif_label");
+
+	if (page_num == EXIFTOOL_PAGE && !is_exif_set)
+	{
+		gchar *buf;
+		gchar *argv[] = { "exiftool", "-t", filename, NULL };
+
+		if (g_spawn_sync(NULL, argv, NULL, G_SPAWN_SEARCH_PATH, NULL, NULL, &buf, NULL, NULL, NULL))
+		{
+			GRegex *re = g_regex_new("^([^\\t]+)\\t(.*)$", G_REGEX_MULTILINE, 0, NULL);
+
+			if (re)
+			{
+				gchar *text = g_regex_replace(re, buf, -1, 0, "<b>\\1:</b> \\2", 0, NULL);
+				g_regex_unref(re);
+				g_free(buf);
+				gtk_label_set_markup(GTK_LABEL(exif_label), text);
+				g_free(text);
+				is_exif_set = TRUE;
+				g_object_set_data(G_OBJECT(ListWin), "is_exif_set", GINT_TO_POINTER((int)is_exif_set));
+			}
+		}
+
+		if (!is_exif_set)
+			gtk_notebook_set_current_page(notebook, 0);
+
+	}
+
+	return FALSE;
+}
+
 HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 {
 	GtkWidget *gFix;
@@ -188,7 +227,21 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	gtk_box_pack_start(GTK_BOX(gFix), mtb, FALSE, FALSE, 2);
 	view = gtk_anim_view_new();
 	scroll = gtk_image_scroll_win_new(GTK_IMAGE_VIEW(view));
-	gtk_container_add(GTK_CONTAINER(gFix), scroll);
+
+	GtkWidget *notebook = gtk_notebook_new();
+	GtkWidget *scroll2 = gtk_scrolled_window_new(NULL, NULL);
+	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scroll2),
+	                               GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
+	GtkWidget *exif_label = gtk_label_new(NULL);
+	gtk_label_set_justify(GTK_LABEL(exif_label), GTK_JUSTIFY_CENTER);
+	gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(scroll2), exif_label);
+	gtk_notebook_append_page(GTK_NOTEBOOK(notebook), scroll, gtk_label_new("(ʘ‿ʘ)"));
+	gtk_notebook_append_page(GTK_NOTEBOOK(notebook), scroll2, gtk_label_new("ExifTool"));
+	gtk_notebook_set_tab_pos(GTK_NOTEBOOK(notebook), GTK_POS_BOTTOM);
+	gtk_notebook_set_show_tabs(GTK_NOTEBOOK(notebook), gTheresExiftool);
+
+	//gtk_container_add(GTK_CONTAINER(gFix), scroll);
+	gtk_container_add(GTK_CONTAINER(gFix), notebook);
 
 	gchar *content_type = g_content_type_guess(FileToLoad, NULL, 0, NULL);
 	g_print("%s (%s): content_type = %s\n", PLUGNAME, FileToLoad, content_type);
@@ -199,9 +252,9 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 
 	gtk_image_view_set_pixbuf(GTK_IMAGE_VIEW(view), pixbuf, TRUE);
 
-	for (gint i = 0; anims[i] != NULL; i++)
+	for (gint i = 0; gAnims[i] != NULL; i++)
 	{
-		if (g_strcmp0(content_type, anims[i]) == 0)
+		if (g_strcmp0(content_type, gAnims[i]) == 0)
 		{
 			anim = gdk_pixbuf_animation_new_from_file(FileToLoad, NULL);
 
@@ -301,6 +354,13 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	g_object_set_data(G_OBJECT(gFix), "play", GTK_WIDGET(tb_play));
 	g_object_set_data(G_OBJECT(gFix), "stop", GTK_WIDGET(tb_stop));
 
+	g_object_set_data(G_OBJECT(gFix), "filename", g_strdup(FileToLoad));
+	g_object_set_data(G_OBJECT(gFix), "exif_label", exif_label);
+	g_object_set_data(G_OBJECT(gFix), "notebook", notebook);
+	g_object_set_data(G_OBJECT(gFix), "is_exif_set", GINT_TO_POINTER(0));
+
+	g_signal_connect(notebook, "switch-page", G_CALLBACK(switch_page_cb), gFix);
+
 	if (GDK_IS_PIXBUF(pixbuf))
 		g_object_unref(pixbuf);
 
@@ -328,9 +388,9 @@ int DCPCALL ListLoadNext(HWND ParentWin, HWND PluginWin, char* FileToLoad, int S
 	gtk_anim_view_set_anim(GTK_ANIM_VIEW(view), NULL);
 	gtk_image_view_set_pixbuf(GTK_IMAGE_VIEW(view), NULL, FALSE);
 
-	for (gint i = 0; anims[i] != NULL; i++)
+	for (gint i = 0; gAnims[i] != NULL; i++)
 	{
-		if (g_strcmp0(content_type, anims[i]) == 0)
+		if (g_strcmp0(content_type, gAnims[i]) == 0)
 			anim = gdk_pixbuf_animation_new_from_file(FileToLoad, NULL);
 	}
 
@@ -362,6 +422,15 @@ int DCPCALL ListLoadNext(HWND ParentWin, HWND PluginWin, char* FileToLoad, int S
 	if (GDK_IS_PIXBUF(pixbuf))
 		g_object_unref(pixbuf);
 
+	gchar *filename = (gchar*)g_object_get_data(G_OBJECT(PluginWin), "filename");
+	g_free(filename);
+	g_object_set_data(G_OBJECT(PluginWin), "is_exif_set", GINT_TO_POINTER(0));
+	g_object_set_data(G_OBJECT(PluginWin), "filename", g_strdup(FileToLoad));
+
+	GtkWidget *notebook = (GtkWidget*)g_object_get_data(G_OBJECT(PluginWin), "notebook");
+	if (gtk_notebook_get_current_page(GTK_NOTEBOOK(notebook)) == EXIFTOOL_PAGE)
+		switch_page_cb(GTK_NOTEBOOK(notebook), NULL, EXIFTOOL_PAGE, PluginWin);
+
 	return LISTPLUGIN_OK;
 }
 
@@ -373,6 +442,9 @@ void DCPCALL ListCloseWindow(HWND ListWin)
 	GdkPixbufAnimation *anim = gtk_anim_view_get_anim(GTK_ANIM_VIEW(view));
 	GdkPixbuf *pixbuf = gtk_image_view_get_pixbuf(GTK_IMAGE_VIEW(view));
 	GdkPixbufAnimationIter *iter = GTK_ANIM_VIEW(view)->iter;
+
+	gchar *filename = (gchar*)g_object_get_data(G_OBJECT(ListWin), "filename");
+	g_free(filename);
 
 	gtk_anim_view_set_anim(GTK_ANIM_VIEW(view), NULL);
 	gtk_image_view_set_pixbuf(GTK_IMAGE_VIEW(view), NULL, FALSE);
@@ -410,6 +482,12 @@ int DCPCALL ListSearchDialog(HWND ListWin, int FindNext)
 
 void DCPCALL ListSetDefaultParams(ListDefaultParamStruct* dps)
 {
+	if (gInit)
+		return;
+
+	//atexit(wlxplug_atexit);
+	gInit = TRUE;
+
 	Dl_info dlinfo;
 	const gchar* dir_f = "%s/langs";
 
@@ -442,4 +520,6 @@ void DCPCALL ListSetDefaultParams(ListDefaultParamStruct* dps)
 
 	g_key_file_free(cfg);
 	g_free(cfgpath);
+
+	gTheresExiftool = (system("which exiftool > /dev/null") == 0);
 }

@@ -20,6 +20,11 @@
 #define RECT1_COLOR 0.3, 0.3, 0.3
 #define RECT2_COLOR 0.4, 0.4, 0.4
 
+#define EXIFTOOL_PAGE 1
+
+bool gInit = false;
+bool gTheresExiftool = false;
+
 class ImageViewer : public QWidget
 {
 		Q_OBJECT
@@ -99,8 +104,8 @@ class ImageViewer : public QWidget
 			m_scrollArea->setWidgetResizable(false);
 			m_scrollArea->viewport()->installEventFilter(this);
 
-			m_mamkimCanvas = new QLabel;
-			m_mamkimCanvas->setAlignment(Qt::AlignCenter);
+			m_canvas = new QLabel;
+			m_canvas->setAlignment(Qt::AlignCenter);
 
 			m_movie = new QMovie(this);
 			m_pal.setBrush(QPalette::Window, QBrush(createShashechki()));
@@ -110,8 +115,49 @@ class ImageViewer : public QWidget
 				updateZoom();
 			});
 
-			m_scrollArea->setWidget(m_mamkimCanvas);
-			mainLayout->addWidget(m_scrollArea);
+			m_scrollArea->setWidget(m_canvas);
+			//mainLayout->addWidget(m_scrollArea);
+
+			m_tabs = new QTabWidget();
+			m_scrollArea->setFrameStyle(QFrame::NoFrame);
+			m_tabs->setTabPosition(QTabWidget::South);
+			m_tabs->addTab(m_scrollArea, "(ʘ‿ʘ)");
+			m_lblExif = new QLabel();
+			m_lblExif->setAlignment(Qt::AlignCenter);
+			m_lblExif->setWordWrap(true);
+			m_lblExif->setTextFormat(Qt::RichText);
+			QScrollArea *scroll = new QScrollArea(this);
+			scroll->setFrameStyle(QFrame::NoFrame);
+			scroll->setAlignment(Qt::AlignCenter);
+			scroll->setWidgetResizable(true);
+			scroll->setWidget(m_lblExif);
+			m_tabs->addTab(scroll, "ExifTool");
+
+			QObject::connect(m_tabs, &QTabWidget::currentChanged, [this](int index)
+			{
+				if (index == EXIFTOOL_PAGE && !m_isExifSet)
+					getExif();
+			});
+
+			if (!gTheresExiftool)
+				m_tabs->tabBar()->hide();
+
+			mainLayout->addWidget(m_tabs);
+		}
+
+		void getExif()
+		{
+			QProcess proc;
+			QStringList params;
+			params << "-t" << m_filename;
+			proc.start("exiftool", params);
+			proc.waitForFinished();
+			QString output(proc.readAllStandardOutput());
+			proc.close();
+			QRegularExpression re("^([^\\t]+)\\t(.*)$", QRegularExpression::MultilineOption);
+			output.replace(re, "<b>\\1:</b> \\2<br>");
+			m_lblExif->setText(output);
+			m_isExifSet = true;
 		}
 
 		bool loadFile(const QString &filename)
@@ -127,8 +173,10 @@ class ImageViewer : public QWidget
 			m_isFlipH = false;
 			m_isFlipV = false;
 			m_isStatic = false;
+			m_isExifSet = false;
+			m_filename = filename;
 			m_isTransparent = false;
-			m_mamkimCanvas->setMovie(nullptr);
+			m_canvas->setMovie(nullptr);
 
 			if (reader.supportsAnimation() && reader.imageCount() > 1)
 			{
@@ -138,7 +186,7 @@ class ImageViewer : public QWidget
 					return false;
 
 				m_movie->start();
-				m_mamkimCanvas->setMovie(m_movie);
+				m_canvas->setMovie(m_movie);
 				m_orgSize = m_movie->currentPixmap().size();
 			}
 			else
@@ -149,10 +197,13 @@ class ImageViewer : public QWidget
 				if (m_staticPixmap.isNull())
 					return false;
 
-				m_mamkimCanvas->setMovie(nullptr);
+				m_canvas->setMovie(nullptr);
 				m_orgSize = m_staticPixmap.size();
 				m_isTransparent = m_staticPixmap.hasAlpha();
 			}
+
+			if (m_tabs->currentIndex() == EXIFTOOL_PAGE)
+				getExif();
 
 			m_isFit = true;
 			updatePlayPauseStatus();
@@ -344,18 +395,18 @@ class ImageViewer : public QWidget
 			{
 				if (m_isTransparent)
 				{
-					m_mamkimCanvas->setPalette(m_pal);
-					m_mamkimCanvas->setAutoFillBackground(true);
+					m_canvas->setPalette(m_pal);
+					m_canvas->setAutoFillBackground(true);
 				}
 
 				QPixmap pix = m_staticPixmap.scaled(scaledSize, Qt::KeepAspectRatio, Qt::SmoothTransformation);
-				m_mamkimCanvas->setPixmap(pix.transformed(trans, Qt::SmoothTransformation));
+				m_canvas->setPixmap(pix.transformed(trans, Qt::SmoothTransformation));
 			}
 			else
 			{
 				m_movie->setScaledSize(scaledSize);
 				QPixmap frame = m_movie->currentPixmap().transformed(trans, Qt::SmoothTransformation);
-				m_mamkimCanvas->setPixmap(frame);
+				m_canvas->setPixmap(frame);
 			}
 
 			QSize displaySize = scaledSize;
@@ -363,10 +414,10 @@ class ImageViewer : public QWidget
 			if (m_rotation == 90 || m_rotation == 270)
 				displaySize.transpose();
 
-			m_mamkimCanvas->setFixedSize(displaySize);
+			m_canvas->setFixedSize(displaySize);
 
-			int newH = (m_mamkimCanvas->width() - m_scrollArea->viewport()->width()) / 2;
-			int newV = (m_mamkimCanvas->height() - m_scrollArea->viewport()->height()) / 2;
+			int newH = (m_canvas->width() - m_scrollArea->viewport()->width()) / 2;
+			int newV = (m_canvas->height() - m_scrollArea->viewport()->height()) / 2;
 
 			m_scrollArea->horizontalScrollBar()->setValue(newH);
 			m_scrollArea->verticalScrollBar()->setValue(newV);
@@ -399,13 +450,16 @@ class ImageViewer : public QWidget
 		int m_rotation;
 		QSize m_orgSize;
 		QMovie *m_movie;
+		bool m_isExifSet;
+		QTabWidget *m_tabs;
+		QString m_filename;
 		double m_zoomFactor;
 		bool m_isTransparent;
 		QPoint m_lastMousePos;
 		QPixmap m_staticPixmap;
 		QAction *m_actPlayPause;
 		QScrollArea *m_scrollArea;
-		QLabel *m_mamkimCanvas, *m_lblSize;
+		QLabel *m_canvas, *m_lblSize, *m_lblExif;
 		bool m_isFlipH, m_isFlipV, m_isFit, m_isStatic;
 };
 
@@ -474,6 +528,11 @@ int DCPCALL ListSearchDialog(HWND ListWin, int FindNext)
 
 void DCPCALL ListSetDefaultParams(ListDefaultParamStruct* dps)
 {
+	if (gInit)
+		return;
+
+	gInit = true;
+
 	Dl_info dlinfo;
 	static char plg_path[PATH_MAX];
 	const char* loc_dir = "langs";
@@ -492,6 +551,8 @@ void DCPCALL ListSetDefaultParams(ListDefaultParamStruct* dps)
 		bindtextdomain(GETTEXT_PACKAGE, plg_path);
 		textdomain(GETTEXT_PACKAGE);
 	}
+
+	gTheresExiftool = (system("which exiftool > /dev/null") == 0);
 }
 
 #include "plugin.moc"

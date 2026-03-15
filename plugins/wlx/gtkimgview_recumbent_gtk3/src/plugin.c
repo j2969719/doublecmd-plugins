@@ -22,21 +22,25 @@
 //#define RECT2_COLOR 0.85, 0.85, 0.85
 #define RECT1_COLOR 0.3, 0.3, 0.3
 #define RECT2_COLOR 0.4, 0.4, 0.4
+#define EXIFTOOL_PAGE 1
 
 
 typedef struct
 {
 	GtkWidget *canvas;
 	GtkWidget *scroll;
+	GtkWidget *notebook;
 	GtkToolItem *tb_play;
 	GtkToolItem *tb_stop;
 	GtkWidget *info_label;
+	GtkWidget *exif_label;
 	GdkPixbufAnimation *anim;
 	GdkPixbufAnimationIter *iter;
 	cairo_surface_t *surf;
 	cairo_pattern_t *shashechki;
 	gboolean is_fit_only_large;
 	gboolean is_transparent;
+	gboolean is_exif_set;
 	gboolean is_playing;
 	gboolean is_static;
 	gboolean is_fit;
@@ -51,10 +55,12 @@ typedef struct
 	int angle;
 	int hflip;
 	int vflip;
+	char filename[PATH_MAX];
 } CustomData;
 
 gboolean gInit = FALSE;
 gboolean gHideToolbar = TRUE;
+gboolean gTheresExiftool = FALSE;
 
 static void clear_data(CustomData *data)
 {
@@ -142,6 +148,8 @@ static gboolean load_file(CustomData **data, const char *FileToLoad)
 	(*data)->vflip = 1;
 	(*data)->is_fit = TRUE;
 	(*data)->is_playing = TRUE;
+	(*data)->is_exif_set = FALSE;
+	g_strlcpy((*data)->filename, FileToLoad, PATH_MAX);
 
 	(*data)->anim = new_anim;
 	(*data)->is_static = gdk_pixbuf_animation_is_static_image(new_anim);
@@ -266,8 +274,8 @@ static gboolean draw_cb(GtkWidget *widget, cairo_t *cr, CustomData* data)
 		GtkAllocation zoom_size;
 		get_image_size(data, &zoom_size, TRUE);
 		cairo_rectangle(cr, (alloc.width - zoom_size.width) / 2.0,
-				(alloc.height - zoom_size.height) / 2.0,
-				zoom_size.width, zoom_size.height);
+		                (alloc.height - zoom_size.height) / 2.0,
+		                zoom_size.width, zoom_size.height);
 		cairo_clip(cr);
 
 		cairo_set_antialias(cr, CAIRO_ANTIALIAS_NONE);
@@ -324,6 +332,36 @@ static gboolean update_anim(CustomData* data)
 	return FALSE;
 }
 
+static gboolean switch_page_cb(GtkNotebook *notebook, GtkWidget *page, guint page_num, CustomData *data)
+{
+	if (page_num == EXIFTOOL_PAGE && !data->is_exif_set)
+	{
+		gchar *buf;
+		gchar *argv[] = { "exiftool", "-t", data->filename, NULL };
+
+		if (g_spawn_sync(NULL, argv, NULL, G_SPAWN_SEARCH_PATH, NULL, NULL, &buf, NULL, NULL, NULL))
+		{
+			GRegex *re = g_regex_new("^([^\\t]+)\\t(.*)$", G_REGEX_MULTILINE, 0, NULL);
+
+			if (re)
+			{
+				gchar *text = g_regex_replace(re, buf, -1, 0, "<b>\\1:</b> \\2", 0, NULL);
+				g_regex_unref(re);
+				g_free(buf);
+				gtk_label_set_markup(GTK_LABEL(data->exif_label), text);
+				g_free(text);
+				data->is_exif_set = TRUE;
+			}
+		}
+
+		if (!data->is_exif_set)
+			gtk_notebook_set_current_page(notebook, 0);
+
+	}
+
+	return FALSE;
+}
+
 static gboolean scroll_cb(GtkWidget *w, GdkEventScroll *e, CustomData* data)
 {
 	if (e->state & GDK_CONTROL_MASK)
@@ -359,11 +397,11 @@ static gboolean canvas_motion_cb(GtkWidget *w, GdkEventMotion *e, CustomData *da
 		GtkAdjustment *v = gtk_scrolled_window_get_vadjustment(GTK_SCROLLED_WINDOW(data->scroll));
 		gtk_adjustment_set_value(h, gtk_adjustment_get_value(h) - drag_x);
 		gtk_adjustment_set_value(v, gtk_adjustment_get_value(v) - drag_y);
-		data->drag_x = e->x_root; 
-		data->drag_y = e->y_root; 
+		data->drag_x = e->x_root;
+		data->drag_y = e->y_root;
 
 		return TRUE;
-	} 
+	}
 
 	return FALSE;
 }
@@ -371,14 +409,14 @@ static gboolean canvas_motion_cb(GtkWidget *w, GdkEventMotion *e, CustomData *da
 static gboolean canvas_button_press_cb(GtkWidget *w, GdkEventButton *e, CustomData *data)
 {
 	if (e->button == GDK_BUTTON_PRIMARY)
-	{ 
-		data->drag_x = e->x_root; 
-		data->drag_y = e->y_root; 
+	{
+		data->drag_x = e->x_root;
+		data->drag_y = e->y_root;
 		return TRUE;
 	}
 
 	return FALSE;
-} 
+}
 
 static void resize_cb(GtkWidget *w, GtkAllocation *al, CustomData *data)
 {
@@ -579,15 +617,29 @@ static GtkWidget *create_ui(GtkWidget *ParentWin, CustomData *data)
 
 	data->scroll = gtk_scrolled_window_new(NULL, NULL);
 	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(data->scroll),
-	                                GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
+	                               GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
 	data->canvas = gtk_drawing_area_new();
 	gtk_widget_add_events(data->canvas, GDK_BUTTON_PRESS_MASK | GDK_POINTER_MOTION_MASK);
 	//gtk_widget_set_halign(data->canvas, GTK_ALIGN_CENTER);
 	//gtk_widget_set_valign(data->canvas, GTK_ALIGN_CENTER);
 	gtk_container_add(GTK_CONTAINER(data->scroll), data->canvas);
 
+	data->notebook = gtk_notebook_new();
+	GtkWidget *scroll = gtk_scrolled_window_new(NULL, NULL);
+	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scroll),
+	                               GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
+	data->exif_label = gtk_label_new(NULL);
+	gtk_label_set_justify(GTK_LABEL(data->exif_label), GTK_JUSTIFY_CENTER);
+	gtk_container_add(GTK_CONTAINER(scroll), data->exif_label);
+	gtk_notebook_append_page(GTK_NOTEBOOK(data->notebook), data->scroll, gtk_label_new("(ʘ‿ʘ)"));
+	gtk_notebook_append_page(GTK_NOTEBOOK(data->notebook), scroll, gtk_label_new("ExifTool"));
+	gtk_notebook_set_tab_pos(GTK_NOTEBOOK(data->notebook), GTK_POS_BOTTOM);
+	gtk_notebook_set_show_tabs(GTK_NOTEBOOK(data->notebook), gTheresExiftool);
+	g_signal_connect(data->notebook, "switch-page", G_CALLBACK(switch_page_cb), data);
+
 	gtk_box_pack_start(GTK_BOX(main_box), mtb, FALSE, FALSE, 2);
-	gtk_box_pack_start(GTK_BOX(main_box), data->scroll, TRUE, TRUE, 0);
+	//gtk_box_pack_start(GTK_BOX(main_box), data->scroll, TRUE, TRUE, 0);
+	gtk_box_pack_start(GTK_BOX(main_box), data->notebook, TRUE, TRUE, 0);
 
 	g_object_set_data(G_OBJECT(main_box), "custom-data", data);
 	gtk_container_add(GTK_CONTAINER(ParentWin), main_box);
@@ -632,6 +684,9 @@ int DCPCALL ListLoadNext(HWND ParentWin, HWND PluginWin, char* FileToLoad, int S
 	if (!load_file(&data, FileToLoad))
 		return LISTPLUGIN_ERROR;
 
+	if (gtk_notebook_get_current_page(GTK_NOTEBOOK(data->notebook)) == EXIFTOOL_PAGE)
+		switch_page_cb(GTK_NOTEBOOK(data->notebook), NULL, EXIFTOOL_PAGE, data);
+
 	if (!data->is_static)
 		update_anim(data);
 
@@ -668,18 +723,18 @@ int DCPCALL ListSendCommand(HWND ListWin, int Command, int Parameter)
 
 	return LISTPLUGIN_OK;
 }
-
+/*
 static void wlxplug_atexit(void)
 {
 	g_print("%s atexit\n", PLUGNAME);
 }
-
+*/
 void DCPCALL ListSetDefaultParams(ListDefaultParamStruct* dps)
 {
 	if (gInit)
 		return;
 
-	atexit(wlxplug_atexit);
+	//atexit(wlxplug_atexit);
 	gInit = TRUE;
 
 	Dl_info dlinfo;
@@ -714,4 +769,6 @@ void DCPCALL ListSetDefaultParams(ListDefaultParamStruct* dps)
 
 	g_key_file_free(cfg);
 	g_free(cfgpath);
+
+	gTheresExiftool = (system("which exiftool > /dev/null") == 0);
 }
