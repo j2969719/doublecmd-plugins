@@ -60,6 +60,7 @@ typedef struct
 
 gboolean gInit = FALSE;
 gboolean gHideToolbar = TRUE;
+gboolean gFastDownscale = TRUE;
 gboolean gTheresExiftool = FALSE;
 
 static void clear_data(CustomData *data)
@@ -300,8 +301,8 @@ static gboolean draw_cb(GtkWidget *widget, cairo_t *cr, CustomData* data)
 		gdk_cairo_set_source_pixbuf(cr, pixbuf, FROM_TOPLEFT);
 	}
 
-	//cairo_pattern_set_filter(cairo_get_source(cr), data->zoom < 0.5 ? CAIRO_FILTER_FAST : CAIRO_FILTER_BILINEAR);
-	cairo_pattern_set_filter(cairo_get_source(cr), data->zoom < 0.7 ? CAIRO_FILTER_FAST : CAIRO_FILTER_GOOD);
+	if (gFastDownscale)
+		cairo_pattern_set_filter(cairo_get_source(cr), data->zoom < 0.7 ? CAIRO_FILTER_FAST : CAIRO_FILTER_GOOD);
 
 	cairo_paint(cr);
 	cairo_restore(cr);
@@ -756,16 +757,28 @@ void DCPCALL ListSetDefaultParams(ListDefaultParamStruct* dps)
 	gchar *cfgdir = g_path_get_dirname(dps->DefaultIniName);
 	gchar *cfgpath = g_strdup_printf("%s/j2969719.ini", cfgdir);
 	g_free(cfgdir);
+	gboolean is_bump_cfg = FALSE;
 	GKeyFile *cfg = g_key_file_new();
 	g_key_file_load_from_file(cfg, cfgpath, G_KEY_FILE_KEEP_COMMENTS, NULL);
 
 	if (!g_key_file_has_key(cfg, PLUGNAME, "HideToolbar", NULL))
 	{
 		g_key_file_set_boolean(cfg, PLUGNAME, "HideToolbar", gHideToolbar);
-		g_key_file_save_to_file(cfg, cfgpath, NULL);
+		is_bump_cfg = TRUE;
 	}
 	else
 		gHideToolbar = g_key_file_get_boolean(cfg, PLUGNAME, "HideToolbar", NULL);
+
+	if (!g_key_file_has_key(cfg, PLUGNAME, "FastDownscale", NULL))
+	{
+		g_key_file_set_boolean(cfg, PLUGNAME, "FastDownscale", gFastDownscale);
+		is_bump_cfg = TRUE;
+	}
+	else
+		gFastDownscale = g_key_file_get_boolean(cfg, PLUGNAME, "FastDownscale", NULL);
+
+	if (is_bump_cfg)
+		g_key_file_save_to_file(cfg, cfgpath, NULL);
 
 	g_key_file_free(cfg);
 	g_free(cfgpath);
