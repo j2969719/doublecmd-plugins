@@ -113,6 +113,7 @@ int DCPCALL ReadHeader(HANDLE hArcData, tHeaderData *HeaderData)
 
 int DCPCALL ProcessFile(HANDLE hArcData, int Operation, char *DestPath, char *DestName)
 {
+	int result = E_SUCCESS;
 	ArcData handle = (ArcData)hArcData;
 	xmlNode *node = handle->node;
 
@@ -124,10 +125,23 @@ int DCPCALL ProcessFile(HANDLE hArcData, int Operation, char *DestPath, char *De
 		{
 			for (gsize i = 0; i < handle->out_len; i += BUFF_SIZE)
 			{
-				int len = (int)fwrite(handle->data + i, sizeof(guchar), BUFF_SIZE, fp);
+				int block = MIN(BUFF_SIZE, handle->out_len - i);
+				int len = (int)fwrite(handle->data + i, sizeof(guchar), block, fp);
+
+				if (len != block)
+				{
+					result = E_EWRITE;
+					break;
+				}
 
 				if (handle->ProcessDataProc)
-					handle->ProcessDataProc(handle->filename, len);
+				{
+					if (handle->ProcessDataProc(handle->filename, len) == 0)
+					{
+						result = E_EABORTED;
+						break;
+					}
+				}
 			}
 
 			fclose(fp);
@@ -139,7 +153,7 @@ int DCPCALL ProcessFile(HANDLE hArcData, int Operation, char *DestPath, char *De
 
 	handle->node = node->next;
 
-	return E_SUCCESS;
+	return result;
 }
 
 int DCPCALL CloseArchive(HANDLE hArcData)
