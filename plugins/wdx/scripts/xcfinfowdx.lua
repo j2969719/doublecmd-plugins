@@ -1,13 +1,18 @@
 -- xcfinfowdx.lua (cross-platform)
--- 2022.08.08
+-- 2026.03.27
 --[[
 Getting some info from XCF files (GIMP native image format).
-  Documentation: /devel-docs/xcf.txt from source.
-  Last check: 2022.08.08 (2.10.32)
-  Minimal GIMP version: from gimp-devel
+  Documentation, minimal GIMP version:
     https://gitlab.gnome.org/GNOME/gimp/-/blob/master/devel-docs/specifications/xcf.txt
+    https://testing.developer.gimp.org/core/standards/xcf/
+    https://gitlab.gnome.org/Infrastructure/gimp-web-devel/-/blob/testing/content/core/standards/xcf.md
+  Last check: 2026.03.27
 
 See list of supported fields in table "fields".
+
+Maybe TODO:
+- has paths/vectors/Bezier strokes (commented, see "Image properties" below);
+- exif-data & gimp-metadata (from parasites).
 
 hex2float() from
 https://stackoverflow.com/questions/18886447/convert-signed-ieee-754-float-to-hexadecimal-representation
@@ -33,10 +38,18 @@ local am = {
 [2] = "1.3.10 (2002-11-07) or 1.3.21 (2003-10-06)",
 [3] = "2.7.1 (2010-06-29)",
 [4] = "2.10.0 (2018-04-27)",
-[14] = "3.0.0",
-[15] = "3.0.0",
-[16] = "3.0.0",
-[17] = "3.0.0"
+[14] = "3.0.0 (2025-03-16)",
+[15] = "3.0.0 (2025-03-16)",
+[16] = "3.0.0 (2025-03-16)",
+[17] = "3.0.0 (2025-03-16)",
+[18] = "3.0.0 (2025-03-16)",
+[19] = "3.0.0 (2025-03-16)",
+[20] = "3.0.0 (2025-03-16)",
+[21] = "3.0.0 (2025-03-16)",
+[22] = "3.0.0 (2025-03-16)",
+[23] = "3.0.0 (2025-03-16)",
+[24] = "3.2.0",
+[25] = "3.2.0"
 }
 local ap4 = {
 [0] = "8-bit gamma integer",
@@ -75,7 +88,7 @@ local ac = {
 [0] = "No compression",
 [1] = "RLE encoding",
 [2] = "zlib compression",
-[3] = "Some fractal compression"
+[3] = "Reserved"
 }
 local filename = ''
 local ar = {}
@@ -138,6 +151,8 @@ function GetData(f)
     else
       if ar[1] < 14 then
         ar[2] = am[4]
+      elseif ar[1] < 24 then
+        ar[2] = am[23]
       else
         t = am[ar[1]]
         if t ~= nil then ar[2] = t end
@@ -179,7 +194,7 @@ function GetData(f)
     if t == nil then ar[8] = '' else ar[8] = t end
   end
   -- Image properties
-  local l, n
+  local l
   while true do
     d = h:read(4)
     if d == nil then break end
@@ -202,6 +217,32 @@ function GetData(f)
       -- PROP_PARASITES
       d = h:read(l)
       GetFromParasites(d)
+--[[
+    elseif i == 23 then
+      -- PROP_PATHS
+      if ar[1] < 18 then
+        d = h:read(12)
+        -- Number of paths
+        i = BinToNumBE(d, 9, 12)
+        if i > 0 then
+          true
+        else
+          false
+        end
+      end
+    elseif i == 25 then
+      -- PROP_VECTORS
+      if ar[1] > 17 then
+        d = h:read(16)
+        -- plength
+        i = BinToNumBE(d, 13, 16)
+        if i > 0 then
+          true
+        else
+          false
+        end
+      end
+]]
     else
       h:seek('cur', l)
     end
