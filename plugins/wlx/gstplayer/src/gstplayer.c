@@ -762,7 +762,6 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
   fileUri = g_filename_to_uri(FileToLoad, NULL, NULL);
   g_object_set (data->playbin, "uri", fileUri, NULL);
   if (fileUri) g_free(fileUri);
-  g_object_set (data->playbin, "uri", "https://uploads.ungrounded.net/alternate/6625000/6625586_alternate_307634.360p.mp4", NULL);
 
   /* Connect to interesting signals in playbin */
   g_signal_connect (G_OBJECT (data->playbin), "video-tags-changed", (GCallback) tags_cb, &data);
