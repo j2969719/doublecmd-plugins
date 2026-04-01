@@ -5,12 +5,14 @@
 #include <gst/video/videooverlay.h>
 
 #include <gdk/gdk.h>
+#ifndef GTK3PLUG
 #if defined (GDK_WINDOWING_X11)
 #include <gdk/gdkx.h>
 #elif defined (GDK_WINDOWING_WIN32)
 #include <gdk/gdkwin32.h>
 #elif defined (GDK_WINDOWING_QUARTZ)
 #include <gdk/gdkquartz.h>
+#endif
 #endif
 
 #include <gdk/gdkkeysyms.h>
@@ -32,6 +34,7 @@
 gboolean gLoop = TRUE;
 gboolean gVis = FALSE;
 gboolean gMute = FALSE;
+gboolean gInit = FALSE;
 gboolean gSaveSettings = TRUE;
 gdouble gVolume = 0.8;
 static char gCfgPath[PATH_MAX]; 
@@ -40,7 +43,10 @@ static char gFont[PATH_MAX] = "";
 /* Structure to contain all our information, so we can pass it around */
 typedef struct _CustomData {
   GstElement *playbin;            /* Our one and only pipeline */
-
+#ifdef GTK3PLUG
+  GtkWidget *sink_widget;         /* The widget where our video will be displayed */
+  GstElement *videosink;
+#endif
   GtkWidget *slider;              /* Slider widget to keep track of current position */
   GtkWidget *streams_list;        /* Text widget to display info about the streams */
   gulong slider_update_signal_id; /* Signal ID for the slider update signal */
@@ -67,7 +73,7 @@ typedef enum {
   GST_PLAY_FLAG_VIS           = (1 << 3), /* Enable rendering of visualizations when there is no video stream. */
 } GstPlayFlags;
 
-
+#ifndef GTK3PLUG
 /* This function is called when the GUI toolkit creates the physical window that will hold the video.
  * At this point we can retrieve its handler (which has a different meaning depending on the windowing system)
  * and pass it to GStreamer through the XOverlay interface. */
@@ -76,7 +82,7 @@ static void realize_cb (GtkWidget *widget, CustomData *data) {
   guintptr window_handle;
 
   if (!gdk_window_ensure_native (window))
-    g_error ("Couldn't create native window needed for GstXOverlay!");
+    g_printerr ("%s: Couldn't create native window needed for GstXOverlay!", PLUGNAME);
 
   /* Retrieve window handler from GDK */
 #if defined (GDK_WINDOWING_WIN32)
@@ -89,6 +95,7 @@ static void realize_cb (GtkWidget *widget, CustomData *data) {
   /* Pass it to playbin, which implements XOverlay and will forward it to the video sink */
   gst_video_overlay_set_window_handle (GST_VIDEO_OVERLAY (data->playbin), window_handle);
 }
+#endif
 
 static gboolean duration_scroll_cb (GtkRange *range, GdkEventScroll *event, CustomData *data) {
   gdouble value = gtk_range_get_value (range);
@@ -243,7 +250,7 @@ static void stop_cb (GtkButton *button, CustomData *data) {
 static void delete_event_cb (GtkWidget *widget, GdkEvent *event, CustomData *data) {
   stop_cb (NULL, data);
 }
-
+#ifndef GTK3PLUG
 /* This function is called everytime the video window needs to be redrawn (due to damage/exposure,
  * rescaling, etc). GStreamer takes care of this in the PAUSED and PLAYING states, otherwise,
  * we simply draw a black rectangle to avoid garbage showing up. */
@@ -265,6 +272,7 @@ static gboolean expose_cb (GtkWidget *widget, GdkEventExpose *event, CustomData 
 
   return FALSE;
 }
+#endif
 
 /* This function is called when the slider changes its position. We perform a seek to the
  * new position here. */
@@ -276,32 +284,33 @@ static void slider_cb (GtkRange *range, CustomData *data) {
 
 /* This creates all the GTK+ widgets that compose our application, and registers the callbacks */
 static GtkWidget *create_ui (GtkWidget *ParentWin, CustomData *data) {
-  GtkWidget *main_window;  /* The uppermost window, containing all other windows */
+  GtkWidget *main_window;  /* VBox to hold main_hbox and the controls */
+#ifndef GTK3PLUG
   GtkWidget *video_window; /* The drawing area where the video will be shown */
-  GtkWidget *main_box;     /* VBox to hold main_hbox and the controls */
+#endif
   GtkWidget *controls;     /* HBox to hold the buttons and the slider */
   //GtkToolItem *play_button, *pause_button, *stop_button; /* Buttons */
   GtkToolItem *stop_button;
   GtkWidget *scroll_window;
-  GdkColor color;
 
-  main_window = gtk_vbox_new (FALSE, 0);
-  gtk_container_add (GTK_CONTAINER (ParentWin), main_window);
-  g_signal_connect (G_OBJECT (main_window), "delete-event", G_CALLBACK (delete_event_cb), data);
-
+#ifndef GTK3PLUG
   video_window = gtk_drawing_area_new ();
   gtk_widget_set_double_buffered (video_window, FALSE);
   gtk_widget_add_events (video_window, GDK_BUTTON_PRESS_MASK);
+  GdkColor color;
   gdk_color_parse ("black", &color);
   gtk_widget_modify_bg (video_window, GTK_STATE_NORMAL, &color);
   g_signal_connect (video_window, "realize", G_CALLBACK (realize_cb), data);
   g_signal_connect (video_window, "expose_event", G_CALLBACK (expose_cb), data);
   g_signal_connect (G_OBJECT (video_window), "button_press_event", G_CALLBACK (on_button_press), data);
+#endif
 
   data->btn_play = gtk_tool_button_new (NULL, NULL);
   gtk_tool_button_set_icon_name (GTK_TOOL_BUTTON (data->btn_play), "media-playback-start");
   g_signal_connect (G_OBJECT (data->btn_play), "clicked", G_CALLBACK (playpause_cb), data);
-  stop_button = gtk_tool_button_new_from_stock (GTK_STOCK_MEDIA_STOP);
+  //stop_button = gtk_tool_button_new_from_stock (GTK_STOCK_MEDIA_STOP);
+  stop_button = gtk_tool_button_new (NULL, NULL);
+  gtk_tool_button_set_icon_name (GTK_TOOL_BUTTON (stop_button), "media-playback-stop");
   g_signal_connect (G_OBJECT (stop_button), "clicked", G_CALLBACK (stop_cb), data);
 
   data->btn_loop = gtk_toggle_tool_button_new ();
@@ -319,13 +328,21 @@ static GtkWidget *create_ui (GtkWidget *ParentWin, CustomData *data) {
   data->lbl_info = gtk_label_new (NULL);
   data->lbl_duration = gtk_label_new (DURATION_EMPTY);
 
+#ifndef GTK3PLUG
   data->slider = gtk_hscale_new_with_range (0, 100, 1);
+#else
+  data->slider = gtk_scale_new_with_range (GTK_ORIENTATION_HORIZONTAL, 0, 100, 1);
+#endif
   gtk_scale_set_draw_value (GTK_SCALE (data->slider), 0);
   gtk_widget_set_can_focus (data->slider, FALSE);
   data->slider_update_signal_id = g_signal_connect (G_OBJECT (data->slider), "value-changed", G_CALLBACK (slider_cb), data);
   g_signal_connect (G_OBJECT (data->slider), "scroll-event", G_CALLBACK (duration_scroll_cb), data);
 
+#ifndef GTK3PLUG
   data->volume_slider = gtk_hscale_new_with_range (0.05, 1, 0.05);
+#else
+  data->volume_slider = gtk_scale_new_with_range (GTK_ORIENTATION_HORIZONTAL, 0.05, 1, 0.05);
+#endif
   gtk_widget_set_can_focus (data->volume_slider, FALSE);
   gtk_scale_set_draw_value (GTK_SCALE (data->volume_slider), 0);
   gtk_widget_set_size_request(data->volume_slider, 100, -1);
@@ -347,7 +364,11 @@ static GtkWidget *create_ui (GtkWidget *ParentWin, CustomData *data) {
 
   gtk_container_add (GTK_CONTAINER (scroll_window), data->streams_list);
 
+#ifndef GTK3PLUG
   controls = gtk_hbox_new (FALSE, 0);
+#else
+  controls = gtk_box_new (GTK_ORIENTATION_HORIZONTAL, 0);
+#endif
   gtk_box_pack_start (GTK_BOX (controls), GTK_WIDGET (data->btn_play), FALSE, FALSE, 2);
   gtk_box_pack_start (GTK_BOX (controls), GTK_WIDGET (stop_button), FALSE, FALSE, 2);
   gtk_box_pack_start (GTK_BOX (controls), GTK_WIDGET (data->btn_loop), FALSE, FALSE, 5);
@@ -358,21 +379,36 @@ static GtkWidget *create_ui (GtkWidget *ParentWin, CustomData *data) {
   gtk_box_pack_end (GTK_BOX (controls), GTK_WIDGET (data->btn_mute), FALSE, TRUE, 2);
 
   data->notebook = gtk_notebook_new ();
+#ifndef GTK3PLUG
   gtk_notebook_append_page (GTK_NOTEBOOK (data->notebook), video_window, NULL);
+#else
+  gtk_widget_set_hexpand (data->notebook, TRUE);
+  gtk_notebook_append_page (GTK_NOTEBOOK (data->notebook),  data->sink_widget, NULL);
+  g_signal_connect (G_OBJECT (data->sink_widget), "button_press_event", G_CALLBACK (on_button_press), data);
+#endif
   gtk_notebook_append_page (GTK_NOTEBOOK (data->notebook), scroll_window, NULL);
   gtk_notebook_set_tab_pos (GTK_NOTEBOOK (data->notebook), GTK_POS_BOTTOM);
   gtk_notebook_set_show_tabs (GTK_NOTEBOOK (data->notebook), FALSE);
 
-  main_box = gtk_vbox_new (FALSE, 0);
-  gtk_box_pack_start (GTK_BOX (main_box), data->notebook, TRUE, TRUE, 0);
-  gtk_box_pack_start (GTK_BOX (main_box), GTK_WIDGET (data->lbl_info), FALSE, TRUE, 4);
-  gtk_box_pack_start (GTK_BOX (main_box), data->slider, FALSE, FALSE, 0);
-  gtk_box_pack_start (GTK_BOX (main_box), controls, FALSE, FALSE, 0);
-  gtk_container_add (GTK_CONTAINER (main_window), main_box);
+#ifndef GTK3PLUG
+  main_window = gtk_vbox_new (FALSE, 0);
+#else
+  main_window = gtk_box_new (GTK_ORIENTATION_VERTICAL, 0);
+#endif
+  gtk_container_add (GTK_CONTAINER (ParentWin), main_window);
+  g_signal_connect (G_OBJECT (main_window), "delete-event", G_CALLBACK (delete_event_cb), data);
+  gtk_box_pack_start (GTK_BOX (main_window), data->notebook, TRUE, TRUE, 0);
+  gtk_box_pack_start (GTK_BOX (main_window), GTK_WIDGET (data->lbl_info), FALSE, FALSE, 4);
+  gtk_box_pack_start (GTK_BOX (main_window), data->slider, FALSE, FALSE, 0);
+  gtk_box_pack_end (GTK_BOX (main_window), controls, FALSE, FALSE, 0);
 
   gtk_widget_show_all (main_window);
 
+#ifndef GTK3PLUG
   gtk_widget_realize (video_window);
+#else
+  gtk_widget_realize (data->sink_widget);
+#endif
 
   return main_window;
 }
@@ -389,7 +425,7 @@ static gboolean refresh_ui (CustomData *data) {
   if (!GST_CLOCK_TIME_IS_VALID (data->duration)) {
     if (!gst_element_query_duration (data->playbin, GST_FORMAT_TIME, &data->duration)) {
       gtk_label_set_text (GTK_LABEL (data->lbl_duration), DURATION_EMPTY);
-      g_printerr ("Could not query current duration.\n");
+      g_printerr ("%s: Could not query current duration.\n", PLUGNAME);
     } else {
       /* Set the range of the slider to the clip duration, in SECONDS */
       gtk_range_set_range (GTK_RANGE (data->slider), 0, (gdouble)data->duration / GST_SECOND);
@@ -425,7 +461,7 @@ static void tags_cb (GstElement *playbin, gint stream, CustomData *data) {
 
 /* This function is called when an error message is posted on the bus */
 static void error_cb (GstBus *bus, GstMessage *msg, CustomData *data) {
-  GError *err;
+  GError *err = NULL;
   gchar *debug_info;
   gchar *str;
   GtkTextBuffer *text;
@@ -676,8 +712,7 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
   GstBus *bus;
   gint flags;
 
-  /* Initialize GStreamer */
-  gst_init (NULL, NULL);
+  if (!gInit) return NULL;
 
   /* Initialize our data structure */
   data = g_new (CustomData, 1);
@@ -686,11 +721,38 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 
   /* Create the elements */
   data->playbin = gst_element_factory_make ("playbin", "playbin");
+#ifdef GTK3PLUG
+  data->videosink = gst_element_factory_make ("glsinkbin", "glsinkbin");
+  GstElement *gtkglsink = gst_element_factory_make ("gtkglsink", "gtkglsink");
 
+  /* Here we create the GTK Sink element which will provide us with a GTK widget where
+   * GStreamer will render the video at and we can add to our UI.
+   * Try to create the OpenGL version of the video sink, and fallback if that fails */
+  if (gtkglsink != NULL && data->videosink != NULL) {
+    g_print ("%s: Successfully created GTK GL Sink\n", PLUGNAME);
+
+    g_object_set (data->videosink, "sink", gtkglsink, NULL);
+
+    /* The gtkglsink creates the gtk widget for us. This is accessible through a property.
+     * So we get it and use it later to add it to our gui. */
+    g_object_get (gtkglsink, "widget", &data->sink_widget, NULL);
+  } else {
+    g_printerr ("%s: Could not create gtkglsink, falling back to gtksink.\n", PLUGNAME);
+
+   if (data->videosink)
+     gst_object_unref (data->videosink);
+
+    data->videosink = gst_element_factory_make ("gtksink", "gtksink");
+    g_object_get (data->videosink, "widget", &data->sink_widget, NULL);
+  }
+
+  if (!data->playbin || !data->videosink) {
+#else
   if (!data->playbin) {
-    g_printerr ("Not all elements could be created.\n");
+#endif
+    g_printerr ("%s: Not all elements could be created.\n", PLUGNAME);
     g_free(data);
-    return 0;
+    return NULL;
   }
 
   g_object_set (data->playbin, "volume", gVolume, NULL);
@@ -700,6 +762,7 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
   fileUri = g_filename_to_uri(FileToLoad, NULL, NULL);
   g_object_set (data->playbin, "uri", fileUri, NULL);
   if (fileUri) g_free(fileUri);
+  g_object_set (data->playbin, "uri", "https://uploads.ungrounded.net/alternate/6625000/6625586_alternate_307634.360p.mp4", NULL);
 
   /* Connect to interesting signals in playbin */
   g_signal_connect (G_OBJECT (data->playbin), "video-tags-changed", (GCallback) tags_cb, &data);
@@ -723,11 +786,15 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
   g_signal_connect (G_OBJECT (bus), "message::state-changed", (GCallback)state_changed_cb, data);
   g_signal_connect (G_OBJECT (bus), "message::application", (GCallback)application_cb, data);
   gst_object_unref (bus);
+#ifdef GTK3PLUG
+  /* Set the video-sink  */
+  g_object_set (data->playbin, "video-sink", data->videosink, NULL);
+#endif
 
   /* Start playing */
   ret = gst_element_set_state (data->playbin, GST_STATE_PLAYING);
   if (ret == GST_STATE_CHANGE_FAILURE) {
-    g_printerr ("Unable to set the pipeline to the playing state.\n");
+    g_printerr ("%s: Unable to set the pipeline to the playing state.\n", PLUGNAME);
     gst_object_unref (data->playbin);
     g_free(data);
     return NULL;
@@ -751,19 +818,11 @@ void DCPCALL ListCloseWindow(HWND ListWin)
   /* Free resources */
   g_source_remove (data->timer);
   gst_element_set_state (data->playbin, GST_STATE_NULL);
-  GKeyFile *cfg = g_key_file_new ();
+
   gLoop = gtk_toggle_tool_button_get_active (GTK_TOGGLE_TOOL_BUTTON (data->btn_loop));
   gMute = gtk_toggle_tool_button_get_active (GTK_TOGGLE_TOOL_BUTTON (data->btn_mute));
   gVolume = gtk_range_get_value (GTK_RANGE (data->volume_slider));
 
-  if (gSaveSettings && g_key_file_load_from_file (cfg, gCfgPath, G_KEY_FILE_KEEP_COMMENTS, NULL)) {
-    g_key_file_set_boolean (cfg, PLUGNAME, "Loop", gLoop);
-    g_key_file_set_boolean (cfg, PLUGNAME, "Mute", gMute);
-    g_key_file_set_double (cfg, PLUGNAME, "Volume", gVolume);
-    g_key_file_save_to_file (cfg, gCfgPath, NULL);
-  }
-
-  g_key_file_free (cfg);
   gst_object_unref (data->playbin);
   gtk_widget_destroy (GTK_WIDGET (ListWin));
   g_free (data);
@@ -870,8 +929,37 @@ int DCPCALL ListSendCommand(HWND ListWin, int Command, int Parameter)
   return LISTPLUGIN_OK;
 }
 
+static void wlxplug_atexit(void)
+{
+  g_print("%s atexit\n", PLUGNAME);
+
+  GKeyFile *cfg = g_key_file_new ();
+
+  if (gSaveSettings && g_key_file_load_from_file (cfg, gCfgPath, G_KEY_FILE_KEEP_COMMENTS, NULL)) {
+    g_key_file_set_boolean (cfg, PLUGNAME, "Loop", gLoop);
+    g_key_file_set_boolean (cfg, PLUGNAME, "Mute", gMute);
+    g_key_file_set_double (cfg, PLUGNAME, "Volume", gVolume);
+    g_key_file_save_to_file (cfg, gCfgPath, NULL);
+  }
+
+  g_key_file_free (cfg);
+  if (gInit) gst_deinit ();
+}
+
 void DCPCALL ListSetDefaultParams(ListDefaultParamStruct* dps)
 {
+  if (gInit) return;
+
+  /* Initialize GStreamer */
+  GError *err = NULL;
+  gInit = gst_init_check (NULL, NULL, &err);
+  if (err) {
+    g_printerr ("%s (gst_init_check) : %s.\n", PLUGNAME, err->message);
+    g_error_free (err);
+    return;
+  }
+  atexit(wlxplug_atexit);
+
   gboolean is_updcfg = FALSE;
   gchar *cfgdir = g_path_get_dirname (dps->DefaultIniName);
   snprintf (gCfgPath, PATH_MAX, "%s/j2969719.ini", cfgdir);
