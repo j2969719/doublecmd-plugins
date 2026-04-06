@@ -113,10 +113,8 @@ end
 
 function calcChr(Target, Pattern)
     if (Target ~= nil) and (Pattern ~= nil) then
-        local Count = 0;
-        for Chr in utf8.gmatch(Target, Pattern) do
-            Count = Count + 1;
-        end
+        local Count;
+        _, Count = utf8.gsub(Target, Pattern, "");
         return Count;
     end
 end
@@ -141,10 +139,11 @@ function checkCaseDupl(Str)
     local IsFound = false;
     local CurrentPath = getPath(Str);
     local CurrentName = getFullname(Str);
+    local CurrentNameLow = utf8.lower(CurrentName);
     local Handle, FindData = SysUtils.FindFirst(CurrentPath .. "*");
     if (Handle ~= nil) then
         repeat
-            if (FindData.Name ~= CurrentName) and (utf8.lower(CurrentName) == utf8.lower(FindData.Name)) then
+            if (FindData.Name ~= CurrentName) and (utf8.lower(FindData.Name) == CurrentNameLow) then
                 IsFound = true;
                 break;
             end
