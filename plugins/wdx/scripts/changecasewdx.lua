@@ -1,5 +1,5 @@
 -- changecasewdx.lua (cross-platform)
---2023.12.21
+--2025.04.06
 --[[
 Changing the case of letters
 
@@ -8,7 +8,7 @@ Values:
   all letters are lowercase;
 - UPPERCASE
   all letters are uppercase;
-- First Uppercase
+- First uppercase
   the first letter of the string is uppercase;
 - Sentence case
   the first letter of the string is uppercase, the others are lowercase;
@@ -28,7 +28,7 @@ local aU8 = {}
 
 function ContentGetSupportedField(FieldIndex)
   if FieldIndex == 0 then
-    return "Base name", "lowercase|UPPERCASE|First Uppercase|Sentence case|Start Case", 8
+    return "Base name", "lowercase|UPPERCASE|First uppercase|Sentence case|Start Case", 8
   elseif FieldIndex == 1 then
     return "Extension", "lowercase|UPPERCASE", 8
   end
