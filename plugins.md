@@ -152,6 +152,9 @@ Getting some information about attached pictures: MP3 (ID3v2.3 & ID3v2.4) and FL
 - [bintstwdx.lua](plugins/wdx/scripts/bintstwdx.lua)<br>
 Checking: binary or Unicode text file (encoding UTF-8, UTF-16 or UTF-32 and byte order, detection by BOM).
 
+- [caseduplwdx.lua](plugins/wdx/scripts/caseduplwdx.lua) *(cross platform)*<br>
+Checks the existence of files with the same names, but with a different letter case (like `filenamechrstatwdx.lua`, but without the `luautf8` module.)
+
 - [changecasewdx.lua](plugins/wdx/scripts/changecasewdx.lua) *(cross platform)*<br>
 Changing the case of letters, see description in the beginning of script.
 
