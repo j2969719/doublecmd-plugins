@@ -164,7 +164,7 @@ else:
         l = len(finfo.filename)
         tmp = finfo.filename[l - 4:l]
         e = tmp.lower()
-        if e == ".fb2" or e == "fbd":
+        if e == ".fb2" or e == ".fbd":
             hfile = z.open(finfo.filename, "r")
             tmp = hfile.read(96)
             hfile.close()
