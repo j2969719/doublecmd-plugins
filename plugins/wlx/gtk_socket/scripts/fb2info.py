@@ -34,6 +34,8 @@ def CheckFile(d):
         if b == 1:
             return "utf-8-sig"
     n2 = s.find("encoding=", n1)
+    if n2 == -1:
+        return "none"
     n1 = s.find('"', n2 + 11)
     t = s[n2 + 10:n1]
     return t.lower()
@@ -128,11 +130,6 @@ def GetPub(s):
 wid = int(sys.argv[1])
 path = sys.argv[2]
 
-plug = Gtk.Plug()
-plug.construct(wid)
-view = WebKit2.WebView()
-plug.add(view)
-
 en = ""
 l = len(path)
 tmp = path[l - 4:l]
@@ -142,9 +139,7 @@ if e == ".fb2" or e == ".fbd":
     tmp = hfile.read(96)
     hfile.close()
     en = CheckFile(tmp)
-    if en == "none":
-        sys.exit(1)
-    else:
+    if en != "none":
         if en[1:8] == "windows-":
             tmp = en.replace("windows-", "cp")
             hfile = open(path, "r", encoding=tmp)
@@ -169,10 +164,7 @@ else:
             tmp = hfile.read(96)
             hfile.close()
             en = CheckFile(tmp)
-            if en == "none":
-                z.close()
-                sys.exit(1)
-            else:
+            if en != "none":
                 hfile = z.open(finfo.filename, "r")
                 if en[1:8] == "windows-":
                     tmp = en.replace("windows-", "cp")
@@ -182,6 +174,9 @@ else:
                 hfile.close()
             break
     z.close()
+
+if len(data) == 0:
+    sys.exit(1)
 
 html = html + en + '"></head><body><div>'
 
@@ -244,6 +239,11 @@ if n1 != -1:
                 break
 
 html = html + "</div></body></html>"
+
+plug = Gtk.Plug()
+plug.construct(wid)
+view = WebKit2.WebView()
+plug.add(view)
 
 view.load_html(html)
 
