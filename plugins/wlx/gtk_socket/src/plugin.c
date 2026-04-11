@@ -6,6 +6,8 @@
 #include <gdk/gdkx.h>
 #include <dlfcn.h>
 #include <magic.h>
+#include <sys/wait.h>
+#include <unistd.h>
 #include <glib.h>
 #include <gdk/gdkkeysyms.h>
 #include <string.h>
@@ -174,6 +176,7 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	gboolean insensitive;
 	gboolean nospinner;
 	gboolean crapgrab;
+	gint exit_timeout = 0;
 
 	cfg = g_key_file_new();
 
@@ -208,6 +211,10 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 		noquote = g_key_file_get_boolean(cfg, group, "noquote", NULL);
 		insensitive = g_key_file_get_boolean(cfg, group, "insensitive", NULL);
 		crapgrab = g_key_file_get_boolean(cfg, group, "grab", NULL);
+		exit_timeout = g_key_file_get_integer(cfg, group, "exit_timeout", NULL);
+
+		if (exit_timeout < 1)
+			exit_timeout = g_key_file_get_integer(cfg, PLUGNAME, "exit_timeout", NULL);
 
 		nospinner = g_key_file_get_boolean(cfg, PLUGNAME, "nospinner", NULL);
 
@@ -266,11 +273,66 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 #else
 	Window id = gtk_socket_get_id(GTK_SOCKET(socket));
 #endif
+
 	command = str_replace(command, "$FILE", noquote ? g_strdup(FileToLoad) : g_shell_quote(FileToLoad));
 	command = str_replace(command, "$XID", g_strdup_printf("%d", id));
 	g_print("%s\n", command);
-
+/*
 	if (!g_spawn_command_line_async(command, NULL))
+	{
+		g_free(command);
+		gtk_widget_destroy(gFix);
+		return NULL;
+	}
+
+	g_free(command);
+*/
+
+	GPid pid;
+	int argc;
+	gchar** argv;
+	GSpawnFlags flags = G_SPAWN_SEARCH_PATH | G_SPAWN_DO_NOT_REAP_CHILD;
+
+	if (!g_shell_parse_argv(command, &argc, &argv, NULL))
+	{
+		g_free(command);
+		gtk_widget_destroy(gFix);
+		return NULL;
+	}
+
+	gboolean is_launched = g_spawn_async(NULL, argv, NULL, flags, NULL, NULL, &pid, NULL);
+	g_strfreev(argv);
+	g_free(command);
+
+	if (is_launched && exit_timeout > 0)
+	{
+		int status;
+		//g_print("%s: exit_timeout = %d millisec\n", PLUGNAME, exit_timeout);
+		usleep(exit_timeout * 1000);
+		//g_print("%s: waitpid %d\n", PLUGNAME, pid);
+		pid_t result = waitpid(pid, &status, WNOHANG);
+
+		if (result > 0)
+		{
+			if (WIFEXITED(status))
+			{
+				g_print("%s: WIFEXITED, WEXITSTATUS(status) == %d\n", PLUGNAME, WEXITSTATUS(status));
+				is_launched = FALSE;
+			}
+			else if (WIFSIGNALED(status))
+			{
+				g_print("%s: WIFSIGNALED, WTERMSIG(status) == %d\n", PLUGNAME, WTERMSIG(status));
+				is_launched = FALSE;
+			}
+		}
+		else if (result != 0)
+		{
+			//g_print("%s: waitpid != 0\n", PLUGNAME);
+			is_launched = FALSE;
+		}
+	}
+
+	if (!is_launched)
 	{
 		gtk_widget_destroy(gFix);
 		return NULL;
@@ -288,6 +350,7 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 #endif
 	}
 
+	g_object_set_data(G_OBJECT(gFix), "pid", GINT_TO_POINTER(pid));
 	gtk_widget_show(gFix);
 	return gFix;
 
@@ -295,7 +358,10 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 
 void DCPCALL ListCloseWindow(HWND ListWin)
 {
+	int status;
+	pid_t pid = (pid_t)GPOINTER_TO_INT(g_object_get_data(G_OBJECT(ListWin), "pid"));
 	gtk_widget_destroy(GTK_WIDGET(ListWin));
+	waitpid(pid, &status, 0);
 }
 
 int DCPCALL ListSearchDialog(HWND ListWin, int FindNext)
