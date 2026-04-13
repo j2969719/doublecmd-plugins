@@ -30,14 +30,14 @@ def destroy(xid):
 	data["plug"].destroy()
 	return True
 
-def loadfile(xid, filename):
+def load_file(xid, filename):
 	mdfile = open(filename)
 	html = markdown.markdown(mdfile.read(), extensions=['extra'])
 	mdfile.close()
 	widgets[xid]["view"].load_html(html)
 	return True
 
-def textsearch(xid, text, flags):
+def search_text(xid, text, flags):
 	lcs_findfirst  = 1
 	lcs_matchcase  = 2
 	lcs_wholewords = 4
@@ -52,7 +52,7 @@ def textsearch(xid, text, flags):
 	find_controller.search(text, options, 69)
 	return True
 
-def trigger(xid, command):
+def send_command(xid, command):
 	if command == "copy":
 		widgets[xid]["view"].execute_editing_command(WebKit2.EDITING_COMMAND_COPY)
 	elif command == "select_all":
@@ -79,17 +79,15 @@ def on_read_ready(stream, result, user_data):
 			case "?CREATE":
 				is_ok = create_ui(xid)
 			case "?LOAD":
-				is_ok = loadfile(xid, param)
+				is_ok = load_file(xid, param)
 			case "?DESTROY":
 				is_ok = destroy(xid)
 			case "?COPY":
-				is_ok = trigger(xid, "copy")
+				is_ok = send_command(xid, "copy")
 			case "?SELECTALL":
-				is_ok = trigger(xid, "select_all")
+				is_ok = send_command(xid, "select_all")
 			case "?FIND":
-				is_ok = textsearch(xid, param, flags)
-
-		print(f"{os.path.basename(__file__)}: {command} -> {is_ok}")
+				is_ok = search_text(xid, param, flags)
 
 		if is_ok:
 			data_out.put_string("!OK\n", None)

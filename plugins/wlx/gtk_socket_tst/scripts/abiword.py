@@ -19,7 +19,6 @@ def create_ui(xid):
 	plug = Gtk.Plug()
 	plug.construct(xid)
 	view = Abi.Widget()
-	#print(dir(view))
 	view.view_print_layout()
 	plug.add(view)
 	plug.show_all()
@@ -31,12 +30,12 @@ def destroy(xid):
 	data["plug"].destroy()
 	return True
 
-def loadfile(xid, filename):
+def load_file(xid, filename):
 	uri = GLib.filename_to_uri(filename)
 	widgets[xid]["view"].load_file(filename, "")
 	return True
 
-def textsearch(xid, text, flags):
+def search_text(xid, text, flags):
 	lcs_findfirst  = 1
 	lcs_matchcase  = 2
 	lcs_wholewords = 4
@@ -50,7 +49,7 @@ def textsearch(xid, text, flags):
 		view.find_next(flags & lcs_findfirst)
 	return True
 
-def trigger(xid, command):
+def send_command(xid, command):
 	view = widgets[xid]["view"]
 	if command == "copy":
 		view.copy()
@@ -78,17 +77,15 @@ def on_read_ready(stream, result, user_data):
 			case "?CREATE":
 				is_ok = create_ui(xid)
 			case "?LOAD":
-				is_ok = loadfile(xid, param)
+				is_ok = load_file(xid, param)
 			case "?DESTROY":
 				is_ok = destroy(xid)
 			case "?COPY":
-				is_ok = trigger(xid, "copy")
+				is_ok = send_command(xid, "copy")
 			case "?SELECTALL":
-				is_ok = trigger(xid, "select_all")
+				is_ok = send_command(xid, "select_all")
 			case "?FIND":
-				is_ok = textsearch(xid, param, flags)
-
-		print(f"{os.path.basename(__file__)}: {command} -> {is_ok}")
+				is_ok = search_text(xid, param, flags)
 
 		if is_ok:
 			data_out.put_string("!OK\n", None)
