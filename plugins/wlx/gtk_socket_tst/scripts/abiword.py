@@ -2,16 +2,15 @@
 
 import os
 import sys
-import markdown
 os.environ["GDK_CORE_DEVICE_EVENTS"] = "1"
 
 import gi
 gi.require_version('Gtk', '3.0')
 gi.require_version('Gio', '2.0')
-gi.require_version('WebKit2', '4.0')
+gi.require_version('Abi', '3.0')
 from gi.repository import Gio
 from gi.repository import Gtk, GLib
-from gi.repository import WebKit2
+from gi.repository import Abi
 
 widgets = {}
 socket_path = os.environ['SOCKET']
@@ -19,7 +18,9 @@ socket_path = os.environ['SOCKET']
 def create_ui(xid):
 	plug = Gtk.Plug()
 	plug.construct(xid)
-	view = WebKit2.WebView()
+	view = Abi.Widget()
+	#print(dir(view))
+	view.view_print_layout()
 	plug.add(view)
 	plug.show_all()
 	widgets[xid] = {"plug": plug, "view": view}
@@ -31,10 +32,8 @@ def destroy(xid):
 	return True
 
 def loadfile(xid, filename):
-	mdfile = open(filename)
-	html = markdown.markdown(mdfile.read(), extensions=['extra'])
-	mdfile.close()
-	widgets[xid]["view"].load_html(html)
+	uri = GLib.filename_to_uri(filename)
+	widgets[xid]["view"].load_file(filename, "")
 	return True
 
 def textsearch(xid, text, flags):
@@ -43,20 +42,20 @@ def textsearch(xid, text, flags):
 	lcs_wholewords = 4
 	lcs_backwards  = 8
 
-	find_controller = widgets[xid]["view"].get_find_controller()
-	options = WebKit2.FindOptions.NONE
-	if not (flags & lcs_matchcase):
-		options |= WebKit2.FindOptions.CASE_INSENSITIVE
+	view = widgets[xid]["view"]
+	view.set_find_string(text)
 	if flags & lcs_backwards:
-		options |= WebKit2.FindOptions.BACKWARDS
-	find_controller.search(text, options, 69)
+		view.find_prev()
+	else:
+		view.find_next(flags & lcs_findfirst)
 	return True
 
 def trigger(xid, command):
+	view = widgets[xid]["view"]
 	if command == "copy":
-		widgets[xid]["view"].execute_editing_command(WebKit2.EDITING_COMMAND_COPY)
+		view.copy()
 	elif command == "select_all":
-		widgets[xid]["view"].execute_editing_command(WebKit2.EDITING_COMMAND_SELECT_ALL)
+		view.select_all()
 	return True
 
 def on_read_ready(stream, result, user_data):
@@ -114,4 +113,5 @@ data_out.put_string("READY\n", None)
 out_stream.flush(None)
 data_in.read_line_async(GLib.PRIORITY_DEFAULT, None, on_read_ready, None)
 
+Abi.init_noargs() 
 Gtk.main()

@@ -2,7 +2,6 @@
 
 import os
 import sys
-import markdown
 os.environ["GDK_CORE_DEVICE_EVENTS"] = "1"
 
 import gi
@@ -51,7 +50,6 @@ def textsearch(xid, text, flags):
 	return True
 
 def trigger(xid, command):
-	print("trigger")
 	if command == "copy":
 		widgets[xid]["view"].execute_editing_command(WebKit2.EDITING_COMMAND_COPY)
 	elif command == "select_all":
