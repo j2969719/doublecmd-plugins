@@ -4,6 +4,7 @@
 #include <gtk/gtkx.h>
 #endif
 #include <gdk/gdkx.h>
+#include <sys/wait.h>
 #include <ftw.h>
 #include <dlfcn.h>
 #include "wlxplugin.h"
@@ -29,7 +30,6 @@ typedef struct
 	GDataOutputStream *data_out;
 	gchar *socket_path;
 	GSocketConnection *sock;
-	gsize wlx_count;
 } ScriptItem;
 
 GKeyFile *cfg = NULL;
@@ -37,6 +37,35 @@ gchar *tmpdir = NULL;
 gchar *new_path = NULL;
 GHashTable *active_scripts = NULL;
 gboolean is_plug_init = FALSE;
+
+static gboolean check_alive(ScriptItem *item)
+{
+	int status;
+	gboolean is_launched = TRUE;
+
+	pid_t result = waitpid(item->pid, &status, WNOHANG);
+
+	if (result > 0)
+	{
+		if (WIFEXITED(status))
+		{
+			g_printerr("%s (%s): %d WIFEXITED, WEXITSTATUS(status) == %d\n", PLUGNAME, item->script, item->pid, WEXITSTATUS(status));
+			is_launched = FALSE;
+		}
+		else if (WIFSIGNALED(status))
+		{
+			g_printerr("%s (%s): %d WIFSIGNALED, WTERMSIG(status) == %d\n", PLUGNAME, item->script, item->pid, WTERMSIG(status));
+			is_launched = FALSE;
+		}
+	}
+	else if (result != 0)
+	{
+		//g_print("%s (%s): waitpid != 0\n", PLUGNAME, item->script);
+		is_launched = FALSE;
+	}
+
+	return is_launched;
+}
 
 void script_data_free(gpointer data)
 {
@@ -48,6 +77,9 @@ void script_data_free(gpointer data)
 		g_object_unref(item->sock);
 	}
 
+	if (item->pid > 0 && check_alive(item))
+		kill(item->pid, SIGTERM);
+
 	unlink(item->socket_path);
 	g_free(item->socket_path);
 	g_free(item->script);
@@ -57,9 +89,6 @@ void script_data_free(gpointer data)
 
 	if (item->data_out)
 		g_object_unref(item->data_out);
-
-	if (item->pid > 0)
-		kill(item->pid, SIGTERM);
 
 	g_free(item);
 }
@@ -157,6 +186,12 @@ static ScriptItem* get_script_item(gchar *group)
 	gchar *script = g_key_file_get_string(cfg, group, "script", NULL);
 	ScriptItem *item = g_hash_table_lookup(active_scripts, script);
 
+	if (item && !check_alive(item))
+	{
+		g_hash_table_remove(active_scripts, script);
+		item = NULL;
+	}
+
 	if (!item)
 	{
 		item = g_new0(ScriptItem, 1);
@@ -184,7 +219,7 @@ static ScriptItem* get_script_item(gchar *group)
 		gboolean is_launched = g_spawn_async(NULL, argv, envp, flags, NULL, NULL, &item->pid, NULL);
 		g_strfreev(envp);
 
-		if (!is_launched)
+		if (!is_launched || !check_alive(item))
 		{
 			script_data_free(item);
 			g_object_unref(service);
@@ -207,9 +242,8 @@ static ScriptItem* get_script_item(gchar *group)
 
 		char buffer[MSG_BUF];
 
-		if (kill(item->pid, 0) != 0)
+		if (!check_alive(item))
 		{
-			g_printerr("%s (%s): %d is dead\n", PLUGNAME, item->script, item->pid);
 			script_data_free(item);
 			return NULL;
 		}
@@ -236,10 +270,7 @@ static ScriptItem* get_script_item(gchar *group)
 		g_hash_table_insert(active_scripts, g_strdup(item->script), item);
 	}
 	else
-	{
-		item->wlx_count++;
 		g_free(script);
-	}
 
 	if (err)
 		g_error_free(err);
@@ -263,11 +294,8 @@ static gboolean send_command(ScriptItem *item, gint64 xid, gchar *command, gchar
 	else
 		g_output_stream_flush(item->out, NULL, NULL);
 
-	if (kill(item->pid, 0) != 0)
-	{
-		g_printerr("%s (%s): %d is dead\n", PLUGNAME, item->script, item->pid);
+	if (!check_alive(item))
 		return FALSE;
-	}
 
 	char *response = g_data_input_stream_read_line(item->data_in, NULL, NULL, &err);
 
@@ -279,6 +307,10 @@ static gboolean send_command(ScriptItem *item, gint64 xid, gchar *command, gchar
 	}
 
 	g_print("%s (%s): %s\t%ld\t%s\t%d -> %s\n", PLUGNAME, item->script, command, xid, param, flags, response);
+
+	if (!response)
+		return FALSE;
+
 	gboolean result = (strcmp(response, "!OK") == 0);
 	g_free(response);
 
@@ -349,7 +381,8 @@ int DCPCALL ListLoadNext(HWND ParentWin,HWND PluginWin,char* FileToLoad,int Show
 
 	ScriptItem *item = (ScriptItem*)g_object_get_data(G_OBJECT(PluginWin), "script_item");
 	gsize xid = (gsize)GPOINTER_TO_SIZE(g_object_get_data(G_OBJECT(PluginWin), "xid"));
-	
+	g_free(group);
+
 	if (item == newitem && send_command(item, xid, CMD_LOAD, FileToLoad, ShowFlags))
 		return LISTPLUGIN_OK;
 

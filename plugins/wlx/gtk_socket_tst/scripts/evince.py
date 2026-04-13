@@ -33,12 +33,42 @@ def loadfile(xid, filename):
 	doc = EvinceDocument.Document.factory_get_document(uri)
 	model = EvinceView.DocumentModel()
 	model.set_document(doc)
+	widgets[xid]["doc"] = doc
 	widgets[xid]["view"].set_model(model)
 	return True
 
 def destroy(xid):
 	data = widgets.pop(xid) 
 	data["plug"].destroy()
+	return True
+
+def trigger(xid, command):
+	view = widgets[xid]["view"]
+	if command == "copy":
+		view.copy()
+	elif command == "select_all":
+		view.select_all()
+	view.find_set_highlight_search(False)
+	return True
+
+def textsearch(xid, text, flags):
+	lcs_findfirst  = 1
+	lcs_matchcase  = 2
+	lcs_wholewords = 4
+	lcs_backwards  = 8
+
+	view = widgets[xid]["view"]
+	view.find_set_highlight_search(True)
+
+	if flags & lcs_findfirst:
+		pages = widgets[xid]["doc"].get_n_pages()
+		job = EvinceView.JobFind.new(widgets[xid]["doc"], 0, pages, text, flags & lcs_matchcase)
+		view.find_started(job);
+		EvinceView.Job.scheduler_push_job(job, EvinceView.JobPriority.PRIORITY_HIGH)
+	elif flags & lcs_backwards:
+		view.find_previous()
+	else:
+		view.find_next()
 	return True
 
 def on_read_ready(stream, result, user_data):
@@ -64,6 +94,12 @@ def on_read_ready(stream, result, user_data):
 				is_ok = loadfile(xid, param)
 			case "?DESTROY":
 				is_ok = destroy(xid)
+			case "?COPY":
+				is_ok = trigger(xid, "copy")
+			case "?SELECTALL":
+				is_ok = trigger(xid, "select_all")
+			case "?FIND":
+				is_ok = textsearch(xid, param, flags)
 
 		if is_ok:
 			data_out.put_string("!OK\n", None)
