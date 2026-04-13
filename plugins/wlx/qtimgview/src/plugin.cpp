@@ -123,6 +123,7 @@ class ImageViewer : public QWidget
 			m_tabs->setTabPosition(QTabWidget::South);
 			m_tabs->addTab(m_scrollArea, "(ʘ‿ʘ)");
 			m_lblExif = new QLabel();
+			//m_lblExif->setAlignment(Qt::AlignTop | Qt::AlignLeft);
 			m_lblExif->setAlignment(Qt::AlignCenter);
 			m_lblExif->setWordWrap(true);
 			m_lblExif->setTextFormat(Qt::RichText);
@@ -305,7 +306,7 @@ class ImageViewer : public QWidget
 			QString output(proc.readAllStandardOutput());
 			proc.close();
 			QRegularExpression re("^([^\\t]+)\\t(.*)$", QRegularExpression::MultilineOption);
-			output.replace(re, "<b>\\1:</b> \\2<br>");
+			output.replace(re, "<b>\\1:</b> <tt>\\2</tt><br>");
 			m_lblExif->setText(output);
 			m_isExifSet = true;
 		}

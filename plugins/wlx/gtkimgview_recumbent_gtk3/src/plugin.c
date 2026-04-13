@@ -61,6 +61,7 @@ typedef struct
 gboolean gInit = FALSE;
 gboolean gHideToolbar = TRUE;
 gboolean gFastDownscale = TRUE;
+gboolean gExifLeftAlign = FALSE;
 gboolean gTheresExiftool = FALSE;
 
 static void clear_data(CustomData *data)
@@ -346,7 +347,7 @@ static gboolean switch_page_cb(GtkNotebook *notebook, GtkWidget *page, guint pag
 
 			if (re)
 			{
-				gchar *text = g_regex_replace(re, buf, -1, 0, "<b>\\1:</b> \\2", 0, NULL);
+				gchar *text = g_regex_replace(re, buf, -1, 0, "<b>\\1:</b> <tt>\\2</tt>", 0, NULL);
 				g_regex_unref(re);
 				g_free(buf);
 				gtk_label_set_markup(GTK_LABEL(data->exif_label), text);
@@ -630,7 +631,15 @@ static GtkWidget *create_ui(GtkWidget *ParentWin, CustomData *data)
 	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scroll),
 	                               GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
 	data->exif_label = gtk_label_new(NULL);
-	gtk_label_set_justify(GTK_LABEL(data->exif_label), GTK_JUSTIFY_CENTER);
+
+	if (gExifLeftAlign)
+	{
+		gtk_widget_set_halign(data->exif_label, GTK_ALIGN_START);
+		gtk_widget_set_valign(data->exif_label, GTK_ALIGN_START);
+	}
+	else
+		gtk_label_set_justify(GTK_LABEL(data->exif_label), GTK_JUSTIFY_CENTER);
+
 	gtk_container_add(GTK_CONTAINER(scroll), data->exif_label);
 	gtk_notebook_append_page(GTK_NOTEBOOK(data->notebook), data->scroll, gtk_label_new("(ʘ‿ʘ)"));
 	gtk_notebook_append_page(GTK_NOTEBOOK(data->notebook), scroll, gtk_label_new("ExifTool"));
@@ -776,6 +785,14 @@ void DCPCALL ListSetDefaultParams(ListDefaultParamStruct* dps)
 	}
 	else
 		gFastDownscale = g_key_file_get_boolean(cfg, PLUGNAME, "FastDownscale", NULL);
+
+	if (!g_key_file_has_key(cfg, PLUGNAME, "ExifLeftAlign", NULL))
+	{
+		g_key_file_set_boolean(cfg, PLUGNAME, "ExifLeftAlign", gExifLeftAlign);
+		is_bump_cfg = TRUE;
+	}
+	else
+		gExifLeftAlign = g_key_file_get_boolean(cfg, PLUGNAME, "ExifLeftAlign", NULL);
 
 	if (is_bump_cfg)
 		g_key_file_save_to_file(cfg, cfgpath, NULL);

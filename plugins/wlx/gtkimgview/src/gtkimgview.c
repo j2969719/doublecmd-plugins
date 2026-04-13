@@ -17,6 +17,7 @@
 gboolean gInit = FALSE;
 gboolean gHideToolbar = TRUE;
 gboolean gTheresExiftool = FALSE;
+gboolean gExifLeftAlign = FALSE;
 const gchar *gAnims[] =
 {
 	"image/gif",
@@ -171,7 +172,7 @@ static gboolean switch_page_cb(GtkNotebook *notebook, GtkWidget *page, guint pag
 
 			if (re)
 			{
-				gchar *text = g_regex_replace(re, buf, -1, 0, "<b>\\1:</b> \\2", 0, NULL);
+				gchar *text = g_regex_replace(re, buf, -1, 0, "<b>\\1:</b> <tt>\\2</tt>", 0, NULL);
 				g_regex_unref(re);
 				g_free(buf);
 				gtk_label_set_markup(GTK_LABEL(exif_label), text);
@@ -233,7 +234,12 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scroll2),
 	                               GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
 	GtkWidget *exif_label = gtk_label_new(NULL);
-	gtk_label_set_justify(GTK_LABEL(exif_label), GTK_JUSTIFY_CENTER);
+
+	if (gExifLeftAlign)
+		gtk_misc_set_alignment(GTK_MISC(exif_label), 0, 0);
+	else
+		gtk_label_set_justify(GTK_LABEL(exif_label), GTK_JUSTIFY_CENTER);
+
 	gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(scroll2), exif_label);
 	gtk_notebook_append_page(GTK_NOTEBOOK(notebook), scroll, gtk_label_new("(ʘ‿ʘ)"));
 	gtk_notebook_append_page(GTK_NOTEBOOK(notebook), scroll2, gtk_label_new("ExifTool"));
@@ -507,16 +513,28 @@ void DCPCALL ListSetDefaultParams(ListDefaultParamStruct* dps)
 	gchar *cfgdir = g_path_get_dirname(dps->DefaultIniName);
 	gchar *cfgpath = g_strdup_printf("%s/j2969719.ini", cfgdir);
 	g_free(cfgdir);
+	gboolean is_bump_cfg = FALSE;
 	GKeyFile *cfg = g_key_file_new();
 	g_key_file_load_from_file(cfg, cfgpath, G_KEY_FILE_KEEP_COMMENTS, NULL);
 
 	if (!g_key_file_has_key(cfg, PLUGNAME, "HideToolbar", NULL))
 	{
 		g_key_file_set_boolean(cfg, PLUGNAME, "HideToolbar", gHideToolbar);
-		g_key_file_save_to_file(cfg, cfgpath, NULL);
+		is_bump_cfg = TRUE;
 	}
 	else
 		gHideToolbar = g_key_file_get_boolean(cfg, PLUGNAME, "HideToolbar", NULL);
+
+	if (!g_key_file_has_key(cfg, PLUGNAME, "ExifLeftAlign", NULL))
+	{
+		g_key_file_set_boolean(cfg, PLUGNAME, "ExifLeftAlign", gExifLeftAlign);
+		is_bump_cfg = TRUE;
+	}
+	else
+		gExifLeftAlign = g_key_file_get_boolean(cfg, PLUGNAME, "ExifLeftAlign", NULL);
+
+	if (is_bump_cfg)
+		g_key_file_save_to_file(cfg, cfgpath, NULL);
 
 	g_key_file_free(cfg);
 	g_free(cfgpath);
