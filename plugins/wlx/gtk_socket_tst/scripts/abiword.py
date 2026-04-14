@@ -29,7 +29,7 @@ def destroy(xid):
 
 def load_file(xid, filename):
 	uri = GLib.filename_to_uri(filename)
-	widgets[xid]["view"].load_file(filename, "")
+	widgets[xid]["view"].load_file(uri, "")
 	return True
 
 def search_text(xid, text, flags):
