@@ -44,7 +44,10 @@ void script_data_free(gpointer data)
 	ScriptItem *item = (ScriptItem*)data;
 
 	if (item->pid > 0 && item->is_alive)
+	{
 		kill(item->pid, SIGTERM);
+		g_spawn_close_pid(item->pid);
+	}
 
 	if (item->in)
 		g_object_unref(item->in);
@@ -71,10 +74,17 @@ static void on_plug_added(GtkWidget *widget, gpointer data)
 
 static void on_child_exited(GPid pid, gint status, gpointer data)
 {
-	ScriptItem *item = (ScriptItem*)data;
-	g_print("%s: PID %d exited, status == %d\n", PLUGNAME, pid, status);
-	item->is_alive = FALSE;
+	gchar *script = (gchar*)data;
+	ScriptItem *item = g_hash_table_lookup(active_scripts, script);
+
+	if (item)
+	{
+		item->is_alive = FALSE;
+		g_printerr("%s: %s [PID %d] exited, status = %d\n", PLUGNAME, script, pid, status);
+	}
+
 	g_spawn_close_pid(pid);
+	g_free(script);
 }
 
 static char* get_file_ext(char *filename)
@@ -210,7 +220,7 @@ static ScriptItem* get_script_item(gchar *group)
 			return NULL;
 		}
 
-		g_child_watch_add(item->pid, on_child_exited, item);
+		g_child_watch_add(item->pid, on_child_exited, g_strdup(script));
 
 		item->in = G_INPUT_STREAM(g_unix_input_stream_new(item->stdout, TRUE));
 		item->out = G_OUTPUT_STREAM(g_unix_output_stream_new(item->stdin, TRUE));
