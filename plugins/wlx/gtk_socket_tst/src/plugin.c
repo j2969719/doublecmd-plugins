@@ -65,11 +65,10 @@ void script_data_free(gpointer data)
 	g_free(item);
 }
 
-static void on_plug_added(GtkWidget *widget, gpointer data)
+static void on_plug_removed(GtkWidget *widget, gpointer data)
 {
-	gtk_spinner_stop(GTK_SPINNER(data));
-	gtk_widget_hide(GTK_WIDGET(data));
-	gtk_widget_show(widget);
+	gtk_widget_show(GTK_WIDGET(data));
+	gtk_widget_hide(widget);
 }
 
 static void on_child_exited(GPid pid, gint status, gpointer data)
@@ -305,12 +304,11 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	gtk_widget_set_no_show_all(main_box, TRUE);
 	gtk_container_add(GTK_CONTAINER(GTK_WIDGET(ParentWin)), main_box);
 	GtkWidget *socket = gtk_socket_new();
-	GtkWidget *spinner = gtk_spinner_new();
-	gtk_widget_show(spinner);
-	gtk_spinner_start(GTK_SPINNER(spinner));
+	GtkWidget *label = gtk_label_new("¯\\_(ツ)_/¯");
+	gtk_widget_show(socket);
 	gtk_box_pack_start(GTK_BOX(main_box), socket, TRUE, TRUE, 0);
-	gtk_box_pack_end(GTK_BOX(main_box), spinner, TRUE, FALSE, 0);
-	g_signal_connect(socket, "plug-added", G_CALLBACK(on_plug_added), (gpointer)spinner);
+	gtk_box_pack_end(GTK_BOX(main_box), label, TRUE, FALSE, 0);
+	g_signal_connect(socket, "plug-removed", G_CALLBACK(on_plug_removed), (gpointer)label);
 
 	gtk_widget_show(main_box);
 
