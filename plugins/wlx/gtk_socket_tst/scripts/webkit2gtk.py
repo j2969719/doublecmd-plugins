@@ -22,13 +22,14 @@ except:
 	print(f"{script_name}: markdown {scream}", file=sys.stderr, flush=True)
 hx_exe = os.path.join(os.path.dirname(__file__), "redist/exsimple")
 hx_cfg = os.path.join(os.path.dirname(__file__), "redist/default.cfg")
-is_hx = os.access(hx_exe, os.X_OK)
-is_mupdf = bool(shutil.which("mutool"))
-if is_hx:
+is_hx_there = os.access(hx_exe, os.X_OK)
+is_mupdf_there = bool(shutil.which("mutool"))
+is_md_there = 'markdown' in sys.modules
+if is_hx_there:
 	import tempfile
 else:
 	print(f"{script_name}: /redist/exsimple {scream}", file=sys.stderr, flush=True)
-if not is_mupdf:
+if not is_mupdf_there:
 	print(f"{script_name}: mutool {scream}", file=sys.stderr, flush=True)
 
 def convert_using_hx(path, output):
@@ -60,7 +61,7 @@ def md_to_html(path):
 		print(f"{script_name}: md_to_html fail", file=sys.stderr, flush=True)
 	return None
 
-def decide_policy_cb(view, decision, decision_type, *args):
+def on_decide_policy(view, decision, decision_type, *args):
 	if decision_type != WebKit2.PolicyDecisionType.NAVIGATION_ACTION:
 		return False
 	action = decision.get_navigation_action()
@@ -72,11 +73,11 @@ def decide_policy_cb(view, decision, decision_type, *args):
 		else:
 			path, _ = GLib.filename_from_uri(uri)
 		ext = os.path.splitext(path)[1].lower()
-		if ext == ".md":
+		if is_md_there and ext == ".md":
 			html = md_to_html(path)
-		elif ext in mutool_exts:
+		elif is_mupdf_there and ext in mutool_exts:
 			html = convert_using_mutool(path)
-		elif is_hx and ext in hx_exts:
+		elif is_hx_there and ext in hx_exts:
 			tmpdir = getattr(view, "tmpdir", None)
 			output = os.path.join(tmpdir, "output.html")
 			if convert_using_hx(path, output):
@@ -96,12 +97,12 @@ def create_ui(xid):
 	plug = Gtk.Plug()
 	plug.construct(xid)
 	view = WebKit2.WebView()
-	view.connect("decide-policy", decide_policy_cb)
+	view.connect("decide-policy", on_decide_policy)
 	settings = view.get_settings()
 	settings.set_allow_file_access_from_file_urls(True)
 	settings.set_allow_universal_access_from_file_urls(True)
 	view.set_settings(settings)
-	if is_hx:
+	if is_hx_there:
 		view.tmpdir = tempfile.mkdtemp()
 	plug.add(view)
 	plug.show_all()
@@ -110,13 +111,20 @@ def create_ui(xid):
 
 def destroy(xid):
 	data = widgets.pop(xid) 
-	if is_hx:
+	if is_hx_there:
 		tmpdir = getattr(data["view"], "tmpdir", None)
 		shutil.rmtree(tmpdir, ignore_errors=True)
 	data["plug"].destroy()
 	return True
 
 def load_file(xid, filename):
+	ext = os.path.splitext(filename)[1].lower()
+	if not is_md_there and ext == ".md":
+		return False
+	elif not is_mupdf_there and ext in mutool_exts:
+		return False
+	elif not is_hx_there and ext in hx_exts:
+		return False
 	view = widgets[xid]["view"]
 	uri = GLib.filename_to_uri(filename)
 	view.dirname = os.path.dirname(filename)
@@ -124,9 +132,7 @@ def load_file(xid, filename):
 	return True
 
 def search_text(xid, text, flags):
-	lcs_findfirst  = 1
 	lcs_matchcase  = 2
-	lcs_wholewords = 4
 	lcs_backwards  = 8
 
 	find_controller = widgets[xid]["view"].get_find_controller()
@@ -149,22 +155,18 @@ def on_read_ready(channel, condition):
 	if condition & GLib.IO_HUP:
 		Gtk.main_quit()
 		return False
-
 	try:
 		line = sys.stdin.readline()
-
 		if not line:
 			print(f"{script_name}: line is None", file=sys.stderr, flush=True)
 			Gtk.main_quit()
 			return False
-
 		parts = line.strip().split('\t')
 		command = parts[0]
 		xid = int(parts[1])
 		param = parts[2]
 		flags = int(parts[3])
 		is_ok = False
-
 		match command:
 			case "?CREATE":
 				is_ok = create_ui(xid)
@@ -178,18 +180,15 @@ def on_read_ready(channel, condition):
 				is_ok = send_command(xid, "select_all")
 			case "?FIND":
 				is_ok = search_text(xid, param, flags)
-
 		if is_ok:
 			sys.stdout.write("!OK\n")
 		else:
 			sys.stdout.write("!ERROR\n")
 		sys.stdout.flush()
-
 	except Exception as e:
 		print(f"{script_name}: {e}", file=sys.stderr, flush=True)
 		Gtk.main_quit()
 		return False
-
 	return True
 
 channel = GLib.IOChannel.unix_new(sys.stdin.fileno())
