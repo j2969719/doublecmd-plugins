@@ -7,13 +7,98 @@ gi.require_version('Gtk', '3.0')
 gi.require_version('WebKit2', '4.0')
 from gi.repository import Gtk, GLib
 from gi.repository import WebKit2
+import subprocess
+import shutil
 
 widgets = {}
+mutool_exts = ['.epub', '.fb2']
+hx_exts = ['.odt', '.ods', '.docx', '.doc', '.rtf', '.xls', '.xlsx', ".ppt", ".pptx", ".123", ".mdb", ".mpp", ".eml", ".dxf", ".drw", ".pct", ".wpd", ".vsd", ".shw", ".sdw", ".qpw", ".prz", ".pst"] # ".mht"
+
+script_name = os.path.basename(__file__)
+scream = "is missing, make sure nothing is registered for it in settings.ini"
+try:
+	import markdown
+except:
+	print(f"{script_name}: markdown {scream}", file=sys.stderr, flush=True)
+hx_exe = os.path.join(os.path.dirname(__file__), "redist/exsimple")
+hx_cfg = os.path.join(os.path.dirname(__file__), "redist/default.cfg")
+is_hx = os.access(hx_exe, os.X_OK)
+is_mupdf = bool(shutil.which("mutool"))
+if is_hx:
+	import tempfile
+else:
+	print(f"{script_name}: /redist/exsimple {scream}", file=sys.stderr, flush=True)
+if not is_mupdf:
+	print(f"{script_name}: mutool {scream}", file=sys.stderr, flush=True)
+
+def convert_using_hx(path, output):
+	try:
+		if os.path.exists(output):
+			os.remove(output)
+		cmd = [hx_exe, path, output, hx_cfg]
+		subprocess.run(cmd, check=True, capture_output=True)
+		if os.path.exists(output) and os.path.getsize(output) > 0:
+			return True
+	except:
+		print(f"{script_name}: convert_using_hx fail", file=sys.stderr, flush=True)
+	return False
+
+def convert_using_mutool(path):
+	try:
+		cmd = ["mutool", "convert", "-F", "xhtml", "-O", "preserve-images","-o", "-", path]
+		result = subprocess.run(cmd, check=True, capture_output=True, text=True)
+		return result.stdout
+	except:
+		print(f"{script_name}: convert_using_mutool fail", file=sys.stderr, flush=True)
+	return None
+
+def md_to_html(path):
+	try:
+		with open(path, 'r') as file:
+			return markdown.markdown(file.read(), extensions=['extra'])
+	except:
+		print(f"{script_name}: md_to_html fail", file=sys.stderr, flush=True)
+	return None
+
+def decide_policy_cb(view, decision, decision_type, *args):
+	if decision_type != WebKit2.PolicyDecisionType.NAVIGATION_ACTION:
+		return False
+	action = decision.get_navigation_action()
+	uri = action.get_request().get_uri()
+	try:
+		if "://" not in uri:
+			dirname = getattr(view, "dirname", None)
+			path = os.path.join(dirname, uri)
+		else:
+			path, _ = GLib.filename_from_uri(uri)
+		ext = os.path.splitext(path)[1].lower()
+		if ext == ".md":
+			html = md_to_html(path)
+		elif ext in mutool_exts:
+			html = convert_using_mutool(path)
+		elif is_hx and ext in hx_exts:
+			tmpdir = getattr(view, "tmpdir", None)
+			output = os.path.join(tmpdir, "output.html")
+			if convert_using_hx(path, output):
+				uri = GLib.filename_to_uri(output)
+				view.load_uri(uri)
+				decision.ignore()
+				return True
+		if html:
+			view.load_html(html, None)
+			decision.ignore()
+			return True
+	except:
+		pass
+	return False
 
 def create_ui(xid):
 	plug = Gtk.Plug()
 	plug.construct(xid)
 	view = WebKit2.WebView()
+	view.connect("decide-policy", decide_policy_cb)
+	if is_hx:
+		view.tmpdir = tempfile.mkdtemp()
 	plug.add(view)
 	plug.show_all()
 	widgets[xid] = {"plug": plug, "view": view}
@@ -21,12 +106,17 @@ def create_ui(xid):
 
 def destroy(xid):
 	data = widgets.pop(xid) 
+	if is_hx:
+		tmpdir = getattr(data["view"], "tmpdir", None)
+		shutil.rmtree(tmpdir, ignore_errors=True)
 	data["plug"].destroy()
 	return True
 
 def load_file(xid, filename):
+	view = widgets[xid]["view"]
 	uri = GLib.filename_to_uri(filename)
-	widgets[xid]["view"].load_uri(uri)
+	view.dirname = os.path.dirname(filename)
+	view.load_uri(uri)
 	return True
 
 def search_text(xid, text, flags):
@@ -60,7 +150,7 @@ def on_read_ready(channel, condition):
 		line = sys.stdin.readline()
 
 		if not line:
-			print(f"{os.path.basename(__file__)}: line is None", file=sys.stderr, flush=True)
+			print(f"{script_name}: line is None", file=sys.stderr, flush=True)
 			Gtk.main_quit()
 			return False
 
@@ -92,7 +182,7 @@ def on_read_ready(channel, condition):
 		sys.stdout.flush()
 
 	except Exception as e:
-		print(f"{os.path.basename(__file__)}: {e}", file=sys.stderr, flush=True)
+		print(f"{script_name}: {e}", file=sys.stderr, flush=True)
 		Gtk.main_quit()
 		return False
 
