@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import os
 import sys
 import gi
 gi.require_version('Gtk', '3.0')
@@ -62,7 +63,7 @@ def on_read_ready(channel, condition):
 	return True
 
 channel = GLib.IOChannel.unix_new(sys.stdin.fileno())
-GLib.io_add_watch(channel, GLib.PRIORITY_DEFAULT, GLib.IO_IN | GLib.IO_HUP, on_read_ready)
+GLib.io_add_watch(channel, GLib.PRIORITY_DEFAULT, GLib.IO_IN, on_read_ready)
 sys.stdout.write("READY\n")
 sys.stdout.flush()
 

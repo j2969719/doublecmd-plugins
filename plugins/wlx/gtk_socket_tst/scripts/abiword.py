@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import os
 import sys
 import gi
 gi.require_version('Gtk', '3.0')
@@ -53,6 +54,10 @@ def send_command(xid, command):
 	return True
 
 def on_read_ready(channel, condition):
+	if condition & GLib.IO_HUP:
+		Gtk.main_quit()
+		return False
+
 	try:
 		line = sys.stdin.readline()
 

@@ -10,7 +10,7 @@ plugname := $(plugdir).$(plugtype)
 plugdescr := `grep '$(plugtype)/$(plugdir))' ../../../../plugins.md -1 | tail -1 | sed 's/[[]//' | sed 's/[]][\(][^\)]\+.//' | sed 's/\s[\(].\+[\)]//'`
 plugfiles := $(filter-out $(wildcard ../*.$(plugtype)), $(wildcard ../*))
 
-detectstring := EXT=\"HTML\"|EXT=\"HTM\"|EXT=\"XHTM\"|EXT=\"XHTML\"|EXT=\"MHT\"
+detectstring := EXT=\"HTML\"|EXT=\"HTM\"|EXT=\"XHTM\"|EXT=\"XHTML\"
 
 
 all:
