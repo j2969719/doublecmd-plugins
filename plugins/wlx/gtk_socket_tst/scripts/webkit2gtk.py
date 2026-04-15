@@ -97,6 +97,10 @@ def create_ui(xid):
 	plug.construct(xid)
 	view = WebKit2.WebView()
 	view.connect("decide-policy", decide_policy_cb)
+	settings = view.get_settings()
+	settings.set_allow_file_access_from_file_urls(True)
+	settings.set_allow_universal_access_from_file_urls(True)
+	view.set_settings(settings)
 	if is_hx:
 		view.tmpdir = tempfile.mkdtemp()
 	plug.add(view)
