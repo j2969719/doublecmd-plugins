@@ -6,6 +6,7 @@
 #include <gdk/gdkx.h>
 #include <gio/gunixinputstream.h>
 #include <gio/gunixoutputstream.h>
+#include <sys/wait.h>
 #include <poll.h>
 #include <dlfcn.h>
 #include "wlxplugin.h"
@@ -32,6 +33,7 @@ typedef struct
 	GDataInputStream *data_in;
 	GDataOutputStream *data_out;
 	gboolean is_alive;
+	gboolean is_debug;
 } ScriptItem;
 
 GKeyFile *cfg = NULL;
@@ -65,6 +67,13 @@ void script_data_free(gpointer data)
 	g_free(item);
 }
 
+static void on_plug_added(GtkWidget *widget, gpointer data)
+{
+	gtk_spinner_stop(GTK_SPINNER(data));
+	gtk_widget_hide(GTK_WIDGET(data));
+	gtk_widget_show(widget);
+}
+
 static void on_plug_removed(GtkWidget *widget, gpointer data)
 {
 	gtk_widget_show(GTK_WIDGET(data));
@@ -74,16 +83,25 @@ static void on_plug_removed(GtkWidget *widget, gpointer data)
 static void on_child_exited(GPid pid, gint status, gpointer data)
 {
 	gchar *script = (gchar*)data;
-	ScriptItem *item = g_hash_table_lookup(active_scripts, script);
 
-	if (item)
+	if (script)
 	{
-		item->is_alive = FALSE;
-		g_printerr("%s: %s [PID %d] exited, status = %d\n", PLUGNAME, script, pid, status);
+		ScriptItem *item = g_hash_table_lookup(active_scripts, script);
+
+		if (item)
+		{
+			item->is_alive = FALSE;
+
+			if (WIFEXITED(status))
+				g_printerr("%s: %s [PID %d] exited, exit status = %d\n", PLUGNAME, script, pid, WEXITSTATUS(status));
+			else if (WIFSIGNALED(status))
+				g_printerr("%s: %s [PID %d] %s\n", PLUGNAME, script, pid, strsignal(WTERMSIG(status)));
+		}
+
+		g_free(script);
 	}
 
 	g_spawn_close_pid(pid);
-	g_free(script);
 }
 
 static char* get_file_ext(char *filename)
@@ -141,7 +159,7 @@ static gchar *resolve_redirect(gchar *group)
 	else
 		result = group;
 
-	if (!g_key_file_has_key(cfg, result, "script", NULL))
+	if (!g_key_file_has_key(cfg, result, "script", NULL) && !g_key_file_has_key(cfg, result, "command", NULL))
 	{
 		g_free(result);
 		return NULL;
@@ -192,6 +210,10 @@ static ScriptItem* get_script_item(gchar *group)
 {
 	GError *err = NULL;
 	gchar *script = g_key_file_get_string(cfg, group, "script", NULL);
+
+	if (!script)
+		return NULL;
+
 	ScriptItem *item = g_hash_table_lookup(active_scripts, script);
 
 	if (item && !item->is_alive)
@@ -208,6 +230,7 @@ static ScriptItem* get_script_item(gchar *group)
 		char *argv[] = {"sh", "-c", script, NULL};
 		GSpawnFlags flags = G_SPAWN_SEARCH_PATH_FROM_ENVP | G_SPAWN_DO_NOT_REAP_CHILD;
 		gchar **envp = g_environ_setenv(g_get_environ(), "PATH", new_path, TRUE);
+		envp = g_environ_setenv(envp, "GDK_CORE_DEVICE_EVENTS", "1", TRUE);
 		item->is_alive = g_spawn_async_with_pipes(NULL, argv, envp, flags, NULL, NULL, &item->pid, &item->stdin, &item->stdout, NULL, &err);
 		g_strfreev(envp);
 
@@ -226,14 +249,17 @@ static ScriptItem* get_script_item(gchar *group)
 
 		item->data_in = g_data_input_stream_new(item->in);
 		item->data_out = g_data_output_stream_new(item->out);
+		item->is_debug = g_key_file_get_boolean(cfg, group, "debug", NULL);
 
 		gchar *line = get_line_from_script(item);
 
 		if (!line || g_strcmp0(line, "READY") != 0)
 		{
-			script_data_free(item);
-			g_printerr("%s (%s): wheres the \"READY\" lebowski? got \"%s\" instead\n", PLUGNAME, script, line);
+			if (item->is_debug)
+				g_printerr("%s (%s): expected \"READY\", got \"%s\" instead\n", PLUGNAME, script, line);
+
 			g_free(line);
+			script_data_free(item);
 			return NULL;
 		}
 
@@ -270,7 +296,8 @@ static gboolean send_command(ScriptItem *item, gint64 xid, gchar *command, gchar
 
 	char *response = get_line_from_script(item);
 
-	g_print("%s (%s): %s\t%ld\t%s\t%d -> %s\n", PLUGNAME, item->script, command, xid, param, flags, response);
+	if (item->is_debug)
+		g_print("%s (%s): %s\t%ld\t%s\t%d -> %s\n", PLUGNAME, item->script, command, xid, param, flags, response);
 
 	if (!response)
 		return FALSE;
@@ -279,6 +306,46 @@ static gboolean send_command(ScriptItem *item, gint64 xid, gchar *command, gchar
 	g_free(response);
 
 	return result;
+}
+
+static gboolean execute_command(gchar *command, char *filename, gsize xid, gint exit_timeout)
+{
+	if (!g_strrstr(command, "$FILE") || !g_strrstr(command, "$XID"))
+	{
+		g_free(command);
+		return FALSE;
+	}
+
+	GPid pid;
+	char *argv[] = {"sh", "-c", command, NULL};
+	GSpawnFlags flags = G_SPAWN_SEARCH_PATH_FROM_ENVP | G_SPAWN_DO_NOT_REAP_CHILD;
+	gchar **envp = g_environ_setenv(g_get_environ(), "PATH", new_path, TRUE);
+	envp = g_environ_setenv(envp, "FILE", filename, TRUE);
+	gchar *string = g_strdup_printf("%ld", xid);
+	envp = g_environ_setenv(envp, "XID", string, TRUE);
+	envp = g_environ_setenv(envp, "GDK_CORE_DEVICE_EVENTS", "1", TRUE);
+	g_free(string);
+
+	gboolean is_launched = g_spawn_async(NULL, argv, envp, flags, NULL, NULL, &pid, NULL);
+	g_strfreev(envp);
+	g_free(command);
+
+	if (!is_launched)
+		return FALSE;
+
+	g_child_watch_add(pid, on_child_exited, NULL);
+
+	if (exit_timeout > 0)
+	{
+		int status;
+		usleep(exit_timeout * 1000);
+		pid_t result = waitpid(pid, &status, WNOHANG);
+
+		if (result != 0)
+			is_launched = FALSE;
+	}
+
+	return is_launched;
 }
 
 HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
@@ -290,11 +357,18 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 
 	ScriptItem *item = get_script_item(group);
 
+	gchar *command = NULL;
+	gint exit_timeout = 0;
+	gboolean is_spinner = FALSE;
+
 	if (!item)
 	{
-		g_free(group);
-		return NULL;
+		command = g_key_file_get_string(cfg, group, "command", NULL);
+		exit_timeout = g_key_file_get_integer(cfg, group, "exit_timeout", NULL);
+		is_spinner = !g_key_file_get_boolean(cfg, group, "nospinner", NULL);
 	}
+
+	g_free(group);
 
 #ifndef GTK3PLUG
 	GtkWidget *main_box = gtk_vbox_new(FALSE, 5);
@@ -308,11 +382,33 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	gtk_widget_show(socket);
 	gtk_box_pack_start(GTK_BOX(main_box), socket, TRUE, TRUE, 0);
 	gtk_box_pack_end(GTK_BOX(main_box), label, TRUE, FALSE, 0);
+
+	if (is_spinner)
+	{
+		GtkWidget *spinner = gtk_spinner_new();
+		gtk_widget_show(spinner);
+		gtk_widget_hide(socket);
+		gtk_spinner_start(GTK_SPINNER(spinner));
+		gtk_box_pack_end(GTK_BOX(main_box), spinner, TRUE, FALSE, 0);
+		g_signal_connect(socket, "plug-added", G_CALLBACK(on_plug_added), (gpointer)spinner);
+	}
 	g_signal_connect(socket, "plug-removed", G_CALLBACK(on_plug_removed), (gpointer)label);
 
 	gtk_widget_show(main_box);
+	gtk_widget_realize(socket);
 
 	gsize xid = (gsize)gtk_socket_get_id(GTK_SOCKET(socket));
+
+	if (!item)
+	{
+		if (!execute_command(command, FileToLoad, xid, exit_timeout))
+		{
+			gtk_widget_destroy(main_box);
+			return NULL;
+		}
+
+		return main_box;
+	}
 
 	if (!send_command(item, xid, CMD_CREATE, "", ShowFlags) || !send_command(item, xid, CMD_LOAD, FileToLoad, ShowFlags))
 	{
@@ -322,13 +418,17 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 
 	g_object_set_data(G_OBJECT(main_box), "script_item", item);
 	g_object_set_data(G_OBJECT(main_box), "xid", GSIZE_TO_POINTER(xid));
-	g_free(group);
 
 	return main_box;
 }
 
 int DCPCALL ListLoadNext(HWND ParentWin, HWND PluginWin, char* FileToLoad, int ShowFlags)
 {
+	ScriptItem *item = (ScriptItem*)g_object_get_data(G_OBJECT(PluginWin), "script_item");
+
+	if (!item)
+		return LISTPLUGIN_ERROR;
+
 	gchar *group = get_group(FileToLoad);
 
 	if (!group)
@@ -342,7 +442,6 @@ int DCPCALL ListLoadNext(HWND ParentWin, HWND PluginWin, char* FileToLoad, int S
 		return LISTPLUGIN_ERROR;
 	}
 
-	ScriptItem *item = (ScriptItem*)g_object_get_data(G_OBJECT(PluginWin), "script_item");
 	gsize xid = (gsize)GPOINTER_TO_SIZE(g_object_get_data(G_OBJECT(PluginWin), "xid"));
 	g_free(group);
 
@@ -355,8 +454,13 @@ int DCPCALL ListLoadNext(HWND ParentWin, HWND PluginWin, char* FileToLoad, int S
 void DCPCALL ListCloseWindow(HWND ListWin)
 {
 	ScriptItem *item = (ScriptItem*)g_object_get_data(G_OBJECT(ListWin), "script_item");
-	gsize xid = (gsize)GPOINTER_TO_SIZE(g_object_get_data(G_OBJECT(ListWin), "xid"));
-	send_command(item, xid, CMD_DESTROY, "", -1);
+
+	if (item)
+	{
+		gsize xid = (gsize)GPOINTER_TO_SIZE(g_object_get_data(G_OBJECT(ListWin), "xid"));
+		send_command(item, xid, CMD_DESTROY, "", -1);
+	}
+
 	gtk_widget_destroy(GTK_WIDGET(ListWin));
 }
 
@@ -364,6 +468,23 @@ int DCPCALL ListSendCommand(HWND ListWin, int Command, int Parameter)
 {
 	gboolean result = FALSE;
 	ScriptItem *item = (ScriptItem*)g_object_get_data(G_OBJECT(ListWin), "script_item");
+
+	if (!item)
+	{
+		if (Command == lc_copy)
+		{
+			gchar *text = gtk_clipboard_wait_for_text(gtk_clipboard_get(GDK_SELECTION_PRIMARY));
+			gtk_clipboard_set_text(gtk_clipboard_get(GDK_SELECTION_CLIPBOARD), text, -1);
+			g_free(text);
+			return LISTPLUGIN_OK;
+		}
+
+		return LISTPLUGIN_ERROR;
+	}
+
+	if (!item->is_alive)
+		return LISTPLUGIN_ERROR;
+
 	gsize xid = (gsize)GPOINTER_TO_SIZE(g_object_get_data(G_OBJECT(ListWin), "xid"));
 
 	if (Command == lc_copy)
@@ -379,6 +500,17 @@ int DCPCALL ListSendCommand(HWND ListWin, int Command, int Parameter)
 int DCPCALL ListSearchText(HWND ListWin, char* SearchString, int SearchParameter)
 {
 	ScriptItem *item = (ScriptItem*)g_object_get_data(G_OBJECT(ListWin), "script_item");
+
+	if (!item || !item->is_alive)
+	{
+		GtkWidget *dialog = gtk_message_dialog_new(GTK_WINDOW(gtk_widget_get_toplevel(GTK_WIDGET(ListWin))),
+		                    GTK_DIALOG_MODAL, GTK_MESSAGE_QUESTION, GTK_BUTTONS_OK, "what if I told you that this is not possible?");
+		gtk_dialog_run(GTK_DIALOG(dialog));
+		gtk_widget_destroy(dialog);
+
+		return LISTPLUGIN_OK;
+	}
+
 	gsize xid = (gsize)GPOINTER_TO_SIZE(g_object_get_data(G_OBJECT(ListWin), "xid"));
 
 	return (send_command(item, xid, CMD_FIND, SearchString, SearchParameter) ? LISTPLUGIN_OK : LISTPLUGIN_ERROR);

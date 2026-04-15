@@ -1,9 +1,6 @@
 #!/usr/bin/env python3
 
-import os
 import sys
-os.environ["GDK_CORE_DEVICE_EVENTS"] = "1"
-
 import gi
 gi.require_version('Gtk', '3.0')
 gi.require_version('Abi', '3.0')
@@ -28,8 +25,9 @@ def destroy(xid):
 	return True
 
 def load_file(xid, filename):
+	view = widgets[xid]["view"]
 	uri = GLib.filename_to_uri(filename)
-	widgets[xid]["view"].load_file(uri, "")
+	view.load_file(uri, "")
 	return True
 
 def search_text(xid, text, flags):
