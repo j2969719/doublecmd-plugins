@@ -1,116 +1,69 @@
 #define _GNU_SOURCE
 #include <gtk/gtk.h>
+#ifdef GTK3PLUG
+#include <gtk/gtkx.h>
+#endif
 #include <dlfcn.h>
 #include <limits.h>
 #include <string.h>
 #include "wlxplugin.h"
 
-#define _detectstring  "(EXT=\"PDF\")|(EXT=\"DJVU\")|(EXT=\"DJV\")|(EXT=\"PS\")|(EXT=\"CBR\")|(EXT=\"CBZ\")"
+gchar *command = NULL;
+char plug_path[PATH_MAX];
+gboolean is_plug_init = FALSE;
 
-static char cfg_path[PATH_MAX];
-static char plug_path[PATH_MAX];
-const char* cfg_file = "settings.ini";
-
-static void plug_added(GtkWidget *widget, gpointer data)
+static void on_plug_added(GtkWidget *widget, gpointer data)
 {
 	gtk_spinner_stop(GTK_SPINNER(data));
 	gtk_widget_hide(GTK_WIDGET(data));
 	gtk_widget_show(widget);
 }
 
-static gchar* get_command_string(GdkNativeWindow id, char* FileToLoad)
-{
-	GKeyFile *cfg;
-	GError *err = NULL;
-	gchar *params, *command;
-	gboolean extcfg;
-
-	cfg = g_key_file_new();
-
-	if (!g_key_file_load_from_file(cfg, cfg_path, G_KEY_FILE_KEEP_COMMENTS, &err))
-	{
-		g_print("zathura.wlx (%s): %s\n", cfg_path, (err)->message);
-		params = " ";
-		extcfg = FALSE;
-	}
-	else
-	{
-		params = g_key_file_get_string(cfg, "Settings", "Params", NULL);
-
-		if (!params)
-			params = " ";
-
-		extcfg = g_key_file_get_boolean(cfg, "Settings", "ExternalCfg", NULL);
-	}
-
-	g_key_file_free(cfg);
-
-	if (err)
-		g_error_free(err);
-
-	if (extcfg)
-		command = g_strdup_printf("zathura --reparent=%d %s %s --config-dir=%s --data-dir=%s",
-		                          id, g_shell_quote(FileToLoad), params, g_shell_quote(plug_path), g_shell_quote(plug_path));
-	else
-		command = g_strdup_printf("zathura --reparent=%d %s %s", id, g_shell_quote(FileToLoad), params);
-
-	return command;
-}
-
 HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 {
-	GtkWidget *gFix;
-	GtkWidget *wspin;
-	GtkWidget *zathura;
-	gchar **argv, **envp;
+#ifndef GTK3PLUG
+	GtkWidget *main_box = gtk_vbox_new(FALSE, 5);
+#else
+	GtkWidget *main_box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5);
+#endif
+	gtk_widget_set_no_show_all(main_box, TRUE);
+	gtk_container_add(GTK_CONTAINER(GTK_WIDGET(ParentWin)), main_box);
+	GtkWidget *socket = gtk_socket_new();
+	GtkWidget *spinner = gtk_spinner_new();
+	gtk_widget_show(spinner);
+	gtk_spinner_start(GTK_SPINNER(spinner));
+	gtk_box_pack_start(GTK_BOX(main_box), socket, TRUE, TRUE, 0);
+	gtk_box_pack_end(GTK_BOX(main_box), spinner, TRUE, FALSE, 0);
+	g_signal_connect(socket, "plug-added", G_CALLBACK(on_plug_added), (gpointer)spinner);
 
-	gFix = gtk_vbox_new(FALSE, 5);
-	gtk_container_add(GTK_CONTAINER(GTK_WIDGET(ParentWin)), gFix);
-	wspin = gtk_spinner_new();
-	gtk_spinner_start(GTK_SPINNER(wspin));
-	gtk_box_pack_start(GTK_BOX(gFix), wspin, TRUE, FALSE, 5);
-	gtk_widget_show(wspin);
+	gchar **envp = g_environ_setenv(g_get_environ(), "GDK_CORE_DEVICE_EVENTS", "1", TRUE);
+	envp = g_environ_setenv(envp, "FILE", FileToLoad, TRUE);
+	envp = g_environ_setenv(envp, "PLUGPATH", plug_path, TRUE);
+	gchar *string = g_strdup_printf("%ld", (gsize)gtk_socket_get_id(GTK_SOCKET(socket)));
+	envp = g_environ_setenv(envp, "XID", string, TRUE);
+	g_free(string);
+	char *argv[] = {"sh", "-c", command, NULL};
+	gboolean is_launched = g_spawn_async(NULL, argv, envp, G_SPAWN_SEARCH_PATH, NULL, NULL, NULL, NULL);
+	g_strfreev(envp);
 
-	zathura = gtk_socket_new();
-	gtk_container_add(GTK_CONTAINER(gFix), zathura);
-	GdkNativeWindow id = gtk_socket_get_id(GTK_SOCKET(zathura));
-
-	g_shell_parse_argv(get_command_string(id, FileToLoad), NULL, &argv, NULL);
-
-	if (!argv)
+	if (!is_launched)
 	{
-		gtk_widget_destroy(gFix);
+		gtk_widget_destroy(main_box);
 		return NULL;
 	}
-
-	envp = g_environ_setenv(g_get_environ(), "GDK_CORE_DEVICE_EVENTS", "1", TRUE);
-
-	if (!g_spawn_async(NULL, argv, envp, G_SPAWN_SEARCH_PATH, NULL, NULL, NULL, NULL))
-	{
-		g_strfreev(argv);
-
-		if (envp)
-			g_strfreev(envp);
-
-		gtk_widget_destroy(gFix);
-		return NULL;
-	}
-
-	g_strfreev(argv);
-
-	if (envp)
-		g_strfreev(envp);
-
-	g_signal_connect(zathura, "plug-added", G_CALLBACK(plug_added), (gpointer)wspin);
 
 	const gchar *role = gtk_window_get_role(GTK_WINDOW(gtk_widget_get_toplevel(GTK_WIDGET(ParentWin))));
 
 	if (g_strcmp0(role, "TfrmViewer") != 0)
-		gtk_widget_set_state(zathura, GTK_STATE_INSENSITIVE);
+#ifndef GTK3PLUG
+		gtk_widget_set_state(socket, GTK_STATE_INSENSITIVE);
+#else
+		gtk_widget_set_sensitive(socket, FALSE);
+#endif
 
-	gtk_widget_show(gFix);
+	gtk_widget_show(main_box);
 
-	return gFix;
+	return main_box;
 }
 
 void DCPCALL ListCloseWindow(HWND ListWin)
@@ -120,7 +73,7 @@ void DCPCALL ListCloseWindow(HWND ListWin)
 
 void DCPCALL ListGetDetectString(char* DetectString, int maxlen)
 {
-	g_strlcpy(DetectString, _detectstring, maxlen - 1);
+	g_strlcpy(DetectString, DETECT_STRING, maxlen);
 }
 
 int DCPCALL ListSearchDialog(HWND ListWin, int FindNext)
@@ -131,27 +84,72 @@ int DCPCALL ListSearchDialog(HWND ListWin, int FindNext)
 int DCPCALL ListSendCommand(HWND ListWin, int Command, int Parameter)
 {
 	if (Command == lc_copy)
-		gtk_clipboard_set_text(gtk_clipboard_get(GDK_SELECTION_CLIPBOARD),
-		                       gtk_clipboard_wait_for_text(gtk_clipboard_get(GDK_SELECTION_PRIMARY)), -1);
-	else
-		return LISTPLUGIN_ERROR;
+	{
+		gchar *text = gtk_clipboard_wait_for_text(gtk_clipboard_get(GDK_SELECTION_PRIMARY));
+		gtk_clipboard_set_text(gtk_clipboard_get(GDK_SELECTION_CLIPBOARD), text, -1);
+		g_free(text);
+		return LISTPLUGIN_OK;
+	}
 
-	return LISTPLUGIN_OK;
+	return LISTPLUGIN_ERROR;
+}
+
+static void wlxplug_atexit(void)
+{
+	g_free(command);
 }
 
 void DCPCALL ListSetDefaultParams(ListDefaultParamStruct* dps)
 {
+	if (is_plug_init)
+		return;
+
 	Dl_info dlinfo;
+	const char* cfg_file = "settings.ini";
+	atexit(wlxplug_atexit);
 
 	memset(&dlinfo, 0, sizeof(dlinfo));
 
-	if (dladdr(cfg_path, &dlinfo) != 0)
+	if (dladdr(&is_plug_init, &dlinfo) != 0)
 	{
-		strncpy(cfg_path, dlinfo.dli_fname, PATH_MAX);
-		strncpy(plug_path, g_path_get_dirname(cfg_path), PATH_MAX);
-		char *pos = strrchr(cfg_path, '/');
+		g_strlcpy(plug_path, dlinfo.dli_fname, PATH_MAX);
+		char *pos = strrchr(plug_path, '/');
 
 		if (pos)
 			strcpy(pos + 1, cfg_file);
+
+
+		GError *err = NULL;
+		gchar *params = NULL;
+		gboolean is_extcfg = FALSE;
+
+		GKeyFile *cfg = g_key_file_new();
+
+		if (!g_key_file_load_from_file(cfg, plug_path, G_KEY_FILE_KEEP_COMMENTS, &err))
+		{
+			g_print("%s (%s): %s\n", PLUGNAME, plug_path, (err)->message);
+			g_error_free(err);
+		}
+		else
+		{
+			params = g_key_file_get_string(cfg, "Settings", "Params", NULL);
+			is_extcfg = g_key_file_get_boolean(cfg, "Settings", "ExternalCfg", NULL);
+		}
+
+		g_key_file_free(cfg);
+
+		if (pos)
+			*pos = '\0';
+
+
+		if (is_extcfg)
+			pos = "zathura --reparent=$XID \"$FILE\" %s --config-dir=\"$PLUGPATH\" --data-dir=\"$PLUGPATH\"";
+		else
+			pos = "zathura --reparent=$XID \"$FILE\" %s";
+
+		command = g_strdup_printf(pos, params ? params : "");
+		g_free(params);
 	}
+
+	is_plug_init = TRUE;
 }

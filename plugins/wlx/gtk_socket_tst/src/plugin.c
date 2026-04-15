@@ -360,12 +360,14 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	gchar *command = NULL;
 	gint exit_timeout = 0;
 	gboolean is_spinner = FALSE;
+	gboolean is_insensitive = FALSE;
 
 	if (!item)
 	{
 		command = g_key_file_get_string(cfg, group, "command", NULL);
 		exit_timeout = g_key_file_get_integer(cfg, group, "exit_timeout", NULL);
 		is_spinner = !g_key_file_get_boolean(cfg, group, "nospinner", NULL);
+		is_insensitive = g_key_file_get_boolean(cfg, group, "insensitive", NULL);
 	}
 
 	g_free(group);
@@ -396,6 +398,18 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 
 	gtk_widget_show(main_box);
 	gtk_widget_realize(socket);
+
+	if (is_insensitive)
+	{
+		const gchar *role = gtk_window_get_role(GTK_WINDOW(gtk_widget_get_toplevel(GTK_WIDGET(ParentWin))));
+
+		if (g_strcmp0(role, "TfrmViewer") != 0)
+#ifndef GTK3PLUG
+			gtk_widget_set_state(socket, GTK_STATE_INSENSITIVE);
+#else
+			gtk_widget_set_sensitive(socket, FALSE);
+#endif
+	}
 
 	gsize xid = (gsize)gtk_socket_get_id(GTK_SOCKET(socket));
 

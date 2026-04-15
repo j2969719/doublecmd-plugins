@@ -6,6 +6,7 @@ Displays PDF, DjVu, PostScipt, CBR.
 
 ## Compatibility
 - `doublecmd-gtk2`
+- `doublecmd-gtk3`
 
 ## Notes
 Requires `zathura`. If Zathura has an epub plugin installed, then you can add `|EXT="EPUB"` to detectstring in `Options->Plugins->Plugins WLX->Tweak`
