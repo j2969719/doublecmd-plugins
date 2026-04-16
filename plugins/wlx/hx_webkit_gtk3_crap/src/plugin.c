@@ -6,11 +6,13 @@
 #include "wlxplugin.h"
 
 #define TEMPLATE "_dc-hx.XXXXXX"
-#define EXE_NAME "/redist/exsimple"
-#define CFG_NAME "/redist/default.cfg"
+#define LIBS_DIR "/redist/"
+#define EXE_NAME "exsimple"
+#define CFG_NAME "default.cfg"
 
-gchar gConfigPath[PATH_MAX] = "";
-gchar gExecutablePath[PATH_MAX] = "";
+gchar gPlugInit = FALSE;
+gchar gDataPath[PATH_MAX] = "";
+gchar gWorkdir[PATH_MAX] = "";
 
 static void remove_target(gchar *path)
 {
@@ -29,20 +31,25 @@ static gchar* export_html(gchar *tmpdir, gchar *filename)
 {
 	gchar *result = NULL;
 
-	gchar *output = g_strdup_printf("%s/output.html", tmpdir, filename);
-	gchar *quoted_output = g_shell_quote(output);
-	gchar *quoted_file = g_shell_quote(filename);
-	gchar *command = g_strdup_printf("%s %s %s %s", gExecutablePath, quoted_file,
-	                                 quoted_output, gConfigPath);
-	g_free(quoted_output);
-	g_free(quoted_file);
+	gchar *output = g_strdup_printf("%s/output.html", tmpdir);
 
-	if (system(command) != 0 || !g_file_test(output, G_FILE_TEST_EXISTS))
+	char *argv[] = {"sh", "-c", "./" EXE_NAME " $FILE $HTML $OIT_CFG_NAME", NULL};
+	GSpawnFlags flags = G_SPAWN_SEARCH_PATH;
+	gchar **envp = g_environ_setenv(g_get_environ(), "HTML", output, TRUE);
+	envp = g_environ_setenv(envp, "FILE", filename, TRUE);
+	envp = g_environ_setenv(envp, "OIT_CFG_NAME", CFG_NAME, FALSE);
+
+	if (gDataPath[0] != '\0')
+		envp = g_environ_setenv(envp, "OIT_DATA_PATH", gDataPath, FALSE);
+
+	gboolean is_launched = g_spawn_sync(gWorkdir, argv, envp, flags, NULL, NULL, NULL, NULL, NULL, NULL);
+	g_strfreev(envp);
+
+	if (!is_launched || !g_file_test(output, G_FILE_TEST_EXISTS))
 		remove_target(tmpdir);
 	else
 		result = g_filename_to_uri(output, NULL, NULL);
 
-	g_free(command);
 	g_free(output);
 
 	return result;
@@ -146,29 +153,42 @@ int DCPCALL ListSendCommand(HWND ListWin, int Command, int Parameter)
 
 void DCPCALL ListSetDefaultParams(ListDefaultParamStruct* dps)
 {
+	if (gPlugInit)
+		return;
+
+	GKeyFile *cfg;
+	char cfg_path[PATH_MAX];
+
+	g_strlcpy(cfg_path, dps->DefaultIniName, PATH_MAX);
+
+	char *pos = strrchr(cfg_path, '/');
+
+	if (pos)
+		strcpy(pos + 1, "j2969719.ini");
+
+	cfg = g_key_file_new();
+	g_key_file_load_from_file(cfg, cfg_path, G_KEY_FILE_NONE, NULL);
+	gchar *string = g_key_file_get_string(cfg, PLUGNAME, "OIT_DATA_PATH", NULL);
+
+	if (string)
+	{
+		g_strlcpy(gDataPath, string, PATH_MAX);
+		g_free(string);
+	}
+
+	g_key_file_free(cfg);
+
 	Dl_info dlinfo;
 	memset(&dlinfo, 0, sizeof(dlinfo));
 
-	if (dladdr(gExecutablePath, &dlinfo) != 0)
+	if (dladdr(gWorkdir, &dlinfo) != 0)
 	{
-		g_strlcpy(gExecutablePath, dlinfo.dli_fname, PATH_MAX);
-		char *pos = strrchr(gExecutablePath, '/');
+		g_strlcpy(gWorkdir, dlinfo.dli_fname, PATH_MAX);
+		char *pos = strrchr(gWorkdir, '/');
 
 		if (pos)
-			strcpy(pos, EXE_NAME);
-
-		gchar *quoted = g_shell_quote(gExecutablePath);
-		g_strlcpy(gExecutablePath, quoted, PATH_MAX);
-		g_free(quoted);
-
-		g_strlcpy(gConfigPath, dlinfo.dli_fname, PATH_MAX);
-		pos = strrchr(gConfigPath, '/');
-
-		if (pos)
-			strcpy(pos, CFG_NAME);
-
-		quoted = g_shell_quote(gConfigPath);
-		g_strlcpy(gConfigPath, quoted, PATH_MAX);
-		g_free(quoted);
+			strcpy(pos, LIBS_DIR);
 	}
+
+	gPlugInit = TRUE;
 }

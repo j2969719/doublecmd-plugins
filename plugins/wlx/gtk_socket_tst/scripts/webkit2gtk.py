@@ -15,11 +15,10 @@ mutool_exts = ['.epub', '.fb2']
 hx_exts = ['.odt', '.ods', '.docx', '.doc', '.rtf', '.xls', '.xlsx', ".ppt", ".pptx", ".123", ".mdb", ".mpp", ".eml", ".dxf", ".drw", ".pct", ".wpd", ".vsd", ".shw", ".sdw", ".qpw", ".prz", ".pst"] # ".mht"
 
 script_name = os.path.basename(__file__)
-scream = "is missing, make sure nothing is registered for it in settings.ini"
 try:
 	import markdown
 except:
-	print(f"{script_name}: markdown {scream}", file=sys.stderr, flush=True)
+	pass
 hx_exe = os.path.join(os.path.dirname(__file__), "redist/exsimple")
 hx_cfg = os.path.join(os.path.dirname(__file__), "redist/default.cfg")
 is_hx_there = os.access(hx_exe, os.X_OK)
@@ -27,10 +26,6 @@ is_mupdf_there = bool(shutil.which("mutool"))
 is_md_there = 'markdown' in sys.modules
 if is_hx_there:
 	import tempfile
-else:
-	print(f"{script_name}: /redist/exsimple {scream}", file=sys.stderr, flush=True)
-if not is_mupdf_there:
-	print(f"{script_name}: mutool {scream}", file=sys.stderr, flush=True)
 
 def convert_using_hx(path, output):
 	try:
@@ -41,7 +36,7 @@ def convert_using_hx(path, output):
 		if os.path.exists(output) and os.path.getsize(output) > 0:
 			return True
 	except:
-		print(f"{script_name}: convert_using_hx fail", file=sys.stderr, flush=True)
+		print(f"{script_name}: {path} convert_using_hx fail", file=sys.stderr, flush=True)
 	return False
 
 def convert_using_mutool(path):
@@ -50,7 +45,7 @@ def convert_using_mutool(path):
 		result = subprocess.run(cmd, check=True, capture_output=True, text=True)
 		return result.stdout
 	except:
-		print(f"{script_name}: convert_using_mutool fail", file=sys.stderr, flush=True)
+		print(f"{script_name}: {path} convert_using_mutool fail", file=sys.stderr, flush=True)
 	return None
 
 def md_to_html(path):
@@ -58,7 +53,7 @@ def md_to_html(path):
 		with open(path, 'r') as file:
 			return markdown.markdown(file.read(), extensions=['extra'])
 	except:
-		print(f"{script_name}: md_to_html fail", file=sys.stderr, flush=True)
+		print(f"{script_name}: {path} md_to_html fail", file=sys.stderr, flush=True)
 	return None
 
 def on_decide_policy(view, decision, decision_type, *args):
