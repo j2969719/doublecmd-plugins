@@ -25,6 +25,8 @@ is_hx_there = os.access(hx_exe, os.X_OK)
 is_mupdf_there = bool(shutil.which("mutool"))
 is_md_there = 'markdown' in sys.modules
 if is_hx_there:
+	hx_env = os.environ.copy()
+	hx_env["OIT_DATA_PATH"] = ""
 	import tempfile
 
 def convert_using_hx(path, output):
@@ -32,7 +34,7 @@ def convert_using_hx(path, output):
 		if os.path.exists(output):
 			os.remove(output)
 		cmd = [hx_exe, path, output, hx_cfg]
-		subprocess.run(cmd, check=True, capture_output=True)
+		subprocess.run(cmd, check=True, capture_output=True, env=hx_env)
 		if os.path.exists(output) and os.path.getsize(output) > 0:
 			return True
 	except:

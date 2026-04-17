@@ -19,8 +19,13 @@
 #define CMD_SELECTA "?SELECTALL"
 #define CMD_NEWPARM "?NEWPARAMS"
 
+#define OPT_MUTE "*silent"
+
 #define DC_USERDIR "/.local/share/doublecmd/plugins/wlx/" PLUGDIR
-#define READ_TIMEOUT 5000
+#define READ_TIMEOUT_MIN 1000
+#define READ_TIMEOUT_DEF 5000
+#define MAX_REDIRECTS 42
+#define INFO_FMT "%s, PID %d, X11 Window ID %ld"
 
 typedef struct
 {
@@ -34,12 +39,18 @@ typedef struct
 	GDataOutputStream *data_out;
 	gboolean is_alive;
 	gboolean is_debug;
+	gboolean is_silent;
+	gint read_timeout;
 } ScriptItem;
 
 GKeyFile *cfg = NULL;
 gchar *new_path = NULL;
+gchar *cfg_path = NULL;
 GHashTable *active_scripts = NULL;
 gboolean is_plug_init = FALSE;
+gboolean is_show_debug_ui = FALSE;
+gboolean is_global_debug = FALSE;
+gint read_timeout = 0;
 
 void script_data_free(gpointer data)
 {
@@ -65,6 +76,46 @@ void script_data_free(gpointer data)
 
 	g_free(item->script);
 	g_free(item);
+}
+
+static void show_message(char *message, GtkMessageType type, HWND widget)
+{
+	GtkWindow *parent = NULL;
+
+	if (widget)
+		parent = GTK_WINDOW(gtk_widget_get_toplevel(GTK_WIDGET(widget)));
+
+	GtkWidget *dialog = gtk_message_dialog_new(parent, GTK_DIALOG_MODAL, type, GTK_BUTTONS_OK, message);
+	gtk_dialog_run(GTK_DIALOG(dialog));
+	gtk_widget_destroy(dialog);
+}
+
+static void get_global_settings(void)
+{
+	read_timeout = g_key_file_get_integer(cfg, PLUGNAME, "read_timeout", NULL);
+
+	if (read_timeout < READ_TIMEOUT_MIN)
+		read_timeout = READ_TIMEOUT_DEF;
+
+	is_global_debug = g_key_file_get_boolean(cfg, ".", "debug", NULL);
+	is_show_debug_ui = g_key_file_get_boolean(cfg, ".", "debug_ui", NULL);
+}
+
+static void get_script_settings(ScriptItem *item, gchar *group)
+{
+	if (!item)
+		return;
+
+	if (is_global_debug)
+		item->is_debug = TRUE;
+	else
+		item->is_debug = g_key_file_get_boolean(cfg, group, "debug", NULL);
+
+
+	item->read_timeout = g_key_file_get_integer(cfg, group, "read_timeout", NULL);
+
+	if (item->read_timeout < READ_TIMEOUT_MIN)
+		item->read_timeout = read_timeout;
 }
 
 static void on_plug_added(GtkWidget *widget, gpointer data)
@@ -152,20 +203,32 @@ static gchar *resolve_redirect(gchar *group)
 	if (!group)
 		return NULL;
 
-	gchar *result = g_key_file_get_string(cfg, group, "redirect", NULL);
+	gint redirect_count = 0;
+	gchar *redirect = NULL;
 
-	if (result)
-		g_free(group);
-	else
-		result = group;
-
-	if (!g_key_file_has_key(cfg, result, "script", NULL) && !g_key_file_has_key(cfg, result, "command", NULL))
+	while ((redirect = g_key_file_get_string(cfg, group, "redirect", NULL)) != NULL)
 	{
-		g_free(result);
+		if (redirect_count++ > MAX_REDIRECTS)
+			break;
+
+		g_free(group);
+		group = redirect;
+	}
+
+	if (redirect)
+	{
+		g_free(group);
+		g_free(redirect);
 		return NULL;
 	}
 
-	return result;
+	if (!g_key_file_has_key(cfg, group, "script", NULL) && !g_key_file_has_key(cfg, group, "command", NULL))
+	{
+		g_free(group);
+		return NULL;
+	}
+
+	return group;
 }
 
 static gchar* get_group(char *filename)
@@ -188,7 +251,7 @@ static gchar* get_line_from_script(ScriptItem *item)
 	pfd.events = POLLIN;
 	GError *err = NULL;
 
-	if (poll(&pfd, 1, READ_TIMEOUT) == 0)
+	if (poll(&pfd, 1, item->read_timeout) == 0)
 	{
 		g_printerr("%s (%s get_line_from_script): timeout\n", PLUGNAME, item->script);
 		return NULL;
@@ -226,18 +289,23 @@ static ScriptItem* get_script_item(gchar *group)
 	{
 		item = g_new0(ScriptItem, 1);
 		item->script = script;
+		get_script_settings(item, group);
 
 		char *argv[] = {"sh", "-c", script, NULL};
 		GSpawnFlags flags = G_SPAWN_SEARCH_PATH_FROM_ENVP | G_SPAWN_DO_NOT_REAP_CHILD;
 		gchar **envp = g_environ_setenv(g_get_environ(), "PATH", new_path, TRUE);
 		envp = g_environ_setenv(envp, "GDK_CORE_DEVICE_EVENTS", "1", TRUE);
+
+		if (item->is_debug)
+			envp = g_environ_setenv(envp, "SCRIPT_DEBUG", "1", TRUE);
+
 		item->is_alive = g_spawn_async_with_pipes(NULL, argv, envp, flags, NULL, NULL, &item->pid, &item->stdin, &item->stdout, NULL, &err);
 		g_strfreev(envp);
 
 		if (!item->is_alive)
 		{
 			script_data_free(item);
-			g_printerr("%s (%s g_spawn_async_with_pipes): %s", PLUGNAME, script, err->message);
+			g_printerr("%s (%s g_spawn_async_with_pipes): %s\n", PLUGNAME, script, err->message);
 			g_error_free(err);
 			return NULL;
 		}
@@ -249,11 +317,10 @@ static ScriptItem* get_script_item(gchar *group)
 
 		item->data_in = g_data_input_stream_new(item->in);
 		item->data_out = g_data_output_stream_new(item->out);
-		item->is_debug = g_key_file_get_boolean(cfg, group, "debug", NULL);
 
 		gchar *line = get_line_from_script(item);
 
-		if (!line || g_strcmp0(line, "READY") != 0)
+		if (!line || !g_str_has_prefix(line, "READY"))
 		{
 			if (item->is_debug)
 				g_printerr("%s (%s): expected \"READY\", got \"%s\" instead\n", PLUGNAME, script, line);
@@ -262,6 +329,8 @@ static ScriptItem* get_script_item(gchar *group)
 			script_data_free(item);
 			return NULL;
 		}
+
+		item->is_silent = (strstr(line, OPT_MUTE) != NULL);
 
 		g_free(line);
 		g_hash_table_insert(active_scripts, g_strdup(item->script), item);
@@ -294,6 +363,14 @@ static gboolean send_command(ScriptItem *item, gint64 xid, gchar *command, gchar
 	else
 		g_output_stream_flush(item->out, NULL, NULL);
 
+	if (item->is_silent)
+	{
+		if (item->is_debug)
+			g_print("%s (%s): %s\t%ld\t%s\t%d !!!response ignored!!!\n", PLUGNAME, item->script, command, xid, param, flags);
+
+		return item->is_alive;
+	}
+
 	char *response = get_line_from_script(item);
 
 	if (item->is_debug)
@@ -308,15 +385,11 @@ static gboolean send_command(ScriptItem *item, gint64 xid, gchar *command, gchar
 	return result;
 }
 
-static gboolean execute_command(gchar *command, char *filename, gsize xid, gint exit_timeout)
+static gboolean execute_command(gchar *command, char *filename, gsize xid, gint exit_timeout, GPid *pid)
 {
 	if (!g_strrstr(command, "$FILE") || !g_strrstr(command, "$XID"))
-	{
-		g_free(command);
 		return FALSE;
-	}
 
-	GPid pid;
 	char *argv[] = {"sh", "-c", command, NULL};
 	GSpawnFlags flags = G_SPAWN_SEARCH_PATH_FROM_ENVP | G_SPAWN_DO_NOT_REAP_CHILD;
 	gchar **envp = g_environ_setenv(g_get_environ(), "PATH", new_path, TRUE);
@@ -326,26 +399,139 @@ static gboolean execute_command(gchar *command, char *filename, gsize xid, gint 
 	envp = g_environ_setenv(envp, "GDK_CORE_DEVICE_EVENTS", "1", TRUE);
 	g_free(string);
 
-	gboolean is_launched = g_spawn_async(NULL, argv, envp, flags, NULL, NULL, &pid, NULL);
+	gboolean is_launched = g_spawn_async(NULL, argv, envp, flags, NULL, NULL, pid, NULL);
 	g_strfreev(envp);
-	g_free(command);
 
 	if (!is_launched)
 		return FALSE;
 
-	g_child_watch_add(pid, on_child_exited, NULL);
+	g_child_watch_add(*pid, on_child_exited, NULL);
 
 	if (exit_timeout > 0)
 	{
 		int status;
 		usleep(exit_timeout * 1000);
-		pid_t result = waitpid(pid, &status, WNOHANG);
+		pid_t result = waitpid(*pid, &status, WNOHANG);
 
 		if (result != 0)
 			is_launched = FALSE;
 	}
 
 	return is_launched;
+}
+
+static void on_btn_bumpcfg_clicked(GtkToolItem *button, gpointer data)
+{
+	if (cfg_path)
+	{
+		g_key_file_load_from_file(cfg, cfg_path, G_KEY_FILE_NONE, NULL);
+		get_global_settings();
+	}
+}
+
+static void on_btn_spawn_clicked(GtkToolItem *button, gpointer data)
+{
+	gchar *filename = (gchar*)g_object_get_data(G_OBJECT(data), "filename");
+	gchar *group = get_group(filename);
+
+	if (group)
+	{
+		GtkWidget *label = GTK_WIDGET(g_object_get_data(G_OBJECT(data), "shruggie"));
+		gtk_widget_hide(label);
+		GtkWidget *socket = gtk_socket_new();
+		GtkWidget *main_box = (GtkWidget*)g_object_get_data(G_OBJECT(data), "main_box");
+		gtk_box_pack_start(GTK_BOX(main_box), socket, TRUE, TRUE, 0);
+		g_signal_connect(socket, "plug-removed", G_CALLBACK(on_plug_removed), label);
+		gtk_widget_show(socket);
+		gtk_widget_realize(socket);
+
+		gsize xid = (gsize)gtk_socket_get_id(GTK_SOCKET(socket));
+		GArray *pids = (GArray*)g_object_get_data(G_OBJECT(data), "pids");
+		ScriptItem *item = get_script_item(group);
+
+		if (item)
+		{
+			if (!send_command(item, xid, CMD_CREATE, "spawn", 0))
+			{
+				gtk_widget_destroy(socket);
+				show_message(CMD_CREATE " failed!", GTK_MESSAGE_ERROR, button);
+				gtk_widget_show(label);
+			}
+			else if (!send_command(item, xid, CMD_LOAD, filename, 0))
+				show_message(CMD_LOAD " failed!", GTK_MESSAGE_ERROR, button);
+			else
+			{
+				gchar *info = g_strdup_printf(INFO_FMT " (last)", item->script, item->pid, xid);
+				gtk_label_set_text(GTK_LABEL(data), info);
+				g_free(info);
+				g_object_set_data(G_OBJECT(main_box), "script_item", item);
+				g_object_set_data(G_OBJECT(main_box), "xid", GSIZE_TO_POINTER(xid));
+			}
+
+			if (item->is_alive)
+			{
+				gboolean is_new = TRUE;
+
+				for (guint i = 0; i < pids->len; i++)
+				{
+					if (item->pid == g_array_index(pids, GPid, i))
+					{
+						is_new = FALSE;
+						break;
+					}
+				}
+
+				if (is_new)
+					g_array_append_val(pids, item->pid);
+			}
+		}
+		else
+		{
+			GPid pid;
+			gchar *command = g_key_file_get_string(cfg, group, "command", NULL);
+			gint exit_timeout = g_key_file_get_integer(cfg, group, "exit_timeout", NULL);
+
+			if (!execute_command(command, filename, xid, exit_timeout, &pid))
+			{
+				gtk_widget_destroy(socket);
+				show_message("execute_command failed!", GTK_MESSAGE_ERROR, button);
+				gtk_widget_show(label);
+			}
+			else
+			{
+				gchar *info = g_strdup_printf(INFO_FMT " (last)", command, pid, xid);
+				gtk_label_set_text(GTK_LABEL(data), info);
+				g_free(info);
+				g_array_append_val(pids, pid);
+			}
+		}
+
+		g_free(group);
+	}
+}
+
+static void on_btn_kill_clicked(GtkToolItem *button, gpointer data)
+{
+	GtkWidget *main_box = (GtkWidget*)g_object_get_data(G_OBJECT(data), "main_box");
+	ScriptItem *item = (ScriptItem*)g_object_get_data(G_OBJECT(main_box), "script_item");
+
+	if (item)
+	{
+		gsize xid = (gsize)GPOINTER_TO_SIZE(g_object_get_data(G_OBJECT(main_box), "xid"));
+		send_command(item, xid, CMD_DESTROY, "", -1);
+	}
+
+	GArray *array = (GArray*)g_object_get_data(G_OBJECT(data), "pids");
+
+	for (guint i = 0; i < array->len; i++)
+	{
+		GPid pid = g_array_index(array, GPid, i);
+		kill(pid, SIGKILL);
+	}
+
+	gchar *info = g_strdup_printf("zed is dead, baby, zed is dead…");
+	gtk_label_set_text(GTK_LABEL(data), info);
+	g_free(info);
 }
 
 HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
@@ -379,13 +565,19 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 #endif
 	gtk_widget_set_no_show_all(main_box, TRUE);
 	gtk_container_add(GTK_CONTAINER(GTK_WIDGET(ParentWin)), main_box);
+#ifndef GTK3PLUG
+	GtkWidget *debug_box = gtk_hbox_new(FALSE, 5);
+#else
+	GtkWidget *debug_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 5);
+#endif
 	GtkWidget *socket = gtk_socket_new();
 	GtkWidget *label = gtk_label_new("¯\\_(ツ)_/¯");
 	gtk_widget_show(socket);
+	gtk_box_pack_start(GTK_BOX(main_box), debug_box, FALSE, FALSE, 0);
 	gtk_box_pack_start(GTK_BOX(main_box), socket, TRUE, TRUE, 0);
 	gtk_box_pack_end(GTK_BOX(main_box), label, TRUE, FALSE, 0);
 
-	if (is_spinner)
+	if (is_spinner || item->is_silent)
 	{
 		GtkWidget *spinner = gtk_spinner_new();
 		gtk_widget_show(spinner);
@@ -394,6 +586,7 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 		gtk_box_pack_end(GTK_BOX(main_box), spinner, TRUE, FALSE, 0);
 		g_signal_connect(socket, "plug-added", G_CALLBACK(on_plug_added), (gpointer)spinner);
 	}
+
 	g_signal_connect(socket, "plug-removed", G_CALLBACK(on_plug_removed), (gpointer)label);
 
 	gtk_widget_show(main_box);
@@ -406,6 +599,7 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 		if (g_strcmp0(role, "TfrmViewer") != 0)
 #ifndef GTK3PLUG
 			gtk_widget_set_state(socket, GTK_STATE_INSENSITIVE);
+
 #else
 			gtk_widget_set_sensitive(socket, FALSE);
 #endif
@@ -413,13 +607,58 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 
 	gsize xid = (gsize)gtk_socket_get_id(GTK_SOCKET(socket));
 
+	GtkWidget *info_label = gtk_label_new(NULL);
+	gtk_box_pack_start(GTK_BOX(debug_box), info_label, FALSE, TRUE, 10);
+
+	if (is_show_debug_ui)
+	{
+		gtk_box_pack_start(GTK_BOX(debug_box), gtk_label_new(NULL), TRUE, TRUE, 0);
+		GtkToolItem *btn_kill = gtk_tool_button_new(NULL, NULL);
+		GtkToolItem *btn_bumpcfg = gtk_tool_button_new(NULL, NULL);
+		gtk_widget_set_tooltip_text(GTK_WIDGET(btn_bumpcfg), "reload config");
+		gtk_tool_button_set_icon_name(GTK_TOOL_BUTTON(btn_bumpcfg), "view-refresh");
+		gtk_widget_set_tooltip_text(GTK_WIDGET(btn_kill), "kill");
+		gtk_tool_button_set_icon_name(GTK_TOOL_BUTTON(btn_kill), "system-shutdown");
+		GtkToolItem *btn_spawn = gtk_tool_button_new(NULL, NULL);
+		gtk_widget_set_tooltip_text(GTK_WIDGET(btn_spawn), "spawn");
+		gtk_tool_button_set_icon_name(GTK_TOOL_BUTTON(btn_spawn), "media-playback-start");
+		gtk_box_pack_end(GTK_BOX(debug_box), GTK_WIDGET(btn_kill), FALSE, FALSE, 2);
+		gtk_box_pack_end(GTK_BOX(debug_box), GTK_WIDGET(btn_spawn), FALSE, FALSE, 2);
+		gtk_box_pack_end(GTK_BOX(debug_box), GTK_WIDGET(btn_bumpcfg), FALSE, FALSE, 2);
+
+		g_object_set_data(G_OBJECT(info_label), "shruggie", label);
+		g_object_set_data(G_OBJECT(info_label), "socket", socket);
+		g_object_set_data(G_OBJECT(info_label), "main_box", main_box);
+		g_object_set_data_full(G_OBJECT(info_label), "filename", g_strdup(FileToLoad), (GDestroyNotify)g_free);
+		g_signal_connect(G_OBJECT(btn_spawn), "clicked", G_CALLBACK(on_btn_spawn_clicked), info_label);
+		g_signal_connect(G_OBJECT(btn_kill), "clicked", G_CALLBACK(on_btn_kill_clicked), info_label);
+		g_signal_connect(G_OBJECT(btn_bumpcfg), "clicked", G_CALLBACK(on_btn_bumpcfg_clicked), info_label);
+	}
+
 	if (!item)
 	{
-		if (!execute_command(command, FileToLoad, xid, exit_timeout))
+		GPid pid;
+
+		if (!execute_command(command, FileToLoad, xid, exit_timeout, &pid))
 		{
+			g_free(command);
 			gtk_widget_destroy(main_box);
 			return NULL;
 		}
+
+		if (is_show_debug_ui)
+		{
+			gchar *info = g_strdup_printf(INFO_FMT, command, pid, xid);
+			gtk_label_set_text(GTK_LABEL(info_label), info);
+			g_free(info);
+			GArray *pids = g_array_new(FALSE, FALSE, sizeof(GPid));
+			g_array_append_val(pids, pid);
+			g_object_set_data_full(G_OBJECT(info_label), "pids", pids, (GDestroyNotify)g_array_unref);
+
+			gtk_widget_show_all(debug_box);
+		}
+
+		g_free(command);
 
 		return main_box;
 	}
@@ -430,7 +669,21 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 		return NULL;
 	}
 
+	if (is_show_debug_ui)
+	{
+		gchar *info = g_strdup_printf(INFO_FMT, item->script, item->pid, xid);
+		gtk_label_set_text(GTK_LABEL(info_label), info);
+		g_free(info);
+
+		GArray *pids = g_array_new(FALSE, FALSE, sizeof(GPid));
+		g_array_append_val(pids, item->pid);
+		g_object_set_data_full(G_OBJECT(info_label), "pids", pids, (GDestroyNotify)g_array_unref);
+
+		gtk_widget_show_all(debug_box);
+	}
+
 	g_object_set_data(G_OBJECT(main_box), "script_item", item);
+	g_object_set_data(G_OBJECT(main_box), "info_label", info_label);
 	g_object_set_data(G_OBJECT(main_box), "xid", GSIZE_TO_POINTER(xid));
 
 	return main_box;
@@ -449,18 +702,24 @@ int DCPCALL ListLoadNext(HWND ParentWin, HWND PluginWin, char* FileToLoad, int S
 		return LISTPLUGIN_ERROR;
 
 	ScriptItem *newitem = get_script_item(group);
-
-	if (!newitem)
-	{
-		g_free(group);
-		return LISTPLUGIN_ERROR;
-	}
-
-	gsize xid = (gsize)GPOINTER_TO_SIZE(g_object_get_data(G_OBJECT(PluginWin), "xid"));
 	g_free(group);
 
+	if (!newitem)
+		return LISTPLUGIN_ERROR;
+
+	gsize xid = (gsize)GPOINTER_TO_SIZE(g_object_get_data(G_OBJECT(PluginWin), "xid"));
+
 	if (item == newitem && send_command(item, xid, CMD_LOAD, FileToLoad, ShowFlags))
+	{
+		if (is_show_debug_ui)
+		{
+			GtkWidget *info_label = g_object_get_data(G_OBJECT(PluginWin), "info_label");
+			g_object_set_data(G_OBJECT(info_label), "filename", NULL);
+			g_object_set_data_full(G_OBJECT(info_label), "filename", g_strdup(FileToLoad), (GDestroyNotify)g_free);
+		}
+
 		return LISTPLUGIN_OK;
+	}
 
 	return LISTPLUGIN_ERROR;
 }
@@ -517,26 +776,27 @@ int DCPCALL ListSearchText(HWND ListWin, char* SearchString, int SearchParameter
 
 	if (!item || !item->is_alive)
 	{
-		GtkWidget *dialog = gtk_message_dialog_new(GTK_WINDOW(gtk_widget_get_toplevel(GTK_WIDGET(ListWin))),
-		                    GTK_DIALOG_MODAL, GTK_MESSAGE_QUESTION, GTK_BUTTONS_OK, "what if I told you that this is not possible?");
-		gtk_dialog_run(GTK_DIALOG(dialog));
-		gtk_widget_destroy(dialog);
-
+		show_message("Not suppoted!", GTK_MESSAGE_INFO, ListWin);
 		return LISTPLUGIN_OK;
 	}
 
 	gsize xid = (gsize)GPOINTER_TO_SIZE(g_object_get_data(G_OBJECT(ListWin), "xid"));
 
-	return (send_command(item, xid, CMD_FIND, SearchString, SearchParameter) ? LISTPLUGIN_OK : LISTPLUGIN_ERROR);
+	if (!send_command(item, xid, CMD_FIND, SearchString, SearchParameter))
+		show_message("Not suppoted!", GTK_MESSAGE_INFO, ListWin);
+
+	return LISTPLUGIN_OK;
 }
 
 static void wlxplug_atexit(void)
 {
-	g_print("%s atexit\n", PLUGNAME);
+	if (is_global_debug)
+		g_print("%s atexit\n", PLUGNAME);
 
 	g_hash_table_destroy(active_scripts);
 	g_key_file_free(cfg);
 	g_free(new_path);
+	g_free(cfg_path);
 }
 
 void DCPCALL ListSetDefaultParams(ListDefaultParamStruct* dps)
@@ -567,7 +827,8 @@ void DCPCALL ListSetDefaultParams(ListDefaultParamStruct* dps)
 
 		gchar *user_path = g_strdup_printf("%s" DC_USERDIR, g_getenv("HOME"));
 		const gchar *search_dirs[] = {user_path, plug_path, NULL};
-		g_key_file_load_from_dirs(cfg, "settings.ini", search_dirs, NULL, G_KEY_FILE_NONE, NULL);
+		g_key_file_load_from_dirs(cfg, "settings.ini", search_dirs, &cfg_path, G_KEY_FILE_NONE, NULL);
 		g_free(user_path);
+		get_global_settings();
 	}
 }
