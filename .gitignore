@@ -40,3 +40,6 @@ stash/qtermwidget-qt5/pkg/
 *kostyl
 !*kostyl/
 plugins/*/settings.ini
+build/
+.vscode/
+
