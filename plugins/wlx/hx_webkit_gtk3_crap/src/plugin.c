@@ -33,7 +33,7 @@ static gchar* export_html(gchar *tmpdir, gchar *filename)
 
 	gchar *output = g_strdup_printf("%s/output.html", tmpdir);
 
-	char *argv[] = {"sh", "-c", "./" EXE_NAME " $FILE $HTML $OIT_CFG_NAME", NULL};
+	char *argv[] = {"sh", "-c", "./" EXE_NAME " \"$FILE\" \"$HTML\" \"$OIT_CFG_NAME\"", NULL};
 	GSpawnFlags flags = G_SPAWN_SEARCH_PATH;
 	gchar **envp = g_environ_setenv(g_get_environ(), "HTML", output, TRUE);
 	envp = g_environ_setenv(envp, "FILE", filename, TRUE);
@@ -153,6 +153,7 @@ int DCPCALL ListSendCommand(HWND ListWin, int Command, int Parameter)
 
 void DCPCALL ListSetDefaultParams(ListDefaultParamStruct* dps)
 {
+	//g_print("ListSetDefaultParams\n");
 	if (gPlugInit)
 		return;
 
