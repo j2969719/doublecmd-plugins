@@ -1,8 +1,0 @@
-/home/pplupo/repos/mpv_wayland/plugins/wlx/kpart_host/build/CMakeFiles/kpart_host.dir
-/home/pplupo/repos/mpv_wayland/plugins/wlx/kpart_host/build/CMakeFiles/uninstall.dir
-/home/pplupo/repos/mpv_wayland/plugins/wlx/kpart_host/build/CMakeFiles/fetch-translations.dir
-/home/pplupo/repos/mpv_wayland/plugins/wlx/kpart_host/build/CMakeFiles/test.dir
-/home/pplupo/repos/mpv_wayland/plugins/wlx/kpart_host/build/CMakeFiles/edit_cache.dir
-/home/pplupo/repos/mpv_wayland/plugins/wlx/kpart_host/build/CMakeFiles/rebuild_cache.dir
-/home/pplupo/repos/mpv_wayland/plugins/wlx/kpart_host/build/CMakeFiles/kpart_host_autogen_timestamp_deps.dir
-/home/pplupo/repos/mpv_wayland/plugins/wlx/kpart_host/build/CMakeFiles/kpart_host_autogen.dir
