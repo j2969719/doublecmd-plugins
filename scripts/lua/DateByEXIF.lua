@@ -1,5 +1,5 @@
 -- DateByEXIF.lua (cross-platform)
---2026.03.18
+--2026.04.18
 --[[
 Sets time stamps by date from EXIF (tested with JPEG).
 
@@ -55,6 +55,8 @@ local function GetTimeStamp(sFile, sPlug)
     return iD
   end
 end
+
+if Dialogs.MessageBox("Are you sure?", sScrName, 0x0001 + 0x0030) ~= 0x0001 then return end
 
 local aFiles = {}
 local bRes, iDT
