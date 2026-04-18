@@ -131,6 +131,19 @@ static void on_plug_removed(GtkWidget *widget, gpointer data)
 	gtk_widget_hide(widget);
 }
 
+static gboolean on_focus_in(GtkWidget *widget, GdkEventFocus *event, gpointer data)
+{
+	gsize xid = (gsize)gtk_socket_get_id(GTK_SOCKET(widget));
+	GtkWidget *main_box = (GtkWidget*)g_object_get_data(G_OBJECT(data), "main_box");
+	g_object_set_data(G_OBJECT(main_box), "xid", GSIZE_TO_POINTER(xid));
+
+	if (is_global_debug)
+		g_print("%s: gtk_socket (xid %ld) on focus in\n", PLUGNAME, xid);
+
+	return FALSE;
+}
+
+
 static void on_child_exited(GPid pid, gint status, gpointer data)
 {
 	gchar *script = (gchar*)data;
@@ -442,6 +455,7 @@ static void on_btn_spawn_clicked(GtkToolItem *button, gpointer data)
 		GtkWidget *main_box = (GtkWidget*)g_object_get_data(G_OBJECT(data), "main_box");
 		gtk_box_pack_start(GTK_BOX(main_box), socket, TRUE, TRUE, 0);
 		g_signal_connect(socket, "plug-removed", G_CALLBACK(on_plug_removed), label);
+		g_signal_connect(socket, "focus-in-event", G_CALLBACK(on_focus_in), data);
 		gtk_widget_show(socket);
 		gtk_widget_realize(socket);
 
@@ -461,6 +475,8 @@ static void on_btn_spawn_clicked(GtkToolItem *button, gpointer data)
 				show_message(CMD_LOAD " failed!", GTK_MESSAGE_ERROR, button);
 			else
 			{
+				GArray *xids = (GArray*)g_object_get_data(G_OBJECT(main_box), "xids");
+				g_array_append_val(xids, xid);
 				gchar *info = g_strdup_printf(INFO_FMT " (last)", item->script, item->pid, xid);
 				gtk_label_set_text(GTK_LABEL(data), info);
 				g_free(info);
@@ -510,24 +526,35 @@ static void on_btn_spawn_clicked(GtkToolItem *button, gpointer data)
 	}
 }
 
-static void on_btn_kill_clicked(GtkToolItem *button, gpointer data)
+static void send_destroy_to_all(HWND main_box)
 {
-	GtkWidget *main_box = (GtkWidget*)g_object_get_data(G_OBJECT(data), "main_box");
 	ScriptItem *item = (ScriptItem*)g_object_get_data(G_OBJECT(main_box), "script_item");
 
 	if (item)
 	{
-		gsize xid = (gsize)GPOINTER_TO_SIZE(g_object_get_data(G_OBJECT(main_box), "xid"));
-		send_command(item, xid, CMD_DESTROY, "", -1);
+		GArray *xids = (GArray*)g_object_get_data(G_OBJECT(main_box), "xids");
+
+		for (guint i = 0; i < xids->len; i++)
+			send_command(item, g_array_index(xids, gsize, i), CMD_DESTROY, "", -1);
+
+		g_array_set_size(xids, 0);
 	}
+}
 
-	GArray *array = (GArray*)g_object_get_data(G_OBJECT(data), "pids");
+static void on_btn_kill_clicked(GtkToolItem *button, gpointer data)
+{
+	GtkWidget *main_box = (GtkWidget*)g_object_get_data(G_OBJECT(data), "main_box");
+	send_destroy_to_all(main_box);
 
-	for (guint i = 0; i < array->len; i++)
+	GArray *pids = (GArray*)g_object_get_data(G_OBJECT(data), "pids");
+
+	for (guint i = 0; i < pids->len; i++)
 	{
-		GPid pid = g_array_index(array, GPid, i);
+		GPid pid = g_array_index(pids, GPid, i);
 		kill(pid, SIGKILL);
 	}
+
+	g_array_set_size(pids, 0);
 
 	gchar *info = g_strdup_printf("zed is dead, baby, zed is dead…");
 	gtk_label_set_text(GTK_LABEL(data), info);
@@ -635,6 +662,8 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 		g_signal_connect(G_OBJECT(btn_bumpcfg), "clicked", G_CALLBACK(on_btn_bumpcfg_clicked), info_label);
 	}
 
+	g_signal_connect(socket, "focus-in-event", G_CALLBACK(on_focus_in), (gpointer)info_label);
+
 	if (!item)
 	{
 		GPid pid;
@@ -682,6 +711,10 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 		gtk_widget_show_all(debug_box);
 	}
 
+	GArray *xids = g_array_new(FALSE, FALSE, sizeof(gsize));
+	g_array_append_val(xids, xid);
+	g_object_set_data_full(G_OBJECT(main_box), "xids", xids, (GDestroyNotify)g_array_unref);
+
 	g_object_set_data(G_OBJECT(main_box), "script_item", item);
 	g_object_set_data(G_OBJECT(main_box), "info_label", info_label);
 	g_object_set_data(G_OBJECT(main_box), "xid", GSIZE_TO_POINTER(xid));
@@ -726,14 +759,7 @@ int DCPCALL ListLoadNext(HWND ParentWin, HWND PluginWin, char* FileToLoad, int S
 
 void DCPCALL ListCloseWindow(HWND ListWin)
 {
-	ScriptItem *item = (ScriptItem*)g_object_get_data(G_OBJECT(ListWin), "script_item");
-
-	if (item)
-	{
-		gsize xid = (gsize)GPOINTER_TO_SIZE(g_object_get_data(G_OBJECT(ListWin), "xid"));
-		send_command(item, xid, CMD_DESTROY, "", -1);
-	}
-
+	send_destroy_to_all(ListWin);
 	gtk_widget_destroy(GTK_WIDGET(ListWin));
 }
 
