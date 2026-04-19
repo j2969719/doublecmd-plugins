@@ -48,6 +48,8 @@ def on_read_ready(channel, condition):
 				is_ok = destroy(xid)
 			case "?LOAD":
 				is_ok = load_file(xid, param)
+				if not is_ok:
+					destroy(xid)
 
 		if is_ok:
 			sys.stdout.write("!OK\n")

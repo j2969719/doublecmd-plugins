@@ -22,6 +22,7 @@ lcp_fitlargeronly = 32 # Images: Sent in addition to lcp_fittowindow if only ima
 lcp_center        = 64 # Images: Sent when the image needs to be centered
 
 widgets = {}
+is_debug = "SCRIPT_DEBUG" in os.environ
 
 def create_ui(xid, showflags):
 	plug = Gtk.Plug()
@@ -89,6 +90,8 @@ def on_read_ready(channel, condition):
 				is_ok = destroy(xid)
 			case "?LOAD":
 				is_ok = load_file(xid, param, flags)
+				if not is_ok:
+					destroy(xid)
 			case "?COPY":
 				is_ok = send_command(xid, "copy", flags)
 			case "?SELECTALL":

@@ -1,8 +1,8 @@
 CC = gcc
 CFLAGS = -shared -fPIC -Wl,--no-as-needed -Wall -pedantic -g
 
-libs := `pkg-config --cflags --libs gio-2.0 gio-unix-2.0`
-includes := -I../../../sdk
+libs := -lmagic `pkg-config --cflags --libs gio-2.0 gio-unix-2.0`
+includes := -I/usr/include/magic -I../../../sdk
 
 gtk2_libs := `pkg-config --cflags --libs gtk+-2.0` -Wno-deprecated-declarations
 gtk3_libs := `pkg-config --cflags --libs gtk+-3.0`
