@@ -141,7 +141,8 @@ def open_maff(path, tmpdir):
 	try:
 		if extact_archive(path, tmpdir):
 			index_files = glob.glob(os.path.join(tmpdir, "*/index.*htm*"))
-			print(f"{script_name}: index_files {index_files} tmpdir {tmpdir}", file=sys.stderr, flush=True)
+			if is_debug:
+				print(f"{script_name}: open_maff: index_files {index_files} tmpdir {tmpdir}", file=sys.stderr, flush=True)
 			if index_files:
 				return GLib.filename_to_uri(index_files[0])
 	except Exception as e:
