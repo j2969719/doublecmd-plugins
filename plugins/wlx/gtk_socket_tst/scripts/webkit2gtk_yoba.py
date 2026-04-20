@@ -14,6 +14,8 @@ import subprocess
 import tempfile
 import shutil
 import glob
+import html
+import re
 
 widgets = {}
 mutool_exts = ['.epub', '.fb2']
@@ -102,14 +104,7 @@ def parse_hhc(tmpdir, store):
 	stack = [None]
 	last_iter = None
 	first_uri = None
-	name_match = None
-	flags = GLib.RegexCompileFlags.CASELESS | GLib.RegexCompileFlags.DOTALL
-	re_tags = GLib.Regex.new(r'(<UL>|</UL>|<OBJECT[^>]*>.*?</OBJECT>)', flags, 0)
-	#re_name = GLib.Regex.new(r'name="Name" value="([^"]+)"', flags, 0)
-	#re_local = GLib.Regex.new(r'name="Local" value="([^"]+)"', flags, 0)
-	re_name = GLib.Regex.new(r'NAME\s*=\s*"Name"[ \t\r\n]+VALUE\s*=\s*"([^"]*)"', GLib.RegexCompileFlags.CASELESS, GLib.RegexMatchFlags(0))
-	re_local = GLib.Regex.new(r'NAME\s*=\s*"Local"[ \t\r\n]+VALUE\s*=\s*"([^"]*)"', GLib.RegexCompileFlags.CASELESS, GLib.RegexMatchFlags(0))
-	tags = re_tags.split(text, 0)
+	tags = re.split(r'(<UL>|</UL>|<OBJECT[^>]*>.*?</OBJECT>)', text, flags=re.S | re.I)
 	for tag in tags:
 		tag_upper = tag.strip().upper()
 		if not tag_upper:
@@ -120,16 +115,13 @@ def parse_hhc(tmpdir, store):
 			if len(stack) > 1:
 				stack.pop()
 		elif '<OBJECT' in tag_upper:
-			is_name, name_match = re_name.match(tag, 0)
-			name = name_match.fetch(1).strip() if is_name else None #dafak
-			is_local, local_match = re_local.match(tag, 0)
-			local = local_match.fetch(1) if is_local else None
+			name = re.search(r'NAME\s*=\s*"Name"[ \t\r\n]+VALUE\s*=\s*"([^"]*)"', tag, re.I)
+			local = re.search(r'NAME\s*=\s*"Local"[ \t\r\n]+VALUE\s*=\s*"([^"]*)"', tag, re.I)
 			if name or local:
-				title = name if name else local
-				#print(f"{script_name}: local {local} title {title}", file=sys.stderr, flush=True)
+				title = html.unescape(name.group(1)) if name else local.group(1)
 				uri = None
 				if local:
-					uri = GLib.filename_to_uri(os.path.join(tmpdir, local.replace('\\', '/')))
+					uri = GLib.filename_to_uri(os.path.join(tmpdir, local.group(1).replace('\\', '/')))
 					if uri and not first_uri:
 						first_uri = uri
 				last_iter = store.append(stack[-1], [title, uri])
@@ -149,6 +141,7 @@ def open_maff(path, tmpdir):
 	try:
 		if extact_archive(path, tmpdir):
 			index_files = glob.glob(os.path.join(tmpdir, "*/index.*htm*"))
+			print(f"{script_name}: index_files {index_files} tmpdir {tmpdir}", file=sys.stderr, flush=True)
 			if index_files:
 				return GLib.filename_to_uri(index_files[0])
 	except Exception as e:
@@ -210,14 +203,14 @@ def on_decide_policy(view, decision, decision_type, *args):
 		#	html = fb2_to_html(path)
 		#elif is_mupdf_there and ext in mutool_exts:
 		#	html = convert_using_mutool(path)
-		elif is_hx_there and ext == ".mht": #ext in hx_exts:
-			tmpdir = getattr(view, "tmpdir", None)
-			output = os.path.join(tmpdir, "output.html")
-			if convert_using_hx(path, output):
-				uri = GLib.filename_to_uri(output)
-				view.load_uri(uri)
-				decision.ignore()
-				return True
+		#elif is_hx_there and ext == ".mht": #ext in hx_exts:
+			#tmpdir = getattr(view, "tmpdir", None)
+			#output = os.path.join(tmpdir, "output.html")
+			#if convert_using_hx(path, output):
+				#uri = GLib.filename_to_uri(output)
+				#view.load_uri(uri)
+				#decision.ignore()
+				#return True
 
 		if html:
 			view.load_html(html, None)
