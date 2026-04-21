@@ -34,9 +34,9 @@ try:
 	import chardet
 except:
 	pass
-hx_exe = os.path.join(os.path.dirname(__file__), "redist/exsimple")
-hx_cfg = os.path.join(os.path.dirname(__file__), "redist/default.cfg")
-fb2_xsl = os.path.join(os.path.dirname(__file__), "FB2_22_xhtml.xsl")
+hx_exe = os.path.join(os.path.dirname(__file__), "third_party/hx_redist/exsimple")
+hx_cfg = os.path.join(os.path.dirname(__file__), "third_party/hx_redist/default.cfg")
+fb2_xsl = os.path.join(os.path.dirname(__file__), "third_party/FB2_22_xhtml.xsl")
 is_hx_there = os.access(hx_exe, os.X_OK)
 is_mupdf_there = bool(shutil.which("mutool"))
 is_7z_there = bool(shutil.which("7z"))
@@ -72,8 +72,9 @@ def fb2_to_html(path):
 		xsl_dom = etree.parse(fb2_xsl)
 		transform = etree.XSLT(xsl_dom)
 		return str(transform(fb2_dom))
-	except:
-		print(f"{script_name}: {path} fb2_to_html fail", file=sys.stderr, flush=True)
+	except Exception as e:
+		if is_debug:
+			print(f"{script_name}: fb2_to_html {path}: {e}", file=sys.stderr, flush=True)
 	return None
 
 def extact_archive(path, tmpdir):
@@ -146,18 +147,20 @@ def open_maff(path, tmpdir):
 			if index_files:
 				return GLib.filename_to_uri(index_files[0])
 	except Exception as e:
-		print(f"{script_name}: open_chm {path}: {e}", file=sys.stderr, flush=True)
+		print(f"{script_name}: open_maff {path}: {e}", file=sys.stderr, flush=True)
 	return None
 
-def convert_using_hx(path, output):
+def convert_using_hx(path, tmpdir):
 	try:
 		clean_tmpdir(tmpdir)
+		output = os.path.join(tmpdir, "output.html")
 		cmd = [hx_exe, path, output, hx_cfg]
 		subprocess.run(cmd, check=True, capture_output=True, env=hx_env)
 		if os.path.exists(output) and os.path.getsize(output) > 0:
-			return True
-	except:
-		print(f"{script_name}: {path} convert_using_hx fail", file=sys.stderr, flush=True)
+			return GLib.filename_to_uri(output)
+	except Exception as e:
+		if is_debug:
+			print(f"{script_name}: convert_using_hx {path}: {e}", file=sys.stderr, flush=True)
 	return False
 
 def convert_using_mutool(path):
@@ -165,16 +168,18 @@ def convert_using_mutool(path):
 		cmd = ["mutool", "convert", "-F", "xhtml", "-O", "preserve-images","-o", "-", path]
 		result = subprocess.run(cmd, check=True, capture_output=True, text=True)
 		return result.stdout
-	except:
-		print(f"{script_name}: {path} convert_using_mutool fail", file=sys.stderr, flush=True)
+	except Exception as e:
+		if is_debug:
+			print(f"{script_name}: convert_using_mutool {path}: {e}", file=sys.stderr, flush=True)
 	return None
 
 def md_to_html(path):
 	try:
 		with open(path, 'r') as file:
 			return markdown.markdown(file.read(), extensions=['extra'])
-	except:
-		print(f"{script_name}: {path} md_to_html fail", file=sys.stderr, flush=True)
+	except Exception as e:
+		if is_debug:
+			print(f"{script_name}: md_to_html {path}: {e}", file=sys.stderr, flush=True)
 	return None
 
 def on_tree_cursor_changed(treeview, view):
@@ -206,9 +211,8 @@ def on_decide_policy(view, decision, decision_type, *args):
 		#	html = convert_using_mutool(path)
 		#elif is_hx_there and ext == ".mht": #ext in hx_exts:
 			#tmpdir = getattr(view, "tmpdir", None)
-			#output = os.path.join(tmpdir, "output.html")
-			#if convert_using_hx(path, output):
-				#uri = GLib.filename_to_uri(output)
+			#uri = convert_using_hx(path, tmpdir)
+			#if uri:
 				#view.load_uri(uri)
 				#decision.ignore()
 				#return True
@@ -228,7 +232,8 @@ def create_ui(xid):
 	paned = Gtk.Paned(orientation=Gtk.Orientation.HORIZONTAL)
 	store = Gtk.TreeStore(str, str)
 	tree_view = Gtk.TreeView(model=store)
-	tree_view.append_column(Gtk.TreeViewColumn("Contents", Gtk.CellRendererText(), text=0))
+	column = Gtk.TreeViewColumn(None, Gtk.CellRendererText(), text=0)
+	tree_view.append_column(column)
 	scroll = Gtk.ScrolledWindow(width_request=200)
 	scroll.add(tree_view)
 	paned.pack1(scroll, False, False)
@@ -243,7 +248,7 @@ def create_ui(xid):
 	view.tmpdir = tempfile.mkdtemp()
 	plug.add(paned)
 	plug.show_all()
-	widgets[xid] = {"plug": plug, "view": view, "tree_model": store, "left_side": scroll}
+	widgets[xid] = {"plug": plug, "view": view, "tree_model": store, "left_side": scroll, "column": column}
 	return True
 
 def destroy(xid):
@@ -273,6 +278,7 @@ def load_file(xid, filename):
 	uri = None
 	html = None
 	tmpdir = getattr(view, "tmpdir", None)
+	widgets[xid]["column"].set_title(os.path.basename(filename))
 	if is_fb2_there and ext ==".fb2":
 		html = fb2_to_html(filename)
 	elif ext == ".chm":
@@ -284,11 +290,7 @@ def load_file(xid, filename):
 	elif ext in mutool_exts:
 		html = convert_using_mutool(filename)
 	elif ext in hx_exts:
-		output = os.path.join(tmpdir, "output.html")
-		if convert_using_hx(filename, output):
-			uri = GLib.filename_to_uri(output)
-		else:
-			return False
+		uri = convert_using_hx(filename, tmpdir)
 	else:
 		uri = GLib.filename_to_uri(filename)
 

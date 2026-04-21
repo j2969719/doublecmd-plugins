@@ -16,6 +16,8 @@ plugins/wlx/hx_webkit_qt_crap/redist/
 plugins/wlx/hx_webkit_gtk3_crap/redist/
 plugins/wcx/bit7z/src/third_party/bit7z/
 plugins/wlx/gtkimgview_gtk3/src/third_party/
+plugins/wlx/gtk_socket_tst/scripts/third_party/
+plugins/wlx/gtk_socket/scripts/third_party/
 stash/atril-gtk2/*.zip
 stash/atril-gtk2/*.zst
 stash/atril-gtk2/*.xz

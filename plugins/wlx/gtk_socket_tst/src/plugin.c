@@ -977,7 +977,7 @@ void DCPCALL ListSetDefaultParams(ListDefaultParamStruct* dps)
 		if (pos)
 		{
 			*pos = '\0';
-			new_path = g_strdup_printf("%s:%s" DC_USERDIR "/scripts:%s/scripts", g_getenv("PATH"), g_getenv("HOME"), plug_path);
+			new_path = g_strdup_printf("%s" DC_USERDIR "/scripts:%s/scripts:%s", g_getenv("HOME"), plug_path, g_getenv("PATH"));
 		}
 
 		gchar *user_path = g_strdup_printf("%s" DC_USERDIR, g_getenv("HOME"));
