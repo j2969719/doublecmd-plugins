@@ -619,6 +619,13 @@ static void on_btn_spawn_clicked(GtkToolItem *button, gpointer data)
 					g_free(info);
 					g_array_append_val(pids, edata->pid);
 					GPtrArray *exec_data = (GPtrArray*)g_object_get_data(G_OBJECT(main_box), "exec_data");
+
+					if (!exec_data)
+					{
+						exec_data = g_ptr_array_new();
+						g_object_set_data_full(G_OBJECT(main_box), "exec_data", exec_data, (GDestroyNotify)g_ptr_array_unref);
+					}
+
 					g_ptr_array_add(exec_data, (gpointer)edata);
 				}
 			}
@@ -800,6 +807,7 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 
 		if (!execute_command(command, FileToLoad, xid, exit_timeout, data))
 		{
+			data->is_destroyed = TRUE;
 			gtk_widget_destroy(main_box);
 			return NULL;
 		}

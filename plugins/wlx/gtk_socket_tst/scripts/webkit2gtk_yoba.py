@@ -19,7 +19,7 @@ import re
 
 widgets = {}
 mutool_exts = ['.epub', '.fb2']
-hx_exts = ['.odt', '.ods', '.docx', '.doc', '.rtf', '.xls', '.xlsx', ".ppt", ".pptx", ".123", ".mdb", ".mpp", ".eml", ".dxf", ".drw", ".pct", ".wpd", ".vsd", ".shw", ".sdw", ".qpw", ".prz", ".pst", ".mht"]
+hx_exts = ['.odt', '.ods', '.docx', '.doc', '.rtf', '.xls', '.xlsx', ".ppt", ".pptx", ".123", ".mdb", ".mpp", ".eml", ".dxf", ".drw", ".pct", ".wpd", ".vsd", ".shw", ".sdw", ".qpw", ".prz", ".pst"]
 
 script_name = os.path.basename(__file__)
 try:
@@ -37,12 +37,14 @@ except:
 hx_exe = os.path.join(os.path.dirname(__file__), "third_party/hx_redist/exsimple")
 hx_cfg = os.path.join(os.path.dirname(__file__), "third_party/hx_redist/default.cfg")
 fb2_xsl = os.path.join(os.path.dirname(__file__), "third_party/FB2_22_xhtml.xsl")
+tmpdir_prefix = f"{os.path.splitext(os.path.basename(__file__))[0]}_"
 is_hx_there = os.access(hx_exe, os.X_OK)
 is_mupdf_there = bool(shutil.which("mutool"))
 is_7z_there = bool(shutil.which("7z"))
 is_md_there = 'markdown' in sys.modules
 is_fb2_there = 'lxml.etree' in sys.modules and os.access(fb2_xsl, os.R_OK)
 is_use_open_epub = True # or False to use mutool instead
+is_use_hx_mht = False # True converts mht to html
 is_debug = "SCRIPT_DEBUG" in os.environ
 if is_hx_there:
 	hx_env = os.environ.copy()
@@ -55,6 +57,7 @@ if is_debug:
 	print(f"{script_name}: is_mupdf_there {is_mupdf_there}", file=sys.stderr, flush=True)
 	print(f"{script_name}: is_7z_there {is_7z_there}", file=sys.stderr, flush=True)
 	print(f"{script_name}: is_use_open_epub {is_use_open_epub}", file=sys.stderr, flush=True)
+	print(f"{script_name}: is_use_hx_mht {is_use_hx_mht}", file=sys.stderr, flush=True)
 
 def clean_tmpdir(tmpdir):
 	for item in os.listdir(tmpdir):
@@ -68,12 +71,28 @@ def clean_tmpdir(tmpdir):
 			if is_debug:
 				print(f"{script_name}: clean_tmpdir {path}: {e}", file=sys.stderr, flush=True)
 
-def fb2_to_html(path):
+def fb2_to_html(path, xid):
 	try:
 		fb2_dom = etree.parse(path)
 		xsl_dom = etree.parse(fb2_xsl)
 		transform = etree.XSLT(xsl_dom)
-		return str(transform(fb2_dom))
+		xhtml = transform(fb2_dom)
+		if xhtml:
+			store = widgets[xid]["tree_model"]
+			store.clear()
+			i = 0
+			for link in xhtml.xpath('//a[starts-with(@href, "#TOC_id")]'):
+				section = link.get("href")[1:]
+				if xhtml.xpath(f'//*[@name="{section}"]'):
+					i += 1
+					title = link.text
+					if not title:
+						title = "anon section"
+					uri = f"about:blank#{section}"
+					store.append(None, [title, uri])
+			if i > 0:
+				widgets[xid]["left_side"].show()
+			return str(xhtml)
 	except Exception as e:
 		if is_debug:
 			print(f"{script_name}: fb2_to_html {path}: {e}", file=sys.stderr, flush=True)
@@ -154,6 +173,15 @@ def parse_ncx(tmpdir, store, epub_ns):
 		store.append(None, [title, uri])
 	return first_uri
 
+def parse_rdf(tmpdir, rdf_ns):
+	rdf_file, subdir = get_file_and_subdir(tmpdir, "**/index.rdf")
+	if not rdf_file:
+		return None
+	first_uri = None
+	rdf_dom = etree.parse(rdf_file)
+	src = rdf_dom.xpath('//maf:indexfilename/@rdf:resource', namespaces=rdf_ns)[0]
+	return build_fileuri(tmpdir, subdir, src)
+
 def parse_hhc(tmpdir, store):
 	hhc_files = glob.glob(os.path.join(tmpdir, "*.hhc"))
 	if not hhc_files:
@@ -221,15 +249,29 @@ def open_epub(path, tmpdir, xid):
 	return None
 
 def open_maff(path, tmpdir):
+	epub_ns = {
+		'rdf': 'http://www.w3.org/1999/02/22-rdf-syntax-ns#',
+		'maf': 'http://maf.mozdev.org/metadata/rdf#',
+	}
 	try:
 		if extact_archive(path, tmpdir):
 			index_files = glob.glob(os.path.join(tmpdir, "*/index.*htm*"))
-			if is_debug:
-				print(f"{script_name}: open_maff: index_files {index_files} tmpdir {tmpdir}", file=sys.stderr, flush=True)
-			if index_files:
+			if not index_files:
+				return parse_rdf(tmpdir, epub_ns)
+			else:
 				return GLib.filename_to_uri(index_files[0])
 	except Exception as e:
 		print(f"{script_name}: open_maff {path}: {e}", file=sys.stderr, flush=True)
+	return None
+
+def open_fbz(path, tmpdir, xid):
+	try:
+		if extact_archive(path, tmpdir):
+			files = glob.glob(os.path.join(tmpdir, "*.fb2"))
+			if files:
+				return fb2_to_html(files[0], xid)
+	except Exception as e:
+		print(f"{script_name}: open_fbz {path}: {e}", file=sys.stderr, flush=True)
 	return None
 
 def convert_using_hx(path, tmpdir):
@@ -282,22 +324,15 @@ def on_decide_policy(view, decision, decision_type, *args):
 		if "://" not in uri:
 			dirname = getattr(view, "dirname", None)
 			path = os.path.join(dirname, uri)
+			if os.path.isdir(path):
+				view.load_uri(GLib.filename_to_uri(path))
+				decision.ignore()
+				return True
 		else:
 			path, _ = GLib.filename_from_uri(uri)
 		ext = os.path.splitext(path)[1].lower()
 		if is_md_there and ext == ".md":
 			html = md_to_html(path)
-		#elif is_fb2_there and ext == ".fb2":
-		#	html = fb2_to_html(path)
-		#elif is_mupdf_there and ext in mutool_exts:
-		#	html = convert_using_mutool(path)
-		#elif is_hx_there and ext == ".mht": #ext in hx_exts:
-			#tmpdir = getattr(view, "tmpdir", None)
-			#uri = convert_using_hx(path, tmpdir)
-			#if uri:
-				#view.load_uri(uri)
-				#decision.ignore()
-				#return True
 
 		if html:
 			view.load_html(html, None)
@@ -327,7 +362,7 @@ def create_ui(xid):
 	settings.set_allow_file_access_from_file_urls(True)
 	settings.set_allow_universal_access_from_file_urls(True)
 	view.set_settings(settings)
-	view.tmpdir = tempfile.mkdtemp()
+	view.tmpdir = tempfile.mkdtemp(prefix=tmpdir_prefix)
 	plug.add(paned)
 	plug.show_all()
 	widgets[xid] = {"plug": plug, "view": view, "tree_model": store, "left_side": scroll, "column": column}
@@ -342,9 +377,12 @@ def destroy(xid):
 
 def load_file(xid, filename):
 	ext = os.path.splitext(filename)[1].lower()
+	is_fbz = filename.lower().endswith(".fb2.zip") or ext == ".fbz"
 	if not is_md_there and ext == ".md":
 		return False
 	if not is_7z_there and (ext == ".chm" or ext == ".maff"):
+		return False
+	if (not is_7z_there or not is_fb2_there) and is_fbz:
 		return False
 	elif not is_mupdf_there and ext in mutool_exts:
 		if ext ==".fb2":
@@ -363,10 +401,12 @@ def load_file(xid, filename):
 	uri = None
 	html = None
 	tmpdir = getattr(view, "tmpdir", None)
-	widgets[xid]["column"].set_title(os.path.basename(filename).replace("_", "__")) # "___________"
+	widgets[xid]["column"].set_title(os.path.basename(filename).replace("_", " "))
 
 	if is_fb2_there and ext ==".fb2":
-		html = fb2_to_html(filename)
+		html = fb2_to_html(filename, xid)
+	if is_fb2_there and is_fbz:
+		html = open_fbz(filename, tmpdir, xid)
 	elif is_use_open_epub and ext == ".epub":
 		uri = open_epub(filename, tmpdir, xid)
 
@@ -377,7 +417,7 @@ def load_file(xid, filename):
 			uri = open_maff(filename, tmpdir)
 		elif ext in mutool_exts:
 			html = convert_using_mutool(filename)
-		elif ext in hx_exts:
+		elif ext in hx_exts or (is_use_hx_mht and ext == ".mht"):
 			uri = convert_using_hx(filename, tmpdir)
 		else:
 			uri = GLib.filename_to_uri(filename)
