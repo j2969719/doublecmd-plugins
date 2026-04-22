@@ -177,7 +177,6 @@ def parse_rdf(tmpdir, rdf_ns):
 	rdf_file, subdir = get_file_and_subdir(tmpdir, "**/index.rdf")
 	if not rdf_file:
 		return None
-	first_uri = None
 	rdf_dom = etree.parse(rdf_file)
 	src = rdf_dom.xpath('//maf:indexfilename/@rdf:resource', namespaces=rdf_ns)[0]
 	return build_fileuri(tmpdir, subdir, src)
@@ -249,7 +248,7 @@ def open_epub(path, tmpdir, xid):
 	return None
 
 def open_maff(path, tmpdir):
-	epub_ns = {
+	rdf_ns = {
 		'rdf': 'http://www.w3.org/1999/02/22-rdf-syntax-ns#',
 		'maf': 'http://maf.mozdev.org/metadata/rdf#',
 	}
@@ -257,7 +256,7 @@ def open_maff(path, tmpdir):
 		if extact_archive(path, tmpdir):
 			index_files = glob.glob(os.path.join(tmpdir, "*/index.*htm*"))
 			if not index_files:
-				return parse_rdf(tmpdir, epub_ns)
+				return parse_rdf(tmpdir, rdf_ns)
 			else:
 				return GLib.filename_to_uri(index_files[0])
 	except Exception as e:
