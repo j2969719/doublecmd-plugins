@@ -42,6 +42,7 @@ is_mupdf_there = bool(shutil.which("mutool"))
 is_7z_there = bool(shutil.which("7z"))
 is_md_there = 'markdown' in sys.modules
 is_fb2_there = 'lxml.etree' in sys.modules and os.access(fb2_xsl, os.R_OK)
+is_use_open_epub = True
 is_debug = "SCRIPT_DEBUG" in os.environ
 if is_hx_there:
 	hx_env = os.environ.copy()
@@ -53,6 +54,7 @@ if is_debug:
 	print(f"{script_name}: is_hx_there {is_hx_there}", file=sys.stderr, flush=True)
 	print(f"{script_name}: is_mupdf_there {is_mupdf_there}", file=sys.stderr, flush=True)
 	print(f"{script_name}: is_7z_there {is_7z_there}", file=sys.stderr, flush=True)
+	print(f"{script_name}: is_use_open_epub {is_use_open_epub}", file=sys.stderr, flush=True)
 
 def clean_tmpdir(tmpdir):
 	for item in os.listdir(tmpdir):
@@ -97,6 +99,27 @@ def load_with_chardet(path):
 		else:
 			return raw_data.decode('utf-8', errors='replace')
 
+def parse_ncx(tmpdir, store, epub_ns):
+	ncx_files = glob.glob(os.path.join(tmpdir, "**/*.ncx"), recursive=True)
+	if not ncx_files:
+		return None
+	first_uri = None
+	ncx_dom = etree.parse(ncx_files[0])
+	dir_name = os.path.dirname(ncx_files[0])
+	if dir_name != tmpdir:
+		dir_name = os.path.basename(dir_name)
+	else:
+		dirname = ""
+	for nav_point in ncx_dom.xpath('//ncx:navPoint', namespaces=epub_ns):
+		title = nav_point.xpath('./ncx:navLabel/ncx:text/text()', namespaces=epub_ns)[0]
+		src = nav_point.xpath('./ncx:content/@src', namespaces=epub_ns)[0]
+		uri = GLib.filename_to_uri(os.path.join(tmpdir, dir_name, src.split('#')[0]))
+		if uri and not first_uri:
+			first_uri = uri
+		store.append(None, [title, uri])
+
+	return first_uri
+
 def parse_hhc(tmpdir, store):
 	hhc_files = glob.glob(os.path.join(tmpdir, "*.hhc"))
 	if not hhc_files:
@@ -133,9 +156,33 @@ def open_chm(path, tmpdir, xid):
 		if extact_archive(path, tmpdir):
 			store = widgets[xid]["tree_model"]
 			store.clear()
-			return parse_hhc(tmpdir, store)
+			uri = parse_hhc(tmpdir, store)
+			if uri:
+				widgets[xid]["left_side"].show()
+				return uri
 	except Exception as e:
 		print(f"{script_name}: open_chm {path}: {e}", file=sys.stderr, flush=True)
+	return None
+
+def open_epub(path, tmpdir, xid):
+	epub_ns = {
+		'ncx': 'http://www.daisy.org/z3986/2005/ncx/',
+		'opf': 'http://www.idpf.org/2007/opf',
+	}
+	try:
+		if extact_archive(path, tmpdir):
+			store = widgets[xid]["tree_model"]
+			store.clear()
+			uri = parse_ncx(tmpdir, store, epub_ns)
+			if not uri:
+				nav_files = glob.glob(os.path.join(tmpdir, "**/nav.?htm?"), recursive=True)
+				if nav_files:
+					return GLib.filename_to_uri(nav_files[0])
+			else:
+				widgets[xid]["left_side"].show()
+				return uri
+	except Exception as e:
+		print(f"{script_name}: open_epub {path}: {e}", file=sys.stderr, flush=True)
 	return None
 
 def open_maff(path, tmpdir):
@@ -262,11 +309,14 @@ def load_file(xid, filename):
 	ext = os.path.splitext(filename)[1].lower()
 	if not is_md_there and ext == ".md":
 		return False
-	if not is_7z_there and ext == ".chm":
+	if not is_7z_there and (ext == ".chm" or ext == ".maff"):
 		return False
 	elif not is_mupdf_there and ext in mutool_exts:
 		if ext ==".fb2":
 			if not is_fb2_there:
+				return False
+		elif is_use_open_epub and ext ==".epub":
+			if not is_7z_there:
 				return False
 		else:
 			return False
@@ -279,20 +329,23 @@ def load_file(xid, filename):
 	html = None
 	tmpdir = getattr(view, "tmpdir", None)
 	widgets[xid]["column"].set_title(os.path.basename(filename))
+
 	if is_fb2_there and ext ==".fb2":
 		html = fb2_to_html(filename)
-	elif ext == ".chm":
-		uri = open_chm(filename, tmpdir, xid)
-		if uri:
-			widgets[xid]["left_side"].show()
-	elif ext == ".maff":
-		uri = open_maff(filename, tmpdir)
-	elif ext in mutool_exts:
-		html = convert_using_mutool(filename)
-	elif ext in hx_exts:
-		uri = convert_using_hx(filename, tmpdir)
-	else:
-		uri = GLib.filename_to_uri(filename)
+	elif is_use_open_epub and ext == ".epub":
+		uri = open_epub(filename, tmpdir, xid)
+
+	if not html and not uri:
+		if ext == ".chm":
+			uri = open_chm(filename, tmpdir, xid)
+		if ext == ".maff":
+			uri = open_maff(filename, tmpdir)
+		elif ext in mutool_exts:
+			html = convert_using_mutool(filename)
+		elif ext in hx_exts:
+			uri = convert_using_hx(filename, tmpdir)
+		else:
+			uri = GLib.filename_to_uri(filename)
 
 	if uri:
 		view.load_uri(uri)
