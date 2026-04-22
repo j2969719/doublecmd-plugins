@@ -42,7 +42,7 @@ is_mupdf_there = bool(shutil.which("mutool"))
 is_7z_there = bool(shutil.which("7z"))
 is_md_there = 'markdown' in sys.modules
 is_fb2_there = 'lxml.etree' in sys.modules and os.access(fb2_xsl, os.R_OK)
-is_use_open_epub = True
+is_use_open_epub = True # or False to use mutool instead
 is_debug = "SCRIPT_DEBUG" in os.environ
 if is_hx_there:
 	hx_env = os.environ.copy()
@@ -99,25 +99,59 @@ def load_with_chardet(path):
 		else:
 			return raw_data.decode('utf-8', errors='replace')
 
-def parse_ncx(tmpdir, store, epub_ns):
-	ncx_files = glob.glob(os.path.join(tmpdir, "**/*.ncx"), recursive=True)
-	if not ncx_files:
+def build_fileuri(tmpdir, subdir, src):
+	if not src:
+		return None
+	anchor = None
+	uri = GLib.filename_to_uri(os.path.join(tmpdir, subdir, src.split('#')[0]))
+	try:
+		anchor = src.split('#')[1]
+	except:
+		pass
+	if anchor:
+		uri = uri + '#' + anchor
+	return uri
+
+def get_file_and_subdir(tmpdir, pattern):
+	files = glob.glob(os.path.join(tmpdir, pattern), recursive=True)
+	if not files:
+		return None, None
+	subdir = os.path.dirname(files[0])
+	if subdir != tmpdir:
+		subdir = os.path.basename(subdir)
+	else:
+		subdir = ""
+	return files[0], subdir
+
+def parse_nav_xhtml(tmpdir, store, epub_ns):
+	nav_file, subdir = get_file_and_subdir(tmpdir, "**/nav.?htm?")
+	if not nav_file:
 		return None
 	first_uri = None
-	ncx_dom = etree.parse(ncx_files[0])
-	dir_name = os.path.dirname(ncx_files[0])
-	if dir_name != tmpdir:
-		dir_name = os.path.basename(dir_name)
-	else:
-		dirname = ""
+	nav_dom = etree.parse(nav_file)
+	for item in nav_dom.xpath('//xhtml:nav//xhtml:a', namespaces=epub_ns):
+		title = item.text.strip()
+		src = item.get('href')
+		uri = build_fileuri(tmpdir, subdir, src)
+		if uri and not first_uri:
+			first_uri = uri
+		if uri:
+			store.append(None, [title, uri])
+	return first_uri
+
+def parse_ncx(tmpdir, store, epub_ns):
+	ncx_file, subdir = get_file_and_subdir(tmpdir, "**/*.ncx")
+	if not ncx_file:
+		return None
+	first_uri = None
+	ncx_dom = etree.parse(ncx_file)
 	for nav_point in ncx_dom.xpath('//ncx:navPoint', namespaces=epub_ns):
 		title = nav_point.xpath('./ncx:navLabel/ncx:text/text()', namespaces=epub_ns)[0]
 		src = nav_point.xpath('./ncx:content/@src', namespaces=epub_ns)[0]
-		uri = GLib.filename_to_uri(os.path.join(tmpdir, dir_name, src.split('#')[0]))
+		uri = build_fileuri(tmpdir, subdir, src)
 		if uri and not first_uri:
 			first_uri = uri
 		store.append(None, [title, uri])
-
 	return first_uri
 
 def parse_hhc(tmpdir, store):
@@ -129,6 +163,8 @@ def parse_hhc(tmpdir, store):
 	last_iter = None
 	first_uri = None
 	tags = re.split(r'(<UL>|</UL>|<OBJECT[^>]*>.*?</OBJECT>)', text, flags=re.S | re.I)
+	re_name = re.compile(r'NAME\s*=\s*"Name"[ \t\r\n]+VALUE\s*=\s*"([^"]*)"', re.I)
+	re_local = re.compile(r'NAME\s*=\s*"Local"[ \t\r\n]+VALUE\s*=\s*"([^"]*)"', re.I)
 	for tag in tags:
 		tag_upper = tag.strip().upper()
 		if not tag_upper:
@@ -139,8 +175,8 @@ def parse_hhc(tmpdir, store):
 			if len(stack) > 1:
 				stack.pop()
 		elif '<OBJECT' in tag_upper:
-			name = re.search(r'NAME\s*=\s*"Name"[ \t\r\n]+VALUE\s*=\s*"([^"]*)"', tag, re.I)
-			local = re.search(r'NAME\s*=\s*"Local"[ \t\r\n]+VALUE\s*=\s*"([^"]*)"', tag, re.I)
+			name = re_name.search(tag)
+			local = re_local.search(tag)
 			if name or local:
 				title = html.unescape(name.group(1)) if name else local.group(1)
 				uri = None
@@ -168,6 +204,7 @@ def open_epub(path, tmpdir, xid):
 	epub_ns = {
 		'ncx': 'http://www.daisy.org/z3986/2005/ncx/',
 		'opf': 'http://www.idpf.org/2007/opf',
+		'xhtml': 'http://www.w3.org/1999/xhtml',
 	}
 	try:
 		if extact_archive(path, tmpdir):
@@ -175,10 +212,8 @@ def open_epub(path, tmpdir, xid):
 			store.clear()
 			uri = parse_ncx(tmpdir, store, epub_ns)
 			if not uri:
-				nav_files = glob.glob(os.path.join(tmpdir, "**/nav.?htm?"), recursive=True)
-				if nav_files:
-					return GLib.filename_to_uri(nav_files[0])
-			else:
+				uri = parse_nav_xhtml(tmpdir, store, epub_ns)
+			if uri:
 				widgets[xid]["left_side"].show()
 				return uri
 	except Exception as e:
@@ -328,7 +363,7 @@ def load_file(xid, filename):
 	uri = None
 	html = None
 	tmpdir = getattr(view, "tmpdir", None)
-	widgets[xid]["column"].set_title(os.path.basename(filename))
+	widgets[xid]["column"].set_title(os.path.basename(filename).replace("_", "__")) # "___________"
 
 	if is_fb2_there and ext ==".fb2":
 		html = fb2_to_html(filename)
@@ -338,7 +373,7 @@ def load_file(xid, filename):
 	if not html and not uri:
 		if ext == ".chm":
 			uri = open_chm(filename, tmpdir, xid)
-		if ext == ".maff":
+		elif ext == ".maff":
 			uri = open_maff(filename, tmpdir)
 		elif ext in mutool_exts:
 			html = convert_using_mutool(filename)
