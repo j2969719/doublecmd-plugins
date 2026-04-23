@@ -176,6 +176,9 @@ Getting some ELF header information.
 - [encawdx.lua](plugins/wdx/scripts/encawdx.lua)<br>
 Detection of file encoding. Requires `enca`.
 
+- [epubwdx.lua](plugins/wdx/scripts/epubwdx.lua) *(cross platform)*<br>
+Getting some information from EPUB files (2/3). See details in the beginning of script.
+
 - [exiftoolwdx.lua](plugins/wdx/scripts/exiftoolwdx.lua)<br>
 Getting information with [ExifTool](https://www.sno.phy.queensu.ca/~phil/exiftool/). You can see list of fields in `fields` (first column).
 
