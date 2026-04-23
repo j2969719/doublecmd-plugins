@@ -25,6 +25,7 @@
 #define DC_USERDIR "/.local/share/doublecmd/plugins/wlx/" PLUGDIR
 #define READ_TIMEOUT_MIN 1000
 #define READ_TIMEOUT_DEF 5000
+#define MAX_GETLINE_ATTEMPTS 5
 #define MAX_REDIRECTS 42
 #define INFO_FMT "%s, PID %d, X11 Window ID %ld"
 
@@ -342,20 +343,35 @@ static gchar* get_line_from_script(ScriptItem *item)
 	pfd.fd = item->stdout;
 	pfd.events = POLLIN;
 	GError *err = NULL;
+	char *line = NULL;
 
-	if (poll(&pfd, 1, item->read_timeout) == 0)
+	for (int i = 0; i < MAX_GETLINE_ATTEMPTS; i++)
 	{
-		g_printerr("%s (%s get_line_from_script): timeout\n", PLUGNAME, item->script);
-		return NULL;
-	}
+		if (poll(&pfd, 1, item->read_timeout) == 0)
+		{
+			g_printerr("%s (%s get_line_from_script): timeout\n", PLUGNAME, item->script);
+			return NULL;
+		}
 
-	char *line = g_data_input_stream_read_line(item->data_in, NULL, NULL, &err);
+		line = g_data_input_stream_read_line(item->data_in, NULL, NULL, &err);
 
-	if (err)
-	{
-		g_printerr("%s (%s g_data_input_stream_read_line): %s", PLUGNAME, item->script, err->message);
-		g_error_free(err);
-		return NULL;
+		if (err)
+		{
+			g_printerr("%s (%s g_data_input_stream_read_line): %s\n", PLUGNAME, item->script, err->message);
+			g_error_free(err);
+			return NULL;
+		}
+
+		if (line && line[0] != '!' && !g_str_has_prefix(line, "READY"))
+		{
+			if (item->is_debug)
+				g_printerr("%s (%s get_line_from_script): attempt #%d, received \"%s\"\n", PLUGNAME, item->script, i + 1, line);
+
+			g_free(line);
+			line = NULL;
+		}
+		else
+			break;
 	}
 
 	return line;
@@ -387,6 +403,8 @@ static ScriptItem* get_script_item(gchar *group)
 		GSpawnFlags flags = G_SPAWN_SEARCH_PATH_FROM_ENVP | G_SPAWN_DO_NOT_REAP_CHILD;
 		gchar **envp = g_environ_setenv(g_get_environ(), "PATH", new_path, TRUE);
 		envp = g_environ_setenv(envp, "GDK_CORE_DEVICE_EVENTS", "1", TRUE);
+		envp = g_environ_setenv(envp, "PLUG_CFGFILE", cfg_path, TRUE);
+		envp = g_environ_setenv(envp, "PLUG_DIR", plug_path, TRUE);
 
 		if (item->is_debug)
 			envp = g_environ_setenv(envp, "SCRIPT_DEBUG", "1", TRUE);
@@ -493,9 +511,10 @@ static gboolean execute_command(gchar *command, char *filename, gsize xid, gint 
 	envp = g_environ_setenv(envp, "FILE", filename, TRUE);
 	gchar *string = g_strdup_printf("%ld", xid);
 	envp = g_environ_setenv(envp, "XID", string, TRUE);
-	envp = g_environ_setenv(envp, "GDK_CORE_DEVICE_EVENTS", "1", TRUE);
-	envp = g_environ_setenv(envp, "PLUG_DIR", plug_path, TRUE);
 	g_free(string);
+	envp = g_environ_setenv(envp, "GDK_CORE_DEVICE_EVENTS", "1", TRUE);
+	envp = g_environ_setenv(envp, "PLUG_CFGFILE", cfg_path, TRUE);
+	envp = g_environ_setenv(envp, "PLUG_DIR", plug_path, TRUE);
 	data->command = command;
 
 	gboolean is_launched = g_spawn_async_with_pipes(NULL, argv, envp, flags, NULL, NULL, &data->pid, NULL, NULL, &data->stderr, NULL);

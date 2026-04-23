@@ -8,7 +8,7 @@ try:
 	gi.require_version('WebKit2', '4.1')
 except:
 	gi.require_version('WebKit2', '4.0')
-from gi.repository import Gtk, GLib
+from gi.repository import Gtk, GLib, Gio
 from gi.repository import WebKit2
 import subprocess
 import tempfile
@@ -34,6 +34,10 @@ try:
 	import chardet
 except:
 	pass
+try:
+	from libzim.reader import Archive
+except:
+	pass
 hx_exe = os.path.join(os.path.dirname(__file__), "third_party/hx_redist/exsimple")
 hx_cfg = os.path.join(os.path.dirname(__file__), "third_party/hx_redist/default.cfg")
 fb2_xsl = os.path.join(os.path.dirname(__file__), "third_party/FB2_22_xhtml.xsl")
@@ -43,21 +47,13 @@ is_mupdf_there = bool(shutil.which("mutool"))
 is_7z_there = bool(shutil.which("7z"))
 is_md_there = 'markdown' in sys.modules
 is_fb2_there = 'lxml.etree' in sys.modules and os.access(fb2_xsl, os.R_OK)
-is_use_open_epub = True # or False to use mutool instead
-is_use_hx_mht = False # True converts mht to html
+is_zim_there = 'Archive' in globals()
+is_use_open_epub = False
+is_use_hx_mht = False
 is_debug = "SCRIPT_DEBUG" in os.environ
 if is_hx_there:
 	hx_env = os.environ.copy()
 	hx_env["OIT_DATA_PATH"] = ""
-
-if is_debug:
-	print(f"{script_name}: is_md_there {is_md_there}", file=sys.stderr, flush=True)
-	print(f"{script_name}: is_fb2_there {is_fb2_there}", file=sys.stderr, flush=True)
-	print(f"{script_name}: is_hx_there {is_hx_there}", file=sys.stderr, flush=True)
-	print(f"{script_name}: is_mupdf_there {is_mupdf_there}", file=sys.stderr, flush=True)
-	print(f"{script_name}: is_7z_there {is_7z_there}", file=sys.stderr, flush=True)
-	print(f"{script_name}: is_use_open_epub {is_use_open_epub}", file=sys.stderr, flush=True)
-	print(f"{script_name}: is_use_hx_mht {is_use_hx_mht}", file=sys.stderr, flush=True)
 
 def clean_tmpdir(tmpdir):
 	for item in os.listdir(tmpdir):
@@ -318,6 +314,8 @@ def on_decide_policy(view, decision, decision_type, *args):
 		return False
 	action = decision.get_navigation_action()
 	uri = action.get_request().get_uri()
+	if uri.startswith("zim://data/"):
+		return False
 	html = None
 	try:
 		if "://" not in uri:
@@ -341,6 +339,24 @@ def on_decide_policy(view, decision, decision_type, *args):
 			if is_debug:
 				print(f"{script_name}: on_decide_policy: {e}", file=sys.stderr, flush=True)
 	return False
+
+def on_zim_uri_request(request):
+	view = request.get_web_view()
+	archive = getattr(view, "zim_archive", None)
+	if not archive:
+		return
+	uri = request.get_uri()
+	try:
+		file_uri = uri.replace("zim://data/", "file:///")
+		path, _ = GLib.filename_from_uri(file_uri)
+		entry = archive.get_entry_by_path(path[1:])
+		item = entry.get_item()
+		data = item.content.tobytes()
+		g_input_stream = Gio.MemoryInputStream.new_from_data(data, None)
+		request.finish(g_input_stream, len(data), item.mimetype)
+	except Exception as e:
+		if is_debug:
+			print(f"{script_name}: on_zim_uri_request {uri}: {e}", file=sys.stderr, flush=True)
 
 def create_ui(xid):
 	plug = Gtk.Plug()
@@ -394,9 +410,13 @@ def load_file(xid, filename):
 			return False
 	elif not is_hx_there and ext in hx_exts:
 		return False
+	elif not is_zim_there and ext == ".zim":
+		return False
 	widgets[xid]["left_side"].hide()
 	view = widgets[xid]["view"]
 	view.dirname = os.path.dirname(filename)
+	if hasattr(view, 'zim_archive'):
+		del view.zim_archive
 	uri = None
 	html = None
 	tmpdir = getattr(view, "tmpdir", None)
@@ -418,6 +438,14 @@ def load_file(xid, filename):
 			html = convert_using_mutool(filename)
 		elif ext in hx_exts or (is_use_hx_mht and ext == ".mht"):
 			uri = convert_using_hx(filename, tmpdir)
+		elif ext == ".zim":
+			view.zim_archive = Archive(filename)
+			if not view.zim_archive:
+				return False
+			main_path = view.zim_archive.main_entry.get_item().path
+			if not main_path:
+				return False
+			uri = GLib.filename_to_uri(f"/{main_path}").replace("file:///", "zim://data/")
 		else:
 			uri = GLib.filename_to_uri(filename)
 
@@ -491,6 +519,27 @@ def on_read_ready(channel, condition):
 		Gtk.main_quit()
 		return False
 	return True
+
+if is_zim_there:
+	WebKit2.WebContext.get_default().register_uri_scheme("zim", on_zim_uri_request)
+
+try:
+	cfg = GLib.KeyFile()
+	cfg.load_from_file(os.environ["PLUG_CFGFILE"], GLib.KeyFileFlags.NONE)
+	is_use_open_epub = cfg.get_boolean("epub", f"{script_name}!use_open_epub")
+	is_use_hx_mht = cfg.get_boolean("mht", f"{script_name}!use_hx")
+except:
+	pass
+
+if is_debug:
+	print(f"{script_name}: markdown support {is_md_there}", file=sys.stderr, flush=True)
+	print(f"{script_name}: fb2 support {is_fb2_there}", file=sys.stderr, flush=True)
+	print(f"{script_name}: outsidein html export support {is_hx_there}", file=sys.stderr, flush=True)
+	print(f"{script_name}: mupdf support {is_mupdf_there}", file=sys.stderr, flush=True)
+	print(f"{script_name}: 7zip support {is_7z_there}", file=sys.stderr, flush=True)
+	print(f"{script_name}: zim support {is_zim_there}", file=sys.stderr, flush=True)
+	print(f"{script_name}: force builtin epub handling {is_use_open_epub}", file=sys.stderr, flush=True)
+	print(f"{script_name}: force outsidein html export for mht {is_use_hx_mht}", file=sys.stderr, flush=True)
 
 channel = GLib.IOChannel.unix_new(sys.stdin.fileno())
 GLib.io_add_watch(channel, GLib.PRIORITY_DEFAULT, GLib.IO_IN | GLib.IO_HUP, on_read_ready)
