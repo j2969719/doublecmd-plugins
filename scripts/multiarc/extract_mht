@@ -103,6 +103,7 @@ def extract_mht(path, tmpdir):
 			sorted_urls = sorted(localhost.items(), key=lambda x: len(x[0]), reverse=True)
 			for url, filename in sorted_urls:
 				html_content = html_content.replace(url, filename)
+			html_content = re.sub(r'(charset=["\']?)([\w-]+)(["\']?)', r'\1utf-8\3', html_content, flags=re.I)
 			html_content = re.sub(r"<meta[^>]*http-equiv=['\"]?Content-Type['\"]?[^>]*>", '<meta http-equiv="Content-Type" content="text/html; charset=utf-8">',  html_content, flags=re.I)
 			html_content = re.sub(r'(encoding=["\']?)([\w-]+)(["\']?)', r'\1utf-8\3', html_content, flags=re.I)
 			try:
