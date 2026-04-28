@@ -1,0 +1,117 @@
+#!/usr/bin/env python3
+
+import os
+import re
+import sys
+import email
+import chardet
+import mimetypes
+from email import policy
+
+script_name = os.path.basename(__file__)
+extract_filelist = None
+out_dir = './'
+is_dont_write='l' in sys.argv[1]
+is_debug='d' in sys.argv[1]
+args = len(sys.argv)
+if args < 3:
+	print(f"usage: {script_name} <command> <mht> <files...> <-Odir> <@filelist>\n<commands>\n  l[d]\tlist archive contents[debug]\n  x\textract files", file=sys.stderr, flush=True)
+	sys.exit(1)
+elif args > 3:
+	for i in range(3, args):
+		if sys.argv[i].startswith("@"):
+			try:
+				with open(sys.argv[i][1:], 'r', encoding='utf-8') as f:
+					extract_filelist = {line.strip() for line in f}
+			except Exception as e:
+				print(f"{script_name}: error {sys.argv[2]}: {e}", file=sys.stderr, flush=True)
+		elif sys.argv[i].startswith("-O"):
+			out_dir = sys.argv[i][2:]
+			os.makedirs(out_dir, exist_ok=True)
+		else:
+			if not extract_filelist:
+				extract_filelist = set()
+			extract_filelist.add(sys.argv[i])
+
+def extract_mht(path, tmpdir):
+	filenames = []
+	ext_map = {
+		'text/html':              '.html',
+		'text/css':                '.css',
+		'text/javascript':          '.js',
+		'application/x-javascript': '.js',
+		'application/javascript':   '.js',
+		'application/octet-stream':'.bin',
+	}
+	url_ext_blacklist = [".php", ".com", ".org"]
+	try:
+		with open(path, 'rb') as f:
+			msg = email.message_from_binary_file(f, policy=policy.default)
+		first_path = None
+		localhost = {}
+		org_name = os.path.splitext(os.path.basename(path))[0]
+		for i, part in enumerate(msg.walk()):
+			if part.is_multipart():
+				continue
+			content_type = part.get_content_type()
+			location = part.get('Content-Location')
+			if content_type in ext_map:
+				ext = ext_map[content_type]
+			else:
+				ext = mimetypes.guess_extension(content_type) or '.???'
+			if not location or location.endswith('/'):
+				if ext == '.html' and first_path is None:
+					name = org_name
+				else:
+					name = f"{org_name}_part{i}"
+			else:
+				filename = os.path.basename(location.split('?')[0])
+				name, url_ext = os.path.splitext(filename)
+				if not (url_ext in url_ext_blacklist):
+					ext = url_ext
+			counter = 1
+			filename = f"{name}{ext}"
+			while filename in filenames:
+				final_name = f"{name}_({counter}){ext}"
+				counter += 1
+			filenames.append(filename)
+			if location and "://" in location:
+				localhost[location] = filename
+			filepath = os.path.join(tmpdir, filename)
+			filedata = part.get_payload(decode=True)
+			size = len(filedata)
+			if is_debug:
+				print(f"location: {location}\ncontent_type\t{content_type}\text\t{ext}\tContent-ID\t{part.get("Content-ID")}", file=sys.stderr)
+			print(f"{size}\t{filename}")
+			if is_dont_write:
+				continue
+			elif extract_filelist and not (filename in extract_filelist):
+				continue
+			try:
+				with open(filepath, "wb") as out:
+					out.write(filedata)
+			except Exception as e:
+				print(f"{script_name}: write error {filepath}: {e}", file=sys.stderr, flush=True)
+			if content_type == 'text/html' and first_path is None:
+				first_path = filepath
+
+		if not is_dont_write and first_path and os.path.exists(first_path):
+			with open(first_path, 'rb') as f:
+				raw_data = f.read()
+			encoding = chardet.detect(raw_data)['encoding']
+			html_content = raw_data.decode(encoding or 'utf-8', errors='ignore')
+			sorted_urls = sorted(localhost.items(), key=lambda x: len(x[0]), reverse=True)
+			for url, filename in sorted_urls:
+				html_content = html_content.replace(url, filename)
+			html_content = re.sub(r"<meta[^>]*http-equiv=['\"]Content-Type['\"][^>]*>", '<meta http-equiv="Content-Type" content="text/html; charset=utf-8">',  html_content, flags=re.I)
+			html_content = re.sub(r'(encoding=["\']?)([\w-]+)(["\']?)', r'\1utf-8\3', html_content, flags=re.I)
+			try:
+				with open(first_path, 'w', encoding='utf-8') as out:
+					out.write(html_content)
+			except Exception as e:
+				print(f"{script_name}: write error {first_path}: {e}", file=sys.stderr, flush=True)
+	except Exception as e:
+		print(f"{script_name}: extract_mht {path}: {e}", file=sys.stderr, flush=True)
+	return None
+
+extract_mht(sys.argv[2], out_dir)

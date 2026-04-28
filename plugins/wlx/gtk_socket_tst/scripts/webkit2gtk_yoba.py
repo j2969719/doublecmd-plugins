@@ -35,7 +35,13 @@ try:
 except:
 	pass
 try:
-	from libzim.reader import Archive
+	from libzim.reader import Archive as ZimArchive
+except:
+	pass
+try:
+	import email
+	from email import policy
+	import mimetypes
 except:
 	pass
 hx_exe = os.path.join(os.path.dirname(__file__), "third_party/hx_redist/exsimple")
@@ -47,7 +53,9 @@ is_mupdf_there = bool(shutil.which("mutool"))
 is_7z_there = bool(shutil.which("7z"))
 is_md_there = 'markdown' in sys.modules
 is_fb2_there = 'lxml.etree' in sys.modules and os.access(fb2_xsl, os.R_OK)
-is_zim_there = 'Archive' in globals()
+is_zim_there = 'ZimArchive' in globals()
+is_disable_js = False
+is_use_extract_mht = False
 is_use_open_epub = False
 is_use_hx_mht = False
 is_debug = "SCRIPT_DEBUG" in os.environ
@@ -104,6 +112,80 @@ def extact_archive(path, tmpdir):
 		if is_debug:
 			print(f"{script_name}: extact_archive {path}: {e}", file=sys.stderr, flush=True)
 	return False
+
+def extract_mht(path, tmpdir):
+	filenames = []
+	ext_map = {
+		'text/html':              '.html',
+		'text/css':                '.css',
+		'text/javascript':          '.js',
+		'application/x-javascript': '.js',
+		'application/javascript':   '.js',
+		'application/octet-stream':'.bin',
+	}
+	url_ext_blacklist = [".php", ".com", ".org"]
+	try:
+		with open(path, 'rb') as f:
+			msg = email.message_from_binary_file(f, policy=policy.default)
+		first_path = None
+		localhost = {}
+		org_name = os.path.splitext(os.path.basename(path))[0]
+		for i, part in enumerate(msg.walk()):
+			if part.is_multipart():
+				continue
+			content_type = part.get_content_type()
+			location = part.get('Content-Location')
+			if content_type in ext_map:
+				ext = ext_map[content_type]
+			else:
+				ext = mimetypes.guess_extension(content_type) or '.???'
+			if not location or location.endswith('/'):
+				if ext == '.html' and first_path is None:
+					name = org_name
+				else:
+					name = f"{org_name}_part{i}"
+			else:
+				filename = os.path.basename(location.split('?')[0])
+				name, url_ext = os.path.splitext(filename)
+				if not (url_ext in url_ext_blacklist):
+					ext = url_ext
+			counter = 1
+			filename = f"{name}{ext}"
+			while filename in filenames:
+				final_name = f"{name}_({counter}){ext}"
+				counter += 1
+			filenames.append(filename)
+			if location and "://" in location:
+				localhost[location] = filename
+			filepath = os.path.join(tmpdir, filename)
+			filedata = part.get_payload(decode=True)
+			try:
+				with open(filepath, "wb") as out:
+					out.write(filedata)
+			except Exception as e:
+				print(f"{script_name}: write error {filepath}: {e}", file=sys.stderr, flush=True)
+			if content_type == 'text/html' and first_path is None:
+				first_path = filepath
+
+		if first_path and os.path.exists(first_path):
+			with open(first_path, 'rb') as f:
+				raw_data = f.read()
+			encoding = chardet.detect(raw_data)['encoding']
+			html_content = raw_data.decode(encoding or 'utf-8', errors='ignore')
+			sorted_urls = sorted(localhost.items(), key=lambda x: len(x[0]), reverse=True)
+			for url, filename in sorted_urls:
+				html_content = html_content.replace(url, filename)
+			html_content = re.sub(r"<meta[^>]*http-equiv=['\"]?Content-Type['\"]?[^>]*>", '<meta http-equiv="Content-Type" content="text/html; charset=utf-8">',  html_content, flags=re.I)
+			html_content = re.sub(r'(encoding=["\']?)([\w-]+)(["\']?)', r'\1utf-8\3', html_content, flags=re.I)
+			try:
+				with open(first_path, 'w', encoding='utf-8') as out:
+					out.write(html_content)
+				return GLib.filename_to_uri(first_path)
+			except Exception as e:
+				print(f"{script_name}: write error {first_path}: {e}", file=sys.stderr, flush=True)
+	except Exception as e:
+		print(f"{script_name}: extract_mht {path}: {e}", file=sys.stderr, flush=True)
+	return None
 
 def load_with_chardet(path):
 	with open(path, 'rb') as f:
@@ -314,8 +396,10 @@ def on_decide_policy(view, decision, decision_type, *args):
 		return False
 	action = decision.get_navigation_action()
 	uri = action.get_request().get_uri()
-	if uri.startswith("zim://data/"):
+	if uri.startswith("zim://data/") or uri.startswith("about:blank"):
 		return False
+	if uri.startswith("about:/"):
+		uri = uri[7:]
 	html = None
 	try:
 		if "://" not in uri:
@@ -376,6 +460,7 @@ def create_ui(xid):
 	settings = view.get_settings()
 	settings.set_allow_file_access_from_file_urls(True)
 	settings.set_allow_universal_access_from_file_urls(True)
+	settings.set_enable_javascript(not is_disable_js)
 	view.set_settings(settings)
 	view.tmpdir = tempfile.mkdtemp(prefix=tmpdir_prefix)
 	plug.add(paned)
@@ -428,6 +513,9 @@ def load_file(xid, filename):
 		html = open_fbz(filename, tmpdir, xid)
 	elif is_use_open_epub and ext == ".epub":
 		uri = open_epub(filename, tmpdir, xid)
+	elif is_use_extract_mht and ext == ".mht":
+		clean_tmpdir(tmpdir)
+		uri = extract_mht(filename, tmpdir)
 
 	if not html and not uri:
 		if ext == ".chm":
@@ -439,7 +527,7 @@ def load_file(xid, filename):
 		elif ext in hx_exts or (is_use_hx_mht and ext == ".mht"):
 			uri = convert_using_hx(filename, tmpdir)
 		elif ext == ".zim":
-			view.zim_archive = Archive(filename)
+			view.zim_archive = ZimArchive(filename)
 			if not view.zim_archive:
 				return False
 			main_path = view.zim_archive.main_entry.get_item().path
@@ -527,7 +615,9 @@ try:
 	cfg = GLib.KeyFile()
 	cfg.load_from_file(os.environ["PLUG_CFGFILE"], GLib.KeyFileFlags.NONE)
 	is_use_open_epub = cfg.get_boolean("epub", f"{script_name}!use_open_epub")
+	is_use_extract_mht = cfg.get_boolean("mht", f"{script_name}!use_extract_mht")
 	is_use_hx_mht = cfg.get_boolean("mht", f"{script_name}!use_hx")
+	is_disable_js = cfg.get_boolean(".", f"{script_name}!disable_js")
 except:
 	pass
 
@@ -539,7 +629,9 @@ if is_debug:
 	print(f"{script_name}: 7zip support {is_7z_there}", file=sys.stderr, flush=True)
 	print(f"{script_name}: zim support {is_zim_there}", file=sys.stderr, flush=True)
 	print(f"{script_name}: force builtin epub handling {is_use_open_epub}", file=sys.stderr, flush=True)
+	print(f"{script_name}: force builtin mht handling {is_use_extract_mht}", file=sys.stderr, flush=True)
 	print(f"{script_name}: force outsidein html export for mht {is_use_hx_mht}", file=sys.stderr, flush=True)
+	print(f"{script_name}: disable javascript {is_disable_js}", file=sys.stderr, flush=True)
 
 channel = GLib.IOChannel.unix_new(sys.stdin.fileno())
 GLib.io_add_watch(channel, GLib.PRIORITY_DEFAULT, GLib.IO_IN | GLib.IO_HUP, on_read_ready)
