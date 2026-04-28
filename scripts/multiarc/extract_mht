@@ -72,7 +72,7 @@ def extract_mht(path, tmpdir):
 			counter = 1
 			filename = f"{name}{ext}"
 			while filename in filenames:
-				final_name = f"{name}_({counter}){ext}"
+				filename = f"{name}_({counter}){ext}"
 				counter += 1
 			filenames.append(filename)
 			if location and "://" in location:
