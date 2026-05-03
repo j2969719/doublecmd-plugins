@@ -24,7 +24,7 @@ Converts multiple files via commandline utilities (Files -> Pack Files...).
 View output of command line utilities on Ctrl+Page Down (see `settings_default.ini`).
 
 - [fb2bin_crap](plugins/wcx/fb2bin_crap)<br>
-Extract binary data from fb2.
+Extract binary data from FB2.
 
 - [gcrypt_hash_crap](plugins/wcx/gcrypt_hash_crap)<br>
 Calculates a hash (Files -> Pack Files...), test file integrity (Files -> Test Archive(s)).

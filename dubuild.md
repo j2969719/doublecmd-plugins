@@ -238,7 +238,7 @@ Requires GTK2 version, i.e. Atril <= 1.16.1.
 Requires GTK2 version, i.e. Evince <= 2.32.
 
 - [fileinfo](plugins/wlx/fileinfo)<br>
-gtk2: `apt install build-essential libgtk2.0-dev`
+gtk2: `apt install build-essential libgtk2.0-dev`<br>
 srcvw2: `apt install build-essential libgtk2.0-dev libgtksourceview2.0-dev`
 
 - [gstplayer](plugins/wlx/gstplayer)<br>
