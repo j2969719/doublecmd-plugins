@@ -4,6 +4,7 @@
 #include <QOpenGLWidget>
 #include <QOpenGLFunctions>
 #include <QString>
+#include <QPointer>
 #include <mpv/client.h>
 #include <mpv/render_gl.h>
 
@@ -41,10 +42,16 @@ private:
     static void *get_proc_address(void *ctx, const char *name);
     QString mapQtKeyToMpvKey(QKeyEvent *event);
 
+    void installFocusGuard();
+    void restoreFocusToDC();
+
     mpv_handle *m_mpv;
     mpv_render_context *m_mpvGL;
     QString m_pendingFile;
     bool m_glReady;
+    bool m_isActive = false;
+    bool m_topLevelFilterInstalled = false;
+    QPointer<QWidget> m_savedFocusWidget;
 };
 
 #endif // MPVWIDGET_H
