@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CONFIG>
+  <ProjectOptions>
+    <Version Value="12"/>
+    <General>
+      <Flags>
+        <MainUnitHasCreateFormStatements Value="False"/>
+        <MainUnitHasTitleStatement Value="False"/>
+        <MainUnitHasScaledStatement Value="False"/>
+      </Flags>
+      <SessionStorage Value="InProjectDir"/>
+      <Title Value="wlx_mdk_wayland"/>
+      <UseAppBundle Value="False"/>
+      <ResourceType Value="res"/>
+    </General>
+    <BuildModes>
+      <Item Name="Default" Default="True">
+        <CompilerOptions>
+          <Version Value="11"/>
+          <Other>
+            <CustomOptions Value="-dLCLqt6"/>
+          </Other>
+        </CompilerOptions>
+      </Item>
+    </BuildModes>
+    <LCLWidgetType Value="qt6"/>
+    <PublishOptions>
+      <Version Value="2"/>
+      <UseFileFilters Value="True"/>
+    </PublishOptions>
+    <RunParams>
+      <FormatVersion Value="2"/>
+    </RunParams>
+    <RequiredPackages>
+      <Item>
+        <PackageName Value="LCL"/>
+      </Item>
+    </RequiredPackages>
+    <Units>
+      <Unit>
+        <Filename Value="wlx_mdk_wayland.lpr"/>
+        <IsPartOfProject Value="True"/>
+      </Unit>
+      <Unit>
+        <Filename Value="mdk.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit>
+    </Units>
+  </ProjectOptions>
+  <CompilerOptions>
+    <Version Value="11"/>
+    <Target>
+      <Filename Value="wlx_mdk_wayland.wlx"/>
+    </Target>
+    <SearchPaths>
+      <IncludeFiles Value="$(ProjOutDir)"/>
+      <UnitOutputDirectory Value="lib/$(TargetCPU)-$(TargetOS)"/>
+    </SearchPaths>
+    <CodeGeneration>
+      <RelocatableUnit Value="True"/>
+    </CodeGeneration>
+    <Linking>
+      <Options>
+        <ExecutableType Value="Library"/>
+        <PassLinkerOptions Value="True"/>
+        <LinkerOptions Value="-rpath $ORIGIN -L."/>
+      </Options>
+    </Linking>
+    <Other>
+      <ExecuteAfter>
+        <Command Value="mv libwlx_mdk_wayland.wlx.so wlx_mdk_wayland.wlx"/>
+      </ExecuteAfter>
+    </Other>
+  </CompilerOptions>
+  <Debugging>
+    <Exceptions>
+      <Item>
+        <Name Value="EAbort"/>
+      </Item>
+      <Item>
+        <Name Value="ECodetoolError"/>
+      </Item>
+      <Item>
+        <Name Value="EFOpenError"/>
+      </Item>
+    </Exceptions>
+  </Debugging>
+</CONFIG>
