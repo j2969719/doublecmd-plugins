@@ -11,8 +11,6 @@ from email import policy
 script_name = os.path.basename(__file__)
 extract_filelist = None
 out_dir = './'
-is_dont_write='l' in sys.argv[1]
-is_debug='d' in sys.argv[1]
 args = len(sys.argv)
 if args < 3:
 	print(f"usage: {script_name} <command> <mht> <files...> <-Odir> <@filelist>\n<commands>\n  l[d]\tlist archive contents[debug]\n  x\textract files", file=sys.stderr, flush=True)
@@ -32,6 +30,8 @@ elif args > 3:
 			if not extract_filelist:
 				extract_filelist = set()
 			extract_filelist.add(sys.argv[i])
+is_dont_write='l' in sys.argv[1]
+is_debug='d' in sys.argv[1]
 
 def extract_mht(path, tmpdir):
 	filenames = []
