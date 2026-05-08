@@ -107,7 +107,7 @@ static void show_message(char *message, GtkMessageType type, HWND widget)
 
 static void get_global_settings(void)
 {
-	read_timeout = g_key_file_get_integer(cfg, PLUGNAME, "read_timeout", NULL);
+	read_timeout = g_key_file_get_integer(cfg, ".", "read_timeout", NULL);
 
 	if (read_timeout < READ_TIMEOUT_MIN)
 		read_timeout = READ_TIMEOUT_DEF;
