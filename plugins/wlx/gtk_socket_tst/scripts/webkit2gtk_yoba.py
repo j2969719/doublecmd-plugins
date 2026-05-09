@@ -8,14 +8,19 @@ try:
 	gi.require_version('WebKit2', '4.1')
 except:
 	gi.require_version('WebKit2', '4.0')
-from gi.repository import Gtk, GLib, Gio
+from gi.repository import Gtk, GLib, Gio, Gdk
 from gi.repository import WebKit2
 import subprocess
+import mimetypes
 import tempfile
+import chardet
 import shutil
 import glob
 import html
 import re
+import email
+from email import policy
+
 
 widgets = {}
 mutool_exts = ['.epub', '.fb2']
@@ -31,17 +36,7 @@ try:
 except:
 	pass
 try:
-	import chardet
-except:
-	pass
-try:
 	from libzim.reader import Archive as ZimArchive
-except:
-	pass
-try:
-	import email
-	from email import policy
-	import mimetypes
 except:
 	pass
 hx_exe = os.path.join(os.path.dirname(__file__), "third_party/hx_redist/exsimple")
@@ -58,6 +53,8 @@ is_disable_js = False
 is_use_extract_mht = False
 is_use_open_epub = False
 is_use_hx_mht = False
+is_hide_toolbar = False
+is_inspector_gadget = False
 is_debug = "SCRIPT_DEBUG" in os.environ
 if is_hx_there:
 	hx_env = os.environ.copy()
@@ -384,6 +381,49 @@ def md_to_html(path):
 			print(f"{script_name}: md_to_html {path}: {e}", file=sys.stderr, flush=True)
 	return None
 
+def on_btn_back_clicked(button, view):
+	view.go_back()
+
+def on_btn_next_clicked(button, view):
+	view.go_forward()
+
+def on_btn_first_clicked(button, view):
+	uri = getattr(view, "first_uri", None)
+	html = getattr(view, "first_html", None)
+	if uri:
+		view.load_uri(uri)
+	elif html:
+		view.load_html(html, None)
+
+def on_btn_stop_clicked(button, view):
+	view.stop_loading()
+
+def on_btn_reload_clicked(button, view):
+	if not view.get_uri().startswith("about:blank"):
+		view.reload()
+
+def on_btn_zoom_in_clicked(button, view):
+	view.set_zoom_level(view.get_zoom_level() + 0.1)
+
+def on_btn_zoom_out_clicked(button, view):
+	view.set_zoom_level(view.get_zoom_level() - 0.1)
+
+def on_btn_zoom_org_clicked(button, view):
+	view.set_zoom_level(1.0)
+
+def on_btn_dev_clicked(button, view):
+	inspector = view.get_inspector()
+	inspector.show()
+
+def on_scroll(view, event):
+	if event.state & Gdk.ModifierType.CONTROL_MASK:
+		if event.direction == Gdk.ScrollDirection.DOWN or event.delta_y > 0:
+			view.set_zoom_level(view.get_zoom_level() - 0.1)
+		else:
+			view.set_zoom_level(view.get_zoom_level() + 0.1)
+		return True
+	return False
+
 def on_tree_cursor_changed(treeview, view):
 	selection = treeview.get_selection()
 	model, tree_iter = selection.get_selected()
@@ -446,6 +486,38 @@ def on_zim_uri_request(request):
 def create_ui(xid):
 	plug = Gtk.Plug()
 	plug.construct(xid)
+	vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
+	toolbar = Gtk.Toolbar()
+	btn_back = Gtk.ToolButton()
+	btn_back.set_icon_name("go-previous")
+	toolbar.insert(btn_back, -1)
+	btn_next = Gtk.ToolButton()
+	btn_next.set_icon_name("go-next")
+	toolbar.insert(btn_next, -1)
+	btn_first = Gtk.ToolButton()
+	btn_first.set_icon_name("go-home")
+	toolbar.insert(btn_first, -1)
+	btn_stop = Gtk.ToolButton()
+	btn_stop.set_icon_name("process-stop")
+	toolbar.insert(btn_stop, -1)
+	btn_reload = Gtk.ToolButton()
+	btn_reload.set_icon_name("view-refresh")
+	toolbar.insert(btn_reload, -1)
+	toolbar.insert(Gtk.SeparatorToolItem(), -1)
+	btn_zoom_in = Gtk.ToolButton()
+	btn_zoom_in.set_icon_name("zoom-in")
+	toolbar.insert(btn_zoom_in, -1)
+	btn_zoom_out = Gtk.ToolButton()
+	btn_zoom_out.set_icon_name("zoom-out")
+	toolbar.insert(btn_zoom_out, -1)
+	btn_zoom_org = Gtk.ToolButton()
+	btn_zoom_org.set_icon_name("zoom-original")
+	toolbar.insert(btn_zoom_org, -1)
+	toolbar.insert(Gtk.SeparatorToolItem(), -1)
+	btn_dev = Gtk.ToolButton()
+	btn_dev.set_icon_name("system-run")
+	toolbar.insert(btn_dev, -1)
+	vbox.pack_start(toolbar, False, False, 0)
 	paned = Gtk.Paned(orientation=Gtk.Orientation.HORIZONTAL)
 	store = Gtk.TreeStore(str, str)
 	tree_view = Gtk.TreeView(model=store)
@@ -457,15 +529,31 @@ def create_ui(xid):
 	view = WebKit2.WebView()
 	paned.pack2(view, True, False)
 	view.connect("decide-policy", on_decide_policy)
+	view.connect("scroll-event", on_scroll)
 	tree_view.connect("cursor-changed", on_tree_cursor_changed, view)
+	btn_back.connect("clicked", on_btn_back_clicked, view)
+	btn_next.connect("clicked", on_btn_next_clicked, view)
+	btn_first.connect("clicked", on_btn_first_clicked, view)
+	btn_stop.connect("clicked", on_btn_stop_clicked, view)
+	btn_reload.connect("clicked", on_btn_reload_clicked, view)
+	btn_zoom_in.connect("clicked", on_btn_zoom_in_clicked, view)
+	btn_zoom_out.connect("clicked", on_btn_zoom_out_clicked, view)
+	btn_zoom_org.connect("clicked", on_btn_zoom_org_clicked, view)
+	btn_dev.connect("clicked", on_btn_dev_clicked, view)
 	settings = view.get_settings()
 	settings.set_allow_file_access_from_file_urls(True)
 	settings.set_allow_universal_access_from_file_urls(True)
 	settings.set_enable_javascript(not is_disable_js)
+	settings.set_enable_developer_extras(is_inspector_gadget)
 	view.set_settings(settings)
 	view.tmpdir = tempfile.mkdtemp(prefix=tmpdir_prefix)
-	plug.add(paned)
+	vbox.pack_start(paned, True, True, 0)
+	plug.add(vbox)
 	plug.show_all()
+	if is_hide_toolbar:
+		toolbar.hide()
+	if not is_inspector_gadget:
+		btn_dev.hide()
 	widgets[xid] = {"plug": plug, "view": view, "tree_model": store, "left_side": scroll, "column": column}
 	return True
 
@@ -501,6 +589,8 @@ def load_file(xid, filename):
 	widgets[xid]["left_side"].hide()
 	view = widgets[xid]["view"]
 	view.dirname = os.path.dirname(filename)
+	view.first_uri = None
+	view.first_html = None
 	if hasattr(view, 'zim_archive'):
 		del view.zim_archive
 	uri = None
@@ -514,7 +604,7 @@ def load_file(xid, filename):
 		html = open_fbz(filename, tmpdir, xid)
 	elif is_use_open_epub and ext == ".epub":
 		uri = open_epub(filename, tmpdir, xid)
-	elif is_use_extract_mht and ext == ".mht":
+	elif is_use_extract_mht and ext in [".mht", ".mhtml"]:
 		clean_tmpdir(tmpdir)
 		uri = extract_mht(filename, tmpdir)
 
@@ -525,7 +615,7 @@ def load_file(xid, filename):
 			uri = open_maff(filename, tmpdir)
 		elif ext in mutool_exts:
 			html = convert_using_mutool(filename)
-		elif ext in hx_exts or (is_use_hx_mht and ext == ".mht"):
+		elif ext in hx_exts or (is_use_hx_mht and ext in [".mht", ".mhtml"]):
 			uri = convert_using_hx(filename, tmpdir)
 		elif ext == ".zim":
 			view.zim_archive = ZimArchive(filename)
@@ -539,8 +629,10 @@ def load_file(xid, filename):
 			uri = GLib.filename_to_uri(filename)
 
 	if uri:
+		view.first_uri = uri
 		view.load_uri(uri)
 	elif html:
+		view.first_html = html
 		view.load_html(html, None)
 	else:
 		return False
@@ -616,9 +708,26 @@ try:
 	cfg = GLib.KeyFile()
 	cfg.load_from_file(os.environ["PLUG_CFGFILE"], GLib.KeyFileFlags.NONE)
 	is_use_open_epub = cfg.get_boolean("epub", f"{script_name}!use_open_epub")
+except:
+	pass
+try:
 	is_use_extract_mht = cfg.get_boolean("mht", f"{script_name}!use_extract_mht")
+except:
+	pass
+try:
 	is_use_hx_mht = cfg.get_boolean("mht", f"{script_name}!use_hx")
+except:
+	pass
+try:
 	is_disable_js = cfg.get_boolean(".", f"{script_name}!disable_js")
+except:
+	pass
+try:
+	is_hide_toolbar = cfg.get_boolean(".", f"{script_name}!hide_toolbar")
+except:
+	pass
+try:
+	is_inspector_gadget = cfg.get_boolean(".", f"{script_name}!inspector")
 except:
 	pass
 
