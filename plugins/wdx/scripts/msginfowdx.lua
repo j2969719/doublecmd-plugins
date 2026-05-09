@@ -340,8 +340,8 @@ function FormatDate(s)
   -- to your local time
   -- Get TimeZone offset
   local ts = os.time()
-  local udt = os.date("!*t", ts)
   local ldt = os.date("*t", ts)
+  local udt = os.date("!*t", ts)
   local t = os.difftime(os.time(ldt), os.time(udt))
   r[3] = os.date('%Y.%m.%d %H:%M:%S', dtu + t)
 ]]

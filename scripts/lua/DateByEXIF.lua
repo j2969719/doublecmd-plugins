@@ -1,5 +1,5 @@
 -- DateByEXIF.lua (cross-platform)
---2026.04.18
+--2026.05.08
 --[[
 Sets time stamps by date from EXIF (tested with JPEG).
 
@@ -44,7 +44,7 @@ local function GetTimeStamp(sFile, sPlug)
     sR = os.date("%H:%M:%S", iT)
     dt.hour, dt.min, dt.sec = string.match(sR, "(%d%d):(%d%d):(%d%d)")
   else
-    dt.year, dt.month, dt.day, dt.hour, dt.min, dt.sec = string.match(sRes, "(%d%d%d%d).(%d%d).(%d%d).(%d%d).(%d%d).(%d%d)")
+    dt.year, dt.month, dt.day, dt.hour, dt.min, dt.sec = string.match(sR, "(%d%d%d%d).(%d%d).(%d%d).(%d%d).(%d%d).(%d%d)")
   end
   if dt.year == nil then return nil end
   for k, v in pairs(dt) do dt[k] = tonumber(v) end
