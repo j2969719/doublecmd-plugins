@@ -194,6 +194,9 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
   -- IM
   elseif FieldIndex == 32 then
     return im[UnitIndex + 1]
+  -- Multi
+  elseif FieldIndex == 34 then
+    return bm
   end
   -- Other fields
   s = GetString(fields[FieldIndex + 1][2], string.len(fields[FieldIndex + 1][2]))
@@ -311,9 +314,6 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
   -- X-ASSISTANT
   elseif FieldIndex == 33 then
     return GetValue(s, 'X-ASSISTANT', 11)
-  -- Multi
-  elseif FieldIndex == 34 then
-    return bm
   end
   return nil
 end
