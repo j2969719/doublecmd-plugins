@@ -11,6 +11,8 @@
 #include <QKeyEvent>
 #include <QToolButton>
 #include <QMessageBox>
+#include <QPushButton>
+#include <QToolButton>
 
 // KDE Frameworks TextEditor headers
 #include <KTextEditor/Document>
@@ -26,6 +28,9 @@ public:
     
     void copySelection();
     void selectAll();
+    void hostSetFocus(bool focus);
+    QString currentFilePath() const;
+    bool isModified() const;
 
 protected:
     bool eventFilter(QObject *obj, QEvent *event) override;
@@ -51,14 +56,35 @@ private:
     // Actions
     QAction *m_actionReadOnly;
     QAction *m_actionWordWrap;
+    QAction *m_actionShowHidden;
 
     int m_zoomLevel;
+
+    // Inline "file changed on disk" banner (Kate-style)
+    QWidget *m_diskChangeBar;
+    QLabel *m_diskChangeLabel;
+    QToolButton *m_diskChangeEnableAutoReload;
+    QToolButton *m_diskChangeViewDiff;
+    QPushButton *m_diskChangeReload;
+    QPushButton *m_diskChangeIgnore;
 
     void setupMenu();
     void setupToolBar();
     void setupStatusBar();
     void updateStatusBar();
     void installFocusGuard();
+    void forceDisableAutoReload();
+    void enableAutoReload();
+    void showDiffAgainstDisk();
+    void setHiddenCharactersVisible(bool visible);
+    void hideDiskChangeBar();
+
+    KTextEditor::Cursor findWordStart(const KTextEditor::Cursor &cursor) const;
+    KTextEditor::Cursor findWordEnd(const KTextEditor::Cursor &cursor) const;
+
+    // Focus handling
+    bool m_isActive;
+    void setActive(bool active);
 
 private slots:
     void onCursorPositionChanged();

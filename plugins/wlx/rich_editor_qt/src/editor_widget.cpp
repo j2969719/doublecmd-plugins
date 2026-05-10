@@ -10,8 +10,19 @@
 #include <QFont>
 #include <QStringList>
 #include <QMouseEvent>
-#include <KSharedConfig>
-#include <KConfigGroup>
+#include <QAbstractButton>
+#include <QPushButton>
+#include <QFrame>
+#include <QToolButton>
+#include <QTemporaryFile>
+#include <QProcess>
+#include <QTextEdit>
+#include <QDialog>
+#include <QFontDatabase>
+#include <QDateTime>
+#include <QFile>
+#include <QDir>
+#include <algorithm>
 
 // Helper: KTextEditor actions live in two places:
 //   1. KXMLGUIClient action collection (edit_undo, edit_copy, edit_find, etc.)
@@ -26,8 +37,43 @@ static QAction* kteAction(KTextEditor::View *view, const char *name) {
     return view->findChild<QAction*>(QString::fromLatin1(name));
 }
 
+static void forceActionChecked(QAction *a, bool checked) {
+    if (!a) return;
+    if (!a->isCheckable()) {
+        if (checked) a->trigger();
+        return;
+    }
+    // Some KTE actions only update state when triggered; setChecked() is not reliable.
+    for (int i = 0; i < 4 && a->isChecked() != checked; ++i) {
+        a->trigger();
+    }
+}
+
+static void logEditor(const QString &msg) {
+    const QString dir = QStringLiteral(RICH_EDITOR_QT_LOG_DIR);
+    QDir().mkpath(dir);
+    QFile f(dir + QStringLiteral("/rich_editor_qt_editor.log"));
+    if (!f.open(QIODevice::Append | QIODevice::Text)) return;
+    const QString line = QStringLiteral("%1 %2\n")
+        .arg(QDateTime::currentDateTime().toString(Qt::ISODateWithMs), msg);
+    f.write(line.toUtf8());
+}
+
 EditorWidget::EditorWidget(QWidget *parent)
-    : QWidget(parent), m_doc(nullptr), m_view(nullptr), m_zoomLevel(10)
+    : QWidget(parent),
+      m_doc(nullptr),
+      m_view(nullptr),
+      m_actionReadOnly(nullptr),
+      m_actionWordWrap(nullptr),
+      m_actionShowHidden(nullptr),
+      m_zoomLevel(10),
+      m_diskChangeBar(nullptr),
+      m_diskChangeLabel(nullptr),
+      m_diskChangeEnableAutoReload(nullptr),
+      m_diskChangeViewDiff(nullptr),
+      m_diskChangeReload(nullptr),
+      m_diskChangeIgnore(nullptr),
+      m_isActive(false)
 {
     m_layout = new QVBoxLayout(this);
     m_layout->setContentsMargins(0, 0, 0, 0);
@@ -45,10 +91,49 @@ EditorWidget::EditorWidget(QWidget *parent)
     m_view = m_doc->createView(this);
     m_zoomLevel = m_view->font().pointSize();
     
+    logEditor(QStringLiteral("KTextEditor view created, focusProxy=%1")
+              .arg(m_view->focusProxy() ? m_view->focusProxy()->metaObject()->className() : "none"));
+    
     // Create UI Elements
     m_menuBar = new QMenuBar(this);
+    // Unmissable marker so we can confirm which binary DC is running.
+    m_menuBar->setNativeMenuBar(false);
+    m_menuBar->addAction(QStringLiteral("rich_editor_qt DEV %1 %2").arg(QStringLiteral(__DATE__), QStringLiteral(__TIME__)));
     m_toolbar = new QToolBar(this);
     setupStatusBar();
+
+    // Inline notification bar (hidden by default)
+    m_diskChangeBar = new QFrame(this);
+    m_diskChangeBar->setObjectName(QStringLiteral("DiskChangeBar"));
+    m_diskChangeBar->setVisible(false);
+    auto *barLayout = new QHBoxLayout(m_diskChangeBar);
+    barLayout->setContentsMargins(8, 4, 8, 4);
+    barLayout->setSpacing(8);
+    m_diskChangeLabel = new QLabel(m_diskChangeBar);
+    m_diskChangeLabel->setTextInteractionFlags(Qt::TextSelectableByMouse);
+    m_diskChangeEnableAutoReload = new QToolButton(m_diskChangeBar);
+    m_diskChangeEnableAutoReload->setText(QStringLiteral("Enable Auto Reload"));
+    m_diskChangeEnableAutoReload->setToolButtonStyle(Qt::ToolButtonTextOnly);
+    m_diskChangeViewDiff = new QToolButton(m_diskChangeBar);
+    m_diskChangeViewDiff->setText(QStringLiteral("View Difference"));
+    m_diskChangeViewDiff->setToolButtonStyle(Qt::ToolButtonTextOnly);
+    m_diskChangeReload = new QPushButton(QStringLiteral("Reload"), m_diskChangeBar);
+    m_diskChangeIgnore = new QPushButton(QStringLiteral("Ignore"), m_diskChangeBar);
+    barLayout->addWidget(m_diskChangeLabel, 1);
+    barLayout->addWidget(m_diskChangeEnableAutoReload);
+    barLayout->addWidget(m_diskChangeViewDiff);
+    barLayout->addWidget(m_diskChangeReload);
+    barLayout->addWidget(m_diskChangeIgnore);
+    m_diskChangeBar->setStyleSheet(
+        "QFrame#DiskChangeBar {"
+        "  background: #2b2b2b;"
+        "  border-bottom: 1px solid #444;"
+        "}"
+        "QLabel { color: #ddd; }"
+        "QPushButton { padding: 3px 10px; }"
+        "QToolButton { padding: 3px 8px; color: #ddd; border: 1px solid #555; border-radius: 3px; }"
+        "QToolButton:hover { border-color: #777; }"
+    );
 
     // Setup Actions and UI
     setupMenu();
@@ -57,6 +142,7 @@ EditorWidget::EditorWidget(QWidget *parent)
     // Layout Assembly
     m_layout->addWidget(m_menuBar);
     m_layout->addWidget(m_toolbar);
+    m_layout->addWidget(m_diskChangeBar);
     m_layout->addWidget(m_view, 1); // Expandable
     m_layout->addWidget(m_statusBar);
 
@@ -71,20 +157,11 @@ EditorWidget::EditorWidget(QWidget *parent)
     if (m_view->focusProxy())
         m_view->focusProxy()->setAttribute(Qt::WA_NativeWindow, false);
     
-    // --- Disable ALL auto-reload paths ---
-    // 1. Public config key (short-circuits the main auto-reload branch)
-    m_doc->setConfigValue("auto-reload-on-external-changes", false);
-    // 2. setModifiedOnDiskWarning enables the Kate notification bar instead of silent reload
-    m_doc->setModifiedOnDiskWarning(true);
-    // 3. AutoReloadIfStateIsInVersionControl has no public alias — write to katepartrc directly
-    //    (this is the branch that fires for files in git repos)
-    {
-        KSharedConfigPtr cfg = KSharedConfig::openConfig(QStringLiteral("katepartrc"));
-        KConfigGroup docGrp(cfg, QStringLiteral("Kate Document Defaults"));
-        docGrp.writeEntry("Auto Reload If State Is In Version Control", false);
-        cfg->sync();
-    }
-    if (QAction* a = kteAction(m_view, "view_auto_reload")) a->setChecked(false);
+    // Make sure the editor widget itself can receive focus
+    setFocusPolicy(Qt::StrongFocus);
+    
+    // Disable auto-reload inside the document/view (do NOT write global katepartrc here).
+    forceDisableAutoReload();
     
     // --- Trailing-space stripping: OFF ---
     m_doc->setConfigValue("remove-spaces", 0);
@@ -92,14 +169,65 @@ EditorWidget::EditorWidget(QWidget *parent)
     connect(m_view, &KTextEditor::View::cursorPositionChanged, this, &EditorWidget::onCursorPositionChanged);
     connect(m_doc, &KTextEditor::Document::readWriteChanged, this, &EditorWidget::onDocumentModeChanged);
     connect(m_doc, &KTextEditor::Document::modeChanged, this, &EditorWidget::onDocumentModeChanged);
+
+    // Diagnostics: capture what triggers reloads / modified-on-disk state.
+    connect(m_doc, &KTextEditor::Document::aboutToReload, this, [this](KTextEditor::Document *d) {
+        logEditor(QStringLiteral("aboutToReload url=%1 modified=%2")
+                      .arg(d && d->url().isValid() ? d->url().toDisplayString() : QStringLiteral("<none>"))
+                      .arg(d ? d->isModified() : false));
+    });
+    connect(m_doc, &KTextEditor::Document::reloaded, this, [this](KTextEditor::Document *d) {
+        logEditor(QStringLiteral("reloaded url=%1 modified=%2")
+                      .arg(d && d->url().isValid() ? d->url().toDisplayString() : QStringLiteral("<none>"))
+                      .arg(d ? d->isModified() : false));
+    });
+    connect(m_doc, &KTextEditor::Document::textChanged, this, [this](KTextEditor::Document *d) {
+        logEditor(QStringLiteral("textChanged modified=%1").arg(d ? d->isModified() : false));
+    });
+    connect(m_doc, &KTextEditor::Document::modifiedChanged, this, [this](KTextEditor::Document *d) {
+        logEditor(QStringLiteral("modifiedChanged modified=%1").arg(d ? d->isModified() : false));
+    });
     
-    // Re-enforce auto-reload=off whenever KTE fires modifiedOnDisk
+    // External-change detection (replace silent reload with an explicit prompt).
     connect(m_doc, &KTextEditor::Document::modifiedOnDisk, this,
-        [this](KTextEditor::Document*, bool, KTextEditor::Document::ModifiedOnDiskReason) {
-            m_doc->setConfigValue("auto-reload-on-external-changes", false);
-            m_doc->setModifiedOnDiskWarning(true);
-            if (QAction* a = kteAction(m_view, "view_auto_reload")) a->setChecked(false);
+        [this](KTextEditor::Document* doc, bool modified, KTextEditor::Document::ModifiedOnDiskReason) {
+            if (!modified || !doc) return;
+            forceDisableAutoReload();
+            logEditor(QStringLiteral("modifiedOnDisk isModifiedOnDisk=true docModified=%1").arg(doc->isModified()));
+
+            const QString path = doc->url().isLocalFile()
+                ? doc->url().toLocalFile()
+                : doc->url().toDisplayString();
+
+            m_diskChangeLabel->setText(QStringLiteral("The file \"%1\" was modified on disk.").arg(path));
+            m_diskChangeBar->setVisible(true);
         });
+
+    connect(m_diskChangeReload, &QPushButton::clicked, this, [this]() {
+        if (!m_doc) return;
+        hideDiskChangeBar();
+        m_doc->documentReload();
+    });
+    connect(m_diskChangeIgnore, &QPushButton::clicked, this, [this]() {
+        hideDiskChangeBar();
+    });
+    connect(m_diskChangeEnableAutoReload, &QToolButton::clicked, this, [this]() {
+        enableAutoReload();
+        hideDiskChangeBar();
+    });
+    // Monitor focus changes to detect and restore focus when lost due to swap file operations
+    connect(qApp, &QApplication::focusChanged, this, [this](QWidget *old, QWidget *now) {
+        if (m_isActive && now && now != m_view && now != m_view->focusProxy() && 
+            (!m_view->isAncestorOf(now))) {
+            // Focus moved outside our editor while we should be active
+            // This might happen during swap file writes or other KTE internal operations
+            logEditor(QStringLiteral("focusLost old=%1 now=%2, restoring")
+                      .arg(old ? old->metaObject()->className() : "none")
+                      .arg(now ? now->metaObject()->className() : "none"));
+            QWidget *focusTarget = m_view->focusProxy() ? m_view->focusProxy() : m_view;
+            focusTarget->setFocus(Qt::OtherFocusReason);
+        }
+    });
     
     // Focus guard: install event filter on all KTE children
     setFocusPolicy(Qt::ClickFocus);
@@ -119,42 +247,647 @@ void EditorWidget::installFocusGuard() {
         child->installEventFilter(this);
     }
     m_view->installEventFilter(this);
-    if (m_view->focusProxy()) m_view->focusProxy()->installEventFilter(this);
+    if (m_view->focusProxy()) {
+        m_view->focusProxy()->installEventFilter(this);
+        logEditor(QStringLiteral("installed event filter on focusProxy: %1").arg(m_view->focusProxy()->metaObject()->className()));
+    }
+    
+    // Also install on the view's children in case there are internal widgets
+    const auto viewChildren = m_view->findChildren<QWidget*>();
+    for (QWidget *child : viewChildren) {
+        child->installEventFilter(this);
+    }
+}
+
+KTextEditor::Cursor EditorWidget::findWordStart(const KTextEditor::Cursor &cursor) const {
+    if (!m_doc) return cursor;
+    
+    QString line = m_doc->line(cursor.line());
+    int col = cursor.column();
+    
+    // Skip whitespace backwards to find word start
+    while (col > 0 && line[col - 1].isSpace()) {
+        col--;
+    }
+    
+    // Skip word characters backwards to find word boundary
+    while (col > 0 && !line[col - 1].isSpace()) {
+        col--;
+    }
+    
+    return KTextEditor::Cursor(cursor.line(), col);
+}
+
+KTextEditor::Cursor EditorWidget::findWordEnd(const KTextEditor::Cursor &cursor) const {
+    if (!m_doc) return cursor;
+    
+    QString line = m_doc->line(cursor.line());
+    int col = cursor.column();
+    int lineLength = line.length();
+    
+    // Skip word characters forwards to find word end
+    while (col < lineLength && !line[col].isSpace()) {
+        col++;
+    }
+    
+    // Skip whitespace forwards
+    while (col < lineLength && line[col].isSpace()) {
+        col++;
+    }
+    
+    return KTextEditor::Cursor(cursor.line(), col);
 }
 
 bool EditorWidget::eventFilter(QObject *obj, QEvent *event) {
-    // Prevent DC from stealing keystrokes the user intends for the editor
-    if (event->type() == QEvent::ShortcutOverride) {
+    // Log all key events to diagnose delivery
+    if (event->type() == QEvent::KeyPress || event->type() == QEvent::KeyRelease) {
         QKeyEvent *keyEvent = static_cast<QKeyEvent*>(event);
-        if (keyEvent->key() == Qt::Key_Escape) {
-            if (parentWidget()) parentWidget()->setFocus();
-            return true;
+        logEditor(QStringLiteral("eventFilter KeyEvent type=%1 key=%2 text='%3' modifiers=%4 obj=%5")
+                  .arg(event->type() == QEvent::KeyPress ? "KeyPress" : "KeyRelease")
+                  .arg(keyEvent->key())
+                  .arg(keyEvent->text())
+                  .arg(static_cast<int>(keyEvent->modifiers()))
+                  .arg(obj ? obj->metaObject()->className() : "none"));
+        
+        if (event->type() == QEvent::KeyPress) {
+            const int key = keyEvent->key();
+            const int mods = static_cast<int>(keyEvent->modifiers());
+            if (key == Qt::Key_Backspace || key == Qt::Key_Delete || key == Qt::Key_Insert ||
+                (key == Qt::Key_S && (mods & Qt::ControlModifier)) ||
+                (key == Qt::Key_C && (mods & Qt::ControlModifier)) ||
+                (key == Qt::Key_V && (mods & Qt::ControlModifier)) ||
+                (key == Qt::Key_X && (mods & Qt::ControlModifier)) ||
+                (key == Qt::Key_F && (mods & Qt::ControlModifier)) ||
+                (key == Qt::Key_R && (mods & Qt::ControlModifier)) ||
+                (key == Qt::Key_G && (mods & Qt::ControlModifier)) ||
+                (key == Qt::Key_A && (mods & Qt::ControlModifier)) ||
+                (key == Qt::Key_Z && (mods & Qt::ControlModifier)) ||
+                (key == Qt::Key_Y && (mods & Qt::ControlModifier)) ||
+                (key == Qt::Key_B && (mods & Qt::ControlModifier) && (mods & Qt::ShiftModifier)) ||
+                key == Qt::Key_Left || key == Qt::Key_Right || key == Qt::Key_Up || key == Qt::Key_Down ||
+                key == Qt::Key_Home || key == Qt::Key_End || key == Qt::Key_PageUp || key == Qt::Key_PageDown) {
+                logEditor(QStringLiteral("specialKey test key=%1 mods=%2 docReadWrite=%3")
+                          .arg(key).arg(mods).arg(m_doc ? m_doc->isReadWrite() : false));
+                bool triggered = false;
+                
+                // Try to find and trigger the corresponding action
+                if (key == Qt::Key_Insert) {
+                    if (QAction *a = kteAction(m_view, "set_insert")) {
+                        logEditor(QStringLiteral("found action set_insert enabled=%1").arg(a->isEnabled()));
+                        if (a->isEnabled()) { a->trigger(); triggered = true; }
+                    }
+                } else if (key == Qt::Key_Backspace || key == Qt::Key_Delete) {
+                    if (QAction *a = kteAction(m_view, "edit_delete")) {
+                        logEditor(QStringLiteral("found action edit_delete enabled=%1").arg(a->isEnabled()));
+                        if (a->isEnabled()) { a->trigger(); triggered = true; }
+                    }
+                    if (!triggered && m_doc && m_view && m_doc->isReadWrite()) {
+                        KTextEditor::Cursor cursor = m_view->cursorPosition();
+                        bool hasSelection = m_view->selection();
+                        if (hasSelection) {
+                            const KTextEditor::Range selection = m_view->selectionRange();
+                            if (m_doc->removeText(selection)) {
+                                m_view->setCursorPosition(selection.start());
+                                triggered = true;
+                            }
+                        } else if (key == Qt::Key_Backspace) {
+                            if (cursor.column() > 0) {
+                                KTextEditor::Cursor start(cursor.line(), cursor.column() - 1);
+                                if (m_doc->removeText(KTextEditor::Range(start, cursor))) {
+                                    m_view->setCursorPosition(start);
+                                    triggered = true;
+                                }
+                            } else if (cursor.line() > 0) {
+                                int prevLine = cursor.line() - 1;
+                                int prevLineLen = m_doc->lineLength(prevLine);
+                                KTextEditor::Cursor start(prevLine, prevLineLen);
+                                if (m_doc->removeText(KTextEditor::Range(start, cursor))) {
+                                    m_view->setCursorPosition(start);
+                                    triggered = true;
+                                }
+                            }
+                        } else if (key == Qt::Key_Delete) {
+                            int lineLen = m_doc->lineLength(cursor.line());
+                            if (cursor.column() < lineLen) {
+                                KTextEditor::Cursor end(cursor.line(), cursor.column() + 1);
+                                if (m_doc->removeText(KTextEditor::Range(cursor, end))) {
+                                    m_view->setCursorPosition(cursor);
+                                    triggered = true;
+                                }
+                            } else if (cursor.line() < m_doc->lines() - 1) {
+                                KTextEditor::Cursor end(cursor.line() + 1, 0);
+                                if (m_doc->removeText(KTextEditor::Range(cursor, end))) {
+                                    m_view->setCursorPosition(cursor);
+                                    triggered = true;
+                                }
+                            }
+                        }
+                    }
+                } else if (key == Qt::Key_C && (mods & Qt::ControlModifier)) {
+                    if (QAction *a = kteAction(m_view, "edit_copy")) {
+                        logEditor(QStringLiteral("found action edit_copy enabled=%1").arg(a->isEnabled()));
+                        if (a->isEnabled()) { a->trigger(); triggered = true; }
+                    }
+                } else if (key == Qt::Key_V && (mods & Qt::ControlModifier)) {
+                    if (QAction *a = kteAction(m_view, "edit_paste")) {
+                        logEditor(QStringLiteral("found action edit_paste enabled=%1").arg(a->isEnabled()));
+                        if (a->isEnabled()) { a->trigger(); triggered = true; }
+                    }
+                } else if (key == Qt::Key_X && (mods & Qt::ControlModifier)) {
+                    if (QAction *a = kteAction(m_view, "edit_cut")) {
+                        logEditor(QStringLiteral("found action edit_cut enabled=%1").arg(a->isEnabled()));
+                        if (a->isEnabled()) { a->trigger(); triggered = true; }
+                    }
+                } else if (key == Qt::Key_F && (mods & Qt::ControlModifier)) {
+                    if (QAction *a = kteAction(m_view, "edit_find")) {
+                        logEditor(QStringLiteral("found action edit_find enabled=%1").arg(a->isEnabled()));
+                        if (a->isEnabled()) { a->trigger(); triggered = true; }
+                    }
+                } else if (key == Qt::Key_R && (mods & Qt::ControlModifier)) {
+                    if (QAction *a = kteAction(m_view, "edit_replace")) {
+                        logEditor(QStringLiteral("found action edit_replace enabled=%1").arg(a->isEnabled()));
+                        if (a->isEnabled()) { a->trigger(); triggered = true; }
+                    }
+                } else if (key == Qt::Key_G && (mods & Qt::ControlModifier)) {
+                    if (QAction *a = kteAction(m_view, "go_goto_line")) {
+                        logEditor(QStringLiteral("found action go_goto_line enabled=%1").arg(a->isEnabled()));
+                        if (a->isEnabled()) { a->trigger(); triggered = true; }
+                    }
+                } else if (key == Qt::Key_A && (mods & Qt::ControlModifier)) {
+                    if (QAction *a = kteAction(m_view, "edit_select_all")) {
+                        logEditor(QStringLiteral("found action edit_select_all enabled=%1").arg(a->isEnabled()));
+                        if (a->isEnabled()) { a->trigger(); triggered = true; }
+                    }
+                } else if (key == Qt::Key_Z && (mods & Qt::ControlModifier)) {
+                    if (QAction *a = kteAction(m_view, "edit_undo")) {
+                        logEditor(QStringLiteral("found action edit_undo enabled=%1").arg(a->isEnabled()));
+                        if (a->isEnabled()) { a->trigger(); triggered = true; }
+                    }
+                } else if (key == Qt::Key_Y && (mods & Qt::ControlModifier)) {
+                    if (QAction *a = kteAction(m_view, "edit_redo")) {
+                        logEditor(QStringLiteral("found action edit_redo enabled=%1").arg(a->isEnabled()));
+                        if (a->isEnabled()) { a->trigger(); triggered = true; }
+                    }
+                } else if (key == Qt::Key_S && (mods & Qt::ControlModifier)) {
+                    if (QAction *a = kteAction(m_view, "file_save")) {
+                        logEditor(QStringLiteral("found action file_save enabled=%1").arg(a->isEnabled()));
+                        if (a->isEnabled()) { a->trigger(); triggered = true; }
+                    }
+                } else if (key == Qt::Key_B && (mods & Qt::ControlModifier) && (mods & Qt::ShiftModifier)) {
+                    if (QAction *a = kteAction(m_view, "set_verticalSelect")) {
+                        logEditor(QStringLiteral("found action set_verticalSelect enabled=%1").arg(a->isEnabled()));
+                        if (a->isEnabled()) { a->trigger(); triggered = true; }
+                    }
+                } else if (key == Qt::Key_Left || key == Qt::Key_Right || key == Qt::Key_Up || key == Qt::Key_Down ||
+                           key == Qt::Key_Home || key == Qt::Key_End || key == Qt::Key_PageUp || key == Qt::Key_PageDown) {
+                    // Handle navigation with selection (Shift), word navigation (Ctrl+Shift),
+                    // and clear the selection when moving without Shift.
+                    KTextEditor::Cursor cursor = m_view->cursorPosition();
+                    KTextEditor::Range selection = m_view->selectionRange();
+                    bool hasSelection = m_view->selection();
+                    bool extendSelection = (mods & Qt::ShiftModifier);
+                    if (!extendSelection && hasSelection) {
+                        m_view->setSelection(KTextEditor::Range(cursor, cursor));
+                        hasSelection = false;
+                    }
+                    
+                    if (key == Qt::Key_Left) {
+                        if (mods & Qt::ControlModifier) {
+                            // Ctrl+Shift+Left: select to start of word
+                            if (extendSelection) {
+                                KTextEditor::Cursor wordStart = findWordStart(cursor);
+                                if (hasSelection) {
+                                    // Extend existing selection
+                                    KTextEditor::Range newSelection = selection;
+                                    if (cursor == selection.start()) {
+                                        newSelection.setStart(wordStart);
+                                    } else {
+                                        newSelection.setEnd(wordStart);
+                                    }
+                                    m_view->setSelection(newSelection);
+                                    m_view->setCursorPosition(wordStart);
+                                } else {
+                                    // Start new selection
+                                    m_view->setSelection(KTextEditor::Range(wordStart, cursor));
+                                    m_view->setCursorPosition(wordStart);
+                                }
+                                triggered = true;
+                            } else {
+                                // Ctrl+Left: move to start of word
+                                m_view->setCursorPosition(findWordStart(cursor));
+                                triggered = true;
+                            }
+                        } else if (extendSelection) {
+                            // Shift+Left: extend selection left
+                            if (cursor.column() == 0 && cursor.line() > 0) {
+                                // Move to end of previous line
+                                int prevLine = cursor.line() - 1;
+                                int prevLineLen = m_view->document()->lineLength(prevLine);
+                                if (hasSelection) {
+                                    KTextEditor::Range newSelection = selection;
+                                    if (cursor == selection.start()) {
+                                        newSelection.setStart(KTextEditor::Cursor(prevLine, prevLineLen));
+                                    } else {
+                                        newSelection.setEnd(KTextEditor::Cursor(prevLine, prevLineLen));
+                                    }
+                                    m_view->setSelection(newSelection);
+                                    cursor.setLine(prevLine);
+                                    cursor.setColumn(prevLineLen);
+                                    m_view->setCursorPosition(cursor);
+                                } else {
+                                    // Start selection
+                                    KTextEditor::Cursor newPos(prevLine, prevLineLen);
+                                    m_view->setSelection(KTextEditor::Range(newPos, cursor));
+                                    m_view->setCursorPosition(newPos);
+                                }
+                            } else {
+                                if (hasSelection) {
+                                    KTextEditor::Range newSelection = selection;
+                                    if (cursor == selection.start()) {
+                                        newSelection.setStart(KTextEditor::Cursor(cursor.line(), std::max(0, cursor.column() - 1)));
+                                    } else {
+                                        newSelection.setEnd(KTextEditor::Cursor(cursor.line(), std::max(0, cursor.column() - 1)));
+                                    }
+                                    m_view->setSelection(newSelection);
+                                    cursor.setColumn(std::max(0, cursor.column() - 1));
+                                    m_view->setCursorPosition(cursor);
+                                } else {
+                                    // Start selection
+                                    KTextEditor::Cursor newPos(cursor.line(), std::max(0, cursor.column() - 1));
+                                    m_view->setSelection(KTextEditor::Range(newPos, cursor));
+                                    m_view->setCursorPosition(newPos);
+                                }
+                            }
+                            triggered = true;
+                        } else {
+                            // Plain Left
+                            if (cursor.column() == 0 && cursor.line() > 0) {
+                                // Move to end of previous line
+                                int prevLine = cursor.line() - 1;
+                                cursor.setLine(prevLine);
+                                cursor.setColumn(m_view->document()->lineLength(prevLine));
+                            } else {
+                                cursor.setColumn(std::max(0, cursor.column() - 1));
+                            }
+                            m_view->setCursorPosition(cursor);
+                            triggered = true;
+                        }
+                    } else if (key == Qt::Key_Right) {
+                        if (mods & Qt::ControlModifier) {
+                            // Ctrl+Shift+Right: select to end of word
+                            if (extendSelection) {
+                                KTextEditor::Cursor wordEnd = findWordEnd(cursor);
+                                if (hasSelection) {
+                                    // Extend existing selection
+                                    KTextEditor::Range newSelection = selection;
+                                    if (cursor == selection.start()) {
+                                        newSelection.setStart(wordEnd);
+                                    } else {
+                                        newSelection.setEnd(wordEnd);
+                                    }
+                                    m_view->setSelection(newSelection);
+                                    m_view->setCursorPosition(wordEnd);
+                                } else {
+                                    // Start new selection
+                                    m_view->setSelection(KTextEditor::Range(cursor, wordEnd));
+                                    m_view->setCursorPosition(wordEnd);
+                                }
+                                triggered = true;
+                            } else {
+                                // Ctrl+Right: move to end of word
+                                m_view->setCursorPosition(findWordEnd(cursor));
+                                triggered = true;
+                            }
+                        } else if (extendSelection) {
+                            // Shift+Right: extend selection right
+                            int lineLength = m_view->document()->lineLength(cursor.line());
+                            if (cursor.column() >= lineLength && cursor.line() < m_view->document()->lines() - 1) {
+                                // Move to beginning of next line
+                                int nextLine = cursor.line() + 1;
+                                if (hasSelection) {
+                                    KTextEditor::Range newSelection = selection;
+                                    if (cursor == selection.start()) {
+                                        newSelection.setStart(KTextEditor::Cursor(nextLine, 0));
+                                    } else {
+                                        newSelection.setEnd(KTextEditor::Cursor(nextLine, 0));
+                                    }
+                                    m_view->setSelection(newSelection);
+                                    cursor.setLine(nextLine);
+                                    cursor.setColumn(0);
+                                    m_view->setCursorPosition(cursor);
+                                } else {
+                                    // Start selection
+                                    KTextEditor::Cursor newPos(nextLine, 0);
+                                    m_view->setSelection(KTextEditor::Range(cursor, newPos));
+                                    m_view->setCursorPosition(newPos);
+                                }
+                            } else {
+                                if (hasSelection) {
+                                    KTextEditor::Range newSelection = selection;
+                                    if (cursor == selection.start()) {
+                                        newSelection.setStart(KTextEditor::Cursor(cursor.line(), std::min(lineLength, cursor.column() + 1)));
+                                    } else {
+                                        newSelection.setEnd(KTextEditor::Cursor(cursor.line(), std::min(lineLength, cursor.column() + 1)));
+                                    }
+                                    m_view->setSelection(newSelection);
+                                    cursor.setColumn(std::min(lineLength, cursor.column() + 1));
+                                    m_view->setCursorPosition(cursor);
+                                } else {
+                                    // Start selection
+                                    KTextEditor::Cursor newPos(cursor.line(), std::min(lineLength, cursor.column() + 1));
+                                    m_view->setSelection(KTextEditor::Range(cursor, newPos));
+                                    m_view->setCursorPosition(newPos);
+                                }
+                            }
+                            triggered = true;
+                        } else {
+                            // Plain Right
+                            int lineLength = m_view->document()->lineLength(cursor.line());
+                            if (cursor.column() >= lineLength && cursor.line() < m_view->document()->lines() - 1) {
+                                // Move to beginning of next line
+                                cursor.setLine(cursor.line() + 1);
+                                cursor.setColumn(0);
+                            } else {
+                                cursor.setColumn(std::min(lineLength, cursor.column() + 1));
+                            }
+                            m_view->setCursorPosition(cursor);
+                            triggered = true;
+                        }
+                    } else if (key == Qt::Key_Up) {
+                        if (extendSelection) {
+                            // Shift+Up: extend selection up
+                            int newLine = std::max(0, cursor.line() - 1);
+                            if (hasSelection) {
+                                KTextEditor::Range newSelection = selection;
+                                if (cursor == selection.start()) {
+                                    newSelection.setStart(KTextEditor::Cursor(newLine, cursor.column()));
+                                } else {
+                                    newSelection.setEnd(KTextEditor::Cursor(newLine, cursor.column()));
+                                }
+                                m_view->setSelection(newSelection);
+                                cursor.setLine(newLine);
+                                m_view->setCursorPosition(cursor);
+                            } else {
+                                // Start selection
+                                KTextEditor::Cursor newPos(newLine, cursor.column());
+                                m_view->setSelection(KTextEditor::Range(newPos, cursor));
+                                m_view->setCursorPosition(newPos);
+                            }
+                            triggered = true;
+                        } else {
+                            // Plain Up
+                            cursor.setLine(std::max(0, cursor.line() - 1));
+                            m_view->setCursorPosition(cursor);
+                            triggered = true;
+                        }
+                    } else if (key == Qt::Key_Down) {
+                        if (extendSelection) {
+                            // Shift+Down: extend selection down
+                            int maxLine = m_view->document()->lines() - 1;
+                            int newLine = std::min(maxLine, cursor.line() + 1);
+                            if (hasSelection) {
+                                KTextEditor::Range newSelection = selection;
+                                if (cursor == selection.start()) {
+                                    newSelection.setStart(KTextEditor::Cursor(newLine, cursor.column()));
+                                } else {
+                                    newSelection.setEnd(KTextEditor::Cursor(newLine, cursor.column()));
+                                }
+                                m_view->setSelection(newSelection);
+                                cursor.setLine(newLine);
+                                m_view->setCursorPosition(cursor);
+                            } else {
+                                // Start selection
+                                KTextEditor::Cursor newPos(newLine, cursor.column());
+                                m_view->setSelection(KTextEditor::Range(cursor, newPos));
+                                m_view->setCursorPosition(newPos);
+                            }
+                            triggered = true;
+                        } else {
+                            // Plain Down
+                            int maxLine = m_view->document()->lines() - 1;
+                            cursor.setLine(std::min(maxLine, cursor.line() + 1));
+                            m_view->setCursorPosition(cursor);
+                            triggered = true;
+                        }
+                    } else if (key == Qt::Key_Home) {
+                        if (mods & Qt::ControlModifier) {
+                            // Ctrl+Shift+Home: select to document start
+                            if (extendSelection) {
+                                if (hasSelection) {
+                                    KTextEditor::Range newSelection = selection;
+                                    if (cursor == selection.start()) {
+                                        newSelection.setStart(KTextEditor::Cursor(0, 0));
+                                    } else {
+                                        newSelection.setEnd(KTextEditor::Cursor(0, 0));
+                                    }
+                                    m_view->setSelection(newSelection);
+                                    m_view->setCursorPosition(KTextEditor::Cursor(0, 0));
+                                } else {
+                                    m_view->setSelection(KTextEditor::Range(KTextEditor::Cursor(0, 0), cursor));
+                                    m_view->setCursorPosition(KTextEditor::Cursor(0, 0));
+                                }
+                                triggered = true;
+                            } else {
+                                // Ctrl+Home: move to document start
+                                m_view->setCursorPosition(KTextEditor::Cursor(0, 0));
+                                triggered = true;
+                            }
+                        } else if (extendSelection) {
+                            // Shift+Home: select to line start
+                            if (hasSelection) {
+                                KTextEditor::Range newSelection = selection;
+                                if (cursor == selection.start()) {
+                                    newSelection.setStart(KTextEditor::Cursor(cursor.line(), 0));
+                                } else {
+                                    newSelection.setEnd(KTextEditor::Cursor(cursor.line(), 0));
+                                }
+                                m_view->setSelection(newSelection);
+                                cursor.setColumn(0);
+                                m_view->setCursorPosition(cursor);
+                            } else {
+                                m_view->setSelection(KTextEditor::Range(KTextEditor::Cursor(cursor.line(), 0), cursor));
+                                cursor.setColumn(0);
+                                m_view->setCursorPosition(cursor);
+                            }
+                            triggered = true;
+                        } else {
+                            // Plain Home
+                            cursor.setColumn(0);
+                            m_view->setCursorPosition(cursor);
+                            triggered = true;
+                        }
+                    } else if (key == Qt::Key_End) {
+                        if (mods & Qt::ControlModifier) {
+                            // Ctrl+Shift+End: select to document end
+                            if (extendSelection) {
+                                int lastLine = m_view->document()->lines() - 1;
+                                int lastCol = m_view->document()->lineLength(lastLine);
+                                KTextEditor::Cursor docEnd(lastLine, lastCol);
+                                if (hasSelection) {
+                                    KTextEditor::Range newSelection = selection;
+                                    if (cursor == selection.start()) {
+                                        newSelection.setStart(docEnd);
+                                    } else {
+                                        newSelection.setEnd(docEnd);
+                                    }
+                                    m_view->setSelection(newSelection);
+                                    m_view->setCursorPosition(docEnd);
+                                } else {
+                                    m_view->setSelection(KTextEditor::Range(cursor, docEnd));
+                                    m_view->setCursorPosition(docEnd);
+                                }
+                                triggered = true;
+                            } else {
+                                // Ctrl+End: move to document end
+                                int lastLine = m_view->document()->lines() - 1;
+                                m_view->setCursorPosition(KTextEditor::Cursor(lastLine, m_view->document()->lineLength(lastLine)));
+                                triggered = true;
+                            }
+                        } else if (extendSelection) {
+                            // Shift+End: select to line end
+                            int lineLength = m_view->document()->lineLength(cursor.line());
+                            if (hasSelection) {
+                                KTextEditor::Range newSelection = selection;
+                                if (cursor == selection.start()) {
+                                    newSelection.setStart(KTextEditor::Cursor(cursor.line(), lineLength));
+                                } else {
+                                    newSelection.setEnd(KTextEditor::Cursor(cursor.line(), lineLength));
+                                }
+                                m_view->setSelection(newSelection);
+                                cursor.setColumn(lineLength);
+                                m_view->setCursorPosition(cursor);
+                            } else {
+                                m_view->setSelection(KTextEditor::Range(cursor, KTextEditor::Cursor(cursor.line(), lineLength)));
+                                cursor.setColumn(lineLength);
+                                m_view->setCursorPosition(cursor);
+                            }
+                            triggered = true;
+                        } else {
+                            // Plain End
+                            cursor.setColumn(m_view->document()->lineLength(cursor.line()));
+                            m_view->setCursorPosition(cursor);
+                            triggered = true;
+                        }
+                    } else if (key == Qt::Key_PageUp) {
+                        if (extendSelection) {
+                            // Shift+PageUp: extend selection up by page
+                            int lines = 10; // Approximate page
+                            int newLine = std::max(0, cursor.line() - lines);
+                            if (hasSelection) {
+                                KTextEditor::Range newSelection = selection;
+                                if (cursor == selection.start()) {
+                                    newSelection.setStart(KTextEditor::Cursor(newLine, cursor.column()));
+                                } else {
+                                    newSelection.setEnd(KTextEditor::Cursor(newLine, cursor.column()));
+                                }
+                                m_view->setSelection(newSelection);
+                                cursor.setLine(newLine);
+                                m_view->setCursorPosition(cursor);
+                            } else {
+                                KTextEditor::Cursor newPos(newLine, cursor.column());
+                                m_view->setSelection(KTextEditor::Range(newPos, cursor));
+                                m_view->setCursorPosition(newPos);
+                            }
+                            triggered = true;
+                        } else {
+                            // Plain PageUp
+                            cursor.setLine(std::max(0, cursor.line() - 10)); // Approximate page
+                            m_view->setCursorPosition(cursor);
+                            triggered = true;
+                        }
+                    } else if (key == Qt::Key_PageDown) {
+                        if (extendSelection) {
+                            // Shift+PageDown: extend selection down by page
+                            int lines = 10; // Approximate page
+                            int maxLine = m_view->document()->lines() - 1;
+                            int newLine = std::min(maxLine, cursor.line() + lines);
+                            if (hasSelection) {
+                                KTextEditor::Range newSelection = selection;
+                                if (cursor == selection.start()) {
+                                    newSelection.setStart(KTextEditor::Cursor(newLine, cursor.column()));
+                                } else {
+                                    newSelection.setEnd(KTextEditor::Cursor(newLine, cursor.column()));
+                                }
+                                m_view->setSelection(newSelection);
+                                cursor.setLine(newLine);
+                                m_view->setCursorPosition(cursor);
+                            } else {
+                                KTextEditor::Cursor newPos(newLine, cursor.column());
+                                m_view->setSelection(KTextEditor::Range(cursor, newPos));
+                                m_view->setCursorPosition(newPos);
+                            }
+                            triggered = true;
+                        } else {
+                            // Plain PageDown
+                            int maxLine = m_view->document()->lines() - 1;
+                            cursor.setLine(std::min(maxLine, cursor.line() + 10)); // Approximate page
+                            m_view->setCursorPosition(cursor);
+                            triggered = true;
+                        }
+                    }
+                }
+                
+                if (triggered) {
+                    logEditor(QStringLiteral("specialKey action triggered key=%1").arg(key));
+                    return true;
+                } else {
+                    logEditor(QStringLiteral("specialKey action NOT found/triggered key=%1").arg(key));
+                }
+            }
         }
-        event->accept();
-        return true;
     }
     
-    if (event->type() == QEvent::KeyPress) {
-        QKeyEvent *keyEvent = static_cast<QKeyEvent*>(event);
-        if (keyEvent->key() == Qt::Key_Escape) {
-            if (parentWidget()) parentWidget()->setFocus();
-            return true;
-        }
-        if (keyEvent->key() == Qt::Key_Alt) {
-            m_view->setBlockSelection(true);
-        } else if (m_view->blockSelection()) {
-            m_view->setBlockSelection(false);
+    // Deactivate on outside click so DC can regain focus.
+    if (event->type() == QEvent::MouseButtonPress && m_isActive) {
+        auto *me = static_cast<QMouseEvent*>(event);
+        const QPoint gp = me->globalPosition().toPoint();
+        const QRect gr(mapToGlobal(QPoint(0, 0)), size());
+        if (!gr.contains(gp)) {
+            setActive(false);
+            return false;
         }
     }
     
-    if (event->type() == QEvent::MouseButtonPress) {
-        QMouseEvent* me = static_cast<QMouseEvent*>(event);
-        if (!(me->modifiers() & Qt::AltModifier)) {
-            m_view->setBlockSelection(false);
+    // Activate on any click inside our panel.
+    if (event->type() == QEvent::MouseButtonPress && !m_isActive) {
+        auto *me = static_cast<QMouseEvent*>(event);
+        const QPoint gp = me->globalPosition().toPoint();
+        const QRect gr(mapToGlobal(QPoint(0, 0)), size());
+        if (gr.contains(gp)) {
+            setActive(true);
+            QWidget *focusTarget = m_view->focusProxy() ? m_view->focusProxy() : m_view;
+            focusTarget->setFocus(Qt::MouseFocusReason);
+            logEditor(QStringLiteral("activated, focusTarget=%1").arg(focusTarget->metaObject()->className()));
         }
     }
     
     return QWidget::eventFilter(obj, event);
+}
+
+static void dumpViewActions(KTextEditor::View *view) {
+    if (!view) return;
+    const auto actions = view->actions();
+    logEditor(QStringLiteral("dumpViewActions count=%1").arg(actions.count()));
+    for (QAction *action : actions) {
+        if (!action) continue;
+        logEditor(QStringLiteral("viewAction name=%1 text=%2 shortcut=%3 enabled=%4 checkable=%5")
+                  .arg(action->objectName())
+                  .arg(action->text())
+                  .arg(action->shortcut().toString(QKeySequence::NativeText))
+                  .arg(action->isEnabled())
+                  .arg(action->isCheckable()));
+    }
+    const auto childActions = view->findChildren<QAction*>();
+    logEditor(QStringLiteral("dumpViewChildActions count=%1").arg(childActions.count()));
+    for (QAction *action : childActions) {
+        if (!action) continue;
+        logEditor(QStringLiteral("childAction name=%1 text=%2 shortcut=%3 enabled=%4 checkable=%5")
+                  .arg(action->objectName())
+                  .arg(action->text())
+                  .arg(action->shortcut().toString(QKeySequence::NativeText))
+                  .arg(action->isEnabled())
+                  .arg(action->isCheckable()));
+    }
 }
 
 bool EditorWidget::loadFile(const QString &filePath) {
@@ -175,8 +908,7 @@ bool EditorWidget::loadFile(const QString &filePath) {
 
     // Set config BEFORE opening to pre-empt global katepartrc defaults
     m_doc->setConfigValue("remove-spaces", 0);
-    m_doc->setConfigValue("auto-reload-on-external-changes", false);
-    m_doc->setModifiedOnDiskWarning(true);
+    forceDisableAutoReload();
     
     bool success = m_doc->openUrl(QUrl::fromLocalFile(filePath));
     if (!success) {
@@ -186,9 +918,9 @@ bool EditorWidget::loadFile(const QString &filePath) {
     
     // Re-apply AFTER openUrl — KTE resets configs from global katepartrc on load
     m_doc->setConfigValue("remove-spaces", 0);
-    m_doc->setConfigValue("auto-reload-on-external-changes", false);
-    m_doc->setModifiedOnDiskWarning(true);
-    if (QAction* a = kteAction(m_view, "view_auto_reload")) a->setChecked(false);
+    forceDisableAutoReload();
+
+    dumpViewActions(m_view);
     
     // Read-only by default
     m_doc->setReadWrite(false);
@@ -206,6 +938,27 @@ void EditorWidget::copySelection() {
 
 void EditorWidget::selectAll() {
     if (QAction* a = kteAction(m_view, "edit_select_all")) a->trigger();
+}
+
+QString EditorWidget::currentFilePath() const {
+    if (!m_doc) return {};
+    if (!m_doc->url().isLocalFile()) return {};
+    return m_doc->url().toLocalFile();
+}
+
+bool EditorWidget::isModified() const {
+    return m_doc ? m_doc->isModified() : false;
+}
+
+void EditorWidget::hostSetFocus(bool focus) {
+    logEditor(QStringLiteral("hostSetFocus focus=%1").arg(focus));
+    if (focus) {
+        setActive(true);
+        setFocus(Qt::OtherFocusReason);
+        if (m_view) m_view->setFocus(Qt::OtherFocusReason);
+    } else {
+        setActive(false);
+    }
 }
 
 void EditorWidget::setupMenu() {
@@ -271,41 +1024,15 @@ void EditorWidget::setupMenu() {
     if (QAction* a = kteAction(m_view, "view_line_numbers")) viewMenu->addAction(a);
     if (QAction* a = kteAction(m_view, "view_folding_markers")) viewMenu->addAction(a);
     
-    // "Show Hidden Characters" — cycles view_show_whitespaces to "All" mode (mode 2)
-    // The action cycles: None(0) -> Trailing(1) -> All(2) -> None(0) on each trigger.
-    // katepartrc has Show Spaces=2, so the action starts checked in All mode.
-    // We manage our own checked state and drive the action to the right mode.
-    if (QAction* wsAct = kteAction(m_view, "view_show_whitespaces")) {
-        wsAct->setText("Show Hidden Characters");
-        // Wrap it: our custom action tracks intent; we sync the native action to All/None
-        QAction* showHiddenAction = new QAction("Show Hidden Characters", this);
-        showHiddenAction->setCheckable(true);
-        // Sync initial state from native action
-        showHiddenAction->setChecked(wsAct->isChecked());
-        connect(showHiddenAction, &QAction::toggled, this, [this, wsAct](bool checked) {
-            // Drive the native action to the desired mode:
-            // checked=true  → we want All (mode 2): trigger until isChecked() AND mode is All
-            // checked=false → we want None (mode 0): trigger until !isChecked()
-            if (checked) {
-                // Trigger up to 3 times to reach All mode
-                // Mode transitions: None->Trailing->All
-                // If currently None (unchecked), 2 triggers reach All
-                // If currently Trailing (checked, mode 1), 1 trigger reaches All
-                for (int i = 0; i < 3; ++i) {
-                    wsAct->trigger();
-                    // Check: view_show_whitespaces checked + mode is All
-                    // We detect All mode by triggering once more and seeing it goes to None
-                    // Simpler: just trigger twice from None to guarantee All
-                    if (i == 1) break; // After 2 triggers from None we're at All
-                }
-            } else {
-                // Drive to None: trigger until unchecked
-                for (int i = 0; i < 3 && wsAct->isChecked(); ++i)
-                    wsAct->trigger();
-            }
-        });
-        viewMenu->addAction(showHiddenAction);
-    }
+    // "Show Hidden Characters" (tabs/spaces/EOL markers).
+    // KTextEditor/Kate can expose this as one cycling action (whitespaces) plus
+    // optional separate toggles for tabs/EOL depending on framework version.
+    m_actionShowHidden = new QAction(QStringLiteral("Show Hidden Characters"), this);
+    m_actionShowHidden->setCheckable(true);
+    connect(m_actionShowHidden, &QAction::toggled, this, [this](bool checked) {
+        setHiddenCharactersVisible(checked);
+    });
+    viewMenu->addAction(m_actionShowHidden);
     
     viewMenu->addSeparator();
     QMenu *zoomMenu = viewMenu->addMenu("Zoom");
@@ -600,4 +1327,137 @@ void EditorWidget::convertEolToLinux() {
 
 void EditorWidget::toggleHiddenCharacters() {
     // Deprecated — now using native view_show_whitespaces action via kteAction()
+}
+
+void EditorWidget::forceDisableAutoReload() {
+    if (!m_doc) return;
+    m_doc->setConfigValue("auto-reload-on-external-changes", false);
+    // Prefer prompt-on-change behavior when available.
+    m_doc->setModifiedOnDiskWarning(true);
+
+    // Disable swap files to prevent focus loss during periodic writes
+    m_doc->setConfigValue("swap-file-mode", 0); // 0 = No swap file
+    m_doc->setConfigValue("swap-file-sync", 0); // Disable swap file syncing
+
+    // Some builds only honor this through the view action; force it OFF if present.
+    if (QAction *a = kteAction(m_view, "view_auto_reload")) {
+        forceActionChecked(a, false);
+    }
+}
+
+void EditorWidget::enableAutoReload() {
+    if (!m_doc) return;
+    m_doc->setConfigValue("auto-reload-on-external-changes", true);
+    // If KTE honors this via an action, flip it on.
+    if (QAction *a = kteAction(m_view, "view_auto_reload")) {
+        forceActionChecked(a, true);
+    }
+}
+
+void EditorWidget::showDiffAgainstDisk() {
+    if (!m_doc) return;
+    if (!m_doc->url().isLocalFile()) return;
+
+    const QString path = m_doc->url().toLocalFile();
+    QFile diskFile(path);
+    if (!diskFile.open(QIODevice::ReadOnly)) return;
+    const QByteArray diskBytes = diskFile.readAll();
+
+    // Write current buffer to a temp file and diff against disk.
+    QTemporaryFile tmp;
+    tmp.setAutoRemove(true);
+    if (!tmp.open()) return;
+    const QByteArray bufBytes = m_doc->text().toUtf8();
+    tmp.write(bufBytes);
+    tmp.flush();
+
+    QProcess proc;
+    QStringList args;
+    args << "-u"
+         << "--label" << QStringLiteral("on-disk")
+         << "--label" << QStringLiteral("buffer")
+         << path
+         << tmp.fileName();
+    proc.start(QStringLiteral("diff"), args);
+    proc.waitForFinished(2000);
+    const QByteArray out = proc.readAllStandardOutput();
+    const QByteArray err = proc.readAllStandardError();
+
+    const QString diffText = !out.isEmpty()
+        ? QString::fromLocal8Bit(out)
+        : (!err.isEmpty() ? QString::fromLocal8Bit(err) : QStringLiteral("(no differences)"));
+
+    auto *dlg = new QDialog(this);
+    dlg->setWindowTitle(QStringLiteral("View Difference"));
+    dlg->resize(900, 600);
+    auto *layout = new QVBoxLayout(dlg);
+    auto *edit = new QTextEdit(dlg);
+    edit->setReadOnly(true);
+    edit->setFont(QFontDatabase::systemFont(QFontDatabase::FixedFont));
+    edit->setPlainText(diffText);
+    layout->addWidget(edit);
+    dlg->setLayout(layout);
+    dlg->setAttribute(Qt::WA_DeleteOnClose, true);
+    dlg->show();
+}
+
+void EditorWidget::setHiddenCharactersVisible(bool visible) {
+    if (!m_view) return;
+
+    // Best-effort list of known Kate/KTextEditor action names across versions.
+    // We toggle anything we find rather than relying on a single cycling action.
+    struct Toggle {
+        const char *name;
+        bool desired;
+    };
+
+    const Toggle toggles[] = {
+        // Main whitespace marker action (often cycles through modes)
+        {"view_show_whitespaces", visible},
+        // Tabs and EOL markers (when available as separate toggles)
+        {"view_show_tabs", visible},
+        {"view_show_tabulators", visible},
+        {"view_show_line_breaks", visible},
+        {"view_show_eol", visible},
+    };
+
+    for (const auto &t : toggles) {
+        if (QAction *a = kteAction(m_view, t.name)) {
+            if (a->isCheckable()) {
+                forceActionChecked(a, t.desired);
+            } else if (visible) {
+                a->trigger();
+            }
+        }
+    }
+
+    // Sync the visible state from whatever primary action exists.
+    if (m_actionShowHidden) {
+        if (QAction *ws = kteAction(m_view, "view_show_whitespaces")) {
+            m_actionShowHidden->blockSignals(true);
+            m_actionShowHidden->setChecked(ws->isChecked() || visible);
+            m_actionShowHidden->blockSignals(false);
+        }
+    }
+}
+
+void EditorWidget::hideDiskChangeBar() {
+    if (m_diskChangeBar) m_diskChangeBar->setVisible(false);
+}
+
+void EditorWidget::setActive(bool active) {
+    m_isActive = active;
+    logEditor(QStringLiteral("setActive active=%1 docReadWrite=%2").arg(active).arg(m_doc ? m_doc->isReadWrite() : false));
+    if (!active) {
+        clearFocus();
+        if (parentWidget()) parentWidget()->setFocus(Qt::OtherFocusReason);
+    } else {
+        setFocus(Qt::OtherFocusReason);
+        QWidget *focusTarget = m_view->focusProxy() ? m_view->focusProxy() : m_view;
+        focusTarget->setFocus(Qt::OtherFocusReason);
+        logEditor(QStringLiteral("setActive: KTE target=%1 hasFocus=%2 currentFocus=%3")
+                  .arg(focusTarget->metaObject()->className())
+                  .arg(focusTarget->hasFocus())
+                  .arg(qApp->focusWidget() ? qApp->focusWidget()->metaObject()->className() : "none"));
+    }
 }

@@ -17,6 +17,10 @@ add_library(rich_editor_qt SHARED
     src/editor_widget.cpp
 )
 
+target_compile_definitions(rich_editor_qt PRIVATE
+    RICH_EDITOR_QT_LOG_DIR="${CMAKE_CURRENT_SOURCE_DIR}/logs"
+)
+
 target_link_libraries(rich_editor_qt PRIVATE
     Qt6::Core
     Qt6::Gui
