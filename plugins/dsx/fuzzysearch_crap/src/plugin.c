@@ -1,9 +1,15 @@
+#define _XOPEN_SOURCE 500
+#include <ftw.h>
 #include <glib.h>
 #include "dsxplugin.h"
 
+int plug_id;
 tSAddFileProc add_file;
 tSUpdateStatusProc update_status;
-gboolean stop_search = FALSE;
+gsize count;
+gchar *query = NULL;
+gboolean is_stop_search = FALSE;
+
 
 static void strip_ext(gchar *filename)
 {
@@ -13,11 +19,17 @@ static void strip_ext(gchar *filename)
 		*dot = '\0';
 }
 
-static gboolean fuzzy_match(const gchar *name, gchar *query, gboolean is_dir)
+int fuzzy_match(const char *path, const struct stat *buf, int flag, struct FTW *ftwbuf)
 {
+	if (is_stop_search)
+		return 1;
+
+	update_status(plug_id, (char*)path, count++);
+
+	const char *name = path + ftwbuf->base;
 	gchar *string = g_utf8_casefold(name, -1);
 
-	if (!is_dir)
+	if (flag == FTW_F)
 		strip_ext(string);
 
 	gchar *pos_string = string;
@@ -34,41 +46,10 @@ static gboolean fuzzy_match(const gchar *name, gchar *query, gboolean is_dir)
 		pos_string = g_utf8_next_char(pos_string);
 	}
 
-	gboolean is_good_enough_for_government_work = (*pos_query == '\0');
-	g_free(string);
+	if (*pos_query == '\0')
+		add_file(plug_id, (char*)path);
 
-	return is_good_enough_for_government_work;
-}
-
-static void walk_dir(int id, const gchar *path, gchar *query, gsize *count)
-{
-	const gchar *name;
-	GDir *dir = g_dir_open(path, 0, NULL);
-
-	if (!dir)
-		return;
-
-	gboolean is_add_slash = (path[strlen(path) - 1] != '/');
-
-	while ((name = g_dir_read_name(dir)) != NULL)
-	{
-		if (stop_search)
-			break;
-
-		gchar *full_path = g_strdup_printf(is_add_slash ? "%s/%s" : "%s%s", path, name);
-		update_status(id, full_path, (*count)++);
-		gboolean is_dir = g_file_test(full_path, G_FILE_TEST_IS_DIR);
-
-		if (fuzzy_match(name, query, is_dir))
-			add_file(id, full_path);
-
-		if (is_dir)
-			walk_dir(id, full_path, query, count);
-
-		g_free(full_path);
-	}
-
-	g_dir_close(dir);
+	return 0;
 }
 
 int DCPCALL Init(tDsxDefaultParamStruct* dsp, tSAddFileProc pAddFileProc, tSUpdateStatusProc pUpdateStatus)
@@ -93,10 +74,10 @@ void DCPCALL StartSearch(int PluginNr, tDsxSearchRecord* pSearchRec)
 		len--;
 
 	gsize count = 0;
-	stop_search = FALSE;
-	gchar *query = g_utf8_casefold(string, len);
+	is_stop_search = FALSE;
+	query = g_utf8_casefold(string, len);
 	update_status(PluginNr, "not found", count);
-	walk_dir(PluginNr, pSearchRec->StartPath, query, &count);
+	nftw(pSearchRec->StartPath, fuzzy_match, 69, FTW_DEPTH | FTW_PHYS);
 	g_free(query);
 
 	add_file(PluginNr, "");
@@ -104,7 +85,7 @@ void DCPCALL StartSearch(int PluginNr, tDsxSearchRecord* pSearchRec)
 
 void DCPCALL StopSearch(int PluginNr)
 {
-	stop_search = TRUE;
+	is_stop_search = TRUE;
 }
 
 void DCPCALL Finalize(int PluginNr)
