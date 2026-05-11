@@ -1,5 +1,5 @@
 -- webpwdx.lua (cross-platform)
--- 2021.09.12
+-- 2026.05.09
 --[[
 Getting some information from WebP files.
 Supported fields: see table "fields".
@@ -183,7 +183,7 @@ function BinToNumS(bin)
   local sum = 0
   for i = 1, string.len(bin) do
     num = string.sub(bin, i, i) == '1' and 1 or 0
-    sum = sum + num * math.pow(2, i - 1)
+    sum = sum + num * (2 ^ i - 1)
   end
   return sum
 end

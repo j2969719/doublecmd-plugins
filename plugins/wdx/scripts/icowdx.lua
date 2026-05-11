@@ -1,5 +1,5 @@
 -- icowdx.lua (cross-platform)
--- 2021.04.18
+-- 2026.05.09
 --[[
 Getting some info from Windows icons (ICO images):
 - the number of images;
@@ -54,7 +54,7 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
       local al1 = {}
       local al2 = {}
       local al3 = {}
-      local nw, nh, nc, w
+      local nw, nh, nc
       while true do
         if c == 0 then break end
         -- width
@@ -89,14 +89,12 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
         else
           h:seek('cur', 14)
         end
-        w = tonumber(nw, 10)
-        t = w .. 'x' .. tonumber(nh, 10)
-        if w > 99 then
-          al3[#al3 + 1] = t
-        elseif w > 9 then
-          al2[#al2 + 1] = t
+        if nw > 99 then
+          al3[#al3 + 1] = nw .. 'x' .. nh
+        elseif nw > 9 then
+          al2[#al2 + 1] = nw .. 'x' .. nh
         else
-          al1[#al1 + 1] = t
+          al1[#al1 + 1] = nw .. 'x' .. nh
         end
         c = c - 1
       end

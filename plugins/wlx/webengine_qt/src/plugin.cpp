@@ -50,6 +50,7 @@ int DCPCALL ListSearchText(HWND ListWin, char* SearchString, int SearchParameter
 int DCPCALL ListSendCommand(HWND ListWin, int Command, int Parameter)
 {
 	QWebEngineView *view = (QWebEngineView*)ListWin;
+	view->findText("");
 
 	switch (Command)
 	{

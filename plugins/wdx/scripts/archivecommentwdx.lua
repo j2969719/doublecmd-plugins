@@ -4,11 +4,15 @@ local notfoundstr = "not found"
 
 
 function ContentGetDetectString()
-  return 'EXT="7Z" | EXT="ZIP" | EXT="RAR"'
+    return 'EXT="7Z" | EXT="ZIP" | EXT="RAR"'
 end
 
 function ContentSetDefaultParams(IniFileName, PlugApiVerHi, PlugApiVerLow)
-  z7cmd = get_output("sh -c 'which 7zz || which 7z' 2>/dev/null"):sub(1, -2)
+    z7cmd = get_output("sh -c 'which 7zz || which 7z' 2>/dev/null"):sub(1, -2)
+    if (z7cmd == '') then
+        plug_name = debug.getinfo(1).source:match("/([^/]+)$")
+        DC.LogWrite(plug_name .. ": 7zip is not installed", 2, true, false)
+    end
 end
 
 function ContentGetSupportedField(FieldIndex)
@@ -19,6 +23,9 @@ function ContentGetSupportedField(FieldIndex)
 end
 
 function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
+    if (z7cmd == '') then
+        return nil
+    end
     if not SysUtils.DirectoryExists(FileName) and (FieldIndex == 0) then
         local result = get_output(z7cmd .. " l " .. FileName:gsub(' ', '\\ ') .. " -p 2>/dev/null"):match(pattern)
         if (result ~= nil) then
@@ -40,11 +47,11 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
 end
 
 function get_output(command)
-  if not command then
-    return ''
-  end
-  local handle = io.popen(command, 'r')
-  local output = handle:read("*a")
-  handle:close()
-  return output
+    if not command then
+        return ''
+    end
+    local handle = io.popen(command, 'r')
+    local output = handle:read("*a")
+    handle:close()
+    return output
 end

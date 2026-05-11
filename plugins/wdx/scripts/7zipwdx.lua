@@ -1,6 +1,6 @@
 -- 7zipwdx.lua
 
-local z7cmd = "7z l"
+local z7cmd = "7z"
 local output = ''
 local cached_file = ''
 
@@ -28,7 +28,11 @@ local fields = {
 }
 
 function ContentSetDefaultParams(IniFileName, PlugApiVerHi, PlugApiVerLow)
-  z7cmd = get_output("sh -c 'which 7zz || which 7z' 2>/dev/null"):sub(1, -2)
+    z7cmd = get_output("sh -c 'which 7zz || which 7z' 2>/dev/null"):sub(1, -2)
+    if (z7cmd == '') then
+        plug_name = debug.getinfo(1).source:match("/([^/]+)$")
+        DC.LogWrite(plug_name .. ": 7zip is not installed", 2, true, false)
+    end
 end
 
 function ContentGetSupportedField(FieldIndex)
@@ -43,6 +47,9 @@ function ContentGetDetectString()
 end
 
 function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
+    if (z7cmd == '') then
+        return nil
+    end
     if (cached_file ~= FileName) then
         local attr = SysUtils.FileGetAttr(FileName)
         if (attr < 0) or (math.floor(attr / 0x00000004) % 2 ~= 0) or (math.floor(attr / 0x00000010) % 2 ~= 0) then
@@ -81,11 +88,11 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
 end
 
 function get_output(command)
-  if not command then
-    return ''
-  end
-  local handle = io.popen(command, 'r')
-  local output = handle:read("*a")
-  handle:close()
-  return output
+    if not command then
+        return ''
+    end
+    local handle = io.popen(command, 'r')
+    local output = handle:read("*a")
+    handle:close()
+    return output
 end

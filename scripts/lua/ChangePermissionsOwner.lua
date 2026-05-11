@@ -43,6 +43,7 @@ local aact = {
 local amod = {
 "644 (-rw-r--r--)",
 "664 (-rw-rw-r--)",
+"666 (-rw-rw-rw-)",
 "755 (-rwxr-xr-x)",
 "775 (-rwxrwxr-x)",
 "777 (-rwxrwxrwx)",

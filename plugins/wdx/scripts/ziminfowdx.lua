@@ -74,6 +74,7 @@ end
 
 function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
   if FieldIndex >= #fields then return nil end
+  local t
   if filename ~= FileName then
     local e = string.lower(SysUtils.ExtractFileExt(FileName))
     if e ~= '.txt' then return nil end
@@ -93,18 +94,18 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
     head = {}
     body = {}
     for l in h:lines() do
-      l = string.gsub(l, '[\r\n]+$', '')
+      t = string.gsub(l, '[\r\n]+$', '')
       if rn == false then
-        if l == 'Content-Type: text/x-zim-wiki' then rn = true else break end
+        if t == 'Content-Type: text/x-zim-wiki' then rn = true else break end
       else
-        if (l == '') and (re == false) then
+        if (t == '') and (re == false) then
           re = true
         else
           if re == true then
-            body[cb] = l
+            body[cb] = t
             cb = cb + 1
           else
-            head[ch] = l
+            head[ch] = t
             ch = ch + 1
           end
         end
@@ -189,9 +190,9 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
         local h = io.open(f, 'r')
         if h == nil then return nil end
         for l in h:lines() do
-          l = string.gsub(l, '[\r\n]+$', '')
-          if string.sub(l, 1, 5) == 'name=' then
-            s = string.sub(l, 6, -1)
+          t = string.gsub(l, '[\r\n]+$', '')
+          if string.sub(t, 1, 5) == 'name=' then
+            s = string.sub(t, 6, -1)
             break
           end
         end
