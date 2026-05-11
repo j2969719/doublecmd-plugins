@@ -34,6 +34,7 @@ public:
 
 protected:
     bool eventFilter(QObject *obj, QEvent *event) override;
+    void focusOutEvent(QFocusEvent *event) override;
 
 private:
     KTextEditor::Document *m_doc;
@@ -59,6 +60,11 @@ private:
     QAction *m_actionShowHidden;
 
     int m_zoomLevel;
+    bool m_isRestoringFocus;
+
+    KTextEditor::Cursor m_savedCursor;
+    KTextEditor::Range m_savedSelection;
+    bool m_savedSelectionValid;
 
     // Inline "file changed on disk" banner (Kate-style)
     QWidget *m_diskChangeBar;
@@ -81,6 +87,7 @@ private:
 
     KTextEditor::Cursor findWordStart(const KTextEditor::Cursor &cursor) const;
     KTextEditor::Cursor findWordEnd(const KTextEditor::Cursor &cursor) const;
+    void saveDocument();
 
     // Focus handling
     bool m_isActive;
@@ -99,6 +106,7 @@ private slots:
     
     void convertEolToWin();
     void convertEolToLinux();
+    void convertEolToMac();
     
     void sortLines();
     void trimTrailingSpaces();
