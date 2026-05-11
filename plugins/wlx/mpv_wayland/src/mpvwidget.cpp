@@ -7,6 +7,9 @@
 #include <QWheelEvent>
 #include <QKeyEvent>
 #include <QCoreApplication>
+#include <QApplication>
+#include <QTimer>
+#include <QChildEvent>
 
 MpvWidget::MpvWidget(QWidget *parent)
     : QOpenGLWidget(parent)
@@ -15,10 +18,15 @@ MpvWidget::MpvWidget(QWidget *parent)
     , m_glReady(false)
 {
     setWindowFlags(Qt::Widget);
-    setAttribute(Qt::WA_NativeWindow);
-    setMouseTracking(true); // Needed so we get hover events for the OSC
-    setFocusPolicy(Qt::WheelFocus); // Accepts keyboard inputs including wheel focus
+    // LAYER 1: NEVER hold Qt focus. On Wayland, calling setFocus() on a
+    // QOpenGLWidget creates a compositor-level subsurface focus lock that
+    // cannot be released programmatically. Instead we intercept keyboard
+    // events at the application level and forward them to mpv.
+    setMouseTracking(true);
+    setFocusPolicy(Qt::NoFocus);
 
+    // Application-level event filter for keyboard forwarding and
+    // outside-click detection.
     if (QCoreApplication::instance()) {
         QCoreApplication::instance()->installEventFilter(this);
     }
@@ -158,6 +166,21 @@ void MpvWidget::resizeGL(int w, int h)
 
 bool MpvWidget::loadFile(const QString &fileName)
 {
+    // LAYER 3: Save DC's currently focused widget so we can return to it
+    m_savedFocusWidget = QApplication::focusWidget();
+    installFocusGuard();
+
+    // Install event filter on top-level window to detect clicks outside
+    // our bounds. On Wayland, the GL subsurface doesn't reliably receive
+    // FocusOut when the user clicks on DC's main surface (source panel),
+    // so we must detect this ourselves.
+    if (!m_topLevelFilterInstalled) {
+        if (QWidget *tlw = window()) {
+            tlw->installEventFilter(this);
+            m_topLevelFilterInstalled = true;
+        }
+    }
+
     if (!m_mpv) return false;
 
     m_pendingFile = fileName;
@@ -165,10 +188,13 @@ bool MpvWidget::loadFile(const QString &fileName)
     if (m_glReady) {
         // GL is already ready, load immediately
         doLoadFile();
+        // LAYER 3: Restore focus once UI is stable
+        QTimer::singleShot(100, this, [this]() { restoreFocusToDC(); });
         return true;
     }
 
     // GL not ready yet — file will be loaded in initializeGL via deferred call
+    // Restore focus via doLoadFile later
     return true;
 }
 
@@ -182,6 +208,25 @@ void MpvWidget::doLoadFile()
 
     if (err < 0) {
         qCritical() << "mpv_wayland: loadfile failed:" << err << m_pendingFile;
+    }
+
+    // LAYER 3: Restore focus once UI is stable
+    QTimer::singleShot(100, this, [this]() { restoreFocusToDC(); });
+}
+
+void MpvWidget::installFocusGuard()
+{
+    const auto children = findChildren<QWidget*>();
+    for (QWidget *child : children) {
+        child->setFocusPolicy(Qt::NoFocus);
+        child->installEventFilter(this);
+    }
+}
+
+void MpvWidget::restoreFocusToDC()
+{
+    if (m_savedFocusWidget) {
+        m_savedFocusWidget->setFocus(Qt::OtherFocusReason);
     }
 }
 
@@ -209,8 +254,10 @@ void MpvWidget::mouseMoveEvent(QMouseEvent *event)
 
 void MpvWidget::mousePressEvent(QMouseEvent *event)
 {
-    setFocus(); // Explicitly request focus when clicked so we can receive keyboard events
-    grabKeyboard(); // Force grab all keyboard input (prevents Double Commander from stealing it)
+    // Activate input mode. We do NOT call setFocus() — that would create
+    // a Wayland subsurface focus lock. Instead, the application-level
+    // event filter in eventFilter() forwards keyboard events to mpv.
+    m_isActive = true;
 
     if (!m_mpv) return;
     if (event->button() == Qt::LeftButton) {
@@ -243,8 +290,6 @@ void MpvWidget::wheelEvent(QWheelEvent *event)
 void MpvWidget::leaveEvent(QEvent *event)
 {
     if (!m_mpv) return;
-    // Release keyboard grab if the user moves their mouse away from the video
-    releaseKeyboard();
     
     // Move mouse out of frame to hide OSC
     mpv_command_string(m_mpv, "mouse -100 -100");
@@ -278,35 +323,70 @@ QString MpvWidget::mapQtKeyToMpvKey(QKeyEvent *event)
 
 void MpvWidget::keyPressEvent(QKeyEvent *event)
 {
-    if (!m_mpv) return;
-    QString mpvKey = mapQtKeyToMpvKey(event);
-    if (!mpvKey.isEmpty()) {
-        QString cmd = QString("keypress %1").arg(mpvKey); // Send keypress directly instead of keydown to avoid stuck keys
-        mpv_command_string(m_mpv, cmd.toUtf8().constData());
-    }
+    // Not used — keyboard handling is done in eventFilter() to avoid
+    // needing Qt focus (which causes Wayland subsurface lock).
+    Q_UNUSED(event);
 }
 
 void MpvWidget::keyReleaseEvent(QKeyEvent *event)
 {
-    // Ignore key release since we sent a full keypress above.
-    // If you need exact down/up tracking, this can be reverted to keyup.
     Q_UNUSED(event);
 }
 
 bool MpvWidget::eventFilter(QObject *obj, QEvent *event)
 {
-    if (event->type() == QEvent::KeyPress || event->type() == QEvent::KeyRelease) {
-        // If the mouse is hovering over the video, steal all keyboard events globally
-        if (underMouse() || hasFocus()) {
-            QKeyEvent *keyEvent = static_cast<QKeyEvent *>(event);
-            if (event->type() == QEvent::KeyPress) {
-                keyPressEvent(keyEvent);
-            } else {
-                keyReleaseEvent(keyEvent);
-            }
-            return true; // Eat the event so DC doesn't get it
+    // ── Outside-click detector ──────────────────────────────────────────
+    // If the user clicks ANYWHERE outside our widget while we're active,
+    // deactivate immediately so DC regains full control.
+    if (event->type() == QEvent::MouseButtonPress && m_isActive) {
+        auto *me = static_cast<QMouseEvent*>(event);
+        QPoint localPos = mapFromGlobal(me->globalPosition().toPoint());
+        if (!rect().contains(localPos)) {
+            m_isActive = false;
+            return false; // let the click through to DC
         }
     }
+
+    // ── Keyboard forwarding ─────────────────────────────────────────────
+    // When active, intercept ALL key events at the application level and
+    // forward them to mpv. This avoids ever calling setFocus() on the GL
+    // widget, which would create a Wayland subsurface focus lock.
+    if (event->type() == QEvent::KeyPress && m_isActive) {
+        auto *ke = static_cast<QKeyEvent*>(event);
+
+        // ESC: deactivate and return control to DC
+        if (ke->key() == Qt::Key_Escape) {
+            m_isActive = false;
+            return true; // eat the ESC so DC doesn't process it
+        }
+
+        // Forward the key to mpv
+        if (m_mpv) {
+            QString mpvKey = mapQtKeyToMpvKey(ke);
+            if (!mpvKey.isEmpty()) {
+                QString cmd = QString("keypress %1").arg(mpvKey);
+                mpv_command_string(m_mpv, cmd.toUtf8().constData());
+                return true; // eat the event so DC doesn't get it
+            }
+        }
+    }
+
+    // ── FocusIn interceptor ──────────────────────────────────────────────
+    // Prevent our widget or children from ever holding Qt focus.
+    auto *w = qobject_cast<QWidget*>(obj);
+    if (event->type() == QEvent::FocusIn && w && (w == this || this->isAncestorOf(w))) {
+        QTimer::singleShot(0, this, [this]() { restoreFocusToDC(); });
+        return false;
+    }
+
+    // ── ChildAdded: guard dynamically-created children ──────────────────
+    if (event->type() == QEvent::ChildAdded) {
+        auto *ce = static_cast<QChildEvent*>(event);
+        if (auto *childWidget = qobject_cast<QWidget*>(ce->child())) {
+            childWidget->setFocusPolicy(Qt::NoFocus);
+            childWidget->installEventFilter(this);
+        }
+    }
+
     return QOpenGLWidget::eventFilter(obj, event);
 }
-
