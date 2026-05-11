@@ -9,6 +9,8 @@
 #include <QApplication>
 #include <QTimer>
 #include <QChildEvent>
+#include <QResizeEvent>
+#include <QEnterEvent>
 
 KPartWidget::KPartWidget(QWidget *parent)
     : QWidget(parent)
@@ -231,11 +233,41 @@ void KPartWidget::instantiatePart()
             if (m_savedFocusWidget) {
                 m_savedFocusWidget->setFocus(Qt::OtherFocusReason);
             }
+            if (m_part && m_part->widget()) {
+                QTimer::singleShot(300, m_part->widget(), [w = m_part->widget()]() {
+                    QCoreApplication::postEvent(w, new QEvent(QEvent::WindowActivate));
+                    QCoreApplication::postEvent(w, new QResizeEvent(w->size(), w->size()));
+                    QCoreApplication::postEvent(w, new QEnterEvent(QPointF(0,0), QPointF(0,0), QPointF(0,0)));
+                    QCoreApplication::postEvent(w, new QEvent(QEvent::Leave));
+                    w->update();
+                    
+                    for (QWidget *child : w->findChildren<QWidget*>()) {
+                        QCoreApplication::postEvent(child, new QEvent(QEvent::WindowActivate));
+                        QCoreApplication::postEvent(child, new QResizeEvent(child->size(), child->size()));
+                        child->update();
+                    }
+                });
+            }
         });
         connect(m_part, &KParts::ReadOnlyPart::completedWithPendingAction, this, [this]() {
             installFocusGuard();
             if (m_savedFocusWidget) {
                 m_savedFocusWidget->setFocus(Qt::OtherFocusReason);
+            }
+            if (m_part && m_part->widget()) {
+                QTimer::singleShot(300, m_part->widget(), [w = m_part->widget()]() {
+                    QCoreApplication::postEvent(w, new QEvent(QEvent::WindowActivate));
+                    QCoreApplication::postEvent(w, new QResizeEvent(w->size(), w->size()));
+                    QCoreApplication::postEvent(w, new QEnterEvent(QPointF(0,0), QPointF(0,0), QPointF(0,0)));
+                    QCoreApplication::postEvent(w, new QEvent(QEvent::Leave));
+                    w->update();
+                    
+                    for (QWidget *child : w->findChildren<QWidget*>()) {
+                        QCoreApplication::postEvent(child, new QEvent(QEvent::WindowActivate));
+                        QCoreApplication::postEvent(child, new QResizeEvent(child->size(), child->size()));
+                        child->update();
+                    }
+                });
             }
         });
 
