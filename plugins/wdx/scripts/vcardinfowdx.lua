@@ -1,5 +1,5 @@
 -- vcardinfowdx.lua (cross-platform)
--- 2023.02.07
+-- 2026.05.09
 --[[
 vCard Format Specification 2.1, 3.0, 4.0
 Some details: https://en.wikipedia.org/wiki/VCard
@@ -52,7 +52,7 @@ local fields = {
 {"Access classification",           "CLASS",      "", 8},
 {"Instant messaging",               "IM",         "AIM|Facebook|Flickr|Gadu-Gadu|Google Hangouts|GroupWise|ICQ|Jabber|Linkedln|MySpace|QQ|Sina Weibo|Skype|Twitter|WhatsApp|Windows Live|Yahoo", 8},
 {"Assistant",                       "X-ASSISTANT", "", 8},
-{"Multi",                           "", "", 6}
+{"Multi",                           "",           "", 6}
 }
 local encoding = {
 ['windows-1250'] = 'cp1250',
@@ -114,6 +114,7 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
     if h == nil then return nil end
     local c, i, j = 1, 1, 0
     local vc = false
+    local t
     all = {}
     for l in h:lines() do
       if j == 1 then
@@ -130,19 +131,19 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
         if string.sub(l, 1, 9) == 'END:VCARD' then
           j = 1
         else
-          l = string.gsub(l, '[\r\n]+$', '')
-          if string.match(l, '^[A-Z][A-Z%-]*[:;]') == nil then
+          t = string.gsub(l, '[\r\n]+$', '')
+          if string.match(t, '^[A-Z][A-Z%-]*[:;]') == nil then
             while true do
-              if string.sub(l, 1, 1) == ' ' then l = string.sub(l, 2, -1) else break end
+              if string.sub(t, 1, 1) == ' ' then t = string.sub(t, 2, -1) else break end
             end
             n1 = string.len(all[c - 1])
             if string.sub(all[c - 1], n1, n1) == '=' then
-              all[c - 1] = string.sub(all[c - 1], 1, n1 - 1) .. l
+              all[c - 1] = string.sub(all[c - 1], 1, n1 - 1) .. t
             else
-              all[c - 1] = all[c - 1] .. l
+              all[c - 1] = all[c - 1] .. t
             end
           else
-            all[c] = l
+            all[c] = t
             c = c + 1
           end
         end
@@ -193,6 +194,9 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
   -- IM
   elseif FieldIndex == 32 then
     return im[UnitIndex + 1]
+  -- Multi
+  elseif FieldIndex == 34 then
+    return bm
   end
   -- Other fields
   s = GetString(fields[FieldIndex + 1][2], string.len(fields[FieldIndex + 1][2]))
@@ -310,9 +314,6 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
   -- X-ASSISTANT
   elseif FieldIndex == 33 then
     return GetValue(s, 'X-ASSISTANT', 11)
-  -- Multi
-  elseif FieldIndex == 34 then
-    return bm
   end
   return nil
 end

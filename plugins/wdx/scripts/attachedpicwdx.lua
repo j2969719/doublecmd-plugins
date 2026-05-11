@@ -1,5 +1,5 @@
 -- attachedpicwdx.lua (cross-platform)
--- 2025.07.30
+-- 2026.05.09
 --[[
 Getting some information about attached pictures: MP3 (ID3v2.3 & ID3v2.4) and FLAC.
 (For MP3 without ID3v2, the script returns 0 and "false".)
@@ -7,8 +7,7 @@ Supported fields: see table "fields".
 
 P.S.
 GetTagSize: from Audio Tools Library
-hex2bin: https://stackoverflow.com/questions/9137415/lua-writing-hexadecimal-values-as-a-binary-file
-bin2dec (BinToNumS): https://stackoverflow.com/questions/37543274/how-do-i-convert-binary-to-decimal-lua
+BitAND: https://stackoverflow.com/questions/5977654/how-do-i-use-the-bitwise-operator-xor-in-lua
 ]]
 
 local fields = {
@@ -25,12 +24,6 @@ local ptype = {
 [0x04] = 3,
 [0x06] = 5,
 [0x08] = 4
-}
-local h2b = {
-["0"] = "0000", ["1"] = "0001", ["2"] = "0010", ["3"] = "0011",
-["4"] = "0100", ["5"] = "0101", ["6"] = "0110", ["7"] = "0111",
-["8"] = "1000", ["9"] = "1001", ["a"] = "1010", ["b"] = "1011",
-["c"] = "1100", ["d"] = "1101", ["e"] = "1110", ["f"] = "1111"
 }
 local ar = {}
 local filename = ""
@@ -66,15 +59,13 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
     local d = h:read(4)
     if string.sub(d, 1, 4) == 'fLaC' then
       while true do
+        -- Metadata block
         d = h:read(4)
-        t = BinToNumBEs(d, 1, 4)
-        t = string.gsub(t, '[0-9a-f]', h2b)
-        -- Last-metadata-block flag
-        at = string.sub(t, 1, 1)
+        at = string.byte(d,1, 1)
         -- Block type
-        p = BinToNumS(string.sub(t, 2, 8))
+        p = BitAND(at, 0x7f)
         -- Size
-        s = BinToNumS(string.sub(t, 9, 32))
+        s = BinToNumBE(d, 2, 4)
         -- Block type == PICTURE
         if p == 6 then
           d = h:read(4)
@@ -84,7 +75,8 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
           s = s - 4
         end
         -- Check the last-metadata-block flag
-        if at == '1' then break else h:seek('cur', s) end
+        if at >= 0x80 then break end
+        h:seek('cur', s)
       end
       h:close()
       ar[1] = c
@@ -139,26 +131,19 @@ end
 
 function BinToNumBE(d, n1, n2)
   local r = ''
+  if string.len(d) == 3 then r = '00' end
   for i = n1, n2 do
     r = r .. string.format('%02x', string.byte(d, i))
   end
   return tonumber('0x' .. r)
 end
 
-function BinToNumBEs(d, n1, n2)
-  local r = ''
-  for i = n1, n2 do
-    r = r .. string.format('%02x', string.byte(d, i))
+function BitAND(a, b)
+  local p, c = 1, 0
+  while a > 0 and b > 0 do
+    local ra, rb = a % 2, b % 2
+    if ra + rb > 1 then c = c + p end
+    a, b, p = (a - ra) / 2, (b - rb) / 2, p * 2
   end
-  return r
-end
-
-function BinToNumS(bin)
-  bin = string.reverse(bin)
-  local sum = 0
-  for i = 1, string.len(bin) do
-    num = string.sub(bin, i, i) == '1' and 1 or 0
-    sum = sum + num * math.pow(2, i - 1)
-  end
-  return sum
+  return c
 end

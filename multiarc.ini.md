@@ -12,6 +12,7 @@ Also some separate files can be found [here](multiarc) (use *Options* > *Archive
 - [TC WCX Test + Wine](#wcxtest)
 - [UHARC + Wine](#uharc)
 - [UUEncode](#uue)
+- [Extract MHT](#mht)
 
 
 ---
@@ -139,3 +140,19 @@ FormMode=10
 FallBackArchivers=$HOME/.local/share/doublecmd/scripts/multiarc/uharc/uharc,$COMMANDER_PATH/scripts/multiarc/uharc/uharc,%ProgramFiles%\UHARC\UHARC.EXE
 ```
 Script [uharc](scripts/multiarc/uharc/uharc)
+
+---
+<a name="mht"><h3>Extract MHT</h3></a>
+```ini
+[MHT]
+Archiver=$HOME/.local/share/doublecmd/scripts/multiarc/extract_mht
+Description=Extract MHT
+IDSeekRange=0
+Extension=mht
+Format0=z+ n+
+List=%P l %AQ
+Extract=%P x %AQ @LQ
+Flags=2
+FormMode=0
+```
+Script [extract_mht](scripts/multiarc/extract_mht)

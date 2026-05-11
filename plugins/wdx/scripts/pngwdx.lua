@@ -1,5 +1,5 @@
 -- pngwdx.lua (cross-platform)
--- 2021.04.18
+-- 2026.05.09
 --[[
 Getting some information from PNG files.
 Supported fields: see table "fields".
@@ -69,11 +69,9 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
       d = h:read(13)
       h:close()
       -- Width
-      n = BinToNumBE(d, 1, 4)
-      ar[1] = tonumber(n, 10)
+      ar[1] = BinToNumBE(d, 1, 4)
       -- Height
-      n = BinToNumBE(d, 5, 8)
-      ar[2] = tonumber(n, 10)
+      ar[2] = BinToNumBE(d, 5, 8)
       -- Bit depth
       ar[3] = string.byte(d, 9)
       -- Color type

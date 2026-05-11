@@ -33,3 +33,4 @@ Not all but most of additions for Linux only.
 - [MTP plugin for Double Commander](https://github.com/BigIskander/mtp_plugin_doublecommander)<br>
 - [rclone WFX Plugin for Double Commander](https://github.com/miklos-szel/doublecmd-rclone-plugin) (miklos-szel)<br>
 - [Rclone plugin for Double Commander](https://github.com/BigIskander/rclone_plugin_doublecommander/) (BigIskander)<br>
+- [Hardlink Visualiser for Double Commander](https://github.com/arsinclair/dc-hardlink-visualiser)<br>

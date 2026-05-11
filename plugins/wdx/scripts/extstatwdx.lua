@@ -82,7 +82,7 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
                     result = extlist[ext]["size"];
                 end
                 if (fields[FieldIndex + 1][5] > 0) then
-                    result = result / math.pow(bytes, fields[FieldIndex + 1][5]);
+                    result = result / math_pow(bytes, fields[FieldIndex + 1][5]);
                 end
             end
         end
@@ -119,13 +119,17 @@ function chkdir(path, recursive)
     end
 end
 
+function math_pow(a, b)
+  return a ^ b
+end
+
 function strsize(size)
-    if (size > math.pow(bytes, 4)) then
-        return string.format("%.1f T", size / math.pow(bytes, 4));
-    elseif (size > math.pow(bytes, 3)) then
-        return string.format("%.1f G", size / math.pow(bytes, 3));
-    elseif (size > math.pow(bytes, 2)) then
-        return string.format("%.1f M", size / math.pow(bytes, 2));
+    if (size > math_pow(bytes, 4)) then
+        return string.format("%.1f T", size / math_pow(bytes, 4));
+    elseif (size > math_pow(bytes, 3)) then
+        return string.format("%.1f G", size / math_pow(bytes, 3));
+    elseif (size > math_pow(bytes, 2)) then
+        return string.format("%.1f M", size / math_pow(bytes, 2));
     elseif (size > bytes) then
         return string.format("%.1f K", size / bytes);
     end
