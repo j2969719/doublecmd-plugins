@@ -42,7 +42,5 @@ stash/qtermwidget-qt5/pkg/
 *kostyl
 !*kostyl/
 plugins/*/settings.ini
-plugins/wlx/rich_editor_qt/build/**
-!plugins/wlx/rich_editor_qt/build/rich_editor_qt.wlx
 build/
 .vscode/
