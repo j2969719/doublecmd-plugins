@@ -12,6 +12,10 @@ function ContentSetDefaultParams(IniFileName, PlugApiVerHi, PlugApiVerLow)
     units = units .. '|' .. i
   end
   z7cmd = get_output("sh -c 'which 7zz || which 7z' 2>/dev/null"):sub(1, -2)
+  if (z7cmd == '') then
+    plug_name = debug.getinfo(1).source:match("/([^/]+)$")
+    DC.LogWrite(plug_name .. ": 7zip is not installed", 2, true, false)
+  end
 end
 
 function ContentGetSupportedField(FieldIndex)
@@ -33,6 +37,9 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
     prefix = '^'
     name = name:gsub("%.tar.*", '')
   else
+    if (z7cmd == '') then
+      return nil
+    end
     command = z7cmd .. " l -slt " .. FileName:gsub(' ', '\\ ') .. " -p 2>/dev/null"
     name = name:gsub(SysUtils.ExtractFileExt(name), '')
   end
@@ -87,6 +94,7 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
   end
   return nil
 end
+
 
 function get_output(command)
   if not command then

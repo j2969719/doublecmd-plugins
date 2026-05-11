@@ -24,15 +24,15 @@ local fields = {
 }
 
 local mults = {
-    ["kB"]  =  math.pow(10, 3),
-    ["KB"]  =  math.pow(10, 3),
-    ["MB"]  =  math.pow(10, 6),
-    ["GB"]  =  math.pow(10, 9),
-    ["TB"]  = math.pow(10, 12),
-    ["KiB"] =  math.pow(2, 10),
-    ["MiB"] =  math.pow(2, 20),
-    ["GiB"] =  math.pow(2, 30),
-    ["TiB"] =  math.pow(2, 40),
+    ["kB"]  =  10 ^ 3,
+    ["KB"]  =  10 ^ 3,
+    ["MB"]  =  10 ^ 6,
+    ["GB"]  =  10 ^ 9,
+    ["TB"]  = 10 ^ 12,
+    ["KiB"] =  2 ^ 10,
+    ["MiB"] =  2 ^ 20,
+    ["GiB"] =  2 ^ 30,
+    ["TiB"] =  2 ^ 40,
 }
 
 local months = {

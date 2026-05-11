@@ -4,6 +4,7 @@ Media player plugin.
 
 ## Compatibility
 - `doublecmd-gtk2`
+- `doublecmd-gtk3`
 - `doublecmd-qt5`
 - `doublecmd-qt6`
 

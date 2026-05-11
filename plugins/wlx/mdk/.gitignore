@@ -1,0 +1,18 @@
+# Build artifacts
+*.wlx
+*.so
+*.so.*
+*.o
+*.ppu
+*.compiled
+*.or
+*.res
+*.moc
+*.dsym
+
+# Lazarus/FPC build dirs
+lib/
+backup/
+
+# MDK SDK binaries (headers in sdk/ are tracked)
+libmdk*

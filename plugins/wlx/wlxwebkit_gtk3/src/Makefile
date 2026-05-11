@@ -1,7 +1,7 @@
 CC = gcc
 CFLAGS = -shared -fPIC -Wl,--no-as-needed
 
-libs := `pkg-config --cflags --libs gtk+-3.0 webkit2gtk-4.0`
+libs := `pkg-config --cflags --libs gtk+-3.0 webkit2gtk-4.1 || pkg-config --cflags --libs gtk+-3.0 webkit2gtk-4.0`
 includes := -I../../../sdk
 
 plugdir := $(shell basename '$(realpath ..)')
