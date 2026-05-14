@@ -347,9 +347,11 @@ static gboolean switch_page_cb(GtkNotebook *notebook, GtkWidget *page, guint pag
 
 			if (re)
 			{
-				gchar *text = g_regex_replace(re, buf, -1, 0, "<b>\\1:</b> <tt>\\2</tt>", 0, NULL);
-				g_regex_unref(re);
+				gchar *escaped = g_markup_escape_text(buf, -1);
 				g_free(buf);
+				gchar *text = g_regex_replace(re, escaped, -1, 0, "<b>\\1:</b> <tt>\\2</tt>", 0, NULL);
+				g_regex_unref(re);
+				g_free(escaped);
 				gtk_label_set_markup(GTK_LABEL(data->exif_label), text);
 				g_free(text);
 				data->is_exif_set = TRUE;

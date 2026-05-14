@@ -304,10 +304,11 @@ class ImageViewer : public QWidget
 			proc.start("exiftool", params);
 			proc.waitForFinished();
 			QString output(proc.readAllStandardOutput());
+			QString escaped = output.toHtmlEscaped();
 			proc.close();
 			QRegularExpression re("^([^\\t]+)\\t(.*)$", QRegularExpression::MultilineOption);
-			output.replace(re, "<b>\\1:</b> <tt>\\2</tt><br>");
-			m_lblExif->setText(output);
+			escaped.replace(re, "<b>\\1:</b> <tt>\\2</tt><br>");
+			m_lblExif->setText(escaped);
 			m_isExifSet = true;
 		}
 
