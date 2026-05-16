@@ -389,11 +389,11 @@ def on_btn_next_clicked(button, view):
 
 def on_btn_first_clicked(button, view):
 	uri = getattr(view, "first_uri", None)
-	html = getattr(view, "first_html", None)
+	html_content = getattr(view, "first_html", None)
 	if uri:
 		view.load_uri(uri)
-	elif html:
-		view.load_html(html, None)
+	elif html_content:
+		view.load_html(html_content, None)
 
 def on_btn_stop_clicked(button, view):
 	view.stop_loading()
@@ -441,7 +441,7 @@ def on_decide_policy(view, decision, decision_type, *args):
 		return False
 	if uri.startswith("about:/"):
 		uri = uri[7:]
-	html = None
+	html_content = None
 	try:
 		if "://" not in uri:
 			dirname = getattr(view, "dirname", None)
@@ -454,10 +454,10 @@ def on_decide_policy(view, decision, decision_type, *args):
 			path, _ = GLib.filename_from_uri(uri)
 		ext = os.path.splitext(path)[1].lower()
 		if is_md_there and ext == ".md":
-			html = md_to_html(path)
+			html_content = md_to_html(path)
 
-		if html:
-			view.load_html(html, None)
+		if html_content:
+			view.load_html(html_content, None)
 			decision.ignore()
 			return True
 	except Exception as e:
@@ -594,27 +594,27 @@ def load_file(xid, filename):
 	if hasattr(view, 'zim_archive'):
 		del view.zim_archive
 	uri = None
-	html = None
+	html_content = None
 	tmpdir = getattr(view, "tmpdir", None)
 	widgets[xid]["column"].set_title(os.path.basename(filename).replace("_", " "))
 
 	if is_fb2_there and ext ==".fb2":
-		html = fb2_to_html(filename, xid)
+		html_content = fb2_to_html(filename, xid)
 	if is_fb2_there and is_fbz:
-		html = open_fbz(filename, tmpdir, xid)
+		html_content = open_fbz(filename, tmpdir, xid)
 	elif is_use_open_epub and ext == ".epub":
 		uri = open_epub(filename, tmpdir, xid)
 	elif is_use_extract_mht and ext in [".mht", ".mhtml"]:
 		clean_tmpdir(tmpdir)
 		uri = extract_mht(filename, tmpdir)
 
-	if not html and not uri:
+	if not html_content and not uri:
 		if ext == ".chm":
 			uri = open_chm(filename, tmpdir, xid)
 		elif ext == ".maff":
 			uri = open_maff(filename, tmpdir)
 		elif ext in mutool_exts:
-			html = convert_using_mutool(filename)
+			html_content = convert_using_mutool(filename)
 		elif ext in hx_exts or (is_use_hx_mht and ext in [".mht", ".mhtml"]):
 			uri = convert_using_hx(filename, tmpdir)
 		elif ext == ".zim":
@@ -631,9 +631,9 @@ def load_file(xid, filename):
 	if uri:
 		view.first_uri = uri
 		view.load_uri(uri)
-	elif html:
-		view.first_html = html
-		view.load_html(html, None)
+	elif html_content:
+		view.first_html = html_content
+		view.load_html(html_content, None)
 	else:
 		return False
 

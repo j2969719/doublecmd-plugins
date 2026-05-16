@@ -1,0 +1,1 @@
+../../gtk_socket/scripts/fb2info_label.py
