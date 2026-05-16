@@ -19,7 +19,7 @@ from gi.repository import WebKit2
 
 data = ""
 
-html = '<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"><html><head><title>View description</title><meta http-equiv="Content-Type" content="text/html; charset='
+result = '<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"><html><head><title>View description</title><meta http-equiv="Content-Type" content="text/html; charset='
 
 def CheckFile(d):
     b = 0
@@ -55,8 +55,8 @@ def GetTagValue(s, t):
 
 def GetAutors(s):
     l = []
-    n3 = 1
-    while n3 > 0:
+    n3 = 0
+    while n3 > -1:
         n1 = s.find("<author>", n3)
         if n1 == -1:
             break
@@ -78,7 +78,7 @@ def GetAutors(s):
 def GetGenres(s):
     l = []
     c = 0
-    n3 = 1
+    n3 = 0
     while c > -1:
         n1 = s.find("<genre>", n3)
         if n1 == -1:
@@ -121,9 +121,9 @@ def GetPub(s):
     id = GetTagValue(s, "isbn")
     if len(id) > 0:
         if c == 1:
-            r = r + ". ISBN: " + id + "."
+            r = r + ". ISBN: " + id
         else:
-            r = "ISBN: " + id + "."
+            r = "ISBN: " + id
     return "<p>" + r + "</p>"
 
 
@@ -178,7 +178,7 @@ else:
 if len(data) == 0:
     sys.exit(1)
 
-html = html + en + '"></head><body><div>'
+result = result + en + '"></head><body><div>'
 
 enddesc = data.find("</description>", 0)
 
@@ -187,34 +187,34 @@ te = data.find("</title-info>", tb)
 
 n1 = data.find("<book-title>", tb, te)
 n2 = data.find("</book-title>", n1)
-html = html + "<h2>" + data[n1 + 12:n2] + "</h2>"
+result = result + "<h2>" + data[n1 + 12:n2] + "</h2>"
 
 tmp = GetAutors(data[tb + 12:te])
-html = html + "<h3>" + tmp + "</h3>"
+result = result + "<h3>" + tmp + "</h3>"
 
 tmp = GetGenres(data[tb + 12:te])
-html = html + "<p>Genres: " + tmp + "</p>"
+result = result + "<p>Genres: " + tmp + "</p>"
 
 n1 = data.find("<sequence", tb, te)
 if n1 != -1:
     n2 = data.find(">", n1, te)
-    html = html + GetSeq(data[n1:n2])
+    result = result + GetSeq(data[n1:n2])
 
 n1 = data.find("<publish-info>", 0, enddesc)
 if n1 != -1:
     n2 = data.find("</publish-info>", n1)
-    html = html + GetPub(data[n1:n2])
+    result = result + GetPub(data[n1:n2])
 
 n1 = data.find("<annotation>", tb, te)
 if n1 != -1:
     n2 = data.find("</annotation>", n1)
-    html = html + data[n1 + 12:n2]
+    result = result + data[n1 + 12:n2]
 
 # Validation
 try:
     root = ET.fromstring(data)
 except ET.ParseError:
-    html = html + '<p><font color="#c00000"><u>This file is not a valid XML file!</u></font></p>'
+    result = result + '<p><font color="#c00000"><u>This file is not a valid XML file!</u></font></p>'
 
 n1 = data.find("<coverpage>", tb, te)
 if n1 != -1:
@@ -235,17 +235,17 @@ if n1 != -1:
             else:
                 ctype = GetType(data[nb:ne])
                 n2 = data.find("</binary>", nb)
-                html = html + '<div><img alt="Cover" src="data:' + ctype + ';base64,' + data[ne + 1:n2] + '"/>'
+                result = result + '<div><img alt="Cover" src="data:' + ctype + ';base64,' + data[ne + 1:n2] + '"/>'
                 break
 
-html = html + "</div></body></html>"
+result = result + "</div></body></html>"
 
 plug = Gtk.Plug()
 plug.construct(wid)
 view = WebKit2.WebView()
 plug.add(view)
 
-view.load_html(html)
+view.load_html(result)
 
 plug.connect("delete-event", Gtk.main_quit)
 plug.show_all()
