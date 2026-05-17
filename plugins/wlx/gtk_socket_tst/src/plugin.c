@@ -295,6 +295,9 @@ static gchar *resolve_redirect(gchar *group)
 		return NULL;
 	}
 
+	if (!group)
+		return NULL;
+
 	if (!g_key_file_has_key(cfg, group, "script_ipc", NULL) &&
 	                !g_key_file_has_key(cfg, group, "script", NULL) &&
 	                !g_key_file_has_key(cfg, group, "command", NULL))
