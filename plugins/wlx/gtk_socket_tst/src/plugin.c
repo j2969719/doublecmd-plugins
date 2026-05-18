@@ -677,6 +677,7 @@ static void send_destroy_to_all(HWND main_box)
 		g_array_set_size(xids, 0);
 	}
 
+	gboolean is_exited = gtk_widget_get_visible(GTK_WIDGET(g_object_get_data(G_OBJECT(main_box), "shruggie")));
 	GPtrArray *exec_data = (GPtrArray*)g_object_get_data(G_OBJECT(main_box), "exec_data");
 
 	if (exec_data)
@@ -684,7 +685,9 @@ static void send_destroy_to_all(HWND main_box)
 		for (guint i = 0; i < exec_data->len; i++)
 		{
 			ExecData *data = g_ptr_array_index(exec_data, i);
-			data->is_destroyed = TRUE;
+
+			if (!is_exited)
+				data->is_destroyed = TRUE;
 		}
 
 		g_ptr_array_set_size(exec_data, 0);
@@ -849,6 +852,7 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 		GPtrArray *exec_data = g_ptr_array_new();
 		g_ptr_array_add(exec_data, (gpointer)data);
 		g_object_set_data_full(G_OBJECT(main_box), "exec_data", exec_data, (GDestroyNotify)g_ptr_array_unref);
+		g_object_set_data(G_OBJECT(main_box), "shruggie", label);
 		return main_box;
 	}
 
@@ -877,6 +881,7 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 
 	g_object_set_data(G_OBJECT(main_box), "script_item", item);
 	g_object_set_data(G_OBJECT(main_box), "info_label", info_label);
+	g_object_set_data(G_OBJECT(main_box), "shruggie", label);
 	g_object_set_data(G_OBJECT(main_box), "xid", GSIZE_TO_POINTER(xid));
 
 	return main_box;
