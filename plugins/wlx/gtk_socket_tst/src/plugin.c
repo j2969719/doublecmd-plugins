@@ -561,10 +561,10 @@ static void on_btn_spawn_clicked(GtkToolItem *button, gpointer data)
 
 	if (group)
 	{
-		GtkWidget *label = GTK_WIDGET(g_object_get_data(G_OBJECT(data), "shruggie"));
+		GtkWidget *main_box = GTK_WIDGET(g_object_get_data(G_OBJECT(data), "main_box"));
+		GtkWidget *label = GTK_WIDGET(g_object_get_data(G_OBJECT(main_box), "shruggie"));
 		gtk_widget_hide(label);
 		GtkWidget *socket = gtk_socket_new();
-		GtkWidget *main_box = (GtkWidget*)g_object_get_data(G_OBJECT(data), "main_box");
 		gtk_box_pack_start(GTK_BOX(main_box), socket, TRUE, TRUE, 0);
 		g_signal_connect(socket, "plug-removed", G_CALLBACK(on_plug_removed), label);
 		g_signal_connect(socket, "focus-in-event", G_CALLBACK(on_focus_in), data);
@@ -577,13 +577,16 @@ static void on_btn_spawn_clicked(GtkToolItem *button, gpointer data)
 
 		if (item)
 		{
-			if (!send_command(item, xid, CMD_CREATE, "spawn", 0))
+			gchar *mode = (gchar*)g_object_get_data(G_OBJECT(data), "mode");
+			gint flags = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(data), "flags"));
+
+			if (!send_command(item, xid, CMD_CREATE, mode, flags))
 			{
 				gtk_widget_destroy(socket);
 				show_message(CMD_CREATE " failed!", GTK_MESSAGE_ERROR, button);
 				gtk_widget_show(label);
 			}
-			else if (!send_command(item, xid, CMD_LOAD, filename, 0))
+			else if (!send_command(item, xid, CMD_LOAD, filename, flags))
 			{
 				send_command(item, xid, CMD_DESTROY, "spawn failed", -1);
 				gtk_widget_destroy(socket);
@@ -780,16 +783,15 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	gtk_widget_show(main_box);
 	gtk_widget_realize(socket);
 
-	if (is_insensitive)
+	const gchar *role = gtk_window_get_role(GTK_WINDOW(gtk_widget_get_toplevel(GTK_WIDGET(ParentWin))));
+	gboolean is_quickview = (g_strcmp0(role, "TfrmViewer") != 0);
+
+	if (is_insensitive && is_quickview)
 	{
-		const gchar *role = gtk_window_get_role(GTK_WINDOW(gtk_widget_get_toplevel(GTK_WIDGET(ParentWin))));
-
-		if (g_strcmp0(role, "TfrmViewer") != 0)
 #ifndef GTK3PLUG
-			gtk_widget_set_state(socket, GTK_STATE_INSENSITIVE);
-
+		gtk_widget_set_state(socket, GTK_STATE_INSENSITIVE);
 #else
-			gtk_widget_set_sensitive(socket, FALSE);
+		gtk_widget_set_sensitive(socket, FALSE);
 #endif
 	}
 
@@ -814,15 +816,13 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 		gtk_box_pack_end(GTK_BOX(debug_box), GTK_WIDGET(btn_spawn), FALSE, FALSE, 2);
 		gtk_box_pack_end(GTK_BOX(debug_box), GTK_WIDGET(btn_bumpcfg), FALSE, FALSE, 2);
 
-		g_object_set_data(G_OBJECT(info_label), "shruggie", label);
-		g_object_set_data(G_OBJECT(info_label), "socket", socket);
-		g_object_set_data(G_OBJECT(info_label), "main_box", main_box);
-		g_object_set_data_full(G_OBJECT(info_label), "filename", g_strdup(FileToLoad), (GDestroyNotify)g_free);
 		g_signal_connect(G_OBJECT(btn_spawn), "clicked", G_CALLBACK(on_btn_spawn_clicked), info_label);
 		g_signal_connect(G_OBJECT(btn_kill), "clicked", G_CALLBACK(on_btn_kill_clicked), info_label);
 		g_signal_connect(G_OBJECT(btn_bumpcfg), "clicked", G_CALLBACK(on_btn_bumpcfg_clicked), info_label);
 	}
 
+	g_object_set_data(G_OBJECT(info_label), "main_box", main_box);
+	g_object_set_data_full(G_OBJECT(info_label), "filename", g_strdup(FileToLoad), (GDestroyNotify)g_free);
 	g_signal_connect(socket, "focus-in-event", G_CALLBACK(on_focus_in), (gpointer)info_label);
 
 	if (!item)
@@ -856,7 +856,11 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 		return main_box;
 	}
 
-	if (!send_command(item, xid, CMD_CREATE, "", ShowFlags) || !send_command(item, xid, CMD_LOAD, FileToLoad, ShowFlags))
+	gchar *mode = g_strdup(is_quickview ? "quickview" : "viewer");
+	g_object_set_data_full(G_OBJECT(info_label), "mode", mode, (GDestroyNotify)g_free);
+	g_object_set_data(G_OBJECT(info_label), "flags", GINT_TO_POINTER(ShowFlags));
+
+	if (!send_command(item, xid, CMD_CREATE, mode, ShowFlags) || !send_command(item, xid, CMD_LOAD, FileToLoad, ShowFlags))
 	{
 		gtk_widget_destroy(main_box);
 		return NULL;
