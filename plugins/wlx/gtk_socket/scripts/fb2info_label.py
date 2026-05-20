@@ -13,7 +13,6 @@ from gi.repository import Gtk, GLib, GdkPixbuf
 import xml.etree.ElementTree as ET
 
 #import re   # I know about PEP 8, but see below.
-#import html # I know about PEP 8, but see below.
 
 wid = int(sys.argv[1])
 path = sys.argv[2]
@@ -154,6 +153,7 @@ def GetAnnotation(s):
         return re.sub(clean, "", r)
 
 en = ""
+r = False
 l = len(path)
 tmp = path[l - 4:l]
 e = tmp.lower()
@@ -170,6 +170,7 @@ if e == ".fb2" or e == ".fbd":
             hfile = open(path, "r", encoding=en)
         data = hfile.read()
         hfile.close()
+        r = True
 else:
     if e == ".zip":
         tmp = path[l - 8:l - 4]
@@ -195,13 +196,16 @@ else:
                 else:
                     data = hfile.read().decode(encoding=en)
                 hfile.close()
+                r = True
             break
     z.close()
 
-if len(data) == 0:
+if r == False:
     sys.exit(1)
 
 enddesc = data.find("</description>", 0)
+if enddesc == -1:
+    sys.exit(1)
 
 tb = data.find("<title-info>", 0, enddesc)
 te = data.find("</title-info>", tb)
@@ -238,11 +242,6 @@ try:
     root = ET.fromstring(data)
 except ET.ParseError:
     result = result + '\n\n<span foreground="darkred"><b><u>This file is not a valid XML file!</u></b></span>'
-
-n1 = result.find("&")
-if n1 != -1:
-    import html
-    result = html.unescape(result)
 
 bp = False
 n1 = data.find("<coverpage>", tb, te)
