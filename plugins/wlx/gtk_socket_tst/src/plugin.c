@@ -380,6 +380,63 @@ static gchar* get_line_from_script(ScriptItem *item)
 	return line;
 }
 
+static gchar* replace_string(gchar *string, const gchar *old, const gchar *new)
+{
+	gchar **split = g_strsplit(string, old, -1);
+	g_free(string);
+	gchar *result = g_strjoinv(new, split);
+	g_strfreev(split);
+	return result;
+}
+
+static gboolean check_executable(gchar *command)
+{
+	gchar **argv;
+	gchar *executable = NULL;
+	gboolean result = FALSE;
+
+	if (g_shell_parse_argv(command, NULL, &argv, NULL))
+	{
+		executable = g_strdup(argv[0]);
+		g_strfreev(argv);
+	}
+
+	if (!executable)
+		return result;
+
+	if (strstr(executable, "$PLUG_DIR"))
+		executable = replace_string(executable, "$PLUG_DIR", plug_path);
+
+	if (strstr(executable, "$COMMANDER_PATH"))
+		executable = replace_string(executable, "$COMMANDER_PATH", g_getenv("COMMANDER_PATH"));
+
+	if (strstr(executable, "$HOME"))
+		executable = replace_string(executable, "$HOME", g_getenv("HOME"));
+
+	if (executable[0] == '/')
+		return g_file_test(executable, G_FILE_TEST_IS_EXECUTABLE);
+
+	gchar **dirs = g_strsplit(new_path, ":", -1);
+
+	for (int i = 0; dirs[i] != NULL; i++)
+	{
+		gchar *filename = g_strdup_printf("%s/%s", dirs[i], executable);
+
+		if (g_file_test(filename, G_FILE_TEST_IS_EXECUTABLE))
+		{
+			result = TRUE;
+			break;
+		}
+
+		g_free(filename);
+	}
+
+	g_strfreev(dirs);
+	g_free(executable);
+
+	return result;
+}
+
 static ScriptItem* get_script_item(gchar *group)
 {
 	GError *err = NULL;
@@ -398,6 +455,9 @@ static ScriptItem* get_script_item(gchar *group)
 
 	if (!item)
 	{
+		if (!check_executable(script))
+			return NULL;
+
 		item = g_new0(ScriptItem, 1);
 		item->script = script;
 		get_script_settings(item, group);
@@ -506,6 +566,9 @@ static gboolean send_command(ScriptItem *item, gint64 xid, gchar *command, gchar
 static gboolean execute_command(gchar *command, char *filename, gsize xid, gint exit_timeout, ExecData *data)
 {
 	if (!command || !g_strrstr(command, "$FILE") || !g_strrstr(command, "$XID"))
+		return FALSE;
+
+	if (!check_executable(command))
 		return FALSE;
 
 	char *argv[] = {"sh", "-c", command, NULL};
@@ -737,6 +800,7 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	gint exit_timeout = 0;
 	gboolean is_spinner = FALSE;
 	gboolean is_insensitive = FALSE;
+	gboolean is_noshruggie = g_key_file_get_boolean(cfg, group, "noshruggie", NULL);
 
 	if (!item)
 	{
@@ -768,13 +832,13 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	GtkWidget *debug_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 5);
 #endif
 	GtkWidget *socket = gtk_socket_new();
-	GtkWidget *label = gtk_label_new("¯\\_(ツ)_/¯");
+	GtkWidget *label = gtk_label_new(is_noshruggie ? NULL : "¯\\_(ツ)_/¯");
 	gtk_widget_show(socket);
 	gtk_box_pack_start(GTK_BOX(main_box), debug_box, FALSE, FALSE, 0);
 	gtk_box_pack_start(GTK_BOX(main_box), socket, TRUE, TRUE, 0);
-	gtk_box_pack_end(GTK_BOX(main_box), label, TRUE, FALSE, 0);
+	gtk_box_pack_end(GTK_BOX(main_box), label, !is_noshruggie, FALSE, 0);
 
-	if (!is_global_nospinner && (is_spinner || item->is_silent))
+	if (!is_global_nospinner && (is_spinner || (item && item->is_silent)))
 	{
 		GtkWidget *spinner = gtk_spinner_new();
 		gtk_widget_show(spinner);
