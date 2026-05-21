@@ -17,6 +17,9 @@ except ValueError:
 from gi.repository import Gtk, GLib
 from gi.repository import WebKit2
 
+wid = int(sys.argv[1])
+path = sys.argv[2]
+
 data = ""
 
 result = '<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"><html><head><title>View description</title><meta http-equiv="Content-Type" content="text/html; charset='
@@ -62,12 +65,38 @@ def GetAutors(s):
             break
         else:
             n2 = s.find("</author>", n1)
-            tmp = s[n1 + 8:n2]
+            tmp = s[n1:n2]
             fn = GetTagValue(tmp, "last-name")
             for t in "first-name", "middle-name":
                 t2 = GetTagValue(tmp, t)
                 if len(t2) > 0:
                     fn = fn + " " + t2
+            if fn == "":
+                fn = GetTagValue(tmp, "nickname")
+            l.append(fn)
+        n3 = n2
+    if len(l) == 1:
+        return l[0]
+    else:
+        return ', '.join(l)
+
+def GetTranslator(s):
+    l = []
+    n3 = 0
+    while n3 > -1:
+        n1 = s.find("<translator>", n3)
+        if n1 == -1:
+            break
+        else:
+            n2 = s.find("</translator>", n1)
+            tmp = s[n1:n2]
+            fn = GetTagValue(tmp, "last-name")
+            for t in "first-name", "middle-name":
+                t2 = GetTagValue(tmp, t)
+                if len(t2) > 0:
+                    fn = fn + " " + t2
+            if fn == "":
+                fn = GetTagValue(tmp, "nickname")
             l.append(fn)
         n3 = n2
     if len(l) == 1:
@@ -126,11 +155,8 @@ def GetPub(s):
             r = "ISBN: " + id
     return "<p>" + r + "</p>"
 
-
-wid = int(sys.argv[1])
-path = sys.argv[2]
-
 en = ""
+r = False
 l = len(path)
 tmp = path[l - 4:l]
 e = tmp.lower()
@@ -147,6 +173,7 @@ if e == ".fb2" or e == ".fbd":
             hfile = open(path, "r", encoding=en)
         data = hfile.read()
         hfile.close()
+        r = True
 else:
     if e == ".zip":
         tmp = path[l - 8:l - 4]
@@ -172,15 +199,18 @@ else:
                 else:
                     data = hfile.read().decode(encoding=en)
                 hfile.close()
+                r = True
             break
     z.close()
 
-if len(data) == 0:
+if r == False:
     sys.exit(1)
 
 result = result + en + '"></head><body><div>'
 
 enddesc = data.find("</description>", 0)
+if enddesc == -1:
+    sys.exit(1)
 
 tb = data.find("<title-info>", 0, enddesc)
 te = data.find("</title-info>", tb)
@@ -189,10 +219,15 @@ n1 = data.find("<book-title>", tb, te)
 n2 = data.find("</book-title>", n1)
 result = result + "<h2>" + data[n1 + 12:n2] + "</h2>"
 
-tmp = GetAutors(data[tb + 12:te])
+tmp = GetAutors(data[tb:te])
 result = result + "<h3>" + tmp + "</h3>"
 
-tmp = GetGenres(data[tb + 12:te])
+n1 = data.find("<translator", tb, te)
+if n1 != -1:
+    tmp = GetTranslator(data[n1 - 2:te])
+    result = result + "<p>Translator(s): " + tmp + "</p>"
+
+tmp = GetGenres(data[tb:te])
 result = result + "<p>Genres: " + tmp + "</p>"
 
 n1 = data.find("<sequence", tb, te)

@@ -58,12 +58,38 @@ def GetAutors(s):
             break
         else:
             n2 = s.find("</author>", n1)
-            tmp = s[n1 + 8:n2]
+            tmp = s[n1:n2]
             fn = GetTagValue(tmp, "last-name")
             for t in "first-name", "middle-name":
                 t2 = GetTagValue(tmp, t)
                 if len(t2) > 0:
                     fn = fn + " " + t2
+            if fn == "":
+                fn = GetTagValue(tmp, "nickname")
+            l.append(fn)
+        n3 = n2
+    if len(l) == 1:
+        return l[0]
+    else:
+        return ', '.join(l)
+
+def GetTranslator(s):
+    l = []
+    n3 = 0
+    while n3 > -1:
+        n1 = s.find("<translator>", n3)
+        if n1 == -1:
+            break
+        else:
+            n2 = s.find("</translator>", n1)
+            tmp = s[n1:n2]
+            fn = GetTagValue(tmp, "last-name")
+            for t in "first-name", "middle-name":
+                t2 = GetTagValue(tmp, t)
+                if len(t2) > 0:
+                    fn = fn + " " + t2
+            if fn == "":
+                fn = GetTagValue(tmp, "nickname")
             l.append(fn)
         n3 = n2
     if len(l) == 1:
@@ -214,10 +240,15 @@ n1 = data.find("<book-title>", tb, te)
 n2 = data.find("</book-title>", n1)
 result = '<span size="x-large"><b>' + data[n1 + 12:n2] + '</b></span>\n'
 
-tmp = GetAutors(data[tb + 12:te])
+tmp = GetAutors(data[tb:te])
 result = result + '\n<span size="large"><b>' + tmp + "\n"
 
-tmp = GetGenres(data[tb + 12:te])
+n1 = data.find("<translator", tb, te)
+if n1 != -1:
+    tmp = GetTranslator(data[n1 - 2:te])
+    result = result + "\nTranslator(s): " + tmp
+
+tmp = GetGenres(data[tb:te])
 result = result + "\nGenres: " + tmp
 
 n1 = data.find("<sequence", tb, te)
@@ -273,7 +304,7 @@ plug.construct(wid)
 view = Gtk.ScrolledWindow()
 plug.add(view)
 hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
-vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=5)
+vbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=5)
 label = Gtk.Label()
 label.set_margin_start(5)
 label.set_margin_end(5)
@@ -294,7 +325,8 @@ if bp == True:
     pixbuf = loader.get_pixbuf()
     width = pixbuf.get_width()
     height = pixbuf.get_height()
-    ratio = min(640 / width, 480 / height)
+    #ratio = min(640 / width, 480 / height)
+    ratio = min(400 / width, 300 / height)
     #image.set_from_pixbuf(pixbuf)
     image.set_from_pixbuf(pixbuf.scale_simple(width * ratio, height * ratio, GdkPixbuf.InterpType.BILINEAR))
 vbox.pack_start(label, False, True, 0)
