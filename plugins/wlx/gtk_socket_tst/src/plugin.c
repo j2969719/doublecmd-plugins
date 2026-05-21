@@ -596,6 +596,13 @@ static void on_btn_spawn_clicked(GtkToolItem *button, gpointer data)
 			else
 			{
 				GArray *xids = (GArray*)g_object_get_data(G_OBJECT(main_box), "xids");
+
+				if (!xids)
+				{
+					xids = g_array_new(FALSE, FALSE, sizeof(gsize));
+					g_object_set_data_full(G_OBJECT(main_box), "xids", xids, (GDestroyNotify)g_array_unref);
+				}
+
 				g_array_append_val(xids, xid);
 				gchar *info = g_strdup_printf(INFO_FMT " (last)", item->script, item->pid, xid);
 				gtk_label_set_text(GTK_LABEL(data), info);
