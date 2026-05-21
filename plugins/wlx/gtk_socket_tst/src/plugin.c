@@ -425,6 +425,7 @@ static gboolean check_executable(gchar *command)
 		if (g_file_test(filename, G_FILE_TEST_IS_EXECUTABLE))
 		{
 			result = TRUE;
+			g_free(filename);
 			break;
 		}
 
