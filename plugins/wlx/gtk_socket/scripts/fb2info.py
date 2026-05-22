@@ -140,7 +140,7 @@ def GetPub(s):
     l = []
     r = ""
     c = 0
-    for t in "publisher", "city", "year":
+    for t in "year", "publisher", "city":
         d = GetTagValue(s, t)
         if len(d) > 0:
             l.append(d)
@@ -150,7 +150,7 @@ def GetPub(s):
     id = GetTagValue(s, "isbn")
     if len(id) > 0:
         if c == 1:
-            r = r + ". ISBN: " + id
+            r = r + ".<br>ISBN: " + id
         else:
             r = "ISBN: " + id
     return "<p>" + r + "</p>"
@@ -221,6 +221,10 @@ result = result + "<h2>" + data[n1 + 12:n2] + "</h2>"
 
 tmp = GetAutors(data[tb:te])
 result = result + "<h3>" + tmp + "</h3>"
+
+tmp = GetTagValue(data[tb:te], "date")
+if tmp != "":
+    result = result + "<p>Date: " + tmp + "</p>"
 
 n1 = data.find("<translator", tb, te)
 if n1 != -1:

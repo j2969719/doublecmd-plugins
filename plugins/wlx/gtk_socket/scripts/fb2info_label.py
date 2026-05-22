@@ -133,7 +133,7 @@ def GetPub(s):
     l = []
     r = ""
     c = 0
-    for t in "publisher", "city", "year":
+    for t in "year", "publisher", "city":
         d = GetTagValue(s, t)
         if len(d) > 0:
             l.append(d)
@@ -143,7 +143,7 @@ def GetPub(s):
     id = GetTagValue(s, "isbn")
     if len(id) > 0:
         if c == 1:
-            r = r + ". ISBN: " + id
+            r = r + ".\nISBN: " + id
         else:
             r = "ISBN: " + id
     return r
@@ -241,7 +241,11 @@ n2 = data.find("</book-title>", n1)
 result = '<span size="x-large"><b>' + data[n1 + 12:n2] + '</b></span>\n'
 
 tmp = GetAutors(data[tb:te])
-result = result + '\n<span size="large"><b>' + tmp + "\n"
+result = result + '\n<span size="large"><b>' + tmp + "</b>\n"
+
+tmp = GetTagValue(data[tb:te], "date")
+if tmp != "":
+    result = result + "\nDate: " + tmp
 
 n1 = data.find("<translator", tb, te)
 if n1 != -1:
@@ -260,7 +264,6 @@ n1 = data.find("<publish-info>", 0, enddesc)
 if n1 != -1:
     n2 = data.find("</publish-info>", n1)
     result = result + "\n" + GetPub(data[n1:n2])
-result = result + "</b>"
 
 n1 = data.find("<annotation>", tb, te)
 if n1 != -1:
@@ -303,12 +306,12 @@ plug = Gtk.Plug()
 plug.construct(wid)
 view = Gtk.ScrolledWindow()
 plug.add(view)
-hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
+hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=5)
 label = Gtk.Label()
 label.set_margin_start(5)
-label.set_margin_end(5)
+#label.set_margin_end(5)
 label.set_margin_top(5)
-label.set_margin_bottom(5)
+#label.set_margin_bottom(5)
 label.set_markup(result)
 label.set_line_wrap(True)
 label.set_selectable(True)
