@@ -7,7 +7,7 @@ Plugins
 
 - [WFX plugins](#wfx)
 
-- WLX plugins: [GTK2](#wlxgtk) (for GTK2-version of DC only), [Qt5/Qt6](#wlxqt) (for Qt5 or Qt6 version of DC only)
+- WLX plugins: [GTK2/GTK3](#wlxgtk), [Qt5/Qt6](#wlxqt)
 
 - [DSX plugins](#dsx)
 
@@ -123,7 +123,7 @@ Returns one or more lines of files, detects text encoding.
 
 ---
 <a name="wdx-lua"><h3>WDX: Lua scripts</h3></a>
-Note: Some scripts uses command line utilities.
+Note: Some scripts use command line utilities.
 
 - [7zipwdx.lua](plugins/wdx/scripts/7zipwdx.lua)<br>
 Getting some information (method, files and folder count, etc) from archives (using 7-Zip). You can see list of fields in `fields` (first column).
@@ -177,7 +177,7 @@ Getting some ELF header information.
 Detection of file encoding. Requires `enca`.
 
 - [epubwdx.lua](plugins/wdx/scripts/epubwdx.lua) *(cross platform)*<br>
-Getting some information from EPUB files (2/3). See details in the beginning of script.
+Getting some information from EPUB2/EPUB3 files. See details in the beginning of script.
 
 - [exiftoolwdx.lua](plugins/wdx/scripts/exiftoolwdx.lua)<br>
 Getting information with [ExifTool](https://www.sno.phy.queensu.ca/~phil/exiftool/). You can see list of fields in `fields` (first column).
@@ -280,7 +280,7 @@ Returns some information from Arch Linux packages.
 Getting some information from PNG files.
 
 - [poheaderwdx.lua](plugins/wdx/scripts/poheaderwdx.lua) *(cross platform)*<br>
-Getting some information from PO-files (gettext).
+Getting some information from PO files (gettext).
 
 - [psdwdx.lua](plugins/wdx/scripts/psdwdx.lua) *(cross platform)*<br>
 Getting some information from PSD files.
@@ -300,7 +300,7 @@ Checking if file(s) exists in folder by extension. List of file extensions (edit
 For "Find files" dialog.
 
 - [somefilesindirwdx.lua](plugins/wdx/scripts/somefilesindirwdx.lua) *(cross platform)*<br>
-Like script above but for columns set or tooltips.
+Like script above, but for columns set or tooltips.
 
 - [svginfowdx.lua](plugins/wdx/scripts/svginfowdx.lua) *(cross platform)*<br>
 Getting some information from SVG files.
@@ -361,7 +361,7 @@ View files in the clipboard. (GTK2)
 View output of command line utilities (see `settings.ini`).
 
 - [cmdoutput_panel](plugins/wfx/cmdoutput_panel)<br>
-Like `cmdoutput` but it outputs data to a column in the file panel (DC 1.1+). Settings are stored in `$DC_CONFIG_PATH/j2969719.ini`.
+Like `cmdoutput`, but it outputs data to a column in the file panel (DC 1.1+). Settings are stored in `$DC_CONFIG_PATH/j2969719.ini`.
 
 - [contentfilter_crap](plugins/wfx/contentfilter_crap)<br>
 Filter files by content (DC 1.1+).
@@ -379,7 +379,7 @@ Filter files by Unix pattern (DC 1.1+).
 Access to bookmarks (RO) from `~/.config/gtk-3.0/bookmarks`.
 
 - [gtkrecent](plugins/wfx/gtkrecent)<br>
-View list of recently used files (also support: open, view or delete any entry). (for GTK2-version of DC only)
+View list of recently used files (also support: open, view or delete any entry), a convenient alternative to viewing `~/.local/share/recently-used.xbel`. DC GTK2 only.
 
 - [gvfs_quickmount](plugins/wfx/gvfs_quickmount)<br>
 Mounting gvfs resources with automatic password entry (stored in ini file). F7 - new connection, Alt+Enter - edit existing.
@@ -413,7 +413,8 @@ The WFX plugin allows to create some simple virtual file systems by scripting.
 
 
 ---
-<a name="wlxgtk"><h3>WLX plugins (GTK2)</h3></a>
+<a name="wlxgtk"><h3>WLX plugins (GTK2/GTK3)</h3></a>
+Note: GTK2 plugins require DC GTK2 version, GTK3 plugins require DC GTK3 version.
 
 - [abiword-gtk2](plugins/wlx/abiword-gtk2)<br>
 Displays DOC, RTF, DOT, ABW, AWT, ZABW. Requires AbiWord (GTK2 version).
@@ -424,11 +425,17 @@ Displays PDF, DjVu, TIFF, PostScipt, CBR, CBZ, XPS. Requires Atril 2 (GTK2 versi
 - [csvview_gtk2](plugins/wlx/csvview_gtk2)<br>
 Very primitive CSV viewer.
 
+- [csvview_gtk3](plugins/wlx/csvview_gtk3)<br>
+Very primitive CSV viewer.
+
 - [evince2](plugins/wlx/evince2)<br>
 Displays PDF, DjVu, TIFF, PostScipt, CBR. Requires Evince 2 (GTK2 version).
 
+- [evince3](plugins/wlx/evince3)<br>
++Displays PDF, DjVu, TIFF, PostScipt, CBR. Requires: Evince
+
 - [fileinfo](plugins/wlx/fileinfo)<br>
-Displays various information about file using command line utilities. Requires `gtksourceview-2.0` ([original](https://github.com/doublecmd/doublecmd/wiki/Plugins#fileinfo)).
+Displays various information about file using command line utilities ([original](https://github.com/doublecmd/doublecmd/wiki/Plugins#fileinfo)). GTK2 version requires `gtksourceview-2.0`
 
 - [gstplayer](plugins/wlx/gstplayer)<br>
 Simple media player plugin based on GStreamer framework. Few cosmetic changes, bit unstable ([original](https://github.com/doublecmd/doublecmd/wiki/Plugins#gstplayer)).
@@ -436,30 +443,44 @@ Simple media player plugin based on GStreamer framework. Few cosmetic changes, b
 - [gtk_socket](plugins/wlx/gtk_socket)<br>
 Plugin-wrapper for embed window of different scripts and utilities, used GtkSocket (container for widgets from other processes). Works with file extensions and MIME types, see `settings.ini`.
 
+- [gtk_socket_tst](plugins/wlx/gtk_socket_tst)<br>
+Like `gtk_socket`, but with some additional features (in progress).
+
 - [gtkimgview](plugins/wlx/gtkimgview)<br>
 Image viewer plugin. Supported formats (all image formats supported by GdkPixbuf, the list can be differ on your system): xpm, xbm, tif, tiff, targa, tga, svg.gz, svgz, svg, qif, qtif, ppm, pgm, pbm, pnm, png, jpg, jpe, jpeg, jpf, j2k, jpx, jpc, jp2, cur, ico, icns, gif, bmp, ani.  Requires `gtkimageview` library.
 
 - [gtkimgview_crap](plugins/wlx/gtkimgview_crap)<br>
-Like `gtkimgview` but for any files if you can convert it to image (see `settings.ini`). Requires `gtkimageview` library.
+Like `gtkimgview`, but for any files if you can convert it to image (see `settings.ini`). Requires `gtkimageview` library.
+
+- [gtkimgview_recumbent_gtk3](plugins/wlx/gtkimgview_recumbent_gtk3)<br>
+Like `gtkimgview`, but with the GTK3 toolkit.
 
 - [gtksourceview](plugins/wlx/gtksourceview)<br>
 Displays source code files with syntax highlighting. Requires `gtksourceview-2.0`.
 
-- [jsonview_gtk2](plugins/wlx/jsonview_gtk2)<br>
-Very primitive JSON Viewer.
-
 - [hx_webkit_crap](plugins/wlx/hx_webkit_crap)<br>
 Document viewer based on WebKitGTK2 and using HTML Export from Oracle Outside In Technology.
 
+- [hx_webkit_gtk3_crap](plugins/wlx/hx_webkit_gtk3_crap)<br>
+Like `hx_webkit_crap`, but with the GTK3 toolkit and WebKit2GTK.
+
 - [imagemagick](plugins/wlx/imagemagick)<br>
 Image viewer plugin. Supported formats: dds, tga, pcx, bmp, webp.
-If you have ImageMagick 6 (for example, Debian/Ubuntu-based distributions) then use `#include <wand/MagickWand.h>` instead `#include <MagickWand/MagickWand.h>`.
+
+- [jsonview_gtk2](plugins/wlx/jsonview_gtk2)<br>
+Very primitive JSON Viewer.
+
+- [jsonview_gtk3](plugins/wlx/jsonview_gtk2)<br>
+Very primitive JSON Viewer.
 
 - [libarchive_crap](plugins/wlx/libarchive_crap)<br>
 Displays file content with `libarchive` ([supported formats](https://github.com/libarchive/libarchive#supported-formats)).
 
 - [md4c_webkit](plugins/wlx/md4c_webkit)<br>
 This plugin allows you to view Markdown files.
+
+- [md4c_webkit_gtk3](plugins/wlx/md4c_webkit_gtk3)<br>
+Like `md4c_webkit`, but with the GTK3 toolkit and WebKit2GTK.
 
 - [mimescript](plugins/wlx/mimescript)<br>
 Displays various information about file using command line utilities. Detection by MIME type.
@@ -468,13 +489,16 @@ Displays various information about file using command line utilities. Detection 
 Media player plugin. Requires `mpv`.
 
 - [mpv_alt](plugins/wlx/mpv_alt)<br>
-Yet another media player plugin. Requires `mpv`.
+Yet another media player plugin. Requires `libmpv`.
 
 - [nfoview](plugins/wlx/nfoview)<br>
 Displays NFO, DIZ.
 
 - [sqlview_gtk2](plugins/wlx/sqlview_gtk2)<br>
-Very primitive SQL Viewer.
+Very primitive SQL Viewer, supports SQL queries.
+
+- [sqlview_gtk3](plugins/wlx/sqlview_gtk3)<br>
+Like `sqlview_gtk2`, but with the GTK3 toolkit.
 
 - [symlinkerror](plugins/wlx/symlinkerror)<br>
 Display symlink error.
@@ -486,7 +510,10 @@ PDF Viewer ([original](https://yassernour.wordpress.com/2010/04/04/how-hard-to-b
 This plugin allows you to view HTML/XHTML files. It is based on WebKitGTK2 engine.
 
 - [wlxwebkit_crap](plugins/wlx/wlxwebkit_crap)<br>
-Like `wlxwebkit` but for any files if you can convert it to HTML file (see `settings.ini`).
+Like `wlxwebkit`, but for any files if you can convert it to HTML file (see `settings.ini`).
+
+- [wlxwebkit_gtk3](plugins/wlx/wlxwebkit_gtk3)<br>
+Like `wlxwebkit`, but with the GTK3 toolkit and WebKit2GTK.
 
 - [yet_another_vte_plugin](plugins/wlx/yet_another_vte_plugin)<br>
 Embeds Virtual Terminal Emulator (VTE) widget (GTK2 version) and runs command line utilities (see `settings.ini`).<br>
@@ -498,6 +525,7 @@ Displays PDF, DjVu, PostScipt, CBR. Requires `zathura`.
 
 ---
 <a name="wlxqt"><h3>WLX plugins (Qt5/Qt6)</h3></a>
+Note: Qt5 plugins require DC Qt5 version,Qt6 plugins require DC Qt6 version.
 
 - [bit7z_qt_crap](plugins/wlx/bit7z_qt_crap)<br>
 Archive item props. (useless)
@@ -520,11 +548,11 @@ Displays various information about file using command line utilities ([original]
 - [fontview_qt](plugins/wlx/fontview_qt)<br>
 Displays font from file.
 
-- [htmlconv_qt_crap](plugins/wlx/htmlconv_qt_crap)<br>
-Like [htmlview_qt_crap](plugins/wlx/htmlview_qt_crap) but for any files if you can convert it to HTML file (see `settings.ini`).
-
 - [htmlview_qt_crap](plugins/wlx/htmlview_qt_crap)<br>
 This plugin allows you to view HTML files.
+
+- [htmlconv_qt_crap](plugins/wlx/htmlconv_qt_crap)<br>
+Like `htmlview_qt_crap`, but for any files if you can convert it to HTML file (see `settings.ini`).
 
 - [hx_qt_crap](plugins/wlx/hx_qt_crap)<br>
 Document viewer using HTML Export from Oracle Outside In Technology.
@@ -551,7 +579,7 @@ This plugin allows you to view Markdown files.
 This plugin allows you to view Markdown files.
 
 - [mpv_alt](plugins/wlx/mpv_alt)<br>
-Yet another media player plugin. Requires `mpv`.
+Yet another media player plugin. Requires `libmpv`.
 
 - [pdf_crap_qml_qt](plugins/wlx/pdf_crap_qml_qt)<br>
 PDF Viewer.
@@ -566,7 +594,7 @@ Embeds `qtermwidget` and runs command line utilities (see `settings.ini`).
 Image viewer plugin.
 
 - [qtimgview_crap](plugins/wlx/qtimgview_crap)<br>
-Like `qtimgview` but for any files if you can convert it to image (see `settings.ini`).
+Like `qtimgview`, but for any files if you can convert it to image (see `settings.ini`).
 
 - [qtpdfview_qt](plugins/wlx/qtpdfview_qt)<br>
 PDF Viewer.
@@ -581,7 +609,7 @@ Very primitive SQL Viewer.
 Display symlink error.
 
 - [syntax-highlighting_qt](plugins/wlx/syntax-highlighting_qt)<br>
-Displays source code files with syntax highlighting. Requires `syntax-highlighting` from KF5 framework.
+Displays source code files with syntax highlighting. Requires `syntax-highlighting` from KF5/KF6 framework.
 
 - [webengine_qt](plugins/wlx/webengine_qt)<br>
 This plugin allows you to view HTML/XHTML files. It is based on Blink engine.
@@ -590,7 +618,7 @@ This plugin allows you to view HTML/XHTML files. It is based on Blink engine.
 This plugin allows you to view HTML/XHTML files. It is based on Qt5WebKit engine.
 
 - [wlxwebkit_qt_crap](plugins/wlx/wlxwebkit_qt_crap)<br>
-Like [wlxwebkit_qt](plugins/wlx/wlxwebkit_qt) but for any files if you can convert it to HTML file (see `settings.ini`).
+Like `wlxwebkit_qt`, but for any files if you can convert it to HTML file (see `settings.ini`).
 
 
 ---
@@ -609,7 +637,7 @@ Finds modified files in git repository via `git ls-files -m`.
 Finds untracked files and other in git repository via `git ls-files -o`.
 
 - [gtkrecent](plugins/dsx/gtkrecent)<br>
-Feed to listbox recent files. (for GTK2-version of DC only)
+Feed to listbox recent files. DC GTK2 only.
 
 - [locate_crap](plugins/dsx/locate_crap)<br>
 Search via `locate` (w/o StartPath). 
