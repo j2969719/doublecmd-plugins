@@ -1,12 +1,16 @@
 Build plugins in Debian/Ubuntu
 ------------------------------
 
-Development packages and note (if it needed) for each plugin.
+Development packages and note (if it is needed) for each plugin.<br>
+Note: There are several versions of Ubuntu distributions and derivatives, so when specifying versions, we will only consider LTS releases.
 
-The [main page](README.md) of this repository. List of plugins with a brief description on [one pages](plugins.md).
+List of plugins with a brief description can be found here [plugins.md](plugins.md).
 
 First of all, you need a compiler (`gcc` or `g++`) and the `make` program, an easy way is to install the `build-essential` package.
 Now install required packages, open plugin directory, launch terminal and use the following commands:
+
+
+To begin, you will need a compiler (`gcc` or `g++`) and the `make` program, an easy way is to install the `build-essential` package. Next, install required packages, open plugin directory, launch terminal and use the following commands:
 
 ```sh
 cd src
@@ -23,7 +27,8 @@ Alternatively, you can use the scripts in the [plugins](plugins) directory:
 - `pack_to_tarballs.sh`: pack all plugins into separate archives,  i.e. `make dist`, but for all plugins.<br>
 - `run_ldd.sh`: generates a list of required libraries (`plugins/dist/.broken.log`, for all plugins) that are not installed on your system. See [FAQ: This is not a valid plugin](https://doublecmd.github.io/doc/en/faq.html#not_valid).
 
-Note: If you are not a programmer or if you rarely build programs and libraries from source, then installing a large number of development packages can be inconvenient for several reasons: a good solution might be to use the same version of your operation system in a virtual machine (QEMU, VirtualBox and so on) or a minimal installation of Debian/Ubuntu in chroot (schroot, sbuild, pbuilder)
+Note:<br>
+If you are not a programmer or if you rarely build programs and libraries from source, then installing a large number of development packages can be inconvenient for several reasons: a good solution might be to use the same version of your operation system in a virtual machine (QEMU, VirtualBox and so on) or a minimal installation of Debian/Ubuntu in chroot (schroot, sbuild, pbuilder)
 
 
 ---
@@ -35,7 +40,7 @@ Note: If you are not a programmer or if you rarely build programs and libraries 
 
 - [WFX plugins](#wfx)
 
-- WLX plugins: [GTK2](#wlxgtk) (for GTK2-version of DC only), [Qt5 or Qt6](#wlxqt) (for Qt-versions of DC only)
+- WLX plugins: [GTK2/GTK3](#wlxgtk), [Qt5/Qt6](#wlxqt)
 
 - [DSX plugins](#dsx)
 
@@ -217,105 +222,154 @@ Previous versions: `apt install build-essential libglib2.0-dev libgdk-pixbuf2.0-
 
 
 ---
-<a name="wlxgtk"><h3>WLX plugins: GTK2</h3></a>
+<a name="wlxgtk"><h3>WLX plugins: GTK2/GTK3</h3></a>
+Note: GTK2 plugins require DC GTK2 version, GTK3 plugins require DC GTK3 version
 
 - [abiword-gtk2](plugins/wlx/abiword-gtk2)<br>
-`apt install build-essential libabiword-dev`<br>
+GTK2: `apt install build-essential libabiword-dev`<br>
 Requires AbiWord (GTK2 version).
 
+- [abiword-gtk3](plugins/wlx/abiword-gtk3)<br>
+GTK3: `apt install build-essential libabiword-dev`<br>
+Requires AbiWord (GTK3 version).
+
 - [atril-gtk2](plugins/wlx/atril-gtk2)<br>
-`apt install build-essential libgtk2.0-dev libatrilview-dev libatrildocument-dev`<br>
-Requires GTK2 version, i.e. Atril <= 1.16.1.
+GTK2: `apt install build-essential libgtk2.0-dev libatrilview-dev libatrildocument-dev`<br>
+Requires Atril <= 1.16.1 (GTK2 version).
 
 - [csvview_gtk2](plugins/wlx/csvview_gtk2)<br>
-`apt install build-essential libgtk2.0-dev libenca-dev`
+GTK2: `apt install build-essential libgtk2.0-dev libenca-dev`
 
-- [dirsize_crap](plugins/wlx/dirsize_crap)<br>
-`apt install build-essential libgtk2.0-dev`
+- [csvview_gtk3](plugins/wlx/csvview_gtk3)<br>
+GTK3: `apt install build-essential libgtk-3-dev libenca-dev`
 
 - [evince2](plugins/wlx/evince2)<br>
-`apt install build-essential libgtk2.0-dev libevview-dev libevdocument-dev`<br>
-Requires GTK2 version, i.e. Evince <= 2.32.
+GTK2: `apt install build-essential libgtk2.0-dev libevview-dev libevdocument-dev`<br>
+Requires Evince <= 2.32 (GTK2 version).
+
+- [evince3](plugins/wlx/evince3)<br>
+GTK3: `apt install build-essential libgtk-3-dev libevince-dev`<br>
+Requires Evince (GTK3 version).
 
 - [fileinfo](plugins/wlx/fileinfo)<br>
-gtk2: `apt install build-essential libgtk2.0-dev`<br>
-srcvw2: `apt install build-essential libgtk2.0-dev libgtksourceview2.0-dev`
+GTK2: : `apt install build-essential libgtk2.0-dev`<br>
+GTK2/srcvw2: `apt install build-essential libgtk2.0-dev libgtksourceview2.0-dev`<br>
+GTK3: `apt install build-essential libgtk-3-dev`
 
 - [gstplayer](plugins/wlx/gstplayer)<br>
-`apt install build-essential libgtk2.0-dev libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev`
+GTK2: `apt install build-essential libgtk2.0-dev libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev`
 
 - [gtk_socket](plugins/wlx/gtk_socket)<br>
-`apt install build-essential libgtk2.0-dev libmagic-dev`<br>
+GTK2: `apt install build-essential libgtk2.0-dev libmagic-dev`<br>
+GTK3: `apt install build-essential libgtk-3-dev libmagic-dev`<br>
 Additions:<br>
 src/abiword: `apt install build-essential libabiword-dev libjpeg-dev`<br>
 src/evince: `apt install build-essential libevince-dev`<br>
 src/libreoffice: `apt install build-essential libgtk-3-dev libreofficekit-dev`<br>
 src/webkit2gtk: `apt install build-essential libwebkit2gtk-4.0-dev`<br>
-src/yelp: `apt install build-essential libgtk-3-dev libwebkit2gtk-4.0-dev libyelp-dev`
+src/yelp: `apt install build-essential libgtk-3-dev libwebkit2gtk-4.0-dev libyelp-dev`<br>
+Note about `libwebkit2gtk-4.0-dev`: If this package is not found, then try `libwebkit2gtk-4.1-dev` instead.
+
+- [gtk_socket_tst](plugins/wlx/gtk_socket_tst)<br>
+GTK2: `apt install build-essential libglib2.0-dev libgtk2.0-dev libmagic-dev`<br>
+GTK3: `apt install build-essential libglib2.0-dev libgtk-3-dev libmagic-dev`<br>
+Additions:<br>
+src/libreoffice: `apt install build-essential libgtk-3-dev libreofficekit-dev`<br>
 
 - [gtkimgview](plugins/wlx/gtkimgview)<br>
-`apt install build-essential libgtkimageview-dev`
+GTK2: `apt install build-essential libgtkimageview-dev`
 
 - [gtkimgview_crap](plugins/wlx/gtkimgview_crap)<br>
-`apt install build-essential libgtkimageview-dev`
+GTK2: `apt install build-essential libgtkimageview-dev`
+
+- [gtkimgview_gtk3](plugins/wlx/gtkimgview_gtk3)<br>
+GTK3: `apt install build-essential libgtk-3-dev`
+
+- [gtkimgview_recumbent_gtk3](plugins/wlx/gtkimgview_recumbent_gtk3)<br> 
+GTK3: `apt install build-essential libgtk-3-dev`
 
 - [gtksourceview](plugins/wlx/gtksourceview)<br>
-`apt install build-essential libgtksourceview2.0-dev libenca-dev`
-
-- [jsonview_gtk2](plugins/wlx/jsonview_gtk2)<br>
-`apt install build-essential libgtk2.0-dev libjson-glib-dev`
+GTK2: `apt install build-essential libgtksourceview2.0-dev libenca-dev`
 
 - [hx_webkit_crap](plugins/wlx/hx_webkit_crap)<br>
-`apt install build-essential libgtk2.0-dev libwebkitgtk-dev`
+GTK2: `apt install build-essential libgtk2.0-dev libwebkitgtk-dev`
+
+- [hx_webkit_gtk3_crap](plugins/wlx/hx_webkit_gtk3_crap)<br>
+GTK3: `apt install build-essential libgtk-3-dev libwebkit2gtk-4.0-dev`
+Note about `libwebkit2gtk-4.0-dev`: If this package is not found, then try `libwebkit2gtk-4.1-dev` instead.
 
 - [imagemagick](plugins/wlx/imagemagick)<br>
-`apt install build-essential libgtkimageview-dev libmagickwand-6.q16-dev`<br>
-`Makefile` is universal for ImageMagick 6 and ImageMagick 7, Debian/Ubuntu and derivative distributions still use ImageMagick 6, so use `make 6` instead of `make`.
+GTK2:<br>
+Debian 13.0+/Ubuntu 26.04+: `apt install build-essential libgtkimageview-dev libmagickwand-7.q16-dev`<br>
+Previous versions: `apt install build-essential libgtkimageview-dev libmagickwand-6.q16-dev`<br>
+`Makefile` is universal for ImageMagick 6 and ImageMagick 7: if you have ImageMagick 6, then use `make 6` instead of `make`.
+
+- [jsonview_gtk2](plugins/wlx/jsonview_gtk2)<br>
+GTK2: `apt install build-essential libgtk2.0-dev libjson-glib-dev`
+
+- [jsonview_gtk3](plugins/wlx/jsonview_gtk3)<br>
+GTK3: `apt install build-essential libgtk-3-dev libjson-glib-dev`
 
 - [libarchive_crap](plugins/wlx/libarchive_crap)<br>
-`apt install build-essential libgtk2.0-dev libarchive-dev libenca-dev`
+GTK2: `apt install build-essential libgtk2.0-dev libarchive-dev libenca-dev`<br>
+GTK3: `apt install build-essential libgtk-3-dev libarchive-dev libenca-dev`
 
 - [md4c_webkit](plugins/wlx/md4c_webkit)<br>
-`apt install build-essential libgtk2.0-dev libwebkitgtk-dev libmd4c-dev libmd4c-html0-dev`<br>
+GTK2: `apt install build-essential libgtk2.0-dev libwebkitgtk-dev libmd4c-dev libmd4c-html0-dev`<br>
+Requires md4c >= 0.4.4.
+
+- [md4c_webkit_gtk3](plugins/wlx/md4c_webkit_gtk3)<br>
+GTK3: `apt install build-essential libgtk-3-dev libwebkit2gtk-4.0-dev libmd4c-dev libmd4c-html0-dev`<br>
+Note about `libwebkit2gtk-4.0-dev`: If this package is not found, then try `libwebkit2gtk-4.1-dev` instead.<br>
 Requires md4c >= 0.4.4.
 
 - [mimescript](plugins/wlx/mimescript)<br>
-`apt install build-essential libgtk2.0-dev libgtksourceview2.0-dev`
+GTK2: `apt install build-essential libgtk2.0-dev libgtksourceview2.0-dev`
 
 - [mpv](plugins/wlx/mpv)<br>
-`apt install build-essential libgtk2.0-dev`
+GTK2: `apt install build-essential libgtk2.0-dev`
 
 - [mpv_alt](plugins/wlx/mpv_alt)<br>
-`apt install build-essential libgtk2.0-dev`
+GTK2: `apt install build-essential libgtk2.0-dev`<br>
+GTK3: `apt install build-essential libgtk-3-dev`
 
 - [nfoview](plugins/wlx/nfoview)<br>
-`apt install build-essential libgtk2.0-dev`
+GTK2: `apt install build-essential libgtk2.0-dev`
 
 - [sqlview_gtk2](plugins/wlx/sqlview_gtk2)<br>
-`apt install build-essential libgtk2.0-dev libsqlite3-dev`
+GTK2: `apt install build-essential libgtk2.0-dev libsqlite3-dev`
+
+- [sqlview_gtk3](plugins/wlx/sqlview_gtk3)<br>
+GTK3: `apt install build-essential libgtk-3-dev libsqlite3-dev`
 
 - [symlinkerror](plugins/wlx/symlinkerror)<br>
-`apt install build-essential libgtk2.0-dev`
+GTK2: `apt install build-essential libgtk2.0-dev`
 
 - [wlxpview](plugins/wlx/wlxpview)<br>
-`apt install build-essential libgtk2.0-dev libpoppler-glib-dev`
+GTK2: `apt install build-essential libgtk2.0-dev libpoppler-glib-dev`<br>
+GTK3: `apt install build-essential libgtk-3-dev libpoppler-glib-dev`
 
 - [wlxwebkit](plugins/wlx/wlxwebkit)<br>
-`apt install build-essential libgtk2.0-dev libwebkitgtk-dev`
+GTK2: `apt install build-essential libgtk2.0-dev libwebkitgtk-dev`
 
 - [wlxwebkit_crap](plugins/wlx/wlxwebkit_crap)<br>
-`apt install build-essential libgtk2.0-dev libwebkitgtk-dev`
+GTK2: `apt install build-essential libgtk2.0-dev libwebkitgtk-dev`
+
+- [wlxwebkit_gtk3](plugins/wlx/wlxwebkit_gtk3)<br>
+GTK3: `apt install build-essential libgtk-3-dev libwebkit2gtk-4.0-dev`
+Note about `libwebkit2gtk-4.0-dev`: If this package is not found, then try `libwebkit2gtk-4.1-dev` instead.
 
 - [yet_another_vte_plugin](plugins/wlx/yet_another_vte_plugin)<br>
-`apt install build-essential libgtk2.0-dev libvte-dev`
+GTK2: `apt install build-essential libgtk2.0-dev libvte-dev`
 
 - [zathura](plugins/wlx/zathura)<br>
-`apt install build-essential libgtk2.0-dev`
+GTK2: `apt install build-essential libgtk2.0-dev`<br>
+GTK3: `apt install build-essential libgtk-3-dev`<br>
 
 
 ---
-<a name="wlxqt"><h3>WLX plugins: Qt5 or Qt6</h3></a>
-
+<a name="wlxqt"><h3>WLX plugins: Qt5/Qt6</h3></a>
+Note: Qt5 plugins require DC Qt5 version, Qt6 plugins require DC Qt6 version.<br>
 You can use `make qt5` (Qt5 only), `make qt6` (Qt6 only) or `make` (both versions).
 
 - [bit7z_qt_crap](plugins/wlx/bit7z_qt_crap)<br>
@@ -406,6 +460,14 @@ Qt6: `apt install build-essential pkg-config qt6-base-dev qt6-multimedia-dev`
 
 - [qtermwidget_qt_crap](plugins/wlx/qtermwidget_qt_crap)<br>
 Qt5: `apt install build-essential pkg-config qtbase5-dev libqtermwidget5-0-dev libutf8proc-dev`
+
+- [qtimgview](plugins/wlx/qtimgview)<br>
+Qt5: `apt install build-essential pkg-config qtbase5-dev`<br>
+Qt6: `apt install build-essential pkg-config qt6-base-dev qt6-5compat-dev libgl-dev`
+
+- [qtimgview_crap](plugins/wlx/qtimgview_crap)<br>
+Qt5: `apt install build-essential pkg-config qtbase5-dev`<br>
+Qt6: `apt install build-essential pkg-config qt6-base-dev qt6-5compat-dev libgl-dev`
 
 - [qtpdfview_qt](plugins/wlx/qtpdfview_qt)<br>
 Qt5: `apt install build-essential pkg-config qtbase5-dev qtpdf5-dev`<br>
