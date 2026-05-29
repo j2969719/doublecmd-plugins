@@ -1,7 +1,7 @@
 Additions for Double Commander (third-party)
 ------------------------------
 
-Not all but most of additions for Linux only.
+Cross-platform or for Linux only.
 
 ### 1. [Plugins](plugins.md) (build plugins in [Debian/Ubuntu](dubuild.md))
 

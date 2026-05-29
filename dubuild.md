@@ -6,10 +6,6 @@ Note: There are several versions of Ubuntu distributions and derivatives, so whe
 
 List of plugins with a brief description can be found here [plugins.md](plugins.md).
 
-First of all, you need a compiler (`gcc` or `g++`) and the `make` program, an easy way is to install the `build-essential` package.
-Now install required packages, open plugin directory, launch terminal and use the following commands:
-
-
 To begin, you will need a compiler (`gcc` or `g++`) and the `make` program, an easy way is to install the `build-essential` package. Next, install required packages, open plugin directory, launch terminal and use the following commands:
 
 ```sh

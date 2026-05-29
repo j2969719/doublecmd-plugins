@@ -40,29 +40,31 @@ FormMode=8
 <a name="b64"><h3>Base64</h3></a>
 ```ini
 [Base64]
-Archiver=%COMMANDER_PATH%/scripts/base64uue
+Archiver=$HOME/.local/share/doublecmd/scripts/multiarc/base64uue
 Description=Base64
 Extension=b64
 Format0=yyyy tt dd hh mm ss aaaaa zzzzzzzzzzzz n+
 List=%P -l %AQ
 Extract=%P -d %AQ %FQ
 Add=%P -eb %AQ %FQ
+FallBackArchivers=$HOME/.local/share/doublecmd/scripts/multiarc/base64uue,$COMMANDER_PATH/scripts/multiarc/base64uue
 ```
-Script [base64uue](scripts/base64uue), [forum](https://doublecmd.sourceforge.io/forum/viewtopic.php?p=24877#p24877)
+Script [base64uue](scripts/multiarc/base64uue), [forum](https://doublecmd.sourceforge.io/forum/viewtopic.php?p=24877#p24877)
 
 ---
 <a name="uue"><h3>UUEncode</h3></a>
 ```ini
 [UUEncode]
-Archiver=%COMMANDER_PATH%/scripts/base64uue
+Archiver=$HOME/.local/share/doublecmd/scripts/multiarc/base64uue
 Description=UUEncode
 Extension=uue
 Format0=yyyy tt dd hh mm ss aaaaa zzzzzzzzzzzz n+
 List=%P -l %AQ
 Extract=%P -d %AQ %FQ
 Add=%P -eu %AQ %FQ
+FallBackArchivers=$HOME/.local/share/doublecmd/scripts/multiarc/base64uue,$COMMANDER_PATH/scripts/multiarc/base64uue
 ```
-Script [base64uue](scripts/base64uue), [forum](https://doublecmd.sourceforge.io/forum/viewtopic.php?p=24877#p24877)
+Script [base64uue](scripts/multiarc/base64uue), [forum](https://doublecmd.sourceforge.io/forum/viewtopic.php?p=24877#p24877)
 
 ---
 <a name="wcxtest"><h3>TC WCX Test + Wine</h3></a>
