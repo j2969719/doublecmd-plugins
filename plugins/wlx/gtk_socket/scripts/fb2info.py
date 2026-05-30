@@ -39,7 +39,10 @@ def CheckFile(d):
     n2 = s.find("encoding=", n1)
     if n2 == -1:
         return "none"
-    n1 = s.find('"', n2 + 11)
+    if s[n2 + 9:n2 + 10] == "'":
+        n1 = s.find("'", n2 + 11)
+    elif s[n2 + 9:n2 + 10] == '"':
+        n1 = s.find('"', n2 + 11)
     t = s[n2 + 10:n1]
     return t.lower()
 
