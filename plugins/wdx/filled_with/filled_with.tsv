@@ -1,0 +1,4 @@
+fieldname	bytes
+whitespaces	09 20
+whitespaces and linebreaks	09 20 0A 0d
+null	0x00
