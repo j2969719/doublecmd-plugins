@@ -499,7 +499,7 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	data->document = poppler_document_new_from_file(fileUri, NULL, NULL);
 	data->total_pages = poppler_document_get_n_pages(data->document);
 	const gchar *role = gtk_window_get_role(GTK_WINDOW(gtk_widget_get_toplevel(GTK_WIDGET(ParentWin))));
-	data->quickview = (g_strcmp0(role, "TfrmViewer") != 0);
+	data->quickview = (role && g_strcmp0(role, "TfrmViewer") != 0);
 
 	if (fileUri)
 		g_free(fileUri);

@@ -666,7 +666,7 @@ static GtkWidget *create_ui(GtkWidget *ParentWin, CustomData *data)
 
 	const gchar *role = gtk_window_get_role(GTK_WINDOW(gtk_widget_get_toplevel(GTK_WIDGET(ParentWin))));
 
-	if (gHideToolbar && g_strcmp0(role, "TfrmViewer") != 0)
+	if (gHideToolbar && role && g_strcmp0(role, "TfrmViewer") != 0)
 		gtk_widget_hide(mtb);
 
 	if (!data->is_static)
