@@ -1,3 +1,6 @@
+#ifndef _WFX_H
+#define _WFX_H
+
 #include "common.h"
 
 // contents of fsplugin.h  version 2.1 (27.April.2010)
@@ -146,6 +149,10 @@ typedef int (DCPCALL *tCryptProc)(int PluginNr,int CryptoNr,int Mode,
 typedef int (DCPCALL *tCryptProcW)(int PluginNr,int CryptoNr,int Mode,
               WCHAR* ConnectionName,WCHAR* Password,int maxlen);
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 // Function prototypes
 int DCPCALL FsInit(int PluginNr,tProgressProc pProgressProc,
                      tLogProc pLogProc,tRequestProc pRequestProc);
@@ -199,6 +206,10 @@ int DCPCALL FsGetPreviewBitmapW(WCHAR* RemoteName,int width,int height,HBITMAP* 
 BOOL DCPCALL FsLinksToLocalFiles(void);
 BOOL DCPCALL FsGetLocalName(char* RemoteName,int maxlen);
 BOOL DCPCALL FsGetLocalNameW(WCHAR* RemoteName,int maxlen);
+
+#ifdef __cplusplus
+}
+#endif
 
 // ************************** content plugin extension ****************************
 
@@ -266,6 +277,10 @@ typedef struct {
     WORD wSecond;
 } ttimeformat,*ptimeformat;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 int DCPCALL FsContentGetSupportedField(int FieldIndex,char* FieldName,char* Units,int maxlen);
 int DCPCALL FsContentGetValue(char* FileName,int FieldIndex,int UnitIndex,void* FieldValue,int maxlen,int flags);
 int DCPCALL FsContentGetValueW(WCHAR* FileName,int FieldIndex,int UnitIndex,void* FieldValue,int maxlen,int flags);
@@ -280,3 +295,11 @@ int DCPCALL FsContentSetValueW(WCHAR* FileName,int FieldIndex,int UnitIndex,int 
 
 BOOL DCPCALL FsContentGetDefaultView(char* ViewContents,char* ViewHeaders,char* ViewWidths,char* ViewOptions,int maxlen);
 BOOL DCPCALL FsContentGetDefaultViewW(WCHAR* ViewContents,WCHAR* ViewHeaders,WCHAR* ViewWidths,WCHAR* ViewOptions,int maxlen);
+
+int DCPCALL FsGetBackgroundFlags(void);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif // _WFX_H

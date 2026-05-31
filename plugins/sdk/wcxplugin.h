@@ -1,3 +1,6 @@
+#ifndef _WCX_H
+#define _WCX_H
+
 #include "common.h"
 
 /* Contents of file wcxhead.h */
@@ -54,6 +57,10 @@
 #define PK_CAPS_HIDE       256   /* Show as normal files (hide packer    */
                                  /* icon), open with Ctrl+PgDn, not Enter*/
 #define PK_CAPS_ENCRYPT    512   /* Plugin supports PK_PACK_ENCRYPT option*/
+
+#define BACKGROUND_UNPACK   1    /* Which operations are thread-safe?    */
+#define BACKGROUND_PACK     2
+#define BACKGROUND_MEMPACK  4
 
 /* Flags for packing in memory */
 #define MEM_OPTIONS_WANTHEADERS 1  /* Return archive headers with packed data */
@@ -175,3 +182,4 @@ typedef int (DCPCALL *tPkCryptProcW)(int CryptoNr,int Mode,
              WCHAR* ArchiveName,WCHAR* Password,int maxlen);
 
 
+#endif // _WCX_H

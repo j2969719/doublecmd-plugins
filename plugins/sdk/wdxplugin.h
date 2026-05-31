@@ -3,7 +3,7 @@
 
 #include "common.h"
 
-// Contents of file contplug.h version 2.0
+// Contents of file contplug.h version 2.12
 
 #define ft_nomorefields 0
 #define ft_numeric_32 1
@@ -19,6 +19,8 @@
 #define ft_stringw 11
 #define ft_fulltextw 12
 
+#define ft_comparecontent 100
+
 // for ContentGetValue
 #define ft_nosuchfield -1   // error, invalid field number given
 #define ft_fileerror -2     // file i/o error
@@ -28,6 +30,9 @@
 #define ft_notsupported -5  // function not supported
 #define ft_setcancel -6     // user clicked cancel in field editor
 #define ft_delayed 0        // field takes a long time to extract -> try again in background
+// for ContentFindValue:
+#define ft_found 1          // Value was found
+#define ft_notfound -8      // Value was NOT found
 
 // for ContentSetValue
 #define ft_setsuccess 0     // setting of the attribute succeeded
@@ -35,7 +40,6 @@
 // for ContentGetSupportedFieldFlags
 #define contflags_edit 1
 #define contflags_substsize 2
-
 #define contflags_substdatetime 4
 #define contflags_substdate 6
 #define contflags_substtime 8
@@ -44,6 +48,8 @@
 #define contflags_passthrough_size_float 14
 #define contflags_substmask 14
 #define contflags_fieldedit 16
+#define contflags_fieldsearch 32
+#define contflags_searchpageonly 64
 
 #define contst_readnewdir 1
 #define contst_refreshpressed 2
@@ -60,7 +66,6 @@
 #define CONTENT_DELAYIFSLOW 1  // ContentGetValue called in foreground
 #define CONTENT_PASSTHROUGH 2  // If requested via contflags_passthrough_size_float: The size
                                // is passed in as floating value, TC expects correct value
-
                                // from the given units value, and optionally a text string
 
 typedef struct {
@@ -71,17 +76,27 @@ typedef struct {
 } ContentDefaultParamStruct;
 
 typedef struct {
-
-WORD wYear;
-	WORD wMonth;
-	WORD wDay;
+    WORD wYear;
+    WORD wMonth;
+    WORD wDay;
 } tdateformat,*pdateformat;
 
 typedef struct {
-	WORD wHour;
-	WORD wMinute;
-	WORD wSecond;
+    WORD wHour;
+    WORD wMinute;
+    WORD wSecond;
 } ttimeformat,*ptimeformat;
+
+typedef struct {
+    __int64 filesize1;
+    __int64 filesize2;
+    FILETIME filetime1;
+    FILETIME filetime2;
+    DWORD attr1;
+    DWORD attr2;
+} FileDetailsStruct;
+
+typedef int (DCPCALL *PROGRESSCALLBACKPROC)(int nextblockdata);
 
 #ifdef __cplusplus
 extern "C" {
@@ -91,20 +106,27 @@ int DCPCALL ContentGetDetectString(char* DetectString,int maxlen);
 int DCPCALL ContentGetSupportedField(int FieldIndex,char* FieldName,char* Units,int maxlen);
 int DCPCALL ContentGetValue(char* FileName,int FieldIndex,int UnitIndex,void* FieldValue,int maxlen,int flags);
 int DCPCALL ContentGetValueW(WCHAR* FileName,int FieldIndex,int UnitIndex,void* FieldValue,int maxlen,int flags);
-
 void DCPCALL ContentSetDefaultParams(ContentDefaultParamStruct* dps);
 void DCPCALL ContentPluginUnloading(void);
+
+// not supported
 void DCPCALL ContentStopGetValue(char* FileName);
 void DCPCALL ContentStopGetValueW(WCHAR* FileName);
 int DCPCALL ContentGetDefaultSortOrder(int FieldIndex);
 int DCPCALL ContentGetSupportedFieldFlags(int FieldIndex);
 int DCPCALL ContentSetValue(char* FileName,int FieldIndex,int UnitIndex,int FieldType,void* FieldValue,int flags);
 int DCPCALL ContentSetValueW(WCHAR* FileName,int FieldIndex,int UnitIndex,int FieldType,void* FieldValue,int flags);
-
 int DCPCALL ContentEditValue(HWND ParentWin,int FieldIndex,int UnitIndex,int FieldType,
                 void* FieldValue,int maxlen,int flags,char* langidentifier);
 void DCPCALL ContentSendStateInformation(int state,char* path);
 void DCPCALL ContentSendStateInformationW(int state,WCHAR* path);
+int DCPCALL ContentCompareFiles(PROGRESSCALLBACKPROC progresscallback,
+  int compareindex,char* filename1,char* filename2,FileDetailsStruct* filedetails);
+int DCPCALL ContentCompareFilesW(PROGRESSCALLBACKPROC progresscallback,
+  int compareindex,WCHAR* filename1,WCHAR* filename2,FileDetailsStruct* filedetails);
+int DCPCALL ContentFindValue(char* FileName, int FieldIndex, int UnitIndex, int OperationIndex, int FieldType, int flags, void* FieldValue);
+int DCPCALL ContentFindValueW(WCHAR* FileName, int FieldIndex, int UnitIndex, int OperationIndex, int FieldType, int flags, void* FieldValue);
+int DCPCALL ContentGetSupportedOperators(int FieldIndex, char* FieldOperators, int maxlen);
 
 #ifdef __cplusplus
 }
