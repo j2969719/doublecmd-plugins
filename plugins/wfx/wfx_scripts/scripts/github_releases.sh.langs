@@ -28,6 +28,10 @@ WFX_SCRIPT_STR_GETTARBALL=Get sources (tarball)
 WFX_SCRIPT_STR_ZIP=Zip file
 WFX_SCRIPT_STR_TARBALL=Tarball file
 WFX_SCRIPT_STR_ARC=Archive
+WFX_SCRIPT_STR_MAGIC=Action
+WFX_SCRIPT_STR_ERRNA=not implemented!
+ENV_WFX_SCRIPT_STR_REPO=Enter the repo address
+ENV_WFX_SCRIPT_STR_SEARCH=Search repos by keyword
 
 [ru_RU]
 WFX_SCRIPT_NAME=Просмотр релизов на GitHub
@@ -46,7 +50,7 @@ WFX_SCRIPT_STR_PTIME=Опубликован
 WFX_SCRIPT_STR_DLOAD=Скачан
 WFX_SCRIPT_STR_SIZE=Размер
 WFX_SCRIPT_STR_TARGET=Ветка
-WFX_SCRIPT_STR_PRERELEASE=предварительный релиз
+WFX_SCRIPT_STR_PRERELEASE=предвартельный релиз
 WFX_SCRIPT_STR_RELEASE=релиз
 WFX_SCRIPT_STR_BODY=Показать примечания к релизу
 WFX_SCRIPT_STR_CHANGEREPO=Сменить репозиторий
@@ -59,3 +63,7 @@ WFX_SCRIPT_STR_GETTARBALL=Скачать исходники (тарбол)
 WFX_SCRIPT_STR_ZIP=Архив Zip
 WFX_SCRIPT_STR_TARBALL=Тарбол
 WFX_SCRIPT_STR_ARC=Архив
+WFX_SCRIPT_STR_MAGIC=Действие
+WFX_SCRIPT_STR_ERRNA=не реализовано!
+ENV_WFX_SCRIPT_STR_REPO=Ввести адрес репозитория
+ENV_WFX_SCRIPT_STR_SEARCH=Искать репозиторий по ключевому слову

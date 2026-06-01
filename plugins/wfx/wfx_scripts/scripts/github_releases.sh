@@ -116,10 +116,11 @@ vfs_init()
     which jq >/dev/null 2>&1 || init_fail "\"jq\" WFX_SCRIPT_STR_ERR_NA"
     which curl >/dev/null 2>&1 || init_fail "\"curl\" WFX_SCRIPT_STR_ERR_NA"
     which wget >/dev/null 2>&1 || init_fail "\"wget\" WFX_SCRIPT_STR_ERR_NA"
-    echo -e "Fs_PushValue WFX_SCRIPT_STR_REPO\tdoublecmd/doublecmd"
+    #echo -e "Fs_PushValue WFX_SCRIPT_STR_REPO\tdoublecmd/doublecmd"
+    echo -e "Fs_PushValue WFX_SCRIPT_STR_REPO\tdoublecmd/snapshots"
     echo "Fs_GetValues_Needed"
     echo "Fs_DisableFakeDates"
-    echo "Fs_YesNo_Message WFX_SCRIPT_STR_ASKSEARCH"
+    #echo "Fs_YesNo_Message WFX_SCRIPT_STR_ASKSEARCH"
     exit $?
 }
 
@@ -142,7 +143,7 @@ vfs_setopt()
         "WFX_SCRIPT_STR_GETTARBALL") echo -e "Fs_SelectFile WFX_SCRIPT_STR_TARBALL\tWFX_SCRIPT_STR_ARC|*.tar.gz;*.tgz\ttgz\tsave" ;;
         "WFX_SCRIPT_STR_TARBALL") get_src "$value" ".tarball_url" ;;
         "WFX_SCRIPT_STR_ZIP") get_src "$value" ".zipball_url" ;;
-        *) exit 1 ;;
+        *) echo "Fs_Info_Message \"${1:1}\" WFX_SCRIPT_STR_ERRNA" ;;
     esac
 
     exit 0
@@ -151,13 +152,16 @@ vfs_setopt()
 vfs_list()
 {
     [ -z "$DC_WFX_SCRIPT_INITFAIL" ] || exit 1
-    [ -z "$DC_WFX_SCRIPT_JSON" ] && exit 1
 
     if [ "$1" == "/" ] ; then
+        echo "---x--x--x 0000-00-00 00:00:00 - >$ENV_WFX_SCRIPT_STR_REPO<.sh"
+        echo "---x--x--x 0000-00-00 00:00:00 - >$ENV_WFX_SCRIPT_STR_SEARCH<.sh"
         cat "$DC_WFX_SCRIPT_JSON" |\
             jq '.[] | "dr-xr-xr-x \(.published_at) - \(.tag_name)"' |\
             sed 's/"$//' | sed 's/^"//'
+        exit 0
     else
+        [ -z "$DC_WFX_SCRIPT_JSON" ] && exit 1
         cat "$DC_WFX_SCRIPT_JSON" | jq -r --argjson ver "\"${1:1}\"" \
             '.[] | select(.tag_name == $ver) | .assets[] | "0444 \(.updated_at) \(.size) \(.name)"'
     fi
@@ -168,6 +172,7 @@ vfs_copyout()
 {
     ver="\"`dirname \"${1:1}\"`\""
     asset="\"${1#/*/}\""
+    [ "$asset" == "/$1" ] && exit 1
     url=`cat "$DC_WFX_SCRIPT_JSON" | jq -r --argjson ver "$ver" --argjson asset "$asset" \
         '.[] | select(.tag_name == $ver) | .assets[] | select(.name == $asset) | .browser_download_url'`
     dst="$2"
@@ -176,6 +181,22 @@ vfs_copyout()
     wget "$url" -O "$dst" 2>&1
 
     exit $?
+}
+
+vfs_openfile()
+{
+    file="/${1#/*/}"
+    if [ "$file" == "/$1" ]; then
+        case "${1:1}" in
+            ">$ENV_WFX_SCRIPT_STR_REPO<.sh") echo -e "Fs_Request_Options\nWFX_SCRIPT_STR_REPO" ;;
+            ">$ENV_WFX_SCRIPT_STR_SEARCH<.sh") echo -e "Fs_Request_Options\nWFX_SCRIPT_STR_SEARCH" ;;
+
+            *) echo "Fs_Info_Message \"${1:1}\" WFX_SCRIPT_STR_ERRNA" ;;
+        esac
+        exit 0
+    fi
+
+    exit 1
 }
 
 vfs_properties()
@@ -187,6 +208,10 @@ vfs_properties()
         cat "$DC_WFX_SCRIPT_JSON" | jq -r --argjson ver "$ver" --argjson asset "$asset" \
             '.[] | select(.tag_name == $ver) | .assets[] | select(.name == $asset) | "WFX_SCRIPT_STR_AUTHOR|\(.uploader.login)", "content_type|\(.content_type)", "WFX_SCRIPT_STR_CTIME|\(.created_at)", "WFX_SCRIPT_STR_PTIME|\(.updated_at)", "WFX_SCRIPT_STR_DLOAD|\(.download_count)", "WFX_SCRIPT_STR_SIZE|\(.size)", "url|\(.browser_download_url)"'|\
             tr '|' '\t'
+    elif [[ "${1:1}" == ">"*"<.sh" ]] ; then
+        echo -e "filetype\tWFX_SCRIPT_STR_MAGIC"
+        echo -e "Fs_PropsActs WFX_SCRIPT_STR_CHANGEREPO\tWFX_SCRIPT_STR_NEWSEARCH"
+        exit 0
     else
         ver="\"`basename \"$1\"`\""
         cat "$DC_WFX_SCRIPT_JSON" | jq -r --argjson ver "$ver" \
@@ -206,11 +231,15 @@ vfs_properties()
 vfs_getinfovalues()
 {
     if [ "$1" != "/" ] ; then
+        [ -z "$DC_WFX_SCRIPT_JSON" ] && exit 1
         ver="\"`basename \"$1\"`\""
         cat "$DC_WFX_SCRIPT_JSON" | jq -r --argjson ver "$ver" \
             '.[] | select(.tag_name == $ver) | .assets[] | "\(.name)|⬇ \(.download_count)"' |\
             tr '|' '\t'
     else
+        echo -e ">$ENV_WFX_SCRIPT_STR_REPO<.sh\tWFX_SCRIPT_STR_MAGIC"
+        echo -e ">$ENV_WFX_SCRIPT_STR_SEARCH<.sh\tWFX_SCRIPT_STR_MAGIC"
+        [ -z "$DC_WFX_SCRIPT_JSON" ] && exit 0
         cat "$DC_WFX_SCRIPT_JSON" | jq -r \
             '.[] | "\(.tag_name)|" + if .prerelease == true then "!" else "*" end + "   \(.name)"' |\
             tr '|' '\t'
@@ -234,6 +263,7 @@ case "$1" in
     setopt) vfs_setopt "$2" "$3";;
     list) vfs_list "$2";;
     copyout) vfs_copyout "$2" "$3";;
+    run) vfs_openfile "$2";;
     properties) vfs_properties "$2";;
     getvalues) vfs_getinfovalues "$2";;
     deinit) vfs_deinit;;
