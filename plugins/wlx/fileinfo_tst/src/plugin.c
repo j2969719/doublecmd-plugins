@@ -40,7 +40,7 @@ gchar *custom_font = NULL;
 char plug_path[PATH_MAX];
 gboolean is_plug_init = FALSE;
 gboolean is_cursor = FALSE;
-gboolean is_use_enca = FALSE;
+gboolean is_use_enca_global = FALSE;
 gint pixels_above, pixels_below;
 
 
@@ -219,7 +219,7 @@ static gchar* get_output(char *filename)
 		g_free(command);
 	}
 
-	
+	gboolean is_use_enca = (g_key_file_get_boolean(cfg, group, "use_enca", NULL) || is_use_enca_global);
 
 	if (result)
 	{
@@ -258,6 +258,12 @@ static gchar* get_output(char *filename)
 
 				enca_analyser_free(analyser);
 			}
+		}
+
+		if (!g_utf8_validate(result, -1, NULL))
+		{
+			g_free(result);
+			result = NULL;
 		}
 	}
 
@@ -469,7 +475,7 @@ void DCPCALL ListSetDefaultParams(ListDefaultParamStruct* dps)
 		pixels_above = g_key_file_get_integer(cfg, ".", "pixels_above_lines", NULL);
 		pixels_below = g_key_file_get_integer(cfg, ".", "pixels_below_lines", NULL);
 		is_cursor = g_key_file_get_boolean(cfg, ".", "show_cursor", NULL);
-		is_use_enca = g_key_file_get_boolean(cfg, ".", "use_enca", NULL);
+		is_use_enca_global = g_key_file_get_boolean(cfg, ".", "use_enca", NULL);
 
 		snprintf(lang, 3, "%s", setlocale(LC_ALL, ""));
 		gchar *lang_dir = g_strdup_printf("%s/langs", plug_path);
