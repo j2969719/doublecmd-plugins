@@ -29,7 +29,7 @@ for h in 'From', 'To', 'Date', 'Subject':
     else:
         result = result + '<b>' + h + '</b>:\n'
 
-result = result + '______________________________'
+result = result + '______________________________\n'
 
 # Body
 if msg.is_multipart():
@@ -52,8 +52,6 @@ plug = Gtk.Plug()
 plug.construct(wid)
 view = Gtk.ScrolledWindow()
 plug.add(view)
-hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
-vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=5)
 label = Gtk.Label()
 label.set_margin_start(5)
 label.set_margin_end(5)
@@ -64,9 +62,7 @@ label.set_line_wrap(True)
 label.set_selectable(True)
 label.set_halign(Gtk.Align.START)
 label.set_valign(Gtk.Align.START)
-vbox.pack_start(label, False, True, 0)
-hbox.pack_start(vbox, True, True, 0)
-view.add(hbox)
+view.add(label)
 
 plug.connect("delete-event", Gtk.main_quit)
 plug.show_all()
