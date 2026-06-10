@@ -1,7 +1,7 @@
 CC = gcc
 CFLAGS = -shared -fPIC -Wl,--no-as-needed
 
-libs := `pkg-config --cflags --libs glib-2.0 gio-2.0`
+libs := `pkg-config --cflags --libs glib-2.0 gio-2.0 json-c`
 includes := -I../../../sdk
 
 plugdir := $(shell basename '$(realpath ..)')
@@ -12,7 +12,7 @@ plugfiles := $(filter-out $(wildcard ../*.$(plugtype)), $(wildcard ../*))
 
 
 all:
-		$(CC) $(CFLAGS) -o '../$(plugname)' plugin.c $(libs) $(includes) -D'PLUGNAME="$(plugname)"' -D'PLUGTARGET="$@"' || echo $(plugname) >> ../../../dist/.build_fail.lst
+		$(CC) $(CFLAGS) -o '../$(plugname)' plugin.c $(libs) $(includes) -D'PLUGNAME="$(plugname)"' -D'PLUGDIR="$(plugdir)"' || echo $(plugname) >> ../../../dist/.build_fail.lst
 
 dist:
 		test -f '../$(plugname)' && \

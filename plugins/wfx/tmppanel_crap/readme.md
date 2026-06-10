@@ -8,4 +8,4 @@ Temporary panel, virtual folder that allows keeping links to frequently used fil
 - `doublecmd-qt5`
 
 ## Notes
-The folder structure and links are stored in ini file.
+The folder structure and links are stored in json file.

@@ -1,91 +1,125 @@
 #include <glib.h>
-#include <glib/gstdio.h>
 #include <gio/gio.h>
-#include <fcntl.h>
+#include <stdio.h>
 #include <errno.h>
 #include <utime.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <json.h>
+#include <json_pointer.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <string.h>
 #include "wfxplugin.h"
 #include "extension.h"
 
-#define Int32x32To64(a,b) ((gint64)(a)*(gint64)(b))
-#define BUFSIZE 8192
 #define ROOTNAME "TmpPanel"
-#define MessageBox gExtensions->MessageBox
-#define SendDlgMsg gExtensions->SendDlgMsg
+#define BUFSIZE 8192
+#define DIRFAKESTAT 16877
+#define IS_VFSROOT(X) (X[1] == '\0')
 
-typedef struct sVFSDirData
+#define MessageBox dc_extensions->MessageBox
+#define SendDlgMsg dc_extensions->SendDlgMsg
+#define CreateComponent dc_extensions->CreateComponent
+#define GetProperty dc_extensions->GetProperty
+#define SetProperty dc_extensions->SetProperty
+
+typedef struct
 {
-	gchar **files;
-	gchar group[PATH_MAX];
-	gsize ifile;
-} tVFSDirData;
+	struct json_object *parent;
+	struct json_object_iterator iter;
+	struct json_object_iterator end;
+} VFSDirData;
 
-int gPluginNr;
-tProgressProc gProgressProc = NULL;
-tLogProc gLogProc = NULL;
-tRequestProc gRequestProc = NULL;
-
-GKeyFile *gCfg = NULL;
-gchar *gCfgPath = NULL;
-
-tExtensionStartupInfo* gExtensions = NULL;
-static char gLFMPath[EXT_MAX_PATH];
-
-static char gGroup[MAX_PATH];
-static char gDisplayName[MAX_PATH];
-static char gRemoteName[PATH_MAX];
-
-gboolean UnixTimeToFileTime(unsigned long mtime, LPFILETIME ft)
+enum
 {
-	gint64 ll = Int32x32To64(mtime, 10000000) + 116444736000000000;
-	ft->dwLowDateTime = (DWORD)ll;
-	ft->dwHighDateTime = ll >> 32;
-	return TRUE;
+	WFX_JSON_INFO_PATH,
+	WFX_JSON_INFO_TIME,
+	WFX_JSON_INFO_NOTE,
+};
+
+static int plug_id;
+static gchar *plug_conf = NULL;
+static tLogProc log_msg = NULL;
+struct json_object *json_root = NULL;
+static tRequestProc show_request = NULL;
+static tProgressProc show_progress = NULL;
+static tExtensionStartupInfo* dc_extensions = NULL;
+
+void DCPCALL ExtensionInitialize(tExtensionStartupInfo* StartupInfo)
+{
+	if (dc_extensions == NULL)
+	{
+		dc_extensions = malloc(sizeof(tExtensionStartupInfo));
+		memcpy(dc_extensions, StartupInfo, sizeof(tExtensionStartupInfo));
+	}
 }
 
-unsigned long FileTimeToUnixTime(LPFILETIME ft)
+void DCPCALL ExtensionFinalize(void* Reserved)
 {
-	gint64 ll = ft->dwHighDateTime;
-	ll = (ll << 32) | ft->dwLowDateTime;
-	ll = (ll - 116444736000000000) / 10000000;
-	return (unsigned long)ll;
+	if (dc_extensions != NULL)
+	{
+		free(dc_extensions);
+		dc_extensions = NULL;
+	}
+
+	if (json_root != NULL)
+	{
+		json_object_to_file_ext(plug_conf, json_root, JSON_C_TO_STRING_PRETTY);
+		json_object_put(json_root);
+		json_root = NULL;
+	}
+
+	g_free(plug_conf);
 }
 
-static void SetCurrentFileTime(LPFILETIME ft)
+static void clear_filetime(LPFILETIME ft)
 {
-	gint64 ll = g_get_real_time();
-	ll = ll * 10 + 116444736000000000;
-	ft->dwLowDateTime = (DWORD)ll;
-	ft->dwHighDateTime = ll >> 32;
+	ft->dwHighDateTime = 0xFFFFFFFF;
+	ft->dwLowDateTime = 0xFFFFFFFE;
 }
 
-static int CopyLocalFile(char* InFileName, char* OutFileName)
+static void set_unixtime(LPFILETIME ft, int64_t unixtime)
 {
-	int ifd, ofd, done;
+	if (unixtime < 0)
+		return;
+
+	int64_t value = unixtime * 10000000 + 116444736000000000;
+	ft->dwLowDateTime = (DWORD)value;
+	ft->dwHighDateTime = value >> 32;
+}
+
+static time_t get_unixtime(LPFILETIME ft)
+{
+	int64_t result = ft->dwHighDateTime;
+	result = (result << 32) | ft->dwLowDateTime;
+	result = (result - 116444736000000000) / 10000000;
+	return result;
+}
+
+static int copy_file(char* src, char* dst)
+{
+	int ifd, ofd, done = 0;
 	ssize_t len, total = 0;
 	char buff[BUFSIZE];
 	struct stat buf;
 	int result = FS_FILE_OK;
 
-	if (strcmp(InFileName, OutFileName) == 0)
+	if (strcmp(src, dst) == 0)
 		return FS_FILE_NOTSUPPORTED;
 
-	if (stat(InFileName, &buf) != 0)
+	if (stat(src, &buf) != 0)
 		return FS_FILE_READERROR;
 
-	ifd = open(InFileName, O_RDONLY);
+	ifd = open(src, O_RDONLY);
 
 	if (ifd == -1)
 		return FS_FILE_READERROR;
 
-	ofd = open(OutFileName, O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR);
+	ofd = open(dst, O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR);
 
 	if (ofd > -1)
 	{
-
 		while ((len = read(ifd, buff, sizeof(buff))) > 0)
 		{
 			if (write(ofd, buff, len) == -1)
@@ -97,23 +131,23 @@ static int CopyLocalFile(char* InFileName, char* OutFileName)
 			total += len;
 
 			if (buf.st_size > 0)
+			{
 				done = total * 100 / buf.st_size;
-			else
-				done = 0;
 
-			if (done > 100)
-				done = 100;
+				if (done > 100)
+					done = 100;
+			}
 
-			if (gProgressProc(gPluginNr, InFileName, OutFileName, done) == 1)
+			if (show_progress(plug_id, src, dst, done) == 1)
 			{
 				result = FS_FILE_USERABORT;
-				remove(OutFileName);
+				remove(dst);
 				break;
 			}
 		}
 
 		close(ofd);
-		chmod(OutFileName, buf.st_mode);
+		chmod(dst, buf.st_mode);
 	}
 	else
 		result = FS_FILE_WRITEERROR;
@@ -123,312 +157,388 @@ static int CopyLocalFile(char* InFileName, char* OutFileName)
 	return result;
 }
 
-static void FillProps(char* FileName, uintptr_t pDlg)
+static char *get_node_name(char *path)
 {
-	SendDlgMsg(pDlg, "lbProps", DM_LISTCLEAR, 0, 0);
-	GFile *gfile = g_file_new_for_path(FileName);
+	if (!path)
+		return NULL;
 
-	if (gfile)
-	{
-		GFileInfo *fileinfo = g_file_query_info(gfile, "*", G_FILE_QUERY_INFO_NONE, NULL, NULL);
+	char *pos = strrchr(path, '/');
 
-		if (fileinfo)
-		{
-			gchar **attr = g_file_info_list_attributes(fileinfo, NULL);
-			guint len = g_strv_length(attr);
+	if (pos)
+		return pos + 1;
 
-			for (guint i = 0; i < len; i++)
-			{
-				gchar *str = NULL;
-				GFileAttributeType type = g_file_info_get_attribute_type(fileinfo, attr[i]);
-
-				if (type == G_FILE_ATTRIBUTE_TYPE_STRING)
-				{
-					const char * val = g_file_info_get_attribute_string(fileinfo, attr[i]);
-					str = g_strdup_printf("%s\t%s", attr[i], val);
-				}
-				else if (type == G_FILE_ATTRIBUTE_TYPE_INT32)
-				{
-					gint32 val = g_file_info_get_attribute_int32(fileinfo, attr[i]);
-					str = g_strdup_printf("%s\t%d", attr[i], val);
-				}
-				else if (type == G_FILE_ATTRIBUTE_TYPE_UINT32)
-				{
-					guint32 val = g_file_info_get_attribute_uint32(fileinfo, attr[i]);
-
-					if (g_strcmp0(attr[i], "unix::mode") == 0)
-						str = g_strdup_printf("%s\t%o", attr[i], val);
-					else
-						str = g_strdup_printf("%s\t%u", attr[i], val);
-				}
-				else if (type == G_FILE_ATTRIBUTE_TYPE_UINT64)
-				{
-					guint64 val = g_file_info_get_attribute_uint64(fileinfo, attr[i]);
-
-					if (g_str_has_prefix(attr[i], "time::") && !g_str_has_suffix(attr[i], "sec"))
-					{
-						time_t tval = (time_t)val;
-						str = g_strdup_printf("%s\t%s", attr[i], ctime(&tval));
-						int len = strlen(str);
-
-						if (len > 1 && str[len - 1] == '\n')
-							str[len - 1] = '\0';
-					}
-					else
-						str = g_strdup_printf("%s\t%lu", attr[i], val);
-				}
-				else if (type == G_FILE_ATTRIBUTE_TYPE_INT64)
-				{
-					gint64 val = g_file_info_get_attribute_int64(fileinfo, attr[i]);
-					str = g_strdup_printf("%s\t%ld", attr[i], val);
-				}
-				else if (type == G_FILE_ATTRIBUTE_TYPE_BOOLEAN)
-				{
-					gboolean val = g_file_info_get_attribute_boolean(fileinfo, attr[i]);
-					str = g_strdup_printf("%s\t%s", attr[i], val ? "true" : "false");
-				}
-				else
-					continue;
-
-				SendDlgMsg(pDlg, "lbProps", DM_LISTADDSTR, (intptr_t)str, 0);
-				g_free(str);
-			}
-
-			g_strfreev(attr);
-			g_object_unref(fileinfo);
-		}
-		else
-			MessageBox("Failed to query fileinfo", ROOTNAME, MB_OK | MB_ICONERROR);
-
-		g_object_unref(gfile);
-	}
-	else
-		MessageBox("Failed to open gfile", ROOTNAME, MB_OK | MB_ICONERROR);
+	return NULL;
 }
 
-intptr_t DCPCALL PropertiesDlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr_t wParam, intptr_t lParam)
+static struct json_object *get_json_node_from_path(char *path)
+{
+	struct json_object *result = NULL;
+
+	if (IS_VFSROOT(path))
+		result = json_root;
+	else
+		json_pointer_get(json_root, path, &result);
+
+	return result;
+}
+
+static struct json_object *get_parent_node(char *path)
+{
+	gchar *root_dir = g_path_get_dirname(path);
+	struct json_object *result = get_json_node_from_path(root_dir);
+	g_free(root_dir);
+
+	return result;
+}
+
+static gboolean json_node_exists(struct json_object *parent, gchar *name)
+{
+	if (!parent || !name)
+		return FALSE;
+
+	struct json_object *found = NULL;
+	json_object_object_get_ex(parent, name, &found);
+	return (found != NULL);
+}
+
+static gboolean json_node_remove(gchar *path)
+{
+	gboolean result = TRUE;
+	struct json_object *parent = get_parent_node(path);
+	char *name = get_node_name(path);
+
+	if (json_node_exists(parent, name))
+		json_object_object_del(parent, name);
+
+	return result;
+}
+
+static void add_file_node(struct json_object *parent, gchar *name, char *path)
+{
+	struct json_object *array = json_object_new_array();
+	json_object_array_put_idx(array, WFX_JSON_INFO_PATH, path ? json_object_new_string(path) : NULL);
+	json_object_array_put_idx(array, WFX_JSON_INFO_TIME, json_object_new_int64((int64_t)time(NULL)));
+	json_object_object_add(parent, name ? name : ".", array);
+}
+
+static void add_dir_node(char *path)
+{
+	struct json_object *parent = get_parent_node(path);
+
+	if (parent != NULL)
+	{
+		char *name = get_node_name(path);
+
+		if (!json_node_exists(parent, name))
+		{
+			json_object_object_add(parent, name, json_object_new_object());
+			add_file_node(parent, NULL, NULL);
+		}
+	}
+}
+
+static void build_tree(char *path)
+{
+	char *pos = strchr(path + 1, '/');
+
+	while (pos)
+	{
+		*pos = '\0';
+		add_dir_node(path);
+		*pos = '/';
+		pos = strchr(pos + 1, '/');
+	}
+
+	add_dir_node(path);
+}
+
+static const char *get_localname(char *path)
+{
+	const char *result = NULL;
+	struct json_object *node = get_json_node_from_path(path);
+
+	if (json_object_is_type(node, json_type_array))
+		result = json_object_get_string(json_object_array_get_idx(node, WFX_JSON_INFO_PATH));
+
+	return result;
+}
+
+static gboolean fill_entry(VFSDirData *dirdata, WIN32_FIND_DATAA *FindData)
+{
+	gboolean result = FALSE;
+
+	memset(FindData, 0, sizeof(WIN32_FIND_DATAA));
+	clear_filetime(&FindData->ftCreationTime);
+	clear_filetime(&FindData->ftLastAccessTime);
+	clear_filetime(&FindData->ftLastWriteTime);
+	FindData->dwFileAttributes = FILE_ATTRIBUTE_UNIX_MODE;
+
+	while (!result && !json_object_iter_equal(&dirdata->iter, &dirdata->end))
+	{
+		const char *name = json_object_iter_peek_name(&dirdata->iter);
+
+		if (strcmp(name, ".") != 0)
+		{
+			g_strlcpy(FindData->cFileName, name, MAX_PATH);
+			struct json_object *value = json_object_iter_peek_value(&dirdata->iter);
+			json_type type = json_object_get_type(value);
+
+			if (type == json_type_object)
+			{
+				FindData->dwFileAttributes |= FILE_ATTRIBUTE_DIRECTORY;
+				FindData->dwReserved0 = DIRFAKESTAT;
+
+				struct json_object *info = NULL;
+
+				if (json_object_object_get_ex(dirdata->parent, ".", &info) && json_object_is_type(info, json_type_array))
+				{
+					int64_t unixtime = json_object_get_int64(json_object_array_get_idx(info, WFX_JSON_INFO_TIME));
+					set_unixtime(&FindData->ftLastWriteTime, unixtime);
+				}
+
+				result = TRUE;
+			}
+			else if (type == json_type_array)
+			{
+				struct stat buf;
+				const char *localname = json_object_get_string(json_object_array_get_idx(value, 0));
+
+				if (lstat(localname, &buf) == 0)
+				{
+					FindData->nFileSizeHigh = (buf.st_size & 0xFFFFFFFF00000000) >> 32;
+					FindData->nFileSizeLow = buf.st_size & 0x00000000FFFFFFFF;
+
+					FindData->dwReserved0 = buf.st_mode;
+					set_unixtime(&FindData->ftLastWriteTime, buf.st_mtime);
+					set_unixtime(&FindData->ftLastAccessTime, buf.st_atime);
+				}
+				else
+				{
+					FindData->nFileSizeHigh = 0xFFFFFFFF;
+					FindData->nFileSizeLow = 0xFFFFFFFE;
+				}
+
+				result = TRUE;
+			}
+		}
+
+		json_object_iter_next(&dirdata->iter);
+	}
+
+	return result;
+}
+
+static void add_prop_label(uintptr_t pDlg, guint index, char *caption, gboolean is_value)
+{
+	char control[MAX_PATH];
+	snprintf(control, sizeof(control), "%s%d", is_value ? "lblValue" : "lblProp", index);
+	CreateComponent(pDlg, "pnlProps", control, "TLabel", NULL);
+	SetProperty(pDlg, control, "Caption", caption, TK_STRING);
+
+	if (!is_value)
+	{
+		SetProperty(pDlg, control, "Font.Style", "[fsBold]", TK_STRING);
+		SetProperty(pDlg, control, "Font.Style", "[fsBold]", TK_STRING);
+	}
+}
+
+intptr_t DCPCALL prop_dialog_cb(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr_t wParam, intptr_t lParam)
 {
 	if (Msg == DN_INITDIALOG)
 	{
-		FillProps(gRemoteName, pDlg);
-		SendDlgMsg(pDlg, "lblName", DM_SETTEXT, (intptr_t)gDisplayName, 0);
-		SendDlgMsg(pDlg, "fnRealPath", DM_SETTEXT, (intptr_t)gRemoteName, 0);
+		const char *localname = NULL;
+		char *filename = (char*)SendDlgMsg(pDlg, NULL, DM_GETDLGDATA, 0, 0);
+		char *pos = strrchr(filename, '/');
+		SendDlgMsg(pDlg, "edFleName", DM_SETTEXT, (intptr_t)pos + 1, 0);
+		struct json_object *node = get_json_node_from_path(filename);
+
+		if (json_object_is_type(node, json_type_array))
+		{
+			guint64 unixtime = (guint64)json_object_get_int64(json_object_array_get_idx(node, WFX_JSON_INFO_TIME));
+			gchar *value = g_date_time_format(g_date_time_new_from_unix_local(unixtime), "%Y-%m-%dT%H:%M:%S");
+			add_prop_label(pDlg, 0, "link created", FALSE);
+			add_prop_label(pDlg, 0, value, TRUE);
+			g_free(value);
+			localname = json_object_get_string(json_object_array_get_idx(node, WFX_JSON_INFO_PATH));
+			SendDlgMsg(pDlg, "edLocalName", DM_SETTEXT, (intptr_t)localname, 0);
+			const char *note = json_object_get_string(json_object_array_get_idx(node, WFX_JSON_INFO_NOTE));
+			SendDlgMsg(pDlg, "Memo", DM_SETTEXT, (intptr_t)note, 0);
+		}
+
+		if (!localname)
+			return 0;
+
+		GFile *gfile = g_file_new_for_path(localname);
+
+		if (gfile)
+		{
+			GFileInfo *fileinfo = g_file_query_info(gfile, "*", G_FILE_QUERY_INFO_NONE, NULL, NULL);
+
+			if (fileinfo)
+			{
+				CreateComponent(pDlg, "sbProps", "lblDescr", "TLabel", NULL);
+				const char *content = g_file_info_get_content_type(fileinfo);
+				gchar *descr = g_content_type_get_description(content);
+				SetProperty(pDlg, "lblDescr", "Caption", descr, TK_STRING);
+				SetProperty(pDlg, "lblDescr", "Alignment", "taCenter", TK_STRING);
+				SetProperty(pDlg, "lblDescr", "Align", "alTop", TK_STRING);
+				g_free(descr);
+				gchar **attrs = g_file_info_list_attributes(fileinfo, NULL);
+				guint len = g_strv_length(attrs);
+
+				for (guint i = 0; i < len; i++)
+				{
+					if (g_strcmp0(attrs[i], "standard::type") == 0)
+						continue;
+
+					GFileAttributeType type = g_file_info_get_attribute_type(fileinfo, attrs[i]);
+
+					if (type == G_FILE_ATTRIBUTE_TYPE_OBJECT || type == G_FILE_ATTRIBUTE_TYPE_BYTE_STRING)
+						continue;
+
+					add_prop_label(pDlg, i + 1, attrs[i], FALSE);
+					gchar *value = NULL;
+
+					if (type == G_FILE_ATTRIBUTE_TYPE_UINT64) 
+					{
+						if (g_str_has_prefix(attrs[i], "time::") && !g_str_has_suffix(attrs[i], "sec"))
+						{
+							guint64 unixtime = g_file_info_get_attribute_uint64(fileinfo, attrs[i]);
+							value = g_date_time_format(g_date_time_new_from_unix_local(unixtime), "%Y-%m-%dT%H:%M:%S");
+						}
+						else if (strstr(attrs[i], "size"))
+							value = g_format_size(g_file_info_get_attribute_uint64(fileinfo, attrs[i]));
+						else
+							value = g_file_info_get_attribute_as_string(fileinfo, attrs[i]);
+					}
+					else if (type == G_FILE_ATTRIBUTE_TYPE_UINT32 && g_strcmp0(attrs[i], "unix::mode") == 0)
+						value = g_strdup_printf("%o", g_file_info_get_attribute_uint32(fileinfo, attrs[i]));
+					else
+						value = g_file_info_get_attribute_as_string(fileinfo, attrs[i]);
+
+					add_prop_label(pDlg, i + 1, value, TRUE);
+					g_free(value);
+				}
+
+				g_strfreev(attrs);
+				g_object_unref(fileinfo);
+			}
+
+			g_object_unref(gfile);
+		}
 	}
 	else if (Msg == DN_CLICK && strcmp(DlgItemName, "btnApply") == 0)
 	{
-		gchar *newpath = g_strdup((char*)SendDlgMsg(pDlg, "fnRealPath", DM_GETTEXT, 0, 0));
-		g_key_file_set_string(gCfg, gGroup, gDisplayName, newpath);
-		FillProps(newpath, pDlg);
-		g_free(newpath);
+		
+	}
+	else if (Msg == DN_CLOSE)
+	{
+		char *filename = (char*)SendDlgMsg(pDlg, NULL, DM_GETDLGDATA, 0, 0);
+		struct json_object *node = get_json_node_from_path(filename);
+
+		if (json_object_is_type(node, json_type_array))
+		{
+			char *path = (char*)SendDlgMsg(pDlg, "edLocalName", DM_GETTEXT, 0, 0);
+			const char *localname = json_object_get_string(json_object_array_get_idx(node, WFX_JSON_INFO_PATH));
+
+			if (strcmp(path, localname) != 0)
+				json_object_array_put_idx(node, WFX_JSON_INFO_PATH, path ? json_object_new_string(path) : NULL);
+
+			char *note = (char*)SendDlgMsg(pDlg, "Memo", DM_GETTEXT, 0, 0);
+			json_object_array_put_idx(node, WFX_JSON_INFO_NOTE, note ? json_object_new_string(note) : NULL);
+		}
 	}
 
 	return 0;
 }
 
-static BOOL PropertiesDialog(void)
+void DCPCALL FsSetDefaultParams(FsDefaultParamStruct* dps)
 {
-	const char lfmdata[] = ""
-	                       "object DialogBox: TDialogBox\n"
-	                       "  Left = 863\n"
-	                       "  Height = 373\n"
-	                       "  Top = 254\n"
-	                       "  Width = 507\n"
-	                       "  AutoSize = True\n"
-	                       "  BorderStyle = bsDialog\n"
-	                       "  Caption = 'Properties'\n"
-	                       "  ChildSizing.LeftRightSpacing = 10\n"
-	                       "  ChildSizing.TopBottomSpacing = 10\n"
-	                       "  ChildSizing.HorizontalSpacing = 10\n"
-	                       "  ChildSizing.VerticalSpacing = 10\n"
-	                       "  ClientHeight = 373\n"
-	                       "  ClientWidth = 507\n"
-	                       "  DesignTimePPI = 100\n"
-	                       "  OnShow = DialogBoxShow\n"
-	                       "  Position = poOwnerFormCenter\n"
-	                       "  LCLVersion = '2.2.4.0'\n"
-	                       "  object lblName: TLabel\n"
-	                       "    AnchorSideLeft.Control = Owner\n"
-	                       "    AnchorSideTop.Control = Owner\n"
-	                       "    AnchorSideRight.Control = lbProps\n"
-	                       "    AnchorSideRight.Side = asrBottom\n"
-	                       "    Left = 10\n"
-	                       "    Height = 1\n"
-	                       "    Top = 20\n"
-	                       "    Width = 464\n"
-	                       "    Align = alCustom\n"
-	                       "    Alignment = taCenter\n"
-	                       "    Anchors = [akTop, akLeft, akRight]\n"
-	                       "    BorderSpacing.Top = 20\n"
-	                       "    Font.Style = [fsBold]\n"
-	                       "    ParentColor = False\n"
-	                       "    ParentFont = False\n"
-	                       "  end\n"
-	                       "  object lbProps: TListBox\n"
-	                       "    AnchorSideLeft.Control = Owner\n"
-	                       "    AnchorSideTop.Control = lblName\n"
-	                       "    AnchorSideTop.Side = asrBottom\n"
-	                       "    AnchorSideRight.Control = btnApply\n"
-	                       "    AnchorSideRight.Side = asrBottom\n"
-	                       "    Left = 10\n"
-	                       "    Height = 219\n"
-	                       "    Top = 41\n"
-	                       "    Width = 464\n"
-	                       "    Anchors = [akTop, akLeft, akRight]\n"
-	                       "    BorderSpacing.Top = 20\n"
-	                       "    ClickOnSelChange = False\n"
-	                       "    ExtendedSelect = False\n"
-	                       "    ItemHeight = 0\n"
-	                       "    Options = []\n"
-	                       "    TabOrder = 0\n"
-	                       "  end\n"
-	                       "  object fnRealPath: TFileNameEdit\n"
-	                       "    AnchorSideLeft.Control = Owner\n"
-	                       "    AnchorSideTop.Control = lbProps\n"
-	                       "    AnchorSideTop.Side = asrBottom\n"
-	                       "    Left = 10\n"
-	                       "    Height = 36\n"
-	                       "    Top = 270\n"
-	                       "    Width = 398\n"
-	                       "    Filter = 'All Files|*'\n"
-	                       "    FilterIndex = 0\n"
-	                       "    HideDirectories = False\n"
-	                       "    ButtonWidth = 24\n"
-	                       "    NumGlyphs = 1\n"
-	                       "    MaxLength = 0\n"
-	                       "    TabOrder = 1\n"
-	                       "  end\n"
-	                       "  object btnApply: TBitBtn\n"
-	                       "    AnchorSideLeft.Control = fnRealPath\n"
-	                       "    AnchorSideLeft.Side = asrBottom\n"
-	                       "    AnchorSideTop.Control = fnRealPath\n"
-	                       "    AnchorSideBottom.Control = fnRealPath\n"
-	                       "    AnchorSideBottom.Side = asrBottom\n"
-	                       "    Left = 418\n"
-	                       "    Height = 36\n"
-	                       "    Top = 270\n"
-	                       "    Width = 56\n"
-	                       "    Anchors = [akTop, akLeft, akBottom]\n"
-	                       "    AutoSize = True\n"
-	                       "    BorderSpacing.Left = 5\n"
-	                       "    BorderSpacing.Right = 5\n"
-	                       "    OnClick = ButtonClick\n"
-	                       "    Caption = 'Apply'\n"
-	                       "    TabOrder = 2\n"
-	                       "  end\n"
-	                       "  object btnClose: TBitBtn\n"
-	                       "    AnchorSideTop.Control = fnRealPath\n"
-	                       "    AnchorSideTop.Side = asrBottom\n"
-	                       "    AnchorSideRight.Control = lbProps\n"
-	                       "    AnchorSideRight.Side = asrBottom\n"
-	                       "    Left = 373\n"
-	                       "    Height = 31\n"
-	                       "    Top = 321\n"
-	                       "    Width = 101\n"
-	                       "    Anchors = [akTop, akRight]\n"
-	                       "    BorderSpacing.Top = 15\n"
-	                       "    Constraints.MinHeight = 31\n"
-	                       "    Constraints.MinWidth = 101\n"
-	                       "    Default = True\n"
-	                       "    DefaultCaption = True\n"
-	                       "    Kind = bkClose\n"
-	                       "    ModalResult = 11\n"
-	                       "    OnClick = ButtonClick\n"
-	                       "    TabOrder = 3\n"
-	                       "  end\n"
-	                       "end\n";
-
-	return gExtensions->DialogBoxLFM((intptr_t)lfmdata, (unsigned long)strlen(lfmdata), PropertiesDlgProc);
-}
-
-gboolean SetFindData(tVFSDirData *dirdata, WIN32_FIND_DATAA *FindData)
-{
-	struct stat buf;
-
-	memset(FindData, 0, sizeof(WIN32_FIND_DATAA));
-
-	if (!dirdata->files)
-		return FALSE;
-
-	char *file = dirdata->files[dirdata->ifile];
-
-	if (file != NULL)
+	if (!plug_conf)
 	{
-		g_strlcpy(FindData->cFileName, file, MAX_PATH - 1);
-		gchar *target = g_key_file_get_string(gCfg, dirdata->group, file, NULL);
+		gchar *cfg_dir = g_path_get_dirname(dps->DefaultIniName);
+		plug_conf = g_strdup_printf("%s/tmppanel_crap.ini", cfg_dir);
 
-		FindData->ftCreationTime.dwHighDateTime = 0xFFFFFFFF;
-		FindData->ftCreationTime.dwLowDateTime = 0xFFFFFFFE;
-		FindData->ftLastAccessTime.dwHighDateTime = 0xFFFFFFFF;
-		FindData->ftLastAccessTime.dwLowDateTime = 0xFFFFFFFE;
-		FindData->ftLastWriteTime.dwHighDateTime = 0xFFFFFFFF;
-		FindData->ftLastWriteTime.dwLowDateTime = 0xFFFFFFFE;
-
-		if ((target) && (strncmp(target, "folder", 6) == 0))
+		if (g_file_test(plug_conf, G_FILE_TEST_EXISTS))
 		{
-			//SetCurrentFileTime(&FindData->ftLastWriteTime);
-			FindData->dwFileAttributes = FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_UNIX_MODE;
-			FindData->dwReserved0 = 16877;
-		}
-		else
-		{
-			if ((lstat(target, &buf) == 0))
+			json_root = json_object_new_object();
+			GKeyFile *cfg = g_key_file_new();
+			struct json_object *parent = json_root;
+
+			if (g_key_file_load_from_file(cfg, plug_conf, G_KEY_FILE_KEEP_COMMENTS, NULL))
 			{
-				FindData->nFileSizeHigh = (buf.st_size & 0xFFFFFFFF00000000) >> 32;
-				FindData->nFileSizeLow = buf.st_size & 0x00000000FFFFFFFF;
-				FindData->dwFileAttributes |= FILE_ATTRIBUTE_UNIX_MODE;
-				FindData->dwReserved0 = buf.st_mode;
-				UnixTimeToFileTime(buf.st_mtime, &FindData->ftLastWriteTime);
-				UnixTimeToFileTime(buf.st_atime, &FindData->ftLastAccessTime);
+				gchar **groups = g_key_file_get_groups(cfg, NULL);
+
+				for (char **dir = groups; *dir != NULL; dir++)
+				{
+					if (strcmp(*dir, "/") != 0)
+					{
+						build_tree(*dir);
+						parent = get_json_node_from_path(*dir);
+					}
+
+					gchar **items = g_key_file_get_keys(cfg, *dir, NULL, NULL);
+
+					for (gsize i = 0; items[i] != NULL; i++)
+					{
+						gchar *localname = g_key_file_get_string(cfg, *dir, items[i], NULL);
+
+						if (strcmp(localname, "folder") != 0)
+							add_file_node(parent, items[i], localname);
+
+						g_free(localname);
+					}
+
+					g_strfreev(items);
+				}
+
+				g_strfreev(groups);
 			}
-			else
-			{
-				FindData->nFileSizeHigh = 0xFFFFFFFF;
-				FindData->nFileSizeLow = 0xFFFFFFFE;
-				//SetCurrentFileTime(&FindData->ftLastWriteTime);
-			}
+
+			g_key_file_free(cfg);
+			gchar *bakup = g_strdup_printf("%s/tmppanel_crap.ini.bak", cfg_dir);
+			rename(plug_conf, bakup);
+			g_free(bakup);
 		}
 
-		dirdata->ifile++;
-		return TRUE;
+		g_free(plug_conf);
+		plug_conf = g_strdup_printf("%s/" PLUGDIR ".json", cfg_dir);
+		g_free(cfg_dir);
+
+		if (!json_root)
+			json_root = json_object_from_file(plug_conf);
+
+		if (!json_root)
+			json_root = json_object_new_object();
 	}
-
-	return FALSE;
 }
 
 int DCPCALL FsInit(int PluginNr, tProgressProc pProgressProc, tLogProc pLogProc, tRequestProc pRequestProc)
 {
-	gPluginNr = PluginNr;
-	gProgressProc = pProgressProc;
-	gLogProc = pLogProc;
-	gRequestProc = pRequestProc;
+	plug_id = PluginNr;
+	show_progress = pProgressProc;
+	log_msg = pLogProc;
+	show_request = pRequestProc;
 
 	return 0;
 }
 
 HANDLE DCPCALL FsFindFirst(char* Path, WIN32_FIND_DATAA *FindData)
 {
-	tVFSDirData *dirdata;
+	struct json_object *node = get_json_node_from_path(Path);
 
-	dirdata = g_new0(tVFSDirData, 1);
+	if (node != NULL)
+	{
+		VFSDirData *dirdata = g_new0(VFSDirData, 1);
+		dirdata->iter = json_object_iter_begin(node);
+		dirdata->end = json_object_iter_end(node);
+		dirdata->parent = node;
 
-	if (dirdata == NULL)
-		return (HANDLE)(-1);
-
-	dirdata->ifile = 0;
-	g_strlcpy(dirdata->group, Path, PATH_MAX);
-
-	if (dirdata->group[1] != '\0' && dirdata->group[(strlen(dirdata->group) - 1)] == '/')
-		dirdata->group[(strlen(dirdata->group) - 1)] = '\0';
-
-	dirdata->files = g_key_file_get_keys(gCfg, dirdata->group, NULL, NULL);
-
-	if (dirdata->files != NULL && SetFindData(dirdata, FindData))
-		return (HANDLE)dirdata;
-
-	if (dirdata->files != NULL)
-		g_strfreev(dirdata->files);
-
-	g_free(dirdata);
+		if (fill_entry(dirdata, FindData))
+			return (HANDLE)dirdata;
+		else
+			g_free(dirdata);
+	}
 
 	return (HANDLE)(-1);
 }
@@ -436,24 +546,14 @@ HANDLE DCPCALL FsFindFirst(char* Path, WIN32_FIND_DATAA *FindData)
 
 BOOL DCPCALL FsFindNext(HANDLE Hdl, WIN32_FIND_DATAA *FindData)
 {
-	tVFSDirData *dirdata = (tVFSDirData*)Hdl;
-
-	if (SetFindData(dirdata, FindData))
-		return TRUE;
-	else
-		return FALSE;
+	VFSDirData *dirdata = (VFSDirData*)Hdl;
+	return fill_entry(dirdata, FindData);
 }
 
 int DCPCALL FsFindClose(HANDLE Hdl)
 {
-	tVFSDirData *dirdata = (tVFSDirData*)Hdl;
-
-
-	if (dirdata->files != NULL)
-		g_strfreev(dirdata->files);
-
+	VFSDirData *dirdata = (VFSDirData*)Hdl;
 	g_free(dirdata);
-
 	return 0;
 }
 
@@ -464,191 +564,115 @@ BOOL DCPCALL FsLinksToLocalFiles(void)
 
 BOOL DCPCALL FsGetLocalName(char* RemoteName, int maxlen)
 {
-	gchar *group = g_path_get_dirname(RemoteName);
-	gchar *key = g_path_get_basename(RemoteName);
-	gchar *result = g_key_file_get_string(gCfg, group, key, NULL);
-	g_free(group);
-	g_free(key);
+	const char *localname = get_localname(RemoteName);
 
-	if (result)
+	if (localname)
 	{
-		g_strlcpy(RemoteName, result, maxlen - 1);
-		g_free(result);
+		g_strlcpy(RemoteName, localname, maxlen);
 		return TRUE;
 	}
-	else
-		return FALSE;
+
+	return FALSE;
 }
 
 int DCPCALL FsGetFile(char* RemoteName, char* LocalName, int CopyFlags, RemoteInfoStruct* ri)
 {
-	int result = FS_FILE_OK;
-	GError *err = NULL;
-
-	if (gProgressProc(gPluginNr, RemoteName, LocalName, 0))
+	if (show_progress(plug_id, RemoteName, LocalName, 0) != 0)
 		return FS_FILE_USERABORT;
 
 	if (CopyFlags == 0 && g_file_test(LocalName, G_FILE_TEST_EXISTS))
 		return FS_FILE_EXISTS;
 
-	gchar *group = g_path_get_dirname(RemoteName);
-	gchar *key = g_path_get_basename(RemoteName);
-	gchar *realname = g_key_file_get_string(gCfg, group, key, NULL);
-	g_free(group);
-	g_free(key);
-
-	if (realname)
-	{
-		if (g_strcmp0(realname, LocalName) == 0)
-			result = FS_FILE_NOTSUPPORTED;
-		else
-			result = CopyLocalFile(realname, LocalName);
-
-		g_free(realname);
-	}
-	else
-		result = FS_FILE_READERROR;
-
-	return result;
+	return copy_file((char*)get_localname(RemoteName), LocalName);
 }
 
 BOOL DCPCALL FsMkDir(char* Path)
 {
-	gboolean result = FALSE;
-	gchar *group = g_path_get_dirname(Path);
-	gchar *key = g_path_get_basename(Path);
+	build_tree(Path);
+	return TRUE;
+}
 
-	if (!g_key_file_has_key(gCfg, group, key, NULL))
+int DCPCALL FsPutFile(char* LocalName, char* RemoteName, int CopyFlags)
+{
+	if (show_progress(plug_id, LocalName, RemoteName, 0) != 0)
+		return FS_FILE_USERABORT;
+
+	int result = FS_FILE_OK;
+
+	struct json_object *parent = get_parent_node(RemoteName);
+
+	if (parent != NULL)
 	{
-		g_key_file_set_string(gCfg, group, key, "folder");
-		result = TRUE;
+		char *name = get_node_name(RemoteName);
+
+		if (CopyFlags == 0 && json_node_exists(parent, name))
+			return FS_FILE_EXISTS;
+
+		add_file_node(parent, name, LocalName);
 	}
 
-	g_free(group);
-	g_free(key);
+	show_progress(plug_id, LocalName, RemoteName, 100);
+	return result;
+}
+
+int DCPCALL FsRenMovFile(char* OldName, char* NewName, BOOL Move, BOOL OverWrite, RemoteInfoStruct* ri)
+{
+	if (show_progress(plug_id, OldName, NewName, 0) != 0)
+		return FS_FILE_USERABORT;
+
+	int result = FS_FILE_OK;
+
+	struct json_object *parent = get_parent_node(NewName);
+	char *name = get_node_name(NewName);
+
+	if (strcmp(name, ".") == 0)
+		result = FS_FILE_NOTSUPPORTED;
+
+	if (!OverWrite && json_node_exists(parent, name))
+		result = FS_FILE_EXISTS;
+
+	if (result == FS_FILE_OK)
+	{
+		struct json_object *node = get_json_node_from_path(OldName);
+		json_object_get(node);
+		json_node_remove(OldName);
+		json_object_object_add(parent, name, node);
+		show_progress(plug_id, OldName, NewName, 100);
+	}
 
 	return result;
 }
 
 BOOL DCPCALL FsRemoveDir(char* RemoteName)
 {
-	gboolean result = FALSE;
-	gchar *group = g_path_get_dirname(RemoteName);
-	gchar *key = g_path_get_basename(RemoteName);
-
-	if (g_key_file_remove_key(gCfg, group, key, NULL))
-	{
-		g_key_file_remove_group(gCfg, RemoteName, NULL);
-		result = TRUE;
-	}
-
-	g_free(group);
-	g_free(key);
-
-	return result;
+	return json_node_remove(RemoteName);
 }
 
 BOOL DCPCALL FsDeleteFile(char* RemoteName)
 {
-	gboolean result = FALSE;
-	gchar *group = g_path_get_dirname(RemoteName);
-	gchar *key = g_path_get_basename(RemoteName);
-
-	if (g_key_file_remove_key(gCfg, group, key, NULL))
-		result = TRUE;
-
-	g_free(group);
-	g_free(key);
-
-	return result;
-
-}
-
-int DCPCALL FsPutFile(char* LocalName, char* RemoteName, int CopyFlags)
-{
-	int err = gProgressProc(gPluginNr, RemoteName, LocalName, 0);
-
-	if (err)
-		return FS_FILE_USERABORT;
-
-	int result = FS_FILE_OK;
-	gchar *group = g_path_get_dirname(RemoteName);
-	gchar *key = g_path_get_basename(RemoteName);
-	gchar *value = g_key_file_get_string(gCfg, group, key, NULL);
-
-	if ((CopyFlags == 0) && (g_key_file_has_key(gCfg, group, key, NULL)))
-		result = FS_FILE_EXISTS;
-	else if (value && strncmp(value, "folder", 6) == 0)
-		result = FS_FILE_WRITEERROR;
-	else
-		g_key_file_set_string(gCfg, group, key, LocalName);
-
-	g_free(group);
-	g_free(key);
-	g_free(value);
-	gProgressProc(gPluginNr, RemoteName, LocalName, 100);
-
-	return result;
-}
-
-int DCPCALL FsRenMovFile(char* OldName, char* NewName, BOOL Move, BOOL OverWrite, RemoteInfoStruct* ri)
-{
-	int err = gProgressProc(gPluginNr, OldName, NewName, 0);
-
-	if (err)
-		return FS_FILE_USERABORT;
-
-	int result = FS_FILE_OK;
-	gchar *group = g_path_get_dirname(OldName);
-	gchar *key = g_path_get_basename(OldName);
-	gchar *value = g_key_file_get_string(gCfg, group, key, NULL);
-	gchar *newgroup = g_path_get_dirname(NewName);
-	gchar *newkey = g_path_get_basename(NewName);
-
-	// iwanttobelive
-	gboolean wtf_overwrite = (gboolean)abs((int)OverWrite % 2);
-
-	if (!wtf_overwrite && g_key_file_has_key(gCfg, newgroup, newkey, NULL))
-		result = FS_FILE_EXISTS;
-	else if (value && strncmp(value, "folder", 6) == 0)
-		result = FS_FILE_WRITEERROR;
-	else
-	{
-		g_key_file_set_string(gCfg, newgroup, newkey, value);
-		gProgressProc(gPluginNr, OldName, NewName, 50);
-
-		if (Move)
-			g_key_file_remove_key(gCfg, group, key, NULL);
-	}
-
-	g_free(group);
-	g_free(key);
-	g_free(value);
-	g_free(newgroup);
-	g_free(newkey);
-	gProgressProc(gPluginNr, OldName, NewName, 100);
-
-	return result;
+	return json_node_remove(RemoteName);
 }
 
 int DCPCALL FsExecuteFile(HWND MainWin, char* RemoteName, char* Verb)
 {
-	struct stat buf;
-	gchar *command = NULL;
 	int result = FS_EXEC_ERROR;
-	gchar *group = g_path_get_dirname(RemoteName);
-	gchar *key = g_path_get_basename(RemoteName);
-	gchar *path = g_key_file_get_string(gCfg, group, key, NULL);
+	const char *localname = get_localname(RemoteName);
 
-	if (strncmp(Verb, "open", 5) == 0)
+	if (!localname || IS_VFSROOT(RemoteName) || strcmp(RemoteName, "/..") == 0)
+		return result;
+
+	if (strcmp(Verb, "open") == 0)
 	{
-		if (path && stat(path, &buf) == 0)
+		struct stat buf;
+		gchar *command = NULL;
+
+		if (stat(localname, &buf) == 0)
 		{
 			if (buf.st_mode & S_IXUSR)
-				command = g_shell_quote(path);
+				command = g_shell_quote(localname);
 			else
 			{
-				gchar *quoted = g_shell_quote(path);
+				gchar *quoted = g_shell_quote(localname);
 				command = g_strdup_printf("xdg-open %s", quoted);
 				g_free(quoted);
 			}
@@ -658,32 +682,25 @@ int DCPCALL FsExecuteFile(HWND MainWin, char* RemoteName, char* Verb)
 			result = FS_FILE_OK;
 		}
 	}
-	else if (path && strncmp(path, "folder", 6) != 0 && strncmp(Verb, "chmod", 5) == 0)
+	else if (strcmp(Verb, "chmod") == 0)
 	{
-		gint i = g_ascii_strtoll(Verb + 6, 0, 8);
+		gint mode = g_ascii_strtoll(Verb + 6, 0, 8);
 
-		if (chmod(path, i) == -1)
+		if (chmod(localname, mode) == -1)
 		{
 			int errsv = errno;
-			gRequestProc(gPluginNr, RT_MsgOK, NULL, strerror(errsv), NULL, 0);
+			show_request(plug_id, RT_MsgOK, NULL, strerror(errsv), NULL, 0);
 		}
-
-		result = FS_FILE_OK;
+		else
+			result = FS_FILE_OK;
 	}
-	else if (path && path[1] != '\0' && strncmp(path, "folder", 6) != 0 && strcmp(Verb, "properties") == 0)
+	else if (strcmp(Verb, "properties") == 0)
 	{
-		g_strlcpy(gRemoteName, path, sizeof(gRemoteName));
-		g_strlcpy(gDisplayName, key, sizeof(gDisplayName));
-		g_strlcpy(gGroup, group, sizeof(gGroup));
-		PropertiesDialog();
+		gchar *lfm = g_strdup_printf("%s/dialog.lfm", dc_extensions->PluginDir);
+		dc_extensions->DialogBoxParam((void*)lfm, (unsigned long)strlen(lfm), prop_dialog_cb, DB_FILENAME, (void*)RemoteName, NULL);
+		g_free(lfm);
 		result = FS_FILE_OK;
 	}
-	else
-		MessageBox(strerror(EOPNOTSUPP), ROOTNAME, MB_OK | MB_ICONERROR);
-
-	g_free(key);
-	g_free(path);
-	g_free(group);
 
 	return result;
 }
@@ -696,32 +713,23 @@ BOOL DCPCALL FsSetTime(char* RemoteName, FILETIME *CreationTime, FILETIME *LastA
 
 	if (LastAccessTime != NULL || LastWriteTime != NULL)
 	{
+		const char *localname = get_localname(RemoteName);
 
-		gchar *group = g_path_get_dirname(RemoteName);
-		gchar *key = g_path_get_basename(RemoteName);
-		gchar *value = g_key_file_get_string(gCfg, group, key, NULL);
-
-		if (value && strncmp(value, "folder", 6) != 0 && g_stat(value, &buf) == 0)
+		if (lstat(localname, &buf) == 0)
 		{
 			if (LastAccessTime != NULL)
-				ubuf.actime = FileTimeToUnixTime(LastAccessTime);
+				ubuf.actime = get_unixtime(LastAccessTime);
 			else
 				ubuf.actime = buf.st_atime;
 
 			if (LastWriteTime != NULL)
-				ubuf.modtime = FileTimeToUnixTime(LastWriteTime);
+				ubuf.modtime = get_unixtime(LastWriteTime);
 			else
 				ubuf.modtime = buf.st_mtime;
 
-			if (utime(value, &ubuf) == 0)
-				result = TRUE;
+			result = (utime(localname, &ubuf) == 0);
 		}
-
-		g_free(group);
-		g_free(key);
-		g_free(value);
 	}
-
 
 	return result;
 }
@@ -734,46 +742,4 @@ BOOL DCPCALL FsContentGetDefaultView(char* ViewContents, char* ViewHeaders, char
 void DCPCALL FsGetDefRootName(char* DefRootName, int maxlen)
 {
 	g_strlcpy(DefRootName, ROOTNAME, maxlen - 1);
-}
-
-void DCPCALL FsSetDefaultParams(FsDefaultParamStruct* dps)
-{
-	GError *err = NULL;
-	const gchar *inifile = "tmppanel_crap.ini";
-
-	gchar *cfg_dir = g_path_get_dirname(dps->DefaultIniName);
-	gCfgPath = g_strdup_printf("%s/tmppanel_crap.ini", cfg_dir);
-	g_free(cfg_dir);
-
-	gCfg = g_key_file_new();
-
-	if (!g_key_file_load_from_file(gCfg, gCfgPath, G_KEY_FILE_KEEP_COMMENTS, &err))
-		g_print("(%s): %s\n", gCfgPath, (err)->message);
-
-	if (err)
-		g_error_free(err);
-}
-
-void DCPCALL ExtensionInitialize(tExtensionStartupInfo* StartupInfo)
-{
-	if (gExtensions == NULL)
-	{
-		gExtensions = malloc(sizeof(tExtensionStartupInfo));
-		memcpy(gExtensions, StartupInfo, sizeof(tExtensionStartupInfo));
-	}
-}
-
-void DCPCALL ExtensionFinalize(void* Reserved)
-{
-	if (gExtensions != NULL)
-		free(gExtensions);
-
-	gExtensions = NULL;
-
-	g_key_file_save_to_file(gCfg, gCfgPath, NULL);
-
-	if (gCfg)
-		g_key_file_free(gCfg);
-
-	g_free(gCfgPath);
 }
