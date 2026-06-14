@@ -164,7 +164,7 @@ def GetAnnotation(s):
             t = s[n1 + 3:n2]
             n4 = t.find("<image", 0)
             if n4 == -1:
-                l.append(t.replace("xlink:href=", "href=").replace("l:href=", "href=").replace("<br/>", "\n").replace("<empty-line/>", "\n").replace("emphasis>", "i>").replace("<sub>", "").replace("<sup>", "").replace("</sup>", "").replace("</sub>", "").replace("strong>", "b>").replace("subtitle>", "b>"))
+                l.append(t.replace("xlink:href=", "href=").replace("l:href=", "href=").replace("<br/>", "\n").replace("<br />", "\n").replace("<empty-line/>", "\n").replace("emphasis>", "i>").replace("<sub>", "").replace("<sup>", "").replace("</sup>", "").replace("</sub>", "").replace("strong>", "b>").replace("subtitle>", "b>"))
                 c = c + 1
         n3 = n2
     if c == 0:
