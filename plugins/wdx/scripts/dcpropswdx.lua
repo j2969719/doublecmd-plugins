@@ -11,7 +11,6 @@ local fields = {-- field name, field type
   {"CreationTime",     ft_date},
   {"LastAccessTime",   ft_date},
   {"ChangeTime",       ft_date},
-  {"ChangeTime",       ft_date},  
   {"Type",           ft_string},
   {"Comment",        ft_string},
 --{"LinkTo",         ft_string},  
@@ -33,11 +32,9 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
   if not result then
     return nil
   end
-  local fieldtype = fields[FieldIndex + 1][2]
-  if (fieldtype == ft_date) then
+  if fields[FieldIndex + 1][2] == ft_date then
     return result * 10000000 + 116444736000000000
   else
     return result
   end
-  return nil -- invalid
 end
