@@ -154,7 +154,7 @@ static void tables_changed_cb(GtkComboBoxText *combo_box, CustomData *data)
 
 	if (text && !data->exec)
 	{
-		gchar *query = g_strdup_printf("SELECT * FROM %s;", text);
+		gchar *query = g_strdup_printf("SELECT * FROM [%s];", text);
 		gtk_label_set_text(GTK_LABEL(data->label), query);
 		g_free(text);
 		g_free(query);

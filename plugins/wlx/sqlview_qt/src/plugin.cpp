@@ -115,7 +115,7 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 		QString strquery;
 
 		if (type.name() == "application/vnd.sqlite3")
-			strquery = QString("SELECT * FROM %1;").arg(cbtables->currentText());
+			strquery = QString("SELECT * FROM [%1];").arg(cbtables->currentText());
 
 		if (!strquery.isEmpty())
 		{
