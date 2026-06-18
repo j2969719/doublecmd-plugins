@@ -167,6 +167,9 @@ Check filename limitations and recommendations, path lenght and other, see descr
 - [checkthumbswdx.lua](plugins/wdx/scripts/checkthumbswdx.lua) *(cross platform)*<br>
 Getting some information from thumbnails files: created by Double Commander (Windows or Linux) or the system generator of thumbnails (Linux).
 
+- [dcpropswdx.lua](plugins/wdx/scripts/dcpropswdx.lua)<br>
+Getting some properties, see `SysUtils.GetFileProperty` in [DC help files](https://doublecmd.github.io/doc/en/lua.html#sysutils_getfileproperty).
+
 - [djvuwdx.lua](plugins/wdx/scripts/djvuwdx.lua)<br>
 Getting some information from DjVu files and searching text. Requires `djvused`.
 
@@ -334,6 +337,9 @@ Getting some information from vCard files. See details in the beginning of scrip
 
 - [webpwdx.lua](plugins/wdx/scripts/webpwdx.lua) *(cross platform)*<br>
 Getting some information from WebP files.
+
+- [whlwdx.lua](plugins/wdx/scripts/whlwdx.lua)<br>
+Getting some information from WHL files (Wheel files, package for Python libraries and modules).
 
 - [xcfinfowdx.lua](plugins/wdx/scripts/xcfinfowdx.lua) *(cross platform)*<br>
 Getting some information from XCF files (GIMP native image format).
