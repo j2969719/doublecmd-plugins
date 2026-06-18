@@ -1,7 +1,7 @@
 -- dcpropswdx.lua (cross-platform)
 -- 2026.06.14
 --[[
-Returns the file property, see
+Returns some file properties, see SysUtils.GetFileProperty
 https://doublecmd.github.io/doc/en/lua.html#sysutils_getfileproperty
 ]]
 
