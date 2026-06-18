@@ -1,5 +1,5 @@
 local skipsysfiles = true  -- skip character, block or fifo files
-local blacklist = '\a\b\t\n\f\r\\e'
+local blacklist = '\a\b\t\n\f\r\e'
 local bufsize = 1024
 local units = {
     "binary (contain control chars)",
@@ -52,7 +52,7 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
                 if (buf == nil) then
                     break;
                 end
-                for b in buf:gfind("%c") do
+                for b in buf:gmatch("%c") do
                     if (blacklist:find(b) == nil) then
                         --local val = b:byte();
                         --print(string.format("found control char %02X (%d)", val, val));
@@ -75,7 +75,7 @@ function checkbom(file, num, hexstr)
     local bytes = file:read(num);
     if (bytes ~= nil) then
         local t = {};
-        for b in string.gfind(bytes, ".") do
+        for b in string.gmatch(bytes, ".") do
             table.insert(t, string.format("%02X", string.byte(b)));
         end
         local str = table.concat(t);
