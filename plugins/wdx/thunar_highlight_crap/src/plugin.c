@@ -102,12 +102,10 @@ static int get_pride_color(gchar *value)
 
 	for (int i = 0; i < ARRAY_SIZE(rainbow); i++)
 	{
-		long r_distance = r - rainbow[i].r;
-		long g_distance = g - rainbow[i].g;
-		long b_distance = b - rainbow[i].b;
-
-		// hes fighting and biting and riding on his horse
-		long distance = sqrt((r_distance * r_distance) + (g_distance * g_distance) + (b_distance * b_distance));
+		long dr = r - rainbow[i].r;
+		long dg = g - rainbow[i].g;
+		long db = b - rainbow[i].b;
+		long distance = sqrt((dr * dr) + (dg * dg) + (db * db));
 
 		if (distance < min_distance)
 		{
