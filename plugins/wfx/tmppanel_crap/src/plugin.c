@@ -5,6 +5,7 @@
 #include <utime.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <math.h>
 #include <json.h>
 #include <json_pointer.h>
 #include <sys/types.h>
@@ -17,12 +18,16 @@
 #define BUFSIZE 8192
 #define DIRFAKESTAT 16877
 #define IS_VFSROOT(X) (X[1] == '\0')
+#define EBMLEM_UNKNWN 16
+#define EBMLEM_EMPTY 17
+#define COLOR_EMPTY 9
 
 #define MessageBox dc_extensions->MessageBox
 #define SendDlgMsg dc_extensions->SendDlgMsg
 #define CreateComponent dc_extensions->CreateComponent
 #define GetProperty dc_extensions->GetProperty
 #define SetProperty dc_extensions->SetProperty
+#define ARRAY_SIZE(arr) (int)(sizeof(arr) / sizeof((arr)[0]))
 
 typedef struct
 {
@@ -30,6 +35,75 @@ typedef struct
 	struct json_object_iterator iter;
 	struct json_object_iterator end;
 } VFSDirData;
+
+typedef struct
+{
+	char *circle;
+	char *square;
+	int r, g, b;
+} RainbowColor;
+
+typedef struct
+{
+	char *name;
+	int type;
+	char *attr;
+} ContentField;
+
+typedef struct
+{
+	char *name;
+	char *emoji;
+} EmblemItem;
+
+static const RainbowColor rainbow[] =
+{
+	{"🔴", "🟥", 221,  46,  68},
+	{"🟠", "🟧", 244, 144,  12},
+	{"🟡", "🟨", 253, 203,  88},
+	{"🟢", "🟩", 120, 177,  89},
+	{"🔵", "🟦",  85, 172, 238},
+	{"🟣", "🟪", 170, 142, 214},
+	{"🟤", "🟫", 193, 105,  79},
+	{"⚫", "⬛",  49,  55,  61},
+	{"⚪", "⬜", 230, 231, 232},
+};
+
+static const ContentField fields[] =
+{
+	{"link created",		ft_datetime,					    NULL},
+	{"localname",			ft_string,					    NULL},
+	{"notes",			ft_string,					    NULL},
+	{"descript.ion",		ft_string,					    NULL},
+	{"description",			ft_string,			"standard::content-type"},
+	{"mode",			ft_numeric_32,				    "unix::mode"},
+	{"user",			ft_string,				   "owner::user"},
+	{"group",			ft_string,				  "owner::group"},
+	{"access",			ft_string,				     "access::*"},
+	{"thunar foreground color",	ft_string, "metadata::thunar-highlight-color-foreground"},
+	{"thunar background color",	ft_string, "metadata::thunar-highlight-color-background"},
+	{"emblems",			ft_string,			     "metadata::emblems"},
+};
+
+static const EmblemItem emblems[] =
+{
+	{"[emblem-checkmark]",	   "✔️"},
+	{"[emblem-documents]",	   "📄"},
+	{"[emblem-downloads]",	   "📥"},
+	{"[emblem-favorite]",	   "⭐"},
+	{"[emblem-important]",	   "⚠️"},
+	{"[emblem-mail]",	   "📧"},
+	{"[emblem-new]",	   "✨"},
+	{"[emblem-package]",	   "📦"},
+	{"[emblem-photos]",	   "📸"},
+	{"[emblem-readonly]",	   "🔒"},
+	{"[emblem-shared]",	   "🔗"},
+	{"[emblem-synchronizing]", "🔂"},
+	{"[emblem-system]",	   "⚙️"},
+	{"[emblem-unreadable]",    "🚫"},
+	{"[emblem-urgent]",	   "🚨"},
+	{"[emblem-web]",	   "🌐"},
+};
 
 enum
 {
@@ -41,6 +115,10 @@ enum
 static int plug_id;
 static gchar *plug_conf = NULL;
 static tLogProc log_msg = NULL;
+static gchar *descr_dir = NULL;
+static gchar **descr_data = NULL;
+static gboolean is_copyin = FALSE;
+static gboolean is_rmfile = FALSE;
 struct json_object *json_root = NULL;
 static tRequestProc show_request = NULL;
 static tProgressProc show_progress = NULL;
@@ -61,6 +139,9 @@ void DCPCALL ExtensionFinalize(void* Reserved)
 	{
 		free(dc_extensions);
 		dc_extensions = NULL;
+		free(descr_dir);
+		descr_dir = NULL;
+		g_strfreev(descr_data);
 	}
 
 	if (json_root != NULL)
@@ -328,6 +409,149 @@ static gboolean fill_entry(VFSDirData *dirdata, WIN32_FIND_DATAA *FindData)
 	return result;
 }
 
+static char* get_emblem_emoji(gchar *value, int *index)
+{
+	char* result = "";
+
+	if (!value)
+		return result;
+
+	for (gsize i = 0; i < ARRAY_SIZE(emblems); i++)
+	{
+		if (g_strcmp0(value, emblems[i].name) == 0)
+		{
+			result = emblems[i].emoji;
+
+			if (index)
+				*index = i;
+		}
+	}
+
+	return result;
+}
+
+static int get_pride_color(gchar *value)
+{
+	int result = -1;
+
+	if (!value)
+		return result;
+
+	int r = 0, g = 0, b = 0;
+	long min_distance = LONG_MAX;
+	sscanf(value, "rgb(%d,%d,%d)", &r, &g, &b);
+	g_free(value);
+
+	for (int i = 0; i < ARRAY_SIZE(rainbow); i++)
+	{
+		long r_distance = r - rainbow[i].r;
+		long g_distance = g - rainbow[i].g;
+		long b_distance = b - rainbow[i].b;
+
+		// hes fighting and biting and riding on his horse
+		long distance = sqrt((r_distance * r_distance) + (g_distance * g_distance) + (b_distance * b_distance));
+
+		if (distance < min_distance)
+		{
+			min_distance = distance;
+			result = i;
+		}
+	}
+
+	return result;
+}
+
+static char* get_color_circle(gchar *value, int *index)
+{
+	int pos = get_pride_color(value);
+
+	if (index)
+		*index = pos;
+
+	if (pos == -1)
+		return "";
+
+	return rainbow[pos].circle;
+}
+
+static char* get_color_square(gchar *value, int *index)
+{
+	int pos = get_pride_color(value);
+
+	if (index)
+		*index = pos;
+
+	if (pos == -1)
+		return "";
+
+	return rainbow[pos].square;
+}
+
+static gchar *get_4dos_descr(const char *localname)
+{
+	if (!localname)
+		return NULL;
+
+	gchar *result = NULL;
+	gchar *dir = g_path_get_dirname(localname);
+
+	if (!descr_dir || strcmp(descr_dir, dir) != 0)
+	{
+		gchar *contents = NULL;
+		gchar *descr_file = g_strdup_printf("%s/descript.ion", dir);
+
+		if (g_file_get_contents(descr_file, &contents, NULL, NULL))
+		{
+			g_strfreev(descr_data);
+			descr_data = g_strsplit((strncmp(contents, "\xEF\xBB\xBF", 3) == 0) ? contents + 3: contents, "\n", -1);
+			g_free(contents);
+			g_free(descr_dir);
+			descr_dir = dir;
+			dir = NULL;
+		}
+	}
+
+	if (!dir || (descr_dir && strcmp(descr_dir, dir) == 0))
+	{
+		gchar *name = g_path_get_basename(localname);
+		size_t len = strlen(name);
+
+		for (gsize i = 0; descr_data[i] != NULL; i++)
+		{
+			gchar *line = descr_data[i];
+
+			if (strlen(line) > len + 2 && g_str_has_prefix(line, name) && line[len] == ' ')
+			{
+				gchar **split = g_strsplit(line + len + 1, "\xC2\xA0", -1);
+				result = g_strjoinv("\n", split);
+				g_strfreev(split);
+				break;
+			}
+		}
+
+		g_free(name);
+	}
+
+	g_free(dir);
+
+	return result;
+}
+
+static void add_descr_label(uintptr_t pDlg, const char *localname)
+{
+	gchar *text = get_4dos_descr(localname);
+
+	if (text)
+	{
+		CreateComponent(pDlg, "sbProps", "lbl4dosDescr", "TLabel", NULL);
+		SetProperty(pDlg, "lbl4dosDescr", "Caption", text, TK_STRING);
+		SetProperty(pDlg, "lbl4dosDescr", "Alignment", "taCenter", TK_STRING);
+		SetProperty(pDlg, "lbl4dosDescr", "Align", "alTop", TK_STRING);
+		SetProperty(pDlg, "lbl4dosDescr", "WordWrap", "False", TK_STRING);
+		g_free(text);
+	}
+}
+
 static void add_prop_label(uintptr_t pDlg, guint index, char *caption, gboolean is_value)
 {
 	char control[MAX_PATH];
@@ -368,6 +592,7 @@ intptr_t DCPCALL prop_dialog_cb(uintptr_t pDlg, char* DlgItemName, intptr_t Msg,
 		if (!localname)
 			return 0;
 
+		add_descr_label(pDlg, localname);
 		GFile *gfile = g_file_new_for_path(localname);
 
 		if (gfile)
@@ -413,6 +638,39 @@ intptr_t DCPCALL prop_dialog_cb(uintptr_t pDlg, char* DlgItemName, intptr_t Msg,
 					}
 					else if (type == G_FILE_ATTRIBUTE_TYPE_UINT32 && g_strcmp0(attrs[i], "unix::mode") == 0)
 						value = g_strdup_printf("%o", g_file_info_get_attribute_uint32(fileinfo, attrs[i]));
+					else if (g_strcmp0(attrs[i], "metadata::emblems") == 0)
+					{
+						int pos = -1;
+						value = g_file_info_get_attribute_as_string(fileinfo, attrs[i]);
+						char *emoji = get_emblem_emoji(value, &pos);
+
+						if (pos != -1)
+						{
+							g_free(value);
+							value = g_strdup(emoji);
+							SendDlgMsg(pDlg, "rgEmblems", DM_LISTSETITEMINDEX, (intptr_t)pos, 0);
+						}
+						else if (value)
+							SendDlgMsg(pDlg, "rgEmblems", DM_LISTSETITEMINDEX, EBMLEM_UNKNWN, 0);
+
+					}
+					else if (g_strcmp0(attrs[i], "metadata::thunar-highlight-color-foreground") == 0 || g_strcmp0(attrs[i], "metadata::thunar-highlight-color-background") == 0)
+					{
+						int pos = 9;
+						value = g_file_info_get_attribute_as_string(fileinfo, attrs[i]);
+
+						if (strstr(attrs[i], "foreground"))
+						{
+							add_prop_label(pDlg, i + 1,  get_color_circle(value, &pos), TRUE);
+							SendDlgMsg(pDlg, "rgFgColor", DM_LISTSETITEMINDEX, (intptr_t)pos, 0);
+						}
+						else
+						{
+							add_prop_label(pDlg, i + 1,  get_color_square(value, &pos), TRUE);
+							SendDlgMsg(pDlg, "rgBgColor", DM_LISTSETITEMINDEX, (intptr_t)pos, 0);
+						}
+						continue;
+					}
 					else
 						value = g_file_info_get_attribute_as_string(fileinfo, attrs[i]);
 
@@ -441,8 +699,81 @@ intptr_t DCPCALL prop_dialog_cb(uintptr_t pDlg, char* DlgItemName, intptr_t Msg,
 			char *path = (char*)SendDlgMsg(pDlg, "edLocalName", DM_GETTEXT, 0, 0);
 			const char *localname = json_object_get_string(json_object_array_get_idx(node, WFX_JSON_INFO_PATH));
 
-			if (strcmp(path, localname) != 0)
+			if (!localname || strcmp(path, localname) != 0)
 				json_object_array_put_idx(node, WFX_JSON_INFO_PATH, path ? json_object_new_string(path) : NULL);
+
+			if (localname)
+			{
+				GFile *gfile = g_file_new_for_path(localname);
+				if (gfile)
+				{
+					gchar *value = NULL;
+					GFileInfo *fileinfo = g_file_query_info(gfile, "metadata::*", G_FILE_QUERY_INFO_NONE, NULL, NULL);
+
+					if (fileinfo)
+					{
+						int index = (int)SendDlgMsg(pDlg, "rgFgColor", DM_LISTGETITEMINDEX, 0, 0);
+
+						if (index == COLOR_EMPTY)
+						{
+							value = g_file_info_get_attribute_as_string(fileinfo, "metadata::thunar-highlight-color-foreground");
+
+							if (value)
+							{
+								g_free(value);
+								g_file_set_attribute(gfile, "metadata::thunar-highlight-color-foreground", G_FILE_ATTRIBUTE_TYPE_INVALID, NULL, G_FILE_QUERY_INFO_NONE, NULL, NULL);
+							}
+						}
+						else
+						{
+							gchar *color = g_strdup_printf("rgb(%d,%d,%d)", rainbow[index].r, rainbow[index].g, rainbow[index].b);
+							g_file_set_attribute_string(gfile, "metadata::thunar-highlight-color-foreground", color, G_FILE_QUERY_INFO_NONE, NULL, NULL);
+							g_free(color);
+						}
+
+						index = (int)SendDlgMsg(pDlg, "rgBgColor", DM_LISTGETITEMINDEX, 0, 0);
+
+						if (index == COLOR_EMPTY)
+						{
+							value = g_file_info_get_attribute_as_string(fileinfo, "metadata::thunar-highlight-color-background");
+
+							if (value)
+							{
+								g_free(value);
+								g_file_set_attribute(gfile, "metadata::thunar-highlight-color-background", G_FILE_ATTRIBUTE_TYPE_INVALID, NULL, G_FILE_QUERY_INFO_NONE, NULL, NULL);
+							}
+						}
+						else
+						{
+							gchar *color = g_strdup_printf("rgb(%d,%d,%d)", rainbow[index].r, rainbow[index].g, rainbow[index].b);
+							g_file_set_attribute_string(gfile, "metadata::thunar-highlight-color-background", color, G_FILE_QUERY_INFO_NONE, NULL, NULL);
+							g_free(color);
+						}
+
+						index = (int)SendDlgMsg(pDlg, "rgEmblems", DM_LISTGETITEMINDEX, 0, 0);
+
+						if (index != EBMLEM_UNKNWN)
+						{
+							if (index == EBMLEM_EMPTY)
+							{
+								value = g_file_info_get_attribute_as_string(fileinfo, "metadata::emblems");
+
+								if (value)
+								{
+									g_free(value);
+									g_file_set_attribute(gfile, "metadata::emblems", G_FILE_ATTRIBUTE_TYPE_INVALID, NULL, G_FILE_QUERY_INFO_NONE, NULL, NULL);
+								}
+							}
+							else
+								g_file_set_attribute_string(gfile, "metadata::emblems", emblems[index].name, G_FILE_QUERY_INFO_NONE, NULL, NULL);
+						}
+
+						g_object_unref(fileinfo);
+					}
+
+					g_object_unref(gfile);
+				}
+			}
 
 			char *note = (char*)SendDlgMsg(pDlg, "Memo", DM_GETTEXT, 0, 0);
 			json_object_array_put_idx(node, WFX_JSON_INFO_NOTE, note ? json_object_new_string(note) : NULL);
@@ -650,6 +981,14 @@ BOOL DCPCALL FsRemoveDir(char* RemoteName)
 
 BOOL DCPCALL FsDeleteFile(char* RemoteName)
 {
+	if (is_rmfile)
+	{
+		const char *localname = get_localname(RemoteName);
+
+		if (remove(localname) != 0)
+			return FALSE;
+	}
+
 	return json_node_remove(RemoteName);
 }
 
@@ -707,6 +1046,9 @@ int DCPCALL FsExecuteFile(HWND MainWin, char* RemoteName, char* Verb)
 
 BOOL DCPCALL FsSetTime(char* RemoteName, FILETIME *CreationTime, FILETIME *LastAccessTime, FILETIME *LastWriteTime)
 {
+	if (is_copyin)
+		return TRUE;
+
 	struct stat buf;
 	struct utimbuf ubuf;
 	gboolean result = FALSE;
@@ -734,9 +1076,180 @@ BOOL DCPCALL FsSetTime(char* RemoteName, FILETIME *CreationTime, FILETIME *LastA
 	return result;
 }
 
+void DCPCALL FsStatusInfo(char* RemoteDir, int InfoStartEnd, int InfoOperation)
+{
+
+	if (InfoOperation == FS_STATUS_OP_PUT_SINGLE)
+		is_copyin = (InfoStartEnd == FS_STATUS_START);
+	else if (InfoOperation == FS_STATUS_OP_DELETE && InfoStartEnd == FS_STATUS_START)
+		is_rmfile = (MessageBox("delete the local file itself as well?", ROOTNAME, MB_YESNO | MB_ICONQUESTION | MB_DEFBUTTON2) == ID_YES);
+}
+
+int DCPCALL FsContentGetSupportedField(int FieldIndex, char* FieldName, char* Units, int maxlen)
+{
+	if (FieldIndex < 0 || FieldIndex >= ARRAY_SIZE(fields))
+		return ft_nomorefields;
+
+	Units[0] = '\0';
+	g_strlcpy(FieldName, fields[FieldIndex].name, maxlen - 1);
+	return fields[FieldIndex].type;
+}
+
+int DCPCALL FsContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void* FieldValue, int maxlen, int flags)
+{
+	int result = fields[FieldIndex].type;
+
+	struct json_object *node = get_json_node_from_path(FileName);
+
+	if (!json_object_is_type(node, json_type_array))
+		return ft_fileerror;
+
+	if (fields[FieldIndex].attr == NULL)
+	{
+		const char *text = NULL;
+
+		switch (FieldIndex)
+		{
+		case 0:
+			int64_t unixtime = json_object_get_int64(json_object_array_get_idx(node, WFX_JSON_INFO_TIME));
+			unixtime = (unixtime * 10000000) + 0x019DB1DED53E8000;
+			((LPFILETIME)FieldValue)->dwLowDateTime = (DWORD)unixtime;
+			((LPFILETIME)FieldValue)->dwHighDateTime = unixtime >> 32;
+			break;
+
+		case 1:
+			text = json_object_get_string(json_object_array_get_idx(node, WFX_JSON_INFO_PATH));
+
+			if (!text)
+				result = ft_fieldempty;
+			else
+				g_strlcpy((char*)FieldValue, text, maxlen - 1);
+
+			break;
+
+		case 2:
+			text = json_object_get_string(json_object_array_get_idx(node, WFX_JSON_INFO_NOTE));
+
+			if (!text)
+				result = ft_fieldempty;
+			else
+				g_strlcpy((char*)FieldValue, text, maxlen - 1);
+
+			break;
+
+		case 3:
+			text = get_4dos_descr(json_object_get_string(json_object_array_get_idx(node, WFX_JSON_INFO_PATH)));
+
+			if (!text)
+				result = ft_fieldempty;
+			else
+				g_strlcpy((char*)FieldValue, text, maxlen - 1);
+
+			break;
+
+		default:
+			return ft_fieldempty;
+		}
+	}
+	else
+	{
+		const char *localname = json_object_get_string(json_object_array_get_idx(node, WFX_JSON_INFO_PATH));
+
+		if (!localname)
+			return ft_fileerror;
+
+		GFile *gfile = g_file_new_for_path(localname);
+
+		if (gfile)
+		{
+			gchar *string = NULL;
+			GFileInfo *fileinfo = g_file_query_info(gfile, fields[FieldIndex].attr, G_FILE_QUERY_INFO_NONE, NULL, NULL);
+
+			if (fileinfo)
+			{
+				if (FieldIndex == 4)
+				{
+					const char *content = g_file_info_get_content_type(fileinfo);
+					string = g_content_type_get_description(content);
+
+					if (!string)
+						result = ft_fieldempty;
+					else
+						g_strlcpy((char*)FieldValue, string, maxlen - 1);
+
+					g_free(string);
+				}
+				else if (FieldIndex == 5)
+				{
+					string = g_strdup_printf("%o", g_file_info_get_attribute_uint32(fileinfo, fields[FieldIndex].attr) & 0777);
+					sscanf(string, "%d", (int*)FieldValue);
+					g_free(string);
+				}
+				else if (FieldIndex == 8)
+				{
+					char access_str[3] = "---";
+
+					if (g_file_info_get_attribute_boolean(fileinfo, "access::can-read"))
+						access_str[0] = 'r';
+
+					if (g_file_info_get_attribute_boolean(fileinfo, "access::can-write"))
+						access_str[1] = 'w';
+
+					if (g_file_info_get_attribute_boolean(fileinfo, "access::can-execute"))
+						access_str[2] = 'x';
+
+					g_strlcpy((char*)FieldValue, access_str, maxlen - 1);
+				}
+				else if (FieldIndex == 11)
+				{
+					string = g_file_info_get_attribute_as_string(fileinfo, fields[FieldIndex].attr);
+
+					if (!string)
+						result = ft_fieldempty;
+					else
+					{
+						g_strlcpy((char*)FieldValue, get_emblem_emoji(string, NULL), maxlen - 1);
+						g_free(string);
+					}
+				}
+				else if (FieldIndex > 8)
+				{
+					string = g_file_info_get_attribute_as_string(fileinfo, fields[FieldIndex].attr);
+					g_strlcpy((char*)FieldValue, (FieldIndex == 9) ? get_color_circle(string, NULL) : get_color_square(string, NULL), maxlen - 1);
+				}
+				else
+				{
+					string = g_file_info_get_attribute_as_string(fileinfo, fields[FieldIndex].attr);
+
+					if (!string)
+						result = ft_fieldempty;
+					else
+						g_strlcpy((char*)FieldValue, string, maxlen - 1);
+
+					g_free(string);
+				}
+
+				g_object_unref(fileinfo);
+			}
+			else
+				result = ft_fileerror;
+
+			g_object_unref(gfile);
+		}
+		else
+			return ft_fileerror;
+	}
+
+	return result;
+}
+
 BOOL DCPCALL FsContentGetDefaultView(char* ViewContents, char* ViewHeaders, char* ViewWidths, char* ViewOptions, int maxlen)
 {
-	return FALSE;
+	g_strlcpy(ViewContents, "[DC().GETFILESIZE{}]\\n[DC().GETFILETIME{}]\\n[Plugin(FS).access{}] [Plugin(FS).emblems{}] [Plugin(FS).thunar background color{}] [Plugin(FS).thunar foreground color{}]", maxlen - 1);
+	g_strlcpy(ViewHeaders, "Size\\nDate\\nInfo", maxlen - 1);
+	g_strlcpy(ViewWidths, "100,15,-25,30,30", maxlen - 1);
+	g_strlcpy(ViewOptions, "-1|0", maxlen - 1);
+	return TRUE;
 }
 
 void DCPCALL FsGetDefRootName(char* DefRootName, int maxlen)
