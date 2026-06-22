@@ -21,11 +21,6 @@ typedef struct
 	char *attr;
 } ContentField;
 
-typedef struct
-{
-	char *name;
-	char *emoji;
-} EmblemItem;
 
 static const RainbowColor rainbow[] =
 {
@@ -42,51 +37,10 @@ static const RainbowColor rainbow[] =
 
 static const ContentField fields[] =
 {
-	{"foreground color",	ft_string, "metadata::thunar-highlight-color-foreground"},
-	{"background color",	ft_string, "metadata::thunar-highlight-color-background"},
-//	{"emblems",		ft_multiplechoice,		     "metadata::emblems"},
+	{"foreground color", ft_multiplechoice, "metadata::thunar-highlight-color-foreground"},
+	{"background color", ft_multiplechoice, "metadata::thunar-highlight-color-background"},
 };
 
-static const EmblemItem emblems[] =
-{
-	{"[emblem-checkmark]",	   "✔️"},
-	{"[emblem-documents]",	   "📄"},
-	{"[emblem-downloads]",	   "📥"},
-	{"[emblem-favorite]",	   "⭐"},
-	{"[emblem-important]",	   "⚠️"},
-	{"[emblem-mail]",	   "📧"},
-	{"[emblem-new]",	   "✨"},
-	{"[emblem-package]",	   "📦"},
-	{"[emblem-photos]",	   "📸"},
-	{"[emblem-readonly]",	   "🔒"},
-	{"[emblem-shared]",	   "🔗"},
-	{"[emblem-synchronizing]", "🔂"},
-	{"[emblem-system]",	   "⚙️"},
-	{"[emblem-unreadable]",    "🚫"},
-	{"[emblem-urgent]",	   "🚨"},
-	{"[emblem-web]",	   "🌐"},
-};
-
-static char* get_emblem_emoji(gchar *value, int *index)
-{
-	char* result = "";
-
-	if (!value)
-		return result;
-
-	for (gsize i = 0; i < ARRAY_SIZE(emblems); i++)
-	{
-		if (g_strcmp0(value, emblems[i].name) == 0)
-		{
-			result = emblems[i].emoji;
-
-			if (index)
-				*index = i;
-		}
-	}
-
-	return result;
-}
 
 static int get_pride_color(gchar *value)
 {
@@ -150,14 +104,14 @@ int DCPCALL ContentGetSupportedField(int FieldIndex, char* FieldName, char* Unit
 
 	Units[0] = '\0';
 
-	if (fields[FieldIndex].type == ft_multiplechoice && ARRAY_SIZE(emblems) * 3 < maxlen)
+	if (fields[FieldIndex].type == ft_multiplechoice)
 	{
-		for (int i = 0; i < ARRAY_SIZE(emblems); i++)
+		for (int i = 0; i < ARRAY_SIZE(rainbow); i++)
 		{
 			if (i != 0)
 				strcat(Units, "|");
 
-			strcat(Units, emblems[i].emoji);
+			strcat(Units, (FieldIndex == 0) ? rainbow[i].circle : rainbow[i].square);
 		}
 	}
 
@@ -177,21 +131,8 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 
 		if (fileinfo)
 		{
-			char *shiet = NULL;
 			gchar *string = g_file_info_get_attribute_as_string(fileinfo, fields[FieldIndex].attr);
-
-			if (FieldIndex == 0)
-				shiet = get_color_circle(string, NULL);
-			else if (FieldIndex == 1)
-				shiet = get_color_square(string, NULL);
-			else if (FieldIndex == 2)
-				shiet = get_emblem_emoji(string, NULL);
-
-			if (!shiet)
-				result = ft_fieldempty;
-			else
-				g_strlcpy((char*)FieldValue, shiet, maxlen - 1);
-
+			g_strlcpy((char*)FieldValue, (FieldIndex == 0) ? get_color_circle(string, NULL) : get_color_square(string, NULL), maxlen - 1);
 			g_object_unref(fileinfo);
 		}
 		else
