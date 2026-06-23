@@ -683,9 +683,31 @@ intptr_t DCPCALL prop_dialog_cb(uintptr_t pDlg, char* DlgItemName, intptr_t Msg,
 			g_object_unref(gfile);
 		}
 	}
-	else if (Msg == DN_CLICK && strcmp(DlgItemName, "btnApply") == 0)
+	else if (Msg == DN_CLICK)
 	{
-		
+		if (strcmp(DlgItemName, "btnReset") == 0)
+		{
+			char *filename = (char*)SendDlgMsg(pDlg, NULL, DM_GETDLGDATA, 0, 0);
+			struct json_object *node = get_json_node_from_path(filename);
+
+			if (!json_object_is_type(node, json_type_array))
+				return 0;
+
+			const char *note = json_object_get_string(json_object_array_get_idx(node, WFX_JSON_INFO_NOTE));
+			SendDlgMsg(pDlg, "Memo", DM_SETTEXT, (intptr_t)note, 0);
+		}
+		else if (strcmp(DlgItemName, "btnDate") == 0)
+		{
+			char *note = (char*)SendDlgMsg(pDlg, "Memo", DM_GETTEXT, 0, 0);
+			time_t t = time(NULL);
+			char date[17];
+			strftime(date, sizeof(date), "%Y-%m-%d %H:%M", localtime(&t));
+			gchar *new = g_strdup_printf("%s%s: ", (strcmp(note, "\n") != 0) ? note : "", date);
+			SendDlgMsg(pDlg, "Memo", DM_SETTEXT, (intptr_t)new, 0);
+			g_free(new);
+		}
+		else if (strcmp(DlgItemName, "btnClear") == 0)
+			SendDlgMsg(pDlg, "Memo", DM_SETTEXT, 0, 0);
 	}
 	else if (Msg == DN_CLOSE)
 	{
