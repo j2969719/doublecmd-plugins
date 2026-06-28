@@ -1,5 +1,5 @@
 -- filenameunwdx.lua (cross-platform)
--- 2024.07.19
+-- 2026.06.28
 --[[
 Returns the normalized (Unicode normalization) filename:
 - form C (NFC);
@@ -9,12 +9,13 @@ Returns the normalized (Unicode normalization) filename:
 (Base name is a filename without extension.)
 
 The "Contains combined chars" field has been added to search for files
-whose names contain combined characters.
+whose names contain combined characters (i.e. "non-NFC name").
 
 Requires LuaJIT and the libunistring library (https://www.gnu.org/software/libunistring/).
 - This library is usually installed in Linux.
 - Windows: use the DLL file from Git for Windows, MinGW, GIMP and so on.
           Or just try NFCname (http://totalcmd.net/plugring/NFCname.html).
+- macOS: for example, try Homebrew, "brew install libunistring".
 - The list of library file names is listed in the "alib" table.
 
 UTF8Normalization(): part of https://github.com/bungle/lua-resty-unistring
@@ -88,8 +89,7 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
       return UTF8Normalization(UnitIndex + 1, fnb)
     end
   elseif FieldIndex == 2 then
-    local st = UTF8Normalization(1, fn)
-    if fn == st then
+    if UTF8Normalization(1, fn) == fn then
       return false
     else
       return true
