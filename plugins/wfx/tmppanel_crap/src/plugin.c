@@ -258,7 +258,16 @@ static struct json_object *get_json_node_from_path(char *path)
 	if (IS_VFSROOT(path))
 		result = json_root;
 	else
-		json_pointer_get(json_root, path, &result);
+	{
+		char kostyl[PATH_MAX];
+		g_strlcpy(kostyl, path, PATH_MAX);
+		size_t len = strlen(kostyl);
+
+		if (len > 0 && kostyl[len - 1] == '/')
+			kostyl[len - 1] = '\0';
+
+		json_pointer_get(json_root, kostyl, &result);
+	}
 
 	return result;
 }
