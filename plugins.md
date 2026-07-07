@@ -449,16 +449,13 @@ Simple media player plugin based on GStreamer framework. Few cosmetic changes, b
 - [gtk_socket](plugins/wlx/gtk_socket)<br>
 Plugin-wrapper for embed window of different scripts and utilities, used GtkSocket (container for widgets from other processes). Works with file extensions and MIME types, see `settings.ini`.
 
-- [gtk_socket_tst](plugins/wlx/gtk_socket_tst)<br>
-Like `gtk_socket`, but with some additional features (in progress).
-
 - [gtkimgview](plugins/wlx/gtkimgview)<br>
 Image viewer plugin. Supported formats (all image formats supported by GdkPixbuf, the list can be differ on your system): xpm, xbm, tif, tiff, targa, tga, svg.gz, svgz, svg, qif, qtif, ppm, pgm, pbm, pnm, png, jpg, jpe, jpeg, jpf, j2k, jpx, jpc, jp2, cur, ico, icns, gif, bmp, ani.  Requires `gtkimageview` library.
 
 - [gtkimgview_crap](plugins/wlx/gtkimgview_crap)<br>
 Like `gtkimgview`, but for any files if you can convert it to image (see `settings.ini`). Requires `gtkimageview` library.
 
-- [gtkimgview_recumbent_gtk3](plugins/wlx/gtkimgview_recumbent_gtk3)<br>
+- [gtkimgviewltw1_gtk3](plugins/wlx/gtkimgview_recumbent_gtk3)<br>
 Like `gtkimgview`, but with the GTK3 toolkit.
 
 - [gtksourceview](plugins/wlx/gtksourceview)<br>

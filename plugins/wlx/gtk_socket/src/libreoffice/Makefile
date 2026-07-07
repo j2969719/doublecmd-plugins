@@ -3,7 +3,7 @@ CFLAGS =
 INCLUDES = `pkg-config --cflags --libs gtk+-3.0` -llibreofficekitgtk -I.
 
 all:
-		$(CC) $(CFLAGS) kostyl.c $(INCLUDES) -o ../../scripts/$(shell basename $(realpath .))/kostyl
+		$(CC) $(CFLAGS) kostyl.c $(INCLUDES) -o ../../$(shell basename $(realpath .))_kostyl
 
 clean:
-		$(RM) ../../scripts/$(shell basename $(realpath .))/kostyl
+		$(RM) ../../$(shell basename $(realpath .))_kostyl

@@ -1,1 +1,0 @@
-../../gtk_socket/scripts/emlmessage.py

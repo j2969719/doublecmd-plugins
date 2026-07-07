@@ -1,1 +1,0 @@
-../../gtk_socket/scripts/maff.py

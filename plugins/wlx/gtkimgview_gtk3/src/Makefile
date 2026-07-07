@@ -1,8 +1,8 @@
 CC = gcc
-CFLAGS = -shared -fPIC -Wl,--no-as-needed
+CFLAGS = -shared -fPIC -Wl,--no-as-needed -g -Wall -pedantic
 
 libs := `pkg-config --cflags --libs gtk+-3.0`
-includes := -I../../../sdk -I./third_party
+includes := -I../../../sdk
 
 plugdir := $(shell basename '$(realpath ..)')
 plugtype := $(shell basename '$(realpath ../..)')
@@ -13,12 +13,8 @@ plugfiles := $(filter-out $(wildcard ../*.$(plugtype)), $(wildcard ../*))
 detectstring :=
 
 
-all: gtkimageview.o
-		$(CC) $(CFLAGS) -o '../$(plugname)' gtkimgview.c gtkimageview.o $(libs) $(includes) -D'PLUGNAME="$(plugname)"' -D'DETECT_STRING="$(detectstring)"' -D'PLUGTARGET="$@"' || echo $(plugname) >> ../../../dist/.build_fail.lst
-		$(RM) gtkimageview.o
-
-gtkimageview.o:
-		$(CC) `pkg-config --cflags gtk+-3.0` -c ./third_party/gtkimageview/gtkimageview.c -Wno-deprecated-declarations
+all:
+		$(CC) $(CFLAGS) -o '../$(plugname)' plugin.c $(libs) $(includes) -D'PLUGNAME="$(plugname)"' -D'DETECT_STRING="$(detectstring)"' -D'PLUGTARGET="$@"' || echo $(plugname) >> ../../../dist/.build_fail.lst
 
 dist:
 		test -f '../$(plugname)' && \

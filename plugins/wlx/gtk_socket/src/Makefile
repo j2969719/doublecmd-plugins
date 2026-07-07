@@ -1,10 +1,10 @@
 CC = gcc
-CFLAGS = -shared -fPIC -Wl,--no-as-needed
+CFLAGS = -shared -fPIC -Wl,--no-as-needed -Wall -pedantic -g
 
-libs := -lmagic
+libs := -lmagic `pkg-config --cflags --libs gio-2.0 gio-unix-2.0`
 includes := -I/usr/include/magic -I../../../sdk
 
-gtk2_libs := `pkg-config --cflags --libs gtk+-2.0`
+gtk2_libs := `pkg-config --cflags --libs gtk+-2.0` -Wno-deprecated-declarations
 gtk3_libs := `pkg-config --cflags --libs gtk+-3.0`
 
 
@@ -20,9 +20,9 @@ detectstring :=
 all: gtk2 gtk3
 
 gtk2:
-		$(CC) $(CFLAGS) -o '../$(plugname)' plugin.c $(libs) $($@_libs) $(includes) -D'PLUGNAME="$(plugname)"' -D'DETECT_STRING="$(detectstring)"' -D'PLUGTARGET="$@"' || echo $(plugname) >> ../../../dist/.build_fail.lst
+		$(CC) $(CFLAGS) -o '../$(plugname)' plugin.c $(libs) $($@_libs) $(includes) -D'PLUGNAME="$(plugname)"' -D'DETECT_STRING="$(detectstring)"' -D'PLUGDIR="$(plugdir)"' || echo $(plugname) >> ../../../dist/.build_fail.lst
 gtk3:
-		$(CC) $(CFLAGS) -o '../$(plugdir)_$@.$(plugtype)' plugin.c $(libs) $($@_libs) $(includes) -D'PLUGNAME="$(plugname)"' -D'DETECT_STRING="$(detectstring)"' -DGTK3PLUG -D'PLUGTARGET="$@"' || echo $(plugname) >> ../../../dist/.build_fail.lst
+		$(CC) $(CFLAGS) -o '../$(plugdir)_$@.$(plugtype)' plugin.c $(libs) $($@_libs) $(includes) -D'PLUGNAME="$(plugname)"' -D'DETECT_STRING="$(detectstring)"' -DGTK3PLUG -D'PLUGDIR="$(plugdir)"' || echo $(plugname) >> ../../../dist/.build_fail.lst
 
 dist:
 		test -f '../$(plugname)' && \
