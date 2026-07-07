@@ -1,0 +1,2 @@
+curl "https://raw.githubusercontent.com/petrovvlad/freeLib/refs/heads/master/src/FB2_22_xhtml.xsl" -o FB2_22_xhtml.xsl
+
