@@ -2,7 +2,7 @@
   <Info>
     <General Name="Autoconf M4*" Extensions="AC M4" Other="1"/>
     <Author Name="Skif_off" Email="" Web="" Copyright="" Company="" Remark="GNU Autoconf 2.72 manual"/>
-    <Version Version="0" Revision="1" Date="46209,6753759607"/>
+    <Version Version="0" Revision="2" Date="46209,6753759607"/>
     <History>
     </History>
     <Sample>
@@ -566,7 +566,6 @@
       <word value="AC_C_LONG_DOUBLE"/>
       <word value="AC_CANONICAL_SYSTEM"/>
       <word value="AC_CHAR_UNSIGNED"/>
-      <word value="AC_CHECK_TYPE"/>
       <word value="AC_CHECKING"/>
       <word value="AC_COMPILE_CHECK"/>
       <word value="AC_CONST"/>
@@ -600,7 +599,6 @@
       <word value="AC_HEADER_EGREP"/>
       <word value="AC_HEADER_TIME"/>
       <word value="AC_HELP_STRING"/>
-      <word value="AC_INIT"/>
       <word value="AC_INLINE"/>
       <word value="AC_INT_16_BITS"/>
       <word value="AC_IRIX_SUN"/>
@@ -625,7 +623,6 @@
       <word value="AC_OBJEXT"/>
       <word value="AC_OBSOLETE"/>
       <word value="AC_OFF_T"/>
-      <word value="AC_OUTPUT"/>
       <word value="AC_OUTPUT_COMMANDS"/>
       <word value="AC_PID_T"/>
       <word value="AC_PREFIX"/>
