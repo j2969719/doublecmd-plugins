@@ -1,7 +1,7 @@
 CC = gcc
-CFLAGS = -shared -fPIC -Wall -pedantic -g
+CFLAGS = -shared -fPIC
 
-libs := `pkg-config --cflags --libs gio-2.0 speech-dispatcher`
+libs := `pkg-config --cflags --libs gio-2.0`
 includes := -I../../sdk
 libname = $(shell basename $(realpath .))
 

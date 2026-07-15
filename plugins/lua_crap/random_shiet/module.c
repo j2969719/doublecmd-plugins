@@ -15,8 +15,6 @@
 #include <string.h>
 #include "wfxplugin.h"
 
-#include <libspeechd.h>
-
 #define DEFINE_INT(name, value) lua_pushinteger(L, value); lua_setfield(L, -2, name)
 #define DEFINE_STR(name, value) lua_pushstring(L, value);  lua_setfield(L, -2, name)
 #define BUFSIZE 8192
@@ -155,22 +153,6 @@ static int lua_grab_props(lua_State *L)
 						lua_pushboolean(L, g_file_info_get_attribute_boolean(fileinfo, attrs[i]));
 						lua_setfield(L, -2, attrs[i]);
 					}
-					/*else if (type == G_FILE_ATTRIBUTE_TYPE_UINT32 && g_strcmp0(attrs[i], "unix::mode") == 0)
-					{
-						int octal = 0;
-						int decimal = g_file_info_get_attribute_uint32(fileinfo, attrs[i]);
-						int base = 1;
-
-						while (decimal != 0)
-						{
-							octal += (decimal % 8) * base;
-							decimal /= 8;
-							base *= 10;
-						}
-
-						lua_pushnumber(L, octal);
-						lua_setfield(L, -2, attrs[i]);
-					}*/
 					else if (type == G_FILE_ATTRIBUTE_TYPE_UINT32)
 					{
 						lua_pushnumber(L, g_file_info_get_attribute_uint32(fileinfo, attrs[i]));
@@ -224,45 +206,6 @@ static int lua_human_size(lua_State *L)
 	gchar *string = g_format_size_full(size, G_FORMAT_SIZE_IEC_UNITS);
 	lua_pushstring(L, string);
 	g_free(string);
-
-	return 1;
-}
-
-static int lua_get_output(lua_State *L)
-{
-	int argc = lua_gettop(L);
-	const char *command = luaL_checkstring(L, 1);
-
-	if (!command)
-	{
-		lua_pushnil(L);
-		return 1;
-	}
-
-	gchar **envp = NULL;
-	char *argv[] = {"sh", "-c", (char*)command, NULL};
-
-	if (argc > 1 && lua_istable(L, 2))
-	{
-		/*while (lua_next(L, 1) != 0)
-		{
-			const char *var = luaL_checkstring(L, 
-			const char *value = luaL_checkstring(L, 
-			envp = g_environ_setenv(envp ? envp : g_get_environ(), var, value, TRUE);
-			
-		}*/
-	}
-
-	gchar *string = NULL;
-	g_spawn_sync(NULL, argv, envp, G_SPAWN_SEARCH_PATH_FROM_ENVP, NULL, NULL, &string, NULL, NULL, NULL);
-
-	if (envp)
-		g_strfreev(envp);
-
-	if (string)
-		lua_pushstring(L, string);
-	else
-		lua_pushnil(L);
 
 	return 1;
 }
@@ -344,7 +287,6 @@ static const struct luaL_Reg shitcode[] =
 	{"copy_file",	 lua_copy_file},
 	{"grab_props",	lua_grab_props},
 	{"human_size",	lua_human_size},
-//	{"get_output",	lua_get_output},
 	{"list_dir",	  lua_list_dir},
 	{NULL,			  NULL}
 };

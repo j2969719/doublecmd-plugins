@@ -3,13 +3,11 @@
 local shiet = require("random_shiet")
 
 print(shiet.which("7z"))
---shiet.say(shiet.which("7z"))
 print("copy_file /etc/lsb-release -> /tmp/lsb-release", shiet.copy_file("/etc/lsb-release", "/tmp/lsb-release"))
 print("trash_file /tmp/lsb-release", shiet.trash_file("/tmp/lsb-release"))
 print()
 local props = shiet.grab_props("/tmp/")
 for key, value in pairs(props) do
-  --shiet.say(key, value)
   print(key, value)
 end
 print()
@@ -19,7 +17,6 @@ if not props["access::can-rename"] then
 end
 print(shiet.human_size(props["standard::size"]))
 print()
---print(shiet.get_output("ls -lA ."))
 for file, filetype in shiet.list_dir(".") do
   print(file, filetype)
 end
