@@ -178,6 +178,20 @@ static time_t get_unixtime(LPFILETIME ft)
 	return result;
 }
 
+static gboolean trash_file(const char *filename)
+{
+	gboolean result = FALSE;
+	GFile *gfile = g_file_new_for_path(filename);
+
+	if (gfile)
+	{
+		result = g_file_trash(gfile, NULL, NULL);
+		g_object_unref(gfile);
+	}
+
+	return result;
+}
+
 static int copy_file(char* src, char* dst)
 {
 	int ifd, ofd, done = 0;
@@ -1014,7 +1028,7 @@ BOOL DCPCALL FsDeleteFile(char* RemoteName)
 	{
 		const char *localname = get_localname(RemoteName);
 
-		if (remove(localname) != 0)
+		if (!trash_file(localname))
 			return FALSE;
 	}
 
