@@ -4,6 +4,13 @@
 
 args = {...}
 
+function meth_pow(x, y)
+  if not math.pow then
+    return x ^ y
+  end
+  return math.pow(x, y)
+end
+
 function get_output(command)
     local handle = io.popen(command, 'r')
     if not handle then
@@ -38,9 +45,9 @@ function fs_getlist(path)
                     if char == 'K' then
                         filesize = math.floor(filesize * 1024)
                     elseif char == 'M' then
-                        filesize = math.floor(filesize * math.pow(1024, 2))
+                        filesize = math.floor(filesize * meth_pow(1024, 2))
                     elseif char == 'G' then
-                        filesize = math.floor(filesize * math.pow(1024, 3))
+                        filesize = math.floor(filesize * meth_pow(1024, 3))
                     end
                 end
                 if filesize == nil then

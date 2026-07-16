@@ -10,6 +10,13 @@ connect_txt = "Connect to"
 system_txt = "System Manager"
 user_txt = "User Service Manager"
 
+function meth_pow(x, y)
+  if not math.pow then
+    return x ^ y
+  end
+  return math.pow(x, y)
+end
+
 function get_output(command)
     local handle = io.popen(command, 'r')
     if not handle then
@@ -99,11 +106,11 @@ function fs_getlist(path)
                 elseif char == 'K' then
                     size = math.floor(value * 1024)
                 elseif char == 'M' then
-                    size = math.floor(value * math.pow(1024, 2))
+                    size = math.floor(value * meth_pow(1024, 2))
                 elseif char == 'G' then
-                    size = math.floor(value * math.pow(1024, 3))
+                    size = math.floor(value * meth_pow(1024, 3))
                 elseif char == 'T' then
-                    size = math.floor(value * math.pow(1024, 4))
+                    size = math.floor(value * meth_pow(1024, 4))
                 end
             end
             if size ~= nil then

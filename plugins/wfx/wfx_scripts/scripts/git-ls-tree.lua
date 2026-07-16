@@ -55,15 +55,16 @@ function select_treeish(dir)
     local output = get_output('cd ' .. dir .. ' && git branch -a')
     print("Fs_LogInfo")
     for line in output:gmatch("[^\n]-\n") do
-        if line:find("%s%->%s") then
-            print(line:match("%s?%s?(.+)"))
-            line = line:match("(.-)%s%->%s") .. '\n'
+        local happy_line = line
+        if happy_line:find("%s%->%s") then
+            print(happy_line:match("%s?%s?(.+)"))
+            happy_line = happy_line:match("(.-)%s%->%s") .. '\n'
         end
-        if line:find("^%*%s") then
-            line = line:match("%s?%*?%s?(.+)")
-            print("WFX_SCRIPT_STR_BRANCH " .. line)
+        if happy_line:find("^%*%s") then
+            happy_line = happy_line:match("%s?%*?%s?(.+)")
+            print("WFX_SCRIPT_STR_BRANCH " .. happy_line)
         end
-        treeish = treeish .. '\t' .. line:match("^%s?%s?(.+)\n")
+        treeish = treeish .. '\t' .. happy_line:match("^%s?%s?(.+)\n")
     end
     local output = get_output('cd ' .. dir .. ' && git tag')
     for line in output:gmatch("[^\n]-\n") do
