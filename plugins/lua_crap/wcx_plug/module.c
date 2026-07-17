@@ -348,8 +348,6 @@ static int call_read_header(PlugData *data, FileItem *item)
 			else if (HeaderData.FileTime > 0)
 				item->filetime = HeaderData.FileTime;
 
-			//g_printerr("!!! MfileTime = %ld, FileTime = %d -> %ld\n", HeaderData.MfileTime, HeaderData.FileTime, item->filetime);
-
 			item->mode = HeaderData.FileAttr;
 		}
 	}

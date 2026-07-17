@@ -120,6 +120,7 @@ typedef struct {
     char Reserved[1024];
   } tHeaderDataEx;
 
+#pragma pack(push, 1)
 typedef struct {
     WCHAR ArcName[1024];
     WCHAR FileName[1024];
@@ -141,6 +142,7 @@ typedef struct {
     char Reserved[1024];
     uint64_t MfileTime;
   } tHeaderDataExW;
+#pragma pack(pop)
 
 typedef struct {
     char* ArcName;

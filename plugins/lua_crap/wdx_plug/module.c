@@ -254,6 +254,7 @@ static PlugData* load_plugin(const char *filename)
 			if (data->ContentSetDefaultParams)
 			{
 				ContentDefaultParamStruct dps;
+				memset(&dps, 0, sizeof(ContentDefaultParamStruct));
 				snprintf(dps.DefaultIniName, MAX_PATH, "%s/doublecmd/wdx.ini", g_get_user_config_dir());
 				dps.PluginInterfaceVersionHi = 1;
 				dps.PluginInterfaceVersionLow = 50;
