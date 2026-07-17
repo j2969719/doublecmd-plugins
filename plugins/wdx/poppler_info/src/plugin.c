@@ -40,8 +40,7 @@ tfield fields[] =
 };
 
 static gchar *doc_text = NULL;
-static gsize pos = 0;
-static gsize len = 0;
+static gsize doc_len = 0;
 
 static char* GetDocumentText(PopplerDocument *document)
 {
@@ -106,7 +105,7 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 {
 	gchar *strvalue = NULL;
 	uint64_t timevalue;
-	gboolean vempty = FALSE;
+	gboolean is_empty = FALSE;
 	GError *err = NULL;
 	PopplerDocument *document = NULL;
 	GFile *gfile = NULL;
@@ -183,7 +182,7 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 		if (strvalue)
 			g_strlcpy((char*)FieldValue, strvalue, maxlen - 1);
 		else
-			vempty = TRUE;
+			is_empty = TRUE;
 
 		break;
 
@@ -193,7 +192,7 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 		if (strvalue)
 			g_strlcpy((char*)FieldValue, strvalue, maxlen - 1);
 		else
-			vempty = TRUE;
+			is_empty = TRUE;
 
 		break;
 
@@ -203,7 +202,7 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 		if (strvalue)
 			g_strlcpy((char*)FieldValue, strvalue, maxlen - 1);
 		else
-			vempty = TRUE;
+			is_empty = TRUE;
 
 		break;
 
@@ -213,7 +212,7 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 		if (strvalue)
 			g_strlcpy((char*)FieldValue, strvalue, maxlen - 1);
 		else
-			vempty = TRUE;
+			is_empty = TRUE;
 
 		break;
 
@@ -223,7 +222,7 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 		if (strvalue)
 			g_strlcpy((char*)FieldValue, strvalue, maxlen - 1);
 		else
-			vempty = TRUE;
+			is_empty = TRUE;
 
 		break;
 
@@ -233,7 +232,7 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 		if (strvalue)
 			g_strlcpy((char*)FieldValue, strvalue, maxlen - 1);
 		else
-			vempty = TRUE;
+			is_empty = TRUE;
 
 		break;
 
@@ -243,7 +242,7 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 		if (strvalue)
 			g_strlcpy((char*)FieldValue, strvalue, maxlen - 1);
 		else
-			vempty = TRUE;
+			is_empty = TRUE;
 
 		break;
 
@@ -255,13 +254,13 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 		timevalue = poppler_document_get_creation_date(document);
 
 		if (!UnixTimeToFileTime(timevalue, (FILETIME*)FieldValue))
-			vempty = TRUE;
+			is_empty = TRUE;
 
 	case 9:
 		timevalue = poppler_document_get_modification_date(document);
 
 		if (!UnixTimeToFileTime(timevalue, (FILETIME*)FieldValue))
-			vempty = TRUE;
+			is_empty = TRUE;
 
 	case 10:
 		if (poppler_document_has_attachments(document))
@@ -339,41 +338,36 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 			if (doc_text != NULL)
 			{
 				g_strlcpy(FieldValue, doc_text, maxlen - 1);
-				len = strlen(doc_text);
-				pos = maxlen - 2;
+				doc_len = strlen(doc_text);
 			}
 			else
-				vempty = TRUE;
+				is_empty = TRUE;
 		}
 		else if (UnitIndex == -1)
 		{
 			if (doc_text != NULL)
 				g_free(doc_text);
 
-			pos = 0;
-			len = 0;
-			vempty = TRUE;
+			doc_len = 0;
+			is_empty = TRUE;
 		}
 		else
 		{
-			if (len > pos && strlen(doc_text + pos) > 0)
-			{
-				g_strlcpy((char*)FieldValue, doc_text + pos, maxlen - 1);
-				pos += maxlen - 2;
-			}
+			if (doc_len > UnitIndex && strlen(doc_text + UnitIndex) > 0)
+				g_strlcpy((char*)FieldValue, doc_text + UnitIndex, maxlen - 1);
 			else
 			{
 				if (doc_text != NULL)
 					g_free(doc_text);
 
-				vempty = TRUE;
+				is_empty = TRUE;
 			}
 		}
 
 		break;
 
 	default:
-		vempty = TRUE;
+		is_empty = TRUE;
 
 		break;
 	}
@@ -381,7 +375,7 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 	if (document != NULL)
 		g_object_unref(G_OBJECT(document));
 
-	if (vempty)
+	if (is_empty)
 		return ft_fieldempty;
 	else
 		return fields[FieldIndex].type;

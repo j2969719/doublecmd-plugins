@@ -180,11 +180,50 @@ static gboolean get_value(lua_State *L, int index, int units, char *filename, Pl
 			result = TRUE;
 			break;
 		}
+		case ft_fulltext:
+		case ft_fulltextw:
+			g_printerr("dafaq its fulltext\n");
 		}
 	}
 	else
 	{
-		// never gonna give you up
+		int offset = 0;
+		int ret = ft_fileerror;
+		luaL_Buffer luabuf;
+		luaL_buffinit(L, &luabuf);
+
+		do
+		{
+			ret = call_getvalue(index, offset, filename, data, buf);
+
+			if (ret == ft_fulltext)
+			{
+				size_t len = strlen(buf);
+				luaL_addstring(&luabuf, buf);
+				offset += len;
+			}
+			else if (ret == ft_fulltextw)
+			{
+				gchar *string = wchar_to_utf8((WCHAR*)buf);
+
+				if (string)
+				{
+					size_t len = strlen(buf);
+					luaL_addstring(&luabuf, buf);
+					offset += len;
+				}
+			}
+		}
+		while (ret == ft_fulltext || ret == ft_fulltextw);
+
+//		if (ret != ft_fieldempty)
+//			call_getvalue(index, -1, filename, data, buf);
+
+		if (ret == ft_fieldempty)
+		{
+			luaL_pushresult(&luabuf);
+			result = TRUE;
+		}
 	}
 
 	return result;
@@ -358,8 +397,6 @@ static int lua_get_fields(lua_State *L)
 
 		lua_rawseti(L, -2, i + 1);
 	}
-
-	//lua_settable(L, -3);
 
 	return 1;
 }
