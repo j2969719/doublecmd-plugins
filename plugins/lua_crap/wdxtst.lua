@@ -40,10 +40,3 @@ if plug then
   end
   wdx.unload_plug(plug)
 end
-
-plug = wdx.load_plug("../wdx/poppler_info/poppler_info.wdx")
-if plug then
-  print()
-  print(wdx.get_value(plug, "weima-manual-petrol-engines.pdf", "Text"))
-  wdx.unload_plug(plug)
-end
