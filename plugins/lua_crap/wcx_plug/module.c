@@ -12,6 +12,10 @@
 #define DEFINE_INT(name, value) lua_pushinteger(L, value); lua_setfield(L, -2, name)
 #define DEFINE_STR(name, value) lua_pushstring(L, value);  lua_setfield(L, -2, name)
 
+#if !defined(lua_rawlen) && LUA_VERSION_NUM < 502
+#define lua_rawlen(L, i) lua_objlen((L), (i))
+#endif
+
 typedef void (*tExtensionInitialize)(tExtensionStartupInfo* StartupInfo);
 typedef void (*tExtensionFinalize)(void* Reserved);
 typedef void (*tPackSetDefaultParams)(PackDefaultParamStruct* dps);
@@ -49,10 +53,11 @@ typedef struct
 	void* archive_handle;
 	gboolean is_process_file;
 	gboolean is_point_at_dir;
+	gboolean is_read_started;
 	gboolean is_extract_mode;
 	gchar *filename;
 	int packer_caps;
-	int flags;
+	int bg_flags;
 	tCanYouHandleThisFile CanYouHandleThisFile;
 	tCanYouHandleThisFileW CanYouHandleThisFileW;
 	tOpenArchive OpenArchive;
@@ -93,8 +98,7 @@ static WCHAR* utf8_to_wchar(char* string)
 	if (!string)
 		return NULL;
 
-	gsize bytes_written = 0;
-	return (WCHAR*)g_convert(string, -1, "UTF-16LE", "UTF-8", NULL, &bytes_written, NULL);
+	return g_utf8_to_utf16(string, -1, NULL, NULL, NULL);
 }
 
 static gchar* wchar_to_utf8(WCHAR* string)
@@ -102,12 +106,7 @@ static gchar* wchar_to_utf8(WCHAR* string)
 	if (!string)
 		return NULL;
 
-	gsize u16_len = 0;
-
-	while (string[u16_len] != 0)
-		u16_len++;
-
-	return g_convert((const char*)string, u16_len * 2, "UTF-8", "UTF-16LE", NULL, NULL, NULL);
+	return g_utf16_to_utf8(string, -1, NULL, NULL, NULL);
 }
 
 static int DCPCALL progress_cb(char *filename, int size)
@@ -154,7 +153,38 @@ static int DCPCALL crypto_utf16_cb(int num, int mode, WCHAR* archive_utf16, WCHA
 
 static int DCPCALL msgbox_cb(char* text, char* caption, long flags)
 {
-	g_printerr("[MessageBox] (%s %ld): %s\n", caption, flags, text);
+	g_printerr("[MessageBox] (%s", caption ? caption : "<default caption>");
+
+	if (flags & MB_OK)
+		g_printerr(" MB_OK");
+	else if (flags & MB_OKCANCEL)
+		g_printerr(" MB_OKCANCEL");
+	else if (flags & MB_ABORTRETRYIGNORE)
+		g_printerr(" MB_ABORTRETRYIGNORE");
+	else if (flags & MB_YESNOCANCEL)
+		g_printerr(" MB_YESNOCANCEL");
+	else if (flags & MB_YESNO)
+		g_printerr(" MB_YESNO");
+
+	if (flags & MB_ICONHAND)
+		g_printerr(" MB_ICONERROR");
+	else if (flags & MB_ICONQUESTION)
+		g_printerr(" MB_ICONQUESTION");
+	else if (flags & MB_ICONEXCLAMATION)
+		g_printerr(" MB_ICONEXCLAMATION");
+	else if (flags & MB_ICONASTERICK)
+		g_printerr(" MB_ICONINFORMATION");
+
+	if (flags & MB_DEFBUTTON1)
+		g_printerr(" MB_DEFBUTTON1");
+	else if (flags & MB_OK)
+		g_printerr(" MB_DEFBUTTON2");
+	else if (flags & MB_DEFBUTTON3)
+		g_printerr(" MB_DEFBUTTON3");
+	else if (flags & MB_DEFBUTTON4)
+		g_printerr(" MB_DEFBUTTON4");
+
+	g_printerr("):\n%s\n", text);
 	return ID_CANCEL;
 }
 
@@ -278,6 +308,7 @@ static void* call_open_archive(PlugData *data, const char *filename)
 	void *result = NULL;
 	data->filename = g_canonicalize_filename(filename, NULL);
 	data->is_process_file = FALSE;
+	data->is_read_started = FALSE;
 
 	if (data->OpenArchiveW)
 	{
@@ -322,6 +353,10 @@ static void* call_open_archive(PlugData *data, const char *filename)
 static int call_read_header(PlugData *data, FileItem *item)
 {
 	int result = E_NOT_SUPPORTED;
+	memset(item, 0, sizeof(FileItem));
+
+	if (!data->is_read_started)
+		data->is_read_started = TRUE;
 
 	if (data->ReadHeaderExW)
 	{
@@ -384,6 +419,14 @@ static int call_read_header(PlugData *data, FileItem *item)
 		}
 	}
 
+	int len = strlen(item->filename);
+
+	for (int i = 0; i < len; i++)
+	{
+		if (item->filename[i] == '\\')
+			item->filename[i] = '/';
+	}
+
 	if (result != E_SUCCESS && result != E_END_ARCHIVE)
 		print_wcx_error("ReadHeader", data->filename, result);
 	else if (result == E_SUCCESS)
@@ -403,7 +446,20 @@ static int call_process_file(PlugData *data, int mode, const char *dst)
 	gchar *filename = NULL;
 
 	if (dst)
+	{
 		filename = g_canonicalize_filename(dst, NULL);
+		gchar *parrent = g_path_get_dirname(filename);
+
+		if (g_mkdir_with_parents(parrent, 0755) != 0)
+		{
+			g_free(parrent);
+			g_free(filename);
+			g_printerr("g_mkdir_with_parents fail");
+			return E_EWRITE;
+		}
+
+		g_free(parrent);
+	}
 
 	if (data->ProcessFileW)
 	{
@@ -426,6 +482,136 @@ static int call_process_file(PlugData *data, int mode, const char *dst)
 		print_wcx_error("ProcessFile", data->filename, result);
 	else
 		data->is_process_file = FALSE;
+
+	return result;
+}
+
+static WCHAR* build_tclist_utf16(gchar **array)
+{
+	if (!array || !array[0])
+		return NULL;
+
+	size_t total = 0;
+	gsize count = g_strv_length(array);
+	WCHAR **converted_items = g_new0(WCHAR*, count);
+
+	for (gsize i = 0; i < count; i++)
+	{
+		glong written = 0;
+		converted_items[i] = g_utf8_to_utf16(array[i], -1, NULL, &written, NULL);
+		total += (written + 1);
+	}
+
+	total++;
+
+	WCHAR *result = g_malloc0(total * sizeof(WCHAR));
+	WCHAR *pos = result;
+
+	for (gsize i = 0; i < count; i++)
+	{
+		if (converted_items[i])
+		{
+			size_t len = 0;
+
+			while (converted_items[i][len] != 0)
+				len++;
+
+			memcpy(pos, converted_items[i], len * sizeof(gunichar2));
+			pos += len + 1;
+			g_free(converted_items[i]);
+		}
+	}
+
+	g_free(converted_items);
+
+	return result;
+}
+
+static gchar* build_tclist(gchar **array)
+{
+	if (!array || !array[0])
+		return NULL;
+
+	size_t total = 0;
+
+	for (gsize i = 0; array[i] != NULL; i++)
+		total += strlen(array[i]) + 1;
+
+	total++;
+
+	gchar *result = g_malloc0(total);
+	gchar *pos = result;
+
+	for (gsize i = 0; array[i] != NULL; i++)
+	{
+		int len = strlen(array[i]) + 1;
+		g_strlcpy(pos, array[i], len);
+		pos += len;
+	}
+
+	return result;
+}
+
+static int call_pack_files(PlugData *data, const char *archive, const char *workdir, gchar **files)
+{
+	int result = E_NOT_SUPPORTED;
+
+	gchar *filename = g_canonicalize_filename(archive, NULL);
+	gchar *canon = g_canonicalize_filename(workdir, NULL);
+	gchar *path = g_strdup_printf("%s/", canon);
+	g_free(canon);
+
+	if (data->PackFilesW)
+	{
+		WCHAR *list = build_tclist_utf16(files);
+		WCHAR *filenamew = utf8_to_wchar(filename);
+		WCHAR *pathw = utf8_to_wchar(path);
+		result = data->PackFilesW(filenamew, NULL, pathw, list, PK_PACK_SAVE_PATHS);
+		g_free(filenamew);
+		g_free(pathw);
+		g_free(list);
+	}
+	else if (data->PackFiles)
+	{
+		gchar *list = build_tclist(files);
+		result = data->PackFiles(filename, NULL, path, list, PK_PACK_SAVE_PATHS);
+		g_free(list);
+	}
+
+	if (result != E_SUCCESS)
+		print_wcx_error("PackFiles", filename, result);
+
+	g_free(filename);
+	g_free(path);
+
+	return result;
+}
+
+static int call_delete_files(PlugData *data, const char *archive, gchar **files)
+{
+	int result = E_NOT_SUPPORTED;
+
+	gchar *filename = g_canonicalize_filename(archive, NULL);
+
+	if (data->DeleteFilesW)
+	{
+		WCHAR *list = build_tclist_utf16(files);
+		WCHAR *filenamew = utf8_to_wchar(filename);
+		result = data->DeleteFilesW(filenamew, list);
+		g_free(filenamew);
+		g_free(list);
+	}
+	else if (data->DeleteFiles)
+	{
+		gchar *list = build_tclist(files);
+		result = data->DeleteFiles(filename, list);
+		g_free(list);
+	}
+
+	if (result != E_SUCCESS)
+		print_wcx_error("DeleteFiles", filename, result);
+
+	g_free(filename);
 
 	return result;
 }
@@ -520,7 +706,7 @@ static PlugData* load_plugin(const char *filename)
 				data->packer_caps = GetPackerCaps();
 
 			if (GetBackgroundFlags)
-				data->flags = GetBackgroundFlags();
+				data->bg_flags = GetBackgroundFlags();
 
 			if (PkSetCryptCallbackW)
 				PkSetCryptCallbackW(crypto_utf16_cb, 666, 0);
@@ -647,6 +833,31 @@ static void push_mode_str(lua_State *L, int mode)
 	lua_pushstring(L, attr);
 }
 
+static void push_fileitem(lua_State *L, FileItem item, gboolean is_table)
+{
+	lua_pushstring(L, item.filename);
+
+	if (is_table)
+		lua_setfield(L, -2, "file");
+
+	lua_createtable(L, 0, 6);
+	lua_pushstring(L, item.arcname);
+	lua_setfield(L, -2, "arcname");
+	lua_pushnumber(L, item.unpk_size);
+	lua_setfield(L, -2, "unpk_size");
+	lua_pushnumber(L, item.pk_size);
+	lua_setfield(L, -2, "pk_size");
+	lua_pushnumber(L, item.filetime);
+	lua_setfield(L, -2, "filetime");
+	lua_pushnumber(L, item.mode);
+	lua_setfield(L, -2, "mode");
+	push_mode_str(L, item.mode);
+	lua_setfield(L, -2, "attr");
+
+	if (is_table)
+		lua_setfield(L, -2, "info");
+}
+
 static int archive_iterator(lua_State *L)
 {
 	PlugData *data = (PlugData*)lua_touserdata(L, lua_upvalueindex(1));
@@ -661,8 +872,6 @@ static int archive_iterator(lua_State *L)
 	}
 
 	FileItem item;
-	memset(&item, 0, sizeof(FileItem));
-
 	int ret = call_read_header(data, &item);
 
 	if (ret != E_SUCCESS)
@@ -671,18 +880,7 @@ static int archive_iterator(lua_State *L)
 		return 0;
 	}
 
-	lua_pushstring(L, item.filename);
-	lua_createtable(L, 0, 5);
-	lua_pushstring(L, item.arcname);
-	lua_setfield(L, -2, "arcname");
-	lua_pushnumber(L, item.unpk_size);
-	lua_setfield(L, -2, "unpk_size");
-	lua_pushnumber(L, item.pk_size);
-	lua_setfield(L, -2, "pk_size");
-	lua_pushnumber(L, item.filetime);
-	lua_setfield(L, -2, "filetime");
-	push_mode_str(L, item.mode);
-	lua_setfield(L, -2, "mode");
+	push_fileitem(L, item, FALSE);
 
 	return 2;
 }
@@ -702,7 +900,10 @@ static int lua_list_archive(lua_State *L)
 	data->archive_handle = call_open_archive(data, path);
 
 	if (!data->archive_handle)
-		return luaL_error(L, "archive open fail (%s)", path);
+		g_printerr("archive open fail (%s)", path);
+
+	//return luaL_error(L, "archive open fail (%s)", path);
+
 
 	lua_pushlightuserdata(L, data);
 	lua_pushcclosure(L, archive_iterator, 1);
@@ -722,12 +923,12 @@ static int lua_snatch_current(lua_State *L)
 
 	if (data->is_point_at_dir)
 	{
-		lua_pushboolean(L, FALSE);
+		lua_pushnil(L);
 		return 1;
 	}
 
 	const char *dst = luaL_checkstring(L, 2);
-	lua_pushboolean(L, call_process_file(data, PK_EXTRACT, dst) == E_SUCCESS);
+	lua_pushboolean(L, (call_process_file(data, PK_EXTRACT, dst) == E_SUCCESS));
 
 	return 1;
 }
@@ -744,11 +945,11 @@ static int lua_test_current(lua_State *L)
 
 	if (data->is_point_at_dir)
 	{
-		lua_pushboolean(L, FALSE);
+		lua_pushnil(L);
 		return 1;
 	}
 
-	lua_pushboolean(L, call_process_file(data, PK_TEST, NULL));
+	lua_pushboolean(L, (call_process_file(data, PK_TEST, NULL) == E_SUCCESS));
 
 	return 1;
 }
@@ -759,8 +960,14 @@ static int lua_probe_archive(lua_State *L)
 		return 0;
 
 	PlugData *data = (PlugData*)lua_touserdata(L, 1);
-	const char *file = luaL_checkstring(L, 2);
-	lua_pushboolean(L, call_probe_file(data, file));
+
+	if (data->packer_caps & PK_CAPS_BY_CONTENT)
+	{
+		const char *file = luaL_checkstring(L, 2);
+		lua_pushboolean(L, call_probe_file(data, file));
+	}
+	else
+		lua_pushnil(L);
 
 	return 1;
 }
@@ -776,15 +983,288 @@ static int lua_packer_casps(lua_State *L)
 	return 1;
 }
 
+static int lua_get_bg_flags(lua_State *L)
+{
+	if (!lua_islightuserdata(L, 1))
+		return 0;
+
+	PlugData *data = (PlugData*)lua_touserdata(L, 1);
+	lua_pushnumber(L, data->bg_flags);
+
+	return 1;
+}
+
+static int lua_open_archive(lua_State *L)
+{
+	if (!lua_islightuserdata(L, 1))
+		return 0;
+
+	PlugData *data = (PlugData*)lua_touserdata(L, 1);
+
+	if (data->archive_handle)
+		return luaL_error(L, "archive already open (%s)", data->filename);
+
+	const char *path = luaL_checkstring(L, 2);
+	data->is_extract_mode = lua_toboolean(L, 3);
+	data->archive_handle = call_open_archive(data, path);
+	lua_pushboolean(L, (data->archive_handle != NULL));
+
+	return 1;
+}
+
+static int lua_close_archive(lua_State *L)
+{
+	if (!lua_islightuserdata(L, 1))
+		return 0;
+
+	PlugData *data = (PlugData*)lua_touserdata(L, 1);
+
+	if (data->archive_handle)
+		call_close_archive(data);
+
+	return 0;
+}
+
+static int lua_get_item(lua_State *L)
+{
+	if (!lua_islightuserdata(L, 1))
+		return 0;
+
+	PlugData *data = (PlugData*)lua_touserdata(L, 1);
+
+	if (data->is_process_file && call_process_file(data, PK_SKIP, NULL) != E_SUCCESS)
+	{
+		lua_pushnil(L);
+		return 1;
+	}
+
+	FileItem item;
+	int ret = call_read_header(data, &item);
+
+	if (ret != E_SUCCESS)
+	{
+		lua_pushnil(L);
+		return 1;
+	}
+
+	push_fileitem(L, item, FALSE);
+
+	return 2;
+}
+
+static int lua_get_filelist(lua_State *L)
+{
+	if (!lua_islightuserdata(L, 1))
+		return 0;
+
+	PlugData *data = (PlugData*)lua_touserdata(L, 1);
+
+	if (data->filename && data->is_read_started)
+	{
+		gchar *filename = g_strdup(data->filename);
+		call_close_archive(data);
+		data->archive_handle = call_open_archive(data, filename);
+		g_free(filename);
+
+		if (!data->archive_handle)
+			return luaL_error(L, "archive reopen fail");
+	}
+
+	if (lua_gettop(L) == 2 && lua_isstring(L, 2))
+	{
+		if (data->archive_handle)
+			return luaL_error(L, "archive already open (%s)", data->filename);
+
+		const char *path = lua_tostring(L, 2);
+		data->archive_handle = call_open_archive(data, path);
+
+		if (!data->archive_handle)
+			return luaL_error(L, "archive open fail (%s)", path);
+	}
+
+	if (!data->archive_handle)
+		return luaL_error(L, "archive not opened");
+
+	data->is_extract_mode = FALSE;
+
+	gsize i = 1;
+	FileItem item;
+	lua_newtable(L);
+
+	while (call_read_header(data, &item) == E_SUCCESS)
+	{
+		lua_createtable(L, 0, 2);
+		push_fileitem(L, item, TRUE);
+		lua_rawseti(L, -2, i++);
+
+		if (call_process_file(data, PK_SKIP, NULL) != E_SUCCESS)
+			break;
+	}
+
+	call_close_archive(data);
+
+	return 1;
+}
+
+static gchar** lua_table_to_array(lua_State *L, int index, gboolean is_strip_slash)
+{
+	size_t len = lua_rawlen(L, index);
+	gchar **result = g_new0(gchar*, len + 1);
+
+	for (size_t i = 1; i <= len; i++)
+	{
+		lua_rawgeti(L, index, i);
+		const char *string = lua_tostring(L, -1);
+
+		if (string)
+		{
+			if (is_strip_slash && string[0] == '/')
+				result[i - 1] = g_strdup(string + 1);
+			else
+				result[i - 1] = g_strdup(string);
+		}
+		else
+			result[i - 1] = g_strdup("");
+
+		lua_pop(L, 1);
+	}
+
+	result[len] = NULL;
+
+	return result;
+}
+
+static int lua_extract_files(lua_State *L)
+{
+	if (!lua_islightuserdata(L, 1))
+		return 0;
+
+	if (!lua_istable(L, 2) && !lua_isstring(L, 2))
+		return luaL_error(L, "there are no files to extract");
+
+	PlugData *data = (PlugData*)lua_touserdata(L, 1);
+
+	if (data->filename && data->is_read_started)
+	{
+		gchar *filename = g_strdup(data->filename);
+		call_close_archive(data);
+		data->archive_handle = call_open_archive(data, filename);
+		g_free(filename);
+
+		if (!data->archive_handle)
+			return luaL_error(L, "archive reopen fail");
+	}
+
+	if (lua_gettop(L) == 4 && lua_isstring(L, 4))
+	{
+		if (data->archive_handle)
+			return luaL_error(L, "archive already open (%s)", data->filename);
+
+		const char *path = lua_tostring(L, 4);
+		data->archive_handle = call_open_archive(data, path);
+
+		if (!data->archive_handle)
+			return luaL_error(L, "archive open fail (%s)", path);
+	}
+
+	if (!data->archive_handle)
+		return luaL_error(L, "archive not opened");
+
+	gboolean result = TRUE;
+	data->is_extract_mode = TRUE;
+	FileItem item;
+	gchar **files = NULL;
+	const char *pattern = NULL;
+	const char *dstdir = luaL_checkstring(L, 3);
+
+	if (lua_isstring(L, 2))
+		pattern = lua_tostring(L, 2);
+	else if (lua_istable(L, 2))
+		files = lua_table_to_array(L, 2, TRUE);
+
+	while (call_read_header(data, &item) == E_SUCCESS)
+	{
+
+		if (!data->is_point_at_dir && ((files && g_strv_contains((const gchar * const *)files, item.filename)) || (pattern && g_pattern_match_simple(pattern, item.filename))))
+		{
+			gchar *dst = g_strdup_printf("%s%s%s", dstdir, (dstdir[0] != '\0') ? "/" : "", item.filename);
+			result = (call_process_file(data, PK_EXTRACT, dst) == E_SUCCESS);
+			g_free(dst);
+		}
+		else
+			result = (call_process_file(data, PK_SKIP, NULL) == E_SUCCESS);
+
+		if (!result)
+			break;
+	}
+
+	if (files)
+		g_strfreev(files);
+
+	call_close_archive(data);
+	lua_pushboolean(L, result);
+
+	return 1;
+}
+
+static int lua_pack_files(lua_State *L)
+{
+	if (!lua_islightuserdata(L, 1))
+		return 0;
+
+	if (!lua_istable(L, 4) && !lua_isstring(L, 3))
+		return luaL_error(L, "there are no files to pack");
+
+	PlugData *data = (PlugData*)lua_touserdata(L, 1);
+	const char *path = luaL_checkstring(L, 2);
+	const char *workdir = luaL_checkstring(L, 3);
+	gchar **files = lua_table_to_array(L, 4, TRUE);
+
+	lua_pushboolean(L, (call_pack_files(data, path, workdir, files) == E_SUCCESS));
+
+	if (files)
+		g_strfreev(files);
+
+	return 1;
+}
+
+static int lua_delete_files(lua_State *L)
+{
+	if (!lua_islightuserdata(L, 1))
+		return 0;
+
+	if (!lua_istable(L, 3))
+		return luaL_error(L, "there are no files to delete");
+
+	PlugData *data = (PlugData*)lua_touserdata(L, 1);
+	const char *path = luaL_checkstring(L, 2);
+	gchar **files = lua_table_to_array(L, 3, TRUE);
+
+	lua_pushboolean(L, (call_delete_files(data, path, files) == E_SUCCESS));
+
+	if (files)
+		g_strfreev(files);
+
+	return 1;
+}
+
 static const struct luaL_Reg shitcode[] =
 {
 	{"load_plug",		     lua_load_plug},
 	{"unload_plug",		   lua_unload_plug},
 	{"packer_caps",		  lua_packer_casps},
+	{"bg_flags",		  lua_get_bg_flags},
 	{"probe_archive",	 lua_probe_archive},
-	{"list_archive",	  lua_list_archive},
-	{"snatch_current",	lua_snatch_current},
-	{"test_current",	  lua_test_current},
+	{"walk_archive",	  lua_list_archive},
+	{"extract_item",	lua_snatch_current},
+	{"test_item",		  lua_test_current},
+	{"get_item",		      lua_get_item},
+	{"open_archive",	  lua_open_archive},
+	{"close_archive",	 lua_close_archive},
+	{"get_filelist",	  lua_get_filelist},
+	{"extract_files",	 lua_extract_files},
+	{"pack_files",		    lua_pack_files},
+	{"delete_files",	  lua_delete_files},
 	{NULL,				      NULL}
 };
 
