@@ -16,6 +16,8 @@
 #define lua_rawlen(L, i) lua_objlen((L), (i))
 #endif
 
+#define DC_OUTBUFF_SIZE 524288
+
 typedef void (*tExtensionInitialize)(tExtensionStartupInfo* StartupInfo);
 typedef void (*tExtensionFinalize)(void* Reserved);
 typedef void (*tPackSetDefaultParams)(PackDefaultParamStruct* dps);
@@ -41,11 +43,11 @@ typedef int (*tPackFiles)(char *PackedFile, char *SubPath, char *SrcPath, char *
 typedef int (*tDeleteFiles)(char *PackedFile, char *DeleteList);
 typedef int (*tPackFilesW)(WCHAR *PackedFile, WCHAR *SubPath, WCHAR *SrcPath, WCHAR *AddList, int Flags);
 typedef int (*tDeleteFilesW)(WCHAR *PackedFile, WCHAR *DeleteList);
-typedef int (*tStartMemPack)(int Options, char *FileName);
-typedef int (*tStartMemPackW)(int Options, WCHAR *FileName);
-typedef int (*tPackToMem)(int hMemPack, char* BufIn, int InLen, int* Taken, char* BufOut, int OutLen, int* Written, int SeekBy);
-typedef int (*tDoneMemPack)(int hMemPack);
-
+typedef HANDLE (*tStartMemPack)(int Options, char *FileName);
+typedef HANDLE (*tStartMemPackW)(int Options, WCHAR *FileName);
+typedef int (*tPackToMem)(HANDLE hMemPack, char* BufIn, int InLen, int* Taken, char* BufOut, int OutLen, int* Written, int* SeekBy);
+typedef int (*tDoneMemPack)(HANDLE hMemPack);
+// source trust me bro
 
 typedef struct
 {
@@ -55,6 +57,7 @@ typedef struct
 	gboolean is_point_at_dir;
 	gboolean is_read_started;
 	gboolean is_extract_mode;
+	gboolean is_finished;
 	gchar *filename;
 	int packer_caps;
 	int bg_flags;
@@ -90,6 +93,7 @@ typedef struct
 	int64_t pk_size;
 	int64_t unpk_size;
 	uint64_t filetime;
+	int flags;
 	int mode;
 } FileItem;
 
@@ -384,6 +388,7 @@ static int call_read_header(PlugData *data, FileItem *item)
 				item->filetime = HeaderData.FileTime;
 
 			item->mode = HeaderData.FileAttr;
+			item->flags = HeaderData.Flags;
 		}
 	}
 	else if (data->ReadHeaderEx)
@@ -398,8 +403,9 @@ static int call_read_header(PlugData *data, FileItem *item)
 			g_strlcpy(item->arcname, HeaderData.ArcName, sizeof(item->arcname));
 			item->pk_size = ((int64_t)HeaderData.PackSizeHigh << 32) | HeaderData.PackSize;
 			item->unpk_size = ((int64_t)HeaderData.UnpSizeHigh << 32) | HeaderData.UnpSize;
-			item->filetime = (uint16_t)HeaderData.FileTime;
+			item->filetime = HeaderData.FileTime;
 			item->mode = HeaderData.FileAttr;
+			item->flags = HeaderData.Flags;
 		}
 	}
 	else if (data->ReadHeader)
@@ -414,8 +420,9 @@ static int call_read_header(PlugData *data, FileItem *item)
 			g_strlcpy(item->arcname, HeaderData.ArcName, sizeof(item->arcname));
 			item->pk_size = (int64_t)HeaderData.PackSize;
 			item->unpk_size = (int64_t)HeaderData.UnpSize;
-			item->filetime = (uint16_t)HeaderData.FileTime;
+			item->filetime = HeaderData.FileTime;
 			item->mode = HeaderData.FileAttr;
+			item->flags = HeaderData.Flags;
 		}
 	}
 
@@ -470,7 +477,7 @@ static int call_process_file(PlugData *data, int mode, const char *dst)
 		result = data->ProcessFileW(data->archive_handle, mode, NULL, filenamew);
 		g_free(filenamew);
 	}
-	else if (data->ProcessFileW)
+	else if (data->ProcessFile)
 	{
 		result = data->ProcessFile(data->archive_handle, mode, NULL, filename);
 	}
@@ -598,12 +605,16 @@ static int call_pack_files(PlugData *data, const char *archive, const char *work
 
 	return result;
 }
-/*
+
 static void* call_start_mempack(PlugData *data, const char *path)
 {
 	void* result = NULL;
 	int flags = MEM_OPTIONS_WANTHEADERS;
 	data->filename = g_canonicalize_filename(path, NULL);
+	data->is_finished = FALSE;
+
+	if (!(data->packer_caps & PK_CAPS_MEMPACK))
+		g_printerr("r u sure bout that?\n");
 
 	if (data->StartMemPackW)
 	{
@@ -623,7 +634,7 @@ static void* call_start_mempack(PlugData *data, const char *path)
 	return result;
 }
 
-static int call_pack_to_mem(PlugData *data, char *buf_in, int len_in, int *taken, char *buf_out, int len_out, int *written, int seek_by)
+static int call_pack_to_mem(PlugData *data, char *buf_in, int len_in, int *taken, char *buf_out, int len_out, int *written, int* seek_by)
 {
 	int result = E_NOT_SUPPORTED;
 
@@ -635,7 +646,7 @@ static int call_pack_to_mem(PlugData *data, char *buf_in, int len_in, int *taken
 
 	return result;
 }
-*/
+
 static int call_delete_files(PlugData *data, const char *archive, gchar **files)
 {
 	int result = E_NOT_SUPPORTED;
@@ -892,7 +903,7 @@ static void push_fileitem(lua_State *L, FileItem item, gboolean is_table)
 	if (is_table)
 		lua_setfield(L, -2, "file");
 
-	lua_createtable(L, 0, 6);
+	lua_createtable(L, 0, 7);
 	lua_pushstring(L, item.arcname);
 	lua_setfield(L, -2, "arcname");
 	lua_pushnumber(L, item.unpk_size);
@@ -905,6 +916,8 @@ static void push_fileitem(lua_State *L, FileItem item, gboolean is_table)
 	lua_setfield(L, -2, "mode");
 	push_mode_str(L, item.mode);
 	lua_setfield(L, -2, "attr");
+	lua_pushboolean(L, (item.flags & RHDF_ENCRYPTED));
+	lua_setfield(L, -2, "is_encrypted");
 
 	if (is_table)
 		lua_setfield(L, -2, "info");
@@ -1302,7 +1315,7 @@ static int lua_delete_files(lua_State *L)
 
 	return 1;
 }
-/*
+
 static int lua_start_mempack(lua_State *L)
 {
 	if (!lua_islightuserdata(L, 1))
@@ -1313,14 +1326,9 @@ static int lua_start_mempack(lua_State *L)
 	if (data->archive_handle)
 		return luaL_error(L, "archive already open (%s)", data->filename);
 
-	if (data->packer_caps & PK_CAPS_MEMPACK)
-	{
-		const char *path = luaL_checkstring(L, 2);
-		data->archive_handle = call_start_mempack(data, path);
-		lua_pushboolean(L, (data->archive_handle != NULL));
-	}
-	else
-		lua_pushnil(L);
+	const char *path = luaL_checkstring(L, 2);
+	data->archive_handle = call_start_mempack(data, path);
+	lua_pushboolean(L, (data->archive_handle != NULL));
 
 	return 1;
 }
@@ -1332,11 +1340,52 @@ static int lua_do_mempack(lua_State *L)
 
 	PlugData *data = (PlugData*)lua_touserdata(L, 1);
 
+	if (data->is_finished)
+	{
+		lua_pushnil(L);
+		return 1;
+	}
+
+	if (!data->archive_handle)
+		lua_start_mempack(L);
+
+	int ret;
+	int taken = 0;
+	int offset = 0;
+	int written = 0;
 	int seek_by = 0;
+	size_t len_in = 0;
+	char buf_out[DC_OUTBUFF_SIZE];
+	const char* buf_in = lua_tolstring(L, 2, &len_in);
+
 	luaL_Buffer buf;
 	luaL_buffinit(L, &buf);
-	// ...
-	// profit
+
+	while ((ret = call_pack_to_mem(data, (char*)buf_in + offset, len_in - offset, &taken, buf_out, DC_OUTBUFF_SIZE, &written, &seek_by)) == MEMPACK_OK || ret == MEMPACK_DONE)
+	{
+		if (written > 0)
+			luaL_addlstring(&buf, buf_out, written);
+
+		if (ret == MEMPACK_DONE)
+			break;
+
+		if (taken > 0)
+			offset += taken;
+
+		if (len_in > 0 && offset == len_in && written == 0)
+			break;
+		else if (len_in == 0 && written == 0)
+			break;
+	}
+
+	if (ret != MEMPACK_DONE && ret != MEMPACK_OK)
+	{
+		lua_pushnil(L);
+		return 1;
+	}
+	else if (ret == MEMPACK_DONE)
+		data->is_finished = TRUE;
+
 	luaL_pushresult(&buf);
 	lua_pushinteger(L, seek_by);
 
@@ -1359,7 +1408,7 @@ static int lua_end_mempack(lua_State *L)
 
 	return 0;
 }
-*/
+
 static const struct luaL_Reg shitcode[] =
 {
 	{"load_plug",		     lua_load_plug},
@@ -1377,9 +1426,9 @@ static const struct luaL_Reg shitcode[] =
 	{"extract_files",	 lua_extract_files},
 	{"pack_files",		    lua_pack_files},
 	{"delete_files",	  lua_delete_files},
-//	{"start_mempack",	 lua_start_mempack}, wtf hMemPack is int????????
-//	{"do_mempack",		    lua_do_mempack}, howtf SeekBy actually works
-//	{"end_mempack",		   lua_end_mempack}, openup yer mouth and feedit
+	{"start_mempack",	 lua_start_mempack},
+	{"do_mempack",		    lua_do_mempack},
+	{"end_mempack",		   lua_end_mempack},
 	{NULL,				      NULL}
 };
 
