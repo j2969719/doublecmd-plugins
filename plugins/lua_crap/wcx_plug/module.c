@@ -435,7 +435,6 @@ static int call_read_header(PlugData *data, FileItem *item)
 		data->is_process_file = TRUE;
 	}
 
-
 	return result;
 }
 
@@ -557,6 +556,19 @@ static int call_pack_files(PlugData *data, const char *archive, const char *work
 	int result = E_NOT_SUPPORTED;
 
 	gchar *filename = g_canonicalize_filename(archive, NULL);
+
+	gboolean is_exists = g_file_test(filename, G_FILE_TEST_EXISTS);
+
+	if (!is_exists && !(data->packer_caps & PK_CAPS_NEW))
+		g_printerr("r u sure bout that?\n");
+	else if (is_exists && !(data->packer_caps & PK_CAPS_MODIFY))
+		g_printerr("r u sure bout that?\n");
+	else if (!files || !files[0] || (files[0] && files[1] && !(data->packer_caps & PK_CAPS_MULTIPLE)))
+	{
+		g_printerr("r u really sure bout that?\n");
+		return result;
+	}
+
 	gchar *canon = g_canonicalize_filename(workdir, NULL);
 	gchar *path = g_strdup_printf("%s/", canon);
 	g_free(canon);
@@ -586,10 +598,50 @@ static int call_pack_files(PlugData *data, const char *archive, const char *work
 
 	return result;
 }
+/*
+static void* call_start_mempack(PlugData *data, const char *path)
+{
+	void* result = NULL;
+	int flags = MEM_OPTIONS_WANTHEADERS;
+	data->filename = g_canonicalize_filename(path, NULL);
 
+	if (data->StartMemPackW)
+	{
+		WCHAR *filenamew = utf8_to_wchar(data->filename);
+		result = data->StartMemPackW(flags, filenamew);
+		g_free(filenamew);
+	}
+	else if (data->StartMemPack)
+		result = data->StartMemPack(flags, data->filename);
+
+	if (!result)
+	{
+		g_free(data->filename);
+		data->filename = NULL;
+	}
+
+	return result;
+}
+
+static int call_pack_to_mem(PlugData *data, char *buf_in, int len_in, int *taken, char *buf_out, int len_out, int *written, int seek_by)
+{
+	int result = E_NOT_SUPPORTED;
+
+	if (data->PackToMem)
+		result = data->PackToMem(data->archive_handle, buf_in, len_in, taken, buf_out, len_out, written, seek_by);
+
+	if (result != MEMPACK_OK && result != MEMPACK_DONE)
+		print_wcx_error("PackToMem", data->filename, result);
+
+	return result;
+}
+*/
 static int call_delete_files(PlugData *data, const char *archive, gchar **files)
 {
 	int result = E_NOT_SUPPORTED;
+
+	if (!(data->packer_caps & PK_CAPS_DELETE))
+		g_printerr("r u sure bout that?\n");
 
 	gchar *filename = g_canonicalize_filename(archive, NULL);
 
@@ -901,9 +953,6 @@ static int lua_list_archive(lua_State *L)
 
 	if (!data->archive_handle)
 		g_printerr("archive open fail (%s)", path);
-
-	//return luaL_error(L, "archive open fail (%s)", path);
-
 
 	lua_pushlightuserdata(L, data);
 	lua_pushcclosure(L, archive_iterator, 1);
@@ -1253,7 +1302,64 @@ static int lua_delete_files(lua_State *L)
 
 	return 1;
 }
+/*
+static int lua_start_mempack(lua_State *L)
+{
+	if (!lua_islightuserdata(L, 1))
+		return 0;
 
+	PlugData *data = (PlugData*)lua_touserdata(L, 1);
+
+	if (data->archive_handle)
+		return luaL_error(L, "archive already open (%s)", data->filename);
+
+	if (data->packer_caps & PK_CAPS_MEMPACK)
+	{
+		const char *path = luaL_checkstring(L, 2);
+		data->archive_handle = call_start_mempack(data, path);
+		lua_pushboolean(L, (data->archive_handle != NULL));
+	}
+	else
+		lua_pushnil(L);
+
+	return 1;
+}
+
+static int lua_do_mempack(lua_State *L)
+{
+	if (!lua_islightuserdata(L, 1))
+		return 0;
+
+	PlugData *data = (PlugData*)lua_touserdata(L, 1);
+
+	int seek_by = 0;
+	luaL_Buffer buf;
+	luaL_buffinit(L, &buf);
+	// ...
+	// profit
+	luaL_pushresult(&buf);
+	lua_pushinteger(L, seek_by);
+
+	return 2;
+}
+
+static int lua_end_mempack(lua_State *L)
+{
+	if (!lua_islightuserdata(L, 1))
+		return 0;
+
+	PlugData *data = (PlugData*)lua_touserdata(L, 1);
+
+	if (data->archive_handle && data->DoneMemPack)
+		print_wcx_error("DoneMemPack", data->filename, data->DoneMemPack((HANDLE)data->archive_handle));
+
+	g_free(data->filename);
+	data->archive_handle = NULL;
+	data->filename = NULL;
+
+	return 0;
+}
+*/
 static const struct luaL_Reg shitcode[] =
 {
 	{"load_plug",		     lua_load_plug},
@@ -1271,6 +1377,9 @@ static const struct luaL_Reg shitcode[] =
 	{"extract_files",	 lua_extract_files},
 	{"pack_files",		    lua_pack_files},
 	{"delete_files",	  lua_delete_files},
+//	{"start_mempack",	 lua_start_mempack}, wtf hMemPack is int????????
+//	{"do_mempack",		    lua_do_mempack}, howtf SeekBy actually works
+//	{"end_mempack",		   lua_end_mempack}, openup yer mouth and feedit
 	{NULL,				      NULL}
 };
 
