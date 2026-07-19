@@ -927,6 +927,9 @@ static int lua_snatch_current(lua_State *L)
 		return 1;
 	}
 
+	if (!data->is_extract_mode)
+		g_printerr("prepare for unforeseen consequences\n");
+
 	const char *dst = luaL_checkstring(L, 2);
 	lua_pushboolean(L, (call_process_file(data, PK_EXTRACT, dst) == E_SUCCESS));
 
@@ -948,6 +951,9 @@ static int lua_test_current(lua_State *L)
 		lua_pushnil(L);
 		return 1;
 	}
+
+	if (!data->is_extract_mode)
+		g_printerr("prepare for unforeseen consequences\n");
 
 	lua_pushboolean(L, (call_process_file(data, PK_TEST, NULL) == E_SUCCESS));
 
