@@ -808,7 +808,7 @@ static int lua_load_plug(lua_State *L)
 static int lua_unload_plug(lua_State *L)
 {
 	if (!lua_islightuserdata(L, 1))
-		return 0;
+		return luaL_error(L, "plugin is miss");
 
 	PlugData *data = (PlugData*)lua_touserdata(L, 1);
 
@@ -953,7 +953,7 @@ static int archive_iterator(lua_State *L)
 static int lua_list_archive(lua_State *L)
 {
 	if (!lua_islightuserdata(L, 1))
-		return 0;
+		return luaL_error(L, "plugin is miss");
 
 	PlugData *data = (PlugData*)lua_touserdata(L, 1);
 
@@ -976,7 +976,7 @@ static int lua_list_archive(lua_State *L)
 static int lua_snatch_current(lua_State *L)
 {
 	if (!lua_islightuserdata(L, 1))
-		return 0;
+		return luaL_error(L, "plugin is miss");
 
 	PlugData *data = (PlugData*)lua_touserdata(L, 1);
 
@@ -1001,7 +1001,7 @@ static int lua_snatch_current(lua_State *L)
 static int lua_test_current(lua_State *L)
 {
 	if (!lua_islightuserdata(L, 1))
-		return 0;
+		return luaL_error(L, "plugin is miss");
 
 	PlugData *data = (PlugData*)lua_touserdata(L, 1);
 
@@ -1025,7 +1025,7 @@ static int lua_test_current(lua_State *L)
 static int lua_probe_archive(lua_State *L)
 {
 	if (!lua_islightuserdata(L, 1))
-		return 0;
+		return luaL_error(L, "plugin is miss");
 
 	PlugData *data = (PlugData*)lua_touserdata(L, 1);
 
@@ -1043,7 +1043,7 @@ static int lua_probe_archive(lua_State *L)
 static int lua_packer_casps(lua_State *L)
 {
 	if (!lua_islightuserdata(L, 1))
-		return 0;
+		return luaL_error(L, "plugin is miss");
 
 	PlugData *data = (PlugData*)lua_touserdata(L, 1);
 	lua_pushnumber(L, data->packer_caps);
@@ -1054,7 +1054,7 @@ static int lua_packer_casps(lua_State *L)
 static int lua_get_bg_flags(lua_State *L)
 {
 	if (!lua_islightuserdata(L, 1))
-		return 0;
+		return luaL_error(L, "plugin is miss");
 
 	PlugData *data = (PlugData*)lua_touserdata(L, 1);
 	lua_pushnumber(L, data->bg_flags);
@@ -1065,7 +1065,7 @@ static int lua_get_bg_flags(lua_State *L)
 static int lua_open_archive(lua_State *L)
 {
 	if (!lua_islightuserdata(L, 1))
-		return 0;
+		return luaL_error(L, "plugin is miss");
 
 	PlugData *data = (PlugData*)lua_touserdata(L, 1);
 
@@ -1083,7 +1083,7 @@ static int lua_open_archive(lua_State *L)
 static int lua_close_archive(lua_State *L)
 {
 	if (!lua_islightuserdata(L, 1))
-		return 0;
+		return luaL_error(L, "plugin is miss");
 
 	PlugData *data = (PlugData*)lua_touserdata(L, 1);
 
@@ -1096,7 +1096,7 @@ static int lua_close_archive(lua_State *L)
 static int lua_get_item(lua_State *L)
 {
 	if (!lua_islightuserdata(L, 1))
-		return 0;
+		return luaL_error(L, "plugin is miss");
 
 	PlugData *data = (PlugData*)lua_touserdata(L, 1);
 
@@ -1123,7 +1123,7 @@ static int lua_get_item(lua_State *L)
 static int lua_get_filelist(lua_State *L)
 {
 	if (!lua_islightuserdata(L, 1))
-		return 0;
+		return luaL_error(L, "plugin is miss");
 
 	PlugData *data = (PlugData*)lua_touserdata(L, 1);
 
@@ -1205,7 +1205,7 @@ static gchar** lua_table_to_array(lua_State *L, int index, gboolean is_strip_sla
 static int lua_extract_files(lua_State *L)
 {
 	if (!lua_islightuserdata(L, 1))
-		return 0;
+		return luaL_error(L, "plugin is miss");
 
 	if (!lua_istable(L, 2) && !lua_isstring(L, 2))
 		return luaL_error(L, "there are no files to extract");
@@ -1278,7 +1278,7 @@ static int lua_extract_files(lua_State *L)
 static int lua_pack_files(lua_State *L)
 {
 	if (!lua_islightuserdata(L, 1))
-		return 0;
+		return luaL_error(L, "plugin is miss");
 
 	if (!lua_istable(L, 4) && !lua_isstring(L, 3))
 		return luaL_error(L, "there are no files to pack");
@@ -1299,7 +1299,7 @@ static int lua_pack_files(lua_State *L)
 static int lua_delete_files(lua_State *L)
 {
 	if (!lua_islightuserdata(L, 1))
-		return 0;
+		return luaL_error(L, "plugin is miss");
 
 	if (!lua_istable(L, 3))
 		return luaL_error(L, "there are no files to delete");
@@ -1319,7 +1319,7 @@ static int lua_delete_files(lua_State *L)
 static int lua_start_mempack(lua_State *L)
 {
 	if (!lua_islightuserdata(L, 1))
-		return 0;
+		return luaL_error(L, "plugin is miss");
 
 	PlugData *data = (PlugData*)lua_touserdata(L, 1);
 
@@ -1336,7 +1336,7 @@ static int lua_start_mempack(lua_State *L)
 static int lua_do_mempack(lua_State *L)
 {
 	if (!lua_islightuserdata(L, 1))
-		return 0;
+		return luaL_error(L, "plugin is miss");
 
 	PlugData *data = (PlugData*)lua_touserdata(L, 1);
 
@@ -1395,7 +1395,7 @@ static int lua_do_mempack(lua_State *L)
 static int lua_end_mempack(lua_State *L)
 {
 	if (!lua_islightuserdata(L, 1))
-		return 0;
+		return luaL_error(L, "plugin is miss");
 
 	PlugData *data = (PlugData*)lua_touserdata(L, 1);
 

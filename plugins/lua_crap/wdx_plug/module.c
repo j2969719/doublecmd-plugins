@@ -44,8 +44,7 @@ static WCHAR* utf8_to_wchar(char* string)
 	if (!string)
 		return NULL;
 
-	gsize bytes_written = 0;
-	return (WCHAR*)g_convert(string, -1, "UTF-16LE", "UTF-8", NULL, &bytes_written, NULL);
+	return g_utf8_to_utf16(string, -1, NULL, NULL, NULL);
 }
 
 static gchar* wchar_to_utf8(WCHAR* string)
@@ -53,12 +52,7 @@ static gchar* wchar_to_utf8(WCHAR* string)
 	if (!string)
 		return NULL;
 
-	gsize u16_len = 0;
-
-	while (string[u16_len] != 0)
-		u16_len++;
-
-	return g_convert((const char*)string, u16_len * 2, "UTF-8", "UTF-16LE", NULL, NULL, NULL);
+	return g_utf16_to_utf8(string, -1, NULL, NULL, NULL);
 }
 
 static int call_getvalue(int index, int unit, char *filename, PlugData *data, char *buf)
@@ -216,9 +210,6 @@ static gboolean get_value(lua_State *L, int index, int units, char *filename, Pl
 		}
 		while (ret == ft_fulltext || ret == ft_fulltextw);
 
-//		if (ret != ft_fieldempty)
-//			call_getvalue(index, -1, filename, data, buf);
-
 		if (ret == ft_fieldempty)
 		{
 			luaL_pushresult(&luabuf);
@@ -344,7 +335,7 @@ static int lua_load_plug(lua_State *L)
 static int lua_unload_plug(lua_State *L)
 {
 	if (!lua_islightuserdata(L, 1))
-		return 0;
+		return luaL_error(L, "plugin is miss");
 
 	PlugData *data = (PlugData*)lua_touserdata(L, 1);
 
@@ -362,10 +353,7 @@ static int lua_unload_plug(lua_State *L)
 static int lua_get_fields(lua_State *L)
 {
 	if (!lua_islightuserdata(L, 1))
-	{
-		lua_pushnil(L);
-		return 1;
-	}
+		return luaL_error(L, "plugin is miss");
 
 	PlugData *data = (PlugData*)lua_touserdata(L, 1);
 
@@ -406,8 +394,7 @@ static int lua_get_value(lua_State *L)
 	int result = 0;
 
 	if (!lua_islightuserdata(L, 1))
-		return result;
-
+		return luaL_error(L, "plugin is miss");
 
 	PlugData *data = (PlugData*)lua_touserdata(L, 1);
 	const char *filename = luaL_checkstring(L, 2);
@@ -427,10 +414,7 @@ static int lua_get_value(lua_State *L)
 static int lua_get_values(lua_State *L)
 {
 	if (!lua_islightuserdata(L, 1))
-	{
-		lua_pushnil(L);
-		return 1;
-	}
+		return luaL_error(L, "plugin is miss");
 
 	PlugData *data = (PlugData*)lua_touserdata(L, 1);
 	const char *filename = luaL_checkstring(L, 2);
@@ -451,10 +435,7 @@ static int lua_get_values(lua_State *L)
 static int lua_get_detectstring(lua_State *L)
 {
 	if (!lua_islightuserdata(L, 1))
-	{
-		lua_pushnil(L);
-		return 1;
-	}
+		return luaL_error(L, "plugin is miss");
 
 	PlugData *data = (PlugData*)lua_touserdata(L, 1);
 	lua_pushstring(L, data->detectstring);
@@ -464,10 +445,7 @@ static int lua_get_detectstring(lua_State *L)
 static int lua_get_field_index(lua_State *L)
 {
 	if (!lua_islightuserdata(L, 1))
-	{
-		lua_pushnil(L);
-		return 1;
-	}
+		return luaL_error(L, "plugin is miss");
 
 	int argc = lua_gettop(L);
 	PlugData *data = (PlugData*)lua_touserdata(L, 1);
