@@ -33,7 +33,6 @@ enum
 {
 	ENC_XXE = 0,
 	ENC_UUE,
-//	ENC_B64,
 	ENC_COUNT
 };
 
@@ -41,8 +40,7 @@ static const EncoderData encoders[ENC_COUNT] =
 {
 	[ENC_XXE] = {".xxe",	  "+-0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"},
 	[ENC_UUE] = {".uue",	"`!\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_"},
-//	[ENC_B64] = {".b64u",	  "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"},
-}; //swag
+};
 
 uchardet_t detector;
 static tProcessDataProc show_progress = NULL;
@@ -230,7 +228,7 @@ int DCPCALL ReadHeaderEx(HANDLE hArcData, tHeaderDataEx *HeaderDataEx)
 						}
 
 						g_strchomp(HeaderDataEx->FileName);
-						g_print("!!! %s, %d, %s\n", HeaderDataEx->FileName, pos, uchardet_get_charset(detector));
+						//g_print("!!! %s, %d, %s\n", HeaderDataEx->FileName, pos, uchardet_get_charset(detector));
 						data->offset = ftell(data->fp);
 						is_data_begin = TRUE;
 					}
@@ -314,44 +312,6 @@ int DCPCALL ProcessFile(HANDLE hArcData, int Operation, char *DestPath, char *De
 
 				if (chr1 < 0 || chr2 < 0 || chr3 < 0 || chr4 < 0)
 					break;
-
-/*
-	-- -- a8 a7 a6 a5 a4 a3  -- -- a2 a1 b8 b7 b6 b5  -- -- b4 b3 b2 b1 c8 c7  -- -- c6 c5 c4 c3 c2 c1
-	          chr1                     chr2                     chr3                     chr4
-	xx xx a8 a7 a6 a5 a4 a3
-	         a >> 2
-	                         a4 a3 a2 a1 xx xx xx xx
-	                                 a << 4
-	                         xx xx xx xx b8 b7 b6 b5
-	                                 b >> 4
-	                                                  b6 b5 b4 b3 b2 b1 xx xx
-	                                                          b << 2
-	                                                  xx xx xx xx xx xx c8 c7
-	                                                          c >> 6
-	                                                                           c8 c7 c6 c5 c4 c3 c2 c1
-	                                                                                       c
-	00111111 - 3F
-
-	chr1 = (a >> 2) & 0x3F
-	chr2 = ((b << 4) | (b >> 4)) & 0x3F
-	chr3 = ((b << 2) | (c >> 6)) & 0x3F
-	chr4 = c & 0x3F
-
-	-- -- a8 a7 a6 a5 a4 a3  -- -- a2 a1 b8 b7 b6 b5  -- -- b4 b3 b2 b1 c8 c7  -- -- c6 c5 c4 c3 c2 c1
-	          chr1                     chr2                     chr3                     chr4
-	a8 a7 a6 a5 a4 a3 xx xx  xx xx xx xx xx xx a2 a1
-	       chr1 << 2                chr2 >> 4
-	                         b8 b7 b6 b5 xx xx xx xx  xx xx xx xx b4 b3 b2 b1
-	                                chr2 << 4                chr3 >> 2
-	                                                  c8 c7 xx xx xx xx xx xx  xx xx c6 c5 c4 c3 c2 c1
-	                                                         chr3 << 6                   chr4
-
-	a = chr1 << 2 | chr2 >> 4
-	b = chr2 << 4 | chr3 >> 2
-	c = chr3 << 6 | chr4
-
-	hangover_math.jpg
-*/
 
 				if (len_out < expected)
 				{

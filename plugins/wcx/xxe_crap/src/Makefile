@@ -1,7 +1,7 @@
 CC = gcc
 CFLAGS = -shared -fPIC -Wl,--no-as-needed
 
-libs :=  `pkg-config --cflags --libs glib-2.0 enca uchardet`
+libs :=  `pkg-config --cflags --libs glib-2.0 uchardet`
 includes := -I../../../sdk
 
 plugdir := $(shell basename '$(realpath ..)')
