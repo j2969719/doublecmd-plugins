@@ -1,7 +1,5 @@
 #include <glib.h>
 #include <glib/gstdio.h>
-#include <uchardet/uchardet.h>
-#include <locale.h>
 #include <string.h>
 #include "wcxplugin.h"
 #include "extension.h"
@@ -15,6 +13,12 @@ typedef struct
 	char *ext;
 	char *chars;
 } EncoderData;
+
+typedef struct
+{
+	char *lang;
+	char *codepage;
+} CPData;
 
 typedef struct
 {
@@ -42,7 +46,39 @@ static const EncoderData encoders[ENC_COUNT] =
 	[ENC_UUE] = {".uue",	"`!\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_"},
 };
 
-uchardet_t detector;
+static const CPData win_cp[] =
+{
+	{"??", "CP1252"},
+
+	{"be", "CP1251"},
+	{"bg", "CP1251"},
+	{"mk", "CP1251"},
+	{"ru", "CP1251"},
+	{"sr", "CP1251"},
+	{"uk", "CP1251"},
+
+	{"hr", "CP1250"},
+	{"cs", "CP1250"},
+	{"hu", "CP1250"},
+	{"pl", "CP1250"},
+	{"ro", "CP1250"},
+	{"sk", "CP1250"},
+	{"sl", "CP1250"},
+
+	{"et", "CP1257"},
+	{"lv", "CP1257"},
+	{"lt", "CP1257"},
+
+	{"he", "CP1255"},
+	{"iw", "CP1255"},
+
+	{"ar", "CP1256"},
+	{"vi", "CP1258"},
+	{"el", "CP1253"},
+	{"tr", "CP1254"},
+};
+
+static int cp_index;
 static tProcessDataProc show_progress = NULL;
 static tExtensionStartupInfo* dc_extensions = NULL;
 
@@ -102,6 +138,22 @@ static int get_encoder_index_by_ext(char *filename)
 	return -1;
 }
 
+static int get_win_cp_index(void)
+{
+	const char *lang = g_getenv("LANG");
+
+	if (!lang || strlen(lang) < 2)
+		return 0;
+
+	for (int i = 0; i < ARRAY_SIZE(win_cp); i++)
+	{
+		if (strncmp(lang, win_cp[i].lang, 2) == 0)
+			return i;
+	}
+
+	return 0;
+}
+
 static int get_org_size(char *line, int encoder_index)
 {
 	int len = get_chr_index(line[0], encoder_index);
@@ -117,9 +169,9 @@ void DCPCALL ExtensionInitialize(tExtensionStartupInfo* StartupInfo)
 {
 	if (!dc_extensions)
 	{
+		cp_index = get_win_cp_index();
 		dc_extensions = (tExtensionStartupInfo*)malloc(sizeof(tExtensionStartupInfo));
 		memcpy(dc_extensions, StartupInfo, sizeof(tExtensionStartupInfo));
-		detector = uchardet_new();
 	}
 }
 
@@ -127,7 +179,6 @@ void DCPCALL ExtensionFinalize(void* Reserved)
 {
 	if (dc_extensions)
 	{
-		uchardet_delete(detector);
 		free(dc_extensions);
 		dc_extensions = NULL;
 	}
@@ -215,20 +266,23 @@ int DCPCALL ReadHeaderEx(HANDLE hArcData, tHeaderDataEx *HeaderDataEx)
 					if (sscanf(line, "begin %o %n", (unsigned int *)&HeaderDataEx->FileAttr, &pos) == 1 && pos > 0)
 					{
 						len = strlen(line + pos);
-						int ret = uchardet_handle_data(detector, line + pos, len);
-						uchardet_data_end(detector);
 
-						if (ret != 0)
+						if (g_utf8_validate(line + pos,len, NULL))
 							g_strlcpy(HeaderDataEx->FileName, line + pos, sizeof(HeaderDataEx->FileName));
 						else
 						{
-							gchar *converted = g_convert(line + pos, len, "UTF-8", uchardet_get_charset(detector), NULL, NULL, NULL);
-							g_strlcpy(HeaderDataEx->FileName, converted, sizeof(HeaderDataEx->FileName));
-							g_free(converted);
+							gchar *converted = g_convert(line + pos, len, "UTF-8", win_cp[cp_index].codepage, NULL, NULL, NULL);
+
+							if (converted)
+							{
+								g_strlcpy(HeaderDataEx->FileName, converted, sizeof(HeaderDataEx->FileName));
+								g_free(converted);
+							}
+							else
+								g_strlcpy(HeaderDataEx->FileName, line + pos, sizeof(HeaderDataEx->FileName));
 						}
 
 						g_strchomp(HeaderDataEx->FileName);
-						//g_print("!!! %s, %d, %s\n", HeaderDataEx->FileName, pos, uchardet_get_charset(detector));
 						data->offset = ftell(data->fp);
 						is_data_begin = TRUE;
 					}
