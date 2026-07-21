@@ -44,3 +44,5 @@ stash/qtermwidget-qt5/pkg/
 plugins/*/settings.ini
 build/
 .vscode/
+test.lua
+plugins/lua_crap/*.so
