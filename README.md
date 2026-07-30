@@ -33,4 +33,7 @@ Cross-platform or for Linux only.
 - [MTP plugin for Double Commander](https://github.com/BigIskander/mtp_plugin_doublecommander)<br>
 - [rclone WFX Plugin for Double Commander](https://github.com/miklos-szel/doublecmd-rclone-plugin) (miklos-szel)<br>
 - [Rclone plugin for Double Commander](https://github.com/BigIskander/rclone_plugin_doublecommander/) (BigIskander)<br>
-- [Hardlink Visualiser for Double Commander](https://github.com/arsinclair/dc-hardlink-visualiser)<br>
+- [ZXC plugin for Total Commander / Double Commander](https://github.com/Xelitan/ZXC-plugin-for-Total-Commander-Double-Commander)<br>
+- [Total/Double Commander WFX file-system plugin for X4/MicroReader e-readers (USB serial)](https://github.com/jpirnay/x4-filemanager-plugin)<br>
+- [Native macOS plugins for Double Commander](https://github.com/NikolaiSachok/DC-plugins)<br>
+- [Plugins for Double Commander to work with ZX Spectrum .trd, .scl disk images](https://github.com/alffcpu/dc-trd-scl-plugins)<br>
