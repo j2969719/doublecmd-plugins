@@ -1,18 +1,18 @@
 #include <fstream>
+#include <filesystem>
+#include <cerrno>
+#include <cstring>
 #include <bit7z/bit7z.hpp>
-#include <bit7z/bitarchivewriter.hpp>
-#include <bit7z/bitarchiveeditor.hpp>
-#include <errno.h>
 #include <unistd.h>
 #include <sys/stat.h>
 #include <limits.h>
 #include <utime.h>
-#include <string.h>
 #include "wcxplugin.h"
 #include "extension.h"
 
 using namespace std;
 using namespace bit7z;
+namespace fs = std::filesystem;
 
 #ifdef BIT7Z_AUTO_FORMAT
 #define PACKERCAPS PK_CAPS_MULTIPLE | PK_CAPS_SEARCHTEXT | PK_CAPS_BY_CONTENT
@@ -621,7 +621,7 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 			pass[0] = '\0';
 
 			if (InputBox(nullptr, gPassMsg, true, pass, PATH_MAX))
-				writer.setPassword(pass, gCryptHeaders);
+				writer.setPassword(pass, gCryptHeaders ? EncryptionScope::DataAndHeaders : EncryptionScope::DataOnly);
 
 			if (gCryptHeaders)
 				gPkCryptProc(gCryptoNr, PK_CRYPT_SAVE_PASSWORD, PackedFile, pass, PATH_MAX);

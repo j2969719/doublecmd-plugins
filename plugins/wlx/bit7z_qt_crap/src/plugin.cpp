@@ -2,6 +2,7 @@
 #include <bit7z/bit7z.hpp>
 #include "wlxplugin.h"
 
+using namespace std;
 using namespace bit7z;
 
 // Bit7zLibrary gBit7zLib { "/usr/lib/p7zip/7z.so" };
