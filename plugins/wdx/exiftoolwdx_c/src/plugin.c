@@ -67,6 +67,9 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 	char *pos = NULL;
 	char *end = NULL;
 
+	if (g_file_test(FileName, G_FILE_TEST_IS_DIR))
+		return ft_fileerror;
+
 	if (strcmp(gLastFile, FileName) != 0)
 	{
 		for (int i = 0; i < gFieldCount; i++)
@@ -119,15 +122,19 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 	case ft_multiplechoice:
 		g_strlcpy((char*)FieldValue, gFields[FieldIndex].value, maxlen - 1);
 		break;
+
 	case ft_numeric_32:
 		*(int*)FieldValue = atoi(gFields[FieldIndex].value);
 		break;
+
 	case ft_numeric_64:
 		*(int64_t*)FieldValue = (int64_t)strtod_l(gFields[FieldIndex].value, &end, gNumericC);
 		break;
+
 	case ft_numeric_floating:
 		*(double*)FieldValue = strtod_l(gFields[FieldIndex].value, &end, gNumericC);
 		break;
+
 	case ft_boolean:
 		if (strcmp(gFields[FieldIndex].value, TMPL_TRUE) == 0)
 			*(int*)FieldValue = 1;
@@ -135,7 +142,9 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 			*(int*)FieldValue = 0;
 		else
 			return ft_fieldempty;
+
 		break;
+
 	case ft_time:
 	{
 		char time_str[12];
@@ -161,11 +170,13 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 
 		return ft_fieldempty;
 	}
+
 	case ft_datetime:
 		if (!toFileTime(gFields[FieldIndex].value, (FILETIME*)FieldValue))
 			return ft_fieldempty;
 
 		break;
+
 	default:
 		return ft_fieldempty;
 	}
@@ -212,16 +223,18 @@ void DCPCALL ContentSetDefaultParams(ContentDefaultParamStruct* dps)
 		{
 			gFieldCount = 0;
 			gFields = malloc(len * sizeof(tfield));
+
 			for (guint i = 1; i < len; i++)
 			{
 				gchar **field = g_strsplit(split[i], "\t", -1);
 				guint items = g_strv_length(field);
 
-				if (items == 3 && field[0] && field[0][0] != '\0')
+				if ((items == 2 || items == 3) && field[0] && field[0][0] != '\0')
 				{
 					gFields[gFieldCount].value = NULL;
 					gFields[gFieldCount].name = g_strdup(field[0]);
 					gFields[gFieldCount].type = ft_string;
+
 					if (field[1])
 					{
 						if (strcmp(field[1], "ft_numeric_32") == 0)
