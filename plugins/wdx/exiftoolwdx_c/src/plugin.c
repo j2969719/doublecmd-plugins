@@ -67,7 +67,7 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 	char *pos = NULL;
 	char *end = NULL;
 
-	if (g_file_test(FileName, G_FILE_TEST_IS_DIR))
+	if (!g_file_test(FileName, G_FILE_TEST_IS_REGULAR))
 		return ft_fileerror;
 
 	if (strcmp(gLastFile, FileName) != 0)
