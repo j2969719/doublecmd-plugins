@@ -1,17 +1,17 @@
 -- checkfilenamewdx.lua (cross-platform)
--- 2024.06.22
+-- 2026.08.06
 --[[
 Save as UTF-8 without BOM!
 
 Fields:
-
 1) Latin and additional characters
 3) Latin, cyrillic and additional characters
 returns all characters except:
 - latin alphabet (1) or latin + cyrillic (3);
 - numbers;
 - space (only 0x20);
-- hyphen, comma, dot, round and square brackets, single quotation mark, underscore: -,.!()[]'_
+- hyphen, comma, dot, round and square brackets, single quotation mark,
+  underscore: -,.!()[]'_
 
 2) Latin and additional characters: count
 4) Latin, cyrillic and additional characters: count
@@ -26,7 +26,7 @@ Check limitations and recommendations, list:
 - name with a dot in the end.
 Returns "Good" if all is good or string with error message(s).
 
-6) Path length:
+6) Full filename length:
 - characters;
 - bytes;
 - characters (relative);
@@ -34,33 +34,41 @@ Returns "Good" if all is good or string with error message(s).
 
 "characters (relative)" and "bytes (relative)" for Unix-like OS:
 extracting a path which be relative to
-  /dev/ad
-  /dev/da
-  /dev/fd
-  /dev/hd
-  /dev/nvme
-  /dev/sd
-  /dev/sr
+  /dev/adN
+  /dev/daN
+  /dev/fdN
+  /dev/hdN
+  /dev/nvmeN
+  /dev/sdN
+  /dev/srN
 i.e. relative to mount points.
 Result will not have a path delimiter in the beginning!
 In Windows this units returns path without "[drive]:\".
 Note: In Unix-like script uses /etc/mtab.
 
-7) Path length: chars = bytes
-Returns true if "path length in characters" = "path length in bytes".
+7) Full filename length: chars = bytes
+Returns true if "length in characters" = "length in bytes".
 
 Notes about a path length limitation in Windows:
 1. MAX_PATH
-In some cases the maximum length for a path is MAX_PATH, which is defined as 260 characters:
+In some cases the maximum length for a path is MAX_PATH, which is defined as 260
+characters:
   [drive]:\[some 256-character path string]<NUL>
-So, if you want to find (or highlight with help "Colors > File types") a file with path more
-than MAX_PATH, you should use:
+So, if you want to find (or highlight with help "Colors > File types") a file
+with path more than MAX_PATH, you should use:
   Win: field "Path length: characters" and condition "> 259".
   Unix-like: field "Path length: characters (relative)" and condition "> 256"
 2. An extended-length path
 A maximum total path length is 32767 characters, but with the "\\?\" prefix:
-the "\\?\" prefix may be expanded to a longer string by the system at run time, so you
-can not use "32767" or "32767 - 1" in conditions.
+the "\\?\" prefix may be expanded to a longer string by the system at run time,
+so you can not use "32767" or "32767 - 1" in conditions.
+
+7) Filename length:
+- characters;
+- bytes.
+
+8) Filename length: chars = bytes
+Returns true if "length in characters" = "length in bytes".
 ---------------------
 
 Also see caseduplwdx.lua, it can be useful too.
@@ -96,9 +104,13 @@ function ContentGetSupportedField(FieldIndex)
   elseif FieldIndex == 4 then
     return "File naming in Windows", "", 8
   elseif FieldIndex == 5 then
-    return "Path length", "characters|bytes|characters (relative)|bytes (relative)", 1
+    return "Full filename length", "characters|bytes|characters (relative)|bytes (relative)", 1
   elseif FieldIndex == 6 then
-    return "Path length: chars = bytes", "", 6
+    return "Full filename length: chars = bytes", "", 6
+  elseif FieldIndex == 5 then
+    return "Filename length", "characters|bytes", 1
+  elseif FieldIndex == 6 then
+    return "Filename length: chars = bytes", "", 6
   end
   return "", "", 0
 end
@@ -108,7 +120,7 @@ function ContentGetDetectString()
 end
 
 function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
-  if FieldIndex > 6 then return nil end
+  if FieldIndex > 8 then return nil end
   --if flags == 1 then return nil end; -- Исключаем вывод для диалога свойств (CONTENT_DELAYIFSLOW)
   local t = string.sub(FileName, -3, -1)
   if (t == '/..') or (t == '\\..') then return nil end
@@ -231,11 +243,27 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
       end
     end
   elseif FieldIndex == 6 then
-    local sl = string.len(FileName)
-    local ll = LazUtf8.Length(FileName)
-    if sl == ll then
+    local n1 = string.len(FileName)
+    local n2 = LazUtf8.Length(FileName)
+    if n1 == n2 then
       return true
-    elseif sl ~= ll then
+    elseif n1 ~= n2 then
+      return false
+    end
+  elseif FieldIndex == 7 then
+    local fn = SysUtils.ExtractFileName(FileName)
+    if UnitIndex == 0 then
+      return LazUtf8.Length(fn)
+    elseif UnitIndex == 1 then
+      return string.len(fn)
+    end
+  elseif FieldIndex == 8 then
+    local fn = SysUtils.ExtractFileName(FileName)
+    local n1 = string.len(fn)
+    local n2 = LazUtf8.Length(fn)
+    if n1 == n2 then
+      return true
+    elseif n1 ~= n2 then
       return false
     end
   end
