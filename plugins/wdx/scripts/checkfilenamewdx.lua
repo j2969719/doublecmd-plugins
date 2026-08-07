@@ -1,5 +1,5 @@
 -- checkfilenamewdx.lua (cross-platform)
--- 2026.08.06
+-- 2026.08.07
 --[[
 Save as UTF-8 without BOM!
 
@@ -107,9 +107,9 @@ function ContentGetSupportedField(FieldIndex)
     return "Full filename length", "characters|bytes|characters (relative)|bytes (relative)", 1
   elseif FieldIndex == 6 then
     return "Full filename length: chars = bytes", "", 6
-  elseif FieldIndex == 5 then
+  elseif FieldIndex == 7 then
     return "Filename length", "characters|bytes", 1
-  elseif FieldIndex == 6 then
+  elseif FieldIndex == 8 then
     return "Filename length: chars = bytes", "", 6
   end
   return "", "", 0
