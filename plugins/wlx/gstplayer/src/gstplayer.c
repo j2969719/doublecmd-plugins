@@ -942,7 +942,7 @@ static void wlxplug_atexit(void)
   }
 
   g_key_file_free (cfg);
-  if (gInit) gst_deinit ();
+//if (gInit) gst_deinit ();
 }
 
 void DCPCALL ListSetDefaultParams(ListDefaultParamStruct* dps)
