@@ -1,5 +1,5 @@
 -- CompareMP3.lua
--- 2026.08.01
+-- 2026.08.14
 --[[
 Compare only MP3 streams, without tags (ID3v1/ID3v2/APEv2).
 
@@ -103,7 +103,6 @@ local i = 1
 while true do
   d1 = string.sub(f1, i, i + 4095)
   d2 = string.sub(f2, i, i + 4095)
-  print(string.len(d1))
   if string.len(d1) == 0 then break end
   if d1 ~= d2 then
     b = false
