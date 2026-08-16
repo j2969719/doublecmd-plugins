@@ -58,7 +58,7 @@ int DCPCALL ListLoadNext(HWND ParentWin, HWND PluginWin, char* FileToLoad, int S
 	QByteArray text = file.readAll();
 	file.close();
 
-	if (md_html(text.data(), text.size(), proc_md_cb, &html_str, 0, MD_HTML_FLAG_SKIP_UTF8_BOM) != 0)
+	if (md_html(text.data(), text.size(), proc_md_cb, &html_str, MD_DIALECT_GITHUB, MD_HTML_FLAG_SKIP_UTF8_BOM) != 0)
 		return LISTPLUGIN_ERROR;
 
 	QTextBrowser *view = (QTextBrowser*)PluginWin;
