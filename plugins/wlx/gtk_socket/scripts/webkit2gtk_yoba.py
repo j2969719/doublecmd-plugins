@@ -258,7 +258,7 @@ def parse_rdf(tmpdir, rdf_ns):
 	return build_fileuri(tmpdir, subdir, src)
 
 def parse_hhc(tmpdir, store):
-	hhc_files = glob.glob(os.path.join(tmpdir, "*.hhc"))
+	hhc_files = glob.glob(os.path.join(tmpdir, "**/*.hhc"), recursive=True)
 	if not hhc_files:
 		return None
 	text = load_with_chardet(hhc_files[0])
@@ -284,7 +284,12 @@ def parse_hhc(tmpdir, store):
 				title = html.unescape(name.group(1)) if name else local.group(1)
 				uri = None
 				if local:
-					uri = GLib.filename_to_uri(os.path.join(tmpdir, local.group(1).replace('\\', '/')))
+					src = local.group(1).replace('\\', '/')
+					uri = GLib.filename_to_uri(os.path.join(tmpdir, src.split('#')[0]))
+					try:
+						uri = uri + '#' + src.split('#')[1]
+					except:
+						pass
 					if uri and not first_uri:
 						first_uri = uri
 				last_iter = store.append(stack[-1], [title, uri])

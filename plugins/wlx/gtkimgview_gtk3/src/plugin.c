@@ -12,8 +12,8 @@
 
 #define ZOOM_IN_FACTOR  1.1
 #define ZOOM_OUT_FACTOR  0.9
-#define ZOOM_IN_MAX  5.0
-#define ZOOM_OUT_MAX 0.1
+#define ZOOM_IN_MAX  100.0
+#define ZOOM_OUT_MAX 0.01
 
 #define ALLOC_CENTER alloc.width / 2.0, alloc.height / 2.0
 #define FROM_TOPLEFT -(data->width / 2.0), -(data->height / 2.0)
@@ -127,7 +127,7 @@ static gboolean load_file(CustomData **data, const char *FileToLoad)
 	{
 		if (err)
 		{
-			g_printerr("%s (load_file): %s\n", PLUGNAME, err->message);
+			//g_printerr("%s (load_file): %s\n", PLUGNAME, err->message);
 			g_error_free(err);
 		}
 

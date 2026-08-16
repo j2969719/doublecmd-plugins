@@ -14,8 +14,8 @@
 #define OUTFILENAME "output.png"
 #define ZOOM_IN_FACTOR  1.1
 #define ZOOM_OUT_FACTOR  0.9
-#define ZOOM_IN_MAX  5.0
-#define ZOOM_OUT_MAX 0.1
+#define ZOOM_IN_MAX  10.0
+#define ZOOM_OUT_MAX 0.02
 
 #define RECT_SIZE 16
 //#define RECT1_COLOR 0.65, 0.65, 0.65

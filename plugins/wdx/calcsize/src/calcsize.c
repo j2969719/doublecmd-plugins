@@ -7,112 +7,125 @@
 #include <string.h>
 #include "wdxplugin.h"
 
-static int64_t calcdirszie(const char *name)
+typedef struct
+{
+	char *name;
+	int type;
+	char *units;
+} ContentField;
+
+enum
+{
+	FIELD_BYTES,
+	FIELD_KiB,
+	FIELD_MiB,
+	FIELD_GiB,
+	FIELD_TiB,
+	FIELD_kB,
+	FIELD_MB,
+	FIELD_GB,
+	FIELD_TB,
+	FIELDS,
+
+// https://www.youtube.com/watch?v=cSAp9sBzPbc
+	FIELD_HUMAN,
+};
+
+static const double KiB = 1024;
+static const double MiB = 1024 * 1024;
+static const double GiB = 1024 * 1024 * 1024;
+static const double TiB = 1024 * GiB;
+
+static const double kB = 1000;
+static const double MB = 1000 * 1000;
+static const double GB = 1000 * 1000 * 1000;
+static const double TB = 1000 * GB;
+
+static const ContentField fields[] =
+{
+	[FIELD_BYTES] = {"bytes",	ft_numeric_64,		"default|files only|dirs only"},
+	[FIELD_KiB]   = {"K",		ft_numeric_floating,	"default|files only|dirs only"},
+	[FIELD_MiB]   = {"M",		ft_numeric_floating,	"default|files only|dirs only"},
+	[FIELD_GiB]   = {"G",		ft_numeric_floating,	"default|files only|dirs only"},
+	[FIELD_TiB]   = {"T",		ft_numeric_floating,	"default|files only|dirs only"},
+	[FIELD_kB]    = {"kB",		ft_numeric_floating,	"default|files only|dirs only"},
+	[FIELD_MB]    = {"MB",		ft_numeric_floating,	"default|files only|dirs only"},
+	[FIELD_GB]    = {"GB",		ft_numeric_floating,	"default|files only|dirs only"},
+	[FIELD_TB]    = {"TB",		ft_numeric_floating,	"default|files only|dirs only"},
+//	[FIELD_HUMAN] = {"size",	ft_numeric_floating,	"default|files only|dirs only"},
+};
+
+static int64_t calc_dir_size(const char *path)
 {
 	DIR *dir;
 	int64_t size = 0;
 	struct dirent *ent;
 	struct stat buf;
 
-	if ((dir = opendir(name)) != NULL)
+	if ((dir = opendir(path)) != NULL)
 	{
 		while ((ent = readdir(dir)) != NULL)
 		{
 			if ((strcmp(ent->d_name, ".") != 0) && (strcmp(ent->d_name, "..") != 0))
 			{
+				char filename[PATH_MAX];
+				snprintf(filename, PATH_MAX, "%s/%s", path, ent->d_name);
+
 				if (ent->d_type == DT_REG)
 				{
-					char file[PATH_MAX];
-					snprintf(file, PATH_MAX, "%s/%s", name, ent->d_name);
-
-					if (stat(file, &buf) == 0)
+					if (stat(filename, &buf) == 0)
 						size += buf.st_size;
 				}
-
-				if (ent->d_type == DT_DIR)
-				{
-					char path[PATH_MAX];
-					snprintf(path, PATH_MAX, "%s/%s", name, ent->d_name);
-					size += calcdirszie(path);
-				}
+				else if (ent->d_type == DT_DIR)
+					size += calc_dir_size(filename);
 			}
 		}
-
 		closedir(dir);
 	}
 
 	return size;
 }
 
-static double sizecnv(int64_t size, int bytes, int bpow)
+static void fill_human_size(int64_t size, char *buf, int maxlen)
 {
-	double pb = pow(bytes, bpow);
-	return round(size / pb * 10) / 10;
+	if (size < KiB)
+		snprintf(buf, maxlen, "%ld", size);
+	else if (size < MiB)
+		snprintf(buf, maxlen, "%.2f KB", size / KiB);
+	else if (size < GiB)
+		snprintf(buf, maxlen, "%.2f MB", size / MiB);
+	else if (size < TiB)
+		snprintf(buf, maxlen, "%.2f GB", size / GiB);
+	else
+		snprintf(buf, maxlen, "%'.2f TB", size / TiB);
 }
 
 int DCPCALL ContentGetSupportedField(int FieldIndex, char* FieldName, char* Units, int maxlen)
 {
-	strncpy(Units, "default|files only|dirs only", maxlen - 1);
-
-	switch (FieldIndex)
-	{
-	case 0:
-		strncpy(FieldName, "bytes", maxlen - 1);
-		return ft_numeric_64;
-
-	case 1:
-		strncpy(FieldName, "K", maxlen - 1);
-		return ft_numeric_floating;
-
-	case 2:
-		strncpy(FieldName, "M", maxlen - 1);
-		return ft_numeric_floating;
-
-	case 3:
-		strncpy(FieldName, "G", maxlen - 1);
-		return ft_numeric_floating;
-
-	case 4:
-		strncpy(FieldName, "T", maxlen - 1);
-		return ft_numeric_floating;
-
-	case 5:
-		strncpy(FieldName, "kB", maxlen - 1);
-		return ft_numeric_floating;
-
-	case 6:
-		strncpy(FieldName, "MB", maxlen - 1);
-		return ft_numeric_floating;
-
-	case 7:
-		strncpy(FieldName, "GB", maxlen - 1);
-		return ft_numeric_floating;
-
-	case 8:
-		strncpy(FieldName, "TB", maxlen - 1);
-		return ft_numeric_floating;
-
-	default:
+	if (FieldIndex < 0 || FieldIndex >= FIELDS)
 		return ft_nomorefields;
-	}
-}
 
+	snprintf(FieldName, maxlen - 1, "%s", fields[FieldIndex].name);
+	snprintf(Units, maxlen - 1, "%s", fields[FieldIndex].units);
+	return fields[FieldIndex].type;
+}
 
 int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void* FieldValue, int maxlen, int flags)
 {
 	struct stat buf;
-	int64_t rsize;
+	int64_t size;
+	size_t len = strlen(FileName);
 
-	if (strncmp(FileName + strlen(FileName) - 3, "/..", 4) == 0)
+	if (len >= 3 && strcmp(FileName + len - 3, "/..") == 0)
 		return ft_fileerror;
 
 	if (lstat(FileName, &buf) != 0)
 		return ft_fileerror;
 
 	if (S_ISDIR(buf.st_mode) && UnitIndex != 1)
-		rsize = calcdirszie(FileName);
+		size = calc_dir_size(FileName);
 	else if (!S_ISDIR(buf.st_mode) && UnitIndex != 2)
-		rsize = buf.st_size;
+		size = buf.st_size;
 	else
 		return ft_fieldempty;
 
@@ -121,45 +134,56 @@ int DCPCALL ContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void*
 
 	switch (FieldIndex)
 	{
-	case 0:
-		*(int64_t*)FieldValue = rsize;
-		return ft_numeric_64;
-
-	case 1:
-		*(double*)FieldValue = sizecnv(rsize, 1024, 1);
+	case FIELD_BYTES:
+		*(int64_t*)FieldValue = size;
 		break;
 
-	case 2:
-		*(double*)FieldValue = sizecnv(rsize, 1024, 2);
+	case FIELD_KiB:
+		*(double*)FieldValue = round(size / KiB * 10) / 10;
 		break;
 
-	case 3:
-		*(double*)FieldValue = sizecnv(rsize, 1024, 3);
+	case FIELD_MiB:
+		*(double*)FieldValue = round(size / MiB * 10) / 10;
 		break;
 
-	case 4:
-		*(double*)FieldValue = sizecnv(rsize, 1024, 4);
+	case FIELD_GiB:
+		*(double*)FieldValue = round(size / GiB * 10) / 10;
 		break;
 
-	case 5:
-		*(double*)FieldValue = sizecnv(rsize, 1000, 1);
+	case FIELD_TiB:
+		*(double*)FieldValue = round(size / TiB * 10) / 10;
 		break;
 
-	case 6:
-		*(double*)FieldValue = sizecnv(rsize, 1000, 2);
+	case FIELD_kB:
+		*(double*)FieldValue = round(size / kB * 10) / 10;
 		break;
 
-	case 7:
-		*(double*)FieldValue = sizecnv(rsize, 1000, 3);
+	case FIELD_MB:
+		*(double*)FieldValue = round(size / MB * 10) / 10;
 		break;
 
-	case 8:
-		*(double*)FieldValue = sizecnv(rsize, 1000, 4);
+	case FIELD_GB:
+		*(double*)FieldValue = round(size / GB * 10) / 10;
+		break;
+
+	case FIELD_TB:
+		*(double*)FieldValue = round(size / TB * 10) / 10;
+		break;
+
+	case FIELD_HUMAN:
+		*(double*)FieldValue = (double)size;
+		fill_human_size(size, (char*)FieldValue + sizeof(double), maxlen - sizeof(double) - 1);
 		break;
 
 	default:
 		return ft_fieldempty;
 	}
 
-	return ft_numeric_floating;
+	return fields[FieldIndex].type;
+}
+
+int DCPCALL ContentGetDetectString(char* DetectString, int maxlen)
+{
+	snprintf(DetectString, maxlen - 1, "%s", DETECT_STRING);
+	return 0;
 }

@@ -177,29 +177,42 @@ static gchar* get_command(char *group, char *ext, gboolean *is_mc_script)
 static gchar* get_output(char *filename)
 {
 	gchar *result = NULL;
+	gchar *command = NULL;
+	gboolean is_mc_script = FALSE;
 
 	gchar *group = get_group(filename);
-	gchar *ext = NULL;
 
-	if (g_key_file_has_key(cfg, group, "mc_script", NULL))
+	if (!group)
 	{
-		ext = g_key_file_get_string(cfg, group, "mc_filetype", NULL);
-
-		if (!ext)
-			ext = get_file_ext(filename, TRUE);
-	}
-
-	gboolean is_mc_script = FALSE;
-	gchar *command = get_command(group, ext, &is_mc_script);
-	g_free(ext);
-
-	if (!command)
 		command = g_key_file_get_string(cfg, ".", "fallback_command", NULL);
+
+		if (!command)
+			return NULL;
+	}
+	else
+	{
+		gchar *ext = NULL;
+
+		if (g_key_file_has_key(cfg, group, "mc_script", NULL))
+		{
+			ext = g_key_file_get_string(cfg, group, "mc_filetype", NULL);
+
+			if (!ext)
+				ext = get_file_ext(filename, TRUE);
+		}
+
+		gchar *command = get_command(group, ext, &is_mc_script);
+		g_free(ext);
+
+		if (!command)
+			command = g_key_file_get_string(cfg, ".", "fallback_command", NULL);
+	}
 
 	if (command)
 	{
 		char *argv[] = {"sh", "-c", command, NULL};
 		gchar **envp = g_environ_setenv(g_get_environ(), "PLUG_DIR", plug_path, TRUE);
+
 		if (!is_mc_script)
 		{
 			envp = g_environ_setenv(envp, "FILE", filename, TRUE);
@@ -219,7 +232,7 @@ static gchar* get_output(char *filename)
 		g_free(command);
 	}
 
-	gboolean is_use_enca = (g_key_file_get_boolean(cfg, group, "use_enca", NULL) || is_use_enca_global);
+	gboolean is_use_enca = ((group && g_key_file_get_boolean(cfg, group, "use_enca", NULL)) || is_use_enca_global);
 
 	if (result)
 	{
