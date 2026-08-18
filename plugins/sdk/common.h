@@ -29,7 +29,9 @@
 	typedef HANDLE HICON;
 	typedef HANDLE HBITMAP;
 	typedef HANDLE HWND;
+#ifndef BOOL
 	typedef int BOOL;
+#endif
 	typedef char CHAR;
 	typedef uint16_t WCHAR;
 	typedef intptr_t LPARAM;
