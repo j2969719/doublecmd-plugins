@@ -6,3 +6,5 @@
 - [mpv_wayland](https://github.com/doublecmd/plugins/tree/master/wlx/mpv_wayland)
 - [rich_editor_qt](https://github.com/doublecmd/plugins/tree/master/wlx/kate)
 - [logview](https://github.com/doublecmd/plugins/tree/master/wlx/logview)
+- [kpart_host](https://github.com/pplupo/doublecmd_plugins/tree/master/wlx/kpart)
+- [mdk](https://github.com/pplupo/doublecmd_plugins/tree/master/wlx/mdk)
