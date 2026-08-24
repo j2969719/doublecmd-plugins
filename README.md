@@ -37,3 +37,4 @@ Cross-platform or for Linux only.
 - [Total/Double Commander WFX file-system plugin for X4/MicroReader e-readers (USB serial)](https://github.com/jpirnay/x4-filemanager-plugin)<br>
 - [Native macOS plugins for Double Commander](https://github.com/NikolaiSachok/DC-plugins)<br>
 - [Plugins for Double Commander to work with ZX Spectrum .trd, .scl disk images](https://github.com/alffcpu/dc-trd-scl-plugins)<br>
+- [WFX plugin to browse Android devices over ADB, preserving modification dates (macOS, Linux)](https://github.com/vmurin/adb-wfx-plugin)<br>
