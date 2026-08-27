@@ -2298,8 +2298,11 @@ static int move_files(gchar *tempdir, gchar **src_list, gchar **dst_list, gboole
 
 	for (guint i = 0; i < len; i++)
 	{
+		if (g_file_test(dst_list[i], G_FILE_TEST_IS_DIR))
+			continue;
+
 		if (g_file_test(dst_list[i], G_FILE_TEST_EXISTS))
-			remove_target(dst_list[i]);
+			remove_file(dst_list[i]);
 
 		if (win_sep)
 			replace_win_sep(src_list[i]);
