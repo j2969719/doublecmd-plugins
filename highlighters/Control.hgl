@@ -37,6 +37,7 @@
       <word value="Build-Ids:"/>
       <word value="Build-Origin:"/>
       <word value="Built-For-Profiles:"/>
+      <word value="Build-Profiles:"/>
       <word value="Built-Using:"/>
       <word value="Changed-By:"/>
       <word value="Changes:"/>
@@ -102,6 +103,7 @@
       <word value="Vcs-Mtn:"/>
       <word value="Vcs-Svn:"/>
       <word value="Version:"/>
+      <word value="XSBC-Original-Maintainer:"/>
     </Keywords>
     <Range Name="Remark #" Attributes="32768,-2147483643;False:True." Style="" CaseSensitive="True"
            Delimiters="!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^`{|}~">
