@@ -68,9 +68,9 @@ get_json()
     tmpfile=`mktemp "$tmpdir/repo.XXXXX.json"`
     echo "Fs_Set_DC_WFX_SCRIPT_JSON $tmpfile"
     echo "Fs_Set_DC_WFX_SCRIPT_REPO $repo"
-    curl "https://api.github.com/repos/$repo/releases" > "$tmpfile" || init_fail WFX_SCRIPT_STR_ERR_CURL
+    curl "https://api.github.com/repos/$repo/releases" > "$tmpfile" || echo "Fs_Info_Message WFX_SCRIPT_STR_ERR_CURL"
     err=`cat "$tmpfile" | jq -r '"\(.status): \(.message)"'`
-    [ -z "$err" ] || init_fail "$err"
+    [ -z "$err" ] || echo "Fs_Info_Message $err"
     check_latest "$repo"
 }
 
@@ -103,7 +103,7 @@ get_repo()
     value="$1"
     repos=`curl --get --data-urlencode "q=$value" 'https://api.github.com/search/repositories' |\
          jq -r '.items[] | .full_name' | tr '\n' '\t'`
-    [ -z "$repos" ] && init_fail WFX_SCRIPT_STR_ERR_CURL
+    [ -z "$repos" ] && echo "Fs_Info_Message WFX_SCRIPT_STR_ERR_CURL"
     if [ "$repos" == "\t" ] ; then
          echo -e "Fs_Info_Message \"$value\" WFX_SCRIPT_STR_ERR_NOTFOUND\nFs_Request_Options\nWFX_SCRIPT_STR_SEARCH"
     else
