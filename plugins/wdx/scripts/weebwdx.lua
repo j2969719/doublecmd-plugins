@@ -1,5 +1,5 @@
 local shiet = {
-    ["　"] = " ",  ["！"] = "!", ["”"] = '"',  ["＃"] = "#", ["＄"] = "$", 
+    ["　"] = " ", ["！"] = "!", ["”"] = '"',  ["＃"] = "#", ["＄"] = "$", 
     ["％"] = "%", ["＆"] = "&", ["’"] = "'",  ["（"] = "(", ["）"] = ")", 
     ["＊"] = "*", ["＋"] = "+", ["，"] = ",", ["－"] = "-", ["．"] = ".", 
     ["／"] = "/", ["："] = ":", ["；"] = ";", ["＜"] = "<", ["＝"] = "=", 
@@ -26,8 +26,10 @@ local shiet = {
 }
 
 function ContentGetSupportedField(FieldIndex)
-  if (FieldIndex == 0) then
+  if FieldIndex == 0 then
     return "shiet", '', 8 -- FieldName,Units,ft_string
+  elseif FieldIndex == 1 then
+    return "is shiet", '', 6 -- FieldName,Units,ft_boolean
   end
   return '', '', 0 -- ft_nomorefields
 end
@@ -36,10 +38,18 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
   local result = ""
   local text = SysUtils.ExtractFileName(FileName):sub(1, -(SysUtils.ExtractFileExt(FileName):len() + 1))
   for _, char in LazUtf8.Next(text) do
-    if not shiet[char] then
-      result = result .. char
+    if FieldIndex == 0 then
+      if not shiet[char] then
+        result = result .. char
+      else
+        result = result .. shiet[char]
+      end
     else
-      result = result .. shiet[char]
+      result = false
+      if shiet[char] then
+        result = true
+        break
+      end
     end
   end
   return result
