@@ -74,6 +74,9 @@ The last four packages for the `bit7z` library, see the `src/third_party` subfol
 - [libarchive_crap](plugins/wcx/libarchive_crap)<br>
 `apt install build-essential libglib2.0-dev libarchive-dev`
 
+- [libzim](plugins/wcx/libzim)<br>
+`apt install build-essential libzim-dev`
+
 - [linkfiles_crap](plugins/wcx/linkfiles_crap)<br>
 `apt install build-essential libglib2.0-dev`
 
@@ -82,6 +85,21 @@ The last four packages for the `bit7z` library, see the `src/third_party` subfol
 
 - [mozlz4json_crap](plugins/wcx/mozlz4json_crap)<br>
 `apt install build-essential liblz4-dev`
+
+- [multiarc_crap](plugins/wcx/multiarc_crap)<br>
+`apt install build-essential libglib2.0-dev`
+
+- [set_dir_date_crap](plugins/wcx/set_dir_date_crap)<br>
+`apt install build-essential`
+
+- [xxe_crap](plugins/wcx/xxe_crap)<br>
+`apt install build-essential libglib2.0-dev`
+
+- [zarchive](plugins/wcx/zarchive)<br>
+`apt install build-essential libzarchive-dev`
+
+- [zpaq_cli_cra](plugins/wcx/zpaq_cli_crap)<br>
+`apt install build-essential libglib2.0-dev`
 
 
 ---
@@ -205,7 +223,7 @@ Previous versions: `apt install build-essential libglib2.0-dev libgdk-pixbuf2.0-
 `apt install build-essential libglib2.0-dev libtagc0-dev`
 
 - [tmppanel_crap](plugins/wfx/tmppanel_crap)<br>
-`apt install build-essential libglib2.0-dev`
+`apt install build-essential libglib2.0-dev libjson-c-dev`
 
 - [trash_crap](plugins/wfx/trash_crap)<br>
 `apt install build-essential libglib2.0-dev`
@@ -245,7 +263,8 @@ Requires Evince <= 2.32 (GTK2 version).
 
 - [evince3](plugins/wlx/evince3)<br>
 GTK3: `apt install build-essential libgtk-3-dev libevince-dev`<br>
-Requires Evince (GTK3 version).
+Requires Evince (GTK3 version).<br>
+Debian 14.0+/Ubuntu 26.04+: use `libevince-gtk3-dev` instead of `libevince-dev`.
 
 - [fileinfo](plugins/wlx/fileinfo)<br>
 GTK2: : `apt install build-essential libgtk2.0-dev`<br>
