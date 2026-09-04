@@ -96,7 +96,7 @@ The last four packages for the `bit7z` library, see the `src/third_party` subfol
 `apt install build-essential libglib2.0-dev`
 
 - [zarchive](plugins/wcx/zarchive)<br>
-`apt install build-essential libzarchive-dev`
+`apt install build-essential libglib2.0-dev libzarchive-dev libzstd-dev pkg-config`
 
 - [zpaq_cli_cra](plugins/wcx/zpaq_cli_crap)<br>
 `apt install build-essential libglib2.0-dev`
