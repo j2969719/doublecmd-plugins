@@ -39,6 +39,8 @@
 #define MSG_PASSWD "Enter password"
 #define MSG_TIMEOUT "Timeout expired, kill process?"
 #define MSG_LFM_MISSIND "LFM file is missing."
+#define CURRENT_PROGRESS 1000 //0
+#define TOTAL_PROGRESS 0 //1000
 
 enum
 {
@@ -4351,7 +4353,7 @@ static int ExecuteArchiver(char *workdir, char **argv, int encoding, char *pass_
 									int p = atoi(string);
 
 									if (p > progress && p <= 100)
-										progress = /*-1000*/ - p;
+										progress = -(TOTAL_PROGRESS + p);
 
 									g_free(string);
 								}
@@ -5077,7 +5079,7 @@ int DCPCALL ProcessFile(HANDLE hArcData, int Operation, char *DestPath, char *De
 {
 	ArcData data = (ArcData)hArcData;
 
-	if (data->ProcessDataProc && data->ProcessDataProc(data->lastitem, -1000) == 0)
+	if (data->ProcessDataProc && data->ProcessDataProc(data->lastitem, -CURRENT_PROGRESS) == 0)
 		return E_EABORTED;
 
 	int result = E_SUCCESS;
@@ -5158,11 +5160,11 @@ int DCPCALL ProcessFile(HANDLE hArcData, int Operation, char *DestPath, char *De
 			else
 				result = ExtractWithPath(src_list, dst_list, DestPath, data);
 
-			data->ProcessDataProc(data->lastitem, -1100);
+			data->ProcessDataProc(data->lastitem, -(CURRENT_PROGRESS + 100));
 		}
 
 		int progress = (int)(data->cur * 100 / data->count);
-		data->ProcessDataProc(DestName, -progress);
+		data->ProcessDataProc(DestName, -(TOTAL_PROGRESS + progress));
 	}
 
 	data->cur++;

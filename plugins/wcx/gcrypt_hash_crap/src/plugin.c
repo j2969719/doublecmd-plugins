@@ -11,6 +11,8 @@
 #include "extension.h"
 
 #define BUFF_SIZE 4096
+#define CURRENT_PROGRESS 1000 //0
+#define TOTAL_PROGRESS 0 //1000
 
 typedef struct sArcData
 {
@@ -330,7 +332,7 @@ static char* calc_hash(int algo, char *path, tProcessDataProc proc)
 		else
 			prcnt = 0;
 
-		proc(path, -(1000 + prcnt));
+		proc(path, -(CURRENT_PROGRESS + prcnt));
 	}
 
 	digest = gcry_md_read(h, algo);
@@ -531,7 +533,7 @@ int DCPCALL ProcessFile(HANDLE hArcData, int Operation, char *DestPath, char *De
 
 			free(hash);
 		}
-		else if (handle->ProcessDataProc && handle->ProcessDataProc(handle->last_path, -1100) == 0)
+		else if (handle->ProcessDataProc && handle->ProcessDataProc(handle->last_path, -(CURRENT_PROGRESS + 100)) == 0)
 			return E_EABORTED;
 		else if (gcry_md_test_algo(handle->algo) != 0)
 			return E_NOT_SUPPORTED;

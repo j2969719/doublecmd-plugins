@@ -44,6 +44,8 @@ typedef void *HINSTANCE;
 
 #define BUFF_SIZE 8192
 #define DC_OUTBUFF_SIZE 524288
+#define CURRENT_PROGRESS 1000 //0
+#define TOTAL_PROGRESS 0 //1000
 
 tChangeVolProc gChangeVolProc  = NULL;
 tProcessDataProc gProcessDataProc = NULL;
@@ -656,7 +658,7 @@ int archive_repack_existing(struct archive *a, char* filename, char** tmpfn, int
 					else
 						prcnt = 0;
 
-					if (gProcessDataProc(infile, -(1000 + prcnt)) == 0)
+					if (gProcessDataProc(infile, -(CURRENT_PROGRESS + prcnt)) == 0)
 					{
 						result = E_EABORTED;
 						break;
@@ -1969,7 +1971,7 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 							else
 								prcnt = 0;
 
-							if (gProcessDataProc(infile, -(1000 + prcnt)) == 0)
+							if (gProcessDataProc(infile, -(CURRENT_PROGRESS + prcnt)) == 0)
 							{
 								result = E_EABORTED;
 								break;
@@ -2076,7 +2078,7 @@ int DCPCALL DeleteFiles(char *PackedFile, char *DeleteList)
 	}
 
 	result = archive_repack_existing(a, PackedFile, &tmpfn, ofd, DeleteList, NULL, PK_PACK_SAVE_PATHS, ext);
-	gProcessDataProc(PackedFile, -100);
+	gProcessDataProc(PackedFile, -(TOTAL_PROGRESS + 100));
 	archive_write_finish_entry(a);
 	archive_write_close(a);
 	archive_write_free(a);

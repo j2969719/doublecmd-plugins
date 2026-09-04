@@ -19,6 +19,8 @@ namespace fs = std::filesystem;
 #else
 #define PACKERCAPS PK_CAPS_NEW | PK_CAPS_MODIFY | PK_CAPS_MULTIPLE | PK_CAPS_DELETE | PK_CAPS_ENCRYPT | PK_CAPS_SEARCHTEXT | PK_CAPS_OPTIONS | PK_CAPS_BY_CONTENT
 #endif
+#define CURRENT_PROGRESS 1000 //0
+#define TOTAL_PROGRESS 0 //1000
 
 #define SendDlgMsg gExtensions->SendDlgMsg
 #define MessageBox gExtensions->MessageBox
@@ -161,7 +163,7 @@ static bool show_progress(uint64_t size)
 	int progress = 0;
 
 	if (gTotalSize > 0)
-		progress = 0 - size * 100 / gTotalSize;
+		progress = -TOTAL_PROGRESS - size * 100 / gTotalSize;
 
 	return (gProcessDataProc(gProcFile, progress) != 0);
 }
@@ -169,7 +171,7 @@ static bool show_progress(uint64_t size)
 static void show_ratio(uint64_t input, uint64_t output)
 {
 	if (input > 0)
-		gProcessDataProc(gProcFile, -1000 - output * 100 / input);
+		gProcessDataProc(gProcFile, -CURRENT_PROGRESS - output * 100 / input);
 }
 */
 static void set_totalsize(uint64_t size)

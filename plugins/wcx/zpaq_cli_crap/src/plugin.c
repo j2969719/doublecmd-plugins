@@ -28,6 +28,8 @@
 #define E_HANDLED -32769
 #define PK_CAPS PK_CAPS_NEW | PK_CAPS_MODIFY | PK_CAPS_MULTIPLE | PK_CAPS_SEARCHTEXT |\
  PK_CAPS_DELETE | PK_CAPS_OPTIONS | PK_CAPS_ENCRYPT | PK_CAPS_BY_CONTENT;
+#define CURRENT_PROGRESS 1000 //0
+#define TOTAL_PROGRESS 0 //1000
 
 #define SendDlgMsg gExtensions->SendDlgMsg
 #define MessageBox gExtensions->MessageBox
@@ -627,7 +629,7 @@ int DCPCALL ProcessFile(HANDLE hArcData, int Operation, char *DestPath, char *De
 	int result = E_SUCCESS;
 	ArcData data = (ArcData)hArcData;
 
-	if (data->ProcessDataProc(DestName, -1000) == 0)
+	if (data->ProcessDataProc(DestName, -CURRENT_PROGRESS) == 0)
 		result = E_EABORTED;
 
 	else if (Operation != PK_SKIP)
@@ -650,13 +652,13 @@ int DCPCALL ProcessFile(HANDLE hArcData, int Operation, char *DestPath, char *De
 
 		gchar **argv = g_strsplit(args, "\n", -1);
 		g_free(args);
-		result = ExecuteArchiver(NULL, argv, data->lastfile, data->ProcessDataProc, -1000);
+		result = ExecuteArchiver(NULL, argv, data->lastfile, data->ProcessDataProc, -CURRENT_PROGRESS);
 		g_strfreev(argv);
-		data->ProcessDataProc(data->lastfile, -1100);
+		data->ProcessDataProc(data->lastfile, -(CURRENT_PROGRESS + 100));
 	}
 
 	int progress = (int)(data->cur * 100 / data->count);
-	data->ProcessDataProc(DestName, -progress);
+	data->ProcessDataProc(DestName, -(TOTAL_PROGRESS + progress));
 
 	return result;
 }
@@ -760,10 +762,10 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 	gchar **argv = g_strsplit(args, "\n", -1);
 	g_free(args);
 
-	result = ExecuteArchiver(SrcPath, argv, SrcPath, gProcessDataProc, 0);
+	result = ExecuteArchiver(SrcPath, argv, SrcPath, gProcessDataProc, TOTAL_PROGRESS);
 	g_strfreev(argv);
 
-	gProcessDataProc(SrcPath, -100);
+	gProcessDataProc(SrcPath, -(TOTAL_PROGRESS + 100));
 	g_free(arcdir);
 
 	return result;
@@ -829,10 +831,10 @@ int DCPCALL DeleteFiles(char *PackedFile, char *DeleteList)
 	gchar **argv = g_strsplit(args, "\n", -1);
 	g_free(args);
 
-	result = ExecuteArchiver(NULL, argv, PackedFile, gProcessDataProc, 0);
+	result = ExecuteArchiver(NULL, argv, PackedFile, gProcessDataProc, TOTAL_PROGRESS);
 	g_strfreev(argv);
 
-	gProcessDataProc(PackedFile, -100);
+	gProcessDataProc(PackedFile, -(TOTAL_PROGRESS + 100));
 
 	return result;
 }
