@@ -7,6 +7,9 @@
 #include "wcxplugin.h"
 #include "extension.h"
 
+#define CURRENT_PROGRESS 1000 //0
+#define TOTAL_PROGRESS 0 //1000
+
 typedef void *HINSTANCE;
 
 tProcessDataProc gProcessDataProc = NULL;
@@ -558,7 +561,7 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 
 			out_file = g_strdup_printf("%s/%s", target_path, fname);
 
-			if (gProcessDataProc(out_file, -100) == 0)
+			if (gProcessDataProc(out_file, -(TOTAL_PROGRESS + 100)) == 0)
 			{
 				result = E_EABORTED;
 				break;

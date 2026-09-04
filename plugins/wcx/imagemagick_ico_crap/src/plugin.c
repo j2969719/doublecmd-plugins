@@ -13,6 +13,8 @@
 #define SendDlgMsg gExtensions->SendDlgMsg
 #define MessageBox gExtensions->MessageBox
 #define InputBox gExtensions->InputBox
+#define CURRENT_PROGRESS 1000 //0
+#define TOTAL_PROGRESS 0 //1000
 
 typedef struct sArcData
 {
@@ -82,7 +84,7 @@ int DCPCALL ProcessFile(HANDLE hArcData, int Operation, char *DestPath, char *De
 {
 	ArcData data = (ArcData)hArcData;
 
-	if (data->ProcessDataProc(DestName, -1000) == 0)
+	if (data->ProcessDataProc(DestName, -CURRENT_PROGRESS) == 0)
 		return E_EABORTED;
 
 	if (Operation == PK_EXTRACT)
@@ -172,7 +174,7 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 
 			g_free(path);
 
-			if (gProcessDataProc(AddList, -1100) == 0)
+			if (gProcessDataProc(AddList, -(CURRENT_PROGRESS + 100)) == 0)
 			{
 				return E_EABORTED;
 				break;

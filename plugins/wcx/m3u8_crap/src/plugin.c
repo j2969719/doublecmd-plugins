@@ -7,6 +7,8 @@
 #include "wcxplugin.h"
 
 #define MAXFILESIZE 10000000
+#define CURRENT_PROGRESS 1000 //0
+#define TOTAL_PROGRESS 0 //1000
 
 typedef struct sArcData
 {
@@ -147,7 +149,7 @@ int DCPCALL ProcessFile(HANDLE hArcData, int Operation, char *DestPath, char *De
 	int result = E_SUCCESS;
 	ArcData data = (ArcData)hArcData;
 
-	if (data->ProcessDataProc(DestName, -1000) == 0)
+	if (data->ProcessDataProc(DestName, -CURRENT_PROGRESS) == 0)
 		return E_EABORTED;
 
 	if (Operation != PK_SKIP && !DestPath)
@@ -295,7 +297,7 @@ int DCPCALL PackFiles(char *PackedFile, char *SubPath, char *SrcPath, char *AddL
 			g_object_unref(fileinfo);
 			g_object_unref(gfile);
 
-			if (gProcessDataProc(AddList, -1100) == 0)
+			if (gProcessDataProc(AddList, -(CURRENT_PROGRESS + 100)) == 0)
 			{
 				fclose(fp);
 				return E_EABORTED;
