@@ -1,4 +1,5 @@
 #include <fstream>
+#include <iostream>
 #include <filesystem>
 #include <cerrno>
 #include <cstring>
@@ -54,6 +55,13 @@ typedef struct sListItem
 	long int data;
 } tListItem;
 
+typedef struct sFormatItem
+{
+	string name;
+	const BitInFormat& format;
+} sFormatItem;
+
+
 typedef tArcData* ArcData;
 typedef void *HINSTANCE;
 
@@ -80,6 +88,7 @@ int gDictSize = 0;
 int gWordSize = 0;
 uint64_t gVolumeSize = 0;
 int gThreadCount = 0;
+vector<sFormatItem> gBlackList;
 
 tListItem gComprLevels[] =
 {
@@ -131,7 +140,6 @@ int gWordSizes[] = {8, 12, 16, 24, 32, 48, 64, 96, 128, 192, 256, 273};
 
 tListItem gVolumeSizes[] =
 {
-
 	{"360 KB",	     362496},
 	{"720 KB",	     730112},
 	{"1.2 MB",	    1213952},
@@ -148,6 +156,71 @@ tListItem gVolumeSizes[] =
 	{"4480 MB",	 4697620480},
 	{"8128 MB",	 8522825728},
 	{"23040 MB",	24159191040},
+};
+
+const vector<sFormatItem> gFormats =
+{
+	{"RAR",		     BitFormat::Rar},
+	{"ARJ",		     BitFormat::Arj},
+	{"Z",		       BitFormat::Z},
+	{"LZH",		     BitFormat::Lzh},
+	{"CAB",		     BitFormat::Cab},
+	{"NSIS",	    BitFormat::Nsis},
+	{"LZMA",	    BitFormat::Lzma},
+	{"LZMA86",	  BitFormat::Lzma86},
+	{"PPMD",	    BitFormat::Ppmd},
+	{"ZSTD",	    BitFormat::Zstd},
+	{"LVM",		     BitFormat::LVM},
+	{"AVB",		     BitFormat::AVB},
+	{"LP",		      BitFormat::LP},
+	{"Sparse",	  BitFormat::Sparse},
+	{"APFS",	    BitFormat::APFS},
+	{"VHDX",	    BitFormat::Vhdx},
+	{"COFF",	    BitFormat::COFF},
+	{"EXT",		     BitFormat::Ext},
+	{"VMDK",	    BitFormat::VMDK},
+	{"VDI",		     BitFormat::VDI},
+	{"QCOW",	    BitFormat::QCow},
+	{"GPT",		     BitFormat::GPT},
+	{"RAR5",	    BitFormat::Rar5},
+	{"IHEX",	    BitFormat::IHex},
+	{"HXS",		     BitFormat::Hxs},
+	{"TE",		      BitFormat::TE},
+	{"UEFIc",	   BitFormat::UEFIc},
+	{"UEFIs",	   BitFormat::UEFIs},
+	{"SquashFS",	BitFormat::SquashFS},
+	{"CramFS",	  BitFormat::CramFS},
+	{"APM",		     BitFormat::APM},
+	{"MSLZ",	    BitFormat::Mslz},
+	{"FLV",		     BitFormat::Flv},
+	{"SWF",		     BitFormat::Swf},
+	{"SWFC",	    BitFormat::Swfc},
+	{"NTFS",	    BitFormat::Ntfs},
+	{"FAT",		     BitFormat::Fat},
+	{"MBR",		     BitFormat::Mbr},
+	{"VHD",		     BitFormat::Vhd},
+	{"PE",		      BitFormat::Pe},
+	{"ELF",		     BitFormat::Elf},
+	{"MACHO",	   BitFormat::Macho},
+	{"UDF",		     BitFormat::Udf},
+	{"XAR",		     BitFormat::Xar},
+	{"MUB",		     BitFormat::Mub},
+	{"HFS",		     BitFormat::Hfs},
+	{"DMG",		     BitFormat::Dmg},
+	{"COMPOUND",	BitFormat::Compound},
+	{"ISO",		     BitFormat::Iso},
+	{"CHM",		     BitFormat::Chm},
+	{"SPLIT",	   BitFormat::Split},
+	{"RPM",		     BitFormat::Rpm},
+	{"DEB",		     BitFormat::Deb},
+	{"CPIO",	    BitFormat::Cpio},
+	{"ZIP",		     BitFormat::Zip},
+	{"BZIP2",	   BitFormat::BZip2},
+	{"7Z",		BitFormat::SevenZip},
+	{"XZ",		      BitFormat::Xz},
+	{"WIM",		     BitFormat::Wim},
+	{"TAR",		     BitFormat::Tar},
+	{"GZIP",	    BitFormat::GZip},
 };
 
 static char *ask_password(void)
@@ -752,6 +825,20 @@ BOOL DCPCALL CanYouHandleThisFile(char *FileName)
 	try
 	{
 		BitArchiveReader reader { gBit7zLib, FileName, BITFORMAT };
+
+#ifdef BIT7Z_AUTO_FORMAT
+		for (const auto& item : gBlackList)
+		{
+			if (item.format == reader.detectedFormat())
+				return false;
+		}
+
+		for (const auto& item : gFormats)
+		{
+			if (item.format == reader.detectedFormat())
+				cout << PLUGNAME ": " << FileName << " was detected as " << item.name << endl;
+		}
+#endif
 	}
 	catch (const bit7z::BitException& ex)
 	{
@@ -806,6 +893,48 @@ void DCPCALL ExtensionInitialize(tExtensionStartupInfo* StartupInfo)
 	{
 		gExtensions = (tExtensionStartupInfo*)malloc(sizeof(tExtensionStartupInfo));
 		memcpy(gExtensions, StartupInfo, sizeof(tExtensionStartupInfo));
+
+#ifdef BIT7Z_AUTO_FORMAT
+		string filename = string(gExtensions->PluginConfDir) + PLUGNAME ".blacklist";
+		ifstream file(filename);
+
+		if (file.is_open())
+		{
+			string line;
+
+			while (std::getline(file, line))
+			{
+				if (line[0] != '#')
+				{
+					line.erase(line.begin(), find_if(line.begin(), line.end(), [](unsigned char ch)
+					{
+						return !isspace(ch);
+					}));
+
+					for (const auto& item : gFormats)
+					{
+						if (item.name == line)
+							gBlackList.push_back(item);
+					}
+				}
+			}
+
+			file.close();
+		}
+		else
+		{
+			ofstream file(filename);
+
+
+			if (file.is_open())
+			{
+				for (const auto& item : gFormats)
+					file << "# " << item.name << std::endl;
+
+				file.close();
+			}
+		}
+#endif
 	}
 }
 
