@@ -325,11 +325,13 @@ intptr_t DCPCALL BlackListDlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Ms
 		}
 		break;
 	case DN_CLOSE:
-		gBlackList.clear();
+
 		ofstream file(gBlackListFile, ios::out | ios::trunc);
 
 		if (file.is_open())
 		{
+			gBlackList.clear();
+
 			for (const auto& item : gFormats)
 			{
 				string name = "cb" + item.name;
