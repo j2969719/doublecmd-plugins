@@ -26,6 +26,10 @@ namespace fs = std::filesystem;
 #define SendDlgMsg gExtensions->SendDlgMsg
 #define MessageBox gExtensions->MessageBox
 #define InputBox gExtensions->InputBox
+#define SendDlgMsg gExtensions->SendDlgMsg
+#define CreateComponent gExtensions->CreateComponent
+#define GetProperty gExtensions->GetProperty
+#define SetProperty gExtensions->SetProperty
 #define LIST_ITEMS(L) (sizeof(L)/sizeof(tListItem))
 #define ARRAY_SIZE(A) (sizeof(A)/sizeof(A[0]))
 
@@ -90,6 +94,7 @@ int gWordSize = 0;
 uint64_t gVolumeSize = 0;
 int gThreadCount = 0;
 vector<sFormatItem> gBlackList;
+string gBlackListFile;
 
 tListItem gComprLevels[] =
 {
@@ -299,6 +304,50 @@ static bool extract_single(tArcData *data, uint32_t index, char *DestName)
 	fix_attr(data, index, DestName);
 
 	return result;
+}
+
+intptr_t DCPCALL BlackListDlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr_t wParam, intptr_t lParam)
+{
+	switch (Msg)
+	{
+	case DN_INITDIALOG:
+		for (const auto& item : gFormats)
+		{
+			string name = "cb" + item.name;
+			CreateComponent(pDlg, "Panel", name.c_str(), "TCheckBox", nullptr);
+			SetProperty(pDlg, name.c_str(), "Caption", (void*)item.name.c_str(), TK_STRING);
+
+			for (const auto& blocked : gBlackList)
+			{
+				if (item.name == blocked.name)
+					SendDlgMsg(pDlg, (char*)name.c_str(), DM_SETCHECK, 1, 0);
+			}
+		}
+		break;
+	case DN_CLOSE:
+		gBlackList.clear();
+		ofstream file(gBlackListFile, ios::out | ios::trunc);
+
+		if (file.is_open())
+		{
+			for (const auto& item : gFormats)
+			{
+				string name = "cb" + item.name;
+
+				if (SendDlgMsg(pDlg, (char*)name.c_str(), DM_GETCHECK, 0, 0) != 0)
+				{
+					gBlackList.push_back(item);
+					file << item.name << std::endl;
+				}
+				else
+					file << "# " << item.name << std::endl;
+			}
+
+			file.close();
+		}
+		break;
+	}
+	return 0;
 }
 
 intptr_t DCPCALL OptionsDlgProc(uintptr_t pDlg, char* DlgItemName, intptr_t Msg, intptr_t wParam, intptr_t lParam)
@@ -884,8 +933,13 @@ int DCPCALL GetPackerCaps(void)
 void DCPCALL ConfigurePacker(HWND Parent, HINSTANCE DllInstance)
 {
 	string lfmpath(gExtensions->PluginDir);
+#ifdef BIT7Z_AUTO_FORMAT
+	lfmpath.append("blacklist.lfm");
+	gExtensions->DialogBoxLFMFile((char*)lfmpath.c_str(), BlackListDlgProc);
+#else
 	lfmpath.append("dialog.lfm");
 	gExtensions->DialogBoxLFMFile((char*)lfmpath.c_str(), OptionsDlgProc);
+#endif
 }
 
 void DCPCALL ExtensionInitialize(tExtensionStartupInfo* StartupInfo)
@@ -896,8 +950,13 @@ void DCPCALL ExtensionInitialize(tExtensionStartupInfo* StartupInfo)
 		memcpy(gExtensions, StartupInfo, sizeof(tExtensionStartupInfo));
 
 #ifdef BIT7Z_AUTO_FORMAT
-		string filename = string(gExtensions->PluginConfDir) + PLUGNAME ".blacklist";
-		ifstream file(filename);
+		sort(gFormats.begin(), gFormats.end(), [](tFormatItem& a, tFormatItem& b)
+		{
+			return a.name < b.name;
+		});
+
+		gBlackListFile = string(gExtensions->PluginConfDir) + PLUGNAME ".blacklist";
+		ifstream file(gBlackListFile);
 
 		if (file.is_open())
 		{
@@ -924,12 +983,7 @@ void DCPCALL ExtensionInitialize(tExtensionStartupInfo* StartupInfo)
 		}
 		else
 		{
-			ofstream file(filename);
-
-			sort(gFormats.begin(), gFormats.end(), [](tFormatItem& a, tFormatItem& b)
-			{
-				return a.name < b.name;
-			});
+			ofstream file(gBlackListFile);
 
 			if (file.is_open())
 			{

@@ -1,0 +1,53 @@
+object DialogBox: TDialogBox
+  Left = 404
+  Height = 391
+  Top = 142
+  Width = 447
+  AutoSize = True
+  BorderStyle = bsDialog
+  Caption = 'Options'
+  ChildSizing.LeftRightSpacing = 10
+  ChildSizing.TopBottomSpacing = 10
+  ClientHeight = 391
+  ClientWidth = 447
+  Position = poOwnerFormCenter
+  LCLVersion = '4.9.0.0'
+  OnClose = DialogBoxClose
+  OnShow = DialogBoxShow
+  object lblWTF: TLabel
+    Left = 10
+    Height = 15
+    Top = 10
+    Width = 427
+    Align = alTop
+    Caption = 'dont detect the following formats by Ctrl+PgDn:'
+  end
+  object ScrollBox: TScrollBox
+    Left = 10
+    Height = 356
+    Top = 25
+    Width = 427
+    HorzScrollBar.Page = 1
+    VertScrollBar.Page = 15
+    Align = alClient
+    ClientHeight = 350
+    ClientWidth = 421
+    Constraints.MinHeight = 200
+    Constraints.MinWidth = 200
+    TabOrder = 0
+    object Panel: TPanel
+      Left = 0
+      Height = 335
+      Top = 15
+      Width = 421
+      Align = alClient
+      BorderSpacing.Top = 15
+      BevelOuter = bvNone
+      ChildSizing.EnlargeHorizontal = crsHomogenousSpaceResize
+      ChildSizing.EnlargeVertical = crsHomogenousChildResize
+      ChildSizing.Layout = cclLeftToRightThenTopToBottom
+      ChildSizing.ControlsPerLine = 5
+      TabOrder = 0
+    end
+  end
+end
