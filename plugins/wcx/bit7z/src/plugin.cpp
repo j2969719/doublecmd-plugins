@@ -58,8 +58,9 @@ typedef struct sListItem
 typedef struct sFormatItem
 {
 	string name;
-	const BitInFormat& format;
-} sFormatItem;
+	//const BitInFormat& format;
+	reference_wrapper<const BitInFormat> format;
+} tFormatItem;
 
 
 typedef tArcData* ArcData;
@@ -158,7 +159,7 @@ tListItem gVolumeSizes[] =
 	{"23040 MB",	24159191040},
 };
 
-const vector<sFormatItem> gFormats =
+vector<sFormatItem> gFormats =
 {
 	{"RAR",		     BitFormat::Rar},
 	{"ARJ",		     BitFormat::Arj},
@@ -829,13 +830,13 @@ BOOL DCPCALL CanYouHandleThisFile(char *FileName)
 #ifdef BIT7Z_AUTO_FORMAT
 		for (const auto& item : gBlackList)
 		{
-			if (item.format == reader.detectedFormat())
+			if (item.format.get() == reader.detectedFormat())
 				return false;
 		}
 
 		for (const auto& item : gFormats)
 		{
-			if (item.format == reader.detectedFormat())
+			if (item.format.get() == reader.detectedFormat())
 				cout << PLUGNAME ": " << FileName << " was detected as " << item.name << endl;
 		}
 #endif
@@ -925,6 +926,10 @@ void DCPCALL ExtensionInitialize(tExtensionStartupInfo* StartupInfo)
 		{
 			ofstream file(filename);
 
+			sort(gFormats.begin(), gFormats.end(), [](tFormatItem& a, tFormatItem& b)
+			{
+				return a.name < b.name;
+			});
 
 			if (file.is_open())
 			{
