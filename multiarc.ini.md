@@ -36,6 +36,33 @@ FormMode=8
 ```
 `appimage2` is a fake extension, this is a small workaround to open AppImage files with Ctrl+PgDn only.
 
+```ini
+[AppImage (unixmode)]
+Archiver=7z
+Description=AppImage (Type 1 and 2, x32 or x64)
+ID=7F 45 4C 46 01 01 01 00 41 49 01, 7F 45 4C 46 01 01 01 00 41 49 02, 7F 45 4C 46 02 01 01 00 41 49 01, 7F 45 4C 46 02 01 01 00 41 49 02
+IDPos=0
+Extension=AppImage
+Start=^----------
+Format0=???? ? n+
+Format1=???? ? z+
+Format2=??????????? ? p+
+Format3=???????? ? yyyy tt dd hh mm ss
+Format4=???? ? aaaaaaaaaa
+List=%P -r0  -slt l {-p%W} %AQ
+Extract=%P x -y {-p%W} {%S} %AQ @%LQU
+ExtractWithoutPath=%P e -y {-p%W} {%S} %AQ @%LQU
+Test=%P t -y {%S} %AQ @%LQU
+PasswordQuery=Enter password
+IgnoreString0=^Folder =
+IgnoreString1=^User ID =
+IgnoreString2=^Group ID =
+Flags=2
+FormMode=4
+Enabled=1
+FallBackArchivers=7zz,7zzs,7z,7zr,7za
+```
+
 ---
 <a name="b64"><h3>Base64</h3></a>
 ```ini
