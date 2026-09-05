@@ -20,7 +20,7 @@ object DialogBox: TDialogBox
     Top = 10
     Width = 427
     Align = alTop
-    Caption = 'dont detect the following formats by Ctrl+PgDn:'
+    Caption = 'When you press Ctrl+PgDn, the following formats are skipped:'
   end
   object ScrollBox: TScrollBox
     Left = 10
