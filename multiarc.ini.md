@@ -60,7 +60,7 @@ IgnoreString2=^Group ID =
 Flags=2
 FormMode=4
 Enabled=1
-FallBackArchivers=7zz,7zzs,7z,7zr,7za
+FallBackArchivers=7zz,7zzs,7z
 ```
 
 ---
