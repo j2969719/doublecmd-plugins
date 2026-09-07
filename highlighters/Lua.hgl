@@ -2,7 +2,7 @@
   <Info>
     <General Name="Lua*" Extensions="LUA"/>
     <Author Name="Skif_off" Email="" Web="" Copyright="" Company="" Remark="Alternative variant"/>
-    <Version Version="1" Revision="8" Date="45646,5187364815"/>
+    <Version Version="1" Revision="9" Date="46272,5104752662"/>
     <History>
     </History>
     <Sample>
@@ -321,10 +321,17 @@
       <word value="LazUtf8.UpperCase"/>
       <word value="os.setenv"/>
       <word value="os.unsetenv"/>
+      <word value="Stash.AddAsTable"/>
+      <word value="Stash.AddAsText"/>
+      <word value="Stash.GetAsTable"/>
+      <word value="Stash.GetAsText"/>
+      <word value="Stash.SetAsTable"/>
+      <word value="Stash.SetAsText"/>
       <word value="SysUtils.CreateDirectory"/>
       <word value="SysUtils.CreateHardLink"/>
       <word value="SysUtils.CreateSymbolicLink"/>
       <word value="SysUtils.DirectoryExists"/>
+      <word value="SysUtils.Execute"/>
       <word value="SysUtils.ExpandEnv"/>
       <word value="SysUtils.ExtractFileDir"/>
       <word value="SysUtils.ExtractFileDrive"/>
@@ -369,7 +376,7 @@
       <word value="geany.activate"/>
       <word value="geany.appinfo"/>
       <word value="geany.banner"/>
-      <word value="geany.basename("/>
+      <word value="geany.basename"/>
       <word value="geany.batch"/>
       <word value="geany.byte"/>
       <word value="geany.caller"/>
@@ -380,14 +387,14 @@
       <word value="geany.copy"/>
       <word value="geany.count"/>
       <word value="geany.cut"/>
-      <word value="geany.dirlist("/>
-      <word value="geany.dirname("/>
+      <word value="geany.dirlist"/>
+      <word value="geany.dirname"/>
       <word value="geany.dirsep"/>
       <word value="geany.documents"/>
       <word value="geany.fileinfo"/>
       <word value="geany.filename"/>
       <word value="geany.find"/>
-      <word value="geany.fullpath("/>
+      <word value="geany.fullpath"/>
       <word value="geany.height"/>
       <word value="geany.input"/>
       <word value="geany.keycmd"/>
