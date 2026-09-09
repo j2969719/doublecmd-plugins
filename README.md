@@ -38,3 +38,5 @@ Cross-platform or for Linux only.
 - [Native macOS plugins for Double Commander](https://github.com/NikolaiSachok/DC-plugins)<br>
 - [Plugins for Double Commander to work with ZX Spectrum .trd, .scl disk images](https://github.com/alffcpu/dc-trd-scl-plugins)<br>
 - [WFX plugin to browse Android devices over ADB, preserving modification dates (macOS, Linux)](https://github.com/vmurin/adb-wfx-plugin)<br>
+- [A modern Chromium-based lister plugin for Total Commander and Double Commander](https://github.com/rg-software/wlx-edge-viewer)<br>
+- [A universal document lister plugin for Total Commander and Double Commander](https://github.com/rg-software/wlx-multidoc-viewer)<br>
