@@ -331,7 +331,7 @@ HWND DCPCALL ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 	}
 
 	scroll = gtk_scrolled_window_new(NULL, NULL);
-	gtk_container_add(GTK_CONTAINER(gFix), scroll);
+	gtk_box_pack_start(GTK_BOX(gFix), scroll, TRUE, TRUE, 1);
 	list = gtk_tree_view_new();
 
 	column = gtk_tree_view_column_new();
