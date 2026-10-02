@@ -40,3 +40,4 @@ Cross-platform or for Linux only.
 - [WFX plugin to browse Android devices over ADB, preserving modification dates (macOS, Linux)](https://github.com/vmurin/adb-wfx-plugin)<br>
 - [A modern Chromium-based lister plugin for Total Commander and Double Commander](https://github.com/rg-software/wlx-edge-viewer)<br>
 - [A universal document lister plugin for Total Commander and Double Commander](https://github.com/rg-software/wlx-multidoc-viewer)<br>
+- [Custom S3 endpoint connection for TotalCommander/DoubleCommander x64](https://github.com/romanov/wfx-s3-go)<br>
