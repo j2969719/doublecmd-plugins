@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# 2024.09.01
+# 2026.10.19
 #
 # For file list after cm_FlatView/cm_FlatViewSel and search result
 #   (from the "///Search result" tab): copy selected files to target directory
@@ -15,13 +15,24 @@ import os
 import shutil
 import sys
 
+def checkds(p0, l0, p1, p2):
+    if p1[0:l0] != p0:
+        return False
+    else:
+        if p2[0:l0] != p0:
+            return False
+
 def copytree(fl, ds, dt):
     f = open(fl, "r")
     af = f.read().splitlines()
     f.close()
     dsl = len(ds)
-    if ds == "/":
+    if ds == "///" or ds == "/":
         dsl = 0
+    else:
+      af.sort()
+      if checkds(ds + "/", dsl + 1, af[0], af[-1]) == False:
+          dsl = 0
     c = 0
     for fn in af:
         if not os.path.isfile(fn):
@@ -54,7 +65,7 @@ def copytree(fl, ds, dt):
 
 if len(sys.argv) == 4:
     if sys.argv[2][0:3] == "///":
-        copytree(sys.argv[1], "/", sys.argv[3])
+        copytree(sys.argv[1], "///", sys.argv[3])
     else:
         copytree(sys.argv[1], sys.argv[2], sys.argv[3])
 else:
