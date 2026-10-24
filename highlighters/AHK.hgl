@@ -1,8 +1,8 @@
 <UniHighlighter version="1.8.1">
   <Info>
-    <General Name="AutoHolkey*" Extensions="AHK"/>
+    <General Name="AutoHotkey*" Extensions="AHK"/>
     <Author Name="Skif_off" Email="" Web="" Copyright="" Company="" Remark="Lists of keywords based on ahk.coder for AkelPad"/>
-    <Version Version="1" Revision="3" Date="43175,8307051389"/>
+    <Version Version="1" Revision="4" Date="46319,5090189583"/>
     <History>
     </History>
     <Sample>
@@ -1073,7 +1073,7 @@
     </Keywords>
     <Range Name="Remarks1 ;" Attributes="32768,16777215;False:False." Style="" CaseSensitive="True"
            Delimiters="!&quot;#$%'()*+,-./:">
-      <Rule OpenSymbol=";" OpenSymbolStartLine="True" CloseOnEol="True"/>
+      <Rule OpenSymbol=";" OpenSymbolStartLine="NonSpace" CloseOnEol="True"/>
     </Range>
     <Range Name="Remarks2 ;" Attributes="32768,16777215;False:False." Style="" CaseSensitive="True"
            Delimiters="!&quot;#$%'()*+,-./:">

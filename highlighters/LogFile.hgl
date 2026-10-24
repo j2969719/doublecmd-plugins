@@ -67,6 +67,8 @@
       <word value="creating"/>
       <word value="deleted"/>
       <word value="done"/>
+      <word value="dpkg-buildpackage"/>
+      <word value="dpkg-source"/>
       <word value="executing"/>
       <word value="exist"/>
       <word value="extract"/>

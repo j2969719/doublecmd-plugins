@@ -1,6 +1,6 @@
 <UniHighlighter version="1.8.1">
   <Info>
-    <General Name="Hashsum file*" Extensions="BLAKE2S BLAKE2SP BLAKE2 CRC32 HAVAL MD4 MD5 RIPEMD128 RIPEMD160 SFV SHA SHA1 SHA224 SHA256 SHA384 SHA512 SHA3 TIGER"/>
+    <General Name="Hashsum file*" Extensions="BLAKE2S BLAKE2SP BLAKE2 CRC32 HAVAL MD4 MD5 RIPEMD128 RIPEMD160 SFV SHA SHA1 SHA224 SHA256 SHA384 SHA512 SHA3 TIGER XXH128"/>
     <Author Name="Skif_off" Email="" Web="" Copyright="" Company="" Remark=""/>
     <Version Version="0" Revision="4" Date="44811,8160981713"/>
     <History>

@@ -1,5 +1,5 @@
 -- CompareMP3.lua
--- 2026.08.14
+-- 2026.10.24
 --[[
 Compare only MP3 streams, without tags (ID3v1/ID3v2/APEv2).
 
@@ -93,7 +93,7 @@ if (f1 == nil) or (f2 == nil) then
 end
 
 if string.len(f1) ~= string.len(f2) then
-  Dialogs.MessageBox("These two files are not identical:\n\n" .. params[1] .. "\n\n" .. params[2], sScrName, 0x0040)
+  Dialogs.MessageBox("These two files are NOT identical:\n\n" .. params[1] .. "\n\n" .. params[2], sScrName, 0x0040)
   return
 end
 
@@ -112,7 +112,7 @@ while true do
 end
 
 if b == true then
-  Dialogs.MessageBox("These two files are identical:\n\n" .. params[1] .. "\n\n" .. params[2], sScrName, 0x0040)
+  Dialogs.MessageBox("These two files are IDENTICAL:\n\n" .. params[1] .. "\n\n" .. params[2], sScrName, 0x0040)
 else
-  Dialogs.MessageBox("These two files are not identical:\n\n" .. params[1] .. "\n\n" .. params[2], sScrName, 0x0040)
+  Dialogs.MessageBox("These two files are NOT identical:\n\n" .. params[1] .. "\n\n" .. params[2], sScrName, 0x0040)
 end
