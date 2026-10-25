@@ -1,5 +1,5 @@
 -- mp3tagswdx.lua (cross-platform)
--- 2026.08.01
+-- 2026.10.25
 --[[
 Check the existence of tags (ID3v1/ID3v2/APEv2) in MP3 files.
 ]]
@@ -75,4 +75,12 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
     filename = FileName
   end
   return ar[FieldIndex + 1]
+end
+
+function BinToNumBE(d, n1, n2)
+  local r = ''
+  for i = n1, n2 do
+    r = r .. string.format('%02x', string.byte(d, i))
+  end
+  return tonumber('0x' .. r)
 end
