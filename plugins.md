@@ -267,6 +267,9 @@ Getting some information from MAFF files. See details in the beginning of script
 - [marker](scripts/lua/marker) *(cross platform)*<br>
 Marker for file highlighting like in *Colors* > *File types*, but "on the fly". See readme.md.
 
+- [mp3hashwdx.lua](plugins/wdx/scripts/mp3hashwdx/mp3hashwdx.lua) *(cross platform)*<br>
+Getting hash of MP3 stream as is, i.e. without tags (ID3v1/ID3v2/APEv2). See details in the beginning of script.
+
 - [mp3tagswdx.lua](plugins/wdx/scripts/mp3tagswdx.lua) *(cross platform)*<br>
 Check the existence of tags (ID3v1/ID3v2/APEv2) in MP3 files.
 
