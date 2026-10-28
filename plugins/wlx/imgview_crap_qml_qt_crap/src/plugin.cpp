@@ -52,9 +52,9 @@ static QString GetOutputFile(char* FileToLoad, QString tmpdir)
 
 	QString out = QString("%1/" OUTFILENAME).arg(tmpdir);
 
-	QString quoted = filename.replace("\'", "\\\'");
-	quoted.prepend("\'");
-	quoted.append("\'");
+	QString quoted = filename.replace("'", "'\\''");
+	quoted.prepend("'");
+	quoted.append("'");
 	cmd.replace(INFILE, quoted);
 	cmd.replace(OUTFILE, out);
 

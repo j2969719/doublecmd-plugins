@@ -39,9 +39,9 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 	if (cmd.isEmpty())
 		return nullptr;
 
-	QString quoted = filename.replace("\'", "\\\'");
-	quoted.prepend("\'");
-	quoted.append("\'");
+	QString quoted = filename.replace("'", "'\\''");
+	quoted.prepend("'");
+	quoted.append("'");
 	cmd.replace("$FILE", quoted);
 
 	QStringList params;

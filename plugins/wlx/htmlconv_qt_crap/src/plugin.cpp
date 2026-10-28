@@ -61,9 +61,9 @@ HANDLE DCPCALL ListLoad(HANDLE ParentWin, char* FileToLoad, int ShowFlags)
 		tmpdir.setAutoRemove(false);
 
 
-	QString quoted = filename.replace("\'", "\\\'");
-	quoted.prepend("\'");
-	quoted.append("\'");
+	QString quoted = filename.replace("'", "'\\''");
+	quoted.prepend("'");
+	quoted.append("'");
 	cmd.replace("$FILE", quoted);
 	cmd.replace("$HTML", out);
 
