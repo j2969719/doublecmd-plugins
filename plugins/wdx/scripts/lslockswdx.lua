@@ -23,7 +23,7 @@ local function escape_str(str)
     local magic_chars = {"%", ".", "-", "+", "*", "?", "^", "$", "(", ")", "["};
 
     for i, chr in pairs(magic_chars) do
-        str = str:gsub("%" .. chr, "%%%" .. chr);
+        str = str:gsub("%" .. chr, "%%%0");
     end
 
     return str;

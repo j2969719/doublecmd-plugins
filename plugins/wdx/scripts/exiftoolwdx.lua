@@ -243,7 +243,7 @@ function escapestr(str)
     if (str ~= nil) then
         result = str;
         for k, chr in pairs(magic_chars) do
-            result = result:gsub("%" .. chr, "%%%" .. chr);
+            result = result:gsub("%" .. chr, "%%%0");
         end
     end
     return result;
