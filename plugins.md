@@ -147,7 +147,7 @@ Returns one or more lines from any `README*` file (first) inside archives. `tar`
 Displays amount of folders and or files found in root directory of archives.
 
 - [attachedpicwdx.lua](plugins/wdx/scripts/attachedpicwdx.lua)<br>
-Getting some information about attached pictures: MP3 (ID3v2.3 & ID3v2.4) and FLAC.
+Getting information about attached pictures: FLAC, M4A (AAC/ALAC) and MP3 (ID3v2.3 & ID3v2.4).
 
 - [bintstwdx.lua](plugins/wdx/scripts/bintstwdx.lua)<br>
 Checking: binary or Unicode text file (encoding UTF-8, UTF-16 or UTF-32 and byte order, detection by BOM).

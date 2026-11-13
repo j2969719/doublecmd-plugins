@@ -1,8 +1,10 @@
 -- attachedpicwdx.lua (cross-platform)
--- 2026.05.09
+-- 2026.11.02
 --[[
-Getting some information about attached pictures: MP3 (ID3v2.3 & ID3v2.4) and FLAC.
+Getting information about attached pictures:
+FLAC, M4A (AAC/ALAC) and MP3 (ID3v2.3 & ID3v2.4).
 (For MP3 without ID3v2, the script returns 0 and "false".)
+
 Supported fields: see table "fields".
 
 P.S.
@@ -25,8 +27,17 @@ local ptype = {
 [0x06] = 5,
 [0x08] = 4
 }
+local mtype = {
+["M4A "] = "Classic Apple iTunes audio file (AAC-LC or ALAC)",
+["mp42"] = "MPEG-4 Base Media v2",
+["isom"] = "ISO Base Media file (universal ID)",
+["M4B "] = "Apple audio book",
+["M4P "] = "Apple audio file with DRM",
+["F4A "] = "Adobe Flash audio"
+}
 local ar = {}
 local filename = ""
+local h
 
 function ContentGetSupportedField(FieldIndex)
   if fields[FieldIndex + 1] ~= nil then
@@ -40,24 +51,25 @@ function ContentGetDefaultSortOrder(FieldIndex)
 end
 
 function ContentGetDetectString()
-  return '(EXT="FLAC")|(EXT="MP3")'
+  return '(EXT="FLAC")|(EXT="M4A")|(EXT="M4B")|(EXT="MP3")'
 end
 
 function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
   if FieldIndex >= #fields then return nil end
   if filename ~= FileName then
-    local e = string.lower(SysUtils.ExtractFileExt(FileName))
-    if (e ~= '.flac') and (e ~= '.mp3') then return nil end
+--    local e = string.lower(SysUtils.ExtractFileExt(FileName))
+--    if (e ~= ".flac") and (e ~= ".mp3") then return nil end
     local at = SysUtils.FileGetAttr(FileName)
     if at < 0 then return nil end
     if math.floor(at / 0x00000010) % 2 ~= 0 then return nil end
-    local h = io.open(FileName, 'rb')
+    h = io.open(FileName, "rb")
     if h == nil then return nil end
     ar[1] = 0
     for i = 2, #fields do ar[i] = false end
     local c, p, s, t = 0, 0, 0, 0
     local d = h:read(4)
-    if string.sub(d, 1, 4) == 'fLaC' then
+    -- FLAC
+    if string.sub(d, 1, 4) == "fLaC" then
       while true do
         -- Metadata block
         d = h:read(4)
@@ -76,11 +88,12 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
         end
         -- Check the last-metadata-block flag
         if at >= 0x80 then break end
-        h:seek('cur', s)
+        h:seek("cur", s)
       end
       h:close()
       ar[1] = c
-    elseif string.sub(d, 1, 3) == 'ID3' then
+    -- MP3
+    elseif string.sub(d, 1, 3) == "ID3" then
       d = h:read(6)
       -- ID3 size
       local id3l = GetTagSize(string.sub(d, 3, 6))
@@ -88,10 +101,10 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
         d = h:read(10)
         p = h:seek()
         -- Check tag name
-        if string.find(d, '^[A-Z][A-Z0-9][A-Z0-9][A-Z0-9]') ~= 1 then break end
+        if string.find(d, "^[A-Z][A-Z0-9][A-Z0-9][A-Z0-9]") ~= 1 then break end
         -- Get tag data size
         s = GetTagSize(string.sub(d, 5, 8)) - 10
-        if string.sub(d, 1, 4) == 'APIC' then
+        if string.sub(d, 1, 4) == "APIC" then
           s = BinToNumBE(d, 5, 8)
           -- Try to skip the text encoding and the MIME type and get the picture type
           d = h:read(30)
@@ -106,19 +119,55 @@ function ContentGetValue(FileName, FieldIndex, UnitIndex, flags)
         end
         p = p + s
         if p >= id3l then break end
-        t = h:seek('set', p)
+        t = h:seek("set", p)
         if t == nil then break end
       end
       h:close()
       ar[1] = c
-    else
+    -- MP3 without ID3v2:
+    elseif BinToNumBE(d, 1, 2) == 0xfffb then
       h:close()
-      -- MP3 without ID3v2:
-      if BinToNumBE(d, 1, 2) ~= 0xfffb then return nil end
+    else
+      -- Various MP4
+      s = BinToNumBE(d, 1, 4)
+      d = h:read(4)
+      if d == "ftyp" then
+        -- moov > udta > meta > ilst > covr
+        d = h:read(4)
+        if mtype[d] ~= nil then
+          c = SysUtils.GetFileProperty(FileName, 0)
+          h:seek("set", s)
+          s = FindAtom("moov", c)
+          if s ~= nil then
+            c = (h:seek() + s) - 8
+            s = FindAtom("udta", c)
+            if s ~= nil then
+              c = (h:seek() + s) - 8
+              s = FindAtom("meta", c)
+              if s ~= nil then
+                c = (h:seek() + s) - 8
+                h:seek("cur", 4)
+                s = FindAtom("ilst", c)
+                if s ~= nil then
+                  c = (h:seek() + s) - 8
+                  s = FindAtom("covr", c)
+                  if s ~= nil then
+                    ar[1] = 1
+                    ar[2] = true
+                  end
+                end
+              end
+            end
+          end
+        end
+      else
+        for i = "", #fields do ar[i] = "" end
+      end
+      h:close()
     end
     filename = FileName
   end
-  if ar[FieldIndex + 1] == '' then
+  if ar[FieldIndex + 1] == "" then
     return nil
   else
     return ar[FieldIndex + 1]
@@ -129,13 +178,34 @@ function GetTagSize(d)
   return d:byte(1) * 0x200000 + d:byte(2) * 0x4000 + d:byte(3) * 0x80 + d:byte(4) + 10
 end
 
+function FindAtom(sn, pe)
+  local b, d, s, n
+  repeat
+    d = h:read(8)
+    s = BinToNumBE(d, 1, 4)
+    if s == 1 then
+      d = h:read(8)
+      s = BinToNumBE(d, 1, 8)
+      n = 16
+    else
+      n = 8
+    end
+    if string.sub(d, 5, 8) == sn then
+      b = true
+      break
+    end
+    h:seek("cur", s - n)
+  until h:seek() >= pe
+  if b == true then return s else return nil end
+end
+
 function BinToNumBE(d, n1, n2)
-  local r = ''
-  if string.len(d) == 3 then r = '00' end
+  local r = ""
+  if string.len(d) == 3 then r = "00" end
   for i = n1, n2 do
-    r = r .. string.format('%02x', string.byte(d, i))
+    r = r .. string.format("%02x", string.byte(d, i))
   end
-  return tonumber('0x' .. r)
+  return tonumber("0x" .. r)
 end
 
 function BitAND(a, b)
